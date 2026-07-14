@@ -1,0 +1,352 @@
+import express, { Request, Response, NextFunction } from 'express';
+import path from 'path';
+import { createServer as createViteServer } from 'vite';
+import { 
+  getDb, 
+  saveDb, 
+  addContactRequest, 
+  addAppointment, 
+  updateContactStatus, 
+  updateAppointmentStatus, 
+  updateSettings, 
+  addAnnouncement, 
+  updateAnnouncement, 
+  deleteAnnouncement, 
+  addGalleryItem, 
+  deleteGalleryItem, 
+  incrementViews, 
+  getAnalytics 
+} from './src/dbServer';
+
+// Setup environment variables
+import dotenv from 'dotenv';
+dotenv.config();
+
+const app = express();
+const PORT = 3000;
+
+// Admin credentials (configurable via env, fallback to secure defaults)
+const ADMIN_USERNAME = process.env.ADMIN_USER || 'admin';
+const ADMIN_PASSWORD = process.env.ADMIN_PASS || 'admin123';
+const AUTH_TOKEN = 'secret-admin-session-token-xyz-2026';
+
+// Request JSON body parsing
+app.use(express.json());
+
+// Helper: Log beautiful simulated emails to the server console
+function simulateEmail(to: string, subject: string, htmlBody: string) {
+  console.log('\n========================================');
+  console.log(`✉️ SIMULATING EMAIL SENT TO: ${to}`);
+  console.log(`📧 SUBJECT: ${subject}`);
+  console.log('----------------------------------------');
+  // Strip tags for basic terminal readability, or just log
+  console.log(htmlBody.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim());
+  console.log('========================================\n');
+}
+
+// Authentication middleware
+function authenticateAdmin(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader === `Bearer ${AUTH_TOKEN}`) {
+    next();
+  } else {
+    res.status(401).json({ error: 'Unauthorized. Invalid or missing administrator token.' });
+  }
+}
+
+// Public API: Increments website views
+app.post('/api/tracker/view', (req, res) => {
+  const newCount = incrementViews();
+  res.json({ success: true, totalViews: newCount });
+});
+
+// Public API: Retrieve active announcements and public info
+app.get('/api/public-data', (req, res) => {
+  const db = getDb();
+  res.json({
+    settings: db.settings,
+    announcements: db.announcements.filter(a => a.active),
+    gallery: db.gallery
+  });
+});
+
+// Public API: Submit contact form (with validation and simulated emails)
+app.post('/api/contact', (req, res) => {
+  const { name, email, phone, service, message } = req.body;
+
+  if (!name || !phone || !service || !message) {
+    return res.status(400).json({ error: 'Please provide all required fields (Name, Phone, Service, Message).' });
+  }
+
+  // Save to JSON database
+  const request = addContactRequest({ name, email: email || '', phone, service, message });
+  const db = getDb();
+
+  // Send confirmation email to client (simulated)
+  if (email) {
+    simulateEmail(
+      email,
+      `Confirmation: Contact Request Received - ${db.settings.cafeName}`,
+      `💡 Hello ${name},<br/><br/>
+      Thank you for contacting ${db.settings.cafeName}. We have received your query regarding <b>${service}</b>.<br/>
+      Our team will review your message and reach out to you within 2 to 4 working hours.<br/><br/>
+      <b>Your Query Details:</b><br/>
+      - Name: ${name}<br/>
+      - Phone: ${phone}<br/>
+      - Message: ${message}<br/><br/>
+      Regards,<br/>Support Team - ${db.settings.cafeName}`
+    );
+  }
+
+  // Send notification email to owner (simulated)
+  simulateEmail(
+    db.settings.email,
+    `🚨 NEW Contact Request: ${service} from ${name}`,
+    `🔔 Hello Administrator,<br/><br/>
+    You have received a new service query on the cyber cafe portal:<br/><br/>
+    <b>Submission Information:</b><br/>
+    - Name: ${name}<br/>
+    - Phone: ${phone}<br/>
+    - Email: ${email || 'Not Provided'}<br/>
+    - Requested Service: ${service}<br/>
+    - Message: ${message}<br/><br/>
+    Please log in to your admin panel to manage this request.`
+  );
+
+  res.json({ success: true, data: request, message: 'Message submitted successfully. Emails simulated in logs.' });
+});
+
+// Public API: Book appointment
+app.post('/api/appointments', (req, res) => {
+  const { name, email, phone, service, appointmentDate, appointmentTime, message } = req.body;
+
+  if (!name || !phone || !service || !appointmentDate || !appointmentTime) {
+    return res.status(400).json({ error: 'Please provide all required fields (Name, Phone, Service, Date, Time).' });
+  }
+
+  const appointment = addAppointment({
+    name,
+    email: email || '',
+    phone,
+    service,
+    appointmentDate,
+    appointmentTime,
+    message: message || ''
+  });
+  const db = getDb();
+
+  // Send confirmation email to client
+  if (email) {
+    simulateEmail(
+      email,
+      `Appointment Requested - ${db.settings.cafeName}`,
+      `📅 Hello ${name},<br/><br/>
+      Your booking request for <b>${service}</b> has been received for <b>${appointmentDate}</b> at <b>${appointmentTime}</b>.<br/>
+      Please wait for an confirmation SMS or email from our desk before visiting.<br/><br/>
+      Regards,<br/>Desk Staff - ${db.settings.cafeName}`
+    );
+  }
+
+  // Send notification to owner
+  simulateEmail(
+    db.settings.email,
+    `📅 NEW Booking Request: ${service} by ${name}`,
+    `🔔 Hello Desk Administrator,<br/><br/>
+    A customer has booked an appointment slot on the portal:<br/><br/>
+    <b>Appointment Details:</b><br/>
+    - Customer Name: ${name}<br/>
+    - Phone: ${phone}<br/>
+    - Service: ${service}<br/>
+    - Date & Time: ${appointmentDate} at ${appointmentTime}<br/>
+    - Customer Note: ${message || 'None'}<br/><br/>
+    Manage this appointment inside the Admin Dashboard to Approve or Reschedule.`
+  );
+
+  res.json({ success: true, data: appointment, message: 'Appointment booked successfully. Emails simulated in logs.' });
+});
+
+// Admin Authentication: Login
+app.post('/api/admin/login', (req, res) => {
+  const { username, password } = req.body;
+  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    res.json({ success: true, token: AUTH_TOKEN, message: 'Administrator authenticated successfully.' });
+  } else {
+    res.status(401).json({ error: 'Invalid username or password. Please try again.' });
+  }
+});
+
+// Admin APIs: Secured by token validation
+
+// Get full dashboard data
+app.get('/api/admin/dashboard', authenticateAdmin, (req, res) => {
+  const db = getDb();
+  const stats = getAnalytics();
+  res.json({
+    settings: db.settings,
+    announcements: db.announcements,
+    gallery: db.gallery,
+    contactRequests: db.contactRequests,
+    appointments: db.appointments,
+    stats
+  });
+});
+
+// Update settings
+app.put('/api/admin/settings', authenticateAdmin, (req, res) => {
+  const settings = req.body;
+  if (!settings || !settings.cafeName) {
+    return res.status(400).json({ error: 'Invalid settings body' });
+  }
+  updateSettings(settings);
+  res.json({ success: true, message: 'Website settings updated successfully.' });
+});
+
+// Create announcement
+app.post('/api/admin/announcements', authenticateAdmin, (req, res) => {
+  const { title, content, type, active } = req.body;
+  if (!title || !content) {
+    return res.status(400).json({ error: 'Title and content are required' });
+  }
+  const newAnn = addAnnouncement({ title, content, type: type || 'info', active: active !== false });
+  res.json({ success: true, data: newAnn });
+});
+
+// Update announcement
+app.put('/api/admin/announcements/:id', authenticateAdmin, (req, res) => {
+  const { id } = req.params;
+  const success = updateAnnouncement(id, req.body);
+  if (success) {
+    res.json({ success: true, message: 'Announcement updated.' });
+  } else {
+    res.status(404).json({ error: 'Announcement not found.' });
+  }
+});
+
+// Delete announcement
+app.delete('/api/admin/announcements/:id', authenticateAdmin, (req, res) => {
+  const { id } = req.params;
+  const success = deleteAnnouncement(id);
+  if (success) {
+    res.json({ success: true, message: 'Announcement deleted.' });
+  } else {
+    res.status(404).json({ error: 'Announcement not found.' });
+  }
+});
+
+// Create gallery item
+app.post('/api/admin/gallery', authenticateAdmin, (req, res) => {
+  const { title, category, url, description } = req.body;
+  if (!title || !category || !url) {
+    return res.status(400).json({ error: 'Title, category, and image URL are required' });
+  }
+  const newItem = addGalleryItem({ title, category, url, description: description || '' });
+  res.json({ success: true, data: newItem });
+});
+
+// Delete gallery item
+app.delete('/api/admin/gallery/:id', authenticateAdmin, (req, res) => {
+  const { id } = req.params;
+  const success = deleteGalleryItem(id);
+  if (success) {
+    res.json({ success: true, message: 'Gallery photo removed.' });
+  } else {
+    res.status(404).json({ error: 'Gallery photo not found.' });
+  }
+});
+
+// Update contact request status
+app.put('/api/admin/requests/:id', authenticateAdmin, (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  if (!status) return res.status(400).json({ error: 'Status is required' });
+  const success = updateContactStatus(id, status);
+  if (success) {
+    res.json({ success: true, message: 'Contact request status updated.' });
+  } else {
+    res.status(404).json({ error: 'Request not found.' });
+  }
+});
+
+// Delete contact request
+app.delete('/api/admin/requests/:id', authenticateAdmin, (req, res) => {
+  const { id } = req.params;
+  const db = getDb();
+  const index = db.contactRequests.findIndex(r => r.id === id);
+  if (index !== -1) {
+    db.contactRequests.splice(index, 1);
+    saveDb(db);
+    res.json({ success: true, message: 'Request removed.' });
+  } else {
+    res.status(404).json({ error: 'Request not found.' });
+  }
+});
+
+// Update appointment status
+app.put('/api/admin/appointments/:id', authenticateAdmin, (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  if (!status) return res.status(400).json({ error: 'Status is required' });
+  const success = updateAppointmentStatus(id, status);
+  if (success) {
+    res.json({ success: true, message: 'Appointment status updated.' });
+  } else {
+    res.status(404).json({ error: 'Appointment not found.' });
+  }
+});
+
+// Delete appointment
+app.delete('/api/admin/appointments/:id', authenticateAdmin, (req, res) => {
+  const { id } = req.params;
+  const db = getDb();
+  const index = db.appointments.findIndex(a => a.id === id);
+  if (index !== -1) {
+    db.appointments.splice(index, 1);
+    saveDb(db);
+    res.json({ success: true, message: 'Appointment removed.' });
+  } else {
+    res.status(404).json({ error: 'Appointment not found.' });
+  }
+});
+
+// Backup Database
+app.get('/api/admin/backup', authenticateAdmin, (req, res) => {
+  const db = getDb();
+  res.setHeader('Content-disposition', 'attachment; filename=cyber-cafe-backup.json');
+  res.setHeader('Content-type', 'application/json');
+  res.send(JSON.stringify(db, null, 2));
+});
+
+// Restore Database
+app.post('/api/admin/restore', authenticateAdmin, (req, res) => {
+  const newData = req.body;
+  if (!newData || !newData.settings || !Array.isArray(newData.announcements)) {
+    return res.status(400).json({ error: 'Invalid backup structure. Restore cancelled.' });
+  }
+  saveDb(newData);
+  res.json({ success: true, message: 'Database restored successfully from backup.' });
+});
+
+// Setup Vite Dev Server / Static Hosting Middleware
+async function startServer() {
+  if (process.env.NODE_ENV !== 'production') {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa',
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get('*', (req: Request, res: Response) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  }
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Cyber Cafe Server successfully started on http://0.0.0.0:${PORT}`);
+  });
+}
+
+startServer().catch((err) => {
+  console.error('Fatal error setting up server:', err);
+});

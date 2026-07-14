@@ -1,0 +1,129 @@
+{
+  "settings": {
+    "cafeName": "APNACSC Digital Cyber Cafe & SBI CSP",
+    "phone": "+91 70068 33767, +91 96821 32895",
+    "whatsapp": "+91 70068 33767",
+    "email": "contact@apnacsc.com",
+    "address": "Shop No. 12, Ground Floor, Royal Plaza, Near Main Bus Stand, Sector 15, New Delhi, Pin - 110001",
+    "officeHours": "Mon - Sat: 08:30 AM - 08:00 PM, Sun: 10:00 AM - 04:00 PM",
+    "googleMapsEmbed": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3501.996452296068!2d77.21833441508272!3d28.630041982417724!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cfd3637e19e75%3A0x6b7a544f84c4f9a7!2sConnaught%20Place%2C%20New%20Delhi%2C%20Delhi%20110001!5e0!3m2!1sen!2sin!4v1680000000000!5m2!1sen!2sin",
+    "seoTitle": "APNACSC Digital Cyber Cafe | Authorized CSC & SBI CSP Banking Center",
+    "seoDescription": "Authorized CSC E-Governance and SBI CSP Banking Services. Apply for PAN, Aadhaar updates, Ayushman Bharat card, Voter ID, and manage all your digital printing, GST, and business registrations in Sector 15, New Delhi.",
+    "seoKeywords": "cyber cafe, CSC center, SBI CSP, banking kiosk, PAN card application, Aadhaar update, online form filling, printing, photocopy, GST return, MSME registration"
+  },
+  "announcements": [
+    {
+      "id": "ann-1",
+      "title": "New PM Kisan Samman Nidhi 17th Installment KYC Open",
+      "content": "All farmers registered under PM Kisan are requested to complete their e-KYC at our center before the end of this month to receive their installment seamlessly. Please bring your Aadhaar and linked mobile phone.",
+      "type": "warning",
+      "date": "2026-07-10T10:00:00.000Z",
+      "active": true
+    },
+    {
+      "id": "ann-2",
+      "title": "SBI CSP Cash Deposit and Withdrawal Limit Enhanced",
+      "content": "We have increased our daily transactional limits for AEPS (Aadhaar Enabled Payment System) and SBI debit card withdrawals. Open a zero-balance savings account at our CSP kiosk in under 10 minutes!",
+      "type": "success",
+      "date": "2026-07-08T09:15:00.000Z",
+      "active": true
+    },
+    {
+      "id": "ann-3",
+      "title": "Free Admission Counselling and Scholarship Form Filling",
+      "content": "Admissions are open for state and central university degree programs. Visit us for prompt, error-free online application filling and scholarship registration with professional support.",
+      "type": "info",
+      "date": "2026-07-05T14:30:00.000Z",
+      "active": true
+    }
+  ],
+  "gallery": [
+    {
+      "id": "gal-1",
+      "title": "Main Office Interior",
+      "category": "interior",
+      "url": "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=600",
+      "description": "Our neat, modern office desk space equipped with superfast fiber internet."
+    },
+    {
+      "id": "gal-2",
+      "title": "SBI CSP Banking Desk",
+      "category": "banking",
+      "url": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&q=80&w=600",
+      "description": "Authorized SBI Customer Service Point (CSP) for fast deposits, withdrawals, and instant account opening."
+    },
+    {
+      "id": "gal-3",
+      "title": "Cyber Computing Area",
+      "category": "interior",
+      "url": "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=600",
+      "description": "High-performance computers available for self-work, learning, and exam browsing."
+    },
+    {
+      "id": "gal-4",
+      "title": "Professional Printing & Scanning",
+      "category": "printing",
+      "url": "https://images.unsplash.com/photo-1615915468538-0fbd857888ca?auto=format&fit=crop&q=80&w=600",
+      "description": "Heavy-duty laser and color plotters for instant printing, scanning, and lamination."
+    }
+  ],
+  "contactRequests": [
+    {
+      "id": "req-1",
+      "name": "Rajesh Kumar",
+      "email": "rajesh.kumar@gmail.com",
+      "phone": "+91 99887 76655",
+      "service": "New PAN Card",
+      "message": "I want to apply for a new PAN card. What documents are required, and how long does it take?",
+      "status": "pending",
+      "date": "2026-07-11T12:30:00.000Z"
+    },
+    {
+      "id": "req-2",
+      "name": "Priya Sharma",
+      "email": "priya.sharma@yahoo.com",
+      "phone": "+91 98765 12345",
+      "service": "GST Return Filing",
+      "message": "Need assistance with monthly GST return filing for my retail shop. Please schedule a call.",
+      "status": "in_progress",
+      "date": "2026-07-10T15:45:00.000Z"
+    },
+    {
+      "id": "req-3",
+      "name": "Amit Patel",
+      "email": "amit.patel@gmail.com",
+      "phone": "+91 91234 56789",
+      "service": "SBI Account Opening",
+      "message": "I want to open a zero balance bank account for my son. He is 16 years old.",
+      "status": "completed",
+      "date": "2026-07-09T11:20:00.000Z"
+    }
+  ],
+  "appointments": [
+    {
+      "id": "apt-1",
+      "name": "Suresh Gupta",
+      "email": "suresh.g@outlook.com",
+      "phone": "+91 94432 10987",
+      "service": "Passport Application",
+      "appointmentDate": "2026-07-13",
+      "appointmentTime": "11:30 AM",
+      "message": "Applying for renewal of passport. Will bring old passport copy and Aadhaar.",
+      "status": "approved",
+      "date": "2026-07-11T16:10:00.000Z"
+    },
+    {
+      "id": "apt-2",
+      "name": "Meena Devi",
+      "email": "meena.devi@gmail.com",
+      "phone": "+91 95543 21098",
+      "service": "Aadhaar Update Guidance",
+      "appointmentDate": "2026-07-14",
+      "appointmentTime": "03:00 PM",
+      "message": "Need to update my residential address in my Aadhaar card.",
+      "status": "pending",
+      "date": "2026-07-11T18:30:00.000Z"
+    }
+  ],
+  "views": 492
+}
