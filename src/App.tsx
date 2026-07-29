@@ -24,10 +24,7 @@ const FALLBACK_SETTINGS: WebsiteSettings = {
 };
 
 export default function App() {
-  const [darkMode, setDarkMode] = useState<boolean>(() => {
-    const saved = localStorage.getItem('theme');
-    return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  });
+  const [darkMode, setDarkMode] = useState<boolean>(false);
 
   const [selectedService, setSelectedService] = useState('');
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
@@ -91,15 +88,10 @@ export default function App() {
     }
   }, [settings]);
 
-  // Sync theme changes with body classList
+  // Enforce light theme mode across portal
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
+    document.documentElement.classList.remove('dark');
+    localStorage.setItem('theme', 'light');
   }, [darkMode]);
 
   // Handle service redirection trigger

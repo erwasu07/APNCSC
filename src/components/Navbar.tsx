@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sun, Moon, Shield, Calendar, PhoneCall, Cpu, Sparkles, Eye, Languages, Home, Briefcase, Flame, Info, Menu, X, Star } from 'lucide-react';
+import { Shield, Calendar, PhoneCall, Cpu, Sparkles, Eye, Languages, Home, Briefcase, Flame, Info, Menu, X, Star } from 'lucide-react';
 import { PolicyTab } from './PrivacyPolicyModal';
 
 interface NavbarProps {
@@ -211,19 +211,8 @@ export default function Navbar({
             })}
           </div>
 
-          {/* Theme Toggle & Mobile Trigger */}
+          {/* Mobile Trigger */}
           <div className="flex items-center gap-2">
-            {/* Theme Toggle */}
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className="p-2 text-white/90 hover:text-amber-400 hover:bg-white/10 rounded-xl transition-all cursor-pointer"
-              aria-label="Toggle theme"
-              id="theme-nav-toggle"
-              title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            >
-              {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-white" />}
-            </button>
-
             {/* Responsive Mobile Menu Trigger Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
