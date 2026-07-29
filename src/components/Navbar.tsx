@@ -77,13 +77,16 @@ export default function Navbar({
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           
           {/* Logo Column: Common Services Centre (CSC) */}
-          <div className="flex-1 text-center md:text-left">
-            <h1 className="text-xl sm:text-2xl md:text-[27px] font-extrabold text-[#0051a5] dark:text-blue-400 font-sans tracking-tight leading-tight">
-              Common Services Centre (CSC)
-            </h1>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
-              A Digital Shop for Digital India
-            </p>
+          <div className="flex-1 text-center md:text-left flex flex-col md:flex-row items-center gap-3">
+            <img src="/favicon.svg" alt="CSC DOST Logo" className="w-12 h-12 object-contain shrink-0 drop-shadow-sm" referrerPolicy="no-referrer" />
+            <div>
+              <h1 className="text-xl sm:text-2xl md:text-[27px] font-extrabold text-[#0051a5] dark:text-blue-400 font-sans tracking-tight leading-tight">
+                Common Services Centre (CSC)
+              </h1>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                A Digital Shop for Digital India • CSC DOST
+              </p>
+            </div>
           </div>
 
 

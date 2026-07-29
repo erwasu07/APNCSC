@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="saffronGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF9933"/>
+      <stop offset="100%" stop-color="#F39C12"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2ECC71"/>
+      <stop offset="50%" stop-color="#1B8A3E"/>
+      <stop offset="100%" stop-color="#0F6126"/>
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E88E5"/>
+      <stop offset="100%" stop-color="#0D47A1"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background Circle (White) -->
+  <circle cx="250" cy="250" r="240" fill="#FFFFFF"/>
+
+  <!-- Outer Concentric Arcs -->
+  <!-- Outer Saffron Arc -->
+  <path d="M 120 420 A 210 210 0 1 1 380 410" fill="none" stroke="url(#saffronGrad)" stroke-width="28" stroke-linecap="round"/>
+  
+  <!-- Inner Green Arc -->
+  <path d="M 140 390 A 175 175 0 1 1 360 380" fill="none" stroke="url(#greenGrad)" stroke-width="24" stroke-linecap="round"/>
+
+  <!-- Top Right WiFi Waves -->
+  <path d="M 360 120 A 30 30 0 0 1 385 145" fill="none" stroke="#2ECC71" stroke-width="8" stroke-linecap="round"/>
+  <path d="M 370 100 A 55 55 0 0 1 415 145" fill="none" stroke="#2ECC71" stroke-width="8" stroke-linecap="round"/>
+  <path d="M 380 80 A 80 80 0 0 1 445 145" fill="none" stroke="#FF9933" stroke-width="9" stroke-linecap="round"/>
+
+  <!-- Globe / Network Grid (Blue Lines & Nodes) -->
+  <g stroke="#0D47A1" stroke-width="4" fill="none">
+    <ellipse cx="250" cy="230" rx="120" ry="120"/>
+    <ellipse cx="250" cy="230" rx="60" ry="120"/>
+    <ellipse cx="250" cy="230" rx="120" ry="60"/>
+    <line x1="130" y1="230" x2="370" y2="230"/>
+    <line x1="250" y1="110" x2="250" y2="350"/>
+  </g>
+
+  <!-- Globe Nodes -->
+  <circle cx="160" cy="160" r="8" fill="#FFFFFF" stroke="#0D47A1" stroke-width="5"/>
+  <circle cx="250" cy="120" r="7" fill="#FFFFFF" stroke="#0D47A1" stroke-width="5"/>
+  <circle cx="340" cy="160" r="8" fill="#FF9933" stroke="#FF9933" stroke-width="2"/>
+  <circle cx="370" cy="230" r="7" fill="#FFFFFF" stroke="#0D47A1" stroke-width="5"/>
+  <circle cx="330" cy="310" r="7" fill="#FFFFFF" stroke="#1B8A3E" stroke-width="5"/>
+
+  <!-- Center Blue User Silhouette -->
+  <circle cx="250" cy="190" r="28" fill="url(#blueGrad)"/>
+  <path d="M 205 270 C 205 225, 295 225, 295 270 L 295 290 L 205 290 Z" fill="url(#blueGrad)"/>
+
+  <!-- Orange Shopping Cart Icon (Left) -->
+  <g transform="translate(110, 220) scale(0.9)">
+    <path d="M0 0 H8 L14 22 H32 L38 8 H10" fill="none" stroke="#FF9933" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="16" cy="27" r="3" fill="#FF9933"/>
+    <circle cx="29" cy="27" r="3" fill="#FF9933"/>
+  </g>
+
+  <!-- Ashoka Chakra (Right) -->
+  <g transform="translate(340, 240)">
+    <circle cx="0" cy="0" r="32" fill="#FFFFFF" stroke="#000080" stroke-width="5"/>
+    <circle cx="0" cy="0" r="6" fill="#000080"/>
+    <!-- 24 spokes -->
+    <g stroke="#000080" stroke-width="2">
+      <line x1="0" y1="-30" x2="0" y2="30"/>
+      <line x1="-30" y1="0" x2="30" y2="0"/>
+      <line x1="-21" y1="-21" x2="21" y2="21"/>
+      <line x1="-21" y1="21" x2="21" y2="-21"/>
+      <line x1="-28" y1="-11" x2="28" y2="11"/>
+      <line x1="-28" y1="11" x2="28" y2="-11"/>
+      <line x1="-11" y1="-28" x2="11" y2="28"/>
+      <line x1="-11" y1="28" x2="11" y2="-28"/>
+      <line x1="-26" y1="-16" x2="26" y2="16"/>
+      <line x1="-26" y1="16" x2="26" y2="-16"/>
+      <line x1="-16" y1="-26" x2="16" y2="26"/>
+      <line x1="-16" y1="26" x2="16" y2="-26"/>
+    </g>
+  </g>
+
+  <!-- Prominent Green "D" Letter -->
+  <path d="M 160 230 H 210 C 265 230, 280 260, 280 300 C 280 345, 260 375, 200 375 H 160 Z" fill="url(#greenGrad)" stroke="#0E5020" stroke-width="3"/>
+  <!-- Cutout for D -->
+  <path d="M 185 255 H 205 C 235 255, 252 275, 252 300 C 252 328, 235 350, 200 350 H 185 Z" fill="#FFFFFF"/>
+
+  <!-- Supportive White Hand Icon (Over the D) -->
+  <g transform="translate(100, 275)">
+    <!-- Hand contour (Blue outline, white fill) -->
+    <path d="M 10 70 Q 25 45, 45 40 Q 50 38, 55 45 L 65 60 Q 70 45, 76 43 Q 82 41, 85 48 L 92 63 Q 97 50, 103 49 Q 109 48, 111 56 L 115 72 Q 120 62, 126 62 Q 131 62, 131 70 C 131 95, 105 120, 65 115 C 30 110, 5 85, 10 70 Z" 
+          fill="#FFFFFF" stroke="#0D47A1" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+    <!-- Fingers details -->
+    <path d="M 60 55 L 60 75 M 82 50 L 82 75 M 105 52 L 105 75 M 122 65 L 122 80" stroke="#0D47A1" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+</svg>
