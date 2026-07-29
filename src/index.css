@@ -75,3 +75,47 @@
   background: rgba(156, 163, 175, 0.7);
 }
 
+/* Optimized Print CSS for Digital Receipt / Slip printing */
+@media print {
+  /* Hide everything on the page by default */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Make only the digital slip receipt and its children visible */
+  #printable-digital-slip,
+  #printable-digital-slip * {
+    visibility: visible !important;
+  }
+
+  /* Position the receipt cleanly at the top of the page */
+  #printable-digital-slip {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 24px !important;
+    box-shadow: none !important;
+    border: 2px solid #10b981 !important;
+    border-radius: 16px !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Explicitly hide action buttons, floating WhatsApp badge, and interactive components */
+  .no-print,
+  #whatsapp-floating-badge,
+  button {
+    display: none !important;
+  }
+
+  @page {
+    size: auto;
+    margin: 10mm;
+  }
+}
+

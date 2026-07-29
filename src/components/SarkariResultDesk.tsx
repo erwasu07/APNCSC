@@ -1015,7 +1015,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
             </div>
           ) : (
             /* PRINTABLE DIGITAL SUCCESS SLIP / RECEIPT */
-            <div className="bg-white text-slate-900 rounded-2xl shadow-xl p-5 md:p-8 border border-emerald-500/40 max-w-2xl mx-auto animate-fade-in relative">
+            <div id="printable-digital-slip" className="bg-white text-slate-900 rounded-2xl shadow-xl p-5 md:p-8 border border-emerald-500/40 max-w-2xl mx-auto animate-fade-in relative">
               {/* Authenticity Watermark Decors */}
               <div className="absolute inset-0 flex items-center justify-center opacity-[0.02] select-none pointer-events-none">
                 <Shield className="w-80 h-80 text-slate-900" />
@@ -1136,7 +1136,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 no-print">
                   <button
                     onClick={() => {
                       if (!submissionReceipt) return;
