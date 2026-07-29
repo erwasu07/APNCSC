@@ -34,68 +34,66 @@ export default function Navbar({
   return (
     <header className="w-full z-50 flex flex-col relative" id="main-gov-header">
       {/* 1. TOP UTILITY GOVT BAR - CSC.GOV.IN DESIGN */}
-      <div className="bg-[#eaeaea] dark:bg-slate-950 border-b border-slate-300 dark:border-slate-900 text-xs font-sans text-slate-700 dark:text-slate-300 py-2 px-4 shadow-sm">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          {/* Left: Text Size controllers exactly like screenshot */}
-          <div className="flex items-center gap-1.5 self-start sm:self-auto">
-            <span className="text-slate-700 dark:text-slate-300 font-bold text-[11px] mr-1">Text Size :</span>
+      <div className="bg-[#eaeaea] dark:bg-slate-950 border-b border-slate-300 dark:border-slate-900 text-xs font-sans text-slate-700 dark:text-slate-300 py-1.5 sm:py-2 px-3 sm:px-4 shadow-sm">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-3">
+          {/* Left: Text Size controllers */}
+          <div className="flex items-center gap-1.5 self-center sm:self-auto">
+            <span className="text-slate-700 dark:text-slate-300 font-bold text-[10px] sm:text-[11px] mr-0.5 sm:mr-1">Text Size :</span>
             <button 
               onClick={() => setFontSize('normal')}
-              className="px-2 py-0.5 text-[11px] font-extrabold text-white bg-[#5bc0de] hover:bg-[#31b0d5] border border-[#46b8da] rounded shadow-sm transition-colors cursor-pointer"
+              className="px-1.5 py-0.5 sm:px-2 text-[10px] sm:text-[11px] font-extrabold text-white bg-[#5bc0de] hover:bg-[#31b0d5] border border-[#46b8da] rounded shadow-sm transition-colors cursor-pointer"
               title="Normal Text Size"
             >
               -A
             </button>
             <button 
               onClick={() => setFontSize('large')}
-              className="px-2 py-0.5 text-[11px] font-extrabold text-white bg-[#5bc0de] hover:bg-[#31b0d5] border border-[#46b8da] rounded shadow-sm transition-colors cursor-pointer"
+              className="px-1.5 py-0.5 sm:px-2 text-[10px] sm:text-[11px] font-extrabold text-white bg-[#5bc0de] hover:bg-[#31b0d5] border border-[#46b8da] rounded shadow-sm transition-colors cursor-pointer"
               title="Large Text Size"
             >
               A
             </button>
             <button 
               onClick={() => setFontSize('larger')}
-              className="px-2 py-0.5 text-[11px] font-extrabold text-white bg-[#5bc0de] hover:bg-[#31b0d5] border border-[#46b8da] rounded shadow-sm transition-colors cursor-pointer"
+              className="px-1.5 py-0.5 sm:px-2 text-[10px] sm:text-[11px] font-extrabold text-white bg-[#5bc0de] hover:bg-[#31b0d5] border border-[#46b8da] rounded shadow-sm transition-colors cursor-pointer"
               title="Larger Text Size"
             >
               +A
             </button>
           </div>
 
-          {/* Right: Helpdesk number and operating hours exactly like prompt */}
-          <div className="flex items-center gap-1.5 text-[11px] font-sans text-slate-700 dark:text-slate-300">
-            <span className="text-base text-slate-800 dark:text-slate-200">📞</span>
+          {/* Right: Helpdesk number and operating hours */}
+          <div className="flex items-center gap-1 text-[10px] sm:text-[11px] font-sans text-slate-700 dark:text-slate-300 text-center sm:text-left">
+            <span className="text-sm sm:text-base text-slate-800 dark:text-slate-200">📞</span>
             <span className="leading-snug">
-              Helpdesk <span className="font-bold text-slate-950 dark:text-white">+91 70068 33767</span> - <span className="text-[#a4630a] dark:text-amber-400 font-extrabold">Working Hours: 09:00 AM to 08:30 PM (Monday to Saturday)</span>
+              Helpdesk <span className="font-bold text-slate-950 dark:text-white">+91 70068 33767</span> - <span className="text-[#a4630a] dark:text-amber-400 font-extrabold">Hours: 09:00 AM to 08:30 PM (Mon-Sat)</span>
             </span>
           </div>
         </div>
       </div>
 
       {/* 2. INDIAN FLAG TRICOLOR BAR */}
-      <div className="w-full h-[4px] bg-gradient-to-r from-[#FF9933] via-white to-[#128807] shadow-sm z-10"></div>
+      <div className="w-full h-[3px] sm:h-[4px] bg-gradient-to-r from-[#FF9933] via-white to-[#128807] shadow-sm z-10"></div>
 
-      {/* 3. MAIN CO-BRANDED PORTAL HEADER - EXACTLY CSC.GOV.IN */}
-      <div className="bg-white dark:bg-slate-900 py-5 px-4 border-b border-slate-200 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+      {/* 3. MAIN CO-BRANDED PORTAL HEADER */}
+      <div className="bg-white dark:bg-slate-900 py-2 sm:py-5 px-3 sm:px-4 border-b border-slate-200 dark:border-slate-800">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2 md:gap-6">
           
           {/* Logo Column: Common Services Centre (CSC) */}
-          <div className="flex-1 text-center md:text-left flex flex-col md:flex-row items-center gap-3">
-            <img src="/favicon.svg" alt="CSC DOST Logo" className="w-12 h-12 object-contain shrink-0 drop-shadow-sm" referrerPolicy="no-referrer" />
-            <div>
-              <h1 className="text-xl sm:text-2xl md:text-[27px] font-extrabold text-[#0051a5] dark:text-blue-400 font-sans tracking-tight leading-tight">
+          <div className="flex-1 text-center md:text-left flex flex-row items-center justify-center md:justify-start gap-2 sm:gap-3">
+            <img src="/favicon.svg" alt="CSC DOST Logo" className="w-7 h-7 sm:w-10 sm:h-10 md:w-12 md:h-12 object-contain shrink-0 drop-shadow-sm" referrerPolicy="no-referrer" />
+            <div className="text-left md:text-left">
+              <h1 className="text-xs sm:text-xl md:text-[27px] font-extrabold text-[#0051a5] dark:text-blue-400 font-sans tracking-tight leading-tight">
                 Common Services Centre (CSC)
               </h1>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+              <p className="text-[7.5px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
                 A Digital Shop for Digital India • CSC DOST
               </p>
             </div>
           </div>
 
-
-
-          {/* Right Column: Dynamic Co-branded CSC Digital Seva & Digital India Logo lockup */}
-          <div className="flex-1 flex justify-center md:justify-end items-center gap-4">
+          {/* Right Column: Dynamic Co-branded CSC Digital Seva & Digital India Logo lockup (Hidden on mobile to save vertical space) */}
+          <div className="hidden md:flex flex-1 justify-end items-center gap-4">
             <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-950 p-2.5 px-4 border border-slate-100 dark:border-slate-850 rounded-2xl shadow-sm hover:shadow transition-all max-w-full overflow-hidden">
               
               {/* Left Brand: Digital India */}
