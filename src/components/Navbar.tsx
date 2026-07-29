@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import { Sun, Moon, Shield, Calendar, PhoneCall, Cpu, Sparkles, Eye, Languages, Home, Briefcase, Flame, Info, Headphones, Menu, X, Star } from 'lucide-react';
+import { Sun, Moon, Shield, Calendar, PhoneCall, Cpu, Sparkles, Eye, Languages, Home, Briefcase, Flame, Info, Headphones, Menu, X, Star, ShieldCheck } from 'lucide-react';
 
 interface NavbarProps {
   darkMode: boolean;
   setDarkMode: (val: boolean) => void;
   cafeName: string;
+  onOpenPrivacyPolicy?: () => void;
 }
 
 export default function Navbar({
   darkMode,
   setDarkMode,
-  cafeName
+  cafeName,
+  onOpenPrivacyPolicy
 }: NavbarProps) {
   const [lang, setLang] = useState<'EN' | 'HI'>('EN');
   const [fontSize, setFontSize] = useState<'normal' | 'large' | 'larger'>('normal');
@@ -216,10 +218,21 @@ export default function Navbar({
           {/* Accessibility Settings & Mode switches */}
           <div className="flex items-center gap-2">
             
+            {/* Privacy Policy Button */}
+            <button
+              onClick={onOpenPrivacyPolicy}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
+              title="View Privacy Policy"
+              id="privacy-policy-nav-btn"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden sm:inline">Privacy Policy</span>
+            </button>
+
             {/* Theme Toggle */}
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className="p-2 text-white/90 hover:text-amber-400 hover:bg-white/10 rounded-xl transition-all relative group"
+              className="p-2 text-white/90 hover:text-amber-400 hover:bg-white/10 rounded-xl transition-all relative group cursor-pointer"
               aria-label="Toggle theme"
               id="theme-nav-toggle"
             >
@@ -282,6 +295,20 @@ export default function Navbar({
                   </button>
                 );
               })}
+
+              {/* Privacy Policy Mobile Item */}
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (onOpenPrivacyPolicy) onOpenPrivacyPolicy();
+                }}
+                className="w-full p-3 rounded-xl flex items-center gap-3 text-left transition-all hover:bg-white/5 text-slate-100 hover:text-white cursor-pointer"
+              >
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span className="text-xs uppercase tracking-wider font-semibold text-emerald-300">
+                  Privacy Policy
+                </span>
+              </button>
             </div>
           </div>
         )}

@@ -6,6 +6,7 @@ import ExploreServicesDesk from './components/ExploreServicesDesk';
 import Testimonials from './components/Testimonials';
 import Faqs from './components/Faqs';
 import Footer from './components/Footer';
+import PrivacyPolicyModal from './components/PrivacyPolicyModal';
 import { WebsiteSettings, Announcement, GalleryItem } from './types';
 import { ShieldCheck, MessageSquare, PhoneCall, Sparkles, Building2, HelpCircle } from 'lucide-react';
 
@@ -29,6 +30,7 @@ export default function App() {
   });
 
   const [selectedService, setSelectedService] = useState('');
+  const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
   
   const [settings, setSettings] = useState<WebsiteSettings>(FALLBACK_SETTINGS);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -56,6 +58,15 @@ export default function App() {
   useEffect(() => {
     fetchPublicData();
     fetch('/api/tracker/view', { method: 'POST' }).catch(() => {});
+
+    const checkHash = () => {
+      if (window.location.hash === '#privacy') {
+        setIsPrivacyModalOpen(true);
+      }
+    };
+    checkHash();
+    window.addEventListener('hashchange', checkHash);
+    return () => window.removeEventListener('hashchange', checkHash);
   }, []);
 
   useEffect(() => {
@@ -111,6 +122,7 @@ export default function App() {
         darkMode={darkMode}
         setDarkMode={setDarkMode}
         cafeName={settings.cafeName}
+        onOpenPrivacyPolicy={() => setIsPrivacyModalOpen(true)}
       />
 
       {/* Main Container */}
@@ -139,7 +151,16 @@ export default function App() {
       </main>
 
       {/* Global Page Footer */}
-      <Footer cafeName={settings.cafeName} />
+      <Footer 
+        cafeName={settings.cafeName} 
+        onOpenPrivacyPolicy={() => setIsPrivacyModalOpen(true)}
+      />
+
+      {/* Privacy Policy Interactive Modal */}
+      <PrivacyPolicyModal 
+        isOpen={isPrivacyModalOpen} 
+        onClose={() => setIsPrivacyModalOpen(false)} 
+      />
 
       {/* Floating WhatsApp Chat Button */}
       <button

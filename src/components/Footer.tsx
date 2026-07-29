@@ -3,9 +3,10 @@ import { ArrowUp, ShieldCheck, Heart, Info } from 'lucide-react';
 
 interface FooterProps {
   cafeName: string;
+  onOpenPrivacyPolicy?: () => void;
 }
 
-export default function Footer({ cafeName }: FooterProps) {
+export default function Footer({ cafeName, onOpenPrivacyPolicy }: FooterProps) {
   const [showScroll, setShowScroll] = useState(false);
   const [showCookie, setShowCookie] = useState(true);
 
@@ -101,7 +102,16 @@ export default function Footer({ cafeName }: FooterProps) {
                 Biometric demographic transactions are safe &amp; encrypted directly via GoI portals. No client-side records are cached.
               </p>
               <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-[10px] font-bold text-slate-400 pt-1">
-                <a href="#privacy" className="hover:text-white underline transition-colors">Privacy Policy</a>
+                <button 
+                  type="button" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (onOpenPrivacyPolicy) onOpenPrivacyPolicy();
+                  }}
+                  className="hover:text-white underline transition-colors cursor-pointer text-left font-bold"
+                >
+                  Privacy Policy
+                </button>
                 <a href="#terms" className="hover:text-white underline transition-colors">Terms of Use</a>
                 <a href="#hyperlink" className="hover:text-white underline transition-colors">Hyperlink Policy</a>
                 <a href="#copyright" className="hover:text-white underline transition-colors">Copyright Policy</a>
