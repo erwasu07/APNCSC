@@ -28,66 +28,104 @@ export const SARKARI_DATA: SarkariItem[] = [
   // LATEST JOBS
   {
     id: 'job-ssc-cgl',
-    title: 'SSC CGL 2026 Online Application Form',
+    title: 'SSC CGL Recruitment 2026 Online Application Form',
     category: 'jobs',
-    postDate: '10/07/2026',
-    lastDate: '15/08/2026',
-    advertisementNo: 'SSC-CGL-2026-I',
-    shortInfo: 'Staff Selection Commission (SSC) invites online applications for Combined Graduate Level CGL Recruitment 2026. Grp B and C Inspector, Assistant, and Executive positions.',
-    ageLimit: '18 - 30 Years (As on 01/08/2026)',
-    eligibility: 'Bachelor Degree in any stream from recognized university in India.',
+    postDate: '24/07/2026',
+    lastDate: '28/08/2026',
+    advertisementNo: 'SSC-CGL-2026-EXAM',
+    shortInfo: 'Staff Selection Commission (SSC) invites online applications for Combined Graduate Level CGL 2026 for 17,727 Group B & C Inspector, Assistant Section Officer, Auditor, and Tax Assistant posts.',
+    ageLimit: '18 - 30 Years (Age relaxation applicable as per rules)',
+    eligibility: 'Bachelor Degree in any stream from a recognized university in India.',
+    fees: { genObc: '₹100', scSt: '₹0 (Female Exempted)' },
+    isNew: true
+  },
+  {
+    id: 'job-ssc-mts',
+    title: 'SSC MTS & Havildar 9,583 Posts Application',
+    category: 'jobs',
+    postDate: '22/07/2026',
+    lastDate: '25/08/2026',
+    advertisementNo: 'SSC-MTS-HAVILDAR-2026',
+    shortInfo: 'Staff Selection Commission (SSC) Multi Tasking (Non-Technical) Staff and Havildar (CBIC & CBN) Examination 2026 online registration.',
+    ageLimit: '18 - 25 Years for MTS, 18 - 27 Years for Havildar',
+    eligibility: 'Class 10th High School Pass from any recognized board in India.',
     fees: { genObc: '₹100', scSt: '₹0' },
     isNew: true
   },
   {
-    id: 'job-rpf-constable',
-    title: 'Railway Protection Force (RPF) Constable Post',
+    id: 'job-rrb-ntpc',
+    title: 'Railway RRB NTPC Graduate & Under Graduate Posts',
     category: 'jobs',
-    postDate: '08/07/2026',
-    lastDate: '10/08/2026',
-    advertisementNo: 'CEN RPF 02/2026',
-    shortInfo: 'Railway Recruitment Board (RRB) invites online applications for the recruitment of Constable & Sub-Inspector SI posts in Railway Protection Force (RPF).',
-    ageLimit: '18 - 28 Years',
-    eligibility: 'Class 10th (High School) passed from any recognized board in India.',
+    postDate: '20/07/2026',
+    lastDate: '30/08/2026',
+    advertisementNo: 'CEN 05/2026 & 06/2026',
+    shortInfo: 'Railway Recruitment Boards (RRB) Non-Technical Popular Categories (NTPC) recruitment for Station Master, Goods Guard, Senior Clerk, Junior Clerk, and Commercial Apprentice.',
+    ageLimit: '18 - 33 Years (UG Posts) / 18 - 36 Years (Graduate Posts)',
+    eligibility: 'Class 12th Intermediate for UG Level / Bachelor Degree for Graduate Level Posts.',
+    fees: { genObc: '₹500 (₹400 Refundable)', scSt: '₹250 (Full Refundable)' },
+    isNew: true
+  },
+  {
+    id: 'job-rpf-constable',
+    title: 'Railway RPF Constable & Sub Inspector (SI) Posts',
+    category: 'jobs',
+    postDate: '18/07/2026',
+    lastDate: '15/08/2026',
+    advertisementNo: 'CEN RPF 01/2026 & 02/2026',
+    shortInfo: 'Railway Protection Force (RPF) recruitment for 4,660 Constable and Sub-Inspector SI posts in Indian Railways.',
+    ageLimit: '18 - 28 Years for Constable, 20 - 28 Years for SI',
+    eligibility: 'Class 10th pass for Constable / Graduation Degree for Sub Inspector SI.',
     fees: { genObc: '₹500', scSt: '₹250' },
     isNew: true
   },
   {
-    id: 'job-upsc-nda',
-    title: 'UPSC NDA / NA II Examination 2026',
-    category: 'jobs',
-    postDate: '01/07/2026',
-    lastDate: '30/07/2026',
-    advertisementNo: 'UPSC-NDA-II-2026',
-    shortInfo: 'Union Public Service Commission (UPSC) recruitment for National Defence Academy & Naval Academy Examination II.',
-    ageLimit: 'Born between 02/01/2007 and 01/01/2010',
-    eligibility: 'Class 12th Intermediate pass / appearing. For Navy/Airforce, Physics & Math mandatory.',
-    fees: { genObc: '₹100', scSt: '₹0' }
-  },
-  {
     id: 'job-ibps-po',
-    title: 'IBPS PO XVI Officer Scale-I Registration',
+    title: 'IBPS PO XVI Officer Scale-I 3,955 Vacancies',
     category: 'jobs',
-    postDate: '11/07/2026',
-    lastDate: '25/08/2026',
-    advertisementNo: 'IBPS-CRP-PO-MT-XVI',
-    shortInfo: 'Institute of Banking Personnel Selection (IBPS) invites applications for Probationary Officer (PO) posts in participating public sector banks.',
-    ageLimit: '20 - 30 Years',
-    eligibility: 'Any Bachelor Degree from a recognized board/university.',
+    postDate: '16/07/2026',
+    lastDate: '21/08/2026',
+    advertisementNo: 'IBPS-CRP-PO/MT-XVI',
+    shortInfo: 'Institute of Banking Personnel Selection (IBPS) invites applications for Probationary Officer / Management Trainee in participating public sector banks.',
+    ageLimit: '20 - 30 Years (As on 01/08/2026)',
+    eligibility: 'Any Graduation Degree in any discipline from recognized University.',
     fees: { genObc: '₹850', scSt: '₹175' },
     isNew: true
   },
   {
-    id: 'job-delhi-police',
-    title: 'Delhi Police SI (Sub-Inspector) Application',
+    id: 'job-up-police-si',
+    title: 'UP Police Sub Inspector SI & Platoon Commander',
     category: 'jobs',
-    postDate: '28/06/2026',
-    lastDate: '24/07/2026',
-    advertisementNo: 'SSC-CPO-2026',
-    shortInfo: 'Staff Selection Commission (SSC) invites applications for Sub-Inspector in Delhi Police and Central Armed Police Forces (CAPF).',
-    ageLimit: '20 - 25 Years',
-    eligibility: 'Bachelor Degree in any stream. For Delhi SI, valid LMV Driving Licence is mandatory.',
+    postDate: '14/07/2026',
+    lastDate: '18/08/2026',
+    advertisementNo: 'UPPRPB-SI-2026',
+    shortInfo: 'Uttar Pradesh Police Recruitment and Promotion Board (UPPRPB) for 9,217 Sub Inspector Civilian Police and Fire Station Officer.',
+    ageLimit: '21 - 28 Years',
+    eligibility: 'Bachelor Degree in any stream for SI / B.Sc Degree for Fire Officer.',
+    fees: { genObc: '₹400', scSt: '₹400' }
+  },
+  {
+    id: 'job-upsc-nda',
+    title: 'UPSC NDA / NA II Examination 2026 Notification',
+    category: 'jobs',
+    postDate: '10/07/2026',
+    lastDate: '05/08/2026',
+    advertisementNo: 'UPSC-NDA-II-2026',
+    shortInfo: 'Union Public Service Commission (UPSC) recruitment for National Defence Academy & Naval Academy Examination II 2026.',
+    ageLimit: 'Born between 02/01/2007 and 01/01/2010',
+    eligibility: 'Class 12th Intermediate pass / appearing. For Navy & Air Force, Physics & Math mandatory.',
     fees: { genObc: '₹100', scSt: '₹0' }
+  },
+  {
+    id: 'job-agniveer-army',
+    title: 'Indian Army Agniveer Recruitment Rally Scheme 2026',
+    category: 'jobs',
+    postDate: '08/07/2026',
+    lastDate: '12/08/2026',
+    advertisementNo: 'ARMY-AGNIVEER-2026',
+    shortInfo: 'Join Indian Army Agniveer General Duty (GD), Technical, Clerk, Store Keeper, and Tradesmen 8th / 10th Pass entry.',
+    ageLimit: '17.5 - 21 Years',
+    eligibility: 'Class 8th / 10th / 12th Pass as per designated post requirements.',
+    fees: { genObc: '₹250', scSt: '₹250' }
   },
 
   // ADMIT CARDS
@@ -95,139 +133,169 @@ export const SARKARI_DATA: SarkariItem[] = [
     id: 'admit-neet-ug',
     title: 'NTA NEET UG 2026 Admit Card / Hall Ticket',
     category: 'admit_cards',
-    postDate: '11/07/2026',
-    shortInfo: 'National Testing Agency (NTA) is hosting download link for National Eligibility cum Entrance Test (NEET UG) admit cards.',
-    eligibility: 'Requires Application Number, Date of Birth &amp; Security Pin to download.',
+    postDate: '25/07/2026',
+    shortInfo: 'National Testing Agency (NTA) download link for National Eligibility cum Entrance Test (NEET UG) admit cards.',
+    eligibility: 'Download using Application Number, Password / DOB & Security Pin.',
     isNew: true
   },
   {
     id: 'admit-ssc-chsl',
-    title: 'SSC CHSL 10+2 Tier-I Admit Card',
+    title: 'SSC CHSL 10+2 Tier-I Admit Card & Exam Status',
     category: 'admit_cards',
-    postDate: '09/07/2026',
-    shortInfo: 'Staff Selection Commission (SSC) released regional exam status &amp; call letter downloads for Combined Higher Secondary Level (10+2) Tier 1 Exam.',
+    postDate: '23/07/2026',
+    shortInfo: 'Staff Selection Commission (SSC) regional hall tickets and roll number verification for Combined Higher Secondary Level Tier 1.',
+    isNew: true
+  },
+  {
+    id: 'admit-rpf-constable',
+    title: 'Railway RPF Constable & SI CBT Exam Admit Card',
+    category: 'admit_cards',
+    postDate: '20/07/2026',
+    shortInfo: 'RRB RPF City Intimation slip and E-Call Letter download portal for Computer Based Test.',
     isNew: true
   },
   {
     id: 'admit-jee-mains',
-    title: 'JEE Mains Session II Call Letter',
+    title: 'NTA JEE Mains Session II Call Letter 2026',
     category: 'admit_cards',
-    postDate: '05/07/2026',
-    shortInfo: 'NTA JEE Mains Session II engineering exam hall ticket. Carry original passport photo &amp; Aadhaar Card proof to the center.'
+    postDate: '15/07/2026',
+    shortInfo: 'National Testing Agency JEE Mains Session II engineering exam call letter and self-declaration form download.'
   },
   {
     id: 'admit-upsc-pre',
-    title: 'UPSC Civil Services Prelims Exam Admit Card',
+    title: 'UPSC Civil Services IAS / IFS Prelims Admit Card',
     category: 'admit_cards',
-    postDate: '30/06/2026',
-    shortInfo: 'Union Public Service Commission UPSC IAS / IFS exam admit cards. Read rules on photo IDs carefully.'
+    postDate: '12/07/2026',
+    shortInfo: 'Union Public Service Commission (UPSC) Civil Services (IAS) and Forest Service (IFS) preliminary exam e-Admit Card.'
+  },
+  {
+    id: 'admit-ctet-july',
+    title: 'CBSE CTET July Exam Admit Card & City Slip',
+    category: 'admit_cards',
+    postDate: '10/07/2026',
+    shortInfo: 'Central Board of Secondary Education CTET Paper I and Paper II pre-admit card city intimation download.'
   },
 
   // RESULTS
   {
     id: 'res-cbse-12th',
-    title: 'CBSE Board Class 12th Result 2026',
+    title: 'CBSE Board Class 12th & 10th Result 2026',
     category: 'results',
-    postDate: '11/07/2026',
-    shortInfo: 'Central Board of Secondary Education (CBSE) declares Class 12 Senior School Certificate results online.',
+    postDate: '26/07/2026',
+    shortInfo: 'Central Board of Secondary Education (CBSE) Senior School Certificate Examination results online with DigiLocker pin.',
     isNew: true
   },
   {
     id: 'res-ssc-gd',
-    title: 'SSC GD Constable Written Test Merit List',
+    title: 'SSC GD Constable Written Test Merit List & Scorecard',
     category: 'results',
-    postDate: '08/07/2026',
-    shortInfo: 'Written exam scores and cutoff marks released for General Duty (GD) Constable in CAPF &amp; Assam Rifles.',
+    postDate: '22/07/2026',
+    shortInfo: 'Written exam cut-off marks and qualified list for Physical Efficiency Test (PET / PST) in BSF, CISF, CRPF & SSB.',
     isNew: true
   },
   {
     id: 'res-jee-adv',
-    title: 'JEE Advanced Exam Final Selection List',
+    title: 'IIT JEE Advanced Final Result & AIR Rank List',
     category: 'results',
-    postDate: '26/06/2026',
-    shortInfo: 'IIT JEE Advanced results with Category rank lists, cutoffs &amp; counseling registration links.'
+    postDate: '18/07/2026',
+    shortInfo: 'Joint Entrance Examination Advanced results with category-wise cutoff marks and JoSAA counseling registration link.'
   },
   {
     id: 'res-up-police',
-    title: 'UP Police Constable Result & Cutoff 2026',
+    title: 'UP Police Constable Result & Cutoff Marks 2026',
     category: 'results',
-    postDate: '15/06/2026',
-    shortInfo: 'Uttar Pradesh Police Recruitment Board (UPPRPB) constable results. Physical test (PET) scheduling details inside.'
+    postDate: '14/07/2026',
+    shortInfo: 'Uttar Pradesh Police Recruitment Board (UPPRPB) constable written exam scorecards and physical test call letters.'
+  },
+  {
+    id: 'res-cuet-ug',
+    title: 'NTA CUET UG Scorecard & Normalised Percentile',
+    category: 'results',
+    postDate: '10/07/2026',
+    shortInfo: 'Common University Entrance Test Undergraduate exam subject-wise percentile scorecards for university admissions.'
   },
 
   // ANSWER KEYS
   {
     id: 'key-ugc-net',
-    title: 'NTA UGC NET June Answer Key with Response Sheet',
+    title: 'NTA UGC NET June Official Answer Key & OMR Sheet',
     category: 'answer_keys',
-    postDate: '11/07/2026',
-    shortInfo: 'National Testing Agency has uploaded provisional answer key &amp; marked responses for Assistant Professor and JRF exam.',
+    postDate: '25/07/2026',
+    shortInfo: 'Provisional answer keys, question papers, and recorded responses for Assistant Professor and JRF fellowship test.',
     isNew: true
   },
   {
     id: 'key-ssc-cpo',
-    title: 'SSC CPO SI Paper I Official Answer Key',
+    title: 'SSC CPO SI Paper I Official Answer Key 2026',
     category: 'answer_keys',
-    postDate: '07/07/2026',
-    shortInfo: 'Answer key along with question paper for Sub-Inspector Paper I exam. Challenges can be submitted online.',
+    postDate: '21/07/2026',
+    shortInfo: 'Sub-Inspector in Delhi Police & CAPF computer-based exam answer key challenge link.',
     isNew: true
   },
   {
     id: 'key-ctet-july',
-    title: 'CTET July Provisional Answer Key 2026',
+    title: 'CTET July Official Provisional Answer Key',
     category: 'answer_keys',
-    postDate: '04/07/2026',
-    shortInfo: 'Central Teacher Eligibility Test (CTET) provisional answers keys for Paper I &amp; II.'
+    postDate: '17/07/2026',
+    shortInfo: 'CBSE Central Teacher Eligibility Test Paper I (Primary) & Paper II (Elementary) answer key and response sheet.'
+  },
+  {
+    id: 'key-neet-ug',
+    title: 'NTA NEET UG Official Answer Key & Scanned OMR',
+    category: 'answer_keys',
+    postDate: '12/07/2026',
+    shortInfo: 'Medical entrance exam official code-wise answer keys (Q, R, S, T) and objection submission window.'
   },
 
   // SYLLABUS
   {
     id: 'syl-ssc-mts',
-    title: 'SSC MTS & Havildar New Exam Pattern & Syllabus',
+    title: 'SSC MTS & Havildar New Exam Pattern & Detailed Syllabus',
     category: 'syllabus',
-    postDate: '10/07/2026',
-    shortInfo: 'Staff Selection Commission Multitasking Staff (MTS) scheme of exam, syllabus breakdown, and physical standard test guidelines.',
+    postDate: '24/07/2026',
+    shortInfo: 'Session-I (Math & Reasoning) and Session-II (General Awareness & English) updated syllabus and physical PST/PET standards.',
     isNew: true
   },
   {
     id: 'syl-railway-alp',
-    title: 'RRB Assistant Loco Pilot (ALP) Stage I & II Syllabus',
+    title: 'RRB Assistant Loco Pilot (ALP) CBT 1 & 2 Syllabus PDF',
     category: 'syllabus',
-    postDate: '05/07/2026',
-    shortInfo: 'Detailed engineering subject topics list, mathematics, and psychological aptitude test specifications.'
+    postDate: '19/07/2026',
+    shortInfo: 'Complete subject-wise topic list, engineering trade specifications, and computer-based aptitude test (CBAT) guidelines.'
   },
   {
     id: 'syl-upsc-cse',
-    title: 'UPSC Civil Services IAS Mains Written Exam Syllabus',
+    title: 'UPSC Civil Services IAS Prelims & Mains Syllabus PDF',
     category: 'syllabus',
-    postDate: '20/06/2026',
-    shortInfo: 'Complete guidelines for GS papers I to IV, Essay writing metrics, and official optional subject catalogs.'
+    postDate: '15/07/2026',
+    shortInfo: 'General Studies Papers I to IV, CSAT aptitude topics, Essay guidelines, and official optional subject catalogs.'
   },
 
   // ADMISSIONS
   {
     id: 'adm-du-ug',
-    title: 'Delhi University CSAS UG Admission Portal',
+    title: 'Delhi University CSAS UG Admission Portal 2026',
     category: 'admissions',
-    postDate: '10/07/2026',
-    lastDate: '31/07/2026',
-    shortInfo: 'Common Seat Allocation System (CSAS) for entry into DU undergraduate programs based on CUET scores.',
+    postDate: '25/07/2026',
+    lastDate: '15/08/2026',
+    shortInfo: 'Common Seat Allocation System (CSAS) registration for entry into DU undergraduate degree colleges based on CUET scores.',
     isNew: true
   },
   {
     id: 'adm-ignou-july',
-    title: 'IGNOU July Cycle Distance Admission Online Form',
+    title: 'IGNOU July Session Open & Distance Learning Online Form',
     category: 'admissions',
-    postDate: '06/07/2026',
-    lastDate: '15/08/2026',
-    shortInfo: 'Indira Gandhi National Open University (IGNOU) offers fresh admission to all online &amp; distance learning courses.',
+    postDate: '20/07/2026',
+    lastDate: '31/08/2026',
+    shortInfo: 'Indira Gandhi National Open University (IGNOU) fresh admission for BA, B.Com, B.Sc, MA, MBA, and Diploma courses.',
     isNew: true
   },
   {
-    id: 'adm-cuet-pg',
-    title: 'NTA CUET PG Post Graduate College Counseling',
+    id: 'adm-up-deled',
+    title: 'UP D.El.Ed (BTC) Online Admission Registration 2026',
     category: 'admissions',
-    postDate: '01/07/2026',
-    shortInfo: 'Common University Entrance Test PG registration & counseling guidance across central universities.'
+    postDate: '16/07/2026',
+    lastDate: '20/08/2026',
+    shortInfo: 'Uttar Pradesh Diploma in Elementary Education 2-year teacher training course state merit list & choice filling.'
   }
 ];
