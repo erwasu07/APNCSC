@@ -28,6 +28,7 @@ import {
   Shield,
   Bell,
   MessageSquare,
+  MessageCircle,
   UploadCloud,
   Paperclip
 } from 'lucide-react';
@@ -417,134 +418,36 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
   };
 
   return (
-    <section id="sarkari-portal-section" className="py-16 md:py-24 bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900 border-t border-slate-200/60 dark:border-slate-800 transition-colors duration-300">
+    <section id="sarkari-portal-section" className="pt-4 md:pt-6 pb-12 md:pb-16 bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900 border-t border-slate-200/60 dark:border-slate-800 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4">
         
-        {/* 🚨 LIVE BROADCAST DESK: ALERTS, UPDATE INFO & HELP */}
-        <div className="mb-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-md overflow-hidden animate-fade-in">
-          {/* Header tabs bar */}
-          <div className="flex border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 p-1 md:p-1.5 gap-1">
-            <button
-              onClick={() => setActiveAlertTab('alerts')}
-              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                activeAlertTab === 'alerts'
-                  ? 'bg-red-500 text-white shadow-sm shadow-red-500/10'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-850 font-bold'
-              }`}
-            >
-              <span className="relative flex h-2 w-2">
-                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${activeAlertTab === 'alerts' ? 'bg-white' : 'bg-red-400'}`}></span>
-                <span className={`relative inline-flex rounded-full h-2 w-2 ${activeAlertTab === 'alerts' ? 'bg-white' : 'bg-red-600'}`}></span>
+        {/* 📢 CSC DOST OFFICIAL & WHATSAPP CHANNEL BANNER */}
+        <div className="mb-6 sm:mb-8 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm p-4 sm:p-6 text-center animate-fade-in relative overflow-hidden">
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+          <div className="max-w-4xl mx-auto space-y-3 relative z-10">
+            <div className="flex items-center justify-center">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-red-600 text-white text-xs sm:text-sm font-black rounded-full uppercase tracking-wider font-mono shadow-lg shadow-red-500/40 ring-4 ring-red-400/30 animate-pulse">
+                <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
+                <span>🔴 LIVE UPDATE</span>
               </span>
-              <span>🚨 Live Alerts</span>
-            </button>
+            </div>
 
-            <button
-              onClick={() => setActiveAlertTab('updates')}
-              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                activeAlertTab === 'updates'
-                  ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/10'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-850 font-bold'
-              }`}
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>📢 Update Info</span>
-            </button>
+            <p className="text-sm sm:text-base md:text-lg text-slate-800 dark:text-slate-100 leading-relaxed font-sans max-w-3xl mx-auto">
+              <strong className="font-extrabold text-slate-950 dark:text-white">CSC Dost Official</strong> – Your trusted portal for online applications, exam results, admit cards, career news, government schemes, and scholarships.
+            </p>
 
-            <button
-              onClick={() => setActiveAlertTab('help')}
-              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                activeAlertTab === 'help'
-                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/10'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-850 font-bold'
-              }`}
-            >
-              <Info className="w-4 h-4" />
-              <span>💡 Help &amp; FAQs</span>
-            </button>
-          </div>
-
-          {/* Dynamic Content Body based on selected tab */}
-          <div className="p-5 md:p-6 min-h-[140px] flex flex-col justify-center">
-            {activeAlertTab === 'alerts' && (
-              <div className="space-y-4 animate-fade-in">
-                <div className="flex items-start gap-4">
-                  <div className="p-2.5 bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded-xl flex-shrink-0">
-                    <Bell className="w-5 h-5 animate-bounce" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-black uppercase tracking-wide text-slate-850 dark:text-slate-100 flex items-center gap-1.5">
-                      Urgent Exams &amp; Digital Form Filing Deadlines
-                    </h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-                      Several key applications including <strong>SSC Postings, Railways, Delhi Police, and PAN card / Aadhaar links</strong> are approaching close dates this week. Portal queues can experience high traffic loads. Avoid late surges by registering your application instantly below.
-                    </p>
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <span className="text-[10px] bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/40 px-2.5 py-0.5 rounded-full font-bold font-mono">
-                        🔥 SSC MTS Deadlines Active
-                      </span>
-                      <span className="text-[10px] bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-900/40 px-2.5 py-0.5 rounded-full font-bold font-mono">
-                        ⚙️ Aadhaar Bio-updates Open
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeAlertTab === 'updates' && (
-              <div className="space-y-4 animate-fade-in">
-                <div className="flex items-start gap-4">
-                  <div className="p-2.5 bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 rounded-xl flex-shrink-0">
-                    <Sparkles className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-black uppercase tracking-wide text-slate-855 dark:text-slate-100">
-                      Digital Seva CSC Node Integration
-                    </h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-                      Our live portal is synced directly with our <strong>Verified Common Service Centre (CSC ID: 212515670018)</strong>. Each form submission generates a live printed slip with a custom security code for trackable processing status.
-                    </p>
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <span className="text-[10px] bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40 px-2.5 py-0.5 rounded-full font-bold font-mono">
-                        ⚡ Instant UPI Gateways
-                      </span>
-                      <span className="text-[10px] bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40 px-2.5 py-0.5 rounded-full font-bold font-mono">
-                        📜 Fully Digital Slip Printable
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeAlertTab === 'help' && (
-              <div className="space-y-3 animate-fade-in">
-                <h4 className="text-sm font-black uppercase tracking-wide text-slate-800 dark:text-slate-100 mb-2">
-                  Digital Portal Step-by-Step Instructions
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-850">
-                    <span className="text-xs font-black text-amber-600 dark:text-amber-400 font-mono block mb-1">STEP 1</span>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-normal">
-                      Provide matching applicant information as per Aadhaar Card or Class 10th school records.
-                    </p>
-                  </div>
-                  <div className="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-850">
-                    <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono block mb-1">STEP 2</span>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-normal">
-                      Choose online UPI payment or counter cash mode. If paying online, scan the live QR code.
-                    </p>
-                  </div>
-                  <div className="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-850">
-                    <span className="text-xs font-black text-blue-600 dark:text-blue-400 font-mono block mb-1">STEP 3</span>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-normal">
-                      Receive your verification code and print receipt. Our verified staff processes the rest.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
+            <div className="pt-1 flex justify-center">
+              <a
+                href="https://whatsapp.com/channel/0029VbDgSe75a248qEZAbL3g"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2.5 px-7 py-3 bg-[#00a884] hover:bg-[#008f70] active:scale-95 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-emerald-500/20 transition-all cursor-pointer group"
+                id="join-whatsapp-channel-btn"
+              >
+                <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 fill-current group-hover:rotate-12 transition-transform" />
+                <span>Join WhatsApp Channel</span>
+              </a>
+            </div>
           </div>
         </div>
 
