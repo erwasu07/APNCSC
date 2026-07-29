@@ -1287,10 +1287,10 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
             </div>
 
             {/* Quick Filter Navigation Tabs */}
-            <div className="md:col-span-7 flex flex-wrap gap-1.5 justify-start md:justify-end">
+            <div className="md:col-span-7 flex flex-nowrap sm:flex-wrap overflow-x-auto pb-1 gap-2 justify-start md:justify-end scrollbar-none">
               <button
                 onClick={() => setActiveTab('all')}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                className={`px-4 py-2.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-xs md:text-sm font-extrabold flex-shrink-0 transition-all cursor-pointer ${
                   activeTab === 'all'
                     ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-md'
                     : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300'
@@ -1303,7 +1303,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                 <button
                   key={key}
                   onClick={() => setActiveTab(key as any)}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-4 py-2.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-xs md:text-sm font-extrabold flex-shrink-0 transition-all cursor-pointer ${
                     activeTab === key
                       ? 'bg-red-600 text-white shadow-md shadow-red-100 dark:shadow-none'
                       : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300'
@@ -1330,52 +1330,52 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
             {/* Box 1: Latest Jobs */}
             {(activeTab === 'all' || activeTab === 'jobs') && (
               <div 
-                className="w-[85vw] sm:w-[360px] md:w-auto flex-shrink-0 snap-start bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-sm md:shadow-md overflow-hidden flex flex-col hover:shadow-2xl dark:hover:shadow-slate-950 transition-all duration-300 group hover:-translate-y-2.5"
+                className="w-[88vw] sm:w-[360px] md:w-auto flex-shrink-0 snap-start bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-sm md:shadow-md overflow-hidden flex flex-col hover:shadow-2xl dark:hover:shadow-slate-950 transition-all duration-300 group hover:-translate-y-2.5"
                 id="sarkari-box-jobs"
               >
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-2 py-2.5 sm:px-5 sm:py-4 md:px-7 md:py-5 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 sm:gap-3">
-                    <Briefcase className="w-3.5 h-3.5 sm:w-5 sm:h-5 flex-shrink-0" />
-                    <h3 className="font-extrabold tracking-tight text-[10px] sm:text-xs md:text-sm lg:text-base uppercase font-display leading-tight truncate">Latest Jobs</h3>
+                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-3.5 sm:px-5 sm:py-4 md:px-7 md:py-5 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5 sm:gap-3">
+                    <Briefcase className="w-5 h-5 sm:w-5 sm:h-5 flex-shrink-0" />
+                    <h3 className="font-extrabold tracking-wide text-xs sm:text-sm md:text-base uppercase font-display leading-tight truncate">Latest Jobs</h3>
                   </div>
-                  <span className="hidden sm:inline-block bg-white/20 text-white text-[9px] sm:text-xs font-mono px-2 py-0.5 rounded-full font-bold">
+                  <span className="inline-block bg-white/20 text-white text-[10px] sm:text-xs font-mono px-2.5 py-0.5 rounded-full font-bold">
                     {getItemsByCategory('jobs').length}
                   </span>
                 </div>
-                <div className="p-1 sm:p-3 md:p-4.5 divide-y divide-slate-100 dark:divide-slate-850 flex-grow max-h-[380px] sm:max-h-[520px] overflow-y-auto scrollbar-thin">
+                <div className="p-2.5 sm:p-3 md:p-4.5 divide-y divide-slate-100 dark:divide-slate-850 flex-grow max-h-[420px] sm:max-h-[520px] overflow-y-auto scrollbar-thin">
                   {getItemsByCategory('jobs').length > 0 ? (
                     getItemsByCategory('jobs').map(item => (
                       <div
                         key={item.id}
                         onClick={() => handleItemClick(item)}
-                        className={`p-1.5 sm:p-3 rounded-lg sm:rounded-2xl cursor-pointer transition-all flex items-start gap-1 sm:gap-3 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 group/item ${
+                        className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl cursor-pointer transition-all flex items-start gap-2 sm:gap-3 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 group/item ${
                           clickedItemId === item.id ? 'bg-blue-100 dark:bg-blue-900/30 scale-[0.98]' : ''
                         }`}
                         id={`sarkari-item-${item.id}`}
                       >
-                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-1.5 flex-shrink-0 group-hover/item:scale-125 transition-transform"></span>
-                        <div className="flex-grow min-w-0 space-y-0.5">
-                          <div className="flex flex-wrap items-center gap-1">
-                            <span className="text-[10px] sm:text-xs md:text-sm font-extrabold text-slate-850 dark:text-slate-100 group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors font-display leading-tight break-words sm:line-clamp-2">
+                        <span className="w-2 h-2 bg-blue-500 rounded-full mt-1.5 flex-shrink-0 group-hover/item:scale-125 transition-transform"></span>
+                        <div className="flex-grow min-w-0 space-y-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-xs sm:text-xs md:text-sm font-extrabold text-slate-850 dark:text-slate-100 group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors font-display leading-tight break-words sm:line-clamp-2">
                               {item.title}
                             </span>
                             {item.isNew && (
-                              <span className="px-1 py-0.2 bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 text-[7.5px] sm:text-[9px] font-black uppercase rounded animate-pulse flex-shrink-0 font-mono tracking-wider">
+                              <span className="px-1.5 py-0.5 bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 text-[8.5px] sm:text-[9.5px] font-black uppercase rounded animate-pulse flex-shrink-0 font-mono tracking-wider">
                                 New
                               </span>
                             )}
                           </div>
                           {item.lastDate && (
-                            <span className="text-[8.5px] sm:text-xs font-mono text-rose-500 dark:text-rose-400 font-extrabold block leading-none">
+                            <span className="text-[10px] sm:text-xs font-mono text-rose-500 dark:text-rose-400 font-extrabold block leading-none">
                               Last Date: {item.lastDate}
                             </span>
                           )}
                         </div>
-                        <ChevronRight className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 text-slate-400 group-hover/item:text-blue-500 dark:group-hover/item:text-blue-400 group-hover/item:translate-x-1 transition-all self-center flex-shrink-0" />
+                        <ChevronRight className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-slate-400 group-hover/item:text-blue-500 dark:group-hover/item:text-blue-400 group-hover/item:translate-x-1 transition-all self-center flex-shrink-0" />
                       </div>
                     ))
                   ) : (
-                    <p className="text-center text-[10px] sm:text-sm text-slate-400 py-12 font-medium">No active jobs found</p>
+                    <p className="text-center text-xs sm:text-sm text-slate-400 py-12 font-medium">No active jobs found</p>
                   )}
                 </div>
               </div>
@@ -1384,50 +1384,50 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
             {/* Box 2: Admit Cards */}
             {(activeTab === 'all' || activeTab === 'admit_cards') && (
               <div 
-                className="w-[85vw] sm:w-[360px] md:w-auto flex-shrink-0 snap-start bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-sm md:shadow-md overflow-hidden flex flex-col hover:shadow-2xl dark:hover:shadow-slate-950 transition-all duration-300 group hover:-translate-y-2.5"
+                className="w-[88vw] sm:w-[360px] md:w-auto flex-shrink-0 snap-start bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-sm md:shadow-md overflow-hidden flex flex-col hover:shadow-2xl dark:hover:shadow-slate-950 transition-all duration-300 group hover:-translate-y-2.5"
                 id="sarkari-box-admit"
               >
-                <div className="bg-gradient-to-r from-orange-600 to-amber-600 text-white px-2 py-2.5 sm:px-5 sm:py-4 md:px-7 md:py-5 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 sm:gap-3">
-                    <FileText className="w-3.5 h-3.5 sm:w-5 sm:h-5 flex-shrink-0" />
-                    <h3 className="font-extrabold tracking-tight text-[10px] sm:text-xs md:text-sm lg:text-base uppercase font-display leading-tight truncate">Admit Cards</h3>
+                <div className="bg-gradient-to-r from-orange-600 to-amber-600 text-white px-4 py-3.5 sm:px-5 sm:py-4 md:px-7 md:py-5 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5 sm:gap-3">
+                    <FileText className="w-5 h-5 sm:w-5 sm:h-5 flex-shrink-0" />
+                    <h3 className="font-extrabold tracking-wide text-xs sm:text-sm md:text-base uppercase font-display leading-tight truncate">Admit Cards</h3>
                   </div>
-                  <span className="hidden sm:inline-block bg-white/20 text-white text-[9px] sm:text-xs font-mono px-2 py-0.5 rounded-full font-bold">
+                  <span className="inline-block bg-white/20 text-white text-[10px] sm:text-xs font-mono px-2.5 py-0.5 rounded-full font-bold">
                     {getItemsByCategory('admit_cards').length}
                   </span>
                 </div>
-                <div className="p-1 sm:p-3 md:p-4.5 divide-y divide-slate-100 dark:divide-slate-850 flex-grow max-h-[380px] sm:max-h-[520px] overflow-y-auto scrollbar-thin">
+                <div className="p-2.5 sm:p-3 md:p-4.5 divide-y divide-slate-100 dark:divide-slate-850 flex-grow max-h-[420px] sm:max-h-[520px] overflow-y-auto scrollbar-thin">
                   {getItemsByCategory('admit_cards').length > 0 ? (
                     getItemsByCategory('admit_cards').map(item => (
                       <div
                         key={item.id}
                         onClick={() => handleItemClick(item)}
-                        className={`p-1.5 sm:p-3 rounded-lg sm:rounded-2xl cursor-pointer transition-all flex items-start gap-1 sm:gap-3 hover:bg-orange-50/50 dark:hover:bg-orange-950/20 group/item ${
+                        className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl cursor-pointer transition-all flex items-start gap-2 sm:gap-3 hover:bg-orange-50/50 dark:hover:bg-orange-950/20 group/item ${
                           clickedItemId === item.id ? 'bg-orange-100 dark:bg-orange-900/30 scale-[0.98]' : ''
                         }`}
                         id={`sarkari-item-${item.id}`}
                       >
-                        <span className="w-1.5 h-1.5 bg-orange-500 rounded-full mt-1.5 flex-shrink-0 group-hover/item:scale-125 transition-transform"></span>
-                        <div className="flex-grow min-w-0 space-y-0.5">
-                          <div className="flex flex-wrap items-center gap-1">
-                            <span className="text-[10px] sm:text-xs md:text-sm font-extrabold text-slate-850 dark:text-slate-100 group-hover/item:text-orange-600 dark:group-hover/item:text-orange-400 transition-colors font-display leading-tight break-words sm:line-clamp-2">
+                        <span className="w-2 h-2 bg-orange-500 rounded-full mt-1.5 flex-shrink-0 group-hover/item:scale-125 transition-transform"></span>
+                        <div className="flex-grow min-w-0 space-y-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-xs sm:text-xs md:text-sm font-extrabold text-slate-850 dark:text-slate-100 group-hover/item:text-orange-600 dark:group-hover/item:text-orange-400 transition-colors font-display leading-tight break-words sm:line-clamp-2">
                               {item.title}
                             </span>
                             {item.isNew && (
-                              <span className="px-1 py-0.2 bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 text-[7.5px] sm:text-[9px] font-black uppercase rounded animate-pulse flex-shrink-0 font-mono tracking-wider">
+                              <span className="px-1.5 py-0.5 bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 text-[8.5px] sm:text-[9.5px] font-black uppercase rounded animate-pulse flex-shrink-0 font-mono tracking-wider">
                                 New
                               </span>
                             )}
                           </div>
-                          <span className="text-[8.5px] sm:text-xs font-mono text-slate-400 dark:text-slate-500 block leading-none">
+                          <span className="text-[10px] sm:text-xs font-mono text-slate-400 dark:text-slate-500 block leading-none">
                             Released: {item.postDate}
                           </span>
                         </div>
-                        <ChevronRight className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 text-slate-400 group-hover/item:text-orange-500 dark:group-hover/item:text-orange-400 group-hover/item:translate-x-1 transition-all self-center flex-shrink-0" />
+                        <ChevronRight className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-slate-400 group-hover/item:text-orange-500 dark:group-hover/item:text-orange-400 group-hover/item:translate-x-1 transition-all self-center flex-shrink-0" />
                       </div>
                     ))
                   ) : (
-                    <p className="text-center text-[10px] sm:text-sm text-slate-400 py-12 font-medium">No admit cards found</p>
+                    <p className="text-center text-xs sm:text-sm text-slate-400 py-12 font-medium">No admit cards found</p>
                   )}
                 </div>
               </div>
@@ -1436,50 +1436,50 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
             {/* Box 3: Exam Results */}
             {(activeTab === 'all' || activeTab === 'results') && (
               <div 
-                className="w-[85vw] sm:w-[360px] md:w-auto flex-shrink-0 snap-start bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-sm md:shadow-md overflow-hidden flex flex-col hover:shadow-2xl dark:hover:shadow-slate-950 transition-all duration-300 group hover:-translate-y-2.5"
+                className="w-[88vw] sm:w-[360px] md:w-auto flex-shrink-0 snap-start bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-sm md:shadow-md overflow-hidden flex flex-col hover:shadow-2xl dark:hover:shadow-slate-950 transition-all duration-300 group hover:-translate-y-2.5"
                 id="sarkari-box-results"
               >
-                <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-2 py-2.5 sm:px-5 sm:py-4 md:px-7 md:py-5 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 sm:gap-3">
-                    <Award className="w-3.5 h-3.5 sm:w-5 sm:h-5 flex-shrink-0" />
-                    <h3 className="font-extrabold tracking-tight text-[10px] sm:text-xs md:text-sm lg:text-base uppercase font-display leading-tight truncate">Exam Results</h3>
+                <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-4 py-3.5 sm:px-5 sm:py-4 md:px-7 md:py-5 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5 sm:gap-3">
+                    <Award className="w-5 h-5 sm:w-5 sm:h-5 flex-shrink-0" />
+                    <h3 className="font-extrabold tracking-wide text-xs sm:text-sm md:text-base uppercase font-display leading-tight truncate">Exam Results</h3>
                   </div>
-                  <span className="hidden sm:inline-block bg-white/20 text-white text-[9px] sm:text-xs font-mono px-2 py-0.5 rounded-full font-bold">
+                  <span className="inline-block bg-white/20 text-white text-[10px] sm:text-xs font-mono px-2.5 py-0.5 rounded-full font-bold">
                     {getItemsByCategory('results').length}
                   </span>
                 </div>
-                <div className="p-1 sm:p-3 md:p-4.5 divide-y divide-slate-100 dark:divide-slate-850 flex-grow max-h-[380px] sm:max-h-[520px] overflow-y-auto scrollbar-thin">
+                <div className="p-2.5 sm:p-3 md:p-4.5 divide-y divide-slate-100 dark:divide-slate-850 flex-grow max-h-[420px] sm:max-h-[520px] overflow-y-auto scrollbar-thin">
                   {getItemsByCategory('results').length > 0 ? (
                     getItemsByCategory('results').map(item => (
                       <div
                         key={item.id}
                         onClick={() => handleItemClick(item)}
-                        className={`p-1.5 sm:p-3 rounded-lg sm:rounded-2xl cursor-pointer transition-all flex items-start gap-1 sm:gap-3 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 group/item ${
+                        className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl cursor-pointer transition-all flex items-start gap-2 sm:gap-3 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 group/item ${
                           clickedItemId === item.id ? 'bg-emerald-100 dark:bg-emerald-900/30 scale-[0.98]' : ''
                         }`}
                         id={`sarkari-item-${item.id}`}
                       >
-                        <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-1.5 flex-shrink-0 group-hover/item:scale-125 transition-transform"></span>
-                        <div className="flex-grow min-w-0 space-y-0.5">
-                          <div className="flex flex-wrap items-center gap-1">
-                            <span className="text-[10px] sm:text-xs md:text-sm font-extrabold text-slate-850 dark:text-slate-100 group-hover/item:text-emerald-600 dark:group-hover/item:text-emerald-400 transition-colors font-display leading-tight break-words sm:line-clamp-2">
+                        <span className="w-2 h-2 bg-emerald-500 rounded-full mt-1.5 flex-shrink-0 group-hover/item:scale-125 transition-transform"></span>
+                        <div className="flex-grow min-w-0 space-y-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-xs sm:text-xs md:text-sm font-extrabold text-slate-850 dark:text-slate-100 group-hover/item:text-emerald-600 dark:group-hover/item:text-emerald-400 transition-colors font-display leading-tight break-words sm:line-clamp-2">
                               {item.title}
                             </span>
                             {item.isNew && (
-                              <span className="px-1 py-0.2 bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 text-[7.5px] sm:text-[9px] font-black uppercase rounded animate-pulse flex-shrink-0 font-mono tracking-wider">
+                              <span className="px-1.5 py-0.5 bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 text-[8.5px] sm:text-[9.5px] font-black uppercase rounded animate-pulse flex-shrink-0 font-mono tracking-wider">
                                 New
                               </span>
                             )}
                           </div>
-                          <span className="text-[8.5px] sm:text-xs font-mono text-emerald-600 dark:text-emerald-400 font-extrabold block leading-none">
+                          <span className="text-[10px] sm:text-xs font-mono text-emerald-600 dark:text-emerald-400 font-extrabold block leading-none">
                             Declared On: {item.postDate}
                           </span>
                         </div>
-                        <ChevronRight className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 text-slate-400 group-hover/item:text-emerald-500 dark:group-hover/item:text-emerald-400 group-hover/item:translate-x-1 transition-all self-center flex-shrink-0" />
+                        <ChevronRight className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-slate-400 group-hover/item:text-emerald-500 dark:group-hover/item:text-emerald-400 group-hover/item:translate-x-1 transition-all self-center flex-shrink-0" />
                       </div>
                     ))
                   ) : (
-                    <p className="text-center text-[10px] sm:text-sm text-slate-400 py-12 font-medium">No results found</p>
+                    <p className="text-center text-xs sm:text-sm text-slate-400 py-12 font-medium">No results found</p>
                   )}
                 </div>
               </div>
@@ -1488,50 +1488,50 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
             {/* Box 4: Answer Keys */}
             {(activeTab === 'all' || activeTab === 'answer_keys') && (
               <div 
-                className="w-[85vw] sm:w-[360px] md:w-auto flex-shrink-0 snap-start bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-sm md:shadow-md overflow-hidden flex flex-col hover:shadow-2xl dark:hover:shadow-slate-950 transition-all duration-300 group hover:-translate-y-2.5"
+                className="w-[88vw] sm:w-[360px] md:w-auto flex-shrink-0 snap-start bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-sm md:shadow-md overflow-hidden flex flex-col hover:shadow-2xl dark:hover:shadow-slate-950 transition-all duration-300 group hover:-translate-y-2.5"
                 id="sarkari-box-keys"
               >
-                <div className="bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white px-2 py-2.5 sm:px-5 sm:py-4 md:px-7 md:py-5 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 sm:gap-3">
-                    <Key className="w-3.5 h-3.5 sm:w-5 sm:h-5 flex-shrink-0" />
-                    <h3 className="font-extrabold tracking-tight text-[10px] sm:text-xs md:text-sm lg:text-base uppercase font-display leading-tight truncate">Answer Keys</h3>
+                <div className="bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white px-4 py-3.5 sm:px-5 sm:py-4 md:px-7 md:py-5 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5 sm:gap-3">
+                    <Key className="w-5 h-5 sm:w-5 sm:h-5 flex-shrink-0" />
+                    <h3 className="font-extrabold tracking-wide text-xs sm:text-sm md:text-base uppercase font-display leading-tight truncate">Answer Keys</h3>
                   </div>
-                  <span className="hidden sm:inline-block bg-white/20 text-white text-[9px] sm:text-xs font-mono px-2 py-0.5 rounded-full font-bold">
+                  <span className="inline-block bg-white/20 text-white text-[10px] sm:text-xs font-mono px-2.5 py-0.5 rounded-full font-bold">
                     {getItemsByCategory('answer_keys').length}
                   </span>
                 </div>
-                <div className="p-1 sm:p-3 md:p-4.5 divide-y divide-slate-100 dark:divide-slate-850 flex-grow max-h-[380px] sm:max-h-[520px] overflow-y-auto scrollbar-thin">
+                <div className="p-2.5 sm:p-3 md:p-4.5 divide-y divide-slate-100 dark:divide-slate-850 flex-grow max-h-[420px] sm:max-h-[520px] overflow-y-auto scrollbar-thin">
                   {getItemsByCategory('answer_keys').length > 0 ? (
                     getItemsByCategory('answer_keys').map(item => (
                       <div
                         key={item.id}
                         onClick={() => handleItemClick(item)}
-                        className={`p-1.5 sm:p-3 rounded-lg sm:rounded-2xl cursor-pointer transition-all flex items-start gap-1 sm:gap-3 hover:bg-purple-50/50 dark:hover:bg-purple-950/20 group/item ${
+                        className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl cursor-pointer transition-all flex items-start gap-2 sm:gap-3 hover:bg-purple-50/50 dark:hover:bg-purple-950/20 group/item ${
                           clickedItemId === item.id ? 'bg-purple-100 dark:bg-purple-900/30 scale-[0.98]' : ''
                         }`}
                         id={`sarkari-item-${item.id}`}
                       >
-                        <span className="w-1.5 h-1.5 bg-purple-500 rounded-full mt-1.5 flex-shrink-0 group-hover/item:scale-125 transition-transform"></span>
-                        <div className="flex-grow min-w-0 space-y-0.5">
-                          <div className="flex flex-wrap items-center gap-1">
-                            <span className="text-[10px] sm:text-xs md:text-sm font-extrabold text-slate-850 dark:text-slate-100 group-hover/item:text-purple-600 dark:group-hover/item:text-purple-400 transition-colors font-display leading-tight break-words sm:line-clamp-2">
+                        <span className="w-2 h-2 bg-purple-500 rounded-full mt-1.5 flex-shrink-0 group-hover/item:scale-125 transition-transform"></span>
+                        <div className="flex-grow min-w-0 space-y-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-xs sm:text-xs md:text-sm font-extrabold text-slate-850 dark:text-slate-100 group-hover/item:text-purple-600 dark:group-hover/item:text-purple-400 transition-colors font-display leading-tight break-words sm:line-clamp-2">
                               {item.title}
                             </span>
                             {item.isNew && (
-                              <span className="px-1 py-0.2 bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 text-[7.5px] sm:text-[9px] font-black uppercase rounded animate-pulse flex-shrink-0 font-mono tracking-wider">
+                              <span className="px-1.5 py-0.5 bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 text-[8.5px] sm:text-[9.5px] font-black uppercase rounded animate-pulse flex-shrink-0 font-mono tracking-wider">
                                 New
                               </span>
                             )}
                           </div>
-                          <span className="text-[8.5px] sm:text-xs font-mono text-slate-400 dark:text-slate-500 block leading-none">
+                          <span className="text-[10px] sm:text-xs font-mono text-slate-400 dark:text-slate-500 block leading-none">
                             Key Update: {item.postDate}
                           </span>
                         </div>
-                        <ChevronRight className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 text-slate-400 group-hover/item:text-purple-500 dark:group-hover/item:text-purple-400 group-hover/item:translate-x-1 transition-all self-center flex-shrink-0" />
+                        <ChevronRight className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-slate-400 group-hover/item:text-purple-500 dark:group-hover/item:text-purple-400 group-hover/item:translate-x-1 transition-all self-center flex-shrink-0" />
                       </div>
                     ))
                   ) : (
-                    <p className="text-center text-[10px] sm:text-sm text-slate-400 py-12 font-medium">No answer keys found</p>
+                    <p className="text-center text-xs sm:text-sm text-slate-400 py-12 font-medium">No answer keys found</p>
                   )}
                 </div>
               </div>
@@ -1540,50 +1540,50 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
             {/* Box 5: Exam Syllabus */}
             {(activeTab === 'all' || activeTab === 'syllabus') && (
               <div 
-                className="w-[85vw] sm:w-[360px] md:w-auto flex-shrink-0 snap-start bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-sm md:shadow-md overflow-hidden flex flex-col hover:shadow-2xl dark:hover:shadow-slate-950 transition-all duration-300 group hover:-translate-y-2.5"
+                className="w-[88vw] sm:w-[360px] md:w-auto flex-shrink-0 snap-start bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-sm md:shadow-md overflow-hidden flex flex-col hover:shadow-2xl dark:hover:shadow-slate-950 transition-all duration-300 group hover:-translate-y-2.5"
                 id="sarkari-box-syllabus"
               >
-                <div className="bg-gradient-to-r from-pink-600 to-rose-600 text-white px-2 py-2.5 sm:px-5 sm:py-4 md:px-7 md:py-5 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 sm:gap-3">
-                    <BookOpen className="w-3.5 h-3.5 sm:w-5 sm:h-5 flex-shrink-0" />
-                    <h3 className="font-extrabold tracking-tight text-[10px] sm:text-xs md:text-sm lg:text-base uppercase font-display leading-tight truncate">Syllabus</h3>
+                <div className="bg-gradient-to-r from-pink-600 to-rose-600 text-white px-4 py-3.5 sm:px-5 sm:py-4 md:px-7 md:py-5 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5 sm:gap-3">
+                    <BookOpen className="w-5 h-5 sm:w-5 sm:h-5 flex-shrink-0" />
+                    <h3 className="font-extrabold tracking-wide text-xs sm:text-sm md:text-base uppercase font-display leading-tight truncate">Syllabus</h3>
                   </div>
-                  <span className="hidden sm:inline-block bg-white/20 text-white text-[9px] sm:text-xs font-mono px-2 py-0.5 rounded-full font-bold">
+                  <span className="inline-block bg-white/20 text-white text-[10px] sm:text-xs font-mono px-2.5 py-0.5 rounded-full font-bold">
                     {getItemsByCategory('syllabus').length}
                   </span>
                 </div>
-                <div className="p-1 sm:p-3 md:p-4.5 divide-y divide-slate-100 dark:divide-slate-850 flex-grow max-h-[380px] sm:max-h-[520px] overflow-y-auto scrollbar-thin">
+                <div className="p-2.5 sm:p-3 md:p-4.5 divide-y divide-slate-100 dark:divide-slate-850 flex-grow max-h-[420px] sm:max-h-[520px] overflow-y-auto scrollbar-thin">
                   {getItemsByCategory('syllabus').length > 0 ? (
                     getItemsByCategory('syllabus').map(item => (
                       <div
                         key={item.id}
                         onClick={() => handleItemClick(item)}
-                        className={`p-1.5 sm:p-3 rounded-lg sm:rounded-2xl cursor-pointer transition-all flex items-start gap-1 sm:gap-3 hover:bg-pink-50/50 dark:hover:bg-pink-950/20 group/item ${
+                        className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl cursor-pointer transition-all flex items-start gap-2 sm:gap-3 hover:bg-pink-50/50 dark:hover:bg-pink-950/20 group/item ${
                           clickedItemId === item.id ? 'bg-pink-100 dark:bg-pink-900/30 scale-[0.98]' : ''
                         }`}
                         id={`sarkari-item-${item.id}`}
                       >
-                        <span className="w-1.5 h-1.5 bg-pink-500 rounded-full mt-1.5 flex-shrink-0 group-hover/item:scale-125 transition-transform"></span>
-                        <div className="flex-grow min-w-0 space-y-0.5">
-                          <div className="flex flex-wrap items-center gap-1">
-                            <span className="text-[10px] sm:text-xs md:text-sm font-extrabold text-slate-850 dark:text-slate-100 group-hover/item:text-pink-600 dark:group-hover/item:text-pink-400 transition-colors font-display leading-tight break-words sm:line-clamp-2">
+                        <span className="w-2 h-2 bg-pink-500 rounded-full mt-1.5 flex-shrink-0 group-hover/item:scale-125 transition-transform"></span>
+                        <div className="flex-grow min-w-0 space-y-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-xs sm:text-xs md:text-sm font-extrabold text-slate-850 dark:text-slate-100 group-hover/item:text-pink-600 dark:group-hover/item:text-pink-400 transition-colors font-display leading-tight break-words sm:line-clamp-2">
                               {item.title}
                             </span>
                             {item.isNew && (
-                              <span className="px-1 py-0.2 bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 text-[7.5px] sm:text-[9px] font-black uppercase rounded animate-pulse flex-shrink-0 font-mono tracking-wider">
+                              <span className="px-1.5 py-0.5 bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 text-[8.5px] sm:text-[9.5px] font-black uppercase rounded animate-pulse flex-shrink-0 font-mono tracking-wider">
                                 New
                               </span>
                             )}
                           </div>
-                          <span className="text-[8.5px] sm:text-xs font-mono text-slate-400 dark:text-slate-500 block leading-none">
+                          <span className="text-[10px] sm:text-xs font-mono text-slate-400 dark:text-slate-500 block leading-none">
                             Updated: {item.postDate}
                           </span>
                         </div>
-                        <ChevronRight className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 text-slate-400 group-hover/item:text-pink-500 dark:group-hover/item:text-pink-400 group-hover/item:translate-x-1 transition-all self-center flex-shrink-0" />
+                        <ChevronRight className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-slate-400 group-hover/item:text-pink-500 dark:group-hover/item:text-pink-400 group-hover/item:translate-x-1 transition-all self-center flex-shrink-0" />
                       </div>
                     ))
                   ) : (
-                    <p className="text-center text-[10px] sm:text-sm text-slate-400 py-12 font-medium">No syllabus found</p>
+                    <p className="text-center text-xs sm:text-sm text-slate-400 py-12 font-medium">No syllabus found</p>
                   )}
                 </div>
               </div>
@@ -1592,52 +1592,52 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
             {/* Box 6: Admissions */}
             {(activeTab === 'all' || activeTab === 'admissions') && (
               <div 
-                className="w-[85vw] sm:w-[360px] md:w-auto flex-shrink-0 snap-start bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-sm md:shadow-md overflow-hidden flex flex-col hover:shadow-2xl dark:hover:shadow-slate-950 transition-all duration-300 group hover:-translate-y-2.5"
+                className="w-[88vw] sm:w-[360px] md:w-auto flex-shrink-0 snap-start bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-sm md:shadow-md overflow-hidden flex flex-col hover:shadow-2xl dark:hover:shadow-slate-950 transition-all duration-300 group hover:-translate-y-2.5"
                 id="sarkari-box-admissions"
               >
-                <div className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white px-2 py-2.5 sm:px-5 sm:py-4 md:px-7 md:py-5 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 sm:gap-3">
-                    <GraduationCap className="w-3.5 h-3.5 sm:w-5 sm:h-5 flex-shrink-0" />
-                    <h3 className="font-extrabold tracking-tight text-[10px] sm:text-xs md:text-sm lg:text-base uppercase font-display leading-tight truncate">Admissions</h3>
+                <div className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white px-4 py-3.5 sm:px-5 sm:py-4 md:px-7 md:py-5 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5 sm:gap-3">
+                    <GraduationCap className="w-5 h-5 sm:w-5 sm:h-5 flex-shrink-0" />
+                    <h3 className="font-extrabold tracking-wide text-xs sm:text-sm md:text-base uppercase font-display leading-tight truncate">Admissions</h3>
                   </div>
-                  <span className="hidden sm:inline-block bg-white/20 text-white text-[9px] sm:text-xs font-mono px-2 py-0.5 rounded-full font-bold">
+                  <span className="inline-block bg-white/20 text-white text-[10px] sm:text-xs font-mono px-2.5 py-0.5 rounded-full font-bold">
                     {getItemsByCategory('admissions').length}
                   </span>
                 </div>
-                <div className="p-1 sm:p-3 md:p-4.5 divide-y divide-slate-100 dark:divide-slate-850 flex-grow max-h-[380px] sm:max-h-[520px] overflow-y-auto scrollbar-thin">
+                <div className="p-2.5 sm:p-3 md:p-4.5 divide-y divide-slate-100 dark:divide-slate-850 flex-grow max-h-[420px] sm:max-h-[520px] overflow-y-auto scrollbar-thin">
                   {getItemsByCategory('admissions').length > 0 ? (
                     getItemsByCategory('admissions').map(item => (
                       <div
                         key={item.id}
                         onClick={() => handleItemClick(item)}
-                        className={`p-1.5 sm:p-3 rounded-lg sm:rounded-2xl cursor-pointer transition-all flex items-start gap-1 sm:gap-3 hover:bg-teal-50/50 dark:hover:bg-teal-950/20 group/item ${
+                        className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl cursor-pointer transition-all flex items-start gap-2 sm:gap-3 hover:bg-teal-50/50 dark:hover:bg-teal-950/20 group/item ${
                           clickedItemId === item.id ? 'bg-teal-100 dark:bg-teal-900/30 scale-[0.98]' : ''
                         }`}
                         id={`sarkari-item-${item.id}`}
                       >
-                        <span className="w-1.5 h-1.5 bg-teal-500 rounded-full mt-1.5 flex-shrink-0 group-hover/item:scale-125 transition-transform"></span>
-                        <div className="flex-grow min-w-0 space-y-0.5">
-                          <div className="flex flex-wrap items-center gap-1">
-                            <span className="text-[10px] sm:text-xs md:text-sm font-extrabold text-slate-850 dark:text-slate-100 group-hover/item:text-teal-600 dark:group-hover/item:text-teal-400 transition-colors font-display leading-tight break-words sm:line-clamp-2">
+                        <span className="w-2 h-2 bg-teal-500 rounded-full mt-1.5 flex-shrink-0 group-hover/item:scale-125 transition-transform"></span>
+                        <div className="flex-grow min-w-0 space-y-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-xs sm:text-xs md:text-sm font-extrabold text-slate-850 dark:text-slate-100 group-hover/item:text-teal-600 dark:group-hover/item:text-teal-400 transition-colors font-display leading-tight break-words sm:line-clamp-2">
                               {item.title}
                             </span>
                             {item.isNew && (
-                              <span className="px-1 py-0.2 bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 text-[7.5px] sm:text-[9px] font-black uppercase rounded animate-pulse flex-shrink-0 font-mono tracking-wider">
+                              <span className="px-1.5 py-0.5 bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 text-[8.5px] sm:text-[9.5px] font-black uppercase rounded animate-pulse flex-shrink-0 font-mono tracking-wider">
                                 New
                               </span>
                             )}
                           </div>
                           {item.lastDate && (
-                            <span className="text-[8.5px] sm:text-xs font-mono text-teal-600 dark:text-teal-400 font-extrabold block leading-none">
+                            <span className="text-[10px] sm:text-xs font-mono text-teal-600 dark:text-teal-400 font-extrabold block leading-none">
                               Last Date: {item.lastDate}
                             </span>
                           )}
                         </div>
-                        <ChevronRight className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 text-slate-400 group-hover/item:text-teal-500 dark:group-hover/item:text-teal-400 group-hover/item:translate-x-1 transition-all self-center flex-shrink-0" />
+                        <ChevronRight className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-slate-400 group-hover/item:text-teal-500 dark:group-hover/item:text-teal-400 group-hover/item:translate-x-1 transition-all self-center flex-shrink-0" />
                       </div>
                     ))
                   ) : (
-                    <p className="text-center text-[10px] sm:text-sm text-slate-400 py-12 font-medium">No admissions found</p>
+                    <p className="text-center text-xs sm:text-sm text-slate-400 py-12 font-medium">No admissions found</p>
                   )}
                 </div>
               </div>
