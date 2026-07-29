@@ -222,14 +222,20 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       setTimeout(() => {
         const formEl = document.getElementById('booking-portal-form');
         if (formEl) {
-          formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
+      }, 50);
+
+      setTimeout(() => {
         const nameInput = document.getElementById('applicant-name-input') as HTMLInputElement | null;
         if (nameInput) {
-          nameInput.focus();
-          nameInput.click();
+          try {
+            nameInput.focus({ preventScroll: true });
+          } catch {
+            nameInput.focus();
+          }
         }
-      }, 150);
+      }, 350);
     }
   }, [selectedService]);
 
@@ -309,17 +315,23 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     setSubmissionReceipt(mockReceipt);
     setIsFormSubmitted(true);
 
-    // Keep receipt centered on customer screen & automatically pop up print dialog
+    // Keep receipt cleanly scrolled into view on customer screen
     setTimeout(() => {
       const slipContainer = document.getElementById('printable-digital-slip') || document.getElementById('booking-portal-form');
       if (slipContainer) {
-        slipContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        slipContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
 
-      // Automatically trigger print popup window
-      setTimeout(() => {
-        window.print();
-      }, 450);
+      // Auto trigger print window on desktop devices
+      if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+        setTimeout(() => {
+          try {
+            window.print();
+          } catch (e) {
+            console.log('Print trigger error:', e);
+          }
+        }, 300);
+      }
     }, 100);
   };
 
@@ -388,14 +400,20 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     setTimeout(() => {
       const formEl = document.getElementById('booking-portal-form');
       if (formEl) {
-        formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
+    }, 50);
+
+    setTimeout(() => {
       const nameInput = document.getElementById('applicant-name-input') as HTMLInputElement | null;
       if (nameInput) {
-        nameInput.focus();
-        nameInput.click();
+        try {
+          nameInput.focus({ preventScroll: true });
+        } catch {
+          nameInput.focus();
+        }
       }
-    }, 150);
+    }, 350);
   };
 
   return (

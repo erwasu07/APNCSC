@@ -108,14 +108,20 @@ export default function App() {
     setTimeout(() => {
       const el = document.getElementById('booking-portal-form');
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
+    }, 50);
+
+    setTimeout(() => {
       const nameInput = document.getElementById('applicant-name-input') as HTMLInputElement | null;
       if (nameInput) {
-        nameInput.focus();
-        nameInput.click();
+        try {
+          nameInput.focus({ preventScroll: true });
+        } catch {
+          nameInput.focus();
+        }
       }
-    }, 150);
+    }, 350);
   };
 
   // Scrolls to Digital Application & Appointment Desk
@@ -123,14 +129,20 @@ export default function App() {
     setTimeout(() => {
       const el = document.getElementById('booking-portal-form');
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
+    }, 50);
+
+    setTimeout(() => {
       const nameInput = document.getElementById('applicant-name-input') as HTMLInputElement | null;
       if (nameInput) {
-        nameInput.focus();
-        nameInput.click();
+        try {
+          nameInput.focus({ preventScroll: true });
+        } catch {
+          nameInput.focus();
+        }
       }
-    }, 150);
+    }, 350);
   };
 
   // WhatsApp click trigger

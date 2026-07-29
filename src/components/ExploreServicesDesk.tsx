@@ -123,14 +123,20 @@ export default function ExploreServicesDesk({ onApplyService }: ExploreServicesD
     setTimeout(() => {
       const portalForm = document.getElementById('booking-portal-form');
       if (portalForm) {
-        portalForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        portalForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
+    }, 50);
+
+    setTimeout(() => {
       const nameInput = document.getElementById('applicant-name-input') as HTMLInputElement | null;
       if (nameInput) {
-        nameInput.focus();
-        nameInput.click();
+        try {
+          nameInput.focus({ preventScroll: true });
+        } catch {
+          nameInput.focus();
+        }
       }
-    }, 150);
+    }, 350);
   };
 
   const getCategoryIcon = (category: string) => {
