@@ -27,7 +27,9 @@ import {
   FileCheck,
   Shield,
   Bell,
-  MessageSquare
+  MessageSquare,
+  UploadCloud,
+  Paperclip
 } from 'lucide-react';
 import { SARKARI_DATA, SARKARI_CATEGORIES, SarkariItem } from '../data/sarkariData';
 import { SERVICES_LIST } from '../servicesData';
@@ -61,9 +63,87 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
   const [copiedUpi, setCopiedUpi] = useState(false);
   const [utrError, setUtrError] = useState<string | null>(null);
+  const [documentError, setDocumentError] = useState<string | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<{ id: string; name: string; size: number; type: string }[]>([]);
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
   const [submissionReceipt, setSubmissionReceipt] = useState<any>(null);
   const [activeAlertTab, setActiveAlertTab] = useState<'alerts' | 'updates' | 'help'>('alerts');
+
+  // Conditional logic helper to check if a document is mandatory for the selected service
+  const getServiceDocRequirement = (serviceVal: string, customText?: string): { mandatory: boolean; requiredDocs: string[] } => {
+    if (!serviceVal) return { mandatory: false, requiredDocs: [] };
+
+    // 1. Check in SERVICES_LIST
+    const serviceItem = SERVICES_LIST.find(s => s.name.toLowerCase() === serviceVal.toLowerCase());
+    if (serviceItem) {
+      if (serviceItem.id === 'csc-utility') {
+        return { mandatory: false, requiredDocs: [] };
+      }
+      return {
+        mandatory: true,
+        requiredDocs: serviceItem.requirements && serviceItem.requirements.length > 0
+          ? serviceItem.requirements
+          : ['Aadhaar Card / ID Proof', 'Relevant Documents']
+      };
+    }
+
+    // 2. Check in SARKARI_DATA
+    const sarkariItem = SARKARI_DATA.find(item => item.title.toLowerCase() === serviceVal.toLowerCase());
+    if (sarkariItem) {
+      if (sarkariItem.category === 'jobs' || sarkariItem.category === 'admissions') {
+        return {
+          mandatory: true,
+          requiredDocs: [
+            'Aadhaar Card / Govt Identity Proof',
+            'Educational Marksheet (10th/12th/Graduation)',
+            'Passport Size Photo & Signature Scan',
+            'Category / Caste Certificate (if applicable)'
+          ]
+        };
+      }
+      return { mandatory: false, requiredDocs: [] };
+    }
+
+    // 3. Custom / Other service selection
+    if (serviceVal === 'other') {
+      const text = (customText || '').toLowerCase();
+      if (text.includes('utility') || text.includes('recharge') || text.includes('bill') || text.includes('inquiry') || text.includes('query')) {
+        return { mandatory: false, requiredDocs: [] };
+      }
+      return {
+        mandatory: true,
+        requiredDocs: ['Aadhaar Card / Relevant Application Document (PDF / JPG)']
+      };
+    }
+
+    // Fallback check
+    const lower = serviceVal.toLowerCase();
+    if (lower.includes('pan') || lower.includes('aadhaar') || lower.includes('voter') || lower.includes('certificate') || lower.includes('caste') || lower.includes('income') || lower.includes('domicile') || lower.includes('passport') || lower.includes('licence') || lower.includes('admission') || lower.includes('scholarship') || lower.includes('gst') || lower.includes('udyam') || lower.includes('exam') || lower.includes('recruitment') || lower.includes('form') || lower.includes('registration')) {
+      return {
+        mandatory: true,
+        requiredDocs: ['Aadhaar Card / Mandatory Supporting Documents']
+      };
+    }
+
+    return { mandatory: false, requiredDocs: [] };
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setDocumentError(null);
+      const newFiles = Array.from(e.target.files as FileList).map((file: File) => ({
+        id: Math.random().toString(36).substring(2, 9),
+        name: file.name,
+        size: file.size,
+        type: file.type
+      }));
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+    }
+  };
+
+  const handleRemoveFile = (id: string) => {
+    setUploadedFiles(prev => prev.filter(f => f.id !== id));
+  };
 
   const parseFeeString = (feeStr: string | undefined) => {
     if (!feeStr) return 0;
@@ -145,11 +225,20 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     }
   }, [selectedService]);
 
+  const docRequirement = getServiceDocRequirement(formData.selectedService, formData.customServiceText);
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setUtrError(null);
+    setDocumentError(null);
 
     if (!formData.customerName || !formData.phoneNumber || !formData.selectedService) {
+      return;
+    }
+
+    const docReq = getServiceDocRequirement(formData.selectedService, formData.customServiceText);
+    if (docReq.mandatory && uploadedFiles.length === 0) {
+      setDocumentError('Please upload at least 1 mandatory document (Aadhaar / Marksheet / Photo / PDF) required for this service.');
       return;
     }
 
@@ -162,6 +251,8 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
     const randomNum = Math.floor(100000 + Math.random() * 900000);
     const mockAppId = `APEX-2026-${randomNum}`;
+    const uploadedDocsList = uploadedFiles.map(f => `${f.name} (${(f.size / 1024).toFixed(1)} KB)`);
+
     const mockReceipt = {
       appId: mockAppId,
       customerName: formData.customerName,
@@ -173,9 +264,12 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       paymentMode: formData.paymentMode,
       utrNumber: formData.paymentMode === 'online' ? formData.utrNumber.trim() : 'N/A',
       totalAmount: formData.paymentMode === 'online' ? (formData.portalFee + formData.applicationFee) : formData.portalFee,
+      uploadedDocuments: uploadedDocsList,
       additionalDetails: formData.additionalDetails || 'None',
       submittedAt: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('en-US')
     };
+
+    const docsSummaryStr = uploadedDocsList.length > 0 ? uploadedDocsList.join(', ') : 'None Attached';
 
     // Send visitor query / application directly to owner email via Web3Forms API
     try {
@@ -197,7 +291,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
           payment_mode: mockReceipt.paymentMode,
           utr_number: mockReceipt.utrNumber,
           amount: `₹${mockReceipt.totalAmount}`,
-          message: `Application Token ID: ${mockReceipt.appId}\nApplicant Name: ${mockReceipt.customerName}\nMobile Number: ${mockReceipt.phoneNumber}\nEmail: ${mockReceipt.emailAddress}\nDate of Birth: ${mockReceipt.dateOfBirth}\nSelected Service: ${mockReceipt.selectedService}\nCategory: ${mockReceipt.userCategory}\nPayment Mode: ${mockReceipt.paymentMode}\nPayment UTR Ref No: ${mockReceipt.utrNumber}\nAmount Charged: ₹${mockReceipt.totalAmount}\nInstructions/Note: ${mockReceipt.additionalDetails}`
+          message: `Application Token ID: ${mockReceipt.appId}\nApplicant Name: ${mockReceipt.customerName}\nMobile Number: ${mockReceipt.phoneNumber}\nEmail: ${mockReceipt.emailAddress}\nDate of Birth: ${mockReceipt.dateOfBirth}\nSelected Service: ${mockReceipt.selectedService}\nCategory: ${mockReceipt.userCategory}\nPayment Mode: ${mockReceipt.paymentMode}\nPayment UTR Ref No: ${mockReceipt.utrNumber}\nAttached Documents: ${docsSummaryStr}\nAmount Charged: ₹${mockReceipt.totalAmount}\nInstructions/Note: ${mockReceipt.additionalDetails}`
         })
       }).catch(err => console.error('Web3Forms delivery error:', err));
     } catch (err) {
@@ -604,6 +698,103 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                       </div>
                     )}
 
+                    {/* CONDITIONAL MANDATORY DOCUMENT UPLOAD SECTION */}
+                    {docRequirement.mandatory && (
+                      <div className="bg-amber-50/90 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/80 rounded-2xl p-4 space-y-3 animate-fade-in my-2 shadow-sm">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1.5 bg-amber-500 text-white rounded-lg shadow-sm">
+                              <UploadCloud className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-amber-300 flex items-center gap-1.5">
+                                <span>Mandatory Document Upload</span>
+                                <span className="text-[9px] bg-red-600 text-white font-black px-2 py-0.5 rounded-md uppercase tracking-wider">Required</span>
+                              </h4>
+                              <p className="text-[10px] text-slate-600 dark:text-slate-400 font-medium">
+                                Upload required documents for <strong className="text-slate-900 dark:text-white font-bold">{formData.selectedService === 'other' ? (formData.customServiceText || 'Custom Service') : formData.selectedService}</strong>
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* List of Mandatory Required Documents */}
+                        {docRequirement.requiredDocs.length > 0 && (
+                          <div className="bg-white/90 dark:bg-slate-900/90 p-3 rounded-xl border border-amber-200 dark:border-amber-900/60 shadow-inner">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-400 block mb-1">
+                              📌 Mandatory Documents Required for this Service:
+                            </span>
+                            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                              {docRequirement.requiredDocs.map((doc, idx) => (
+                                <li key={idx} className="flex items-center gap-1.5">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                                  <span>{doc}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Drag & Drop / Click Upload Area */}
+                        <div className="relative">
+                          <label className={`flex flex-col items-center justify-center p-4 border-2 border-dashed ${documentError ? 'border-red-500 bg-red-50/50 dark:bg-red-950/30' : 'border-amber-400 dark:border-amber-600 hover:border-amber-500 bg-white dark:bg-slate-900'} rounded-xl cursor-pointer transition-all hover:bg-amber-50/50 dark:hover:bg-amber-950/40 text-center group`}>
+                            <UploadCloud className="w-7 h-7 text-amber-500 mb-1 group-hover:scale-110 transition-transform" />
+                            <span className="text-xs font-black text-slate-900 dark:text-white">
+                              Click or Drag &amp; Drop Documents Here
+                            </span>
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                              Aadhaar Card, Marksheet, Passport Photo, Signature, PDF or JPG (Max 10MB)
+                            </span>
+                            <input
+                              type="file"
+                              multiple
+                              accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                              onChange={handleFileUpload}
+                              className="hidden"
+                            />
+                          </label>
+                        </div>
+
+                        {/* Error Message if not uploaded */}
+                        {documentError && (
+                          <p className="text-[11px] text-red-600 dark:text-red-400 font-bold flex items-center gap-1.5 bg-red-100 dark:bg-red-950/90 p-2.5 rounded-xl border border-red-300 dark:border-red-800 animate-pulse">
+                            <span>⚠️ {documentError}</span>
+                          </p>
+                        )}
+
+                        {/* Attached Files List */}
+                        {uploadedFiles.length > 0 && (
+                          <div className="space-y-1.5 pt-1">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 block">
+                              Attached Customer Documents ({uploadedFiles.length}):
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                              {uploadedFiles.map((file) => (
+                                <div
+                                  key={file.id}
+                                  className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs shadow-sm"
+                                >
+                                  <Paperclip className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                                  <div className="max-w-[160px] truncate">
+                                    <span className="font-bold text-slate-900 dark:text-slate-100 block truncate">{file.name}</span>
+                                    <span className="text-[9px] text-slate-400 font-mono">{(file.size / 1024).toFixed(1)} KB</span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveFile(file.id)}
+                                    className="p-1 hover:bg-red-50 dark:hover:bg-red-950 text-slate-400 hover:text-red-500 rounded-lg transition-colors cursor-pointer"
+                                    title="Remove Document"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {/* Additional Details Text Area */}
                     <div className="space-y-1">
                       <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -901,6 +1092,22 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                       <span className="text-xs font-black font-mono text-slate-900 dark:text-white">{submissionReceipt?.utrNumber}</span>
                     </div>
                   )}
+
+                  {submissionReceipt?.uploadedDocuments && submissionReceipt?.uploadedDocuments.length > 0 && (
+                    <div className="sm:col-span-3 bg-emerald-50/80 p-2.5 rounded-xl border border-emerald-200">
+                      <span className="text-emerald-800 block font-black uppercase text-[10px] tracking-wider mb-1 flex items-center gap-1">
+                        <Paperclip className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Attached Customer Documents ({submissionReceipt.uploadedDocuments.length}):</span>
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {submissionReceipt.uploadedDocuments.map((doc: string, idx: number) => (
+                          <span key={idx} className="px-2 py-0.5 bg-white rounded-lg border border-emerald-300 text-[10px] font-bold text-slate-800 font-mono shadow-xs">
+                            📄 {doc}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {submissionReceipt?.additionalDetails && submissionReceipt?.additionalDetails !== 'None' && (
@@ -943,6 +1150,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 *Category:* ${submissionReceipt.userCategory}
 *Payment Mode:* ${submissionReceipt.paymentMode}
 *Payment UTR / Ref No:* ${submissionReceipt.utrNumber}
+*Attached Documents:* ${submissionReceipt.uploadedDocuments && submissionReceipt.uploadedDocuments.length > 0 ? submissionReceipt.uploadedDocuments.join(', ') : 'None'}
 *Amount:* ₹${submissionReceipt.totalAmount}
 *Instructions:* ${submissionReceipt.additionalDetails}`;
                       window.open(`https://wa.me/917006833767?text=${encodeURIComponent(msg)}`, '_blank');
@@ -965,6 +1173,8 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                     onClick={() => {
                       setIsFormSubmitted(false);
                       setUtrError(null);
+                      setDocumentError(null);
+                      setUploadedFiles([]);
                       setFormData({
                         customerName: '',
                         phoneNumber: '',
