@@ -117,15 +117,15 @@ export default function ExploreServicesDesk({ onApplyService }: ExploreServicesD
 
   const handleApply = (service: ServiceItem) => {
     setSelectedService(null);
-    onApplyService(`Assistance Request: ${service.name}`);
+    onApplyService(service.name);
     
-    // Smooth scroll to the contact form at the bottom
+    // Smooth scroll to Digital Application & Appointment Desk
     setTimeout(() => {
-      const contactSec = document.getElementById('contact');
-      if (contactSec) {
-        contactSec.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const portalForm = document.getElementById('booking-portal-form');
+      if (portalForm) {
+        portalForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-    }, 200);
+    }, 100);
   };
 
   const getCategoryIcon = (category: string) => {

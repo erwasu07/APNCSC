@@ -54,7 +54,7 @@ export default function Footer({ cafeName }: FooterProps) {
                 </div>
                 <div className="flex flex-col text-left">
                   <span className="text-base font-black tracking-tight text-white font-display">
-                    APNA<span className="text-orange-500">CSC</span>
+                    CSC <span className="text-orange-500">DOST</span>
                   </span>
                   <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">Digital Seva Terminal</span>
                 </div>

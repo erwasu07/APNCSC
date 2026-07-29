@@ -10,16 +10,16 @@ import { WebsiteSettings, Announcement, GalleryItem } from './types';
 import { ShieldCheck, MessageSquare, PhoneCall, Sparkles, Building2, HelpCircle } from 'lucide-react';
 
 const FALLBACK_SETTINGS: WebsiteSettings = {
-  cafeName: "APNACSC Digital Cyber Cafe",
+  cafeName: "CSC DOST",
   phone: "+91 70068 33767, +91 96821 32895",
   whatsapp: "+91 70068 33767",
-  email: "contact@apnacsc.com",
+  email: "contact@cscdost.online",
   address: "Shop No. 12, Ground Floor, Royal Plaza, Near Main Bus Stand, Sector 15, New Delhi, Pin - 110001",
   officeHours: "Mon - Sat: 08:30 AM - 08:00 PM, Sun: 10:00 AM - 04:00 PM",
   googleMapsEmbed: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3501.996452296068!2d77.21833441508272!3d28.630041982417724!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cfd3637e19e75%3A0x6b7a544f84c4f9a7!2sConnaught%20Place%2C%20New%20Delhi%2C%20Delhi%20110001!5e0!3m2!1sen!2sin!4v1680000000000!5m2!1sen!2sin",
-  seoTitle: "cscdost - APNACSC Digital Cyber Cafe & CSP Portal",
-  seoDescription: "Authorized CSC E-Governance and Digital Services. Apply for PAN, Aadhaar updates, Ayushman Bharat card, Voter ID, and manage all your digital printing, GST, and business registrations in Sector 15, New Delhi.",
-  seoKeywords: "cscdost, cyber cafe, CSC center, PAN card application, Aadhaar update, online form filling, printing, photocopy, GST return, MSME registration"
+  seoTitle: "CSC DOST",
+  seoDescription: "CSC DOST - Authorized CSC E-Governance and Digital Services Portal. Apply for PAN, Aadhaar updates, Ayushman Bharat card, Voter ID, and digital services.",
+  seoKeywords: "cscdost, CSC DOST, cyber cafe, CSC center, PAN card application, Aadhaar update, online form filling, printing"
 };
 
 export default function App() {
@@ -78,14 +78,20 @@ export default function App() {
   // Handle service redirection trigger
   const handleServiceSelect = (serviceName: string) => {
     setSelectedService(serviceName);
+    setTimeout(() => {
+      const el = document.getElementById('booking-portal-form');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
   };
 
-  // Scrolls to footer
+  // Scrolls to Digital Application & Appointment Desk
   const handleVisitClick = () => {
     setTimeout(() => {
-      const el = document.getElementById('footer');
+      const el = document.getElementById('booking-portal-form');
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth' });
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }, 100);
   };
@@ -112,7 +118,7 @@ export default function App() {
         {/* PUBLIC VISITOR INTERFACE */}
         <div className="animate-fade-in">
           {/* Sarkari Result Bulletin Board at top */}
-          <SarkariResultDesk onApplyService={handleServiceSelect} />
+          <SarkariResultDesk onApplyService={handleServiceSelect} selectedService={selectedService} />
 
           {/* Explore All Government & Digital Services Directory */}
           <ExploreServicesDesk onApplyService={handleServiceSelect} />

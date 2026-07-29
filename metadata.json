@@ -1,5 +1,5 @@
 {
-  "name": "APNACSC Digital Cyber Cafe & CSP Portal",
+  "name": "CSC DOST",
   "description": "A premium, professional full-stack portal for a modern Cyber Cafe, offering CSC e-governance services, digital printing, business, and education registrations with a secure admin dashboard, contact tracking, and appointment booking.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Briefcase, 
   FileText, 
@@ -34,9 +34,10 @@ import { SERVICES_LIST } from '../servicesData';
 
 interface SarkariResultDeskProps {
   onApplyService: (serviceName: string) => void;
+  selectedService?: string;
 }
 
-export default function SarkariResultDesk({ onApplyService }: SarkariResultDeskProps) {
+export default function SarkariResultDesk({ onApplyService, selectedService }: SarkariResultDeskProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<SarkariItem | null>(null);
   const [clickedItemId, setClickedItemId] = useState<string | null>(null);
@@ -100,6 +101,47 @@ export default function SarkariResultDesk({ onApplyService }: SarkariResultDeskP
       applicationFee: appFee
     }));
   };
+
+  useEffect(() => {
+    if (selectedService) {
+      // Clean up any prefix if present
+      const cleanName = selectedService.replace(/^(Assistance Request:|Filing Application:)\s*/i, '').trim();
+
+      // Look for exact title match in SARKARI_DATA or SERVICES_LIST
+      const sarkariMatch = SARKARI_DATA.find(item => item.title.toLowerCase() === cleanName.toLowerCase());
+      const serviceMatch = SERVICES_LIST.find(s => s.name.toLowerCase() === cleanName.toLowerCase());
+
+      if (sarkariMatch) {
+        handleServiceChange(sarkariMatch.title);
+      } else if (serviceMatch) {
+        handleServiceChange(serviceMatch.name);
+      } else {
+        // Search by partial match
+        const partialSarkari = SARKARI_DATA.find(item => item.title.toLowerCase().includes(cleanName.toLowerCase()) || cleanName.toLowerCase().includes(item.title.toLowerCase()));
+        const partialService = SERVICES_LIST.find(s => s.name.toLowerCase().includes(cleanName.toLowerCase()) || cleanName.toLowerCase().includes(s.name.toLowerCase()));
+
+        if (partialSarkari) {
+          handleServiceChange(partialSarkari.title);
+        } else if (partialService) {
+          handleServiceChange(partialService.name);
+        } else {
+          setFormData(prev => ({
+            ...prev,
+            selectedService: 'other',
+            customServiceText: cleanName
+          }));
+        }
+      }
+
+      // Smooth scroll to Digital Application & Appointment Desk
+      setTimeout(() => {
+        const formEl = document.getElementById('booking-portal-form');
+        if (formEl) {
+          formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    }
+  }, [selectedService]);
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
