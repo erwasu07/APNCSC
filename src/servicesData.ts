@@ -5,6 +5,7 @@ export interface ServiceItem {
   description: string;
   requirements: string[];
   estimatedTime: string;
+  price: string;
   popular?: boolean;
 }
 
@@ -24,6 +25,7 @@ export const SERVICES_LIST: ServiceItem[] = [
     description: 'Fresh Permanent Account Number (PAN) application & correction services with e-KYC support.',
     requirements: ['Aadhaar Card', '2 Passport Size Photos', 'Aadhaar-linked Mobile Number'],
     estimatedTime: '3 - 7 Days',
+    price: '₹107 (Govt Fee) + ₹50 (CSC Charge)',
     popular: true
   },
   {
@@ -33,6 +35,7 @@ export const SERVICES_LIST: ServiceItem[] = [
     description: 'Demographic updates (Name, Address, DOB, Gender, Mobile Number) and photo verification guidance.',
     requirements: ['Aadhaar Card', 'Valid Address/ID Proof (e.g., Voter ID, Passport, Bank Passbook)'],
     estimatedTime: '2 - 5 Days',
+    price: '₹50 (Standard Govt/CSC Fee)',
     popular: true
   },
   {
@@ -41,7 +44,8 @@ export const SERVICES_LIST: ServiceItem[] = [
     category: 'csc',
     description: 'Apply for a new Voter ID card, make corrections, shift assembly constituencies, or request PVC card printing.',
     requirements: ['Aadhaar Card', 'Age Proof', 'Passport Size Photo', 'Address Proof'],
-    estimatedTime: '15 - 30 Days'
+    estimatedTime: '15 - 30 Days',
+    price: '₹30 - ₹50 (Application/PVC Print)'
   },
   {
     id: 'csc-ayushman',
@@ -49,7 +53,8 @@ export const SERVICES_LIST: ServiceItem[] = [
     category: 'csc',
     description: 'Check eligibility and register for free ₹5 Lakh health insurance cover under PM-JAY scheme.',
     requirements: ['Aadhaar Card', 'Ration Card / PM Letter'],
-    estimatedTime: 'Same Day'
+    estimatedTime: 'Same Day',
+    price: 'FREE (₹0 Govt Scheme Registration)'
   },
   {
     id: 'csc-pmkisan',
@@ -57,7 +62,8 @@ export const SERVICES_LIST: ServiceItem[] = [
     category: 'csc',
     description: 'Apply for farmer registration under PM Kisan Samman Nidhi Yojana and mandatory e-KYC updates.',
     requirements: ['Aadhaar Card', 'Land Registry Copy (Khatauni)', 'Bank Passbook Copy'],
-    estimatedTime: 'Same Day'
+    estimatedTime: 'Same Day',
+    price: '₹15 - ₹30 (Mandatory Portal Fee)'
   },
   {
     id: 'csc-eshram',
@@ -65,7 +71,8 @@ export const SERVICES_LIST: ServiceItem[] = [
     category: 'csc',
     description: 'Registration for unorganized sector workers to secure central government accident insurance and social benefits.',
     requirements: ['Aadhaar Card', 'Bank Account Number', 'Mobile Number'],
-    estimatedTime: 'Same Day'
+    estimatedTime: 'Same Day',
+    price: 'FREE (Govt) / ₹20 (Lamination Print)'
   },
   {
     id: 'csc-certificates',
@@ -74,6 +81,7 @@ export const SERVICES_LIST: ServiceItem[] = [
     description: 'Authorized state-level applications for Caste, Domicile, Income, Marriage, Birth, Death, and Character Certificates.',
     requirements: ['Aadhaar Card', 'Ration Card Copy', 'Self-Declaration Form', 'Address Proof'],
     estimatedTime: '7 - 15 Days',
+    price: '₹30 (Govt Fee) + ₹30 (Filing Charge)',
     popular: true
   },
   {
@@ -82,7 +90,8 @@ export const SERVICES_LIST: ServiceItem[] = [
     category: 'csc',
     description: 'Apply for a new digital ration card, add or delete family member names, and address updates.',
     requirements: ['Aadhaar Cards of all members', 'Head of Family Photo', 'Income Proof'],
-    estimatedTime: '15 - 30 Days'
+    estimatedTime: '15 - 30 Days',
+    price: '₹50 (Service & Portal Fee)'
   },
   {
     id: 'csc-passport',
@@ -90,7 +99,8 @@ export const SERVICES_LIST: ServiceItem[] = [
     category: 'csc',
     description: 'Online registration for fresh passports, renewals, tatkaal services, and appointment booking at PSK.',
     requirements: ['Aadhaar Card', '10th Marksheet/Non-ECR Proof', 'Bank Statement', 'Address Proof'],
-    estimatedTime: 'Appointment booked in 24h'
+    estimatedTime: 'Appointment booked in 24h',
+    price: '₹1500 (Govt Fee) + ₹200 (CSC Filing)'
   },
   {
     id: 'csc-dl',
@@ -98,7 +108,8 @@ export const SERVICES_LIST: ServiceItem[] = [
     category: 'csc',
     description: 'Apply for fresh learners licence, permanent driving licence, DL renewal, duplicate copy, or address changes.',
     requirements: ['Age Proof (10th pass/Aadhaar)', 'Address Proof', 'Physical Fitness Declaration'],
-    estimatedTime: 'Slot Booking same day'
+    estimatedTime: 'Slot Booking same day',
+    price: '₹200 - ₹500 (Govt RTO Fee depend)'
   },
   {
     id: 'csc-utility',
@@ -107,6 +118,7 @@ export const SERVICES_LIST: ServiceItem[] = [
     description: 'Instant payments for electricity bills, water bills, gas cylinders, mobile/DTH, FASTag recharges, and premium insurance payments.',
     requirements: ['Consumer ID / Policy Number', 'Mobile Number'],
     estimatedTime: 'Instant Credit',
+    price: 'FREE (₹0 Convenience Fee)',
     popular: true
   },
 
@@ -117,7 +129,8 @@ export const SERVICES_LIST: ServiceItem[] = [
     category: 'digital',
     description: 'High-quality laser printing, document scanning (PDF/JPG formats), and thick-pouch lamination up to A3 size.',
     requirements: ['Soft Copy via WhatsApp, Email, or USB Drive'],
-    estimatedTime: 'Instant'
+    estimatedTime: 'Instant',
+    price: 'B&W ₹2/pg, Color ₹10/pg, Lamination ₹20'
   },
   {
     id: 'dig-photo',
@@ -126,6 +139,7 @@ export const SERVICES_LIST: ServiceItem[] = [
     description: 'Instant professional passport photo capture, digital background replacement, skin tone touchups, and physical sheets printing.',
     requirements: ['Physical presence for photo or digital file'],
     estimatedTime: '5 Minutes',
+    price: '₹50 (8 Photos) / ₹80 (16 Photos)',
     popular: true
   },
   {
@@ -134,7 +148,8 @@ export const SERVICES_LIST: ServiceItem[] = [
     category: 'digital',
     description: 'Design interactive resumes, document editing, PDF combining, and precise typing in Hindi, English, or regional languages.',
     requirements: ['Handwritten Draft or legacy CV', 'Educational Details'],
-    estimatedTime: '15 - 30 Minutes'
+    estimatedTime: '15 - 30 Minutes',
+    price: '₹50 - ₹100 (Based on pages)'
   },
 
   // Education Services
@@ -144,7 +159,8 @@ export const SERVICES_LIST: ServiceItem[] = [
     category: 'education',
     description: 'Admissions application support for schools, open universities (e.g., IGNOU, DU SOL), and local colleges.',
     requirements: ['Previous Year Marksheets', 'Category Certificate (if applicable)', 'Photo', 'ID Proof'],
-    estimatedTime: 'Same Day'
+    estimatedTime: 'Same Day',
+    price: '₹50 - ₹100 + University Fee'
   },
   {
     id: 'edu-scholarship',
@@ -152,7 +168,8 @@ export const SERVICES_LIST: ServiceItem[] = [
     category: 'education',
     description: 'Secure application filling for national (NSP) and state e-kalyan scholarships for minor, SC/ST, and OBC candidates.',
     requirements: ['Aadhaar Card', 'Previous Class Marksheet', 'Income Certificate', 'Caste Certificate', 'Bank Passbook'],
-    estimatedTime: '1 - 2 Hours'
+    estimatedTime: '1 - 2 Hours',
+    price: '₹50 - ₹80 (Full Filing)'
   },
   {
     id: 'edu-exams',
@@ -161,6 +178,7 @@ export const SERVICES_LIST: ServiceItem[] = [
     description: 'Filing for central/state exams (SSC, UPSC, Banking, NEET, JEE) and instant colorful admit card downloads.',
     requirements: ['Academic Credentials', 'Signature Scans', 'Photo Scans'],
     estimatedTime: '20 Minutes',
+    price: '₹50 - ₹100 (Exam Filing) / ₹10 (Print)',
     popular: true
   },
 
@@ -171,7 +189,8 @@ export const SERVICES_LIST: ServiceItem[] = [
     category: 'business',
     description: 'File applications for new GST registration and prepare files for monthly or quarterly GSTR filing.',
     requirements: ['PAN Card', 'Aadhaar Card', 'Business Address Proof (Rent Agreement/Electricity Bill)'],
-    estimatedTime: '3 - 5 Days'
+    estimatedTime: '3 - 5 Days',
+    price: '₹500 (Reg) / ₹300 (Return Filing)'
   },
   {
     id: 'biz-udyam',
@@ -179,7 +198,8 @@ export const SERVICES_LIST: ServiceItem[] = [
     category: 'business',
     description: 'Register small-medium enterprises under UDYAM scheme to receive interest concessions and credit benefits.',
     requirements: ['Aadhaar Card', 'PAN Card', 'Business Name & Bank Details'],
-    estimatedTime: 'Same Day'
+    estimatedTime: 'Same Day',
+    price: '₹100 (CSC Assistance Charge)'
   },
   {
     id: 'biz-dsc',
@@ -187,6 +207,7 @@ export const SERVICES_LIST: ServiceItem[] = [
     category: 'business',
     description: 'Obtain Class 3 Digital Signature Certificate (DSC) for e-tendering, company registration, and trademark filing.',
     requirements: ['Aadhaar Card', 'PAN Card', 'Aadhaar-linked Mobile (OTP verification)'],
-    estimatedTime: '24 Hours'
+    estimatedTime: '24 Hours',
+    price: '₹1200 - ₹1500 (2 Year Token)'
   }
 ];

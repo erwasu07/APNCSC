@@ -26,7 +26,8 @@ import {
   Check,
   FileCheck,
   Shield,
-  Bell
+  Bell,
+  MessageSquare
 } from 'lucide-react';
 import { SARKARI_DATA, SARKARI_CATEGORIES, SarkariItem } from '../data/sarkariData';
 import { SERVICES_LIST } from '../servicesData';
@@ -121,6 +122,32 @@ export default function SarkariResultDesk({ onApplyService }: SarkariResultDeskP
       additionalDetails: formData.additionalDetails || 'None',
       submittedAt: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('en-US')
     };
+
+    // Send visitor query / application directly to owner email via Web3Forms API
+    try {
+      fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          access_key: 'a6293a04-2711-4d7c-bb7c-e7c9ed3d888c',
+          subject: `New Application Inquiry [${mockReceipt.appId}] - ${mockReceipt.customerName}`,
+          from_name: 'APNA CSC Digital Portal',
+          name: mockReceipt.customerName,
+          email: mockReceipt.emailAddress !== 'N/A' ? mockReceipt.emailAddress : 'no-reply@apnacsc.in',
+          phone_number: mockReceipt.phoneNumber,
+          service_requested: mockReceipt.selectedService,
+          category: mockReceipt.userCategory,
+          payment_mode: mockReceipt.paymentMode,
+          amount: `₹${mockReceipt.totalAmount}`,
+          message: `Application Token ID: ${mockReceipt.appId}\nApplicant Name: ${mockReceipt.customerName}\nMobile Number: ${mockReceipt.phoneNumber}\nEmail: ${mockReceipt.emailAddress}\nDate of Birth: ${mockReceipt.dateOfBirth}\nSelected Service: ${mockReceipt.selectedService}\nCategory: ${mockReceipt.userCategory}\nPayment Mode: ${mockReceipt.paymentMode}\nAmount Charged: ₹${mockReceipt.totalAmount}\nInstructions/Note: ${mockReceipt.additionalDetails}`
+        })
+      }).catch(err => console.error('Web3Forms delivery error:', err));
+    } catch (err) {
+      console.error('Web3Forms dispatch error:', err);
+    }
 
     setSubmissionReceipt(mockReceipt);
     setIsFormSubmitted(true);
@@ -775,6 +802,28 @@ export default function SarkariResultDesk({ onApplyService }: SarkariResultDeskP
                 </div>
 
                 <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => {
+                      if (!submissionReceipt) return;
+                      const msg = `*New Application Query Submitted on Website!*
+*Token ID:* ${submissionReceipt.appId}
+*Name:* ${submissionReceipt.customerName}
+*Mobile:* ${submissionReceipt.phoneNumber}
+*Email:* ${submissionReceipt.emailAddress}
+*DOB:* ${submissionReceipt.dateOfBirth}
+*Service Requested:* ${submissionReceipt.selectedService}
+*Category:* ${submissionReceipt.userCategory}
+*Payment Mode:* ${submissionReceipt.paymentMode}
+*Amount:* ₹${submissionReceipt.totalAmount}
+*Instructions:* ${submissionReceipt.additionalDetails}`;
+                      window.open(`https://wa.me/917006833767?text=${encodeURIComponent(msg)}`, '_blank');
+                    }}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-emerald-600/30"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>Send to WhatsApp Admin</span>
+                  </button>
+
                   <button
                     onClick={() => window.print()}
                     className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-xs uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer border border-slate-200"

@@ -15,7 +15,10 @@ import {
   Briefcase,
   Layers,
   Search,
-  Check
+  Check,
+  Download,
+  FileSpreadsheet,
+  Tag
 } from 'lucide-react';
 import { SERVICES_LIST, CATEGORY_LABELS, ServiceItem } from '../servicesData';
 
@@ -36,6 +39,28 @@ export default function ExploreServicesDesk({ onApplyService }: ExploreServicesD
                           service.description.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
+
+  // Export to Excel / CSV function
+  const handleExportToExcel = () => {
+    const headers = ['Category', 'Service Name', 'Price / Fee', 'Estimated Time', 'Required Documents', 'Description'];
+    const rows = SERVICES_LIST.map(service => [
+      `"${CATEGORY_LABELS[service.category]}"`,
+      `"${service.name.replace(/"/g, '""')}"`,
+      `"${service.price.replace(/"/g, '""')}"`,
+      `"${service.estimatedTime}"`,
+      `"${service.requirements.join('; ').replace(/"/g, '""')}"`,
+      `"${service.description.replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', 'E_Services_Directory_With_Prices.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   // Group services by category for clean, box-based rendering
   const getServicesByCategory = (category: 'csc' | 'digital' | 'education' | 'business') => {
@@ -123,28 +148,39 @@ export default function ExploreServicesDesk({ onApplyService }: ExploreServicesD
             </p>
           </div>
 
-          {/* Quick Search inside Services Directory */}
-          <div className="relative w-full md:w-80 group">
-            {/* Premium Outer Glow on Hover */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-cyan-500 to-indigo-500 rounded-xl blur-sm opacity-20 group-hover:opacity-60 group-focus-within:opacity-80 transition-all duration-300 -z-10"></div>
-            
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300 z-10" />
-              <input
-                type="text"
-                placeholder="Search all cafe services..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-12 py-2.5 bg-white dark:bg-slate-900 border border-slate-200/85 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none hover:border-transparent dark:hover:border-transparent focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/15 transition-all duration-300 shadow-md"
-              />
-              {searchQuery && (
-                <button 
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors z-10"
-                >
-                  CLEAR
-                </button>
-              )}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Download Excel Sheet Button */}
+            <button
+              onClick={handleExportToExcel}
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-extrabold uppercase tracking-wider flex items-center gap-2 transition-all shadow-md shadow-emerald-600/20 cursor-pointer"
+              title="Download Excel List with Prices"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Download Excel List (.CSV)</span>
+            </button>
+
+            {/* Quick Search inside Services Directory */}
+            <div className="relative w-full sm:w-64 group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-cyan-500 to-indigo-500 rounded-xl blur-sm opacity-20 group-hover:opacity-60 group-focus-within:opacity-80 transition-all duration-300 -z-10"></div>
+              
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300 z-10" />
+                <input
+                  type="text"
+                  placeholder="Search all services..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-12 py-2.5 bg-white dark:bg-slate-900 border border-slate-200/85 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none hover:border-transparent dark:hover:border-transparent focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/15 transition-all duration-300 shadow-md"
+                />
+                {searchQuery && (
+                  <button 
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors z-10"
+                  >
+                    CLEAR
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -221,7 +257,7 @@ export default function ExploreServicesDesk({ onApplyService }: ExploreServicesD
                         }`}
                         id={`explore-item-${service.id}`}
                       >
-                        <div className="space-y-0.5 min-w-0 flex-grow">
+                        <div className="space-y-1 min-w-0 flex-grow">
                           <div className="flex items-center gap-1 flex-wrap">
                             <span className="text-[10px] sm:text-xs md:text-sm font-extrabold text-slate-850 dark:text-slate-100 leading-tight block truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors font-display">
                               {service.name}
@@ -235,6 +271,12 @@ export default function ExploreServicesDesk({ onApplyService }: ExploreServicesD
                           <span className="text-[8.5px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium block truncate">
                             {service.description}
                           </span>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-black text-emerald-600 dark:text-emerald-400 font-mono bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-500/10">
+                              <Tag className="w-2.5 h-2.5" />
+                              {service.price}
+                            </span>
+                          </div>
                         </div>
                         <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400 flex-shrink-0 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-colors" />
                       </div>
@@ -290,6 +332,17 @@ export default function ExploreServicesDesk({ onApplyService }: ExploreServicesD
                 </p>
               </div>
 
+              {/* Price Block */}
+              <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Tag className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span className="font-bold text-slate-800 dark:text-slate-200">Official Service Fee / Govt Price</span>
+                </div>
+                <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-xs">
+                  {selectedService.price}
+                </span>
+              </div>
+
               {/* Requirements documents checklist */}
               <div className="space-y-2">
                 <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 font-mono">
@@ -343,3 +396,4 @@ export default function ExploreServicesDesk({ onApplyService }: ExploreServicesD
     </div>
   );
 }
+
