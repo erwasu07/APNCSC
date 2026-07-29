@@ -215,6 +215,9 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
         }
       }
 
+      // Reset form submission view if a new service is selected
+      setIsFormSubmitted(false);
+
       // Smooth scroll to Digital Application & Appointment Desk
       setTimeout(() => {
         const formEl = document.getElementById('booking-portal-form');
@@ -300,6 +303,19 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
     setSubmissionReceipt(mockReceipt);
     setIsFormSubmitted(true);
+
+    // Keep receipt centered on customer screen & automatically pop up print dialog
+    setTimeout(() => {
+      const slipContainer = document.getElementById('printable-digital-slip') || document.getElementById('booking-portal-form');
+      if (slipContainer) {
+        slipContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      // Automatically trigger print popup window
+      setTimeout(() => {
+        window.print();
+      }, 450);
+    }, 100);
   };
 
   // Filter items based on search query and category tab
@@ -350,6 +366,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
   const handleApplyNow = (item: SarkariItem) => {
     setSelectedItem(null);
+    setIsFormSubmitted(false);
     onApplyService(`Filing Application: ${item.title}`);
     
     // Auto-fill our new portal form states!
