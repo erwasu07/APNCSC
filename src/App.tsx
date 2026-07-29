@@ -153,7 +153,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-850 dark:text-slate-100 flex flex-col justify-between font-sans transition-colors duration-300">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-850 dark:text-slate-100 flex flex-col justify-between font-sans transition-colors duration-300 w-full max-w-full overflow-x-hidden">
       
       {/* Top Navigation Panel */}
       <Navbar
@@ -164,7 +164,7 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="flex-grow">
+      <main className="flex-grow w-full max-w-full overflow-x-hidden">
         {/* PUBLIC VISITOR INTERFACE */}
         <div className="animate-fade-in">
           {/* Sarkari Result Bulletin Board at top */}
