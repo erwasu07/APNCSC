@@ -36,8 +36,8 @@ export default function Navbar({
       {/* 1. TOP UTILITY GOVT BAR - CSC.GOV.IN DESIGN */}
       <div className="bg-[#eaeaea] dark:bg-slate-950 border-b border-slate-300 dark:border-slate-900 text-xs font-sans text-slate-700 dark:text-slate-300 py-1.5 sm:py-2 px-3 sm:px-4 shadow-sm">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-3">
-          {/* Left: Text Size controllers */}
-          <div className="flex items-center gap-1.5 self-center sm:self-auto">
+          {/* Left: Text Size controllers (Hidden on mobile) */}
+          <div className="hidden sm:flex items-center gap-1.5 self-center sm:self-auto">
             <span className="text-slate-700 dark:text-slate-300 font-bold text-[10px] sm:text-[11px] mr-0.5 sm:mr-1">Text Size :</span>
             <button 
               onClick={() => setFontSize('normal')}
