@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
-import Hero from './components/Hero';
 import SarkariResultDesk from './components/SarkariResultDesk';
 import ExploreServicesDesk from './components/ExploreServicesDesk';
-import Testimonials from './components/Testimonials';
-import Faqs from './components/Faqs';
 import Footer from './components/Footer';
 import PrivacyPolicyModal, { PolicyTab } from './components/PrivacyPolicyModal';
 import { WebsiteSettings, Announcement, GalleryItem } from './types';
@@ -164,19 +161,6 @@ export default function App() {
 
           {/* Explore All Government & Digital Services Directory */}
           <ExploreServicesDesk onApplyService={handleServiceSelect} />
-
-          {/* Hero section */}
-          <Hero
-            settings={settings}
-            announcements={announcements}
-            onVisitClick={handleVisitClick}
-          />
-
-          {/* Reviews Section */}
-          <Testimonials />
-
-          {/* FAQs Accordion */}
-          <Faqs />
         </div>
       </main>
 
