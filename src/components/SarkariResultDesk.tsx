@@ -53,12 +53,14 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     customServiceText: '',
     userCategory: 'genObc' as 'genObc' | 'scSt',
     paymentMode: 'online' as 'cash' | 'online',
+    utrNumber: '',
     additionalDetails: '',
     portalFee: 50, // Processing charge
     applicationFee: 0, // Exam application fee
   });
 
   const [copiedUpi, setCopiedUpi] = useState(false);
+  const [utrError, setUtrError] = useState<string | null>(null);
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
   const [submissionReceipt, setSubmissionReceipt] = useState<any>(null);
   const [activeAlertTab, setActiveAlertTab] = useState<'alerts' | 'updates' | 'help'>('alerts');
@@ -145,8 +147,17 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setUtrError(null);
+
     if (!formData.customerName || !formData.phoneNumber || !formData.selectedService) {
       return;
+    }
+
+    if (formData.paymentMode === 'online') {
+      if (!formData.utrNumber || formData.utrNumber.trim().length < 4) {
+        setUtrError('Please enter the mandatory 12-digit UPI UTR / Transaction Reference ID.');
+        return;
+      }
     }
 
     const randomNum = Math.floor(100000 + Math.random() * 900000);
@@ -160,6 +171,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       selectedService: formData.selectedService === 'other' ? formData.customServiceText : formData.selectedService,
       userCategory: formData.userCategory === 'genObc' ? 'General/OBC' : 'SC/ST',
       paymentMode: formData.paymentMode,
+      utrNumber: formData.paymentMode === 'online' ? formData.utrNumber.trim() : 'N/A',
       totalAmount: formData.paymentMode === 'online' ? (formData.portalFee + formData.applicationFee) : formData.portalFee,
       additionalDetails: formData.additionalDetails || 'None',
       submittedAt: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('en-US')
@@ -183,8 +195,9 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
           service_requested: mockReceipt.selectedService,
           category: mockReceipt.userCategory,
           payment_mode: mockReceipt.paymentMode,
+          utr_number: mockReceipt.utrNumber,
           amount: `₹${mockReceipt.totalAmount}`,
-          message: `Application Token ID: ${mockReceipt.appId}\nApplicant Name: ${mockReceipt.customerName}\nMobile Number: ${mockReceipt.phoneNumber}\nEmail: ${mockReceipt.emailAddress}\nDate of Birth: ${mockReceipt.dateOfBirth}\nSelected Service: ${mockReceipt.selectedService}\nCategory: ${mockReceipt.userCategory}\nPayment Mode: ${mockReceipt.paymentMode}\nAmount Charged: ₹${mockReceipt.totalAmount}\nInstructions/Note: ${mockReceipt.additionalDetails}`
+          message: `Application Token ID: ${mockReceipt.appId}\nApplicant Name: ${mockReceipt.customerName}\nMobile Number: ${mockReceipt.phoneNumber}\nEmail: ${mockReceipt.emailAddress}\nDate of Birth: ${mockReceipt.dateOfBirth}\nSelected Service: ${mockReceipt.selectedService}\nCategory: ${mockReceipt.userCategory}\nPayment Mode: ${mockReceipt.paymentMode}\nPayment UTR Ref No: ${mockReceipt.utrNumber}\nAmount Charged: ₹${mockReceipt.totalAmount}\nInstructions/Note: ${mockReceipt.additionalDetails}`
         })
       }).catch(err => console.error('Web3Forms delivery error:', err));
     } catch (err) {
@@ -671,53 +684,119 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
                     {/* Interactive QR code scanner shown when online mode is active */}
                     {formData.paymentMode === 'online' ? (
-                      <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white rounded-xl p-4 shadow-sm border border-slate-200/60 dark:border-slate-800 flex flex-col items-center text-center animate-fade-in relative">
-                        <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 rounded-md text-[7px] font-black tracking-widest uppercase animate-pulse">
-                          Live Scan QR
+                      <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-2xl p-4 shadow-md border border-slate-200 dark:border-slate-800 flex flex-col items-center text-center animate-fade-in relative overflow-hidden">
+                        {/* Top Google Colors Decorative Bar */}
+                        <div className="absolute top-0 left-0 right-0 h-1.5 flex">
+                          <div className="w-1/4 bg-[#4285F4]"></div>
+                          <div className="w-1/4 bg-[#34A853]"></div>
+                          <div className="w-1/4 bg-[#FBBC05]"></div>
+                          <div className="w-1/4 bg-[#EA4335]"></div>
                         </div>
-                        
-                        <p className="text-[9px] text-slate-400 dark:text-slate-500 font-extrabold uppercase tracking-widest mb-2">
-                          Scan to complete filing registration
-                        </p>
 
-                        <div className="p-2 bg-white dark:bg-white rounded-lg mb-2 border border-slate-200/80">
-                          {/* Live rendered UPI payment url */}
+                        {/* Header with Google Pay logo & Merchant details */}
+                        <div className="mt-1 mb-2 flex flex-col items-center">
+                          <div className="flex items-center justify-center gap-1 font-extrabold text-lg text-slate-800 dark:text-white tracking-tight">
+                            <span className="text-[#4285F4]">G</span>
+                            <span className="text-[#EA4335]">o</span>
+                            <span className="text-[#FBBC05]">o</span>
+                            <span className="text-[#4285F4]">g</span>
+                            <span className="text-[#34A853]">l</span>
+                            <span className="text-[#EA4335]">e</span>
+                            <span className="ml-1 text-slate-800 dark:text-slate-100 font-bold">Pay</span>
+                          </div>
+                          
+                          <h4 className="text-sm font-black text-slate-900 dark:text-white mt-1">
+                            Model Common Service Centre
+                          </h4>
+                          <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 font-mono">
+                            +91 70068 33767
+                          </p>
+                          <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">
+                            Scan &amp; pay
+                          </p>
+                        </div>
+
+                        {/* High quality QR Code Frame */}
+                        <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-inner my-1 flex flex-col items-center relative">
                           <img
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=130x130&color=0d3164&data=${encodeURIComponent(
-                              `upi://pay?pa=erwsu@axl&pn=Apex%20Cyber%20Cafe&am=${formData.portalFee + formData.applicationFee}&cu=INR&tn=APEX_${encodeURIComponent((formData.customerName || 'Service').replace(/\s+/g, '_'))}`
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&color=000000&data=${encodeURIComponent(
+                              `upi://pay?pa=7006833767-2@okbizaxis&pn=Model%20Common%20Service%20Centre&am=${formData.portalFee + formData.applicationFee}&cu=INR&tn=CSC_DOST_${encodeURIComponent((formData.customerName || 'Payment').replace(/\s+/g, '_'))}`
                             )}`}
-                            alt="Payment UPI QR Code"
-                            className="w-28 h-28 object-contain"
+                            alt="Google Pay QR Code"
+                            className="w-36 h-36 object-contain"
                             referrerPolicy="no-referrer"
                           />
                         </div>
 
-                        {/* Click to Copy UPI ID */}
-                        <div className="flex items-center gap-1.5 px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg mb-1.5 max-w-full">
-                          <span className="text-[10px] font-mono font-black text-slate-700 dark:text-slate-300 truncate">
-                            erwsu@axl
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              navigator.clipboard.writeText('erwsu@axl');
-                              setCopiedUpi(true);
-                              setTimeout(() => setCopiedUpi(false), 2000);
-                            }}
-                            className="p-0.5 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
-                            title="Copy UPI ID"
-                          >
-                            {copiedUpi ? (
-                              <Check className="w-3 h-3 text-emerald-500 scale-110" />
-                            ) : (
-                              <Copy className="w-3 h-3" />
-                            )}
-                          </button>
+                        {/* UPI ID Banner with Copy button */}
+                        <div className="mt-2 w-full max-w-xs">
+                          <div className="flex items-center justify-between gap-1 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
+                            <span className="text-[10px] font-mono font-extrabold text-slate-800 dark:text-slate-200 truncate">
+                              7006833767-2@okbizaxis
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText('7006833767-2@okbizaxis');
+                                setCopiedUpi(true);
+                                setTimeout(() => setCopiedUpi(false), 2000);
+                              }}
+                              className="px-2 py-0.5 bg-amber-500 hover:bg-amber-600 text-white rounded-md text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 shrink-0"
+                              title="Copy UPI ID"
+                            >
+                              {copiedUpi ? (
+                                <>
+                                  <Check className="w-3 h-3 text-white" />
+                                  <span>Copied</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-3 h-3" />
+                                  <span>Copy</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
                         </div>
 
-                        <p className="text-[8px] text-slate-400 leading-normal max-w-[200px]">
-                          BHIM, Google Pay, PhonePe, Paytm, or any banking UPI App. Scan, complete payment, then submit the application.
-                        </p>
+                        {/* Supported App Badges */}
+                        <div className="mt-2.5 flex flex-wrap items-center justify-center gap-1">
+                          <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[8px] font-black text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">BHIM UPI</span>
+                          <span className="px-1.5 py-0.5 bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 rounded text-[8px] font-black border border-blue-200 dark:border-blue-800">GPay</span>
+                          <span className="px-1.5 py-0.5 bg-sky-50 dark:bg-sky-950 text-sky-600 dark:text-sky-400 rounded text-[8px] font-black border border-sky-200 dark:border-sky-800">Paytm</span>
+                          <span className="px-1.5 py-0.5 bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400 rounded text-[8px] font-black border border-purple-200 dark:border-purple-800">PhonePe</span>
+                          <span className="px-1.5 py-0.5 bg-orange-50 dark:bg-orange-950 text-orange-600 dark:text-orange-400 rounded text-[8px] font-black border border-orange-200 dark:border-orange-800">Amazon Pay</span>
+                        </div>
+
+                        {/* MANDATORY UTR / TRANSACTION ID INPUT */}
+                        <div className="w-full mt-3.5 text-left border-t border-slate-200 dark:border-slate-800 pt-3">
+                          <label className="text-[11px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center justify-between">
+                            <span>12-Digit UTR / Transaction Ref ID <span className="text-red-500">*</span></span>
+                            <span className="text-[9px] text-red-500 font-extrabold uppercase bg-red-50 dark:bg-red-950 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800">Mandatory</span>
+                          </label>
+                          <div className="relative mt-1.5">
+                            <input
+                              type="text"
+                              required={formData.paymentMode === 'online'}
+                              placeholder="Enter 12-Digit UTR No. (e.g., 420819123456)"
+                              value={formData.utrNumber}
+                              onChange={(e) => {
+                                setFormData({ ...formData, utrNumber: e.target.value });
+                                if (utrError) setUtrError(null);
+                              }}
+                              className={`w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border ${utrError ? 'border-red-500 ring-2 ring-red-500/20' : 'border-amber-400 dark:border-amber-500 focus:border-amber-500'} rounded-xl text-slate-900 dark:text-white font-mono font-extrabold text-xs focus:ring-2 focus:ring-amber-500/20 outline-none`}
+                            />
+                          </div>
+                          {utrError ? (
+                            <p className="text-[10px] text-red-500 font-bold mt-1 animate-pulse">
+                              ⚠️ {utrError}
+                            </p>
+                          ) : (
+                            <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-1 font-medium leading-tight">
+                              * After scanning &amp; paying, copy the 12-digit UTR/Ref No. from GPay/PhonePe/Paytm payment receipt and paste it above.
+                            </p>
+                          )}
+                        </div>
                       </div>
                     ) : (
                       <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-850 rounded-xl p-4 text-center flex flex-col items-center justify-center py-5 animate-fade-in">
@@ -815,6 +894,13 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                       ₹{submissionReceipt?.totalAmount} ({submissionReceipt?.paymentMode === 'online' ? 'Online Paid' : 'Cash Pending'})
                     </span>
                   </div>
+
+                  {submissionReceipt?.paymentMode === 'online' && (
+                    <div className="sm:col-span-2 bg-amber-50 dark:bg-amber-950/40 p-2 rounded-lg border border-amber-200 dark:border-amber-800">
+                      <span className="text-amber-700 dark:text-amber-400 block font-black uppercase text-[10px] tracking-wider">UPI Payment UTR / Ref ID:</span>
+                      <span className="text-xs font-black font-mono text-slate-900 dark:text-white">{submissionReceipt?.utrNumber}</span>
+                    </div>
+                  )}
                 </div>
 
                 {submissionReceipt?.additionalDetails && submissionReceipt?.additionalDetails !== 'None' && (
@@ -856,6 +942,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 *Service Requested:* ${submissionReceipt.selectedService}
 *Category:* ${submissionReceipt.userCategory}
 *Payment Mode:* ${submissionReceipt.paymentMode}
+*Payment UTR / Ref No:* ${submissionReceipt.utrNumber}
 *Amount:* ₹${submissionReceipt.totalAmount}
 *Instructions:* ${submissionReceipt.additionalDetails}`;
                       window.open(`https://wa.me/917006833767?text=${encodeURIComponent(msg)}`, '_blank');
@@ -877,6 +964,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                   <button
                     onClick={() => {
                       setIsFormSubmitted(false);
+                      setUtrError(null);
                       setFormData({
                         customerName: '',
                         phoneNumber: '',
@@ -886,6 +974,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                         customServiceText: '',
                         userCategory: 'genObc',
                         paymentMode: 'online',
+                        utrNumber: '',
                         additionalDetails: '',
                         portalFee: 50,
                         applicationFee: 0
