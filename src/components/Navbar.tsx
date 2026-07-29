@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Sun, Moon, Shield, Calendar, PhoneCall, Cpu, Sparkles, Eye, Languages, Home, Briefcase, Flame, Info, Headphones, Menu, X, Star, ShieldCheck } from 'lucide-react';
+import { PolicyTab } from './PrivacyPolicyModal';
 
 interface NavbarProps {
   darkMode: boolean;
   setDarkMode: (val: boolean) => void;
   cafeName: string;
-  onOpenPrivacyPolicy?: () => void;
+  onOpenPrivacyPolicy?: (tab?: PolicyTab) => void;
 }
 
 export default function Navbar({
@@ -61,11 +62,11 @@ export default function Navbar({
             </button>
           </div>
 
-          {/* Right: Helpdesk number and operating hours exactly like screenshot */}
+          {/* Right: Helpdesk number and operating hours exactly like prompt */}
           <div className="flex items-center gap-1.5 text-[11px] font-sans text-slate-700 dark:text-slate-300">
             <span className="text-base text-slate-800 dark:text-slate-200">📞</span>
             <span className="leading-snug">
-              Helpdesk <span className="font-bold text-slate-950 dark:text-white">+91 70068 33767</span> - <span className="text-[#a4630a] dark:text-amber-400 font-extrabold">Working Hours: 9:30 AM to 6:00 PM (Monday to Saturday)</span>
+              Helpdesk <span className="font-bold text-slate-950 dark:text-white">+91 70068 33767</span> - <span className="text-[#a4630a] dark:text-amber-400 font-extrabold">Working Hours: 09:00 AM to 08:30 PM (Monday to Saturday)</span>
             </span>
           </div>
         </div>
@@ -218,9 +219,20 @@ export default function Navbar({
           {/* Accessibility Settings & Mode switches */}
           <div className="flex items-center gap-2">
             
+            {/* Help & Support Button */}
+            <button
+              onClick={() => onOpenPrivacyPolicy && onOpenPrivacyPolicy('help')}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
+              title="Help & Support Center"
+              id="help-support-nav-btn"
+            >
+              <Headphones className="w-3.5 h-3.5 text-teal-400" />
+              <span className="hidden sm:inline">Help &amp; Support</span>
+            </button>
+
             {/* Privacy Policy Button */}
             <button
-              onClick={onOpenPrivacyPolicy}
+              onClick={() => onOpenPrivacyPolicy && onOpenPrivacyPolicy('privacy')}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
               title="View Privacy Policy"
               id="privacy-policy-nav-btn"
@@ -296,11 +308,25 @@ export default function Navbar({
                 );
               })}
 
+              {/* Help & Support Mobile Item */}
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (onOpenPrivacyPolicy) onOpenPrivacyPolicy('help');
+                }}
+                className="w-full p-3 rounded-xl flex items-center gap-3 text-left transition-all hover:bg-white/5 text-slate-100 hover:text-white cursor-pointer"
+              >
+                <Headphones className="w-4 h-4 text-teal-400" />
+                <span className="text-xs uppercase tracking-wider font-semibold text-teal-300">
+                  Help &amp; Support
+                </span>
+              </button>
+
               {/* Privacy Policy Mobile Item */}
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
-                  if (onOpenPrivacyPolicy) onOpenPrivacyPolicy();
+                  if (onOpenPrivacyPolicy) onOpenPrivacyPolicy('privacy');
                 }}
                 className="w-full p-3 rounded-xl flex items-center gap-3 text-left transition-all hover:bg-white/5 text-slate-100 hover:text-white cursor-pointer"
               >

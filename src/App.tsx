@@ -6,7 +6,7 @@ import ExploreServicesDesk from './components/ExploreServicesDesk';
 import Testimonials from './components/Testimonials';
 import Faqs from './components/Faqs';
 import Footer from './components/Footer';
-import PrivacyPolicyModal from './components/PrivacyPolicyModal';
+import PrivacyPolicyModal, { PolicyTab } from './components/PrivacyPolicyModal';
 import { WebsiteSettings, Announcement, GalleryItem } from './types';
 import { ShieldCheck, MessageSquare, PhoneCall, Sparkles, Building2, HelpCircle } from 'lucide-react';
 
@@ -31,6 +31,12 @@ export default function App() {
 
   const [selectedService, setSelectedService] = useState('');
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
+  const [legalModalTab, setLegalModalTab] = useState<PolicyTab>('privacy');
+
+  const openLegalModal = (tab: PolicyTab = 'privacy') => {
+    setLegalModalTab(tab);
+    setIsPrivacyModalOpen(true);
+  };
   
   const [settings, setSettings] = useState<WebsiteSettings>(FALLBACK_SETTINGS);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -61,7 +67,17 @@ export default function App() {
 
     const checkHash = () => {
       if (window.location.hash === '#privacy') {
-        setIsPrivacyModalOpen(true);
+        openLegalModal('privacy');
+      } else if (window.location.hash === '#terms') {
+        openLegalModal('terms');
+      } else if (window.location.hash === '#hyperlink') {
+        openLegalModal('hyperlink');
+      } else if (window.location.hash === '#copyright') {
+        openLegalModal('copyright');
+      } else if (window.location.hash === '#disclaimer') {
+        openLegalModal('disclaimer');
+      } else if (window.location.hash === '#help') {
+        openLegalModal('help');
       }
     };
     checkHash();
@@ -122,7 +138,7 @@ export default function App() {
         darkMode={darkMode}
         setDarkMode={setDarkMode}
         cafeName={settings.cafeName}
-        onOpenPrivacyPolicy={() => setIsPrivacyModalOpen(true)}
+        onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
       />
 
       {/* Main Container */}
@@ -153,13 +169,14 @@ export default function App() {
       {/* Global Page Footer */}
       <Footer 
         cafeName={settings.cafeName} 
-        onOpenPrivacyPolicy={() => setIsPrivacyModalOpen(true)}
+        onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
       />
 
-      {/* Privacy Policy Interactive Modal */}
+      {/* Privacy Policy & Terms Interactive Modal */}
       <PrivacyPolicyModal 
         isOpen={isPrivacyModalOpen} 
         onClose={() => setIsPrivacyModalOpen(false)} 
+        initialTab={legalModalTab}
       />
 
       {/* Floating WhatsApp Chat Button */}

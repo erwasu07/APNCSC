@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowUp, ShieldCheck, Heart, Info } from 'lucide-react';
+import { PolicyTab } from './PrivacyPolicyModal';
 
 interface FooterProps {
   cafeName: string;
-  onOpenPrivacyPolicy?: () => void;
+  onOpenPrivacyPolicy?: (tab?: PolicyTab) => void;
 }
 
 export default function Footer({ cafeName, onOpenPrivacyPolicy }: FooterProps) {
@@ -106,17 +107,62 @@ export default function Footer({ cafeName, onOpenPrivacyPolicy }: FooterProps) {
                   type="button" 
                   onClick={(e) => {
                     e.preventDefault();
-                    if (onOpenPrivacyPolicy) onOpenPrivacyPolicy();
+                    if (onOpenPrivacyPolicy) onOpenPrivacyPolicy('privacy');
                   }}
                   className="hover:text-white underline transition-colors cursor-pointer text-left font-bold"
                 >
                   Privacy Policy
                 </button>
-                <a href="#terms" className="hover:text-white underline transition-colors">Terms of Use</a>
-                <a href="#hyperlink" className="hover:text-white underline transition-colors">Hyperlink Policy</a>
-                <a href="#copyright" className="hover:text-white underline transition-colors">Copyright Policy</a>
-                <a href="#disclaimer" className="hover:text-white underline transition-colors">Disclaimer</a>
-                <a href="#help" className="hover:text-white underline transition-colors">Help</a>
+                <button 
+                  type="button" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (onOpenPrivacyPolicy) onOpenPrivacyPolicy('terms');
+                  }}
+                  className="hover:text-white underline transition-colors cursor-pointer text-left font-bold"
+                >
+                  Terms of Use
+                </button>
+                <button 
+                  type="button" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (onOpenPrivacyPolicy) onOpenPrivacyPolicy('hyperlink');
+                  }}
+                  className="hover:text-white underline transition-colors cursor-pointer text-left font-bold"
+                >
+                  Hyperlink Policy
+                </button>
+                <button 
+                  type="button" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (onOpenPrivacyPolicy) onOpenPrivacyPolicy('copyright');
+                  }}
+                  className="hover:text-white underline transition-colors cursor-pointer text-left font-bold"
+                >
+                  Copyright Policy
+                </button>
+                <button 
+                  type="button" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (onOpenPrivacyPolicy) onOpenPrivacyPolicy('disclaimer');
+                  }}
+                  className="hover:text-white underline transition-colors cursor-pointer text-left font-bold"
+                >
+                  Disclaimer
+                </button>
+                <button 
+                  type="button" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (onOpenPrivacyPolicy) onOpenPrivacyPolicy('help');
+                  }}
+                  className="hover:text-white underline transition-colors cursor-pointer text-left font-bold"
+                >
+                  Help &amp; Support
+                </button>
               </div>
             </div>
           </div>
