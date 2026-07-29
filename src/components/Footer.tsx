@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUp, ShieldCheck, Heart, Info } from 'lucide-react';
+import { ArrowUp, ShieldCheck, Heart, Info, MapPin, ExternalLink, Navigation } from 'lucide-react';
 import { PolicyTab } from './PrivacyPolicyModal';
 
 interface FooterProps {
@@ -46,63 +46,91 @@ export default function Footer({ cafeName, onOpenPrivacyPolicy }: FooterProps) {
       <footer id="footer" className="bg-slate-950 text-slate-300 py-16 border-t border-slate-900 transition-colors">
         <div className="max-w-7xl mx-auto px-4">
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-8 mb-10 pb-10 border-b border-slate-900">
-            {/* Left Col - Brand & Mandates */}
-            <div className="md:col-span-4 space-y-4">
-              <div className="flex items-center gap-3">
-                {/* Emblem graphic box */}
-                <div className="w-9 h-9 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-center text-blue-900 font-extrabold text-xs shadow-md">
-                  CSC
-                </div>
-                <div className="flex flex-col text-left">
-                  <span className="text-base font-black tracking-tight text-white font-display">
-                    CSC <span className="text-orange-500">DOST</span>
-                  </span>
-                  <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">Digital Seva Terminal</span>
-                </div>
-              </div>
+
+
+          {/* GOOGLE MAPS LOCATION CARD */}
+          <div className="mb-10 p-5 md:p-6 bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl">
+            <div className="flex flex-col md:flex-row items-stretch justify-between gap-6">
               
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Operated as an official co-partner in coordination with the National Institute of Electronics &amp; Information Technology (NIELIT) and UIDAI, Ministry of Electronics &amp; IT, Government of India.
-              </p>
+              {/* Location Information */}
+              <div className="flex-1 space-y-3 flex flex-col justify-center">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-500/10 border border-orange-500/20 text-orange-400 rounded-full text-xs font-bold w-fit">
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span>CSC DOST Location</span>
+                </div>
 
-              <div className="flex items-center gap-2.5 text-[10px] bg-slate-900 p-3 rounded-xl text-slate-400 border border-slate-800/80 max-w-xs">
-                <ShieldCheck className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                <span>Government regulated tariff plan strictly applied for all public transactions.</span>
+                <h3 className="text-base md:text-lg font-black text-white">
+                  Visit Our Official Common Service Centre
+                </h3>
+
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Verified CSC Node (ID: <strong className="text-white">212515670018</strong>). Visit us for instant offline assistance with online applications, document verification, Aadhaar &amp; PAN card updates, e-KYC, and digital certificates.
+                </p>
+
+                <div className="pt-2 flex flex-wrap items-center gap-3">
+                  <a
+                    href="https://share.google/9jGqiH9vxn5BNUES3"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-lg shadow-orange-500/20 transition-all cursor-pointer group"
+                    id="open-google-maps-btn"
+                  >
+                    <Navigation className="w-4 h-4 group-hover:rotate-45 transition-transform" />
+                    <span>Open in Google Maps</span>
+                    <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                  </a>
+
+                  <a
+                    href="https://share.google/9jGqiH9vxn5BNUES3"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-slate-400 hover:text-white underline font-semibold transition-colors flex items-center gap-1"
+                  >
+                    Get Driving Directions
+                  </a>
+                </div>
               </div>
-            </div>
 
-            {/* Col 2 - Govt Directories */}
-            <div className="md:col-span-2 space-y-3">
-              <h4 className="text-xs font-black uppercase tracking-widest text-slate-200 border-l-2 border-orange-500 pl-2">Government of India</h4>
-              <ul className="space-y-2 text-xs text-slate-400">
-                <li><a href="https://www.india.gov.in" target="_blank" rel="noopener noreferrer" className="hover:text-orange-400 transition-colors">National Portal of India</a></li>
-                <li><a href="https://www.meity.gov.in" target="_blank" rel="noopener noreferrer" className="hover:text-orange-400 transition-colors">Ministry of IT (MeitY)</a></li>
-                <li><a href="https://www.digitalindia.gov.in" target="_blank" rel="noopener noreferrer" className="hover:text-orange-400 transition-colors">Digital India Initiative</a></li>
-                <li><a href="https://uidai.gov.in" target="_blank" rel="noopener noreferrer" className="hover:text-orange-400 transition-colors">UIDAI Aadhaar Portal</a></li>
-                <li><a href="https://www.mygov.in" target="_blank" rel="noopener noreferrer" className="hover:text-orange-400 transition-colors">MyGov Citizen Portal</a></li>
-              </ul>
-            </div>
+              {/* Map Preview / Frame */}
+              <div className="w-full md:w-80 lg:w-96 h-48 md:h-auto min-h-[160px] rounded-xl overflow-hidden border border-slate-800 relative bg-slate-950 flex flex-col justify-between p-4 group">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-slate-950 pointer-events-none"></div>
+                
+                <div className="relative z-10 flex items-center justify-between">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-900/80 backdrop-blur px-2 py-1 rounded border border-slate-800">
+                    Live Location
+                  </span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                </div>
 
-            {/* Col 3 - Candidate Zone */}
-            <div className="md:col-span-3 space-y-3">
-              <h4 className="text-xs font-black uppercase tracking-widest text-slate-200 border-l-2 border-orange-500 pl-2">Student &amp; Services Zone</h4>
-              <ul className="space-y-2 text-xs text-slate-400">
-                <li><a href="#services" className="hover:text-orange-400 transition-colors">Apply CCC / BCC Online</a></li>
-                <li><a href="#sarkari-board" className="hover:text-orange-400 transition-colors">Download Exam Admit Cards</a></li>
-                <li><a href="https://student.nielit.gov.in" target="_blank" rel="noopener noreferrer" className="hover:text-orange-400 transition-colors">NIELIT Candidate Portal</a></li>
-                <li><a href="#services" className="hover:text-orange-400 transition-colors">Aadhaar Card Demographics</a></li>
-                <li><a href="#sarkari-board" className="hover:text-orange-400 transition-colors">Check Sarkari Result updates</a></li>
-              </ul>
-            </div>
+                <div className="relative z-10 text-center my-auto py-2">
+                  <MapPin className="w-8 h-8 text-orange-500 mx-auto mb-2 animate-bounce" />
+                  <p className="text-xs font-bold text-white">CSC DOST Service Station</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">Click to view location map &amp; navigation</p>
+                </div>
 
-            {/* Col 4 - Policies */}
-            <div className="md:col-span-3 space-y-3">
+                <a
+                  href="https://share.google/9jGqiH9vxn5BNUES3"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="relative z-10 w-full py-1.5 bg-slate-900 hover:bg-slate-850 text-slate-300 hover:text-white text-[11px] font-bold rounded-lg border border-slate-800 text-center transition-colors block"
+                >
+                  View Full Map ↗
+                </a>
+              </div>
+
+            </div>
+          </div>
+
+
+
+          {/* LEGALITIES & POLICY */}
+          <div className="pb-6 mb-6 border-b border-slate-900">
+            <div className="space-y-2">
               <h4 className="text-xs font-black uppercase tracking-widest text-slate-200 border-l-2 border-orange-500 pl-2">Legalities &amp; Policy</h4>
               <p className="text-[11px] text-slate-400 leading-relaxed">
                 Biometric demographic transactions are safe &amp; encrypted directly via GoI portals. No client-side records are cached.
               </p>
-              <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-[10px] font-bold text-slate-400 pt-1">
+              <div className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] font-bold text-slate-400 pt-1">
                 <button 
                   type="button" 
                   onClick={(e) => {
@@ -164,25 +192,6 @@ export default function Footer({ cafeName, onOpenPrivacyPolicy }: FooterProps) {
                   Help &amp; Support
                 </button>
               </div>
-            </div>
-          </div>
-
-          {/* OFFICIAL GOVERNMENT INITIATIVE BANNER LOGOS */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5 pb-10 mb-8 border-b border-slate-900 text-center text-xs font-bold text-slate-500">
-            <div className="border border-slate-900 bg-slate-900/50 p-2.5 rounded-xl hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center gap-1.5">
-              <span className="text-orange-400">●</span> Digital India
-            </div>
-            <div className="border border-slate-900 bg-slate-900/50 p-2.5 rounded-xl hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center gap-1.5">
-              <span className="text-white">●</span> National Portal of India
-            </div>
-            <div className="border border-slate-900 bg-slate-900/50 p-2.5 rounded-xl hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center gap-1.5">
-              <span className="text-green-500">●</span> MyGov.in
-            </div>
-            <div className="border border-slate-900 bg-slate-900/50 p-2.5 rounded-xl hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center gap-1.5">
-              <span className="text-blue-400">●</span> MeitY Portal
-            </div>
-            <div className="border border-slate-900 bg-slate-900/50 p-2.5 rounded-xl hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center gap-1.5">
-              <span className="text-purple-400">●</span> NIC India
             </div>
           </div>
 
