@@ -75,47 +75,82 @@
   background: rgba(156, 163, 175, 0.7);
 }
 
-/* Optimized Print CSS for Digital Receipt / Slip printing */
+/* Optimized Print CSS for Digital Receipt / Slip printing - Strictly Page 1 */
 @media print {
-  /* Hide everything on the page by default */
+  /* Restrict root document layout height to prevent multi-page overflow */
+  html, body {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide all elements on the screen by default */
   body * {
     visibility: hidden !important;
   }
 
-  /* Make only the digital slip receipt and its children visible */
+  /* Make only the digital slip receipt and its nested descendants visible */
   #printable-digital-slip,
   #printable-digital-slip * {
     visibility: visible !important;
   }
 
-  /* Position the receipt cleanly at the top of the page */
+  /* Position the receipt cleanly on Page 1 only */
   #printable-digital-slip {
-    position: absolute !important;
-    left: 0 !important;
+    position: fixed !important;
     top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
-    margin: 0 !important;
-    padding: 24px !important;
+    margin: 0 auto !important;
+    padding: 20px 24px !important;
     box-shadow: none !important;
-    border: 2px solid #10b981 !important;
+    border: 2px solid #cbd5e1 !important;
     border-radius: 16px !important;
     background-color: #ffffff !important;
     color: #0f172a !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+    box-sizing: border-box !important;
+    z-index: 999999 !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: avoid !important;
+    break-inside: avoid !important;
   }
 
-  /* Explicitly hide action buttons, floating WhatsApp badge, and interactive components */
+  /* Preserve grid and flex layouts inside the receipt */
+  #printable-digital-slip .grid {
+    display: grid !important;
+  }
+  #printable-digital-slip .flex {
+    display: flex !important;
+  }
+  #printable-digital-slip .inline-flex {
+    display: inline-flex !important;
+  }
+  #printable-digital-slip .inline-block {
+    display: inline-block !important;
+  }
+
+  /* Explicitly hide action buttons, floating WhatsApp badge, and interactive controls */
   .no-print,
+  .no-print *,
   #whatsapp-floating-badge,
-  button {
+  button,
+  footer,
+  nav {
     display: none !important;
+    visibility: hidden !important;
   }
 
   @page {
-    size: auto;
-    margin: 10mm;
+    size: portrait;
+    margin: 8mm;
   }
 }
 
