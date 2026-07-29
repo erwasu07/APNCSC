@@ -17,7 +17,6 @@ import {
   Search,
   Check,
   Download,
-  FileSpreadsheet,
   Tag,
   Landmark,
   Laptop,
@@ -42,28 +41,6 @@ export default function ExploreServicesDesk({ onApplyService }: ExploreServicesD
                           service.description.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
-
-  // Export to Excel / CSV function
-  const handleExportToExcel = () => {
-    const headers = ['Category', 'Service Name', 'Price / Fee', 'Estimated Time', 'Required Documents', 'Description'];
-    const rows = SERVICES_LIST.map(service => [
-      `"${CATEGORY_LABELS[service.category]}"`,
-      `"${service.name.replace(/"/g, '""')}"`,
-      `"${service.price.replace(/"/g, '""')}"`,
-      `"${service.estimatedTime}"`,
-      `"${service.requirements.join('; ').replace(/"/g, '""')}"`,
-      `"${service.description.replace(/"/g, '""')}"`
-    ]);
-
-    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', 'E_Services_Directory_With_Prices.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   // Group services by category for clean, box-based rendering
   const getServicesByCategory = (category: 'csc' | 'digital' | 'education' | 'business') => {
@@ -178,16 +155,6 @@ export default function ExploreServicesDesk({ onApplyService }: ExploreServicesD
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {/* Download Excel Sheet Button */}
-            <button
-              onClick={handleExportToExcel}
-              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-extrabold uppercase tracking-wider flex items-center gap-2 transition-all shadow-md shadow-emerald-600/20 cursor-pointer"
-              title="Download Excel List with Prices"
-            >
-              <FileSpreadsheet className="w-4 h-4" />
-              <span>Download Excel List (.CSV)</span>
-            </button>
-
             {/* Quick Search inside Services Directory */}
             <div className="relative w-full sm:w-64 group">
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-cyan-500 to-indigo-500 rounded-xl blur-sm opacity-20 group-hover:opacity-60 group-focus-within:opacity-80 transition-all duration-300 -z-10"></div>
