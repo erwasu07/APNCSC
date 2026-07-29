@@ -110,7 +110,12 @@ export default function App() {
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-    }, 100);
+      const nameInput = document.getElementById('applicant-name-input') as HTMLInputElement | null;
+      if (nameInput) {
+        nameInput.focus();
+        nameInput.click();
+      }
+    }, 150);
   };
 
   // Scrolls to Digital Application & Appointment Desk
@@ -120,7 +125,12 @@ export default function App() {
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-    }, 100);
+      const nameInput = document.getElementById('applicant-name-input') as HTMLInputElement | null;
+      if (nameInput) {
+        nameInput.focus();
+        nameInput.click();
+      }
+    }, 150);
   };
 
   // WhatsApp click trigger

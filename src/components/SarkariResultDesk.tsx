@@ -218,13 +218,18 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       // Reset form submission view if a new service is selected
       setIsFormSubmitted(false);
 
-      // Smooth scroll to Digital Application & Appointment Desk
+      // Smooth scroll to Digital Application & Appointment Desk and auto focus Applicant Name
       setTimeout(() => {
         const formEl = document.getElementById('booking-portal-form');
         if (formEl) {
           formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-      }, 100);
+        const nameInput = document.getElementById('applicant-name-input') as HTMLInputElement | null;
+        if (nameInput) {
+          nameInput.focus();
+          nameInput.click();
+        }
+      }, 150);
     }
   }, [selectedService]);
 
@@ -379,13 +384,18 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       applicationFee: appFee
     }));
 
-    // Smooth scroll to our form container
+    // Smooth scroll to our form container and auto focus Applicant Name
     setTimeout(() => {
       const formEl = document.getElementById('booking-portal-form');
       if (formEl) {
         formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-    }, 200);
+      const nameInput = document.getElementById('applicant-name-input') as HTMLInputElement | null;
+      if (nameInput) {
+        nameInput.focus();
+        nameInput.click();
+      }
+    }, 150);
   };
 
   return (
@@ -578,12 +588,13 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                       {/* Full Name */}
                       <div className="space-y-1">
-                        <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                        <label htmlFor="applicant-name-input" className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1 cursor-pointer">
                           Applicant Name <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
                           <input
+                            id="applicant-name-input"
                             type="text"
                             required
                             placeholder="Full Name (as in records)"

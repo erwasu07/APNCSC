@@ -119,13 +119,18 @@ export default function ExploreServicesDesk({ onApplyService }: ExploreServicesD
     setSelectedService(null);
     onApplyService(service.name);
     
-    // Smooth scroll to Digital Application & Appointment Desk
+    // Smooth scroll to Digital Application & Appointment Desk and focus Applicant Name
     setTimeout(() => {
       const portalForm = document.getElementById('booking-portal-form');
       if (portalForm) {
         portalForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-    }, 100);
+      const nameInput = document.getElementById('applicant-name-input') as HTMLInputElement | null;
+      if (nameInput) {
+        nameInput.focus();
+        nameInput.click();
+      }
+    }, 150);
   };
 
   const getCategoryIcon = (category: string) => {
