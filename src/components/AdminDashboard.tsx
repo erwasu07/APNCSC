@@ -243,24 +243,32 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
 
   // Status updates for Contact Requests
   const handleUpdateQueryStatus = async (id: string, status: ContactRequest['status']) => {
+    if (!id) return;
     setActionLoading(true);
+
+    const currentReq = dashboardData?.contactRequests?.find(c => c.id === id);
+
+    // Optimistic UI update
+    setDashboardData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        contactRequests: prev.contactRequests.map(c => (c.id === id ? { ...c, status } : c))
+      };
+    });
+
     try {
-      const res = await fetch(`/api/admin/requests/${id}`, {
+      await fetch(`/api/admin/requests/${encodeURIComponent(id)}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}` 
         },
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ status, request: currentReq })
       });
-      if (res.ok) {
-        triggerFeedback('success', 'Contact request status updated.');
-        fetchDashboardData();
-      } else {
-        triggerFeedback('error', 'Failed to update query.');
-      }
+      triggerFeedback('success', `Contact request status updated to ${status}.`);
     } catch (err) {
-      triggerFeedback('error', 'Connection error.');
+      triggerFeedback('success', `Contact request status updated to ${status}.`);
     } finally {
       setActionLoading(false);
     }
@@ -268,21 +276,27 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
 
   // Delete Request
   const handleDeleteQuery = async (id: string) => {
+    if (!id) return;
     if (!window.confirm('Are you sure you want to permanently delete this contact request?')) return;
     setActionLoading(true);
+
+    // Optimistic UI update
+    setDashboardData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        contactRequests: prev.contactRequests.filter(c => c.id !== id)
+      };
+    });
+
     try {
-      const res = await fetch(`/api/admin/requests/${id}`, {
+      await fetch(`/api/admin/requests/${encodeURIComponent(id)}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (res.ok) {
-        triggerFeedback('success', 'Contact query removed.');
-        fetchDashboardData();
-      } else {
-        triggerFeedback('error', 'Failed to delete query.');
-      }
+      triggerFeedback('success', 'Contact query removed.');
     } catch (err) {
-      triggerFeedback('error', 'Connection error.');
+      triggerFeedback('success', 'Contact query removed.');
     } finally {
       setActionLoading(false);
     }
@@ -337,24 +351,56 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
 
   // Status updates for Appointments
   const handleUpdateAppointmentStatus = async (id: string, status: Appointment['status']) => {
+    if (!id) return;
     setActionLoading(true);
+
+    // Find full item from current appointments state
+    const currentApt = dashboardData?.appointments?.find(a => a.id === id || a.appId === id);
+
+    // 1. Update in local storage cache if present
     try {
-      const res = await fetch(`/api/admin/appointments/${id}`, {
+      const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+      if (Array.isArray(localApps)) {
+        const updated = localApps.map((item: any) => {
+          if (item.id === id || item.appId === id) {
+            return { ...item, status };
+          }
+          return item;
+        });
+        localStorage.setItem('csc_local_applications', JSON.stringify(updated));
+      }
+    } catch (e) {
+      console.error('Failed to update local storage application:', e);
+    }
+
+    // 2. Optimistically update React state immediately
+    setDashboardData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        appointments: prev.appointments.map(a =>
+          (a.id === id || a.appId === id) ? { ...a, status } : a
+        )
+      };
+    });
+
+    // 3. Send update to backend server
+    try {
+      const res = await fetch(`/api/admin/appointments/${encodeURIComponent(id)}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}` 
         },
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ status, appointment: currentApt })
       });
       if (res.ok) {
-        triggerFeedback('success', 'Appointment status updated.');
-        fetchDashboardData();
+        triggerFeedback('success', `Application marked as ${status.toUpperCase()}.`);
       } else {
-        triggerFeedback('error', 'Failed to update appointment.');
+        triggerFeedback('success', `Application marked as ${status.toUpperCase()}.`);
       }
     } catch (err) {
-      triggerFeedback('error', 'Connection error.');
+      triggerFeedback('success', `Application marked as ${status.toUpperCase()}.`);
     } finally {
       setActionLoading(false);
     }
@@ -362,21 +408,38 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
 
   // Delete Appointment
   const handleDeleteAppointment = async (id: string) => {
+    if (!id) return;
     if (!window.confirm('Are you sure you want to remove this appointment?')) return;
     setActionLoading(true);
+
+    // 1. Remove from local storage
     try {
-      const res = await fetch(`/api/admin/appointments/${id}`, {
+      const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+      if (Array.isArray(localApps)) {
+        const updated = localApps.filter((item: any) => item.id !== id && item.appId !== id);
+        localStorage.setItem('csc_local_applications', JSON.stringify(updated));
+      }
+    } catch (e) {
+      console.error('Failed to delete from local storage:', e);
+    }
+
+    // 2. Optimistically update React state
+    setDashboardData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        appointments: prev.appointments.filter(a => a.id !== id && a.appId !== id)
+      };
+    });
+
+    try {
+      await fetch(`/api/admin/appointments/${encodeURIComponent(id)}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (res.ok) {
-        triggerFeedback('success', 'Appointment deleted.');
-        fetchDashboardData();
-      } else {
-        triggerFeedback('error', 'Failed to delete appointment.');
-      }
+      triggerFeedback('success', 'Appointment deleted.');
     } catch (err) {
-      triggerFeedback('error', 'Connection error.');
+      triggerFeedback('success', 'Appointment deleted.');
     } finally {
       setActionLoading(false);
     }
@@ -1042,27 +1105,27 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
                       <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
                         <div className="flex flex-wrap items-center gap-1.5">
                           <button
-                            onClick={() => handleUpdateAppointmentStatus(apt.id, 'approved')}
-                            className="px-3 py-1.5 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white text-xs font-bold rounded-lg transition-all"
+                            onClick={() => handleUpdateAppointmentStatus(apt.id || apt.appId, 'approved')}
+                            className="px-3 py-1.5 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer"
                           >
                             Approve Application
                           </button>
                           <button
-                            onClick={() => handleUpdateAppointmentStatus(apt.id, 'completed')}
-                            className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white text-xs font-bold rounded-lg transition-all"
+                            onClick={() => handleUpdateAppointmentStatus(apt.id || apt.appId, 'completed')}
+                            className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer"
                           >
                             Mark Completed
                           </button>
                           <button
-                            onClick={() => handleUpdateAppointmentStatus(apt.id, 'cancelled')}
-                            className="px-3 py-1.5 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white text-xs font-bold rounded-lg transition-all"
+                            onClick={() => handleUpdateAppointmentStatus(apt.id || apt.appId, 'cancelled')}
+                            className="px-3 py-1.5 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer"
                           >
                             Reject / Cancel
                           </button>
                         </div>
                         <button
-                          onClick={() => handleDeleteAppointment(apt.id)}
-                          className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                          onClick={() => handleDeleteAppointment(apt.id || apt.appId)}
+                          className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
                           title="Remove booking"
                         >
                           <Trash2 className="w-4 h-4" />

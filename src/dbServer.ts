@@ -169,7 +169,7 @@ export function updateContactStatus(id: string, status: ContactRequest['status']
 
 export function updateAppointmentStatus(id: string, status: Appointment['status']): boolean {
   const db = getDb();
-  const item = db.appointments.find(r => r.id === id);
+  const item = db.appointments.find(r => r.id === id || (r as any).appId === id);
   if (item) {
     item.status = status;
     saveDb(db);

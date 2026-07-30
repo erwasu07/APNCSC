@@ -116,7 +116,7 @@
       "totalAmount": 0,
       "documents": [],
       "id": "apt-1785413615420-372",
-      "status": "pending",
+      "status": "approved",
       "date": "2026-07-30T12:13:35.420Z"
     },
     {
@@ -144,5 +144,5 @@
       "date": "2026-07-11T18:30:00.000Z"
     }
   ],
-  "views": 522
+  "views": 526
 }

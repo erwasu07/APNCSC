@@ -288,9 +288,15 @@ app.delete('/api/admin/gallery/:id', authenticateAdmin, (req, res) => {
 // Update contact request status
 app.put('/api/admin/requests/:id', authenticateAdmin, (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, request } = req.body;
   if (!status) return res.status(400).json({ error: 'Status is required' });
-  const success = updateContactStatus(id, status);
+  let success = updateContactStatus(id, status);
+  if (!success && request) {
+    const db = getDb();
+    db.contactRequests.unshift({ ...request, id, status });
+    saveDb(db);
+    success = true;
+  }
   if (success) {
     res.json({ success: true, message: 'Contact request status updated.' });
   } else {
@@ -315,9 +321,15 @@ app.delete('/api/admin/requests/:id', authenticateAdmin, (req, res) => {
 // Update appointment status
 app.put('/api/admin/appointments/:id', authenticateAdmin, (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, appointment } = req.body;
   if (!status) return res.status(400).json({ error: 'Status is required' });
-  const success = updateAppointmentStatus(id, status);
+  let success = updateAppointmentStatus(id, status);
+  if (!success && appointment) {
+    const db = getDb();
+    db.appointments.unshift({ ...appointment, id, status });
+    saveDb(db);
+    success = true;
+  }
   if (success) {
     res.json({ success: true, message: 'Appointment status updated.' });
   } else {
@@ -329,7 +341,7 @@ app.put('/api/admin/appointments/:id', authenticateAdmin, (req, res) => {
 app.delete('/api/admin/appointments/:id', authenticateAdmin, (req, res) => {
   const { id } = req.params;
   const db = getDb();
-  const index = db.appointments.findIndex(a => a.id === id);
+  const index = db.appointments.findIndex(a => a.id === id || (a as any).appId === id);
   if (index !== -1) {
     db.appointments.splice(index, 1);
     saveDb(db);
