@@ -44,9 +44,57 @@ function initDb() {
         }
       ],
       gallery: [],
-      contactRequests: [],
-      appointments: [],
-      views: 0
+      contactRequests: [
+        {
+          id: "req-1",
+          name: "Rajesh Kumar",
+          email: "rajesh.kumar@gmail.com",
+          phone: "+91 99887 76655",
+          service: "New PAN Card",
+          message: "I want to apply for a new PAN card. What documents are required?",
+          status: "pending",
+          date: new Date().toISOString()
+        },
+        {
+          id: "req-2",
+          name: "Priya Sharma",
+          email: "priya.sharma@yahoo.com",
+          phone: "+91 98765 12345",
+          service: "GST Return Filing",
+          message: "Need assistance with monthly GST return filing for my retail shop.",
+          status: "in_progress",
+          date: new Date().toISOString()
+        }
+      ],
+      appointments: [
+        {
+          id: "apt-1",
+          appId: "APEX-2026-981245",
+          name: "Suresh Gupta",
+          email: "suresh.g@outlook.com",
+          phone: "+91 94432 10987",
+          service: "Passport Application",
+          appointmentDate: "2026-07-31",
+          appointmentTime: "11:30 AM",
+          message: "Applying for renewal of passport. Will bring old passport copy and Aadhaar.",
+          status: "approved",
+          date: new Date().toISOString()
+        },
+        {
+          id: "apt-2",
+          appId: "APEX-2026-773412",
+          name: "Meena Devi",
+          email: "meena.devi@gmail.com",
+          phone: "+91 95543 21098",
+          service: "Aadhaar Update Guidance",
+          appointmentDate: "2026-08-01",
+          appointmentTime: "03:00 PM",
+          message: "Need to update my residential address in my Aadhaar card.",
+          status: "pending",
+          date: new Date().toISOString()
+        }
+      ],
+      views: 520
     };
     fs.writeFileSync(DB_PATH, JSON.stringify(defaultDb, null, 2), 'utf-8');
   }
@@ -56,11 +104,18 @@ export function getDb(): DatabaseSchema {
   initDb();
   try {
     const content = fs.readFileSync(DB_PATH, 'utf-8');
-    return JSON.parse(content);
+    const parsed = JSON.parse(content);
+    if (!parsed.appointments) parsed.appointments = [];
+    if (!parsed.contactRequests) parsed.contactRequests = [];
+    if (!parsed.announcements) parsed.announcements = [];
+    if (!parsed.gallery) parsed.gallery = [];
+    return parsed;
   } catch (error) {
     console.error('Error reading database file, recreating it...', error);
     // If corrupt, reinitialize
-    fs.unlinkSync(DB_PATH);
+    if (fs.existsSync(DB_PATH)) {
+      fs.unlinkSync(DB_PATH);
+    }
     initDb();
     const content = fs.readFileSync(DB_PATH, 'utf-8');
     return JSON.parse(content);

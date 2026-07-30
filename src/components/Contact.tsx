@@ -125,6 +125,27 @@ export default function Contact({ settings, selectedService, setSelectedService 
           return;
         }
 
+        const localAppItem = {
+          id: `apt-local-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          appId: `APEX-2026-${Math.floor(100000 + Math.random() * 900000)}`,
+          name,
+          email: email || '',
+          phone,
+          service: service || selectedService || 'Desk Consultation',
+          appointmentDate: appointmentDate || new Date().toISOString().split('T')[0],
+          appointmentTime: appointmentTime || '10:00 AM',
+          message: message || '',
+          status: 'pending',
+          date: new Date().toISOString()
+        };
+
+        try {
+          const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+          localStorage.setItem('csc_local_applications', JSON.stringify([localAppItem, ...existing]));
+        } catch (e) {
+          console.error('Failed to cache appointment locally:', e);
+        }
+
         const res = await fetch('/api/appointments', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

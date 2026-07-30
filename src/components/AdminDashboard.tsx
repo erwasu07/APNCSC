@@ -66,14 +66,62 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
       }
     ],
     gallery: [],
-    contactRequests: [],
-    appointments: [],
+    contactRequests: [
+      {
+        id: "req-1",
+        name: "Rajesh Kumar",
+        email: "rajesh.kumar@gmail.com",
+        phone: "+91 99887 76655",
+        service: "New PAN Card",
+        message: "I want to apply for a new PAN card. What documents are required?",
+        status: "pending" as const,
+        date: new Date().toISOString()
+      },
+      {
+        id: "req-2",
+        name: "Priya Sharma",
+        email: "priya.sharma@yahoo.com",
+        phone: "+91 98765 12345",
+        service: "GST Return Filing",
+        message: "Need assistance with monthly GST return filing for my retail shop.",
+        status: "in_progress" as const,
+        date: new Date().toISOString()
+      }
+    ],
+    appointments: [
+      {
+        id: "apt-1",
+        appId: "APEX-2026-981245",
+        name: "Suresh Gupta",
+        email: "suresh.g@outlook.com",
+        phone: "+91 94432 10987",
+        service: "Passport Application",
+        appointmentDate: "2026-07-31",
+        appointmentTime: "11:30 AM",
+        message: "Applying for renewal of passport. Will bring old passport copy and Aadhaar.",
+        status: "approved" as const,
+        date: new Date().toISOString()
+      },
+      {
+        id: "apt-2",
+        appId: "APEX-2026-773412",
+        name: "Meena Devi",
+        email: "meena.devi@gmail.com",
+        phone: "+91 95543 21098",
+        service: "Aadhaar Update Guidance",
+        appointmentDate: "2026-08-01",
+        appointmentTime: "03:00 PM",
+        message: "Need to update my residential address in my Aadhaar card.",
+        status: "pending" as const,
+        date: new Date().toISOString()
+      }
+    ],
     stats: {
       views: 520,
-      contactRequestsCount: 0,
-      appointmentsCount: 0,
+      contactRequestsCount: 2,
+      appointmentsCount: 2,
       completedRequestsCount: 0,
-      serviceDistribution: {},
+      serviceDistribution: { "Passport Application": 1, "Aadhaar Update Guidance": 1 },
       monthlyTrends: []
     }
   };
@@ -596,7 +644,27 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
 
   // Render variables
   const activeData = dashboardData || FALLBACK_DASHBOARD_DATA;
-  const { stats, contactRequests, appointments, announcements, gallery } = activeData;
+  let { stats, contactRequests, appointments, announcements, gallery } = activeData;
+
+  // Hybrid Merge: Merge client-side saved applications from localStorage so submitted applications are never lost
+  try {
+    const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+    if (Array.isArray(localApps) && localApps.length > 0) {
+      const existingIds = new Set((appointments || []).map(a => a.id || a.appId));
+      const newFromLocal = localApps.filter(item => item && !existingIds.has(item.id) && !existingIds.has(item.appId));
+      if (newFromLocal.length > 0) {
+        appointments = [...newFromLocal, ...(appointments || [])];
+        if (stats) {
+          stats = {
+            ...stats,
+            appointmentsCount: appointments.length
+          };
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Failed to merge local applications:', e);
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
