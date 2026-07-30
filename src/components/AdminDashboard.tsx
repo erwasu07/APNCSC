@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   ShieldAlert, LayoutDashboard, Send, Calendar, Megaphone, Image as ImageIcon, 
   Settings as SettingsIcon, LogOut, Download, Upload, CheckCircle2, RefreshCw, Trash2, Edit2, Plus, Save,
-  Eye, FileText, Paperclip, ExternalLink
+  Eye, FileText, Paperclip, ExternalLink, Clock, XCircle, History, Printer, Filter, Check
 } from 'lucide-react';
 import { ContactRequest, Appointment, Announcement, GalleryItem, WebsiteSettings, AnalyticsStats } from '../types';
 
@@ -20,6 +20,7 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
 
   // Tab state
   const [activeTab, setActiveTab] = useState<'overview' | 'queries' | 'appointments' | 'announcements' | 'gallery' | 'settings' | 'backup'>('overview');
+  const [aptSubTab, setAptSubTab] = useState<'all' | 'pending' | 'approved' | 'completed' | 'cancelled'>('all');
 
   // Server Data
   const [dashboardData, setDashboardData] = useState<{
@@ -347,6 +348,57 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handlePrintAppointmentCard = (apt: Appointment) => {
+    const win = window.open('', '_blank');
+    if (!win) return;
+    win.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Application Receipt - ${apt.appId || apt.id}</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; color: #1e293b; max-width: 800px; margin: 0 auto; }
+            .header { border-bottom: 2px solid #2563eb; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+            .title { font-size: 22px; font-weight: bold; color: #1e293b; }
+            .badge { background: #dcfce7; color: #15803d; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; text-transform: uppercase; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+            .box { background: #f8fafc; padding: 12px 16px; border-radius: 8px; border: 1px solid #e2e8f0; }
+            .label { font-size: 10px; text-transform: uppercase; color: #64748b; font-weight: bold; margin-bottom: 4px; }
+            .val { font-size: 14px; font-weight: bold; color: #0f172a; }
+            .note { background: #fef3c7; border: 1px solid #fde68a; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; }
+            .footer { text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 15px; margin-top: 30px; }
+            @media print { body { padding: 0; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <div class="title">${cafeName || "CSC DOST"} E-Services</div>
+              <div style="font-size: 12px; color: #64748b;">Official Application Acknowledgement & Order History</div>
+            </div>
+            <div class="badge">${apt.status}</div>
+          </div>
+          <div class="grid">
+            <div class="box"><div class="label">Application Reference ID</div><div class="val">${apt.appId || apt.id}</div></div>
+            <div class="box"><div class="label">Applicant Name</div><div class="val">${apt.name}</div></div>
+            <div class="box"><div class="label">Contact Phone / Email</div><div class="val">${apt.phone} ${apt.email ? '| ' + apt.email : ''}</div></div>
+            <div class="box"><div class="label">Requested Service</div><div class="val">${apt.service}</div></div>
+            <div class="box"><div class="label">Date of Birth / Category</div><div class="val">${apt.dateOfBirth || 'N/A'} (${apt.userCategory || 'General'})</div></div>
+            <div class="box"><div class="label">Payment Mode / UTR</div><div class="val">${(apt.paymentMode || 'cash').toUpperCase()} ${apt.utrNumber && apt.utrNumber !== 'N/A' ? `(UTR: ${apt.utrNumber})` : ''}</div></div>
+            <div class="box"><div class="label">Submission Timestamp</div><div class="val">${apt.appointmentDate} at ${apt.appointmentTime}</div></div>
+            <div class="box"><div class="label">Total Amount</div><div class="val">₹${apt.totalAmount || 0}</div></div>
+          </div>
+          ${apt.message ? `<div class="note"><strong>Instructions/Message:</strong> "${apt.message}"</div>` : ''}
+          <div class="footer">
+            Generated on ${new Date().toLocaleString()} by ${cafeName || "CSC DOST"} Digital Portal Admin Desk
+          </div>
+          <script>window.print();</script>
+        </body>
+      </html>
+    `);
+    win.document.close();
   };
 
   // Status updates for Appointments
@@ -729,6 +781,226 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
     console.error('Failed to merge local applications:', e);
   }
 
+  const pendingApts = (appointments || []).filter(a => a.status === 'pending');
+  const approvedApts = (appointments || []).filter(a => a.status === 'approved');
+  const completedApts = (appointments || []).filter(a => a.status === 'completed');
+  const cancelledApts = (appointments || []).filter(a => a.status === 'cancelled');
+
+  const renderAppointmentCard = (apt: Appointment) => {
+    const isCompleted = apt.status === 'completed';
+    const isApproved = apt.status === 'approved';
+    const isCancelled = apt.status === 'cancelled';
+    const isPending = apt.status === 'pending';
+
+    return (
+      <div key={apt.id || apt.appId} className="p-5 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 space-y-3 shadow-xs transition-all hover:border-slate-300 dark:hover:border-slate-700">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+          <div className="flex items-center gap-2">
+            {apt.appId && (
+              <span className="px-2.5 py-1 bg-blue-600 text-white font-mono font-bold text-xs rounded-lg shadow-xs">
+                {apt.appId}
+              </span>
+            )}
+            <div>
+              <h4 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+                {apt.name}
+              </h4>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold tracking-wide mt-0.5">
+                📞 {apt.phone} {apt.email && apt.email !== 'N/A' ? `| ✉️ ${apt.email}` : ''}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 ${
+              isCompleted ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' :
+              isApproved ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800' :
+              isCancelled ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-200 dark:border-rose-800' :
+              'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+            }`}>
+              {isCompleted && <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />}
+              {isApproved && <Check className="w-3 h-3 text-blue-600 dark:text-blue-400" />}
+              {isCancelled && <XCircle className="w-3 h-3 text-rose-600 dark:text-rose-400" />}
+              {isPending && <Clock className="w-3 h-3 text-amber-600 dark:text-amber-400" />}
+              {apt.status}
+            </span>
+          </div>
+        </div>
+
+        {/* Complete Order Details Info Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 text-xs font-semibold">
+          <div className="p-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 rounded-xl">
+            <span className="text-[9px] font-extrabold uppercase text-slate-400 block">Requested Service</span>
+            <span className="text-blue-600 dark:text-blue-400 font-bold block truncate">{apt.service}</span>
+          </div>
+          <div className="p-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 rounded-xl">
+            <span className="text-[9px] font-extrabold uppercase text-slate-400 block">Date of Birth / Cat.</span>
+            <span className="text-slate-700 dark:text-slate-200 font-bold block">{apt.dateOfBirth || 'N/A'} ({apt.userCategory || 'General'})</span>
+          </div>
+          <div className="p-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 rounded-xl">
+            <span className="text-[9px] font-extrabold uppercase text-slate-400 block">Payment / UTR</span>
+            <span className="text-slate-700 dark:text-slate-200 font-bold block uppercase">{apt.paymentMode || 'cash'} {apt.utrNumber && apt.utrNumber !== 'N/A' ? `(${apt.utrNumber})` : ''}</span>
+          </div>
+          <div className="p-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 rounded-xl">
+            <span className="text-[9px] font-extrabold uppercase text-slate-400 block">Submission Date</span>
+            <span className="text-slate-700 dark:text-slate-200 font-bold block">{apt.appointmentDate} ({apt.appointmentTime})</span>
+          </div>
+        </div>
+
+        {apt.message && (
+          <div className="p-3 bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/30 rounded-xl text-xs text-amber-900 dark:text-amber-200">
+            <span className="font-extrabold uppercase text-[9px] text-amber-700 dark:text-amber-400 block mb-0.5">Additional Instructions / Note:</span>
+            "{apt.message}"
+          </div>
+        )}
+
+        {/* ATTACHED CUSTOMER DOCUMENTS */}
+        <div className="p-3 bg-slate-50/80 dark:bg-slate-850/60 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+              <Paperclip className="w-4 h-4 text-blue-600" />
+              Attached Customer Documents ({apt.documents && apt.documents.length > 0 ? apt.documents.length : 0}):
+            </span>
+          </div>
+
+          {apt.documents && apt.documents.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              {apt.documents.map((doc, idx) => (
+                <div key={doc.id || idx} className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg flex items-center justify-between gap-2 shadow-2xs">
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    {doc.dataUrl && doc.type && doc.type.startsWith('image/') ? (
+                      <img src={doc.dataUrl} alt={doc.name} className="w-9 h-9 object-cover rounded-md border border-slate-300 dark:border-slate-600 shrink-0" />
+                    ) : (
+                      <div className="w-9 h-9 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 rounded-md flex items-center justify-center shrink-0">
+                        <FileText className="w-5 h-5" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-900 dark:text-white truncate" title={doc.name}>
+                        {doc.name}
+                      </p>
+                      <p className="text-[10px] text-slate-400 font-semibold">
+                        {(doc.size / 1024).toFixed(1)} KB
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1 shrink-0">
+                    {doc.dataUrl ? (
+                      <>
+                        <button
+                          onClick={() => handleViewDocument(doc)}
+                          className="p-1.5 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white dark:bg-blue-950 dark:hover:bg-blue-600 dark:text-blue-300 rounded-lg transition-all cursor-pointer"
+                          title="View Document"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDownloadDocument(doc)}
+                          className="p-1.5 bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white dark:bg-emerald-950 dark:hover:bg-emerald-600 dark:text-emerald-300 rounded-lg transition-all cursor-pointer"
+                          title="Download Document"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-[10px] text-slate-400 italic">No File Data</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-slate-400 italic">No documents attached to this submission.</p>
+          )}
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {isPending && (
+              <>
+                <button
+                  onClick={() => handleUpdateAppointmentStatus(apt.id || apt.appId, 'approved')}
+                  className="px-3 py-1.5 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  Approve Application
+                </button>
+                <button
+                  onClick={() => handleUpdateAppointmentStatus(apt.id || apt.appId, 'completed')}
+                  className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Mark Completed
+                </button>
+                <button
+                  onClick={() => handleUpdateAppointmentStatus(apt.id || apt.appId, 'cancelled')}
+                  className="px-3 py-1.5 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1"
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  Reject / Cancel
+                </button>
+              </>
+            )}
+
+            {isApproved && (
+              <>
+                <button
+                  onClick={() => handleUpdateAppointmentStatus(apt.id || apt.appId, 'completed')}
+                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1 shadow-xs"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Mark Completed
+                </button>
+                <button
+                  onClick={() => handleUpdateAppointmentStatus(apt.id || apt.appId, 'pending')}
+                  className="px-3 py-1.5 bg-amber-50 hover:bg-amber-500 text-amber-700 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1"
+                >
+                  <Clock className="w-3.5 h-3.5" />
+                  Back to Pending
+                </button>
+                <button
+                  onClick={() => handleUpdateAppointmentStatus(apt.id || apt.appId, 'cancelled')}
+                  className="px-3 py-1.5 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1"
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  Reject / Cancel
+                </button>
+              </>
+            )}
+
+            {(isCompleted || isCancelled) && (
+              <>
+                <button
+                  onClick={() => handleUpdateAppointmentStatus(apt.id || apt.appId, 'pending')}
+                  className="px-3 py-1.5 bg-amber-50 hover:bg-amber-600 text-amber-700 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Re-open Application
+                </button>
+                <button
+                  onClick={() => handlePrintAppointmentCard(apt)}
+                  className="px-3 py-1.5 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  Print Receipt
+                </button>
+              </>
+            )}
+          </div>
+
+          <button
+            onClick={() => handleDeleteAppointment(apt.id || apt.appId)}
+            className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
+            title="Remove record permanently"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
       
@@ -972,170 +1244,206 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
 
           {/* TAB 3: APPOINTMENTS & APPLICATIONS */}
           {activeTab === 'appointments' && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
+            <div className="space-y-6">
+              {/* Header bar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200 dark:border-slate-800">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white font-display">Applications & Desk Reservations</h3>
-                  <p className="text-xs text-slate-500">View customer online application forms and uploaded identity/educational documents.</p>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white font-display flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                    Applications & Desk Reservations
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Manage customer digital applications, document attachments, and full order processing history.
+                  </p>
                 </div>
-                <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-extrabold text-xs rounded-full">
-                  Total: {appointments.length}
-                </span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="px-3.5 py-1.5 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-extrabold text-xs rounded-xl border border-blue-200 dark:border-blue-900">
+                    Total Logs: {appointments.length}
+                  </span>
+                </div>
               </div>
 
-              {appointments.length > 0 ? (
-                <div className="space-y-4">
-                  {appointments.map((apt) => (
-                    <div key={apt.id} className="p-5 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-850/40 space-y-3 shadow-xs">
-                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
-                        <div className="flex items-center gap-2">
-                          {apt.appId && (
-                            <span className="px-2.5 py-1 bg-blue-600 text-white font-mono font-bold text-xs rounded-lg shadow-xs">
-                              {apt.appId}
-                            </span>
-                          )}
-                          <div>
-                            <h4 className="font-bold text-sm text-slate-900 dark:text-white">{apt.name}</h4>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold tracking-wide mt-0.5">
-                              📞 {apt.phone} {apt.email && apt.email !== 'N/A' ? `| ✉️ ${apt.email}` : ''}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                            apt.status === 'completed' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' :
-                            apt.status === 'approved' ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' :
-                            apt.status === 'cancelled' ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300' :
-                            'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-                          }`}>
-                            {apt.status}
-                          </span>
-                        </div>
+              {/* Category Filter Pills */}
+              <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-slate-800">
+                <button
+                  onClick={() => setAptSubTab('all')}
+                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                    aptSubTab === 'all'
+                      ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <Filter className="w-3.5 h-3.5" />
+                  All Boxes ({appointments.length})
+                </button>
+
+                <button
+                  onClick={() => setAptSubTab('pending')}
+                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                    aptSubTab === 'pending'
+                      ? 'bg-amber-500 text-white shadow-xs'
+                      : 'text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30'
+                  }`}
+                >
+                  <Clock className="w-3.5 h-3.5" />
+                  Pending ({pendingApts.length})
+                </button>
+
+                <button
+                  onClick={() => setAptSubTab('approved')}
+                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                    aptSubTab === 'approved'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30'
+                  }`}
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  Approved ({approvedApts.length})
+                </button>
+
+                <button
+                  onClick={() => setAptSubTab('completed')}
+                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                    aptSubTab === 'completed'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
+                  }`}
+                >
+                  <History className="w-3.5 h-3.5" />
+                  Completed History ({completedApts.length})
+                </button>
+
+                <button
+                  onClick={() => setAptSubTab('cancelled')}
+                  className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                    aptSubTab === 'cancelled'
+                      ? 'bg-rose-600 text-white shadow-xs'
+                      : 'text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30'
+                  }`}
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  Rejected ({cancelledApts.length})
+                </button>
+              </div>
+
+              {/* BOX 1: PENDING APPLICATIONS */}
+              {(aptSubTab === 'all' || aptSubTab === 'pending') && (
+                <div className="border-2 border-amber-200 dark:border-amber-900/50 bg-amber-50/20 dark:bg-amber-950/10 rounded-2xl p-4 space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-amber-200/60 dark:border-amber-900/40">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold">
+                        <Clock className="w-4 h-4" />
                       </div>
-
-                      {/* Info grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 text-xs font-semibold">
-                        <div className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
-                          <span className="text-[9px] font-extrabold uppercase text-slate-400 block">Requested Service</span>
-                          <span className="text-blue-600 dark:text-blue-400 font-bold block truncate">{apt.service}</span>
-                        </div>
-                        <div className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
-                          <span className="text-[9px] font-extrabold uppercase text-slate-400 block">Date of Birth / Cat.</span>
-                          <span className="text-slate-700 dark:text-slate-200 font-bold block">{apt.dateOfBirth || 'N/A'} ({apt.userCategory || 'General'})</span>
-                        </div>
-                        <div className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
-                          <span className="text-[9px] font-extrabold uppercase text-slate-400 block">Payment / UTR</span>
-                          <span className="text-slate-700 dark:text-slate-200 font-bold block uppercase">{apt.paymentMode || 'cash'} {apt.utrNumber && apt.utrNumber !== 'N/A' ? `(${apt.utrNumber})` : ''}</span>
-                        </div>
-                        <div className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
-                          <span className="text-[9px] font-extrabold uppercase text-slate-400 block">Submission Date</span>
-                          <span className="text-slate-700 dark:text-slate-200 font-bold block">{apt.appointmentDate} ({apt.appointmentTime})</span>
-                        </div>
-                      </div>
-
-                      {apt.message && (
-                        <div className="p-3 bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/30 rounded-xl text-xs text-amber-900 dark:text-amber-200">
-                          <span className="font-extrabold uppercase text-[9px] text-amber-700 dark:text-amber-400 block mb-0.5">Additional Note / Instructions:</span>
-                          "{apt.message}"
-                        </div>
-                      )}
-
-                      {/* ATTACHED DOCUMENTS SECTION */}
-                      <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                            <Paperclip className="w-4 h-4 text-blue-600" />
-                            Attached Customer Documents ({apt.documents && apt.documents.length > 0 ? apt.documents.length : 0}):
-                          </span>
-                        </div>
-
-                        {apt.documents && apt.documents.length > 0 ? (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                            {apt.documents.map((doc, idx) => (
-                              <div key={doc.id || idx} className="p-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg flex items-center justify-between gap-2">
-                                <div className="flex items-center gap-2 overflow-hidden">
-                                  {doc.dataUrl && doc.type && doc.type.startsWith('image/') ? (
-                                    <img src={doc.dataUrl} alt={doc.name} className="w-9 h-9 object-cover rounded-md border border-slate-300 dark:border-slate-600 shrink-0" />
-                                  ) : (
-                                    <div className="w-9 h-9 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 rounded-md flex items-center justify-center shrink-0">
-                                      <FileText className="w-5 h-5" />
-                                    </div>
-                                  )}
-                                  <div className="min-w-0">
-                                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate" title={doc.name}>
-                                      {doc.name}
-                                    </p>
-                                    <p className="text-[10px] text-slate-400 font-semibold">
-                                      {(doc.size / 1024).toFixed(1)} KB
-                                    </p>
-                                  </div>
-                                </div>
-
-                                <div className="flex items-center gap-1 shrink-0">
-                                  {doc.dataUrl ? (
-                                    <>
-                                      <button
-                                        onClick={() => handleViewDocument(doc)}
-                                        className="p-1.5 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white dark:bg-blue-950 dark:hover:bg-blue-600 dark:text-blue-300 rounded-lg transition-all"
-                                        title="View Document"
-                                      >
-                                        <Eye className="w-3.5 h-3.5" />
-                                      </button>
-                                      <button
-                                        onClick={() => handleDownloadDocument(doc)}
-                                        className="p-1.5 bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white dark:bg-emerald-950 dark:hover:bg-emerald-600 dark:text-emerald-300 rounded-lg transition-all"
-                                        title="Download Document"
-                                      >
-                                        <Download className="w-3.5 h-3.5" />
-                                      </button>
-                                    </>
-                                  ) : (
-                                    <span className="text-[10px] text-slate-400 italic">No File Data</span>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-xs text-slate-400 italic">No documents attached to this submission.</p>
-                        )}
-                      </div>
-
-                      {/* Action buttons */}
-                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <button
-                            onClick={() => handleUpdateAppointmentStatus(apt.id || apt.appId, 'approved')}
-                            className="px-3 py-1.5 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer"
-                          >
-                            Approve Application
-                          </button>
-                          <button
-                            onClick={() => handleUpdateAppointmentStatus(apt.id || apt.appId, 'completed')}
-                            className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer"
-                          >
-                            Mark Completed
-                          </button>
-                          <button
-                            onClick={() => handleUpdateAppointmentStatus(apt.id || apt.appId, 'cancelled')}
-                            className="px-3 py-1.5 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer"
-                          >
-                            Reject / Cancel
-                          </button>
-                        </div>
-                        <button
-                          onClick={() => handleDeleteAppointment(apt.id || apt.appId)}
-                          className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
-                          title="Remove booking"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                      <div>
+                        <h4 className="font-bold text-sm text-slate-900 dark:text-white">1. Pending Applications (Action Required)</h4>
+                        <p className="text-[11px] text-amber-800 dark:text-amber-300">New customer submissions awaiting desk verification & approval.</p>
                       </div>
                     </div>
-                  ))}
+                    <span className="px-3 py-1 bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 font-extrabold text-xs rounded-full border border-amber-300 dark:border-amber-700">
+                      {pendingApts.length} Pending
+                    </span>
+                  </div>
+
+                  {pendingApts.length > 0 ? (
+                    <div className="space-y-4">
+                      {pendingApts.map(renderAppointmentCard)}
+                    </div>
+                  ) : (
+                    <div className="p-6 text-center bg-white/60 dark:bg-slate-900/40 rounded-xl border border-dashed border-amber-300/60 dark:border-amber-900/40">
+                      <p className="text-xs text-amber-800 dark:text-amber-400 font-medium">No pending applications at the moment.</p>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <p className="text-xs text-slate-450 italic">No applications or desk reservations found in database.</p>
+              )}
+
+              {/* BOX 2: APPROVED APPLICATIONS */}
+              {(aptSubTab === 'all' || aptSubTab === 'approved') && (
+                <div className="border-2 border-blue-200 dark:border-blue-900/50 bg-blue-50/20 dark:bg-blue-950/10 rounded-2xl p-4 space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-blue-200/60 dark:border-blue-900/40">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold">
+                        <Check className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-sm text-slate-900 dark:text-white">2. Approved Applications (In Processing / Kiosk Scheduled)</h4>
+                        <p className="text-[11px] text-blue-800 dark:text-blue-300">Applications approved for kiosk processing or customer appointment.</p>
+                      </div>
+                    </div>
+                    <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200 font-extrabold text-xs rounded-full border border-blue-300 dark:border-blue-700">
+                      {approvedApts.length} Approved
+                    </span>
+                  </div>
+
+                  {approvedApts.length > 0 ? (
+                    <div className="space-y-4">
+                      {approvedApts.map(renderAppointmentCard)}
+                    </div>
+                  ) : (
+                    <div className="p-6 text-center bg-white/60 dark:bg-slate-900/40 rounded-xl border border-dashed border-blue-300/60 dark:border-blue-900/40">
+                      <p className="text-xs text-blue-800 dark:text-blue-400 font-medium">No approved applications currently in processing.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* BOX 3: COMPLETED APPLICATIONS & ORDER HISTORY */}
+              {(aptSubTab === 'all' || aptSubTab === 'completed') && (
+                <div className="border-2 border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/20 dark:bg-emerald-950/10 rounded-2xl p-4 space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-emerald-200/60 dark:border-emerald-900/40">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold">
+                        <History className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-sm text-slate-900 dark:text-white">3. Completed Applications & Order History</h4>
+                        <p className="text-[11px] text-emerald-800 dark:text-emerald-300">Full order details, receipts, and attached files retained permanently in history.</p>
+                      </div>
+                    </div>
+                    <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 font-extrabold text-xs rounded-full border border-emerald-300 dark:border-emerald-700">
+                      {completedApts.length} Completed
+                    </span>
+                  </div>
+
+                  {completedApts.length > 0 ? (
+                    <div className="space-y-4">
+                      {completedApts.map(renderAppointmentCard)}
+                    </div>
+                  ) : (
+                    <div className="p-6 text-center bg-white/60 dark:bg-slate-900/40 rounded-xl border border-dashed border-emerald-300/60 dark:border-emerald-900/40">
+                      <p className="text-xs text-emerald-800 dark:text-emerald-400 font-medium">No completed application history yet. Completed orders will be safely archived here.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* BOX 4: REJECTED / CANCELLED APPLICATIONS */}
+              {(aptSubTab === 'all' || aptSubTab === 'cancelled') && (
+                <div className="border-2 border-rose-200 dark:border-rose-900/50 bg-rose-50/20 dark:bg-rose-950/10 rounded-2xl p-4 space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-rose-200/60 dark:border-rose-900/40">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-rose-600 text-white flex items-center justify-center font-bold">
+                        <XCircle className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-sm text-slate-900 dark:text-white">4. Rejected / Cancelled Applications</h4>
+                        <p className="text-[11px] text-rose-800 dark:text-rose-300">Cancelled or rejected application records with option to re-open.</p>
+                      </div>
+                    </div>
+                    <span className="px-3 py-1 bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200 font-extrabold text-xs rounded-full border border-rose-300 dark:border-rose-700">
+                      {cancelledApts.length} Rejected
+                    </span>
+                  </div>
+
+                  {cancelledApts.length > 0 ? (
+                    <div className="space-y-4">
+                      {cancelledApts.map(renderAppointmentCard)}
+                    </div>
+                  ) : (
+                    <div className="p-6 text-center bg-white/60 dark:bg-slate-900/40 rounded-xl border border-dashed border-rose-300/60 dark:border-rose-900/40">
+                      <p className="text-xs text-rose-800 dark:text-rose-400 font-medium">No rejected or cancelled application records.</p>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}

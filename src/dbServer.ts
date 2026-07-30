@@ -250,7 +250,7 @@ export function incrementViews(): number {
 export function getAnalytics(): AnalyticsStats {
   const db = getDb();
   
-  const completedRequestsCount = db.contactRequests.filter(r => r.status === 'completed').length;
+  const completedRequestsCount = db.contactRequests.filter(r => r.status === 'completed').length + db.appointments.filter(a => a.status === 'completed').length;
   
   // Distribute services
   const serviceDistribution: Record<string, number> = {};
