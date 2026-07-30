@@ -5,9 +5,10 @@ import { PolicyTab } from './PrivacyPolicyModal';
 interface FooterProps {
   cafeName: string;
   onOpenPrivacyPolicy?: (tab?: PolicyTab) => void;
+  onOpenAdmin?: () => void;
 }
 
-export default function Footer({ cafeName, onOpenPrivacyPolicy }: FooterProps) {
+export default function Footer({ cafeName, onOpenPrivacyPolicy, onOpenAdmin }: FooterProps) {
   const [showScroll, setShowScroll] = useState(false);
   const [showCookie, setShowCookie] = useState(true);
 
@@ -190,6 +191,18 @@ export default function Footer({ cafeName, onOpenPrivacyPolicy }: FooterProps) {
                   className="hover:text-white underline transition-colors cursor-pointer text-left font-bold"
                 >
                   Help &amp; Support
+                </button>
+                <button 
+                  type="button" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (onOpenAdmin) onOpenAdmin();
+                  }}
+                  className="text-amber-400 hover:text-amber-300 underline transition-colors cursor-pointer text-left font-black flex items-center gap-1"
+                  id="footer-admin-login-btn"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Staff Admin Login</span>
                 </button>
               </div>
             </div>

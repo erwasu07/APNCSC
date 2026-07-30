@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import SarkariResultDesk from './components/SarkariResultDesk';
 import ExploreServicesDesk from './components/ExploreServicesDesk';
+import AdminDashboard from './components/AdminDashboard';
 import Footer from './components/Footer';
 import PrivacyPolicyModal, { PolicyTab } from './components/PrivacyPolicyModal';
 import { WebsiteSettings, Announcement, GalleryItem } from './types';
-import { ShieldCheck, MessageSquare, PhoneCall, Sparkles, Building2, HelpCircle } from 'lucide-react';
+import { ShieldCheck, MessageSquare, ArrowLeft, PhoneCall, Sparkles, Building2, HelpCircle } from 'lucide-react';
 
 const FALLBACK_SETTINGS: WebsiteSettings = {
   cafeName: "CSC DOST",
@@ -22,6 +23,7 @@ const FALLBACK_SETTINGS: WebsiteSettings = {
 
 export default function App() {
   const [darkMode, setDarkMode] = useState<boolean>(false);
+  const [isAdminView, setIsAdminView] = useState<boolean>(false);
 
   const [selectedService, setSelectedService] = useState('');
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
@@ -60,7 +62,9 @@ export default function App() {
     fetch('/api/tracker/view', { method: 'POST' }).catch(() => {});
 
     const checkHash = () => {
-      if (window.location.hash === '#privacy') {
+      if (window.location.hash === '#admin' || window.location.search.includes('admin=true')) {
+        setIsAdminView(true);
+      } else if (window.location.hash === '#privacy') {
         openLegalModal('privacy');
       } else if (window.location.hash === '#terms') {
         openLegalModal('terms');
@@ -150,24 +154,53 @@ export default function App() {
         setDarkMode={setDarkMode}
         cafeName={settings.cafeName}
         onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
+        onOpenAdmin={() => setIsAdminView(true)}
       />
 
       {/* Main Container */}
       <main className="flex-grow w-full max-w-full overflow-x-hidden">
-        {/* PUBLIC VISITOR INTERFACE */}
-        <div className="animate-fade-in">
-          {/* Sarkari Result Bulletin Board at top */}
-          <SarkariResultDesk onApplyService={handleServiceSelect} selectedService={selectedService} />
+        {isAdminView ? (
+          <div className="max-w-7xl mx-auto px-4 py-6 space-y-4">
+            <div className="flex items-center justify-between bg-blue-900 text-white p-4 rounded-2xl shadow-lg">
+              <div className="flex items-center gap-3">
+                <ShieldCheck className="w-6 h-6 text-amber-400" />
+                <div>
+                  <h2 className="text-base font-black">CSC DOST - Staff Administrator Desk</h2>
+                  <p className="text-xs text-blue-200">Manage online applications, view/download uploaded documents, update announcements & settings.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsAdminView(false)}
+                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-2 border border-white/20 cursor-pointer"
+                id="back-to-public-portal-btn"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Return to Public Portal</span>
+              </button>
+            </div>
 
-          {/* Explore All Government & Digital Services Directory */}
-          <ExploreServicesDesk onApplyService={handleServiceSelect} />
-        </div>
+            <AdminDashboard 
+              cafeName={settings.cafeName}
+              onSettingsUpdate={fetchPublicData}
+            />
+          </div>
+        ) : (
+          /* PUBLIC VISITOR INTERFACE */
+          <div className="animate-fade-in">
+            {/* Sarkari Result Bulletin Board at top */}
+            <SarkariResultDesk onApplyService={handleServiceSelect} selectedService={selectedService} />
+
+            {/* Explore All Government & Digital Services Directory */}
+            <ExploreServicesDesk onApplyService={handleServiceSelect} />
+          </div>
+        )}
       </main>
 
       {/* Global Page Footer */}
       <Footer 
         cafeName={settings.cafeName} 
         onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
+        onOpenAdmin={() => setIsAdminView(true)}
       />
 
       {/* Privacy Policy & Terms Interactive Modal */}

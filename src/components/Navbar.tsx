@@ -7,13 +7,15 @@ interface NavbarProps {
   setDarkMode: (val: boolean) => void;
   cafeName: string;
   onOpenPrivacyPolicy?: (tab?: PolicyTab) => void;
+  onOpenAdmin?: () => void;
 }
 
 export default function Navbar({
   darkMode,
   setDarkMode,
   cafeName,
-  onOpenPrivacyPolicy
+  onOpenPrivacyPolicy,
+  onOpenAdmin
 }: NavbarProps) {
   const [lang, setLang] = useState<'EN' | 'HI'>('EN');
   const [fontSize, setFontSize] = useState<'normal' | 'large' | 'larger'>('normal');
@@ -62,12 +64,24 @@ export default function Navbar({
             </button>
           </div>
 
-          {/* Right: Helpdesk number and operating hours */}
-          <div className="flex items-center gap-1.5 text-[11px] font-sans text-slate-700 dark:text-slate-300 text-center sm:text-left">
-            <span className="text-xs text-slate-800 dark:text-slate-200">📞</span>
-            <span className="leading-snug">
-              Helpdesk <span className="font-bold text-slate-950 dark:text-white">+91 70068 33767</span> - <span className="text-[#9a5b00] dark:text-amber-400 font-extrabold">Hours: 09:00 AM to 08:30 PM (Mon-Sat)</span>
-            </span>
+          {/* Right: Helpdesk number, operating hours, and Admin Portal button */}
+          <div className="flex items-center gap-3 text-[11px] font-sans text-slate-700 dark:text-slate-300">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-slate-800 dark:text-slate-200">📞</span>
+              <span className="leading-snug">
+                Helpdesk <span className="font-bold text-slate-950 dark:text-white">+91 70068 33767</span> - <span className="text-[#9a5b00] dark:text-amber-400 font-extrabold">Hours: 09:00 AM to 08:30 PM</span>
+              </span>
+            </div>
+
+            <button
+              onClick={onOpenAdmin}
+              className="px-2.5 py-0.5 text-[11px] font-extrabold text-blue-800 dark:text-blue-200 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/60 dark:hover:bg-blue-800 rounded shadow-xs transition-colors cursor-pointer flex items-center gap-1 shrink-0 ml-1 border border-blue-200 dark:border-blue-700"
+              title="Staff Admin Portal"
+              id="admin-portal-top-btn"
+            >
+              <Shield className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+              <span>Admin Portal</span>
+            </button>
           </div>
         </div>
       </div>
@@ -209,6 +223,16 @@ export default function Navbar({
                 </button>
               );
             })}
+
+            <button
+              onClick={onOpenAdmin}
+              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold rounded-xl transition-all flex items-center gap-1.5 shadow-md ml-auto sm:ml-2 cursor-pointer text-xs"
+              title="Open Admin Desk to view applications and download customer documents"
+              id="admin-portal-menu-btn"
+            >
+              <Shield className="w-4 h-4 text-slate-950" />
+              <span>Admin Desk</span>
+            </button>
           </div>
 
           {/* Mobile Trigger */}
