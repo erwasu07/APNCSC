@@ -325,25 +325,43 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
     // Save application and uploaded documents directly to central server database
     try {
+      const payload = {
+        appId: mockReceipt.appId,
+        name: mockReceipt.customerName,
+        email: mockReceipt.emailAddress,
+        phone: mockReceipt.phoneNumber,
+        service: mockReceipt.selectedService,
+        dateOfBirth: mockReceipt.dateOfBirth,
+        userCategory: mockReceipt.userCategory,
+        paymentMode: mockReceipt.paymentMode,
+        utrNumber: mockReceipt.utrNumber,
+        totalAmount: mockReceipt.totalAmount,
+        message: formData.additionalDetails,
+        documents: uploadedFiles
+      };
+
+      // Also cache in local storage as safety backup
+      try {
+        const localAppItem = {
+          id: `apt-local-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          ...payload,
+          appointmentDate: new Date().toISOString().split('T')[0],
+          appointmentTime: mockReceipt.submittedAt,
+          status: 'pending',
+          date: new Date().toISOString()
+        };
+        const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+        localStorage.setItem('csc_local_applications', JSON.stringify([localAppItem, ...existing]));
+      } catch (e) {
+        console.error('Failed to cache application locally:', e);
+      }
+
       const res = await fetch('/api/appointments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          appId: mockReceipt.appId,
-          name: mockReceipt.customerName,
-          email: mockReceipt.emailAddress,
-          phone: mockReceipt.phoneNumber,
-          service: mockReceipt.selectedService,
-          dateOfBirth: mockReceipt.dateOfBirth,
-          userCategory: mockReceipt.userCategory,
-          paymentMode: mockReceipt.paymentMode,
-          utrNumber: mockReceipt.utrNumber,
-          totalAmount: mockReceipt.totalAmount,
-          message: formData.additionalDetails,
-          documents: uploadedFiles
-        })
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       console.log('Application saved to server database:', data);
