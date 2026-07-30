@@ -80,9 +80,9 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
   };
 
   // Load Admin Data
-  const fetchDashboardDataWithToken = async (authToken: string) => {
+  const fetchDashboardDataWithToken = async (authToken: string, isSilent = false) => {
     if (!authToken) return;
-    setLoading(true);
+    if (!isSilent) setLoading(true);
     try {
       const res = await fetch('/api/admin/dashboard', {
         headers: { 'Authorization': `Bearer ${authToken}` }
@@ -94,7 +94,6 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
           setDashboardData(data);
           setConfigSettings(data.settings);
           setLoginError('');
-          setLoading(false);
           return;
         }
       }
@@ -102,7 +101,6 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
       if (res.status === 401) {
         handleLogout();
         setLoginError('Session expired. Please log in again.');
-        setLoading(false);
         return;
       }
 
@@ -114,23 +112,23 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
       setDashboardData(prev => prev || FALLBACK_DASHBOARD_DATA);
       setConfigSettings(prev => prev || FALLBACK_DASHBOARD_DATA.settings);
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   };
 
   const fetchDashboardData = () => {
     if (token) {
-      fetchDashboardDataWithToken(token);
+      fetchDashboardDataWithToken(token, false);
     }
   };
 
   useEffect(() => {
     if (token) {
-      fetchDashboardDataWithToken(token);
-      // Auto-refresh every 8 seconds to automatically show new customer applications & appointments
+      fetchDashboardDataWithToken(token, false);
+      // Auto-refresh every 3 seconds to instantly reflect live customer applications across all devices
       const interval = setInterval(() => {
-        fetchDashboardDataWithToken(token);
-      }, 8000);
+        fetchDashboardDataWithToken(token, true);
+      }, 3000);
       return () => clearInterval(interval);
     }
   }, [token]);
@@ -916,17 +914,19 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Logged in as Administrator | Managing live database files.</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={fetchDashboardData}
-            className="p-2 text-slate-500 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition-all"
-            title="Refresh database"
+            className="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:hover:bg-blue-900/60 dark:text-blue-300 font-bold text-xs rounded-xl flex items-center gap-2 transition-all cursor-pointer border border-blue-200/60 dark:border-blue-900/50 shadow-xs"
+            title="Refresh database directly from central server"
           >
-            <RefreshCw className="w-4 h-4" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Sync Live Database</span>
           </button>
           <button
             onClick={handleLogout}
-            className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/20 dark:hover:bg-rose-900/35 dark:text-rose-450 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all"
+            className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/20 dark:hover:bg-rose-900/35 dark:text-rose-450 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
             Lock Desk
