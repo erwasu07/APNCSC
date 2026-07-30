@@ -132,6 +132,20 @@ export default function Contact({ settings, selectedService, setSelectedService 
         });
         const data = await res.json();
         if (res.ok) {
+          const savedItem = data.data;
+          if (savedItem) {
+            try {
+              const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+              localStorage.setItem('csc_local_applications', JSON.stringify([savedItem, ...existing]));
+              window.dispatchEvent(new CustomEvent('csc_appointment_created', { detail: savedItem }));
+              window.dispatchEvent(new Event('storage'));
+              const bc = new BroadcastChannel('csc_portal_sync');
+              bc.postMessage({ type: 'NEW_APPOINTMENT', payload: savedItem });
+              bc.close();
+            } catch (e) {
+              console.error('Contact sync dispatch error:', e);
+            }
+          }
           setStatusMessage({
             type: 'success',
             text: 'Your Desk Appointment has been booked. Confirmation details printed in server logs!'

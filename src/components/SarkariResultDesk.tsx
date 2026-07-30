@@ -365,6 +365,26 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       });
       const data = await res.json();
       console.log('Application saved to server database:', data);
+
+      const savedItem = data.data || {
+        id: `apt-local-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        ...payload,
+        appointmentDate: new Date().toISOString().split('T')[0],
+        appointmentTime: mockReceipt.submittedAt,
+        status: 'pending',
+        date: new Date().toISOString()
+      };
+
+      // Real-time synchronization dispatches
+      try {
+        window.dispatchEvent(new CustomEvent('csc_appointment_created', { detail: savedItem }));
+        window.dispatchEvent(new Event('storage'));
+        const bc = new BroadcastChannel('csc_portal_sync');
+        bc.postMessage({ type: 'NEW_APPOINTMENT', payload: savedItem });
+        bc.close();
+      } catch (bcErr) {
+        console.error('Broadcast Channel sync error:', bcErr);
+      }
     } catch (err) {
       console.error('API submission dispatch error:', err);
     }

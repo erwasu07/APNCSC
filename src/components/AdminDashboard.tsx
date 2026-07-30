@@ -125,11 +125,58 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
   useEffect(() => {
     if (token) {
       fetchDashboardDataWithToken(token, false);
-      // Auto-refresh every 3 seconds to instantly reflect live customer applications across all devices
+
+      const handleLiveSync = (e?: any) => {
+        if (e?.detail) {
+          const newApt = e.detail;
+          setDashboardData(prev => {
+            if (!prev) return prev;
+            const existing = prev.appointments || [];
+            const exists = existing.some(a => (a.id && a.id === newApt.id) || (a.appId && a.appId === newApt.appId));
+            if (!exists) {
+              return {
+                ...prev,
+                appointments: [newApt, ...existing],
+                stats: {
+                  ...prev.stats,
+                  appointmentsCount: (prev.stats?.appointmentsCount || 0) + 1
+                }
+              };
+            }
+            return prev;
+          });
+        }
+        fetchDashboardDataWithToken(token, true);
+      };
+
+      window.addEventListener('csc_appointment_created', handleLiveSync);
+      window.addEventListener('storage', handleLiveSync);
+      window.addEventListener('csc_refresh_dashboard', handleLiveSync);
+
+      let channel: BroadcastChannel | null = null;
+      try {
+        channel = new BroadcastChannel('csc_portal_sync');
+        channel.onmessage = (msg) => {
+          if (msg.data?.type === 'NEW_APPOINTMENT' || msg.data?.type === 'REFRESH') {
+            handleLiveSync(msg.data?.payload ? { detail: msg.data.payload } : undefined);
+          }
+        };
+      } catch (err) {
+        console.error('Broadcast Channel listener error:', err);
+      }
+
+      // Fast polling (1.5s) to guarantee live synchronization across devices and tabs
       const interval = setInterval(() => {
         fetchDashboardDataWithToken(token, true);
-      }, 3000);
-      return () => clearInterval(interval);
+      }, 1500);
+
+      return () => {
+        window.removeEventListener('csc_appointment_created', handleLiveSync);
+        window.removeEventListener('storage', handleLiveSync);
+        window.removeEventListener('csc_refresh_dashboard', handleLiveSync);
+        if (channel) channel.close();
+        clearInterval(interval);
+      };
     }
   }, [token]);
 

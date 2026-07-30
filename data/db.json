@@ -70,6 +70,25 @@
   "contactRequests": [],
   "appointments": [
     {
+      "appId": "APEX-2026-999111",
+      "name": "Realtime Test User",
+      "email": "",
+      "phone": "9876543210",
+      "service": "Ayushman Bharat Card",
+      "appointmentDate": "2026-07-30",
+      "appointmentTime": "03:27 PM",
+      "message": "Testing live sync",
+      "dateOfBirth": "N/A",
+      "userCategory": "General/OBC",
+      "paymentMode": "cash",
+      "utrNumber": "N/A",
+      "totalAmount": 0,
+      "documents": [],
+      "id": "apt-1785425268674-164",
+      "status": "pending",
+      "date": "2026-07-30T15:27:48.674Z"
+    },
+    {
       "appId": "APEX-2026-857690",
       "name": "waism ahmad khanday",
       "email": "",
@@ -135,5 +154,5 @@
       "date": "2026-07-30T12:13:35.420Z"
     }
   ],
-  "views": 538
+  "views": 540
 }
