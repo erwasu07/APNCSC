@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { SARKARI_DATA, SARKARI_CATEGORIES, SarkariItem } from '../data/sarkariData';
 import { SERVICES_LIST } from '../servicesData';
+import { UploadedDocument } from '../types';
 
 interface SarkariResultDeskProps {
   onApplyService: (serviceName: string) => void;
@@ -65,7 +66,8 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
   const [copiedUpi, setCopiedUpi] = useState(false);
   const [utrError, setUtrError] = useState<string | null>(null);
   const [documentError, setDocumentError] = useState<string | null>(null);
-  const [uploadedFiles, setUploadedFiles] = useState<{ id: string; name: string; size: number; type: string }[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedDocument[]>([]);
+  const [isProcessingFiles, setIsProcessingFiles] = useState(false);
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
   const [submissionReceipt, setSubmissionReceipt] = useState<any>(null);
   const [activeAlertTab, setActiveAlertTab] = useState<'alerts' | 'updates' | 'help'>('alerts');
@@ -132,13 +134,48 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setDocumentError(null);
-      const newFiles = Array.from(e.target.files as FileList).map((file: File) => ({
-        id: Math.random().toString(36).substring(2, 9),
-        name: file.name,
-        size: file.size,
-        type: file.type
-      }));
-      setUploadedFiles(prev => [...prev, ...newFiles]);
+      const filesArray = Array.from(e.target.files as FileList);
+
+      // Check max size (10MB limit per file)
+      for (const file of filesArray) {
+        if (file.size > 10 * 1024 * 1024) {
+          setDocumentError(`File "${file.name}" exceeds the maximum size limit of 10MB.`);
+          return;
+        }
+      }
+
+      setIsProcessingFiles(true);
+      let loadedCount = 0;
+
+      filesArray.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = reader.result as string;
+          const newDoc: UploadedDocument = {
+            id: Math.random().toString(36).substring(2, 9),
+            name: file.name,
+            size: file.size,
+            type: file.type || 'application/octet-stream',
+            dataUrl
+          };
+          setUploadedFiles(prev => [...prev, newDoc]);
+          loadedCount++;
+          if (loadedCount === filesArray.length) {
+            setIsProcessingFiles(false);
+          }
+        };
+        reader.onerror = () => {
+          console.error('Error reading file:', file.name);
+          loadedCount++;
+          if (loadedCount === filesArray.length) {
+            setIsProcessingFiles(false);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // Reset target value so re-selecting same file works
+      e.target.value = '';
     }
   };
 
@@ -285,6 +322,34 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     };
 
     const docsSummaryStr = uploadedDocsList.length > 0 ? uploadedDocsList.join(', ') : 'None Attached';
+
+    // Save application and uploaded documents to local database server
+    try {
+      fetch('/api/appointments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          appId: mockReceipt.appId,
+          name: mockReceipt.customerName,
+          email: mockReceipt.emailAddress,
+          phone: mockReceipt.phoneNumber,
+          service: mockReceipt.selectedService,
+          dateOfBirth: mockReceipt.dateOfBirth,
+          userCategory: mockReceipt.userCategory,
+          paymentMode: mockReceipt.paymentMode,
+          utrNumber: mockReceipt.utrNumber,
+          totalAmount: mockReceipt.totalAmount,
+          message: formData.additionalDetails,
+          documents: uploadedFiles
+        })
+      }).then(res => res.json())
+        .then(data => console.log('Application saved to database:', data))
+        .catch(err => console.error('Failed to save application to database:', err));
+    } catch (err) {
+      console.error('API submission dispatch error:', err);
+    }
 
     // Send visitor query / application directly to owner email via Web3Forms API
     try {

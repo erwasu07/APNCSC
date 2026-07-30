@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   ShieldAlert, LayoutDashboard, Send, Calendar, Megaphone, Image as ImageIcon, 
-  Settings as SettingsIcon, LogOut, Download, Upload, CheckCircle2, RefreshCw, Trash2, Edit2, Plus, Save
+  Settings as SettingsIcon, LogOut, Download, Upload, CheckCircle2, RefreshCw, Trash2, Edit2, Plus, Save,
+  Eye, FileText, Paperclip, ExternalLink
 } from 'lucide-react';
 import { ContactRequest, Appointment, Announcement, GalleryItem, WebsiteSettings, AnalyticsStats } from '../types';
 
@@ -148,6 +149,53 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handleViewDocument = (doc: { name: string; type: string; dataUrl?: string }) => {
+    if (!doc.dataUrl) return;
+    const win = window.open();
+    if (win) {
+      if (doc.type && doc.type.startsWith('image/')) {
+        win.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>${doc.name}</title>
+              <style>body { margin: 0; background: #0f172a; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: system-ui; color: white; }</style>
+            </head>
+            <body>
+              <div style="text-align: center; padding: 20px;">
+                <h3 style="margin-bottom: 15px; font-size: 16px;">${doc.name}</h3>
+                <img src="${doc.dataUrl}" style="max-width: 90vw; max-height: 85vh; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);" />
+              </div>
+            </body>
+          </html>
+        `);
+      } else {
+        win.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>${doc.name}</title>
+              <style>body { margin: 0; height: 100vh; overflow: hidden; }</style>
+            </head>
+            <body>
+              <iframe src="${doc.dataUrl}" style="width: 100%; height: 100%; border: none;"></iframe>
+            </body>
+          </html>
+        `);
+      }
+    }
+  };
+
+  const handleDownloadDocument = (doc: { name: string; dataUrl?: string }) => {
+    if (!doc.dataUrl) return;
+    const link = document.createElement('a');
+    link.href = doc.dataUrl;
+    link.download = doc.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Status updates for Appointments
@@ -701,62 +749,157 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
             </div>
           )}
 
-          {/* TAB 3: APPOINTMENTS */}
+          {/* TAB 3: APPOINTMENTS & APPLICATIONS */}
           {activeTab === 'appointments' && (
             <div className="space-y-4">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white font-display">Desk Slot Reservations</h3>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white font-display">Applications & Desk Reservations</h3>
+                  <p className="text-xs text-slate-500">View customer online application forms and uploaded identity/educational documents.</p>
+                </div>
+                <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-extrabold text-xs rounded-full">
+                  Total: {appointments.length}
+                </span>
+              </div>
+
               {appointments.length > 0 ? (
                 <div className="space-y-4">
                   {appointments.map((apt) => (
-                    <div key={apt.id} className="p-5 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-850/40 space-y-3">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div>
-                          <h4 className="font-bold text-sm text-slate-900 dark:text-white">{apt.name}</h4>
-                          <p className="text-[10px] text-slate-400 font-bold tracking-wide mt-0.5">{apt.phone} | {apt.email}</p>
+                    <div key={apt.id} className="p-5 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-850/40 space-y-3 shadow-xs">
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+                        <div className="flex items-center gap-2">
+                          {apt.appId && (
+                            <span className="px-2.5 py-1 bg-blue-600 text-white font-mono font-bold text-xs rounded-lg shadow-xs">
+                              {apt.appId}
+                            </span>
+                          )}
+                          <div>
+                            <h4 className="font-bold text-sm text-slate-900 dark:text-white">{apt.name}</h4>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold tracking-wide mt-0.5">
+                              📞 {apt.phone} {apt.email && apt.email !== 'N/A' ? `| ✉️ ${apt.email}` : ''}
+                            </p>
+                          </div>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase ${
-                            apt.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
-                            apt.status === 'approved' ? 'bg-blue-100 text-blue-700' :
-                            apt.status === 'cancelled' ? 'bg-rose-100 text-rose-700' :
-                            'bg-orange-100 text-orange-700'
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                            apt.status === 'completed' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' :
+                            apt.status === 'approved' ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' :
+                            apt.status === 'cancelled' ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300' :
+                            'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
                           }`}>
                             {apt.status}
                           </span>
                         </div>
                       </div>
 
-                      {/* Date details row */}
-                      <div className="flex gap-4 p-2.5 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 rounded-xl text-xs font-semibold text-blue-950 dark:text-blue-300">
-                        <span>📅 Slot Date: {apt.appointmentDate}</span>
-                        <span>⏰ Hour window: {apt.appointmentTime}</span>
+                      {/* Info grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 text-xs font-semibold">
+                        <div className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+                          <span className="text-[9px] font-extrabold uppercase text-slate-400 block">Requested Service</span>
+                          <span className="text-blue-600 dark:text-blue-400 font-bold block truncate">{apt.service}</span>
+                        </div>
+                        <div className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+                          <span className="text-[9px] font-extrabold uppercase text-slate-400 block">Date of Birth / Cat.</span>
+                          <span className="text-slate-700 dark:text-slate-200 font-bold block">{apt.dateOfBirth || 'N/A'} ({apt.userCategory || 'General'})</span>
+                        </div>
+                        <div className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+                          <span className="text-[9px] font-extrabold uppercase text-slate-400 block">Payment / UTR</span>
+                          <span className="text-slate-700 dark:text-slate-200 font-bold block uppercase">{apt.paymentMode || 'cash'} {apt.utrNumber && apt.utrNumber !== 'N/A' ? `(${apt.utrNumber})` : ''}</span>
+                        </div>
+                        <div className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+                          <span className="text-[9px] font-extrabold uppercase text-slate-400 block">Submission Date</span>
+                          <span className="text-slate-700 dark:text-slate-200 font-bold block">{apt.appointmentDate} ({apt.appointmentTime})</span>
+                        </div>
                       </div>
 
-                      <div className="p-3 bg-white dark:bg-slate-900 border rounded-xl">
-                        <span className="text-[9px] font-extrabold text-blue-600 uppercase">Assistance: {apt.service}</span>
-                        {apt.message && <p className="text-xs text-slate-600 dark:text-slate-350 mt-1 italic font-medium leading-relaxed">"{apt.message}"</p>}
+                      {apt.message && (
+                        <div className="p-3 bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/30 rounded-xl text-xs text-amber-900 dark:text-amber-200">
+                          <span className="font-extrabold uppercase text-[9px] text-amber-700 dark:text-amber-400 block mb-0.5">Additional Note / Instructions:</span>
+                          "{apt.message}"
+                        </div>
+                      )}
+
+                      {/* ATTACHED DOCUMENTS SECTION */}
+                      <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                            <Paperclip className="w-4 h-4 text-blue-600" />
+                            Attached Customer Documents ({apt.documents && apt.documents.length > 0 ? apt.documents.length : 0}):
+                          </span>
+                        </div>
+
+                        {apt.documents && apt.documents.length > 0 ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                            {apt.documents.map((doc, idx) => (
+                              <div key={doc.id || idx} className="p-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 overflow-hidden">
+                                  {doc.dataUrl && doc.type && doc.type.startsWith('image/') ? (
+                                    <img src={doc.dataUrl} alt={doc.name} className="w-9 h-9 object-cover rounded-md border border-slate-300 dark:border-slate-600 shrink-0" />
+                                  ) : (
+                                    <div className="w-9 h-9 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 rounded-md flex items-center justify-center shrink-0">
+                                      <FileText className="w-5 h-5" />
+                                    </div>
+                                  )}
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate" title={doc.name}>
+                                      {doc.name}
+                                    </p>
+                                    <p className="text-[10px] text-slate-400 font-semibold">
+                                      {(doc.size / 1024).toFixed(1)} KB
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-1 shrink-0">
+                                  {doc.dataUrl ? (
+                                    <>
+                                      <button
+                                        onClick={() => handleViewDocument(doc)}
+                                        className="p-1.5 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white dark:bg-blue-950 dark:hover:bg-blue-600 dark:text-blue-300 rounded-lg transition-all"
+                                        title="View Document"
+                                      >
+                                        <Eye className="w-3.5 h-3.5" />
+                                      </button>
+                                      <button
+                                        onClick={() => handleDownloadDocument(doc)}
+                                        className="p-1.5 bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white dark:bg-emerald-950 dark:hover:bg-emerald-600 dark:text-emerald-300 rounded-lg transition-all"
+                                        title="Download Document"
+                                      >
+                                        <Download className="w-3.5 h-3.5" />
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <span className="text-[10px] text-slate-400 italic">No File Data</span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-slate-400 italic">No documents attached to this submission.</p>
+                        )}
                       </div>
 
                       {/* Action buttons */}
-                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-150">
-                        <div className="flex flex-wrap items-center gap-1">
+                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                        <div className="flex flex-wrap items-center gap-1.5">
                           <button
                             onClick={() => handleUpdateAppointmentStatus(apt.id, 'approved')}
-                            className="px-2.5 py-1 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white text-[10px] font-extrabold rounded-lg transition-all"
+                            className="px-3 py-1.5 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white text-xs font-bold rounded-lg transition-all"
                           >
-                            Approve Slot
+                            Approve Application
                           </button>
                           <button
                             onClick={() => handleUpdateAppointmentStatus(apt.id, 'completed')}
-                            className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white text-[10px] font-extrabold rounded-lg transition-all"
+                            className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white text-xs font-bold rounded-lg transition-all"
                           >
-                            Mark Visited
+                            Mark Completed
                           </button>
                           <button
                             onClick={() => handleUpdateAppointmentStatus(apt.id, 'cancelled')}
-                            className="px-2.5 py-1 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white text-[10px] font-extrabold rounded-lg transition-all"
+                            className="px-3 py-1.5 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white text-xs font-bold rounded-lg transition-all"
                           >
-                            Cancel
+                            Reject / Cancel
                           </button>
                         </div>
                         <button
@@ -764,14 +907,14 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
                           className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
                           title="Remove booking"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-slate-450 italic">No desk reservations present in databases.</p>
+                <p className="text-xs text-slate-450 italic">No applications or desk reservations found in database.</p>
               )}
             </div>
           )}

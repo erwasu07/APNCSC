@@ -30,8 +30,9 @@ const ADMIN_USERNAME = process.env.ADMIN_USER || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASS || 'admin123';
 const AUTH_TOKEN = 'secret-admin-session-token-xyz-2026';
 
-// Request JSON body parsing
-app.use(express.json());
+// Request JSON body parsing with extended limits for document uploads
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Helper: Log beautiful simulated emails to the server console
 function simulateEmail(to: string, subject: string, htmlBody: string) {
@@ -116,53 +117,83 @@ app.post('/api/contact', (req, res) => {
   res.json({ success: true, data: request, message: 'Message submitted successfully. Emails simulated in logs.' });
 });
 
-// Public API: Book appointment
+// Public API: Book appointment / Submit online application
 app.post('/api/appointments', (req, res) => {
-  const { name, email, phone, service, appointmentDate, appointmentTime, message } = req.body;
+  const { 
+    appId, 
+    name, 
+    email, 
+    phone, 
+    service, 
+    appointmentDate, 
+    appointmentTime, 
+    message,
+    dateOfBirth,
+    userCategory,
+    paymentMode,
+    utrNumber,
+    totalAmount,
+    documents 
+  } = req.body;
 
-  if (!name || !phone || !service || !appointmentDate || !appointmentTime) {
-    return res.status(400).json({ error: 'Please provide all required fields (Name, Phone, Service, Date, Time).' });
+  if (!name || !phone || !service) {
+    return res.status(400).json({ error: 'Please provide all required fields (Name, Phone, Service).' });
   }
 
+  const currentDate = new Date().toISOString().split('T')[0];
+  const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
   const appointment = addAppointment({
+    appId: appId || `APEX-2026-${Math.floor(100000 + Math.random() * 900000)}`,
     name,
     email: email || '',
     phone,
     service,
-    appointmentDate,
-    appointmentTime,
-    message: message || ''
+    appointmentDate: appointmentDate || currentDate,
+    appointmentTime: appointmentTime || currentTime,
+    message: message || '',
+    dateOfBirth: dateOfBirth || 'N/A',
+    userCategory: userCategory || 'General/OBC',
+    paymentMode: paymentMode || 'cash',
+    utrNumber: utrNumber || 'N/A',
+    totalAmount: totalAmount || 0,
+    documents: Array.isArray(documents) ? documents : []
   });
   const db = getDb();
 
+  const docCount = Array.isArray(documents) ? documents.length : 0;
+
   // Send confirmation email to client
-  if (email) {
+  if (email && email !== 'N/A') {
     simulateEmail(
       email,
-      `Appointment Requested - ${db.settings.cafeName}`,
+      `Application & Slot Confirmation - ${db.settings.cafeName}`,
       `📅 Hello ${name},<br/><br/>
-      Your booking request for <b>${service}</b> has been received for <b>${appointmentDate}</b> at <b>${appointmentTime}</b>.<br/>
-      Please wait for an confirmation SMS or email from our desk before visiting.<br/><br/>
-      Regards,<br/>Desk Staff - ${db.settings.cafeName}`
+      Your application/booking request for <b>${service}</b> [ID: <b>${appointment.appId}</b>] has been registered.<br/>
+      Attached Documents: <b>${docCount} file(s) uploaded</b>.<br/>
+      Our team will review your application and documents.<br/><br/>
+      Regards,<br/>CSC DOST Portal - ${db.settings.cafeName}`
     );
   }
 
   // Send notification to owner
   simulateEmail(
     db.settings.email,
-    `📅 NEW Booking Request: ${service} by ${name}`,
+    `🚨 NEW Application Submitted: ${service} by ${name} [${docCount} Docs]`,
     `🔔 Hello Desk Administrator,<br/><br/>
-    A customer has booked an appointment slot on the portal:<br/><br/>
-    <b>Appointment Details:</b><br/>
+    A customer has submitted a new application with documents on the portal:<br/><br/>
+    <b>Application Details:</b><br/>
+    - Application Token ID: ${appointment.appId}<br/>
     - Customer Name: ${name}<br/>
     - Phone: ${phone}<br/>
     - Service: ${service}<br/>
-    - Date & Time: ${appointmentDate} at ${appointmentTime}<br/>
-    - Customer Note: ${message || 'None'}<br/><br/>
-    Manage this appointment inside the Admin Dashboard to Approve or Reschedule.`
+    - Attached Documents: ${docCount} file(s) uploaded<br/>
+    - Payment Mode: ${paymentMode || 'cash'} (UTR: ${utrNumber || 'N/A'})<br/>
+    - Date & Time: ${appointmentDate || currentDate} at ${appointmentTime || currentTime}<br/><br/>
+    Log in to the Admin Dashboard to view/download attached documents.`
   );
 
-  res.json({ success: true, data: appointment, message: 'Appointment booked successfully. Emails simulated in logs.' });
+  res.json({ success: true, data: appointment, message: 'Application submitted successfully with documents attached.' });
 });
 
 // Admin Authentication: Login
