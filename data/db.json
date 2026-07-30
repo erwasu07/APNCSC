@@ -67,38 +67,7 @@
       "description": "Heavy-duty laser and color plotters for instant printing, scanning, and lamination."
     }
   ],
-  "contactRequests": [
-    {
-      "id": "req-1",
-      "name": "Rajesh Kumar",
-      "email": "rajesh.kumar@gmail.com",
-      "phone": "+91 99887 76655",
-      "service": "New PAN Card",
-      "message": "I want to apply for a new PAN card. What documents are required, and how long does it take?",
-      "status": "pending",
-      "date": "2026-07-11T12:30:00.000Z"
-    },
-    {
-      "id": "req-2",
-      "name": "Priya Sharma",
-      "email": "priya.sharma@yahoo.com",
-      "phone": "+91 98765 12345",
-      "service": "GST Return Filing",
-      "message": "Need assistance with monthly GST return filing for my retail shop. Please schedule a call.",
-      "status": "in_progress",
-      "date": "2026-07-10T15:45:00.000Z"
-    },
-    {
-      "id": "req-3",
-      "name": "Amit Patel",
-      "email": "amit.patel@gmail.com",
-      "phone": "+91 91234 56789",
-      "service": "SBI Account Opening",
-      "message": "I want to open a zero balance bank account for my son. He is 16 years old.",
-      "status": "completed",
-      "date": "2026-07-09T11:20:00.000Z"
-    }
-  ],
+  "contactRequests": [],
   "appointments": [
     {
       "appId": "APEX-2026-451613",
@@ -118,31 +87,7 @@
       "id": "apt-1785413615420-372",
       "status": "approved",
       "date": "2026-07-30T12:13:35.420Z"
-    },
-    {
-      "id": "apt-1",
-      "name": "Suresh Gupta",
-      "email": "suresh.g@outlook.com",
-      "phone": "+91 94432 10987",
-      "service": "Passport Application",
-      "appointmentDate": "2026-07-13",
-      "appointmentTime": "11:30 AM",
-      "message": "Applying for renewal of passport. Will bring old passport copy and Aadhaar.",
-      "status": "approved",
-      "date": "2026-07-11T16:10:00.000Z"
-    },
-    {
-      "id": "apt-2",
-      "name": "Meena Devi",
-      "email": "meena.devi@gmail.com",
-      "phone": "+91 95543 21098",
-      "service": "Aadhaar Update Guidance",
-      "appointmentDate": "2026-07-14",
-      "appointmentTime": "03:00 PM",
-      "message": "Need to update my residential address in my Aadhaar card.",
-      "status": "pending",
-      "date": "2026-07-11T18:30:00.000Z"
     }
   ],
-  "views": 526
+  "views": 528
 }

@@ -67,62 +67,14 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
       }
     ],
     gallery: [],
-    contactRequests: [
-      {
-        id: "req-1",
-        name: "Rajesh Kumar",
-        email: "rajesh.kumar@gmail.com",
-        phone: "+91 99887 76655",
-        service: "New PAN Card",
-        message: "I want to apply for a new PAN card. What documents are required?",
-        status: "pending" as const,
-        date: new Date().toISOString()
-      },
-      {
-        id: "req-2",
-        name: "Priya Sharma",
-        email: "priya.sharma@yahoo.com",
-        phone: "+91 98765 12345",
-        service: "GST Return Filing",
-        message: "Need assistance with monthly GST return filing for my retail shop.",
-        status: "in_progress" as const,
-        date: new Date().toISOString()
-      }
-    ],
-    appointments: [
-      {
-        id: "apt-1",
-        appId: "APEX-2026-981245",
-        name: "Suresh Gupta",
-        email: "suresh.g@outlook.com",
-        phone: "+91 94432 10987",
-        service: "Passport Application",
-        appointmentDate: "2026-07-31",
-        appointmentTime: "11:30 AM",
-        message: "Applying for renewal of passport. Will bring old passport copy and Aadhaar.",
-        status: "approved" as const,
-        date: new Date().toISOString()
-      },
-      {
-        id: "apt-2",
-        appId: "APEX-2026-773412",
-        name: "Meena Devi",
-        email: "meena.devi@gmail.com",
-        phone: "+91 95543 21098",
-        service: "Aadhaar Update Guidance",
-        appointmentDate: "2026-08-01",
-        appointmentTime: "03:00 PM",
-        message: "Need to update my residential address in my Aadhaar card.",
-        status: "pending" as const,
-        date: new Date().toISOString()
-      }
-    ],
+    contactRequests: [],
+    appointments: [],
     stats: {
-      views: 520,
-      contactRequestsCount: 2,
-      appointmentsCount: 2,
+      views: 0,
+      contactRequestsCount: 0,
+      appointmentsCount: 0,
       completedRequestsCount: 0,
-      serviceDistribution: { "Passport Application": 1, "Aadhaar Update Guidance": 1 },
+      serviceDistribution: {},
       monthlyTrends: []
     }
   };
