@@ -19,7 +19,7 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
   const [loginError, setLoginError] = useState('');
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<'overview' | 'queries' | 'appointments' | 'announcements' | 'gallery' | 'settings' | 'backup'>('overview');
+  const [activeTab, setActiveTab] = useState<'appointments' | 'overview' | 'queries' | 'announcements' | 'gallery' | 'settings' | 'backup'>('appointments');
   const [aptSubTab, setAptSubTab] = useState<'all' | 'pending' | 'approved' | 'completed' | 'cancelled'>('all');
 
   // Server Data
@@ -953,8 +953,23 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
           <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-3 block mb-2">Management Tools</span>
           
           <button
+            onClick={() => setActiveTab('appointments')}
+            className={`w-full p-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center justify-between gap-2.5 transition-all cursor-pointer ${
+              activeTab === 'appointments' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 hover:bg-slate-50'
+            }`}
+          >
+            <span className="flex items-center gap-2.5">
+              <Calendar className="w-4 h-4" />
+              Applications &amp; Desk
+            </span>
+            <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 font-extrabold px-2.5 py-0.5 rounded-full text-xs">
+              {appointments.length}
+            </span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('overview')}
-            className={`w-full p-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2.5 transition-all ${
+            className={`w-full p-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2.5 transition-all cursor-pointer ${
               activeTab === 'overview' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 hover:bg-slate-50'
             }`}
           >
@@ -964,7 +979,7 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
 
           <button
             onClick={() => setActiveTab('queries')}
-            className={`w-full p-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center justify-between gap-2.5 transition-all ${
+            className={`w-full p-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center justify-between gap-2.5 transition-all cursor-pointer ${
               activeTab === 'queries' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 hover:bg-slate-50'
             }`}
           >
@@ -974,21 +989,6 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
             </span>
             <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-full text-[10px]">
               {contactRequests.length}
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('appointments')}
-            className={`w-full p-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center justify-between gap-2.5 transition-all ${
-              activeTab === 'appointments' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 hover:bg-slate-50'
-            }`}
-          >
-            <span className="flex items-center gap-2.5">
-              <Calendar className="w-4 h-4" />
-              Appointments
-            </span>
-            <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-full text-[10px]">
-              {appointments.length}
             </span>
           </button>
 
@@ -1060,6 +1060,35 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
                   <span className="text-slate-400 text-[10px] font-extrabold uppercase">Completed Tasks</span>
                   <span className="block text-2xl font-extrabold text-emerald-600 mt-1">{stats.completedRequestsCount}</span>
                 </div>
+              </div>
+
+              {/* Recent Customer Applications Overview */}
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2 font-display">
+                      <FileText className="w-4 h-4 text-blue-600" />
+                      Recent Applications &amp; Desk Reservations ({appointments.length})
+                    </h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Live feed of incoming customer form submissions &amp; appointments.</p>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab('appointments')}
+                    className="text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 underline cursor-pointer"
+                  >
+                    View All ({appointments.length}) &rarr;
+                  </button>
+                </div>
+
+                {appointments.length > 0 ? (
+                  <div className="space-y-4">
+                    {appointments.slice(0, 5).map(renderAppointmentCard)}
+                  </div>
+                ) : (
+                  <div className="p-6 text-center bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">No application records found in database.</p>
+                  </div>
+                )}
               </div>
 
               {/* Service distribution bento panel */}
