@@ -93,6 +93,7 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
           setDashboardData(data);
           setConfigSettings(data.settings);
           setLoginError('');
+          setLoading(false);
           return;
         }
       }
@@ -100,17 +101,20 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
       if (res.status === 401) {
         handleLogout();
         setLoginError('Session expired. Please log in again.');
+        setLoading(false);
         return;
       }
+
+      // Non-200 response fallback
+      setDashboardData(prev => prev || FALLBACK_DASHBOARD_DATA);
+      setConfigSettings(prev => prev || FALLBACK_DASHBOARD_DATA.settings);
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
+      setDashboardData(prev => prev || FALLBACK_DASHBOARD_DATA);
+      setConfigSettings(prev => prev || FALLBACK_DASHBOARD_DATA.settings);
     } finally {
       setLoading(false);
     }
-
-    // Ensure fallback data is loaded if server fetch is delayed
-    setDashboardData(prev => prev || FALLBACK_DASHBOARD_DATA);
-    setConfigSettings(prev => prev || FALLBACK_DASHBOARD_DATA.settings);
   };
 
   const fetchDashboardData = () => {
@@ -122,6 +126,11 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
   useEffect(() => {
     if (token) {
       fetchDashboardDataWithToken(token);
+      // Auto-refresh every 8 seconds to automatically show new customer applications & appointments
+      const interval = setInterval(() => {
+        fetchDashboardDataWithToken(token);
+      }, 8000);
+      return () => clearInterval(interval);
     }
   }, [token]);
 

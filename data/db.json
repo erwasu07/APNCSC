@@ -101,6 +101,25 @@
   ],
   "appointments": [
     {
+      "appId": "APEX-2026-451613",
+      "name": "Test User",
+      "email": "",
+      "phone": "+919876543210",
+      "service": "New PAN Card Application",
+      "appointmentDate": "2026-07-30",
+      "appointmentTime": "12:13 PM",
+      "message": "Need urgently",
+      "dateOfBirth": "N/A",
+      "userCategory": "General/OBC",
+      "paymentMode": "cash",
+      "utrNumber": "N/A",
+      "totalAmount": 0,
+      "documents": [],
+      "id": "apt-1785413615420-372",
+      "status": "pending",
+      "date": "2026-07-30T12:13:35.420Z"
+    },
+    {
       "id": "apt-1",
       "name": "Suresh Gupta",
       "email": "suresh.g@outlook.com",
@@ -125,5 +144,5 @@
       "date": "2026-07-11T18:30:00.000Z"
     }
   ],
-  "views": 510
+  "views": 522
 }
