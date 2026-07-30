@@ -279,7 +279,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
   const docRequirement = getServiceDocRequirement(formData.selectedService, formData.customServiceText);
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setUtrError(null);
     setDocumentError(null);
@@ -323,36 +323,9 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
     const docsSummaryStr = uploadedDocsList.length > 0 ? uploadedDocsList.join(', ') : 'None Attached';
 
-    const localAppItem = {
-      id: `apt-local-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      appId: mockReceipt.appId,
-      name: mockReceipt.customerName,
-      email: mockReceipt.emailAddress,
-      phone: mockReceipt.phoneNumber,
-      service: mockReceipt.selectedService,
-      dateOfBirth: mockReceipt.dateOfBirth,
-      userCategory: mockReceipt.userCategory,
-      paymentMode: mockReceipt.paymentMode,
-      utrNumber: mockReceipt.utrNumber,
-      totalAmount: mockReceipt.totalAmount,
-      message: formData.additionalDetails || '',
-      documents: uploadedFiles,
-      status: 'pending',
-      appointmentDate: new Date().toISOString().split('T')[0],
-      appointmentTime: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-      date: new Date().toISOString()
-    };
-
+    // Save application and uploaded documents directly to central server database
     try {
-      const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-      localStorage.setItem('csc_local_applications', JSON.stringify([localAppItem, ...existing]));
-    } catch (e) {
-      console.error('Failed to cache application locally:', e);
-    }
-
-    // Save application and uploaded documents to local database server
-    try {
-      fetch('/api/appointments', {
+      const res = await fetch('/api/appointments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -371,9 +344,9 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
           message: formData.additionalDetails,
           documents: uploadedFiles
         })
-      }).then(res => res.json())
-        .then(data => console.log('Application saved to database:', data))
-        .catch(err => console.error('Failed to save application to database:', err));
+      });
+      const data = await res.json();
+      console.log('Application saved to server database:', data);
     } catch (err) {
       console.error('API submission dispatch error:', err);
     }

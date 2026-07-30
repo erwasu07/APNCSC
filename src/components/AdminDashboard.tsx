@@ -361,23 +361,7 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
     // Find full item from current appointments state
     const currentApt = dashboardData?.appointments?.find(a => a.id === id || a.appId === id);
 
-    // 1. Update in local storage cache if present
-    try {
-      const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-      if (Array.isArray(localApps)) {
-        const updated = localApps.map((item: any) => {
-          if (item.id === id || item.appId === id) {
-            return { ...item, status };
-          }
-          return item;
-        });
-        localStorage.setItem('csc_local_applications', JSON.stringify(updated));
-      }
-    } catch (e) {
-      console.error('Failed to update local storage application:', e);
-    }
-
-    // 2. Optimistically update React state immediately
+    // Optimistically update React state immediately
     setDashboardData(prev => {
       if (!prev) return prev;
       return {
@@ -416,18 +400,7 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
     if (!window.confirm('Are you sure you want to remove this appointment?')) return;
     setActionLoading(true);
 
-    // 1. Remove from local storage
-    try {
-      const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-      if (Array.isArray(localApps)) {
-        const updated = localApps.filter((item: any) => item.id !== id && item.appId !== id);
-        localStorage.setItem('csc_local_applications', JSON.stringify(updated));
-      }
-    } catch (e) {
-      console.error('Failed to delete from local storage:', e);
-    }
-
-    // 2. Optimistically update React state
+    // Optimistically update React state
     setDashboardData(prev => {
       if (!prev) return prev;
       return {
@@ -712,26 +685,6 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
   // Render variables
   const activeData = dashboardData || FALLBACK_DASHBOARD_DATA;
   let { stats, contactRequests, appointments, announcements, gallery } = activeData;
-
-  // Hybrid Merge: Merge client-side saved applications from localStorage so submitted applications are never lost
-  try {
-    const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-    if (Array.isArray(localApps) && localApps.length > 0) {
-      const existingIds = new Set((appointments || []).map(a => a.id || a.appId));
-      const newFromLocal = localApps.filter(item => item && !existingIds.has(item.id) && !existingIds.has(item.appId));
-      if (newFromLocal.length > 0) {
-        appointments = [...newFromLocal, ...(appointments || [])];
-        if (stats) {
-          stats = {
-            ...stats,
-            appointmentsCount: appointments.length
-          };
-        }
-      }
-    }
-  } catch (e) {
-    console.error('Failed to merge local applications:', e);
-  }
 
   const pendingApts = (appointments || []).filter(a => a.status === 'pending');
   const approvedApts = (appointments || []).filter(a => a.status === 'approved');
