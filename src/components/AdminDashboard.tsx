@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth, storage } from '../lib/firebase';
-import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
   signInWithEmailAndPassword,
@@ -210,10 +210,28 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
             }
           }
 
+          const getPriority = (st?: string) => {
+            if (!st) return 0;
+            const l = st.toLowerCase();
+            if (l.includes('completed')) return 3;
+            if (l.includes('approved') || l.includes('process') || l.includes('reject')) return 2;
+            if (l.includes('pending')) return 1;
+            return 1;
+          };
+
+          const existingPriority = getPriority(existing.status);
+          const newPriority = getPriority(app.status);
+
+          let resolvedStatus = existing.status || 'Pending';
+          if (newPriority >= existingPriority && app.status) {
+            resolvedStatus = app.status;
+          }
+
           map.set(key, {
             ...existing,
             ...app,
             appId: app.appId || existing.appId || key,
+            id: app.id || existing.id || key,
             name: app.name || app.customerName || app.applicantName || existing.name || 'N/A',
             phone: app.phone || app.phoneNumber || app.mobile || existing.phone || 'N/A',
             email: app.email || app.emailAddress || existing.email || 'N/A',
@@ -225,7 +243,8 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
             totalAmount: app.totalAmount || existing.totalAmount || 0,
             submittedAt: app.createdAt || app.submittedAt || app.appointmentTime || app.date || existing.submittedAt || 'Recent',
             updatedAt: app.updatedAt || app.statusUpdatedAt || existing.updatedAt || null,
-            status: app.status || existing.status || 'pending'
+            finalReceiptUrl: app.finalReceiptUrl || existing.finalReceiptUrl || null,
+            status: resolvedStatus
           });
         }
       });
@@ -285,7 +304,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     };
   }, [isAuthenticated]);
 
-  // Handle status update in Firestore & state with timestamp
+  // Handle status update in Firestore & state with timestamp safely using setDoc merge
   const handleUpdateStatus = async (appId: string, newStatus: string) => {
     const isoNow = new Date().toISOString();
     const updatePayload = {
@@ -295,15 +314,35 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     };
 
     try {
-      await updateDoc(doc(db, 'applications', appId), updatePayload);
+      await setDoc(doc(db, 'applications', appId), updatePayload, { merge: true });
     } catch (e) {
-      console.warn('Firestore "applications" status update error:', e);
+      try {
+        await updateDoc(doc(db, 'applications', appId), updatePayload);
+      } catch (err) {
+        console.warn('Firestore "applications" status update error:', err);
+      }
     }
 
     try {
-      await updateDoc(doc(db, 'appointments', appId), updatePayload);
+      await setDoc(doc(db, 'appointments', appId), updatePayload, { merge: true });
     } catch (e) {
-      console.warn('Firestore "appointments" status update error:', e);
+      try {
+        await updateDoc(doc(db, 'appointments', appId), updatePayload);
+      } catch (err) {
+        console.warn('Firestore "appointments" status update error:', err);
+      }
+    }
+
+    try {
+      const local = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+      const updatedLocal = local.map((a: any) => (a.appId === appId || a.id === appId) ? { ...a, ...updatePayload } : a);
+      localStorage.setItem('csc_local_applications', JSON.stringify(updatedLocal));
+
+      const web3 = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
+      const updatedWeb3 = web3.map((a: any) => (a.appId === appId || a.id === appId) ? { ...a, ...updatePayload } : a);
+      localStorage.setItem('csc_web3forms_submissions', JSON.stringify(updatedWeb3));
+    } catch (e) {
+      console.error('Local storage cache update error:', e);
     }
 
     setApplications(prev =>
@@ -390,22 +429,33 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
   // Filter logic
   const filteredApplications = applications.filter(app => {
-    const q = searchQuery.toLowerCase();
-    const name = (app.name || app.customerName || '').toLowerCase();
-    const phone = (app.phone || app.phoneNumber || '').toLowerCase();
-    const appId = (app.appId || '').toLowerCase();
-    const service = (app.service || app.selectedService || '').toLowerCase();
+    const q = searchQuery.toLowerCase().trim();
+    const name = (app.name || app.customerName || app.applicantName || '').toLowerCase();
+    const phone = (app.phone || app.phoneNumber || app.mobile || '').toLowerCase();
+    const appId = (app.appId || app.id || '').toLowerCase();
+    const service = (app.service || app.selectedService || app.eService || '').toLowerCase();
     const utr = (app.utrNumber || '').toLowerCase();
 
-    const matchesQuery = name.includes(q) || phone.includes(q) || appId.includes(q) || service.includes(q) || utr.includes(q);
+    const matchesQuery = !q || name.includes(q) || phone.includes(q) || appId.includes(q) || service.includes(q) || utr.includes(q);
 
     if (filterStatus === 'all') return matchesQuery;
     if (filterStatus === 'online') return matchesQuery && app.paymentMode === 'online';
     if (filterStatus === 'cash') return matchesQuery && app.paymentMode === 'cash';
-    if (filterStatus === 'pending') return matchesQuery && (app.status === 'Pending' || app.status === 'pending' || !app.status);
-    if (filterStatus === 'approved') return matchesQuery && (app.status === 'Approved & Under Process' || app.status === 'approved');
-    if (filterStatus === 'completed') return matchesQuery && (app.status === 'Completed' || app.status === 'completed');
-    if (filterStatus === 'rejected') return matchesQuery && (app.status === 'Rejected' || app.status === 'rejected');
+
+    const statusStr = (app.status || 'Pending').toLowerCase();
+
+    if (filterStatus === 'pending') {
+      return matchesQuery && (statusStr === 'pending' || !app.status);
+    }
+    if (filterStatus === 'approved') {
+      return matchesQuery && (statusStr.includes('approved') || statusStr.includes('process'));
+    }
+    if (filterStatus === 'completed') {
+      return matchesQuery && statusStr.includes('completed');
+    }
+    if (filterStatus === 'rejected') {
+      return matchesQuery && statusStr.includes('reject');
+    }
 
     return matchesQuery;
   });
@@ -1026,7 +1076,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                       }
                     }
 
-                    // 2. Save status & finalReceiptUrl in Firestore with ISO timestamp
+                    // 2. Save status & finalReceiptUrl in Firestore with ISO timestamp safely using setDoc merge
                     const isoNow = new Date().toISOString();
                     const updatePayload = {
                       status: 'Completed',
@@ -1036,19 +1086,39 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                     };
 
                     try {
-                      await updateDoc(doc(db, 'applications', uploadModalApp.appId), updatePayload);
+                      await setDoc(doc(db, 'applications', uploadModalApp.appId), updatePayload, { merge: true });
                     } catch (err: any) {
-                      console.warn('Error updating status in applications collection:', err);
+                      try {
+                        await updateDoc(doc(db, 'applications', uploadModalApp.appId), updatePayload);
+                      } catch (e: any) {
+                        console.warn('Error updating status in applications collection:', e);
+                      }
                     }
 
                     try {
-                      await updateDoc(doc(db, 'appointments', uploadModalApp.appId), updatePayload);
+                      await setDoc(doc(db, 'appointments', uploadModalApp.appId), updatePayload, { merge: true });
                     } catch (err: any) {
-                      console.warn('Error updating status in appointments collection:', err);
+                      try {
+                        await updateDoc(doc(db, 'appointments', uploadModalApp.appId), updatePayload);
+                      } catch (e: any) {
+                        console.warn('Error updating status in appointments collection:', e);
+                      }
+                    }
+
+                    try {
+                      const local = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+                      const updatedLocal = local.map((a: any) => (a.appId === uploadModalApp.appId || a.id === uploadModalApp.appId) ? { ...a, ...updatePayload } : a);
+                      localStorage.setItem('csc_local_applications', JSON.stringify(updatedLocal));
+
+                      const web3 = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
+                      const updatedWeb3 = web3.map((a: any) => (a.appId === uploadModalApp.appId || a.id === uploadModalApp.appId) ? { ...a, ...updatePayload } : a);
+                      localStorage.setItem('csc_web3forms_submissions', JSON.stringify(updatedWeb3));
+                    } catch (e) {
+                      console.error('Local storage cache update error:', e);
                     }
 
                     setApplications(prev =>
-                      prev.map(a => a.appId === uploadModalApp.appId ? { ...a, status: 'Completed', finalReceiptUrl: finalUrl, updatedAt: isoNow, statusUpdatedAt: isoNow } : a)
+                      prev.map(a => (a.appId === uploadModalApp.appId || a.id === uploadModalApp.appId) ? { ...a, status: 'Completed', finalReceiptUrl: finalUrl, updatedAt: isoNow, statusUpdatedAt: isoNow } : a)
                     );
 
                     setActionSuccess(`Application ${uploadModalApp.appId} marked Completed & final receipt attached!`);
