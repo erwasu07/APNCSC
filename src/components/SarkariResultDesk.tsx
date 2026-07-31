@@ -30,7 +30,8 @@ import {
   MessageSquare,
   MessageCircle,
   UploadCloud,
-  Paperclip
+  Paperclip,
+  CreditCard
 } from 'lucide-react';
 import { SARKARI_DATA, SARKARI_CATEGORIES, SarkariItem } from '../data/sarkariData';
 import { SERVICES_LIST } from '../servicesData';
@@ -449,14 +450,14 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
         slipContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
 
-      if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+      if (typeof window !== 'undefined') {
         setTimeout(() => {
           try {
             window.print();
           } catch (e) {
             console.log('Print trigger error:', e);
           }
-        }, 300);
+        }, 350);
       }
     }, 100);
   };
@@ -943,13 +944,13 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
             /* POST-SUBMISSION PAYMENT MODE SELECTION STEP */
             <div id="booking-portal-form" className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 border border-slate-200 dark:border-slate-800 max-w-2xl mx-auto animate-fade-in">
               <div className="text-center pb-5 border-b border-slate-200 dark:border-slate-800 space-y-2">
-                <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-950/60 rounded-full flex items-center justify-center text-emerald-600 dark:text-emerald-400 mx-auto">
-                  <CheckCircle className="w-7 h-7" />
+                <div className="w-12 h-12 bg-amber-100 dark:bg-amber-950/60 rounded-full flex items-center justify-center text-amber-600 dark:text-amber-400 mx-auto">
+                  <CreditCard className="w-7 h-7" />
                 </div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 rounded-full text-xs font-extrabold uppercase tracking-wider border border-emerald-200 dark:border-emerald-800">
-                  <span>Step 1 Complete</span>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 rounded-full text-xs font-extrabold uppercase tracking-wider border border-amber-200 dark:border-amber-800">
+                  <span>Step 2 of 2</span>
                   <span>•</span>
-                  <span>Application Form Submitted</span>
+                  <span>Select Payment Method</span>
                 </div>
                 <h3 className="text-xl font-black uppercase text-slate-900 dark:text-white font-display">
                   Select Payment Option
@@ -1186,8 +1187,9 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                 <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mx-auto mb-2 animate-bounce" style={{ animationDuration: '3.5s' }}>
                   <CheckCircle className="w-7 h-7" />
                 </div>
-                <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-full text-[9px] font-black tracking-wider uppercase mb-1">
-                  Application Logged Successfully
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 rounded-full text-xs font-black tracking-wider uppercase mb-1.5 border border-emerald-300">
+                  <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Application Form Submitted &amp; Payment Confirmed</span>
                 </div>
                 <h3 className="text-lg font-black uppercase tracking-tight text-slate-900 font-display">
                   Apex Cyber Cafe digital slip
