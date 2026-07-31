@@ -914,37 +914,49 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                     )}
                   </div>
 
-                  {/* ACTION BUTTONS: Approve, Reject, Mark Completed */}
+                  {/* ACTION BUTTONS OR FINAL STATE INDICATOR */}
                   <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-                    <button
-                      onClick={() => handleUpdateStatus(app.appId, 'Approved & Under Process')}
-                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer shadow-xs"
-                      title="Approve & mark as Under Process"
-                    >
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Approve</span>
-                    </button>
+                    {(app.status || '').toLowerCase().includes('completed') ? (
+                      <div className="px-3 py-1.5 bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 rounded-lg text-xs font-extrabold flex items-center gap-1.5 shadow-xs">
+                        <span>✅ Application Processed</span>
+                      </div>
+                    ) : (app.status || '').toLowerCase().includes('reject') ? (
+                      <div className="px-3 py-1.5 bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300 border border-red-300 dark:border-red-800 rounded-lg text-xs font-extrabold flex items-center gap-1.5 shadow-xs">
+                        <span>❌ Application Closed</span>
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleUpdateStatus(app.appId, 'Approved & Under Process')}
+                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer shadow-xs"
+                          title="Approve & mark as Under Process"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Approve</span>
+                        </button>
 
-                    <button
-                      onClick={() => handleUpdateStatus(app.appId, 'Rejected')}
-                      className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer shadow-xs"
-                      title="Reject application"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                      <span>Reject</span>
-                    </button>
+                        <button
+                          onClick={() => handleUpdateStatus(app.appId, 'Rejected')}
+                          className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer shadow-xs"
+                          title="Reject application"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          <span>Reject</span>
+                        </button>
 
-                    <button
-                      onClick={() => {
-                        setUploadModalApp(app);
-                        setReceiptDataUrl(app.finalReceiptUrl || '');
-                      }}
-                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer shadow-xs"
-                      title="Upload final processed receipt & mark Completed"
-                    >
-                      <Upload className="w-3.5 h-3.5" />
-                      <span>Mark Completed</span>
-                    </button>
+                        <button
+                          onClick={() => {
+                            setUploadModalApp(app);
+                            setReceiptDataUrl(app.finalReceiptUrl || '');
+                          }}
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer shadow-xs"
+                          title="Upload final processed receipt & mark Completed"
+                        >
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Mark Completed</span>
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
