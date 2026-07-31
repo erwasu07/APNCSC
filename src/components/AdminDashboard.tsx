@@ -968,12 +968,112 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       {/* MARK COMPLETED FILE UPLOAD MODAL */}
       {uploadModalApp && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setUploadError(null);
+
+              const manualUrl = receiptDataUrl && !receiptDataUrl.startsWith('data:') ? receiptDataUrl.trim() : '';
+              const file = selectedReceiptFile;
+
+              console.log('1. Starting upload handler...', { hasFile: !!file, fileName: file?.name, manualUrl });
+
+              if (!file && !manualUrl) {
+                alert("Please select a file or enter a URL.");
+                return;
+              }
+
+              setIsUploadingReceipt(true);
+              let finalUrl = manualUrl;
+
+              try {
+                if (file) {
+                  // Explicitly reference storage instance with Date.now() timestamp prefix to prevent file collision/overwrites
+                  const safeFileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+                  console.log(`2. Storage Ref created: receipts/${safeFileName}`);
+                  const activeStorage = storage || getStorage();
+                  const storageRef = ref(activeStorage, `receipts/${safeFileName}`);
+
+                  console.log('3. Uploading bytes to Firebase Storage...');
+                  const snapshot = await uploadBytes(storageRef, file);
+                  console.log('4. Upload completed. Fetching download URL via snapshot.ref...');
+
+                  finalUrl = await getDownloadURL(snapshot.ref);
+                  console.log('5. Download URL obtained successfully:', finalUrl);
+                }
+
+                if (!finalUrl) {
+                  throw new Error('Failed to obtain a valid receipt URL.');
+                }
+
+                console.log('6. Updating Firestore document...');
+                const isoNow = new Date().toISOString();
+                const updatePayload = {
+                  status: 'Completed',
+                  finalReceiptUrl: finalUrl,
+                  updatedAt: isoNow,
+                  statusUpdatedAt: isoNow
+                };
+
+                const docRef = doc(db, 'applications', uploadModalApp.appId);
+                try {
+                  await updateDoc(docRef, updatePayload);
+                  console.log('7. Application document updated via updateDoc');
+                } catch (err: any) {
+                  console.warn('7b. updateDoc failed, falling back to setDoc merge:', err);
+                  await setDoc(docRef, updatePayload, { merge: true });
+                }
+
+                // Also update appointments collection if present
+                try {
+                  const appointmentRef = doc(db, 'appointments', uploadModalApp.appId);
+                  await updateDoc(appointmentRef, updatePayload);
+                } catch (e) {
+                  // non-critical
+                }
+
+                // Update local storage cache
+                try {
+                  const local = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+                  const updatedLocal = local.map((a: any) => (a.appId === uploadModalApp.appId || a.id === uploadModalApp.appId) ? { ...a, ...updatePayload } : a);
+                  localStorage.setItem('csc_local_applications', JSON.stringify(updatedLocal));
+
+                  const web3 = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
+                  const updatedWeb3 = web3.map((a: any) => (a.appId === uploadModalApp.appId || a.id === uploadModalApp.appId) ? { ...a, ...updatePayload } : a);
+                  localStorage.setItem('csc_web3forms_submissions', JSON.stringify(updatedWeb3));
+                } catch (e) {
+                  console.error('LocalStorage cache update error:', e);
+                }
+
+                // Update React state
+                setApplications(prev =>
+                  prev.map(a => (a.appId === uploadModalApp.appId || a.id === uploadModalApp.appId) ? { ...a, status: 'Completed', finalReceiptUrl: finalUrl, updatedAt: isoNow, statusUpdatedAt: isoNow } : a)
+                );
+
+                alert("Success! Application completed.");
+
+                // Close modal
+                setUploadModalApp(null);
+                setReceiptDataUrl('');
+                setSelectedReceiptFile(null);
+                setUploadError(null);
+              } catch (error: any) {
+                console.error("Critical Upload Error:", error);
+                const errMsg = error?.message || String(error);
+                setUploadError(`Failed to upload: ${errMsg}`);
+                alert(`Failed to upload: ${errMsg}. Please check console.`);
+              } finally {
+                setIsUploadingReceipt(false); // Guarantee button reset
+              }
+            }}
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl"
+          >
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
               <h3 className="text-base font-black text-slate-900 dark:text-white uppercase">
                 Upload Processed Receipt / Document
               </h3>
               <button
+                type="button"
                 onClick={() => {
                   setUploadModalApp(null);
                   setReceiptDataUrl('');
@@ -1051,6 +1151,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
               <button
+                type="button"
                 disabled={isUploadingReceipt}
                 onClick={() => {
                   setUploadModalApp(null);
@@ -1064,120 +1165,8 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               </button>
 
               <button
+                type="submit"
                 disabled={isUploadingReceipt}
-                onClick={async () => {
-                  setUploadError(null);
-
-                  const manualUrl = receiptDataUrl ? receiptDataUrl.trim() : '';
-                  const file = selectedReceiptFile;
-
-                  console.log('1. Upload process triggered', { hasFile: !!file, fileName: file?.name, manualUrl });
-
-                  if (!file && !manualUrl) {
-                    console.log('Validation failed: Both file and manual URL are empty');
-                    alert('Please select a receipt file or provide a valid receipt URL.');
-                    return;
-                  }
-
-                  setIsUploadingReceipt(true);
-
-                  try {
-                    let finalUrl = '';
-
-                    if (file) {
-                      console.log('2. File detected. Proceeding with Firebase uploadBytes logic:', file);
-                      console.log('3. Storage Ref created for:', 'receipts/' + file.name);
-                      const activeStorage = storage || getStorage();
-                      const storageRef = ref(activeStorage, 'receipts/' + file.name);
-
-                      console.log('4. Uploading bytes to Firebase Storage...');
-                      await uploadBytes(storageRef, file);
-                      console.log('5. File uploaded successfully. Fetching download URL...');
-
-                      const downloadUrl = await getDownloadURL(storageRef);
-                      console.log('6. Download URL generated:', downloadUrl);
-                      finalUrl = downloadUrl;
-                    } else if (manualUrl) {
-                      console.log('2. Manual URL provided. Skipping Firebase Storage entirely:', manualUrl);
-                      finalUrl = manualUrl;
-                    }
-
-                    if (!finalUrl) {
-                      throw new Error('Failed to obtain a valid receipt URL.');
-                    }
-
-                    console.log('7. Preparing Firestore update payload with finalReceiptUrl:', finalUrl);
-                    const isoNow = new Date().toISOString();
-                    const updatePayload = {
-                      status: 'Completed',
-                      finalReceiptUrl: finalUrl,
-                      updatedAt: isoNow,
-                      statusUpdatedAt: isoNow
-                    };
-
-                    console.log('8. Updating "applications" collection for appId:', uploadModalApp.appId);
-                    try {
-                      await updateDoc(doc(db, 'applications', uploadModalApp.appId), updatePayload);
-                      console.log('9. "applications" updated via updateDoc');
-                    } catch (err: any) {
-                      console.warn('9. updateDoc failed on applications, falling back to setDoc merge:', err);
-                      try {
-                        await setDoc(doc(db, 'applications', uploadModalApp.appId), updatePayload, { merge: true });
-                        console.log('9b. "applications" updated via setDoc merge');
-                      } catch (e: any) {
-                        console.error('9c. Failed to update applications collection:', e);
-                      }
-                    }
-
-                    console.log('10. Updating "appointments" collection for appId:', uploadModalApp.appId);
-                    try {
-                      await updateDoc(doc(db, 'appointments', uploadModalApp.appId), updatePayload);
-                      console.log('11. "appointments" updated via updateDoc');
-                    } catch (err: any) {
-                      console.warn('11. updateDoc failed on appointments, falling back to setDoc merge:', err);
-                      try {
-                        await setDoc(doc(db, 'appointments', uploadModalApp.appId), updatePayload, { merge: true });
-                        console.log('11b. "appointments" updated via setDoc merge');
-                      } catch (e: any) {
-                        console.error('11c. Failed to update appointments collection:', e);
-                      }
-                    }
-
-                    console.log('12. Updating localStorage cache...');
-                    try {
-                      const local = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-                      const updatedLocal = local.map((a: any) => (a.appId === uploadModalApp.appId || a.id === uploadModalApp.appId) ? { ...a, ...updatePayload } : a);
-                      localStorage.setItem('csc_local_applications', JSON.stringify(updatedLocal));
-
-                      const web3 = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
-                      const updatedWeb3 = web3.map((a: any) => (a.appId === uploadModalApp.appId || a.id === uploadModalApp.appId) ? { ...a, ...updatePayload } : a);
-                      localStorage.setItem('csc_web3forms_submissions', JSON.stringify(updatedWeb3));
-                    } catch (e) {
-                      console.error('12b. LocalStorage cache error:', e);
-                    }
-
-                    console.log('13. Updating React state & closing modal...');
-                    setApplications(prev =>
-                      prev.map(a => (a.appId === uploadModalApp.appId || a.id === uploadModalApp.appId) ? { ...a, status: 'Completed', finalReceiptUrl: finalUrl, updatedAt: isoNow, statusUpdatedAt: isoNow } : a)
-                    );
-
-                    setActionSuccess(`Application ${uploadModalApp.appId} marked Completed & final receipt attached!`);
-                    setTimeout(() => setActionSuccess(null), 3000);
-                    setUploadModalApp(null);
-                    setReceiptDataUrl('');
-                    setSelectedReceiptFile(null);
-                    setUploadError(null);
-                    console.log('14. Complete upload flow finished successfully!');
-                  } catch (error: any) {
-                    console.error('UPLOAD CRASHED:', error);
-                    const errMsg = error?.message || String(error);
-                    setUploadError(`Upload Error: ${errMsg}`);
-                    alert('Upload Error: ' + errMsg);
-                  } finally {
-                    console.log('15. Executing finally block: resetting isUploadingReceipt to false');
-                    setIsUploadingReceipt(false);
-                  }
-                }}
                 className="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {isUploadingReceipt ? (
@@ -1193,7 +1182,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                 )}
               </button>
             </div>
-          </div>
+          </form>
         </div>
       )}
 
