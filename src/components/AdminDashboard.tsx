@@ -1008,6 +1008,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
+                      console.log('Selected file for upload:', file);
                       setSelectedReceiptFile(file);
                       setUploadError(null);
                       const reader = new FileReader();
@@ -1078,15 +1079,16 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                     // 1. Upload to Firebase Storage if a file is selected
                     if (selectedReceiptFile) {
                       const file = selectedReceiptFile;
+                      console.log('Uploading file:', file);
                       const storageRef = ref(storage, 'receipts/' + file.name);
-                      const snapshot = await uploadBytes(storageRef, file);
-                      const downloadUrl = await getDownloadURL(snapshot.ref);
+                      await uploadBytes(storageRef, file);
+                      const downloadUrl = await getDownloadURL(storageRef);
                       if (downloadUrl) {
                         finalUrl = downloadUrl;
                       }
                     }
 
-                    // 2. Save status & finalReceiptUrl in Firestore with ISO timestamp safely using setDoc merge
+                    // 2. Only after URL is successfully generated, run updateDoc to update status and finalReceiptUrl
                     const isoNow = new Date().toISOString();
                     const updatePayload = {
                       status: 'Completed',
@@ -1096,20 +1098,20 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                     };
 
                     try {
-                      await setDoc(doc(db, 'applications', uploadModalApp.appId), updatePayload, { merge: true });
+                      await updateDoc(doc(db, 'applications', uploadModalApp.appId), updatePayload);
                     } catch (err: any) {
                       try {
-                        await updateDoc(doc(db, 'applications', uploadModalApp.appId), updatePayload);
+                        await setDoc(doc(db, 'applications', uploadModalApp.appId), updatePayload, { merge: true });
                       } catch (e: any) {
                         console.warn('Error updating status in applications collection:', e);
                       }
                     }
 
                     try {
-                      await setDoc(doc(db, 'appointments', uploadModalApp.appId), updatePayload, { merge: true });
+                      await updateDoc(doc(db, 'appointments', uploadModalApp.appId), updatePayload);
                     } catch (err: any) {
                       try {
-                        await updateDoc(doc(db, 'appointments', uploadModalApp.appId), updatePayload);
+                        await setDoc(doc(db, 'appointments', uploadModalApp.appId), updatePayload, { merge: true });
                       } catch (e: any) {
                         console.warn('Error updating status in appointments collection:', e);
                       }

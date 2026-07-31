@@ -433,7 +433,11 @@ export default function TrackApplication({ initialTokenId = '' }: TrackApplicati
                   </div>
 
                   <button
-                    onClick={() => window.open(applicationData.finalReceiptUrl, '_blank')}
+                    onClick={() => {
+                      if (applicationData?.finalReceiptUrl) {
+                        window.open(applicationData.finalReceiptUrl, '_blank');
+                      }
+                    }}
                     className="w-full px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Download className="w-4 h-4" />
