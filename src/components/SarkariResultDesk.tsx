@@ -389,28 +389,61 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       console.error('API submission dispatch error:', err);
     }
 
-    // Send visitor query / application directly to owner email via Web3Forms API
+    // Send visitor query / application directly to owner email via Web3Forms API & save to Web3Forms Extractor cache
     try {
+      const web3Payload = {
+        access_key: 'a6293a04-2711-4d7c-bb7c-e7c9ed3d888c',
+        subject: `New Application Inquiry [${mockReceipt.appId}] - ${mockReceipt.customerName}`,
+        from_name: 'APNA CSC Digital Portal',
+        name: mockReceipt.customerName,
+        email: mockReceipt.emailAddress !== 'N/A' ? mockReceipt.emailAddress : 'no-reply@apnacsc.in',
+        phone_number: mockReceipt.phoneNumber,
+        service_requested: mockReceipt.selectedService,
+        category: mockReceipt.userCategory,
+        payment_mode: mockReceipt.paymentMode,
+        utr_number: mockReceipt.utrNumber,
+        amount: `₹${mockReceipt.totalAmount}`,
+        message: `Application Token ID: ${mockReceipt.appId}\nApplicant Name: ${mockReceipt.customerName}\nMobile Number: ${mockReceipt.phoneNumber}\nEmail: ${mockReceipt.emailAddress}\nDate of Birth: ${mockReceipt.dateOfBirth}\nSelected Service: ${mockReceipt.selectedService}\nCategory: ${mockReceipt.userCategory}\nPayment Mode: ${mockReceipt.paymentMode}\nPayment UTR Ref No: ${mockReceipt.utrNumber}\nAttached Documents: ${docsSummaryStr}\nAmount Charged: ₹${mockReceipt.totalAmount}\nInstructions/Note: ${mockReceipt.additionalDetails}`
+      };
+
+      // Save to Web3Forms local submissions cache for real-time extraction
+      try {
+        const web3Item = {
+          id: `w3f-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          appId: mockReceipt.appId,
+          name: mockReceipt.customerName,
+          email: mockReceipt.emailAddress,
+          phone: mockReceipt.phoneNumber,
+          service: mockReceipt.selectedService,
+          dateOfBirth: mockReceipt.dateOfBirth,
+          userCategory: mockReceipt.userCategory,
+          paymentMode: mockReceipt.paymentMode,
+          utrNumber: mockReceipt.utrNumber,
+          totalAmount: mockReceipt.totalAmount,
+          message: formData.additionalDetails || 'Web3Forms Direct Inquiry',
+          documents: uploadedFiles,
+          appointmentDate: new Date().toISOString().split('T')[0],
+          appointmentTime: mockReceipt.submittedAt,
+          status: 'pending' as const,
+          date: new Date().toISOString(),
+          source: 'Web3Forms API'
+        };
+
+        const existingW3F = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
+        localStorage.setItem('csc_web3forms_submissions', JSON.stringify([web3Item, ...existingW3F]));
+
+        window.dispatchEvent(new CustomEvent('csc_web3forms_sync', { detail: web3Item }));
+      } catch (cacheErr) {
+        console.error('Failed to cache Web3Forms extraction:', cacheErr);
+      }
+
       fetch('https://api.web3forms.com/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify({
-          access_key: 'a6293a04-2711-4d7c-bb7c-e7c9ed3d888c',
-          subject: `New Application Inquiry [${mockReceipt.appId}] - ${mockReceipt.customerName}`,
-          from_name: 'APNA CSC Digital Portal',
-          name: mockReceipt.customerName,
-          email: mockReceipt.emailAddress !== 'N/A' ? mockReceipt.emailAddress : 'no-reply@apnacsc.in',
-          phone_number: mockReceipt.phoneNumber,
-          service_requested: mockReceipt.selectedService,
-          category: mockReceipt.userCategory,
-          payment_mode: mockReceipt.paymentMode,
-          utr_number: mockReceipt.utrNumber,
-          amount: `₹${mockReceipt.totalAmount}`,
-          message: `Application Token ID: ${mockReceipt.appId}\nApplicant Name: ${mockReceipt.customerName}\nMobile Number: ${mockReceipt.phoneNumber}\nEmail: ${mockReceipt.emailAddress}\nDate of Birth: ${mockReceipt.dateOfBirth}\nSelected Service: ${mockReceipt.selectedService}\nCategory: ${mockReceipt.userCategory}\nPayment Mode: ${mockReceipt.paymentMode}\nPayment UTR Ref No: ${mockReceipt.utrNumber}\nAttached Documents: ${docsSummaryStr}\nAmount Charged: ₹${mockReceipt.totalAmount}\nInstructions/Note: ${mockReceipt.additionalDetails}`
-        })
+        body: JSON.stringify(web3Payload)
       }).catch(err => console.error('Web3Forms delivery error:', err));
     } catch (err) {
       console.error('Web3Forms dispatch error:', err);

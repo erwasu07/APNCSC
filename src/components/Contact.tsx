@@ -131,6 +131,54 @@ export default function Contact({ settings, selectedService, setSelectedService 
           body: JSON.stringify({ name, email, phone, service, appointmentDate, appointmentTime, message })
         });
         const data = await res.json();
+
+        // Web3Forms direct integration & real-time extraction dispatch
+        try {
+          const web3Payload = {
+            access_key: 'a6293a04-2711-4d7c-bb7c-e7c9ed3d888c',
+            subject: `Contact Desk Inquiry - ${name}`,
+            from_name: 'APNA CSC Contact Desk',
+            name: name,
+            email: email || 'no-reply@apnacsc.in',
+            phone_number: phone,
+            service_requested: service,
+            message: message || 'Desk appointment query from Contact Page'
+          };
+
+          const web3Item = {
+            id: data.data?.id || `w3f-contact-${Date.now()}`,
+            appId: data.data?.appId || `APEX-2026-${Math.floor(100000 + Math.random() * 900000)}`,
+            name: name,
+            email: email,
+            phone: phone,
+            service: service,
+            dateOfBirth: 'N/A',
+            userCategory: 'General/OBC',
+            paymentMode: 'cash',
+            utrNumber: 'N/A',
+            totalAmount: 0,
+            message: message || 'Contact form inquiry',
+            documents: [],
+            appointmentDate: appointmentDate || new Date().toISOString().split('T')[0],
+            appointmentTime: appointmentTime || '10:00 AM',
+            status: 'pending' as const,
+            date: new Date().toISOString(),
+            source: 'Web3Forms API'
+          };
+
+          const existingW3F = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
+          localStorage.setItem('csc_web3forms_submissions', JSON.stringify([web3Item, ...existingW3F]));
+
+          fetch('https://api.web3forms.com/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(web3Payload)
+          }).catch(err => console.error('Web3Forms contact delivery error:', err));
+
+          window.dispatchEvent(new CustomEvent('csc_web3forms_sync', { detail: web3Item }));
+        } catch (w3fErr) {
+          console.error('Web3Forms dispatch error in Contact.tsx:', w3fErr);
+        }
         if (res.ok) {
           const savedItem = data.data;
           if (savedItem) {

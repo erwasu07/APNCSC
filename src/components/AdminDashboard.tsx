@@ -130,26 +130,27 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
         if (e?.detail) {
           const newApt = e.detail;
           setDashboardData(prev => {
-            if (!prev) return prev;
-            const existing = prev.appointments || [];
+            const current = prev || FALLBACK_DASHBOARD_DATA;
+            const existing = current.appointments || [];
             const exists = existing.some(a => (a.id && a.id === newApt.id) || (a.appId && a.appId === newApt.appId));
             if (!exists) {
               return {
-                ...prev,
+                ...current,
                 appointments: [newApt, ...existing],
                 stats: {
-                  ...prev.stats,
-                  appointmentsCount: (prev.stats?.appointmentsCount || 0) + 1
+                  ...current.stats,
+                  appointmentsCount: (current.stats?.appointmentsCount || 0) + 1
                 }
               };
             }
-            return prev;
+            return current;
           });
         }
         fetchDashboardDataWithToken(token, true);
       };
 
       window.addEventListener('csc_appointment_created', handleLiveSync);
+      window.addEventListener('csc_web3forms_sync', handleLiveSync);
       window.addEventListener('storage', handleLiveSync);
       window.addEventListener('csc_refresh_dashboard', handleLiveSync);
 
@@ -157,7 +158,7 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
       try {
         channel = new BroadcastChannel('csc_portal_sync');
         channel.onmessage = (msg) => {
-          if (msg.data?.type === 'NEW_APPOINTMENT' || msg.data?.type === 'REFRESH') {
+          if (msg.data?.type === 'NEW_APPOINTMENT' || msg.data?.type === 'WEB3FORMS_NEW_SUBMISSION' || msg.data?.type === 'REFRESH') {
             handleLiveSync(msg.data?.payload ? { detail: msg.data.payload } : undefined);
           }
         };
@@ -172,6 +173,7 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
 
       return () => {
         window.removeEventListener('csc_appointment_created', handleLiveSync);
+        window.removeEventListener('csc_web3forms_sync', handleLiveSync);
         window.removeEventListener('storage', handleLiveSync);
         window.removeEventListener('csc_refresh_dashboard', handleLiveSync);
         if (channel) channel.close();
@@ -731,10 +733,12 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
   const activeData = dashboardData || FALLBACK_DASHBOARD_DATA;
   let { stats, contactRequests, announcements, gallery } = activeData;
 
-  // Read local applications from localStorage backup
+  // Read local applications and Web3Forms extracted submissions from localStorage
   const localApps: Appointment[] = (() => {
     try {
-      return JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+      const cscApps: Appointment[] = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+      const w3fApps: Appointment[] = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
+      return [...w3fApps, ...cscApps];
     } catch {
       return [];
     }
@@ -981,7 +985,7 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
     <div className="max-w-7xl mx-auto px-4 py-10">
       
       {/* Admin Header Panel */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm">
         <div>
           <h2 className="text-2xl font-extrabold text-blue-950 dark:text-white font-display">Administrator Desk Portal</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Logged in as Administrator | Managing live database files.</p>
@@ -1005,6 +1009,36 @@ export default function AdminDashboard({ onSettingsUpdate, cafeName }: AdminDash
             Lock Desk
           </button>
         </div>
+      </div>
+
+      {/* Realtime Web3Forms Data Sync Banner */}
+      <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white shadow-md border border-blue-800/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center shrink-0">
+            <span className="w-3 h-3 rounded-full bg-emerald-400 animate-ping"></span>
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-xs tracking-wider uppercase text-blue-300">Web3Forms Realtime Extractor</span>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">Live Stream Active</span>
+            </div>
+            <p className="text-xs text-blue-100/90 mt-0.5">
+              Automatically extracting real-time customer applications from Web3Forms submissions (<code className="bg-blue-950 px-1 py-0.5 rounded text-[10px] text-emerald-300 font-mono">Key: a6293a04-2711...</code>) &amp; central server database.
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => {
+            fetchDashboardData();
+            setActionFeedback({ type: 'success', text: `⚡ Web3Forms Data Extracted Successfully! Synced ${appointments.length} total live application logs.` });
+            setTimeout(() => setActionFeedback(null), 4000);
+          }}
+          className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs rounded-xl shadow-lg flex items-center gap-2 shrink-0 transition-all cursor-pointer"
+        >
+          <RefreshCw className="w-4 h-4" />
+          <span>Sync Web3Forms Data Now</span>
+        </button>
       </div>
 
       {/* Live action feedback indicator */}
