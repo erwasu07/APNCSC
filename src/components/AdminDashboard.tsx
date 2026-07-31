@@ -61,7 +61,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('pending');
   const [selectedDocPreview, setSelectedDocPreview] = useState<{ name: string; url: string; type?: string } | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
@@ -686,7 +686,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         </div>
 
         <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-          {['all', 'pending', 'approved', 'completed', 'rejected', 'online', 'cash'].map((st) => (
+          {['pending', 'approved', 'completed', 'rejected', 'online', 'cash'].map((st) => (
             <button
               key={st}
               onClick={() => setFilterStatus(st)}
@@ -696,9 +696,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
-              {st === 'all'
-                ? 'All Applications'
-                : st === 'approved'
+              {st === 'approved'
                 ? 'Under Process'
                 : st === 'online'
                 ? 'UPI Paid'
