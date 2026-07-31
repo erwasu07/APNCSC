@@ -70,6 +70,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   const [receiptDataUrl, setReceiptDataUrl] = useState<string>('');
   const [selectedReceiptFile, setSelectedReceiptFile] = useState<File | null>(null);
   const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Monitor Firebase Auth state change
   useEffect(() => {
@@ -916,12 +917,21 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                 onClick={() => {
                   setUploadModalApp(null);
                   setReceiptDataUrl('');
+                  setSelectedReceiptFile(null);
+                  setUploadError(null);
                 }}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {uploadError && (
+              <div className="p-3 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 text-xs font-bold flex items-center gap-2 animate-fade-in">
+                <XCircle className="w-4 h-4 shrink-0" />
+                <span className="break-words">{uploadError}</span>
+              </div>
+            )}
 
             <div className="space-y-3 text-xs">
               <p className="text-slate-600 dark:text-slate-300 font-medium">
@@ -939,6 +949,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                     const file = e.target.files?.[0];
                     if (file) {
                       setSelectedReceiptFile(file);
+                      setUploadError(null);
                       const reader = new FileReader();
                       reader.onloadend = () => {
                         setReceiptDataUrl(reader.result as string);
@@ -961,6 +972,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   onChange={(e) => {
                     setReceiptDataUrl(e.target.value);
                     setSelectedReceiptFile(null);
+                    setUploadError(null);
                   }}
                   className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white text-xs font-mono"
                 />
@@ -983,6 +995,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   setUploadModalApp(null);
                   setReceiptDataUrl('');
                   setSelectedReceiptFile(null);
+                  setUploadError(null);
                 }}
                 className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all disabled:opacity-50"
               >
@@ -992,6 +1005,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               <button
                 disabled={isUploadingReceipt}
                 onClick={async () => {
+                  setUploadError(null);
                   if (!receiptDataUrl && !selectedReceiptFile) {
                     alert('Please select a receipt file or enter a document download link.');
                     return;
@@ -1000,53 +1014,62 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   setIsUploadingReceipt(true);
                   let finalUrl = receiptDataUrl;
 
-                  // 1. Try uploading to Firebase Storage if a file is selected
-                  if (selectedReceiptFile) {
-                    try {
-                      const cleanFileName = selectedReceiptFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-                      const storageRef = ref(storage, `receipts/${uploadModalApp.appId}_${Date.now()}_${cleanFileName}`);
-                      const snapshot = await uploadBytes(storageRef, selectedReceiptFile);
-                      const downloadUrl = await getDownloadURL(snapshot.ref);
-                      if (downloadUrl) {
-                        finalUrl = downloadUrl;
+                  try {
+                    // 1. Try uploading to Firebase Storage if a file is selected
+                    if (selectedReceiptFile) {
+                      try {
+                        const cleanFileName = selectedReceiptFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+                        const storageRef = ref(storage, `receipts/${uploadModalApp.appId}_${Date.now()}_${cleanFileName}`);
+                        const snapshot = await uploadBytes(storageRef, selectedReceiptFile);
+                        const downloadUrl = await getDownloadURL(snapshot.ref);
+                        if (downloadUrl) {
+                          finalUrl = downloadUrl;
+                        }
+                      } catch (storageErr: any) {
+                        console.error('Firebase Storage upload error:', storageErr);
+                        const exactErrorMsg = storageErr?.message || String(storageErr);
+                        setUploadError(`Storage Upload Failed: ${exactErrorMsg}`);
+                        alert(`Firebase Storage Upload Failed:\n${exactErrorMsg}`);
+                        throw storageErr; // Stops flow and triggers catch block
                       }
-                    } catch (storageErr) {
-                      console.warn('Firebase Storage upload warning (falling back to data URL):', storageErr);
-                      // keeps finalUrl as receiptDataUrl base64 fallback
                     }
+
+                    // 2. Save status & finalReceiptUrl in Firestore with ISO timestamp
+                    const isoNow = new Date().toISOString();
+                    const updatePayload = {
+                      status: 'Completed',
+                      finalReceiptUrl: finalUrl,
+                      updatedAt: isoNow,
+                      statusUpdatedAt: isoNow
+                    };
+
+                    try {
+                      await updateDoc(doc(db, 'applications', uploadModalApp.appId), updatePayload);
+                    } catch (err: any) {
+                      console.warn('Error updating status in applications collection:', err);
+                    }
+
+                    try {
+                      await updateDoc(doc(db, 'appointments', uploadModalApp.appId), updatePayload);
+                    } catch (err: any) {
+                      console.warn('Error updating status in appointments collection:', err);
+                    }
+
+                    setApplications(prev =>
+                      prev.map(a => a.appId === uploadModalApp.appId ? { ...a, status: 'Completed', finalReceiptUrl: finalUrl, updatedAt: isoNow, statusUpdatedAt: isoNow } : a)
+                    );
+
+                    setActionSuccess(`Application ${uploadModalApp.appId} marked Completed & final receipt attached!`);
+                    setTimeout(() => setActionSuccess(null), 3000);
+                    setUploadModalApp(null);
+                    setReceiptDataUrl('');
+                    setSelectedReceiptFile(null);
+                    setUploadError(null);
+                  } catch (err: any) {
+                    console.error('Receipt upload process failed:', err);
+                  } finally {
+                    setIsUploadingReceipt(false);
                   }
-
-                  // 2. Save status & finalReceiptUrl in Firestore with ISO timestamp
-                  const isoNow = new Date().toISOString();
-                  const updatePayload = {
-                    status: 'Completed',
-                    finalReceiptUrl: finalUrl,
-                    updatedAt: isoNow,
-                    statusUpdatedAt: isoNow
-                  };
-
-                  try {
-                    await updateDoc(doc(db, 'applications', uploadModalApp.appId), updatePayload);
-                  } catch (err) {
-                    console.warn('Error updating status in applications collection:', err);
-                  }
-
-                  try {
-                    await updateDoc(doc(db, 'appointments', uploadModalApp.appId), updatePayload);
-                  } catch (err) {
-                    console.warn('Error updating status in appointments collection:', err);
-                  }
-
-                  setApplications(prev =>
-                    prev.map(a => a.appId === uploadModalApp.appId ? { ...a, status: 'Completed', finalReceiptUrl: finalUrl, updatedAt: isoNow, statusUpdatedAt: isoNow } : a)
-                  );
-
-                  setActionSuccess(`Application ${uploadModalApp.appId} marked Completed & final receipt attached!`);
-                  setTimeout(() => setActionSuccess(null), 3000);
-                  setUploadModalApp(null);
-                  setReceiptDataUrl('');
-                  setSelectedReceiptFile(null);
-                  setIsUploadingReceipt(false);
                 }}
                 className="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
