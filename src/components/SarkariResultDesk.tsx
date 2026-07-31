@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import TrackApplication from './TrackApplication';
 import { db } from '../lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { 
@@ -342,7 +343,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       totalAmount: mockReceipt.totalAmount,
       message: formData.additionalDetails || 'None',
       documents: uploadedFiles,
-      status: 'pending',
+      status: 'Pending',
       submittedAt: mockReceipt.submittedAt,
       createdAt: new Date().toISOString()
     };
@@ -444,6 +445,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       totalAmount: updatedReceipt.totalAmount,
       message: formData.additionalDetails || 'None',
       documents: uploadedFiles,
+      status: 'Pending',
       submittedAt: updatedReceipt.submittedAt
     };
 
@@ -661,6 +663,9 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
             </div>
           </div>
         </div>
+
+        {/* 🔍 PUBLIC CUSTOMER TRACK APPLICATION SECTION */}
+        <TrackApplication />
 
         {/* 🚀 DIGITAL APPLICATION & BOOKING PORTAL WITH UPI INTEGRATION */}
         <div id="booking-portal-form" className="mb-12 scroll-mt-24">

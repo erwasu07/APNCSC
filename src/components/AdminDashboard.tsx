@@ -18,6 +18,7 @@ import {
   RefreshCw,
   FileText,
   CheckCircle,
+  CheckCircle2,
   Clock,
   XCircle,
   Lock,
@@ -35,7 +36,9 @@ import {
   IndianRupee,
   ExternalLink,
   Info,
-  Flame
+  Flame,
+  Check,
+  Upload
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -60,6 +63,10 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [selectedDocPreview, setSelectedDocPreview] = useState<{ name: string; url: string; type?: string } | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
+  // States for Mark Completed Upload Modal
+  const [uploadModalApp, setUploadModalApp] = useState<any | null>(null);
+  const [receiptDataUrl, setReceiptDataUrl] = useState<string>('');
 
   // Monitor Firebase Auth state change
   useEffect(() => {
@@ -286,8 +293,10 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     if (filterStatus === 'all') return matchesQuery;
     if (filterStatus === 'online') return matchesQuery && app.paymentMode === 'online';
     if (filterStatus === 'cash') return matchesQuery && app.paymentMode === 'cash';
-    if (filterStatus === 'pending') return matchesQuery && (app.status === 'pending' || !app.status);
-    if (filterStatus === 'completed') return matchesQuery && app.status === 'completed';
+    if (filterStatus === 'pending') return matchesQuery && (app.status === 'Pending' || app.status === 'pending' || !app.status);
+    if (filterStatus === 'approved') return matchesQuery && (app.status === 'Approved & Under Process' || app.status === 'approved');
+    if (filterStatus === 'completed') return matchesQuery && (app.status === 'Completed' || app.status === 'completed');
+    if (filterStatus === 'rejected') return matchesQuery && (app.status === 'Rejected' || app.status === 'rejected');
 
     return matchesQuery;
   });
@@ -518,7 +527,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         </div>
 
         <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-          {['all', 'online', 'cash', 'pending', 'completed'].map((st) => (
+          {['all', 'pending', 'approved', 'completed', 'rejected', 'online', 'cash'].map((st) => (
             <button
               key={st}
               onClick={() => setFilterStatus(st)}
@@ -528,7 +537,15 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
-              {st === 'all' ? 'All Applications' : st === 'online' ? 'UPI Paid' : st === 'cash' ? 'Cash Counter' : st}
+              {st === 'all'
+                ? 'All Applications'
+                : st === 'approved'
+                ? 'Under Process'
+                : st === 'online'
+                ? 'UPI Paid'
+                : st === 'cash'
+                ? 'Cash Counter'
+                : st}
             </button>
           ))}
         </div>
@@ -704,9 +721,184 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                     </div>
                   )}
                 </div>
+
+                {/* STAFF APPLICATION STATUS & ACTIONS BAR */}
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-50 dark:bg-slate-950/80 p-3.5 rounded-xl border border-slate-150 dark:border-slate-800/80">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Filing Status:
+                    </span>
+                    <span className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider ${
+                      (app.status === 'Approved & Under Process' || app.status === 'approved')
+                        ? 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800'
+                        : (app.status === 'Completed' || app.status === 'completed')
+                        ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
+                        : (app.status === 'Rejected' || app.status === 'rejected')
+                        ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800'
+                        : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
+                    }`}>
+                      {app.status || 'Pending'}
+                    </span>
+                    {app.finalReceiptUrl && (
+                      <a
+                        href={app.finalReceiptUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[11px] text-emerald-600 dark:text-emerald-400 font-extrabold hover:underline flex items-center gap-1"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Receipt Ready</span>
+                      </a>
+                    )}
+                  </div>
+
+                  {/* ACTION BUTTONS: Approve, Reject, Mark Completed */}
+                  <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+                    <button
+                      onClick={() => handleUpdateStatus(app.appId, 'Approved & Under Process')}
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer shadow-xs"
+                      title="Approve & mark as Under Process"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Approve</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleUpdateStatus(app.appId, 'Rejected')}
+                      className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer shadow-xs"
+                      title="Reject application"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                      <span>Reject</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setUploadModalApp(app);
+                        setReceiptDataUrl(app.finalReceiptUrl || '');
+                      }}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer shadow-xs"
+                      title="Upload final processed receipt & mark Completed"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Mark Completed</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* MARK COMPLETED FILE UPLOAD MODAL */}
+      {uploadModalApp && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+              <h3 className="text-base font-black text-slate-900 dark:text-white uppercase">
+                Upload Processed Receipt / Document
+              </h3>
+              <button
+                onClick={() => {
+                  setUploadModalApp(null);
+                  setReceiptDataUrl('');
+                }}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <p className="text-slate-600 dark:text-slate-300 font-medium">
+                Attach the final processed receipt or document for <strong className="text-amber-500 font-mono">{uploadModalApp.appId}</strong> ({uploadModalApp.name || uploadModalApp.customerName}).
+              </p>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-black uppercase text-slate-500 block">
+                  1. Select Receipt File (Image / PDF / Scan)
+                </label>
+                <input
+                  type="file"
+                  accept=".pdf,image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setReceiptDataUrl(reader.result as string);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  className="w-full text-xs text-slate-700 dark:text-slate-200 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-600 cursor-pointer"
+                />
+              </div>
+
+              <div className="space-y-1 pt-1">
+                <label className="text-[11px] font-black uppercase text-slate-500 block">
+                  2. Or Direct Download URL Link
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://drive.google.com/..."
+                  value={receiptDataUrl.startsWith('data:') ? '' : receiptDataUrl}
+                  onChange={(e) => setReceiptDataUrl(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white text-xs font-mono"
+                />
+              </div>
+
+              {receiptDataUrl && (
+                <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-xl text-emerald-800 dark:text-emerald-300 text-[11px] font-bold flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>Receipt attachment prepared successfully!</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+              <button
+                onClick={() => {
+                  setUploadModalApp(null);
+                  setReceiptDataUrl('');
+                }}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={async () => {
+                  if (!receiptDataUrl) {
+                    alert('Please select a receipt file or enter a document download link.');
+                    return;
+                  }
+                  try {
+                    await updateDoc(doc(db, 'appointments', uploadModalApp.appId), {
+                      status: 'Completed',
+                      finalReceiptUrl: receiptDataUrl
+                    });
+                  } catch (err) {
+                    console.error('Error updating status in Firestore:', err);
+                  }
+
+                  setApplications(prev =>
+                    prev.map(a => a.appId === uploadModalApp.appId ? { ...a, status: 'Completed', finalReceiptUrl: receiptDataUrl } : a)
+                  );
+
+                  setActionSuccess(`Application ${uploadModalApp.appId} marked Completed & final receipt attached!`);
+                  setTimeout(() => setActionSuccess(null), 3000);
+                  setUploadModalApp(null);
+                  setReceiptDataUrl('');
+                }}
+                className="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Save &amp; Mark Completed</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

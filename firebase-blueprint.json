@@ -15,7 +15,8 @@
         "utrNumber": { "type": "string", "description": "UPI Transaction ID / UTR" },
         "totalAmount": { "type": "number", "description": "Service fee amount in INR" },
         "message": { "type": "string", "description": "Additional notes/details" },
-        "status": { "type": "string", "description": "Application status: pending, completed, approved, cancelled" },
+        "status": { "type": "string", "enum": ["Pending", "Approved & Under Process", "Completed", "Rejected"], "description": "Application status: Pending, Approved & Under Process, Completed, or Rejected" },
+        "finalReceiptUrl": { "type": "string", "description": "Download link or base64 data URL of the final completed receipt or document" },
         "documents": { "type": "array", "description": "Attached customer documents" },
         "submittedAt": { "type": "string", "description": "Formatted timestamp string" },
         "createdAt": { "type": "string", "description": "ISO timestamp for sorting" }
