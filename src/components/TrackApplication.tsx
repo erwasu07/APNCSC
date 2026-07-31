@@ -432,36 +432,13 @@ export default function TrackApplication({ initialTokenId = '' }: TrackApplicati
                     <span>Official Receipt Ready</span>
                   </div>
 
-                  <div className="flex items-center gap-2 pt-0.5">
-                    <button
-                      onClick={() => handleForceDownload(applicationData.finalReceiptUrl, `Receipt_${applicationData.appId || 'CSC'}.png`)}
-                      disabled={isDownloading}
-                      className="flex-1 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs uppercase tracking-wider rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-                    >
-                      {isDownloading ? (
-                        <>
-                          <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-950" />
-                          <span>Downloading...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Download className="w-3.5 h-3.5" />
-                          <span>Download Receipt</span>
-                        </>
-                      )}
-                    </button>
-
-                    <a
-                      href={applicationData.finalReceiptUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-lg transition-all flex items-center gap-1 border border-slate-700 shrink-0"
-                      title="View Online in New Tab"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      <span>View</span>
-                    </a>
-                  </div>
+                  <button
+                    onClick={() => window.open(applicationData.finalReceiptUrl, '_blank')}
+                    className="w-full px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>View &amp; Download Receipt</span>
+                  </button>
                 </div>
               ) : normalizeStatus(applicationData.status) === 'Completed' ? (
                 <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-[11px] text-slate-400 flex items-center gap-1.5">

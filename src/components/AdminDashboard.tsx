@@ -1015,22 +1015,14 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   let finalUrl = receiptDataUrl;
 
                   try {
-                    // 1. Try uploading to Firebase Storage if a file is selected
+                    // 1. Upload to Firebase Storage if a file is selected
                     if (selectedReceiptFile) {
-                      try {
-                        const cleanFileName = selectedReceiptFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-                        const storageRef = ref(storage, `receipts/${uploadModalApp.appId}_${Date.now()}_${cleanFileName}`);
-                        const snapshot = await uploadBytes(storageRef, selectedReceiptFile);
-                        const downloadUrl = await getDownloadURL(snapshot.ref);
-                        if (downloadUrl) {
-                          finalUrl = downloadUrl;
-                        }
-                      } catch (storageErr: any) {
-                        console.error('Firebase Storage upload error:', storageErr);
-                        const exactErrorMsg = storageErr?.message || String(storageErr);
-                        setUploadError(`Storage Upload Failed: ${exactErrorMsg}`);
-                        alert(`Firebase Storage Upload Failed:\n${exactErrorMsg}`);
-                        throw storageErr; // Stops flow and triggers catch block
+                      const file = selectedReceiptFile;
+                      const storageRef = ref(storage, 'receipts/' + file.name);
+                      const snapshot = await uploadBytes(storageRef, file);
+                      const downloadUrl = await getDownloadURL(snapshot.ref);
+                      if (downloadUrl) {
+                        finalUrl = downloadUrl;
                       }
                     }
 
@@ -1065,8 +1057,11 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                     setReceiptDataUrl('');
                     setSelectedReceiptFile(null);
                     setUploadError(null);
-                  } catch (err: any) {
-                    console.error('Receipt upload process failed:', err);
+                  } catch (error: any) {
+                    console.error('Upload Error:', error);
+                    const errMsg = error?.message || String(error);
+                    setUploadError(`Upload Error: ${errMsg}`);
+                    alert('Upload Error: ' + errMsg);
                   } finally {
                     setIsUploadingReceipt(false);
                   }
