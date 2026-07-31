@@ -1,0 +1,657 @@
+import React, { useState, useEffect } from 'react';
+import {
+  ShieldCheck,
+  Search,
+  Filter,
+  Download,
+  Eye,
+  Trash2,
+  RefreshCw,
+  FileText,
+  CheckCircle,
+  Clock,
+  XCircle,
+  Lock,
+  User,
+  Key,
+  LogOut,
+  X,
+  FileSpreadsheet,
+  Building2,
+  Phone,
+  Mail,
+  Calendar,
+  Tag,
+  CreditCard,
+  IndianRupee,
+  ExternalLink,
+  Info
+} from 'lucide-react';
+
+interface AdminDashboardProps {
+  cafeName: string;
+  onClose?: () => void;
+}
+
+export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProps) {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return sessionStorage.getItem('csc_admin_authed') === 'true';
+  });
+
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+  const [applications, setApplications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [selectedDocPreview, setSelectedDocPreview] = useState<{ name: string; url: string; type?: string } | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError(null);
+
+    const trimmedUser = username.trim();
+    const trimmedPass = password.trim();
+
+    if (trimmedUser === 'Mahi' && trimmedPass === 'Wasu@9687') {
+      setIsAuthenticated(true);
+      sessionStorage.setItem('csc_admin_authed', 'true');
+    } else {
+      setLoginError('Invalid Username or Password. Please enter correct staff credentials.');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem('csc_admin_authed');
+  };
+
+  // Fetch submitted applications from server & fallback storage
+  const fetchApplications = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/appointments');
+      if (res.ok) {
+        const data = await res.json();
+        const serverApps = data.data || [];
+
+        // Also merge local cache safety items
+        const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+        const web3Apps = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
+
+        // Combine and deduplicate by appId
+        const map = new Map();
+        [...serverApps, ...localApps, ...web3Apps].forEach(app => {
+          if (app && app.appId && !map.has(app.appId)) {
+            map.set(app.appId, app);
+          }
+        });
+
+        const combinedList = Array.from(map.values());
+        setApplications(combinedList);
+      }
+    } catch (err) {
+      console.error('Error fetching admin applications:', err);
+      // Fallback to local storage
+      const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+      setApplications(localApps);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchApplications();
+    }
+  }, [isAuthenticated]);
+
+  // Handle status update
+  const handleUpdateStatus = async (appId: string, newStatus: string) => {
+    try {
+      const res = await fetch(`/api/appointments/${appId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (res.ok) {
+        setActionSuccess(`Status updated to ${newStatus}`);
+        setTimeout(() => setActionSuccess(null), 3000);
+      }
+    } catch (e) {
+      console.error('Failed to update status on server:', e);
+    }
+
+    // Update local state
+    setApplications(prev => prev.map(a => a.appId === appId ? { ...a, status: newStatus } : a));
+  };
+
+  // Handle delete application
+  const handleDelete = (appId: string) => {
+    if (window.confirm(`Are you sure you want to remove application ${appId}?`)) {
+      setApplications(prev => prev.filter(a => a.appId !== appId));
+
+      // Remove from local cache
+      const local = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+      const filtered = local.filter((a: any) => a.appId !== appId);
+      localStorage.setItem('csc_local_applications', JSON.stringify(filtered));
+
+      setActionSuccess(`Application ${appId} deleted.`);
+      setTimeout(() => setActionSuccess(null), 3000);
+    }
+  };
+
+  // Export to CSV
+  const handleExportCSV = () => {
+    if (applications.length === 0) return;
+    const headers = ['Token ID', 'Applicant Name', 'Mobile', 'Email', 'Service', 'Category', 'Payment Mode', 'UTR Ref', 'Amount', 'Date', 'Status'];
+    const rows = applications.map(a => [
+      a.appId || '',
+      `"${a.name || a.customerName || ''}"`,
+      a.phone || a.phoneNumber || '',
+      a.email || a.emailAddress || '',
+      `"${a.service || a.selectedService || ''}"`,
+      a.userCategory || '',
+      a.paymentMode || '',
+      a.utrNumber || '',
+      a.totalAmount || '',
+      `"${a.submittedAt || a.date || ''}"`,
+      a.status || 'pending'
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `CSC_Applications_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Filter logic
+  const filteredApplications = applications.filter(app => {
+    const q = searchQuery.toLowerCase();
+    const name = (app.name || app.customerName || '').toLowerCase();
+    const phone = (app.phone || app.phoneNumber || '').toLowerCase();
+    const appId = (app.appId || '').toLowerCase();
+    const service = (app.service || app.selectedService || '').toLowerCase();
+    const utr = (app.utrNumber || '').toLowerCase();
+
+    const matchesQuery = name.includes(q) || phone.includes(q) || appId.includes(q) || service.includes(q) || utr.includes(q);
+
+    if (filterStatus === 'all') return matchesQuery;
+    if (filterStatus === 'online') return matchesQuery && app.paymentMode === 'online';
+    if (filterStatus === 'cash') return matchesQuery && app.paymentMode === 'cash';
+    if (filterStatus === 'pending') return matchesQuery && (app.status === 'pending' || !app.status);
+    if (filterStatus === 'completed') return matchesQuery && app.status === 'completed';
+
+    return matchesQuery;
+  });
+
+  // Render Login Modal if not logged in
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-[500px] flex items-center justify-center py-12 px-4">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl p-8 max-w-md w-full relative overflow-hidden animate-fade-in">
+          {/* Header Banner */}
+          <div className="text-center space-y-2 mb-6">
+            <div className="w-14 h-14 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl flex items-center justify-center mx-auto border border-amber-500/20 shadow-inner">
+              <ShieldCheck className="w-8 h-8" />
+            </div>
+            <h2 className="text-xl font-black uppercase tracking-tight text-slate-900 dark:text-white font-display">
+              CSC Staff Portal Login
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Access online applications &amp; customer documents
+            </p>
+          </div>
+
+          {loginError && (
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 text-xs font-bold flex items-center gap-2 animate-shake">
+              <XCircle className="w-4 h-4 shrink-0" />
+              <span>{loginError}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                Username
+              </label>
+              <div className="relative">
+                <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                <input
+                  type="text"
+                  required
+                  placeholder="Enter staff username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                Password
+              </label>
+              <div className="relative">
+                <Key className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                <input
+                  type="password"
+                  required
+                  placeholder="Enter staff password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
+            >
+              <Lock className="w-4 h-4" />
+              <span>Authenticate Staff Login</span>
+            </button>
+          </form>
+
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="mt-4 w-full text-center text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold transition-colors"
+            >
+              ← Back to Visitor Portal
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Render Admin Dashboard
+  return (
+    <div className="space-y-6 animate-fade-in pb-12">
+      {/* Top Banner */}
+      <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white rounded-3xl p-6 shadow-xl border border-blue-900/50 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-amber-500 text-slate-950 rounded-2xl shadow-lg shrink-0">
+            <ShieldCheck className="w-7 h-7" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-black uppercase tracking-tight font-display">
+                CSC Staff Dashboard
+              </h2>
+              <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[10px] font-mono font-bold">
+                Logged in: Mahi
+              </span>
+            </div>
+            <p className="text-xs text-blue-200 mt-0.5">
+              Manage submitted applications &amp; download customer uploaded documents
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={fetchApplications}
+            className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-white/10 cursor-pointer"
+            title="Refresh Data"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
+          </button>
+
+          <button
+            onClick={handleExportCSV}
+            className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
+            title="Export CSV"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            <span>Export CSV</span>
+          </button>
+
+          <button
+            onClick={handleLogout}
+            className="px-3.5 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer"
+            title="Sign Out"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Logout</span>
+          </button>
+        </div>
+      </div>
+
+      {actionSuccess && (
+        <div className="p-3 bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800 rounded-xl text-emerald-700 dark:text-emerald-300 text-xs font-bold flex items-center gap-2 animate-fade-in">
+          <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600" />
+          <span>{actionSuccess}</span>
+        </div>
+      )}
+
+      {/* Metrics Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+            Total Submissions
+          </span>
+          <span className="text-2xl font-black text-slate-900 dark:text-white font-mono mt-1 block">
+            {applications.length}
+          </span>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-500 block">
+            UPI Paid (Online)
+          </span>
+          <span className="text-2xl font-black text-amber-600 dark:text-amber-400 font-mono mt-1 block">
+            {applications.filter(a => a.paymentMode === 'online').length}
+          </span>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-500 block">
+            Cash Counter
+          </span>
+          <span className="text-2xl font-black text-blue-600 dark:text-blue-400 font-mono mt-1 block">
+            {applications.filter(a => a.paymentMode === 'cash').length}
+          </span>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-500 block">
+            Uploaded Docs Total
+          </span>
+          <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono mt-1 block">
+            {applications.reduce((acc, app) => acc + (app.documents?.length || app.uploadedDocuments?.length || 0), 0)}
+          </span>
+        </div>
+      </div>
+
+      {/* Search & Filter Bar */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="relative w-full md:w-96">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+          <input
+            type="text"
+            placeholder="Search by Applicant Name, Phone, Token ID, Service, UTR..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/30 text-slate-900 dark:text-white"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+          {['all', 'online', 'cash', 'pending', 'completed'].map((st) => (
+            <button
+              key={st}
+              onClick={() => setFilterStatus(st)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 ${
+                filterStatus === st
+                  ? 'bg-amber-500 text-slate-950 shadow-xs'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+              }`}
+            >
+              {st === 'all' ? 'All Applications' : st === 'online' ? 'UPI Paid' : st === 'cash' ? 'Cash Counter' : st}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Applications List */}
+      {loading ? (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center text-slate-400">
+          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2 text-amber-500" />
+          <p className="text-xs font-bold">Loading submitted customer applications...</p>
+        </div>
+      ) : filteredApplications.length === 0 ? (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center text-slate-400 space-y-2">
+          <FileText className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-700" />
+          <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">No applications found</h4>
+          <p className="text-xs">No records match your search query or filter selection.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredApplications.map((app, idx) => {
+            const rawDocs = app.documents || [];
+            const textDocs = app.uploadedDocuments || [];
+
+            return (
+              <div
+                key={app.appId || idx}
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4 hover:border-amber-400/50 transition-all"
+              >
+                {/* Application Header Card */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-1 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-mono font-black text-xs rounded-lg border border-amber-500/20">
+                      {app.appId || `APEX-${idx + 1}`}
+                    </span>
+                    <span className="text-xs text-slate-400 font-mono">
+                      {app.submittedAt || app.date || 'Recent'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${
+                      app.paymentMode === 'online'
+                        ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800'
+                        : 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-800'
+                    }`}>
+                      {app.paymentMode === 'online' ? 'UPI Online Paid' : 'Cash Counter'}
+                    </span>
+
+                    <button
+                      onClick={() => handleDelete(app.appId)}
+                      className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/50 rounded-lg transition-colors cursor-pointer"
+                      title="Delete Record"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Details Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase text-slate-400 block">Applicant Name</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-sm">
+                      {app.name || app.customerName || 'N/A'}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase text-slate-400 block">Mobile &amp; Email</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 block">
+                      📞 {app.phone || app.phoneNumber || 'N/A'}
+                    </span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate block">
+                      ✉️ {app.email || app.emailAddress || 'N/A'}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase text-slate-400 block">Requested Service</span>
+                    <span className="font-bold text-amber-600 dark:text-amber-400">
+                      {app.service || app.selectedService || 'General Form'}
+                    </span>
+                    <span className="text-[10px] text-slate-400 block mt-0.5">
+                      Cat: {app.userCategory || 'General'} | DOB: {app.dateOfBirth || 'N/A'}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase text-slate-400 block">Payment &amp; UTR</span>
+                    <span className="font-black text-emerald-600 dark:text-emerald-400 font-mono text-sm block">
+                      ₹{app.totalAmount || 0}
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-600 dark:text-slate-300 block">
+                      UTR: {app.utrNumber || 'N/A'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Additional Notes */}
+                {app.message && app.message !== 'None' && (
+                  <div className="p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-150 dark:border-slate-800 text-xs">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Instructions / Note:</span>
+                    <p className="text-slate-700 dark:text-slate-300 font-medium">{app.message}</p>
+                  </div>
+                )}
+
+                {/* UPLOADED CUSTOMER DOCUMENTS DISPLAY SECTION */}
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mb-2">
+                    <FileText className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Uploaded Customer Documents ({rawDocs.length || textDocs.length})</span>
+                  </span>
+
+                  {rawDocs.length === 0 && textDocs.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic">No files uploaded with this application.</p>
+                  ) : rawDocs.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {rawDocs.map((doc: any, dIdx: number) => (
+                        <div
+                          key={doc.id || dIdx}
+                          className="p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2"
+                        >
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            <div className="p-1.5 bg-amber-500/10 text-amber-600 rounded-lg shrink-0">
+                              <FileText className="w-4 h-4" />
+                            </div>
+                            <div className="truncate">
+                              <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate block">
+                                {doc.name}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-mono">
+                                {(doc.size / 1024).toFixed(1)} KB
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1 shrink-0">
+                            {/* Preview Button */}
+                            {doc.dataUrl && (
+                              <button
+                                onClick={() => setSelectedDocPreview({ name: doc.name, url: doc.dataUrl, type: doc.type })}
+                                className="p-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                title="View/Preview Document"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Preview</span>
+                              </button>
+                            )}
+
+                            {/* Download Button */}
+                            {doc.dataUrl && (
+                              <a
+                                href={doc.dataUrl}
+                                download={doc.name}
+                                className="p-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                title="Download Document"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                                <span>Download</span>
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {textDocs.map((docStr: string, tIdx: number) => (
+                        <span key={tIdx} className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                          📎 {docStr}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* DOCUMENT PREVIEW LIGHTBOX MODAL */}
+      {selectedDocPreview && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950">
+              <div className="flex items-center gap-2 overflow-hidden">
+                <FileText className="w-5 h-5 text-amber-500 shrink-0" />
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                  {selectedDocPreview.name}
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={selectedDocPreview.url}
+                  download={selectedDocPreview.name}
+                  className="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-extrabold rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download</span>
+                </a>
+                <button
+                  onClick={() => setSelectedDocPreview(null)}
+                  className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-4 flex-grow overflow-auto flex items-center justify-center bg-slate-100 dark:bg-slate-950">
+              {selectedDocPreview.type?.startsWith('image/') || selectedDocPreview.url.startsWith('data:image/') ? (
+                <img
+                  src={selectedDocPreview.url}
+                  alt={selectedDocPreview.name}
+                  className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-md"
+                />
+              ) : selectedDocPreview.type === 'application/pdf' || selectedDocPreview.url.startsWith('data:application/pdf') ? (
+                <iframe
+                  src={selectedDocPreview.url}
+                  title={selectedDocPreview.name}
+                  className="w-full h-[70vh] rounded-lg border border-slate-200"
+                />
+              ) : (
+                <div className="text-center p-8 space-y-3">
+                  <FileText className="w-12 h-12 text-amber-500 mx-auto" />
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Document preview is ready for download.
+                  </p>
+                  <a
+                    href={selectedDocPreview.url}
+                    download={selectedDocPreview.name}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-md"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download File ({selectedDocPreview.name})</span>
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

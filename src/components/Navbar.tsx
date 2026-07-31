@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Calendar, PhoneCall, Cpu, Sparkles, Eye, Languages, Home, Briefcase, Flame, Info, Menu, X, Star } from 'lucide-react';
+import { Shield, Calendar, PhoneCall, Cpu, Sparkles, Eye, Languages, Home, Briefcase, Flame, Info, Menu, X, Star, ShieldCheck } from 'lucide-react';
 import { PolicyTab } from './PrivacyPolicyModal';
 
 interface NavbarProps {
@@ -7,13 +7,15 @@ interface NavbarProps {
   setDarkMode: (val: boolean) => void;
   cafeName: string;
   onOpenPrivacyPolicy?: (tab?: PolicyTab) => void;
+  onOpenAdmin?: () => void;
 }
 
 export default function Navbar({
   darkMode,
   setDarkMode,
   cafeName,
-  onOpenPrivacyPolicy
+  onOpenPrivacyPolicy,
+  onOpenAdmin
 }: NavbarProps) {
   const [lang, setLang] = useState<'EN' | 'HI'>('EN');
   const [fontSize, setFontSize] = useState<'normal' | 'large' | 'larger'>('normal');
@@ -213,8 +215,22 @@ export default function Navbar({
             })}
           </div>
 
-          {/* Mobile Trigger */}
+          {/* Right side controls & Staff Portal button */}
           <div className="flex items-center gap-2">
+            {onOpenAdmin && (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenAdmin();
+                }}
+                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black uppercase tracking-wider shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                title="CSC Staff & Admin Portal"
+              >
+                <ShieldCheck className="w-4 h-4 text-slate-950" />
+                <span className="hidden sm:inline">Staff Portal</span>
+              </button>
+            )}
+
             {/* Responsive Mobile Menu Trigger Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

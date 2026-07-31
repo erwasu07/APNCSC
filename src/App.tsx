@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import SarkariResultDesk from './components/SarkariResultDesk';
 import ExploreServicesDesk from './components/ExploreServicesDesk';
+import AdminDashboard from './components/AdminDashboard';
 import Footer from './components/Footer';
 import PrivacyPolicyModal, { PolicyTab } from './components/PrivacyPolicyModal';
 import { WebsiteSettings, Announcement, GalleryItem } from './types';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, ArrowLeft } from 'lucide-react';
 
 const FALLBACK_SETTINGS: WebsiteSettings = {
   cafeName: "CSC DOST",
@@ -22,6 +23,7 @@ const FALLBACK_SETTINGS: WebsiteSettings = {
 
 export default function App() {
   const [darkMode, setDarkMode] = useState<boolean>(false);
+  const [isAdminView, setIsAdminView] = useState<boolean>(false);
 
   const [selectedService, setSelectedService] = useState('');
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
@@ -60,7 +62,9 @@ export default function App() {
     fetch('/api/tracker/view', { method: 'POST' }).catch(() => {});
 
     const checkHash = () => {
-      if (window.location.hash === '#privacy') {
+      if (window.location.hash === '#admin' || window.location.hash === '#staff') {
+        setIsAdminView(true);
+      } else if (window.location.hash === '#privacy') {
         openLegalModal('privacy');
       } else if (window.location.hash === '#terms') {
         openLegalModal('terms');
@@ -150,24 +154,44 @@ export default function App() {
         setDarkMode={setDarkMode}
         cafeName={settings.cafeName}
         onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
+        onOpenAdmin={() => setIsAdminView(true)}
       />
 
       {/* Main Container */}
-      <main className="flex-grow w-full max-w-full overflow-x-hidden">
-        {/* PUBLIC VISITOR INTERFACE */}
-        <div className="animate-fade-in">
-          {/* Sarkari Result Bulletin Board at top */}
-          <SarkariResultDesk onApplyService={handleServiceSelect} selectedService={selectedService} />
+      <main className="flex-grow w-full max-w-7xl mx-auto px-4 py-6 overflow-x-hidden">
+        {isAdminView ? (
+          <div>
+            <div className="mb-4">
+              <button
+                onClick={() => setIsAdminView(false)}
+                className="px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Return to Public Services Portal</span>
+              </button>
+            </div>
+            <AdminDashboard
+              cafeName={settings.cafeName}
+              onClose={() => setIsAdminView(false)}
+            />
+          </div>
+        ) : (
+          /* PUBLIC VISITOR INTERFACE */
+          <div className="animate-fade-in space-y-6">
+            {/* Sarkari Result Bulletin Board at top */}
+            <SarkariResultDesk onApplyService={handleServiceSelect} selectedService={selectedService} />
 
-          {/* Explore All Government & Digital Services Directory */}
-          <ExploreServicesDesk onApplyService={handleServiceSelect} />
-        </div>
+            {/* Explore All Government & Digital Services Directory */}
+            <ExploreServicesDesk onApplyService={handleServiceSelect} />
+          </div>
+        )}
       </main>
 
       {/* Global Page Footer */}
       <Footer 
         cafeName={settings.cafeName} 
         onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
+        onOpenAdmin={() => setIsAdminView(true)}
       />
 
       {/* Privacy Policy & Terms Interactive Modal */}
