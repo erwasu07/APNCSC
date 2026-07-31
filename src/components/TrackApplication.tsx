@@ -229,8 +229,8 @@ export default function TrackApplication({ initialTokenId = '' }: TrackApplicati
   };
 
   return (
-    <div id="track-application-section" className="mb-6 scroll-mt-20 max-w-xl mx-auto px-2">
-      <div className="bg-gradient-to-br from-slate-900 via-slate-850 to-slate-950 text-white rounded-2xl p-4 sm:p-5 shadow-lg border border-slate-800 relative overflow-hidden">
+    <div id="track-application-section" className="mb-6 scroll-mt-20 w-full max-w-xl mx-auto px-0 sm:px-2">
+      <div className="bg-gradient-to-br from-slate-900 via-slate-850 to-slate-950 text-white rounded-none sm:rounded-2xl p-4 sm:p-5 shadow-lg border-x-0 sm:border-x border-y sm:border border-slate-800 relative overflow-hidden w-full">
         {/* Subtle background glow */}
         <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl pointer-events-none"></div>
 

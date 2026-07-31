@@ -405,7 +405,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   return (
     <div className="space-y-6 animate-fade-in pb-12">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white rounded-3xl p-6 shadow-xl border border-blue-900/50 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white rounded-none sm:rounded-3xl p-4 sm:p-6 shadow-xl border-x-0 sm:border-x border-y sm:border border-blue-900/50 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 w-full">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-amber-500 text-slate-950 rounded-2xl shadow-lg shrink-0">
             <ShieldCheck className="w-7 h-7" />
@@ -509,7 +509,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
+      <div className="bg-white dark:bg-slate-900 border-x-0 sm:border-x border-y sm:border border-slate-200 dark:border-slate-800 rounded-none sm:rounded-2xl p-3.5 sm:p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3 w-full">
         <div className="relative w-full md:w-96">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
           <input

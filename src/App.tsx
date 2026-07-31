@@ -158,10 +158,10 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="flex-grow w-full max-w-7xl mx-auto px-4 py-6 overflow-x-hidden">
+      <main className="flex-grow w-full max-w-7xl mx-auto px-0 md:px-6 py-2 md:py-6 overflow-x-hidden">
         {isAdminView ? (
-          <div>
-            <div className="mb-4">
+          <div className="px-2 sm:px-4 md:px-0">
+            <div className="mb-4 px-2 sm:px-0">
               <button
                 onClick={() => setIsAdminView(false)}
                 className="px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
@@ -177,7 +177,7 @@ export default function App() {
           </div>
         ) : (
           /* PUBLIC VISITOR INTERFACE */
-          <div className="animate-fade-in space-y-6">
+          <div className="animate-fade-in space-y-4 md:space-y-6 w-full">
             {/* Sarkari Result Bulletin Board at top */}
             <SarkariResultDesk onApplyService={handleServiceSelect} selectedService={selectedService} />
 

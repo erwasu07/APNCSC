@@ -134,8 +134,8 @@ export default function ExploreServicesDesk({ onApplyService }: ExploreServicesD
   const categoriesKeys: ('csc' | 'digital' | 'education' | 'business')[] = ['csc', 'digital', 'education', 'business'];
 
   return (
-    <div className="bg-white dark:bg-slate-900/40 border-b border-slate-200/50 dark:border-slate-800/60 py-10 transition-colors duration-300 scroll-mt-24" id="services">
-      <div className="max-w-7xl mx-auto px-4">
+    <div className="bg-white dark:bg-slate-900/40 border-b border-slate-200/50 dark:border-slate-800/60 py-6 sm:py-10 transition-colors duration-300 scroll-mt-24 w-full" id="services">
+      <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 md:px-6">
         
         {/* Desk Header & Intro */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 pb-6 border-b border-slate-100 dark:border-slate-800/80">

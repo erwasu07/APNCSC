@@ -631,11 +631,11 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
   };
 
   return (
-    <section id="sarkari-portal-section" className="pt-4 md:pt-6 pb-12 md:pb-16 bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900 border-t border-slate-200/60 dark:border-slate-800 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4">
+    <section id="sarkari-portal-section" className="pt-2 md:pt-6 pb-12 md:pb-16 bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900 border-t border-slate-200/60 dark:border-slate-800 transition-colors duration-300 w-full">
+      <div className="w-full max-w-7xl mx-auto px-0 sm:px-4 md:px-6">
         
         {/* 📢 CSC DOST OFFICIAL & WHATSAPP CHANNEL BANNER */}
-        <div className="mb-6 sm:mb-8 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm p-4 sm:p-6 text-center animate-fade-in relative overflow-hidden">
+        <div className="mb-6 sm:mb-8 bg-white dark:bg-slate-900 border-x-0 sm:border-x border-y sm:border border-slate-200/80 dark:border-slate-800 rounded-none sm:rounded-2xl shadow-sm p-4 sm:p-6 text-center animate-fade-in relative overflow-hidden w-full">
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
           <div className="max-w-4xl mx-auto space-y-3 relative z-10">
             <div className="flex items-center justify-center">
@@ -668,9 +668,9 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
         <TrackApplication />
 
         {/* 🚀 DIGITAL APPLICATION & BOOKING PORTAL WITH UPI INTEGRATION */}
-        <div id="booking-portal-form" className="mb-12 scroll-mt-24">
+        <div id="booking-portal-form" className="mb-12 scroll-mt-24 w-full">
           {!isFormSubmitted ? (
-            <div className="relative overflow-hidden bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-2xl shadow-xl border border-slate-200/80 dark:border-slate-800 p-5 md:p-8">
+            <div className="relative overflow-hidden bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-none sm:rounded-2xl shadow-xl border-x-0 sm:border-x border-y sm:border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 md:p-8 w-full">
               {/* Subtle Ambient Decorative Gradients */}
               <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-amber-500/5 via-orange-500/5 to-transparent rounded-full blur-3xl pointer-events-none"></div>
               <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
@@ -1265,7 +1265,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
             </div>
           ) : (
             /* PRINTABLE DIGITAL SUCCESS SLIP / RECEIPT */
-            <div id="printable-digital-slip" className="bg-white text-slate-900 rounded-2xl shadow-xl p-5 md:p-8 border border-emerald-500/40 max-w-2xl mx-auto animate-fade-in relative">
+            <div id="printable-digital-slip" className="bg-white text-slate-900 rounded-none sm:rounded-2xl shadow-xl p-4 sm:p-5 md:p-8 border-x-0 sm:border-x border-y sm:border border-emerald-500/40 max-w-2xl mx-auto animate-fade-in relative w-full">
               {/* Authenticity Watermark Decors */}
               <div className="absolute inset-0 flex items-center justify-center opacity-[0.02] select-none pointer-events-none">
                 <Shield className="w-80 h-80 text-slate-900" />
@@ -1462,7 +1462,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
         </div>
 
         {/* Live Search & Filter Desk Controls */}
-        <div className="bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-6 shadow-sm mb-12 max-w-4xl mx-auto">
+        <div className="bg-white dark:bg-slate-900/60 border-x-0 sm:border-x border-y sm:border border-slate-200/80 dark:border-slate-800/80 rounded-none sm:rounded-3xl p-4 sm:p-6 shadow-sm mb-8 md:mb-12 max-w-4xl mx-auto w-full">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
             
             {/* Search Input Box */}
