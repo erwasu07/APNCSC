@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { getStorage } from 'firebase/storage';
 
 // Safely load config from firebase-applet-config.json if available, or environment variables
 let rawConfig: Record<string, any> = {};
@@ -37,6 +38,9 @@ export const db = dbId && dbId !== '(default)'
 
 // Initialize Firebase Authentication
 export const auth = getAuth(app);
+
+// Initialize Firebase Storage
+export const storage = getStorage(app);
 
 export default app;
 

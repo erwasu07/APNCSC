@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { db, auth } from '../lib/firebase';
+import { db, auth, storage } from '../lib/firebase';
 import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
   signInWithEmailAndPassword,
   signInAnonymously,
@@ -67,6 +68,8 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   // States for Mark Completed Upload Modal
   const [uploadModalApp, setUploadModalApp] = useState<any | null>(null);
   const [receiptDataUrl, setReceiptDataUrl] = useState<string>('');
+  const [selectedReceiptFile, setSelectedReceiptFile] = useState<File | null>(null);
+  const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
 
   // Monitor Firebase Auth state change
   useEffect(() => {
@@ -825,6 +828,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
+                      setSelectedReceiptFile(file);
                       const reader = new FileReader();
                       reader.onloadend = () => {
                         setReceiptDataUrl(reader.result as string);
@@ -842,9 +846,12 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                 </label>
                 <input
                   type="url"
-                  placeholder="https://drive.google.com/..."
+                  placeholder="https://firebasestorage.googleapis.com/..."
                   value={receiptDataUrl.startsWith('data:') ? '' : receiptDataUrl}
-                  onChange={(e) => setReceiptDataUrl(e.target.value)}
+                  onChange={(e) => {
+                    setReceiptDataUrl(e.target.value);
+                    setSelectedReceiptFile(null);
+                  }}
                   className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white text-xs font-mono"
                 />
               </div>
@@ -852,50 +859,87 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               {receiptDataUrl && (
                 <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-xl text-emerald-800 dark:text-emerald-300 text-[11px] font-bold flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span>Receipt attachment prepared successfully!</span>
+                  <span>
+                    {selectedReceiptFile ? `File selected: ${selectedReceiptFile.name} (${Math.round(selectedReceiptFile.size/1024)} KB)` : 'Receipt download link ready!'}
+                  </span>
                 </div>
               )}
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
               <button
+                disabled={isUploadingReceipt}
                 onClick={() => {
                   setUploadModalApp(null);
                   setReceiptDataUrl('');
+                  setSelectedReceiptFile(null);
                 }}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all"
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all disabled:opacity-50"
               >
                 Cancel
               </button>
 
               <button
+                disabled={isUploadingReceipt}
                 onClick={async () => {
-                  if (!receiptDataUrl) {
+                  if (!receiptDataUrl && !selectedReceiptFile) {
                     alert('Please select a receipt file or enter a document download link.');
                     return;
                   }
+
+                  setIsUploadingReceipt(true);
+                  let finalUrl = receiptDataUrl;
+
+                  // 1. Try uploading to Firebase Storage if a file is selected
+                  if (selectedReceiptFile) {
+                    try {
+                      const cleanFileName = selectedReceiptFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+                      const storageRef = ref(storage, `receipts/${uploadModalApp.appId}_${Date.now()}_${cleanFileName}`);
+                      const snapshot = await uploadBytes(storageRef, selectedReceiptFile);
+                      const downloadUrl = await getDownloadURL(snapshot.ref);
+                      if (downloadUrl) {
+                        finalUrl = downloadUrl;
+                      }
+                    } catch (storageErr) {
+                      console.warn('Firebase Storage upload warning (falling back to data URL):', storageErr);
+                      // keeps finalUrl as receiptDataUrl base64 fallback
+                    }
+                  }
+
+                  // 2. Save status & finalReceiptUrl in Firestore
                   try {
                     await updateDoc(doc(db, 'appointments', uploadModalApp.appId), {
                       status: 'Completed',
-                      finalReceiptUrl: receiptDataUrl
+                      finalReceiptUrl: finalUrl
                     });
                   } catch (err) {
                     console.error('Error updating status in Firestore:', err);
                   }
 
                   setApplications(prev =>
-                    prev.map(a => a.appId === uploadModalApp.appId ? { ...a, status: 'Completed', finalReceiptUrl: receiptDataUrl } : a)
+                    prev.map(a => a.appId === uploadModalApp.appId ? { ...a, status: 'Completed', finalReceiptUrl: finalUrl } : a)
                   );
 
                   setActionSuccess(`Application ${uploadModalApp.appId} marked Completed & final receipt attached!`);
                   setTimeout(() => setActionSuccess(null), 3000);
                   setUploadModalApp(null);
                   setReceiptDataUrl('');
+                  setSelectedReceiptFile(null);
+                  setIsUploadingReceipt(false);
                 }}
-                className="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Save &amp; Mark Completed</span>
+                {isUploadingReceipt ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
+                    <span>Uploading to Storage...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Save &amp; Mark Completed</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
