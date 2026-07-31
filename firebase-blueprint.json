@@ -1,0 +1,26 @@
+{
+  "entities": {
+    "appointments": {
+      "title": "Applications & Appointments",
+      "description": "Customer submitted service applications and appointments",
+      "properties": {
+        "appId": { "type": "string", "description": "Unique token/receipt ID" },
+        "name": { "type": "string", "description": "Applicant full name" },
+        "email": { "type": "string", "description": "Applicant email address" },
+        "phone": { "type": "string", "description": "Applicant phone number" },
+        "service": { "type": "string", "description": "Applied service title" },
+        "dateOfBirth": { "type": "string", "description": "Applicant date of birth" },
+        "userCategory": { "type": "string", "description": "Category status e.g. General/OBC/SC/ST" },
+        "paymentMode": { "type": "string", "description": "Payment mode: cash or upi" },
+        "utrNumber": { "type": "string", "description": "UPI Transaction ID / UTR" },
+        "totalAmount": { "type": "number", "description": "Service fee amount in INR" },
+        "message": { "type": "string", "description": "Additional notes/details" },
+        "status": { "type": "string", "description": "Application status: pending, completed, approved, cancelled" },
+        "documents": { "type": "array", "description": "Attached customer documents" },
+        "submittedAt": { "type": "string", "description": "Formatted timestamp string" },
+        "createdAt": { "type": "string", "description": "ISO timestamp for sorting" }
+      },
+      "required": ["appId", "name", "phone", "service"]
+    }
+  }
+}

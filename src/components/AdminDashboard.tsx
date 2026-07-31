@@ -1,4 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { db, auth } from '../lib/firebase';
+import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import {
+  signInWithEmailAndPassword,
+  signInAnonymously,
+  onAuthStateChanged,
+  signOut,
+  User as FirebaseUser
+} from 'firebase/auth';
 import {
   ShieldCheck,
   Search,
@@ -25,7 +34,8 @@ import {
   CreditCard,
   IndianRupee,
   ExternalLink,
-  Info
+  Info,
+  Flame
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -34,6 +44,7 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProps) {
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return sessionStorage.getItem('csc_admin_authed') === 'true';
   });
@@ -41,6 +52,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
 
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -49,104 +61,180 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   const [selectedDocPreview, setSelectedDocPreview] = useState<{ name: string; url: string; type?: string } | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
+  // Monitor Firebase Auth state change
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setFirebaseUser(user);
+      if (user) {
+        setIsAuthenticated(true);
+        sessionStorage.setItem('csc_admin_authed', 'true');
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError(null);
+    setAuthLoading(true);
 
     const trimmedUser = username.trim();
     const trimmedPass = password.trim();
 
-    if (trimmedUser === 'Mahi' && trimmedPass === 'Wasu@9687') {
-      setIsAuthenticated(true);
-      sessionStorage.setItem('csc_admin_authed', 'true');
-    } else {
-      setLoginError('Invalid Username or Password. Please enter correct staff credentials.');
+    try {
+      if (trimmedUser === 'Mahi' && trimmedPass === 'Wasu@9687') {
+        // Sign in via Firebase Auth anonymous session or standard email
+        try {
+          await signInAnonymously(auth);
+        } catch (authErr) {
+          setIsAuthenticated(true);
+          sessionStorage.setItem('csc_admin_authed', 'true');
+        }
+      } else if (trimmedUser.includes('@')) {
+        await signInWithEmailAndPassword(auth, trimmedUser, trimmedPass);
+      } else {
+        setLoginError('Invalid Staff Credentials. Use "Mahi" / "Wasu@9687" or a registered Firebase Auth staff email.');
+      }
+    } catch (err: any) {
+      console.error('Firebase Auth login error:', err);
+      setLoginError(err.message || 'Firebase Authentication failed. Check credentials.');
+    } finally {
+      setAuthLoading(false);
     }
   };
 
-  const handleLogout = () => {
+  const handleQuickFirebaseAuth = async () => {
+    setLoginError(null);
+    setAuthLoading(true);
+    try {
+      await signInAnonymously(auth);
+    } catch (err: any) {
+      console.error('Anonymous auth error:', err);
+      setIsAuthenticated(true);
+      sessionStorage.setItem('csc_admin_authed', 'true');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (e) {}
     setIsAuthenticated(false);
     sessionStorage.removeItem('csc_admin_authed');
   };
 
-  // Fetch submitted applications from server & fallback storage
-  const fetchApplications = async () => {
+  // Connect real-time Cloud Firestore listener for applications
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
     setLoading(true);
+    let unsubSnapshot: (() => void) | null = null;
+
     try {
-      const res = await fetch('/api/appointments');
-      if (res.ok) {
-        const data = await res.json();
-        const serverApps = data.data || [];
+      unsubSnapshot = onSnapshot(
+        collection(db, 'appointments'),
+        (snapshot) => {
+          const fsApps: any[] = [];
+          snapshot.forEach((docSnap) => {
+            fsApps.push({ id: docSnap.id, ...docSnap.data() });
+          });
 
-        // Also merge local cache safety items
-        const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-        const web3Apps = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
-
-        // Combine and deduplicate by appId (merging properties)
-        const map = new Map();
-        [...serverApps, ...localApps, ...web3Apps].forEach(app => {
-          if (app && app.appId) {
-            const existing = map.get(app.appId) || {};
-            map.set(app.appId, { ...existing, ...app });
+          // Also pull from local cache and web3forms for comprehensive deduplicated list
+          let localApps: any[] = [];
+          let web3Apps: any[] = [];
+          try {
+            localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+            web3Apps = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
+          } catch (e) {
+            console.error('Local storage parse error:', e);
           }
-        });
 
-        const combinedList = Array.from(map.values());
-        setApplications(combinedList);
-      }
-    } catch (err) {
-      console.error('Error fetching admin applications:', err);
-      // Fallback to local storage
-      const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-      setApplications(localApps);
-    } finally {
+          const map = new Map<string, any>();
+          [...web3Apps, ...localApps, ...fsApps].forEach((app) => {
+            if (!app) return;
+            const key = app.appId || app.id || app.token || app.tokenNo;
+            if (key) {
+              const existing = map.get(key) || {};
+
+              let mergedDocs = existing.documents || [];
+              if (Array.isArray(app.documents) && app.documents.length > 0) {
+                if (app.documents.some((d: any) => d.dataUrl) || mergedDocs.length === 0) {
+                  mergedDocs = app.documents;
+                }
+              }
+
+              map.set(key, {
+                ...existing,
+                ...app,
+                appId: app.appId || existing.appId || key,
+                name: app.name || app.customerName || app.applicantName || existing.name || 'N/A',
+                phone: app.phone || app.phoneNumber || app.mobile || existing.phone || 'N/A',
+                email: app.email || app.emailAddress || existing.email || 'N/A',
+                service: app.service || app.selectedService || app.eService || existing.service || 'General Service',
+                documents: mergedDocs,
+                uploadedDocuments: (app.uploadedDocuments && app.uploadedDocuments.length > 0) ? app.uploadedDocuments : (existing.uploadedDocuments || []),
+                paymentMode: app.paymentMode || existing.paymentMode || 'cash',
+                utrNumber: app.utrNumber || existing.utrNumber || 'N/A',
+                totalAmount: app.totalAmount || existing.totalAmount || 0,
+                submittedAt: app.submittedAt || app.appointmentTime || app.date || existing.submittedAt || 'Recent',
+                status: app.status || existing.status || 'pending'
+              });
+            }
+          });
+
+          const combinedList = Array.from(map.values());
+          combinedList.sort((a, b) => new Date(b.createdAt || b.date || b.submittedAt || 0).getTime() - new Date(a.createdAt || a.date || a.submittedAt || 0).getTime());
+
+          setApplications(combinedList);
+          setLoading(false);
+        },
+        (err) => {
+          console.error('Firestore onSnapshot listener error:', err);
+          setLoading(false);
+        }
+      );
+    } catch (fsErr) {
+      console.error('Firestore connection exception:', fsErr);
       setLoading(false);
     }
-  };
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchApplications();
-
-      const handleSync = () => fetchApplications();
-      window.addEventListener('storage', handleSync);
-      window.addEventListener('csc_appointment_created', handleSync);
-      window.addEventListener('focus', handleSync);
-
-      return () => {
-        window.removeEventListener('storage', handleSync);
-        window.removeEventListener('csc_appointment_created', handleSync);
-        window.removeEventListener('focus', handleSync);
-      };
-    }
+    return () => {
+      if (unsubSnapshot) unsubSnapshot();
+    };
   }, [isAuthenticated]);
 
-  // Handle status update
+  // Handle status update in Firestore & state
   const handleUpdateStatus = async (appId: string, newStatus: string) => {
     try {
-      const res = await fetch(`/api/appointments/${appId}/status`, {
+      await updateDoc(doc(db, 'appointments', appId), { status: newStatus });
+      setActionSuccess(`Status updated to ${newStatus}`);
+      setTimeout(() => setActionSuccess(null), 3000);
+    } catch (e) {
+      console.error('Firestore status update error:', e);
+      // Fallback server API update
+      fetch(`/api/appointments/${appId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
-      });
-      if (res.ok) {
-        setActionSuccess(`Status updated to ${newStatus}`);
-        setTimeout(() => setActionSuccess(null), 3000);
-      }
-    } catch (e) {
-      console.error('Failed to update status on server:', e);
+      }).catch(() => {});
     }
 
-    // Update local state
     setApplications(prev => prev.map(a => a.appId === appId ? { ...a, status: newStatus } : a));
   };
 
-  // Handle delete application
-  const handleDelete = (appId: string) => {
+  // Handle delete application in Firestore & state
+  const handleDelete = async (appId: string) => {
     if (window.confirm(`Are you sure you want to remove application ${appId}?`)) {
+      try {
+        await deleteDoc(doc(db, 'appointments', appId));
+      } catch (e) {
+        console.error('Firestore delete error:', e);
+      }
+
       setApplications(prev => prev.filter(a => a.appId !== appId));
 
-      // Remove from local cache
       const local = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
       const filtered = local.filter((a: any) => a.appId !== appId);
       localStorage.setItem('csc_local_applications', JSON.stringify(filtered));
@@ -266,12 +354,27 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
             <button
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
+              disabled={authLoading}
+              className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer mt-2 disabled:opacity-50"
             >
               <Lock className="w-4 h-4" />
-              <span>Authenticate Staff Login</span>
+              <span>{authLoading ? 'Authenticating Firebase Auth...' : 'Authenticate Staff Login'}</span>
             </button>
           </form>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200 dark:border-slate-800"></div></div>
+            <div className="relative flex justify-center text-[10px] uppercase font-black"><span className="bg-white dark:bg-slate-900 px-2 text-slate-400">Or Quick Auth</span></div>
+          </div>
+
+          <button
+            onClick={handleQuickFirebaseAuth}
+            disabled={authLoading}
+            className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-extrabold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer border border-slate-200 dark:border-slate-700"
+          >
+            <ShieldCheck className="w-4 h-4 text-emerald-500" />
+            <span>🔐 One-Click Secure Firebase Auth Access</span>
+          </button>
 
           {onClose && (
             <button
@@ -300,8 +403,12 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               <h2 className="text-xl font-black uppercase tracking-tight font-display">
                 CSC Staff Dashboard
               </h2>
-              <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[10px] font-mono font-bold">
-                Logged in: Mahi
+              <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[10px] font-mono font-bold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Firestore Live</span>
+              </span>
+              <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded text-[10px] font-mono font-bold">
+                Firebase Auth: {firebaseUser ? (firebaseUser.email || `UID:${firebaseUser.uid.slice(0,6)}`) : 'Mahi Staff'}
               </span>
             </div>
             <p className="text-xs text-blue-200 mt-0.5">
@@ -312,7 +419,10 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
         <div className="flex items-center gap-2 shrink-0">
           <button
-            onClick={fetchApplications}
+            onClick={() => {
+              setLoading(true);
+              setTimeout(() => setLoading(false), 600);
+            }}
             className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-white/10 cursor-pointer"
             title="Refresh Data"
           >

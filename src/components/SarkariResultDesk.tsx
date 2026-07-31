@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { db } from '../lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 import { 
   Briefcase, 
   FileText, 
@@ -326,7 +328,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     setPostSubmitPaymentMode('none');
     setIsPaymentConfirmed(false);
 
-    // Save initial application to server & local cache immediately
+    // Save initial application directly to Cloud Firestore & server API immediately
     const initialPayload = {
       appId: mockReceipt.appId,
       name: mockReceipt.customerName,
@@ -340,23 +342,57 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       totalAmount: mockReceipt.totalAmount,
       message: formData.additionalDetails || 'None',
       documents: uploadedFiles,
-      submittedAt: mockReceipt.submittedAt
+      status: 'pending',
+      submittedAt: mockReceipt.submittedAt,
+      createdAt: new Date().toISOString()
     };
 
+    // 1. Save directly to Cloud Firestore
     try {
+      setDoc(doc(db, 'appointments', mockReceipt.appId), initialPayload, { merge: true }).catch(fsErr => {
+        console.error('Firestore initial save error:', fsErr);
+      });
+    } catch (fsErr) {
+      console.error('Firestore save execution exception:', fsErr);
+    }
+
+    // 2. Always POST to server API as secondary persistence
+    fetch('/api/appointments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(initialPayload)
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log('Server registration successful:', data);
+      })
+      .catch(err => console.error('Initial API submission save error:', err));
+
+    // 2. Save lightweight version to localStorage (avoiding quota overflow)
+    try {
+      const lightDocs = uploadedFiles.map(f => ({
+        id: f.id,
+        name: f.name,
+        size: f.size,
+        type: f.type
+      }));
+      const lightPayload = { ...initialPayload, documents: lightDocs };
+
       const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-      localStorage.setItem('csc_local_applications', JSON.stringify([initialPayload, ...existing.filter((i: any) => i.appId !== mockReceipt.appId)]));
+      localStorage.setItem('csc_local_applications', JSON.stringify([lightPayload, ...existing.filter((i: any) => i.appId !== mockReceipt.appId)]));
+    } catch (e) {
+      console.warn('localStorage quota warning (handled safely):', e);
+    }
 
-      fetch('/api/appointments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(initialPayload)
-      }).catch(err => console.error('Initial API submission save error:', err));
-
+    // 3. Broadcast live synchronization events across tabs and windows
+    try {
       window.dispatchEvent(new CustomEvent('csc_appointment_created', { detail: initialPayload }));
       window.dispatchEvent(new Event('storage'));
-    } catch (e) {
-      console.error('Failed to save initial application:', e);
+      const bc = new BroadcastChannel('csc_portal_sync');
+      bc.postMessage({ type: 'NEW_APPOINTMENT', payload: initialPayload });
+      bc.close();
+    } catch (bcErr) {
+      console.error('Broadcast Channel error:', bcErr);
     }
 
     // Keep form cleanly scrolled into view on customer screen
@@ -394,32 +430,50 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       ? updatedReceipt.uploadedDocuments.join(', ') 
       : 'None Attached';
 
-    // Save/update application in central server database
+    // Save/update application in Cloud Firestore & central server database
+    const payload = {
+      appId: updatedReceipt.appId,
+      name: updatedReceipt.customerName,
+      email: updatedReceipt.emailAddress,
+      phone: updatedReceipt.phoneNumber,
+      service: updatedReceipt.selectedService,
+      dateOfBirth: updatedReceipt.dateOfBirth,
+      userCategory: updatedReceipt.userCategory,
+      paymentMode: updatedReceipt.paymentMode,
+      utrNumber: updatedReceipt.utrNumber,
+      totalAmount: updatedReceipt.totalAmount,
+      message: formData.additionalDetails || 'None',
+      documents: uploadedFiles,
+      submittedAt: updatedReceipt.submittedAt
+    };
+
+    // Save directly to Cloud Firestore
     try {
-      const payload = {
-        appId: updatedReceipt.appId,
-        name: updatedReceipt.customerName,
-        email: updatedReceipt.emailAddress,
-        phone: updatedReceipt.phoneNumber,
-        service: updatedReceipt.selectedService,
-        dateOfBirth: updatedReceipt.dateOfBirth,
-        userCategory: updatedReceipt.userCategory,
-        paymentMode: updatedReceipt.paymentMode,
-        utrNumber: updatedReceipt.utrNumber,
-        totalAmount: updatedReceipt.totalAmount,
-        message: formData.additionalDetails,
-        documents: uploadedFiles
-      };
+      setDoc(doc(db, 'appointments', updatedReceipt.appId), payload, { merge: true }).catch(fsErr => {
+        console.error('Firestore payment update error:', fsErr);
+      });
+    } catch (fsErr) {
+      console.error('Firestore payment update execution error:', fsErr);
+    }
 
-      // Also update local storage
-      try {
-        const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-        const updated = existing.map((item: any) => item.appId === updatedReceipt.appId ? { ...item, paymentMode: updatedReceipt.paymentMode, utrNumber: updatedReceipt.utrNumber } : item);
-        localStorage.setItem('csc_local_applications', JSON.stringify([payload, ...existing.filter((i: any) => i.appId !== updatedReceipt.appId)]));
-      } catch (e) {
-        console.error('Failed to update local application cache:', e);
-      }
+    // 1. Update local storage with lightweight payload (no heavy base64 to avoid quota error)
+    try {
+      const lightDocs = uploadedFiles.map(f => ({
+        id: f.id,
+        name: f.name,
+        size: f.size,
+        type: f.type
+      }));
+      const lightPayload = { ...payload, documents: lightDocs };
 
+      const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+      localStorage.setItem('csc_local_applications', JSON.stringify([lightPayload, ...existing.filter((i: any) => i.appId !== updatedReceipt.appId)]));
+    } catch (e) {
+      console.warn('Failed to update local application cache safely:', e);
+    }
+
+    // 2. Perform server API update
+    try {
       const res = await fetch('/api/appointments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -436,15 +490,11 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
         date: new Date().toISOString()
       };
 
-      try {
-        window.dispatchEvent(new CustomEvent('csc_appointment_created', { detail: savedItem }));
-        window.dispatchEvent(new Event('storage'));
-        const bc = new BroadcastChannel('csc_portal_sync');
-        bc.postMessage({ type: 'NEW_APPOINTMENT', payload: savedItem });
-        bc.close();
-      } catch (bcErr) {
-        console.error('Broadcast Channel sync error:', bcErr);
-      }
+      window.dispatchEvent(new CustomEvent('csc_appointment_created', { detail: savedItem }));
+      window.dispatchEvent(new Event('storage'));
+      const bc = new BroadcastChannel('csc_portal_sync');
+      bc.postMessage({ type: 'NEW_APPOINTMENT', payload: savedItem });
+      bc.close();
     } catch (err) {
       console.error('API submission update error:', err);
     }
