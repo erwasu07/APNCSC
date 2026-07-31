@@ -391,7 +391,21 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
     // Send visitor query / application directly to owner email via Web3Forms API & save to Web3Forms Extractor cache
     try {
-      const web3Payload = {
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+
+      // Format downloadable document links for Web3Forms email body & fields
+      const docDownloadDetailsList = uploadedFiles.map((doc, idx) => {
+        const downloadHttpUrl = `${origin}/api/documents/download?appId=${mockReceipt.appId}&docId=${doc.id || `doc-${idx}`}`;
+        return `📄 File ${idx + 1}: ${doc.name} (${(doc.size / 1024).toFixed(1)} KB)
+   • Direct Download Link: ${downloadHttpUrl}
+   • Format/Type: ${doc.type || 'application/octet-stream'}`;
+      }).join('\n\n');
+
+      const docDownloadSummaryText = uploadedFiles.length > 0 
+        ? `\n==================================================\n📁 ATTACHED DOCUMENTS & IMAGES (DOWNLOADABLE FORMAT)\n==================================================\n${docDownloadDetailsList}\n`
+        : '\n📁 ATTACHED DOCUMENTS: None Uploaded\n';
+
+      const web3Payload: Record<string, any> = {
         access_key: 'a6293a04-2711-4d7c-bb7c-e7c9ed3d888c',
         subject: `New Application Inquiry [${mockReceipt.appId}] - ${mockReceipt.customerName}`,
         from_name: 'APNA CSC Digital Portal',
@@ -403,8 +417,28 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
         payment_mode: mockReceipt.paymentMode,
         utr_number: mockReceipt.utrNumber,
         amount: `₹${mockReceipt.totalAmount}`,
-        message: `Application Token ID: ${mockReceipt.appId}\nApplicant Name: ${mockReceipt.customerName}\nMobile Number: ${mockReceipt.phoneNumber}\nEmail: ${mockReceipt.emailAddress}\nDate of Birth: ${mockReceipt.dateOfBirth}\nSelected Service: ${mockReceipt.selectedService}\nCategory: ${mockReceipt.userCategory}\nPayment Mode: ${mockReceipt.paymentMode}\nPayment UTR Ref No: ${mockReceipt.utrNumber}\nAttached Documents: ${docsSummaryStr}\nAmount Charged: ₹${mockReceipt.totalAmount}\nInstructions/Note: ${mockReceipt.additionalDetails}`
+        total_documents_attached: `${uploadedFiles.length} File(s)`,
+        documents_summary: docsSummaryStr,
+        message: `Application Token ID: ${mockReceipt.appId}
+Applicant Name: ${mockReceipt.customerName}
+Mobile Number: ${mockReceipt.phoneNumber}
+Email: ${mockReceipt.emailAddress}
+Date of Birth: ${mockReceipt.dateOfBirth}
+Selected Service: ${mockReceipt.selectedService}
+Category: ${mockReceipt.userCategory}
+Payment Mode: ${mockReceipt.paymentMode}
+Payment UTR Ref No: ${mockReceipt.utrNumber}
+Amount Charged: ₹${mockReceipt.totalAmount}
+Instructions/Note: ${mockReceipt.additionalDetails}
+${docDownloadSummaryText}`
       };
+
+      // Add explicit key-value fields for each uploaded document in Web3Forms
+      uploadedFiles.forEach((doc, idx) => {
+        const downloadUrl = `${origin}/api/documents/download?appId=${mockReceipt.appId}&docId=${doc.id || `doc-${idx}`}`;
+        web3Payload[`document_${idx + 1}_name`] = doc.name;
+        web3Payload[`document_${idx + 1}_download_link`] = downloadUrl;
+      });
 
       // Save to Web3Forms local submissions cache for real-time extraction
       try {

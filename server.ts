@@ -192,6 +192,39 @@ app.post('/api/appointments', (req, res) => {
   res.json({ success: true, data: appointment, message: 'Application submitted successfully with documents attached.' });
 });
 
+// GET Public Document Download Endpoint (for Web3Forms, Email Links & Admin Desk)
+app.get('/api/documents/download', (req, res) => {
+  const { appId, docId, docName } = req.query;
+  if (!appId) {
+    return res.status(400).send('Missing appId query parameter');
+  }
+
+  const db = getDb();
+  const apt = db.appointments.find(a => a.appId === appId || a.id === appId);
+  if (!apt || !apt.documents || apt.documents.length === 0) {
+    return res.status(404).send('Application or attached document record not found');
+  }
+
+  const doc = apt.documents.find(d => (docId && d.id === docId) || (docName && d.name === docName)) || apt.documents[0];
+  if (!doc || !doc.dataUrl) {
+    return res.status(404).send('Document content or binary data not found');
+  }
+
+  const matches = doc.dataUrl.match(/^data:(.+);base64,(.+)$/);
+  if (!matches) {
+    return res.redirect(doc.dataUrl);
+  }
+
+  const contentType = matches[1] || 'application/octet-stream';
+  const base64Data = matches[2];
+  const buffer = Buffer.from(base64Data, 'base64');
+
+  const fileName = doc.name || 'downloaded_document';
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+  res.send(buffer);
+});
+
 // Admin Authentication: Login
 app.post('/api/admin/login', (req, res) => {
   const { username, password } = req.body;
