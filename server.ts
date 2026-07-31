@@ -113,6 +113,25 @@ app.post('/api/contact', (req, res) => {
   res.json({ success: true, data: request, message: 'Message submitted successfully. Emails simulated in logs.' });
 });
 
+// Public API: Get all submitted applications
+app.get('/api/appointments', (req, res) => {
+  const db = getDb();
+  res.json({ success: true, data: db.appointments || [] });
+});
+
+// Update appointment status
+app.patch('/api/appointments/:id/status', (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  if (!status) return res.status(400).json({ error: 'Status is required' });
+  const success = updateAppointmentStatus(id, status);
+  if (success) {
+    res.json({ success: true, message: 'Status updated successfully' });
+  } else {
+    res.status(404).json({ error: 'Appointment not found' });
+  }
+});
+
 // Public API: Book appointment / Submit online application
 app.post('/api/appointments', (req, res) => {
   const { 

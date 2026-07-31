@@ -326,6 +326,39 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     setPostSubmitPaymentMode('none');
     setIsPaymentConfirmed(false);
 
+    // Save initial application to server & local cache immediately
+    const initialPayload = {
+      appId: mockReceipt.appId,
+      name: mockReceipt.customerName,
+      email: mockReceipt.emailAddress,
+      phone: mockReceipt.phoneNumber,
+      service: mockReceipt.selectedService,
+      dateOfBirth: mockReceipt.dateOfBirth,
+      userCategory: mockReceipt.userCategory,
+      paymentMode: 'cash',
+      utrNumber: 'N/A',
+      totalAmount: mockReceipt.totalAmount,
+      message: formData.additionalDetails || 'None',
+      documents: uploadedFiles,
+      submittedAt: mockReceipt.submittedAt
+    };
+
+    try {
+      const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+      localStorage.setItem('csc_local_applications', JSON.stringify([initialPayload, ...existing.filter((i: any) => i.appId !== mockReceipt.appId)]));
+
+      fetch('/api/appointments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(initialPayload)
+      }).catch(err => console.error('Initial API submission save error:', err));
+
+      window.dispatchEvent(new CustomEvent('csc_appointment_created', { detail: initialPayload }));
+      window.dispatchEvent(new Event('storage'));
+    } catch (e) {
+      console.error('Failed to save initial application:', e);
+    }
+
     // Keep form cleanly scrolled into view on customer screen
     setTimeout(() => {
       const formEl = document.getElementById('booking-portal-form');

@@ -82,11 +82,12 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
         const web3Apps = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
 
-        // Combine and deduplicate by appId
+        // Combine and deduplicate by appId (merging properties)
         const map = new Map();
         [...serverApps, ...localApps, ...web3Apps].forEach(app => {
-          if (app && app.appId && !map.has(app.appId)) {
-            map.set(app.appId, app);
+          if (app && app.appId) {
+            const existing = map.get(app.appId) || {};
+            map.set(app.appId, { ...existing, ...app });
           }
         });
 
@@ -106,6 +107,17 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   useEffect(() => {
     if (isAuthenticated) {
       fetchApplications();
+
+      const handleSync = () => fetchApplications();
+      window.addEventListener('storage', handleSync);
+      window.addEventListener('csc_appointment_created', handleSync);
+      window.addEventListener('focus', handleSync);
+
+      return () => {
+        window.removeEventListener('storage', handleSync);
+        window.removeEventListener('csc_appointment_created', handleSync);
+        window.removeEventListener('focus', handleSync);
+      };
     }
   }, [isAuthenticated]);
 

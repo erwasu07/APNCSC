@@ -95,17 +95,28 @@ export function addContactRequest(req: Omit<ContactRequest, 'id' | 'status' | 'd
   return newReq;
 }
 
-export function addAppointment(apt: Omit<Appointment, 'id' | 'status' | 'date'>): Appointment {
+export function addAppointment(apt: Omit<Appointment, 'id' | 'status' | 'date'> & { id?: string; status?: string }): Appointment {
   const db = getDb();
-  const newApt: Appointment = {
-    ...apt,
-    id: `apt-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-    status: 'pending',
-    date: new Date().toISOString()
-  };
-  db.appointments.unshift(newApt);
-  saveDb(db);
-  return newApt;
+  const existingIdx = db.appointments.findIndex(a => (apt.appId && a.appId === apt.appId) || (apt.id && a.id === apt.id));
+  if (existingIdx !== -1) {
+    db.appointments[existingIdx] = {
+      ...db.appointments[existingIdx],
+      ...apt,
+      status: (apt.status as any) || db.appointments[existingIdx].status || 'pending'
+    };
+    saveDb(db);
+    return db.appointments[existingIdx];
+  } else {
+    const newApt: Appointment = {
+      ...apt,
+      id: apt.id || `apt-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      status: (apt.status as any) || 'pending',
+      date: new Date().toISOString()
+    };
+    db.appointments.unshift(newApt);
+    saveDb(db);
+    return newApt;
+  }
 }
 
 export function updateContactStatus(id: string, status: ContactRequest['status']): boolean {
