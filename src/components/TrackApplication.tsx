@@ -29,6 +29,45 @@ export default function TrackApplication({ initialTokenId = '' }: TrackApplicati
   const [searched, setSearched] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
+  // Robust Date/Timestamp Formatting Helper
+  const formatDisplayDate = (dateVal: any): string => {
+    if (!dateVal) return 'N/A';
+    try {
+      let d: Date;
+      if (typeof dateVal === 'object' && dateVal !== null) {
+        if (typeof dateVal.toDate === 'function') {
+          d = dateVal.toDate();
+        } else if (typeof dateVal.seconds === 'number') {
+          d = new Date(dateVal.seconds * 1000);
+        } else {
+          d = new Date(dateVal);
+        }
+      } else if (typeof dateVal === 'number') {
+        d = new Date(dateVal);
+      } else {
+        const parsed = new Date(String(dateVal));
+        if (!isNaN(parsed.getTime())) {
+          d = parsed;
+        } else {
+          return String(dateVal);
+        }
+      }
+
+      if (isNaN(d.getTime())) return String(dateVal);
+
+      return d.toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch (e) {
+      return String(dateVal);
+    }
+  };
+
   // Subscribe in real-time to Firestore document when activeTokenId changes
   useEffect(() => {
     if (!activeTokenId) {
@@ -42,66 +81,85 @@ export default function TrackApplication({ initialTokenId = '' }: TrackApplicati
 
     const cleanToken = activeTokenId.trim();
 
-    // 1. Setup Firestore real-time listener
-    const docRef = doc(db, 'appointments', cleanToken);
-    const unsub = onSnapshot(
-      docRef,
-      (docSnap) => {
-        if (docSnap.exists()) {
-          setApplicationData({ id: docSnap.id, ...docSnap.data() });
-          setNotFound(false);
-          setLoading(false);
-        } else {
-          // Check local cache fallback
-          let foundLocal = null;
-          try {
-            const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-            const web3Apps = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
-            foundLocal = [...localApps, ...web3Apps].find(
-              (a) =>
-                (a.appId && a.appId.toLowerCase() === cleanToken.toLowerCase()) ||
-                (a.id && a.id.toLowerCase() === cleanToken.toLowerCase())
-            );
-          } catch (e) {
-            console.error('Local tracking parse error:', e);
-          }
+    let unsubApp: (() => void) | null = null;
+    let unsubApt: (() => void) | null = null;
 
-          if (foundLocal) {
-            setApplicationData(foundLocal);
-            setNotFound(false);
-          } else {
-            setApplicationData(null);
-            setNotFound(true);
-          }
-          setLoading(false);
-        }
-      },
-      (err) => {
-        console.error('Firestore real-time tracking error:', err);
-        // Fallback local search
+    let appFoundData: any = null;
+    let aptFoundData: any = null;
+
+    const checkAndSetResult = () => {
+      const mergedData = appFoundData || aptFoundData;
+      if (mergedData) {
+        setApplicationData(mergedData);
+        setNotFound(false);
+        setLoading(false);
+      } else {
+        // Check local cache fallback
+        let foundLocal = null;
         try {
           const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
           const web3Apps = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
-          const foundLocal = [...localApps, ...web3Apps].find(
+          foundLocal = [...localApps, ...web3Apps].find(
             (a) =>
               (a.appId && a.appId.toLowerCase() === cleanToken.toLowerCase()) ||
               (a.id && a.id.toLowerCase() === cleanToken.toLowerCase())
           );
-          if (foundLocal) {
-            setApplicationData(foundLocal);
-            setNotFound(false);
-          } else {
-            setApplicationData(null);
-            setNotFound(true);
-          }
         } catch (e) {
+          console.error('Local tracking parse error:', e);
+        }
+
+        if (foundLocal) {
+          setApplicationData(foundLocal);
+          setNotFound(false);
+        } else {
+          setApplicationData(null);
           setNotFound(true);
         }
         setLoading(false);
       }
-    );
+    };
 
-    return () => unsub();
+    try {
+      unsubApp = onSnapshot(
+        doc(db, 'applications', cleanToken),
+        (docSnap) => {
+          if (docSnap.exists()) {
+            appFoundData = { id: docSnap.id, ...docSnap.data() };
+          } else {
+            appFoundData = null;
+          }
+          checkAndSetResult();
+        },
+        () => {
+          appFoundData = null;
+          checkAndSetResult();
+        }
+      );
+
+      unsubApt = onSnapshot(
+        doc(db, 'appointments', cleanToken),
+        (docSnap) => {
+          if (docSnap.exists()) {
+            aptFoundData = { id: docSnap.id, ...docSnap.data() };
+          } else {
+            aptFoundData = null;
+          }
+          checkAndSetResult();
+        },
+        () => {
+          aptFoundData = null;
+          checkAndSetResult();
+        }
+      );
+    } catch (err) {
+      console.error('Firestore real-time tracking exception:', err);
+      checkAndSetResult();
+    }
+
+    return () => {
+      if (unsubApp) unsubApp();
+      if (unsubApt) unsubApt();
+    };
   }, [activeTokenId]);
 
   const handleTrackSubmit = (e: React.FormEvent) => {
@@ -332,9 +390,9 @@ export default function TrackApplication({ initialTokenId = '' }: TrackApplicati
                 </div>
 
                 <div className="text-right">
-                  <span className="text-[9px] font-black uppercase text-slate-400 block">Submitted</span>
+                  <span className="text-[9px] font-black uppercase text-slate-400 block">Submitted Date</span>
                   <span className="text-[11px] font-mono font-bold text-slate-300">
-                    {applicationData.submittedAt || applicationData.date || 'Recent'}
+                    {formatDisplayDate(applicationData.createdAt || applicationData.submittedAt || applicationData.date)}
                   </span>
                 </div>
               </div>

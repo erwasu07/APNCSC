@@ -135,73 +135,141 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     sessionStorage.removeItem('csc_admin_authed');
   };
 
-  // Connect real-time Cloud Firestore listener for applications
+  // Robust Date/Timestamp Formatting Helper
+  const formatDisplayDate = (dateVal: any): string => {
+    if (!dateVal) return 'N/A';
+    try {
+      let d: Date;
+      if (typeof dateVal === 'object' && dateVal !== null) {
+        if (typeof dateVal.toDate === 'function') {
+          d = dateVal.toDate();
+        } else if (typeof dateVal.seconds === 'number') {
+          d = new Date(dateVal.seconds * 1000);
+        } else {
+          d = new Date(dateVal);
+        }
+      } else if (typeof dateVal === 'number') {
+        d = new Date(dateVal);
+      } else {
+        const parsed = new Date(String(dateVal));
+        if (!isNaN(parsed.getTime())) {
+          d = parsed;
+        } else {
+          return String(dateVal);
+        }
+      }
+
+      if (isNaN(d.getTime())) return String(dateVal);
+
+      return d.toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch (e) {
+      return String(dateVal);
+    }
+  };
+
+  // Connect real-time Cloud Firestore listener for applications & appointments
   useEffect(() => {
     if (!isAuthenticated) return;
 
     setLoading(true);
-    let unsubSnapshot: (() => void) | null = null;
+    let unsubApps: (() => void) | null = null;
+    let unsubApts: (() => void) | null = null;
 
-    try {
-      unsubSnapshot = onSnapshot(
-        collection(db, 'appointments'),
-        (snapshot) => {
-          const fsApps: any[] = [];
-          snapshot.forEach((docSnap) => {
-            fsApps.push({ id: docSnap.id, ...docSnap.data() });
-          });
+    const appsMap = new Map<string, any>();
+    const aptsMap = new Map<string, any>();
 
-          // Also pull from local cache and web3forms for comprehensive deduplicated list
-          let localApps: any[] = [];
-          let web3Apps: any[] = [];
-          try {
-            localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-            web3Apps = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
-          } catch (e) {
-            console.error('Local storage parse error:', e);
+    const updateCombinedApplications = () => {
+      let localApps: any[] = [];
+      let web3Apps: any[] = [];
+      try {
+        localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+        web3Apps = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
+      } catch (e) {
+        console.error('Local storage parse error:', e);
+      }
+
+      const map = new Map<string, any>();
+      [...web3Apps, ...localApps, ...Array.from(appsMap.values()), ...Array.from(aptsMap.values())].forEach((app) => {
+        if (!app) return;
+        const key = app.appId || app.id || app.token || app.tokenNo;
+        if (key) {
+          const existing = map.get(key) || {};
+
+          let mergedDocs = existing.documents || [];
+          if (Array.isArray(app.documents) && app.documents.length > 0) {
+            if (app.documents.some((d: any) => d.dataUrl) || mergedDocs.length === 0) {
+              mergedDocs = app.documents;
+            }
           }
 
-          const map = new Map<string, any>();
-          [...web3Apps, ...localApps, ...fsApps].forEach((app) => {
-            if (!app) return;
-            const key = app.appId || app.id || app.token || app.tokenNo;
-            if (key) {
-              const existing = map.get(key) || {};
-
-              let mergedDocs = existing.documents || [];
-              if (Array.isArray(app.documents) && app.documents.length > 0) {
-                if (app.documents.some((d: any) => d.dataUrl) || mergedDocs.length === 0) {
-                  mergedDocs = app.documents;
-                }
-              }
-
-              map.set(key, {
-                ...existing,
-                ...app,
-                appId: app.appId || existing.appId || key,
-                name: app.name || app.customerName || app.applicantName || existing.name || 'N/A',
-                phone: app.phone || app.phoneNumber || app.mobile || existing.phone || 'N/A',
-                email: app.email || app.emailAddress || existing.email || 'N/A',
-                service: app.service || app.selectedService || app.eService || existing.service || 'General Service',
-                documents: mergedDocs,
-                uploadedDocuments: (app.uploadedDocuments && app.uploadedDocuments.length > 0) ? app.uploadedDocuments : (existing.uploadedDocuments || []),
-                paymentMode: app.paymentMode || existing.paymentMode || 'cash',
-                utrNumber: app.utrNumber || existing.utrNumber || 'N/A',
-                totalAmount: app.totalAmount || existing.totalAmount || 0,
-                submittedAt: app.submittedAt || app.appointmentTime || app.date || existing.submittedAt || 'Recent',
-                status: app.status || existing.status || 'pending'
-              });
-            }
+          map.set(key, {
+            ...existing,
+            ...app,
+            appId: app.appId || existing.appId || key,
+            name: app.name || app.customerName || app.applicantName || existing.name || 'N/A',
+            phone: app.phone || app.phoneNumber || app.mobile || existing.phone || 'N/A',
+            email: app.email || app.emailAddress || existing.email || 'N/A',
+            service: app.service || app.selectedService || app.eService || existing.service || 'General Service',
+            documents: mergedDocs,
+            uploadedDocuments: (app.uploadedDocuments && app.uploadedDocuments.length > 0) ? app.uploadedDocuments : (existing.uploadedDocuments || []),
+            paymentMode: app.paymentMode || existing.paymentMode || 'cash',
+            utrNumber: app.utrNumber || existing.utrNumber || 'N/A',
+            totalAmount: app.totalAmount || existing.totalAmount || 0,
+            submittedAt: app.createdAt || app.submittedAt || app.appointmentTime || app.date || existing.submittedAt || 'Recent',
+            updatedAt: app.updatedAt || app.statusUpdatedAt || existing.updatedAt || null,
+            status: app.status || existing.status || 'pending'
           });
+        }
+      });
 
-          const combinedList = Array.from(map.values());
-          combinedList.sort((a, b) => new Date(b.createdAt || b.date || b.submittedAt || 0).getTime() - new Date(a.createdAt || a.date || a.submittedAt || 0).getTime());
+      const combinedList = Array.from(map.values());
+      combinedList.sort((a, b) => {
+        const getTs = (item: any) => {
+          if (item.createdAt && typeof item.createdAt.seconds === 'number') return item.createdAt.seconds * 1000;
+          if (item.submittedAt && typeof item.submittedAt.seconds === 'number') return item.submittedAt.seconds * 1000;
+          return new Date(item.createdAt || item.submittedAt || item.date || 0).getTime();
+        };
+        return getTs(b) - getTs(a);
+      });
 
-          setApplications(combinedList);
-          setLoading(false);
+      setApplications(combinedList);
+      setLoading(false);
+    };
+
+    try {
+      unsubApps = onSnapshot(
+        collection(db, 'applications'),
+        (snapshot) => {
+          appsMap.clear();
+          snapshot.forEach((docSnap) => {
+            appsMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
+          });
+          updateCombinedApplications();
         },
         (err) => {
-          console.error('Firestore onSnapshot listener error:', err);
+          console.error('Firestore "applications" snapshot error:', err);
+          setLoading(false);
+        }
+      );
+
+      unsubApts = onSnapshot(
+        collection(db, 'appointments'),
+        (snapshot) => {
+          aptsMap.clear();
+          snapshot.forEach((docSnap) => {
+            aptsMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
+          });
+          updateCombinedApplications();
+        },
+        (err) => {
+          console.error('Firestore "appointments" snapshot error:', err);
           setLoading(false);
         }
       );
@@ -211,45 +279,82 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     }
 
     return () => {
-      if (unsubSnapshot) unsubSnapshot();
+      if (unsubApps) unsubApps();
+      if (unsubApts) unsubApts();
     };
   }, [isAuthenticated]);
 
-  // Handle status update in Firestore & state
+  // Handle status update in Firestore & state with timestamp
   const handleUpdateStatus = async (appId: string, newStatus: string) => {
+    const isoNow = new Date().toISOString();
+    const updatePayload = {
+      status: newStatus,
+      updatedAt: isoNow,
+      statusUpdatedAt: isoNow
+    };
+
     try {
-      await updateDoc(doc(db, 'appointments', appId), { status: newStatus });
-      setActionSuccess(`Status updated to ${newStatus}`);
-      setTimeout(() => setActionSuccess(null), 3000);
+      await updateDoc(doc(db, 'applications', appId), updatePayload);
     } catch (e) {
-      console.error('Firestore status update error:', e);
-      // Fallback server API update
-      fetch(`/api/appointments/${appId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
-      }).catch(() => {});
+      console.warn('Firestore "applications" status update error:', e);
     }
 
-    setApplications(prev => prev.map(a => a.appId === appId ? { ...a, status: newStatus } : a));
+    try {
+      await updateDoc(doc(db, 'appointments', appId), updatePayload);
+    } catch (e) {
+      console.warn('Firestore "appointments" status update error:', e);
+    }
+
+    setApplications(prev =>
+      prev.map(a =>
+        (a.appId === appId || a.id === appId)
+          ? { ...a, status: newStatus, updatedAt: isoNow, statusUpdatedAt: isoNow }
+          : a
+      )
+    );
+
+    setActionSuccess(`Status updated to ${newStatus}`);
+    setTimeout(() => setActionSuccess(null), 3000);
   };
 
-  // Handle delete application in Firestore & state
+  // Handle permanent delete application in Firestore & state
   const handleDelete = async (appId: string) => {
-    if (window.confirm(`Are you sure you want to remove application ${appId}?`)) {
+    if (!appId) return;
+    if (window.confirm(`Are you sure you want to PERMANENTLY remove application ${appId}? This action cannot be undone.`)) {
+      // 1. Await deleteDoc on 'applications' collection
+      try {
+        await deleteDoc(doc(db, 'applications', appId));
+      } catch (e) {
+        console.error('Error permanently deleting document from applications collection:', e);
+      }
+
+      // 2. Await deleteDoc on 'appointments' collection
       try {
         await deleteDoc(doc(db, 'appointments', appId));
       } catch (e) {
-        console.error('Firestore delete error:', e);
+        console.error('Error permanently deleting document from appointments collection:', e);
       }
 
-      setApplications(prev => prev.filter(a => a.appId !== appId));
+      // 3. Immediately filter local state
+      setApplications(prev => prev.filter(a => a.appId !== appId && a.id !== appId));
 
-      const local = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-      const filtered = local.filter((a: any) => a.appId !== appId);
-      localStorage.setItem('csc_local_applications', JSON.stringify(filtered));
+      // 4. Clear from local storage caches
+      try {
+        const local = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+        const filteredLocal = local.filter((a: any) => a.appId !== appId && a.id !== appId);
+        localStorage.setItem('csc_local_applications', JSON.stringify(filteredLocal));
 
-      setActionSuccess(`Application ${appId} deleted.`);
+        const web3 = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
+        const filteredWeb3 = web3.filter((a: any) => a.appId !== appId && a.id !== appId);
+        localStorage.setItem('csc_web3forms_submissions', JSON.stringify(filteredWeb3));
+      } catch (e) {
+        console.error('Local storage deletion cleanup error:', e);
+      }
+
+      // Fallback API delete
+      fetch(`/api/appointments/${appId}`, { method: 'DELETE' }).catch(() => {});
+
+      setActionSuccess(`Application ${appId} permanently removed.`);
       setTimeout(() => setActionSuccess(null), 3000);
     }
   };
@@ -579,12 +684,12 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               >
                 {/* Application Header Card */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="px-2.5 py-1 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-mono font-black text-xs rounded-lg border border-amber-500/20">
                       {app.appId || `APEX-${idx + 1}`}
                     </span>
-                    <span className="text-xs text-slate-400 font-mono">
-                      {app.submittedAt || app.date || 'Recent'}
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-mono font-semibold">
+                      📅 Submitted: {formatDisplayDate(app.createdAt || app.submittedAt || app.date)}
                     </span>
                   </div>
 
@@ -742,6 +847,11 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                     }`}>
                       {app.status || 'Pending'}
                     </span>
+                    {(app.statusUpdatedAt || app.updatedAt) && (
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                        (Updated: {formatDisplayDate(app.statusUpdatedAt || app.updatedAt)})
+                      </span>
+                    )}
                     {app.finalReceiptUrl && (
                       <a
                         href={app.finalReceiptUrl}
@@ -906,18 +1016,29 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                     }
                   }
 
-                  // 2. Save status & finalReceiptUrl in Firestore
+                  // 2. Save status & finalReceiptUrl in Firestore with ISO timestamp
+                  const isoNow = new Date().toISOString();
+                  const updatePayload = {
+                    status: 'Completed',
+                    finalReceiptUrl: finalUrl,
+                    updatedAt: isoNow,
+                    statusUpdatedAt: isoNow
+                  };
+
                   try {
-                    await updateDoc(doc(db, 'appointments', uploadModalApp.appId), {
-                      status: 'Completed',
-                      finalReceiptUrl: finalUrl
-                    });
+                    await updateDoc(doc(db, 'applications', uploadModalApp.appId), updatePayload);
                   } catch (err) {
-                    console.error('Error updating status in Firestore:', err);
+                    console.warn('Error updating status in applications collection:', err);
+                  }
+
+                  try {
+                    await updateDoc(doc(db, 'appointments', uploadModalApp.appId), updatePayload);
+                  } catch (err) {
+                    console.warn('Error updating status in appointments collection:', err);
                   }
 
                   setApplications(prev =>
-                    prev.map(a => a.appId === uploadModalApp.appId ? { ...a, status: 'Completed', finalReceiptUrl: finalUrl } : a)
+                    prev.map(a => a.appId === uploadModalApp.appId ? { ...a, status: 'Completed', finalReceiptUrl: finalUrl, updatedAt: isoNow, statusUpdatedAt: isoNow } : a)
                   );
 
                   setActionSuccess(`Application ${uploadModalApp.appId} marked Completed & final receipt attached!`);

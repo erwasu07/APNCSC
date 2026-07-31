@@ -330,6 +330,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     setIsPaymentConfirmed(false);
 
     // Save initial application directly to Cloud Firestore & server API immediately
+    const nowIso = new Date().toISOString();
     const initialPayload = {
       appId: mockReceipt.appId,
       name: mockReceipt.customerName,
@@ -344,14 +345,19 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       message: formData.additionalDetails || 'None',
       documents: uploadedFiles,
       status: 'Pending',
-      submittedAt: mockReceipt.submittedAt,
-      createdAt: new Date().toISOString()
+      submittedAt: nowIso,
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      statusUpdatedAt: nowIso
     };
 
-    // 1. Save directly to Cloud Firestore
+    // 1. Save directly to Cloud Firestore in both 'applications' and 'appointments' collections
     try {
+      setDoc(doc(db, 'applications', mockReceipt.appId), initialPayload, { merge: true }).catch(fsErr => {
+        console.error('Firestore "applications" save error:', fsErr);
+      });
       setDoc(doc(db, 'appointments', mockReceipt.appId), initialPayload, { merge: true }).catch(fsErr => {
-        console.error('Firestore initial save error:', fsErr);
+        console.error('Firestore "appointments" save error:', fsErr);
       });
     } catch (fsErr) {
       console.error('Firestore save execution exception:', fsErr);
@@ -432,6 +438,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       : 'None Attached';
 
     // Save/update application in Cloud Firestore & central server database
+    const nowIso = new Date().toISOString();
     const payload = {
       appId: updatedReceipt.appId,
       name: updatedReceipt.customerName,
@@ -446,13 +453,19 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       message: formData.additionalDetails || 'None',
       documents: uploadedFiles,
       status: 'Pending',
-      submittedAt: updatedReceipt.submittedAt
+      submittedAt: nowIso,
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      statusUpdatedAt: nowIso
     };
 
-    // Save directly to Cloud Firestore
+    // Save directly to Cloud Firestore in both 'applications' and 'appointments' collections
     try {
+      setDoc(doc(db, 'applications', updatedReceipt.appId), payload, { merge: true }).catch(fsErr => {
+        console.error('Firestore "applications" payment update error:', fsErr);
+      });
       setDoc(doc(db, 'appointments', updatedReceipt.appId), payload, { merge: true }).catch(fsErr => {
-        console.error('Firestore payment update error:', fsErr);
+        console.error('Firestore "appointments" payment update error:', fsErr);
       });
     } catch (fsErr) {
       console.error('Firestore payment update execution error:', fsErr);
