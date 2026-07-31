@@ -1098,29 +1098,29 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                     }}
                     className={`group relative p-4 rounded-2xl border-2 flex items-center justify-between gap-3 transition-all duration-200 cursor-pointer text-left shadow-xs hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 ${
                       postSubmitPaymentMode === 'online'
-                        ? 'border-amber-500 bg-amber-500/10 dark:bg-amber-500/20 text-slate-900 dark:text-white font-extrabold shadow-md ring-4 ring-amber-500/25 scale-[1.01]'
-                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50/60 dark:hover:bg-amber-950/30'
+                        ? 'border-blue-600 dark:border-blue-500 bg-blue-500/15 dark:bg-blue-500/25 text-slate-900 dark:text-white font-extrabold shadow-md ring-4 ring-blue-500/25 scale-[1.01]'
+                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50/80 dark:hover:bg-blue-950/40'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <div className={`p-3 rounded-xl shrink-0 transition-colors duration-200 ${
                         postSubmitPaymentMode === 'online'
-                          ? 'bg-amber-500 text-white shadow-sm ring-2 ring-amber-300/50'
-                          : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 group-hover:bg-amber-500 group-hover:text-white'
+                          ? 'bg-blue-600 text-white shadow-sm ring-2 ring-blue-300/50'
+                          : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white'
                       }`}>
                         <QrCode className="w-6 h-6" />
                       </div>
                       <div>
-                        <span className="text-xs font-black uppercase tracking-wider block group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">Pay Online</span>
+                        <span className="text-xs font-black uppercase tracking-wider block group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Pay Online</span>
                         <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Scan Google Pay / UPI QR Code</span>
                       </div>
                     </div>
                     {postSubmitPaymentMode === 'online' ? (
-                      <div className="bg-amber-500 text-white p-1 rounded-full shrink-0 shadow-xs animate-in zoom-in-75">
+                      <div className="bg-blue-600 text-white p-1 rounded-full shrink-0 shadow-xs animate-in zoom-in-75">
                         <Check className="w-4 h-4 stroke-[3]" />
                       </div>
                     ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-700 group-hover:border-amber-400 shrink-0 transition-colors" />
+                      <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-700 group-hover:border-blue-500 shrink-0 transition-colors" />
                     )}
                   </button>
 
@@ -1132,29 +1132,29 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                     }}
                     className={`group relative p-4 rounded-2xl border-2 flex items-center justify-between gap-3 transition-all duration-200 cursor-pointer text-left shadow-xs hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 ${
                       postSubmitPaymentMode === 'cash'
-                        ? 'border-amber-500 bg-amber-500/10 dark:bg-amber-500/20 text-slate-900 dark:text-white font-extrabold shadow-md ring-4 ring-amber-500/25 scale-[1.01]'
-                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50/60 dark:hover:bg-amber-950/30'
+                        ? 'border-emerald-600 dark:border-emerald-500 bg-emerald-500/15 dark:bg-emerald-500/25 text-slate-900 dark:text-white font-extrabold shadow-md ring-4 ring-emerald-500/25 scale-[1.01]'
+                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-emerald-500 dark:hover:border-emerald-400 hover:bg-emerald-50/80 dark:hover:bg-emerald-950/40'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <div className={`p-3 rounded-xl shrink-0 transition-colors duration-200 ${
                         postSubmitPaymentMode === 'cash'
-                          ? 'bg-amber-500 text-white shadow-sm ring-2 ring-amber-300/50'
-                          : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 group-hover:bg-amber-500 group-hover:text-white'
+                          ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-300/50'
+                          : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white'
                       }`}>
                         <IndianRupee className="w-6 h-6" />
                       </div>
                       <div>
-                        <span className="text-xs font-black uppercase tracking-wider block group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">Cash Counter</span>
+                        <span className="text-xs font-black uppercase tracking-wider block group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Cash Counter</span>
                         <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Pay in person at Cyber Cafe</span>
                       </div>
                     </div>
                     {postSubmitPaymentMode === 'cash' ? (
-                      <div className="bg-amber-500 text-white p-1 rounded-full shrink-0 shadow-xs animate-in zoom-in-75">
+                      <div className="bg-emerald-600 text-white p-1 rounded-full shrink-0 shadow-xs animate-in zoom-in-75">
                         <Check className="w-4 h-4 stroke-[3]" />
                       </div>
                     ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-700 group-hover:border-amber-400 shrink-0 transition-colors" />
+                      <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-700 group-hover:border-emerald-500 shrink-0 transition-colors" />
                     )}
                   </button>
                 </div>
@@ -1163,7 +1163,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                 {postSubmitPaymentMode === 'none' ? (
                   <div className="bg-slate-50 dark:bg-slate-950 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl p-6 text-center text-slate-500 dark:text-slate-400">
                     <p className="text-xs font-semibold">
-                      👈 Please select either <span className="font-extrabold text-amber-600 dark:text-amber-400">Pay Online</span> or <span className="font-extrabold text-amber-600 dark:text-amber-400">Cash Counter</span> above to proceed.
+                      👈 Please select either <span className="font-extrabold text-blue-600 dark:text-blue-400">Pay Online</span> or <span className="font-extrabold text-emerald-600 dark:text-emerald-400">Cash Counter</span> above to proceed.
                     </p>
                   </div>
                 ) : postSubmitPaymentMode === 'online' ? (
