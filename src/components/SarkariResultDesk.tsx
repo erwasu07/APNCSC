@@ -46,6 +46,146 @@ interface SarkariResultDeskProps {
   selectedService?: string;
 }
 
+export interface DocumentTypeConfig {
+  id: string;
+  name: string;
+  shortName: string;
+  description: string;
+  accept: string;
+}
+
+export const DOCUMENT_TYPE_CONFIGS: Record<string, DocumentTypeConfig> = {
+  aadhaar: {
+    id: 'aadhaar',
+    name: 'Aadhaar Card / Govt Identity Proof',
+    shortName: 'Aadhaar Card',
+    description: 'Clear copy of Aadhaar Card, Voter ID, or Passport (PDF/JPG, Max 10MB)',
+    accept: '.pdf,.jpg,.jpeg,.png'
+  },
+  marksheet: {
+    id: 'marksheet',
+    name: 'Educational Marksheet (10th/12th/Graduation)',
+    shortName: 'Educational Marksheet',
+    description: '10th, 12th or Graduation Certificate / Marksheet (PDF/JPG, Max 10MB)',
+    accept: '.pdf,.jpg,.jpeg,.png'
+  },
+  photo: {
+    id: 'photo',
+    name: 'Passport Size Photo & Signature Scan',
+    shortName: 'Passport Photo & Signature',
+    description: 'Recent passport size photo and scanned signature image (JPG/PNG, Max 10MB)',
+    accept: '.jpg,.jpeg,.png'
+  },
+  signature: {
+    id: 'signature',
+    name: 'Signature Specimen Scan',
+    shortName: 'Signature Scan',
+    description: 'Scanned signature on plain white paper (JPG/PNG, Max 10MB)',
+    accept: '.jpg,.jpeg,.png'
+  },
+  caste: {
+    id: 'caste',
+    name: 'Category / Caste Certificate (if applicable)',
+    shortName: 'Caste Certificate',
+    description: 'Valid SC / ST / OBC / EWS Caste or Sub-caste Certificate (PDF/JPG, Max 10MB)',
+    accept: '.pdf,.jpg,.jpeg,.png'
+  },
+  income: {
+    id: 'income',
+    name: 'Income Certificate / Proof',
+    shortName: 'Income Certificate',
+    description: 'Latest Govt issued Income Certificate or Salary Slip (PDF/JPG, Max 10MB)',
+    accept: '.pdf,.jpg,.jpeg,.png'
+  },
+  address_proof: {
+    id: 'address_proof',
+    name: 'Valid Address Proof Document',
+    shortName: 'Address Proof',
+    description: 'Electricity bill, Domicile certificate, Voter ID or Bank Passbook (PDF/JPG, Max 10MB)',
+    accept: '.pdf,.jpg,.jpeg,.png'
+  },
+  bank_passbook: {
+    id: 'bank_passbook',
+    name: 'Bank Passbook / Statement Copy',
+    shortName: 'Bank Passbook',
+    description: 'Front page displaying Account Number & IFSC code (PDF/JPG, Max 10MB)',
+    accept: '.pdf,.jpg,.jpeg,.png'
+  },
+  land: {
+    id: 'land',
+    name: 'Land Registry Copy (Khatauni / B-1)',
+    shortName: 'Land Registry Copy',
+    description: 'Verified revenue land record or Khatauni copy (PDF/JPG, Max 10MB)',
+    accept: '.pdf,.jpg,.jpeg,.png'
+  },
+  ration: {
+    id: 'ration',
+    name: 'Ration Card / PM Letter Copy',
+    shortName: 'Ration Card',
+    description: 'Copy of Ration Card or PM-JAY eligibility letter (PDF/JPG, Max 10MB)',
+    accept: '.pdf,.jpg,.jpeg,.png'
+  },
+  other_doc: {
+    id: 'other_doc',
+    name: 'Relevant Application Supporting Document',
+    shortName: 'Supporting Document',
+    description: 'Any relevant supporting document or reference slip (PDF/JPG, Max 10MB)',
+    accept: '.pdf,.jpg,.jpeg,.png'
+  }
+};
+
+export const SERVICE_DOCUMENT_MAP: Record<string, string[]> = {
+  // CSC Services
+  'csc-pan': ['aadhaar', 'photo', 'signature'],
+  'New PAN Card Application': ['aadhaar', 'photo', 'signature'],
+
+  'csc-aadhaar': ['aadhaar', 'address_proof'],
+  'Aadhaar Card Update Assistance': ['aadhaar', 'address_proof'],
+
+  'csc-voter': ['aadhaar', 'photo', 'address_proof'],
+  'Voter ID Card Services': ['aadhaar', 'photo', 'address_proof'],
+
+  'csc-ayushman': ['aadhaar', 'ration'],
+  'Ayushman Bharat Golden Card': ['aadhaar', 'ration'],
+
+  'csc-pmkisan': ['aadhaar', 'land', 'bank_passbook'],
+  'PM Kisan Registration & e-KYC': ['aadhaar', 'land', 'bank_passbook'],
+
+  'csc-eshram': ['aadhaar', 'bank_passbook'],
+  'e-Shram & Labour Card': ['aadhaar', 'bank_passbook'],
+
+  'csc-certificates': ['aadhaar', 'address_proof', 'income', 'caste'],
+  'State Certificates (Caste/Income/Domicile)': ['aadhaar', 'address_proof', 'income', 'caste'],
+
+  'csc-ration': ['aadhaar', 'photo', 'income'],
+  'New Ration Card & Corrections': ['aadhaar', 'photo', 'income'],
+
+  'csc-passport': ['aadhaar', 'marksheet', 'bank_passbook', 'address_proof'],
+  'Passport Application Filing': ['aadhaar', 'marksheet', 'bank_passbook', 'address_proof'],
+
+  'csc-dl': ['aadhaar', 'marksheet', 'address_proof'],
+  'Driving Licence Services': ['aadhaar', 'marksheet', 'address_proof'],
+
+  'csc-utility': [],
+  'Utility Bill Payments & Recharges': [],
+
+  // Digital Services
+  'dig-print': ['other_doc'],
+  'B&W / Color Printing & Scanning': ['other_doc'],
+
+  'dig-photo': ['photo'],
+  'Passport Size Photos & Editing': ['photo'],
+
+  'dig-form': ['marksheet', 'other_doc'],
+  'Professional Resume & Typing Services': ['marksheet', 'other_doc'],
+
+  // Education Services
+  'edu-admissions': ['aadhaar', 'marksheet', 'photo', 'caste'],
+  'School & College Admissions': ['aadhaar', 'marksheet', 'photo', 'caste'],
+
+  'other': ['aadhaar', 'other_doc']
+};
+
 export default function SarkariResultDesk({ onApplyService, selectedService }: SarkariResultDeskProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<SarkariItem | null>(null);
@@ -79,63 +219,104 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
   const [submissionReceipt, setSubmissionReceipt] = useState<any>(null);
   const [activeAlertTab, setActiveAlertTab] = useState<'alerts' | 'updates' | 'help'>('alerts');
 
-  // Conditional logic helper to check if a document is mandatory for the selected service
-  const getServiceDocRequirement = (serviceVal: string, customText?: string): { mandatory: boolean; requiredDocs: string[] } => {
-    if (!serviceVal) return { mandatory: false, requiredDocs: [] };
+  // Dynamic document requirement helper linking service selection to specific required documents
+  const getServiceDocRequirement = (serviceVal: string, customText?: string): { mandatory: boolean; requiredDocTypes: DocumentTypeConfig[] } => {
+    if (!serviceVal) return { mandatory: false, requiredDocTypes: [] };
 
-    // 1. Check in SERVICES_LIST
-    const serviceItem = SERVICES_LIST.find(s => s.name.toLowerCase() === serviceVal.toLowerCase());
-    if (serviceItem) {
-      if (serviceItem.id === 'csc-utility') {
-        return { mandatory: false, requiredDocs: [] };
+    let docKeys: string[] | undefined = SERVICE_DOCUMENT_MAP[serviceVal];
+
+    if (!docKeys) {
+      const sItem = SERVICES_LIST.find(s => s.name.toLowerCase() === serviceVal.toLowerCase() || s.id.toLowerCase() === serviceVal.toLowerCase());
+      if (sItem) {
+        docKeys = SERVICE_DOCUMENT_MAP[sItem.id] || SERVICE_DOCUMENT_MAP[sItem.name];
       }
-      return {
-        mandatory: true,
-        requiredDocs: serviceItem.requirements && serviceItem.requirements.length > 0
-          ? serviceItem.requirements
-          : ['Aadhaar Card / ID Proof', 'Relevant Documents']
-      };
     }
 
-    // 2. Check in SARKARI_DATA
-    const sarkariItem = SARKARI_DATA.find(item => item.title.toLowerCase() === serviceVal.toLowerCase());
-    if (sarkariItem) {
-      if (sarkariItem.category === 'jobs' || sarkariItem.category === 'admissions') {
-        return {
-          mandatory: true,
-          requiredDocs: [
-            'Aadhaar Card / Govt Identity Proof',
-            'Educational Marksheet (10th/12th/Graduation)',
-            'Passport Size Photo & Signature Scan',
-            'Category / Caste Certificate (if applicable)'
-          ]
-        };
+    if (!docKeys) {
+      const sarkariItem = SARKARI_DATA.find(item => item.title.toLowerCase() === serviceVal.toLowerCase());
+      if (sarkariItem) {
+        if (sarkariItem.category === 'jobs' || sarkariItem.category === 'admissions') {
+          docKeys = ['aadhaar', 'marksheet', 'photo', 'caste'];
+        }
       }
-      return { mandatory: false, requiredDocs: [] };
     }
 
-    // 3. Custom / Other service selection
-    if (serviceVal === 'other') {
+    if (!docKeys && serviceVal === 'other') {
       const text = (customText || '').toLowerCase();
       if (text.includes('utility') || text.includes('recharge') || text.includes('bill') || text.includes('inquiry') || text.includes('query')) {
-        return { mandatory: false, requiredDocs: [] };
+        return { mandatory: false, requiredDocTypes: [] };
       }
-      return {
-        mandatory: true,
-        requiredDocs: ['Aadhaar Card / Relevant Application Document (PDF / JPG)']
-      };
+      docKeys = ['aadhaar', 'other_doc'];
     }
 
-    // Fallback check
-    const lower = serviceVal.toLowerCase();
-    if (lower.includes('pan') || lower.includes('aadhaar') || lower.includes('voter') || lower.includes('certificate') || lower.includes('caste') || lower.includes('income') || lower.includes('domicile') || lower.includes('passport') || lower.includes('licence') || lower.includes('admission') || lower.includes('scholarship') || lower.includes('gst') || lower.includes('udyam') || lower.includes('exam') || lower.includes('recruitment') || lower.includes('form') || lower.includes('registration')) {
-      return {
-        mandatory: true,
-        requiredDocs: ['Aadhaar Card / Mandatory Supporting Documents']
-      };
+    if (!docKeys) {
+      const lower = serviceVal.toLowerCase();
+      if (lower.includes('utility') || lower.includes('recharge') || lower.includes('bill')) {
+        return { mandatory: false, requiredDocTypes: [] };
+      }
+      if (lower.includes('pan')) {
+        docKeys = ['aadhaar', 'photo', 'signature'];
+      } else if (lower.includes('aadhaar')) {
+        docKeys = ['aadhaar', 'address_proof'];
+      } else if (lower.includes('voter')) {
+        docKeys = ['aadhaar', 'photo', 'address_proof'];
+      } else if (lower.includes('caste') || lower.includes('income') || lower.includes('certificate') || lower.includes('domicile')) {
+        docKeys = ['aadhaar', 'address_proof', 'income', 'caste'];
+      } else if (lower.includes('job') || lower.includes('recruitment') || lower.includes('exam') || lower.includes('railway') || lower.includes('ssc') || lower.includes('police') || lower.includes('rpf') || lower.includes('constable') || lower.includes('inspector') || lower.includes('sub inspector')) {
+        docKeys = ['aadhaar', 'marksheet', 'photo', 'caste'];
+      } else {
+        docKeys = ['aadhaar', 'other_doc'];
+      }
     }
 
-    return { mandatory: false, requiredDocs: [] };
+    const docTypes = docKeys.map(k => DOCUMENT_TYPE_CONFIGS[k]).filter(Boolean);
+    return {
+      mandatory: docTypes.length > 0,
+      requiredDocTypes: docTypes
+    };
+  };
+
+  const handleSingleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, docType: DocumentTypeConfig) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setDocumentError(null);
+      const file = e.target.files[0];
+
+      if (file.size > 10 * 1024 * 1024) {
+        setDocumentError(`File "${file.name}" exceeds the maximum size limit of 10MB.`);
+        return;
+      }
+
+      setIsProcessingFiles(true);
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        const newDoc: UploadedDocument = {
+          id: Math.random().toString(36).substring(2, 9),
+          docTypeId: docType.id,
+          docTypeName: docType.name,
+          name: file.name,
+          size: file.size,
+          type: file.type || 'application/octet-stream',
+          dataUrl
+        };
+        setUploadedFiles(prev => [
+          ...prev.filter(f => f.docTypeId !== docType.id),
+          newDoc
+        ]);
+        setIsProcessingFiles(false);
+      };
+      reader.onerror = () => {
+        console.error('Error reading file:', file.name);
+        setIsProcessingFiles(false);
+      };
+      reader.readAsDataURL(file);
+
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveDocByTypeId = (docTypeId: string) => {
+    setUploadedFiles(prev => prev.filter(f => f.docTypeId !== docTypeId));
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -960,15 +1141,18 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                         </select>
                       </div>
 
-                      {/* Required Documents Banner (Matching Image 1) */}
+                      {/* Required Documents Banner */}
                       <div className="bg-slate-100/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-2.5 text-xs flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium">
                         <Info className="w-4 h-4 text-amber-500 shrink-0" />
                         <span>
-                          <strong className="font-extrabold text-slate-900 dark:text-white">Required Documents:</strong> Aadhaar Card, Passport Size Photo, Signature Specimen
+                          <strong className="font-extrabold text-slate-900 dark:text-white">Required Documents:</strong>{' '}
+                          {docRequirement.mandatory && docRequirement.requiredDocTypes.length > 0
+                            ? docRequirement.requiredDocTypes.map(d => d.shortName).join(', ')
+                            : 'No documents required for this service'}
                         </span>
                       </div>
 
-                      {/* Applicant Category (Determines Concession Fee) - Matching Image 1 */}
+                      {/* Applicant Category (Determines Concession Fee) */}
                       <div className="space-y-1.5 pt-1">
                         <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 block">
                           Applicant Category (Determines Concession Fee)
@@ -1017,18 +1201,22 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                       </div>
                     )}
 
-                    {/* CONDITIONAL MANDATORY DOCUMENT UPLOAD SECTION */}
-                    {docRequirement.mandatory && (
-                      <div className="bg-amber-50/90 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/80 rounded-2xl p-4 space-y-3 animate-fade-in my-2 shadow-sm">
+                    {/* DYNAMIC MANDATORY DOCUMENT UPLOAD SECTION */}
+                    {docRequirement.mandatory && docRequirement.requiredDocTypes.length > 0 && (
+                      <div className="bg-amber-50/90 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/80 rounded-2xl p-4 space-y-3.5 animate-fade-in my-2 shadow-sm">
+                        
+                        {/* Section Title */}
                         <div className="flex items-center justify-between gap-2 flex-wrap">
                           <div className="flex items-center gap-2">
-                            <div className="p-1.5 bg-amber-500 text-white rounded-lg shadow-sm">
+                            <div className="p-1.5 bg-amber-500 text-slate-950 rounded-lg shadow-xs">
                               <UploadCloud className="w-4 h-4" />
                             </div>
                             <div>
                               <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-amber-300 flex items-center gap-1.5">
                                 <span>Mandatory Document Upload</span>
-                                <span className="text-[9px] bg-red-600 text-white font-black px-2 py-0.5 rounded-md uppercase tracking-wider">Required</span>
+                                <span className="text-[9px] bg-red-600 text-white font-black px-2 py-0.5 rounded-md uppercase tracking-wider">
+                                  Required
+                                </span>
                               </h4>
                               <p className="text-[10px] text-slate-600 dark:text-slate-400 font-medium">
                                 Upload required documents for <strong className="text-slate-900 dark:text-white font-bold">{formData.selectedService === 'other' ? (formData.customServiceText || 'Custom Service') : formData.selectedService}</strong>
@@ -1037,41 +1225,92 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                           </div>
                         </div>
 
-                        {/* List of Mandatory Required Documents */}
-                        {docRequirement.requiredDocs.length > 0 && (
-                          <div className="bg-white/90 dark:bg-slate-900/90 p-3 rounded-xl border border-amber-200 dark:border-amber-900/60 shadow-inner">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-400 block mb-1">
-                              📌 Mandatory Documents Required for this Service:
-                            </span>
-                            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] font-bold text-slate-800 dark:text-slate-200">
-                              {docRequirement.requiredDocs.map((doc, idx) => (
-                                <li key={idx} className="flex items-center gap-1.5">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
-                                  <span>{doc}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
+                        {/* Dynamic Bullet Points List of Mandatory Documents */}
+                        <div className="bg-white/90 dark:bg-slate-900/90 p-3 rounded-xl border border-amber-200 dark:border-amber-900/60 shadow-inner">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-400 block mb-1.5">
+                            📌 MANDATORY DOCUMENTS REQUIRED FOR THIS SERVICE:
+                          </span>
+                          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                            {docRequirement.requiredDocTypes.map((docType) => (
+                              <li key={docType.id} className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                                <span>{docType.name}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
 
-                        {/* Drag & Drop / Click Upload Area */}
-                        <div className="relative">
-                          <label className={`flex flex-col items-center justify-center p-4 border-2 border-dashed ${documentError ? 'border-red-500 bg-red-50/50 dark:bg-red-950/30' : 'border-amber-400 dark:border-amber-600 hover:border-amber-500 bg-white dark:bg-slate-900'} rounded-xl cursor-pointer transition-all hover:bg-amber-50/50 dark:hover:bg-amber-950/40 text-center group`}>
-                            <UploadCloud className="w-7 h-7 text-amber-500 mb-1 group-hover:scale-110 transition-transform" />
-                            <span className="text-xs font-black text-slate-900 dark:text-white">
-                              Click or Drag &amp; Drop Documents Here
-                            </span>
-                            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-                              Aadhaar Card, Marksheet, Passport Photo, Signature, PDF or JPG (Max 10MB)
-                            </span>
-                            <input
-                              type="file"
-                              multiple
-                              accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
-                              onChange={handleFileUpload}
-                              className="hidden"
-                            />
-                          </label>
+                        {/* SEPARATE INDIVIDUAL FILE INPUT FIELDS FOR EACH DOCUMENT TYPE */}
+                        <div className="space-y-2.5 pt-1">
+                          <span className="text-[10.5px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 block">
+                            📁 Separate Document Upload Fields ({docRequirement.requiredDocTypes.length} Required):
+                          </span>
+
+                          <div className="grid grid-cols-1 gap-2.5">
+                            {docRequirement.requiredDocTypes.map((docType) => {
+                              const uploadedDoc = uploadedFiles.find(f => f.docTypeId === docType.id);
+
+                              return (
+                                <div
+                                  key={docType.id}
+                                  className={`p-3 rounded-xl border transition-all ${
+                                    uploadedDoc
+                                      ? 'bg-emerald-50/90 dark:bg-emerald-950/30 border-emerald-400 dark:border-emerald-800 shadow-xs'
+                                      : 'bg-white dark:bg-slate-900 border-amber-300 dark:border-amber-800/80 hover:border-amber-500 shadow-2xs'
+                                  }`}
+                                >
+                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                    <div className="space-y-0.5">
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-[11.5px] font-black uppercase tracking-wide text-slate-900 dark:text-white">
+                                          {docType.name}
+                                        </span>
+                                        <span className="text-[8.5px] bg-red-600 text-white font-bold px-1.5 py-0.2 rounded uppercase">
+                                          Required
+                                        </span>
+                                      </div>
+                                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                                        {docType.description}
+                                      </p>
+                                    </div>
+
+                                    {uploadedDoc ? (
+                                      <div className="flex items-center gap-2 bg-white dark:bg-slate-950 px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 shrink-0">
+                                        <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                        <div className="max-w-[150px] text-left">
+                                          <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100 block truncate">
+                                            {uploadedDoc.name}
+                                          </span>
+                                          <span className="text-[9px] text-slate-400 font-mono block">
+                                            {(uploadedDoc.size / 1024).toFixed(1)} KB
+                                          </span>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRemoveDocByTypeId(docType.id)}
+                                          className="p-1 hover:bg-red-50 dark:hover:bg-red-950 text-slate-400 hover:text-red-500 rounded-md transition-colors cursor-pointer ml-1"
+                                          title="Remove Document"
+                                        >
+                                          <X className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <label className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs uppercase tracking-wider rounded-lg shadow-2xs transition-all cursor-pointer shrink-0">
+                                        <UploadCloud className="w-3.5 h-3.5" />
+                                        <span>Choose File</span>
+                                        <input
+                                          type="file"
+                                          accept={docType.accept}
+                                          onChange={(e) => handleSingleFileUpload(e, docType)}
+                                          className="hidden"
+                                        />
+                                      </label>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
 
                         {/* Error Message if not uploaded */}
@@ -1081,34 +1320,11 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                           </p>
                         )}
 
-                        {/* Attached Files List */}
+                        {/* Attached Files Counter Summary */}
                         {uploadedFiles.length > 0 && (
-                          <div className="space-y-1.5 pt-1">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 block">
-                              Attached Customer Documents ({uploadedFiles.length}):
-                            </span>
-                            <div className="flex flex-wrap gap-2">
-                              {uploadedFiles.map((file) => (
-                                <div
-                                  key={file.id}
-                                  className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs shadow-sm"
-                                >
-                                  <Paperclip className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                                  <div className="max-w-[160px] truncate">
-                                    <span className="font-bold text-slate-900 dark:text-slate-100 block truncate">{file.name}</span>
-                                    <span className="text-[9px] text-slate-400 font-mono">{(file.size / 1024).toFixed(1)} KB</span>
-                                  </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveFile(file.id)}
-                                    className="p-1 hover:bg-red-50 dark:hover:bg-red-950 text-slate-400 hover:text-red-500 rounded-lg transition-colors cursor-pointer"
-                                    title="Remove Document"
-                                  >
-                                    <X className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
+                          <div className="pt-1 flex items-center justify-between text-[10px] text-slate-600 dark:text-slate-400 font-bold">
+                            <span>Total Uploaded Documents: {uploadedFiles.length} of {docRequirement.requiredDocTypes.length}</span>
+                            <span className="text-emerald-600 dark:text-emerald-400">✓ Ready for submission</span>
                           </div>
                         )}
                       </div>

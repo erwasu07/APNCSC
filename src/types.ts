@@ -1,5 +1,7 @@
 export interface UploadedDocument {
   id: string;
+  docTypeId?: string;
+  docTypeName?: string;
   name: string;
   size: number;
   type: string;
