@@ -1135,57 +1135,9 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                 </div>
               </div>
 
-              {/* RIGHT COLUMN: APPLICATION TRACKER WIDGET & CSC DOST OPERATING GUARANTEE (Matching Image 1) */}
+              {/* RIGHT COLUMN: APPLICATION TRACKER WIDGET */}
               <div className="lg:col-span-5 space-y-5">
-                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-md overflow-hidden">
-                  
-                  {/* Dark Navy Header Banner */}
-                  <div className="bg-[#0f172a] text-white px-3.5 py-2.5 flex items-center justify-between border-b border-slate-800">
-                    <div className="flex items-center gap-2">
-                      <Search className="w-4 h-4 text-amber-400" />
-                      <h3 className="text-xs sm:text-sm font-extrabold tracking-wide font-sans text-white">
-                        Track Application
-                      </h3>
-                    </div>
-                    <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider font-mono">
-                      REAL-TIME
-                    </span>
-                  </div>
-
-                  {/* Tracker Widget Container */}
-                  <div className="p-2.5 sm:p-3">
-                    <TrackApplication />
-                  </div>
-                </div>
-
-                {/* CSC DOST OPERATING GUARANTEE CARD (Matching Image 1 Exact Layout) */}
-                <div className="bg-[#12183b] text-white rounded-2xl border border-indigo-900/60 p-5 shadow-md space-y-4">
-                  <div className="flex items-center gap-2 text-[#fbbf24] font-black uppercase text-xs sm:text-sm tracking-wider">
-                    <Sparkles className="w-4 h-4 text-[#fbbf24]" />
-                    <span>CSC DOST OPERATING GUARANTEE</span>
-                  </div>
-
-                  <ul className="space-y-3 text-xs leading-relaxed text-slate-200 font-medium">
-                    <li className="flex items-start gap-2.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 mt-1.5"></span>
-                      <span>
-                        <strong className="text-white font-bold">Instant Token Generation:</strong> Every submission receives a verified digital receipt.
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 mt-1.5"></span>
-                      <span>
-                        <strong className="text-white font-bold">WhatsApp Confirmation:</strong> Live tracking link dispatched directly to your mobile.
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 mt-1.5"></span>
-                      <span>
-                        <strong className="text-white font-bold">Zero Hidden Charges:</strong> All government and portal rates explicitly broken down.
-                      </span>
-                    </li>
-                  </ul>
-                </div>
+                <TrackApplication />
               </div>
 
             </div>
