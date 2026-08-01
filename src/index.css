@@ -95,7 +95,47 @@
   background: rgba(156, 163, 175, 0.7);
 }
 
+/* Hide Google Translate top toolbar frame, popups, and highlights for clean UI */
+.goog-te-banner-frame,
+.skiptranslate iframe,
+#goog-gt-tt,
+.goog-te-balloon-frame,
+.goog-te-spinner-pos {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+body {
+  top: 0px !important;
+  position: static !important;
+}
+
+.goog-text-highlight {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
 /* Optimized Print CSS for Digital Receipt / Slip printing - Strictly Single Page */
+/* Marquee ticker animation for continuous horizontal news banner */
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: inline-flex;
+  width: max-content;
+  animation: marquee 35s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
 @media print {
   /* Restrict printed page setup */
   html, body {

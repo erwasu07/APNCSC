@@ -21,7 +21,9 @@ import {
   Edit,
   Fingerprint,
   ShieldCheck,
-  FileCheck
+  FileCheck,
+  Eye,
+  Bell
 } from 'lucide-react';
 import { SERVICES_LIST, CATEGORY_LABELS, ServiceItem } from '../servicesData';
 
@@ -313,14 +315,23 @@ export default function ExploreServicesDesk({ onApplyService, selectedService }:
                     </div>
                   </div>
 
-                  {/* Apply Button */}
-                  <button
-                    onClick={() => handleApply(service)}
-                    className="w-full py-3 px-4 bg-[#1e1b4b] hover:bg-[#121033] dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer group-hover:shadow-md"
-                  >
-                    <span>Select Service &amp; Apply</span>
-                    <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                  </button>
+                  {/* Action Buttons: View & Apply via CSC Desk */}
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <button
+                      onClick={() => setSelectedServiceItem(service)}
+                      className="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-700"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                      <span>View</span>
+                    </button>
+                    <button
+                      onClick={() => handleApply(service)}
+                      className="py-2.5 px-3 bg-[#1e1b4b] hover:bg-[#121033] text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <span>Apply via CSC Desk</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -365,7 +376,7 @@ export default function ExploreServicesDesk({ onApplyService, selectedService }:
               </div>
               <button
                 onClick={() => setSelectedServiceItem(null)}
-                className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-full transition-all absolute right-4 top-4"
+                className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-full transition-all absolute right-4 top-4 cursor-pointer"
                 title="Close"
               >
                 <X className="w-5 h-5" />
@@ -374,6 +385,18 @@ export default function ExploreServicesDesk({ onApplyService, selectedService }:
 
             {/* Modal Body */}
             <div className="p-6 overflow-y-auto space-y-5 text-xs scrollbar-thin">
+              
+              {/* Important Notifications Section */}
+              <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-2xl space-y-2">
+                <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-black text-xs uppercase font-mono tracking-wider">
+                  <Bell className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 animate-bounce" />
+                  <span>Important Notifications</span>
+                </div>
+                <p className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed font-medium">
+                  Please ensure all supporting identity proofs and application details are uploaded clearly. Authorized CSC processing ensures official validation.
+                </p>
+              </div>
+
               {/* Description */}
               <div className="space-y-1">
                 <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 font-mono">
@@ -428,15 +451,15 @@ export default function ExploreServicesDesk({ onApplyService, selectedService }:
             <div className="px-6 py-4.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5 bg-slate-50 dark:bg-slate-950/30">
               <button
                 onClick={() => setSelectedServiceItem(null)}
-                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl transition-all"
+                className="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all cursor-pointer"
               >
-                Close Window
+                Close
               </button>
               <button
                 onClick={() => handleApply(selectedServiceItem)}
-                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-blue-100 dark:shadow-none"
+                className="px-6 py-2.5 bg-[#1e1b4b] hover:bg-[#121033] text-white text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 shadow-md cursor-pointer"
               >
-                Apply Online
+                <span>Apply via CSC Desk</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>

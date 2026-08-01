@@ -287,45 +287,45 @@ export default function TrackApplication({ initialTokenId = '' }: TrackApplicati
   };
 
   return (
-    <div id="track-application-section" className="mb-6 scroll-mt-20 w-full max-w-xl mx-auto px-0 sm:px-2">
-      <div className="bg-gradient-to-br from-slate-900 via-slate-850 to-slate-950 text-white rounded-none sm:rounded-2xl p-4 sm:p-5 shadow-lg border-x-0 sm:border-x border-y sm:border border-slate-800 relative overflow-hidden w-full">
+    <div id="track-application-section" className="mb-2 scroll-mt-20 w-full max-w-md mx-auto px-0">
+      <div className="bg-gradient-to-br from-slate-900 via-slate-850 to-slate-950 text-white rounded-xl p-3 sm:p-3.5 shadow-md border border-slate-800 relative overflow-hidden w-full">
         {/* Subtle background glow */}
-        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-28 h-28 bg-amber-500/10 rounded-full blur-xl pointer-events-none"></div>
 
-        <div className="relative z-10 space-y-4">
+        <div className="relative z-10 space-y-2.5">
           {/* Compact Header */}
-          <div className="flex items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-amber-500/20 text-amber-400 rounded-lg border border-amber-500/30 shrink-0">
-                <Sparkles className="w-4 h-4 animate-pulse" />
+          <div className="flex items-center justify-between gap-1.5 border-b border-slate-800/80 pb-2">
+            <div className="flex items-center gap-1.5">
+              <div className="p-1 bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/30 shrink-0">
+                <Sparkles className="w-3.5 h-3.5 animate-pulse" />
               </div>
               <div>
-                <h2 className="text-base sm:text-lg font-black uppercase tracking-tight font-display text-white">
+                <h2 className="text-xs sm:text-sm font-black uppercase tracking-tight font-display text-white">
                   Track Application
                 </h2>
-                <p className="text-[11px] text-slate-300 font-medium">
+                <p className="text-[10px] text-slate-300 font-medium">
                   Enter Token ID to check real-time filing status
                 </p>
               </div>
             </div>
 
-            <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-[10px] font-mono font-bold flex items-center gap-1 shrink-0">
+            <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-md text-[9px] font-mono font-bold flex items-center gap-1 shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
               <span>Live Sync</span>
             </span>
           </div>
 
           {/* Compact Search Bar */}
-          <form onSubmit={handleTrackSubmit} className="flex items-center gap-2">
+          <form onSubmit={handleTrackSubmit} className="flex items-center gap-1.5">
             <div className="relative flex-1">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 required
-                placeholder="Enter Token ID (e.g., APEX-2026-638466)"
+                placeholder="Enter Token ID (e.g. APEX-2026-638466)"
                 value={tokenIdInput}
                 onChange={(e) => setTokenIdInput(e.target.value)}
-                className="w-full pl-9 pr-8 py-2.5 bg-slate-900/90 border border-slate-700 hover:border-slate-600 focus:border-amber-400 rounded-xl text-white placeholder-slate-400 font-mono font-bold text-xs tracking-wide focus:outline-none focus:ring-2 focus:ring-amber-500/20 transition-all"
+                className="w-full pl-8 pr-7 py-1.5 bg-slate-900/90 border border-slate-700 hover:border-slate-600 focus:border-amber-400 rounded-lg text-white placeholder-slate-400 font-mono font-bold text-[11px] tracking-wide focus:outline-none focus:ring-1 focus:ring-amber-500/20 transition-all"
               />
               {tokenIdInput && (
                 <button
@@ -337,9 +337,9 @@ export default function TrackApplication({ initialTokenId = '' }: TrackApplicati
                     setNotFound(false);
                     setSearched(false);
                   }}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-3 h-3" />
                 </button>
               )}
             </div>
@@ -347,13 +347,13 @@ export default function TrackApplication({ initialTokenId = '' }: TrackApplicati
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50"
+              className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-slate-950 font-black text-[11px] uppercase tracking-wider rounded-lg shadow-xs transition-all flex items-center gap-1 cursor-pointer shrink-0 disabled:opacity-50"
             >
               {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-950" />
               ) : (
                 <>
-                  <Search className="w-3.5 h-3.5" />
+                  <Search className="w-3 h-3" />
                   <span>Track</span>
                 </>
               )}

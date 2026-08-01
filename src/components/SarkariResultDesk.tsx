@@ -34,7 +34,8 @@ import {
   MessageCircle,
   UploadCloud,
   Paperclip,
-  CreditCard
+  CreditCard,
+  Eye
 } from 'lucide-react';
 import { SARKARI_DATA, SARKARI_CATEGORIES, SarkariItem } from '../data/sarkariData';
 import { SERVICES_LIST } from '../servicesData';
@@ -318,7 +319,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       utrNumber: 'N/A',
       portalFee: formData.portalFee,
       applicationFee: formData.applicationFee,
-      totalAmount: formData.portalFee + formData.applicationFee,
+      totalAmount: formData.portalFee + formData.applicationFee + Math.round(formData.portalFee * 0.18),
       uploadedDocuments: uploadedDocsList,
       additionalDetails: formData.additionalDetails || 'None',
       submittedAt: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('en-US')
@@ -689,22 +690,122 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     <section id="sarkari-portal-section" className="pt-0 pb-12 md:pb-16 bg-slate-50 dark:bg-slate-950 transition-colors duration-300 w-full">
       
       {/* 1. 📢 YELLOW TOP NEWS TICKER STRIP (Exact CSC DOST Portal Style) */}
-      <div className="bg-[#f59e0b] border-b border-amber-500 py-2 px-4 shadow-sm w-full mb-6 text-slate-950">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs font-sans">
-          <div className="flex items-center gap-2.5 flex-1 min-w-[280px] overflow-hidden">
-            <span className="bg-slate-950 text-amber-300 font-extrabold text-[11px] px-2.5 py-1 rounded uppercase tracking-wider shrink-0 flex items-center gap-1 shadow-xs">
+      <div className="bg-[#f59e0b] border-b border-amber-500 py-2 px-3 sm:px-4 shadow-sm w-full mb-6 text-slate-950">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 text-xs font-sans relative">
+          <div className="flex items-center gap-2.5 flex-1 min-w-0 overflow-hidden">
+            <span className="bg-slate-950 text-amber-300 font-extrabold text-[11px] px-2.5 py-1 rounded uppercase tracking-wider shrink-0 flex items-center gap-1.5 shadow-xs z-10">
               <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
-              <span>🔥 LATEST NEWS:</span>
+              <span>LATEST NEWS:</span>
             </span>
-            <div className="overflow-hidden whitespace-nowrap text-xs font-bold text-slate-950 flex-1">
-              <span className="inline-block animate-marquee">
-                📢 SSC CGL 2026 Official Notification Released — Apply before August 25, 2026 at CSC DOST Desk! &nbsp;&nbsp;•&nbsp;&nbsp; ⚡ Railway RRB NTPC Non-Technical 2026 Exam City &amp; Admit Card Live! &nbsp;&nbsp;•&nbsp;&nbsp; 📄 J&amp;K BOPEE &amp; JKSSB Constable Final List Uploaded &nbsp;&nbsp;•&nbsp;&nbsp; 💳 Fast-Track PAN, Ayushman Card &amp; E-Shram Digital Generation Active
-              </span>
+            <div className="overflow-hidden whitespace-nowrap text-xs font-bold text-slate-950 flex-1 relative group">
+              <div className="animate-marquee whitespace-nowrap group-hover:[animation-play-state:paused] flex items-center">
+                {/* 8 News Items - Primary Copy */}
+                <div className="inline-flex items-center gap-6 pr-6 shrink-0">
+                  {/* Job Notifications (2) */}
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">JOB</span>
+                    🔥 <strong>SSC CGL 2026</strong> Official Notification Released — Apply at CSC Desk!
+                  </span>
+                  <span className="text-amber-800 font-black">•</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">JOB</span>
+                    ⚡ <strong>UPPSC RO/ARO 2026</strong> Online Application Form Open
+                  </span>
+                  <span className="text-amber-800 font-black">•</span>
+
+                  {/* Form Results (2) */}
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">RESULT</span>
+                    🏆 <strong>NEET UG 2026</strong> Merit List &amp; Cutoff Scorecard Released
+                  </span>
+                  <span className="text-amber-800 font-black">•</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">RESULT</span>
+                    🎯 <strong>IBPS PO Mains Result 2026</strong> Declared — Check Score
+                  </span>
+                  <span className="text-amber-800 font-black">•</span>
+
+                  {/* Answer Keys (2) */}
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ANSWER KEY</span>
+                    🔑 <strong>NTA JEE Main 2026</strong> Session 1 Final Answer Key Out
+                  </span>
+                  <span className="text-amber-800 font-black">•</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ANSWER KEY</span>
+                    📝 <strong>SSC GD Constable 2026</strong> Official Answer Key Released
+                  </span>
+                  <span className="text-amber-800 font-black">•</span>
+
+                  {/* Admission Updates (2) */}
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ADMISSION</span>
+                    🎓 <strong>CUET UG 2026</strong> Online Registration Form Open
+                  </span>
+                  <span className="text-amber-800 font-black">•</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ADMISSION</span>
+                    🏫 <strong>Bihar B.Ed CET 2026</strong> Admission Online Form Active
+                  </span>
+                  <span className="text-amber-800 font-black">•</span>
+                </div>
+
+                {/* 8 News Items - Duplicate Copy for Infinite Seamless Loop */}
+                <div className="inline-flex items-center gap-6 pr-6 shrink-0" aria-hidden="true">
+                  {/* Job Notifications (2) */}
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">JOB</span>
+                    🔥 <strong>SSC CGL 2026</strong> Official Notification Released — Apply at CSC Desk!
+                  </span>
+                  <span className="text-amber-800 font-black">•</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">JOB</span>
+                    ⚡ <strong>UPPSC RO/ARO 2026</strong> Online Application Form Open
+                  </span>
+                  <span className="text-amber-800 font-black">•</span>
+
+                  {/* Form Results (2) */}
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">RESULT</span>
+                    🏆 <strong>NEET UG 2026</strong> Merit List &amp; Cutoff Scorecard Released
+                  </span>
+                  <span className="text-amber-800 font-black">•</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">RESULT</span>
+                    🎯 <strong>IBPS PO Mains Result 2026</strong> Declared — Check Score
+                  </span>
+                  <span className="text-amber-800 font-black">•</span>
+
+                  {/* Answer Keys (2) */}
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ANSWER KEY</span>
+                    🔑 <strong>NTA JEE Main 2026</strong> Session 1 Final Answer Key Out
+                  </span>
+                  <span className="text-amber-800 font-black">•</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ANSWER KEY</span>
+                    📝 <strong>SSC GD Constable 2026</strong> Official Answer Key Released
+                  </span>
+                  <span className="text-amber-800 font-black">•</span>
+
+                  {/* Admission Updates (2) */}
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ADMISSION</span>
+                    🎓 <strong>CUET UG 2026</strong> Online Registration Form Open
+                  </span>
+                  <span className="text-amber-800 font-black">•</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ADMISSION</span>
+                    🏫 <strong>Bihar B.Ed CET 2026</strong> Admission Online Form Active
+                  </span>
+                  <span className="text-amber-800 font-black">•</span>
+                </div>
+              </div>
             </div>
           </div>
           <a
             href="#bulletin-board-section"
-            className="bg-[#0f172a] hover:bg-black text-white font-black text-[11px] px-3.5 py-1.5 rounded transition-all shadow-xs shrink-0 flex items-center gap-1 cursor-pointer"
+            className="bg-[#0f172a] hover:bg-black text-white font-black text-[11px] px-3.5 py-1.5 rounded transition-all shadow-xs shrink-0 flex items-center gap-1 cursor-pointer z-10"
           >
             <span>View All Bulletins</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -822,39 +923,6 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                         <span className="text-[9.5px] text-slate-400 dark:text-slate-500 font-medium block">
                           For instant SMS/WhatsApp Token Receipts
                         </span>
-                      </div>
-
-                      {/* Email Address */}
-                      <div className="space-y-1">
-                        <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                          Email Address <span className="text-slate-400 font-normal">(Optional)</span>
-                        </label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
-                          <input
-                            type="email"
-                            placeholder="e.g. applicant@email.com"
-                            value={formData.emailAddress}
-                            onChange={(e) => setFormData({ ...formData, emailAddress: e.target.value })}
-                            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-semibold text-xs outline-none"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Date of Birth */}
-                      <div className="space-y-1">
-                        <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                          Date of Birth <span className="text-slate-400 font-normal">(Aadhaar Records)</span>
-                        </label>
-                        <div className="relative">
-                          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
-                          <input
-                            type="date"
-                            value={formData.dateOfBirth}
-                            onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-semibold text-xs outline-none cursor-pointer"
-                          />
-                        </div>
                       </div>
                     </div>
 
@@ -1046,59 +1114,10 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                       </div>
                     )}
 
-                    {/* Additional Details Text Area */}
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                        Instructions / Required Document Info
-                      </label>
-                      <textarea
-                        rows={2}
-                        placeholder="Add specific instructions, required document links, or special physical visit time slots..."
-                        value={formData.additionalDetails}
-                        onChange={(e) => setFormData({ ...formData, additionalDetails: e.target.value })}
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-medium text-xs outline-none"
-                      />
-                    </div>
 
-                    {/* TRANSPARENT DYNAMIC FEE CALCULATOR (Exact Image 1 Style) */}
+
+                    {/* Solid Emerald Green Submit Button */}
                     <div className="pt-2 space-y-3">
-                      <div className="bg-[#0b1120] text-white p-4 rounded-xl border border-slate-800 space-y-2.5 shadow-md">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-slate-200">
-                            <span>📊</span>
-                            <span>TRANSPARENT DYNAMIC FEE CALCULATOR</span>
-                          </div>
-                          <span className="bg-[#042f1e] text-[#00e699] border border-[#00b377]/60 text-[10px] font-mono font-extrabold px-2 py-0.5 rounded">
-                            Node Rate Locked
-                          </span>
-                        </div>
-
-                        <div className="space-y-1.5 text-xs font-mono pt-1 text-slate-300">
-                          <div className="flex justify-between items-center">
-                            <span>Govt Prescribed Fee ({formData.userCategory === 'genObc' ? 'General/OBC' : 'SC/ST'}):</span>
-                            <span className="font-bold text-white">₹{formData.applicationFee}</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span>CSC Node Portal Charge (Fixed):</span>
-                            <span className="font-bold text-white">₹{formData.portalFee}</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span>GST (18% on CSC Charge):</span>
-                            <span className="font-bold text-white">₹{Math.round(formData.portalFee * 0.18)}</span>
-                          </div>
-                        </div>
-
-                        <div className="h-[1px] bg-slate-800 my-1"></div>
-
-                        <div className="flex justify-between items-center pt-0.5">
-                          <span className="text-xs font-black uppercase tracking-wider text-slate-200">TOTAL PAYABLE AMOUNT:</span>
-                          <span className="text-xl font-black font-mono text-[#00e699]">
-                            ₹{formData.portalFee + formData.applicationFee + Math.round(formData.portalFee * 0.18)}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Solid Emerald Green Submit Button (Matching Image 1) */}
                       <button
                         type="submit"
                         className="w-full py-3.5 px-4 bg-[#00a86b] hover:bg-[#008f5a] text-white font-black text-sm uppercase tracking-wider rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
@@ -1121,11 +1140,11 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                 <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-md overflow-hidden">
                   
                   {/* Dark Navy Header Banner */}
-                  <div className="bg-[#0f172a] text-white px-5 py-3.5 flex items-center justify-between border-b border-slate-800">
+                  <div className="bg-[#0f172a] text-white px-3.5 py-2.5 flex items-center justify-between border-b border-slate-800">
                     <div className="flex items-center gap-2">
                       <Search className="w-4 h-4 text-amber-400" />
-                      <h3 className="text-sm font-extrabold uppercase tracking-wide font-sans text-white">
-                        🔍 Application Tracker Widget
+                      <h3 className="text-xs sm:text-sm font-extrabold tracking-wide font-sans text-white">
+                        Track Application
                       </h3>
                     </div>
                     <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider font-mono">
@@ -1134,7 +1153,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                   </div>
 
                   {/* Tracker Widget Container */}
-                  <div className="p-4 sm:p-5">
+                  <div className="p-2.5 sm:p-3">
                     <TrackApplication />
                   </div>
                 </div>
@@ -1207,6 +1226,43 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase font-extrabold">Total Fee</span>
                   <span className="font-black font-mono text-emerald-600 dark:text-emerald-400 text-sm">₹{submissionReceipt?.totalAmount}</span>
+                </div>
+              </div>
+
+              {/* TRANSPARENT DYNAMIC FEE CALCULATOR (Moved to Step 2) */}
+              <div className="mb-5 bg-[#0b1120] text-white p-4 rounded-xl border border-slate-800 space-y-2.5 shadow-md">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-slate-200">
+                    <span>📊</span>
+                    <span>TRANSPARENT DYNAMIC FEE CALCULATOR</span>
+                  </div>
+                  <span className="bg-[#042f1e] text-[#00e699] border border-[#00b377]/60 text-[10px] font-mono font-extrabold px-2 py-0.5 rounded">
+                    Node Rate Locked
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 text-xs font-mono pt-1 text-slate-300">
+                  <div className="flex justify-between items-center">
+                    <span>Govt Prescribed Fee ({submissionReceipt?.userCategory || 'General/OBC'}):</span>
+                    <span className="font-bold text-white">₹{submissionReceipt?.applicationFee || 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>CSC Node Portal Charge (Fixed):</span>
+                    <span className="font-bold text-white">₹{submissionReceipt?.portalFee || 50}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>GST (18% on CSC Charge):</span>
+                    <span className="font-bold text-white">₹{Math.round((submissionReceipt?.portalFee || 50) * 0.18)}</span>
+                  </div>
+                </div>
+
+                <div className="h-[1px] bg-slate-800 my-1"></div>
+
+                <div className="flex justify-between items-center pt-0.5">
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-200">TOTAL PAYABLE AMOUNT:</span>
+                  <span className="text-xl font-black font-mono text-[#00e699]">
+                    ₹{submissionReceipt?.totalAmount || 0}
+                  </span>
                 </div>
               </div>
 
@@ -1849,14 +1905,23 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                   </div>
                 </div>
 
-                {/* Apply Button */}
-                <button
-                  onClick={() => handleApplyNow(item)}
-                  className="w-full py-3 px-4 bg-[#1e1b4b] hover:bg-[#121033] text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <span>Apply via CSC Desk</span>
-                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                </button>
+                {/* Action Buttons: View and Apply via CSC Desk */}
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <button
+                    onClick={() => handleItemClick(item)}
+                    className="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-700"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                    <span>View</span>
+                  </button>
+                  <button
+                    onClick={() => handleApplyNow(item)}
+                    className="py-2.5 px-3 bg-[#1e1b4b] hover:bg-[#121033] text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <span>Apply via CSC Desk</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -1910,7 +1975,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
               </div>
               <button
                 onClick={() => setSelectedItem(null)}
-                className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-full transition-all absolute right-4 top-4"
+                className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-full transition-all absolute right-4 top-4 cursor-pointer"
                 title="Close"
               >
                 <X className="w-5 h-5" />
@@ -1920,6 +1985,22 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
             {/* Modal Body Scroll */}
             <div className="p-6 overflow-y-auto space-y-6 text-sm scrollbar-thin">
               
+              {/* Important Notifications Section */}
+              <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-2xl space-y-2">
+                <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-black text-xs uppercase font-mono tracking-wider">
+                  <Bell className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 animate-bounce" />
+                  <span>Important Notifications</span>
+                </div>
+                <p className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed font-medium">
+                  Candidates are advised to verify all eligibility conditions, required documents, and critical dates before submitting their application. Accurate data entry prevents rejection at the board level.
+                </p>
+                {selectedItem.lastDate && (
+                  <p className="text-[11px] font-bold text-red-600 dark:text-red-400 font-mono pt-1 border-t border-amber-200/80 dark:border-amber-800/50">
+                    ⚡ Deadline Notice: Last date for online form filing is {selectedItem.lastDate}.
+                  </p>
+                )}
+              </div>
+
               {/* Short details paragraph */}
               <div className="space-y-1">
                 <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 font-mono">
@@ -2009,18 +2090,18 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
             </div>
 
             {/* Modal Footer Controls */}
-            <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3 bg-slate-50 dark:bg-slate-950/30">
+            <div className="p-5 sm:p-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3 bg-slate-50 dark:bg-slate-950/30">
               <button
                 onClick={() => setSelectedItem(null)}
-                className="px-4.5 py-2.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl transition-all"
+                className="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all cursor-pointer"
               >
-                Close View
+                Close
               </button>
               <button
                 onClick={() => handleApplyNow(selectedItem)}
-                className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-2 shadow-md shadow-red-100 dark:shadow-none"
+                className="px-6 py-2.5 bg-[#1e1b4b] hover:bg-[#121033] text-white text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 shadow-md cursor-pointer"
               >
-                Apply Online via Café
+                <span>Apply via CSC Desk</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>

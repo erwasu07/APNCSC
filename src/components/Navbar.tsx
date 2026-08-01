@@ -17,10 +17,53 @@ export default function Navbar({
   onOpenPrivacyPolicy,
   onOpenAdmin
 }: NavbarProps) {
-  const [lang, setLang] = useState<'EN' | 'HI'>('EN');
+  const [lang, setLang] = useState<'EN' | 'HI'>(() => {
+    if (typeof window !== 'undefined') {
+      const cookies = document.cookie;
+      if (cookies.includes('googtrans=/en/hi') || cookies.includes('googtrans=/auto/hi') || localStorage.getItem('site_lang') === 'HI') {
+        return 'HI';
+      }
+    }
+    return 'EN';
+  });
+
   const [fontSize, setFontSize] = useState<'normal' | 'large' | 'larger'>('normal');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeItem, setActiveItem] = useState('hero');
+
+  const handleLanguageChange = (newLang: 'EN' | 'HI') => {
+    setLang(newLang);
+    if (typeof window === 'undefined') return;
+
+    localStorage.setItem('site_lang', newLang);
+    const code = newLang === 'HI' ? 'hi' : 'en';
+
+    // Set cookie for Google Translate widget
+    const domain = window.location.hostname;
+    document.cookie = `googtrans=/en/${code}; path=/;`;
+    document.cookie = `googtrans=/en/${code}; domain=${domain}; path=/;`;
+    document.cookie = `googtrans=/en/${code}; domain=.${domain}; path=/;`;
+
+    // Attempt to select language inside Google Translate dropdown
+    const selectElem = document.querySelector('.goog-te-combo') as HTMLSelectElement | null;
+    if (selectElem) {
+      selectElem.value = code;
+      selectElem.dispatchEvent(new Event('change'));
+    } else {
+      // Reload page to apply google translate cookie
+      window.location.reload();
+    }
+  };
+
+  const handleFontSizeChange = (size: 'normal' | 'large' | 'larger') => {
+    setFontSize(size);
+    if (typeof window !== 'undefined') {
+      const root = document.documentElement;
+      if (size === 'normal') root.style.fontSize = '100%';
+      else if (size === 'large') root.style.fontSize = '108%';
+      else if (size === 'larger') root.style.fontSize = '116%';
+    }
+  };
 
   const scrollInto = (id: string) => {
     setActiveItem(id);
@@ -64,16 +107,26 @@ export default function Navbar({
           {/* Right: Language, Text Size controllers & WhatsApp Support link */}
           <div className="flex items-center gap-2.5 self-center md:self-auto">
             {/* Language Switcher */}
-            <div className="flex items-center bg-[#1e293b] p-0.5 rounded text-[10px] font-bold">
+            <div className="flex items-center bg-[#1e293b] p-0.5 rounded text-[10px] font-bold border border-slate-700/60 shadow-xs">
               <button 
-                onClick={() => setLang('EN')} 
-                className={`px-2 py-0.5 rounded transition-all cursor-pointer ${lang === 'EN' ? 'bg-blue-600 text-white font-extrabold' : 'text-slate-300 hover:text-white'}`}
+                onClick={() => handleLanguageChange('EN')} 
+                className={`px-2.5 py-0.5 rounded transition-all cursor-pointer font-extrabold flex items-center gap-1 ${
+                  lang === 'EN' 
+                    ? 'bg-blue-600 text-white shadow-xs' 
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                }`}
+                title="Switch portal language to English"
               >
                 ENG
               </button>
               <button 
-                onClick={() => setLang('HI')} 
-                className={`px-2 py-0.5 rounded transition-all cursor-pointer ${lang === 'HI' ? 'bg-blue-600 text-white font-extrabold' : 'text-slate-300 hover:text-white'}`}
+                onClick={() => handleLanguageChange('HI')} 
+                className={`px-2.5 py-0.5 rounded transition-all cursor-pointer font-extrabold flex items-center gap-1 ${
+                  lang === 'HI' 
+                    ? 'bg-amber-500 text-slate-950 font-black shadow-xs' 
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                }`}
+                title="पोर्टल की भाषा हिंदी में बदलें"
               >
                 हिंदी
               </button>
@@ -82,21 +135,21 @@ export default function Navbar({
             {/* Text Size Controls */}
             <div className="hidden sm:flex items-center gap-1">
               <button 
-                onClick={() => setFontSize('normal')}
+                onClick={() => handleFontSizeChange('normal')}
                 className={`px-1.5 py-0.5 text-[10px] font-extrabold rounded transition-colors cursor-pointer ${fontSize === 'normal' ? 'bg-blue-600 text-white' : 'bg-[#1e293b] text-slate-300 hover:bg-slate-700'}`}
                 title="Normal Text Size"
               >
                 -A
               </button>
               <button 
-                onClick={() => setFontSize('large')}
+                onClick={() => handleFontSizeChange('large')}
                 className={`px-1.5 py-0.5 text-[10px] font-extrabold rounded transition-colors cursor-pointer ${fontSize === 'large' ? 'bg-blue-600 text-white' : 'bg-[#1e293b] text-slate-300 hover:bg-slate-700'}`}
                 title="Large Text Size"
               >
                 A
               </button>
               <button 
-                onClick={() => setFontSize('larger')}
+                onClick={() => handleFontSizeChange('larger')}
                 className={`px-1.5 py-0.5 text-[10px] font-extrabold rounded transition-colors cursor-pointer ${fontSize === 'larger' ? 'bg-blue-600 text-white' : 'bg-[#1e293b] text-slate-300 hover:bg-slate-700'}`}
                 title="Larger Text Size"
               >
@@ -216,13 +269,8 @@ export default function Navbar({
             })}
           </div>
 
-          {/* Right side: Blinking Live Update Badge */}
+          {/* Right side: Mobile Menu Trigger Button */}
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-full text-[11px] font-black tracking-wider transition-all shadow-sm cursor-pointer animate-pulse">
-              <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
-              <span>LIVE UPDATE &gt;</span>
-            </div>
-
             {/* Responsive Mobile Menu Trigger Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -237,7 +285,37 @@ export default function Navbar({
 
         {/* MOBILE MENU DRAWER */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-slate-900 text-white p-4 space-y-2 border-t border-slate-800 shadow-2xl animate-fade-in z-50">
+          <div className="md:hidden bg-slate-900 text-white p-4 space-y-3 border-t border-slate-800 shadow-2xl animate-fade-in z-50">
+            {/* Mobile Language Switcher */}
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <span className="text-xs text-slate-400 font-bold flex items-center gap-1.5">
+                <Languages className="w-4 h-4 text-amber-400" />
+                Language / भाषा:
+              </span>
+              <div className="flex items-center bg-slate-800 p-0.5 rounded text-[11px] font-bold border border-slate-700">
+                <button 
+                  onClick={() => handleLanguageChange('EN')} 
+                  className={`px-3 py-1 rounded transition-all cursor-pointer font-extrabold ${
+                    lang === 'EN' 
+                      ? 'bg-blue-600 text-white shadow-xs' 
+                      : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  ENG
+                </button>
+                <button 
+                  onClick={() => handleLanguageChange('HI')} 
+                  className={`px-3 py-1 rounded transition-all cursor-pointer font-extrabold ${
+                    lang === 'HI' 
+                      ? 'bg-amber-500 text-slate-950 font-black shadow-xs' 
+                      : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  हिंदी
+                </button>
+              </div>
+            </div>
+
             <div className="flex flex-col gap-1">
               {[
                 { id: 'hero', label: 'HOME' },
