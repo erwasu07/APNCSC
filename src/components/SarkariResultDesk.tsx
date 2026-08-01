@@ -219,6 +219,68 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
   const [submissionReceipt, setSubmissionReceipt] = useState<any>(null);
   const [activeAlertTab, setActiveAlertTab] = useState<'alerts' | 'updates' | 'help'>('alerts');
 
+  // WhatsApp Automated Invoice Notification State
+  const [whatsappStatus, setWhatsappStatus] = useState<{
+    loading: boolean;
+    sent?: boolean;
+    message?: string;
+    directWhatsAppUrl?: string;
+    error?: string;
+  } | null>(null);
+
+  const triggerWhatsAppInvoiceDispatch = async (receiptData: any) => {
+    if (!receiptData || !receiptData.phoneNumber) return;
+
+    setWhatsappStatus({ loading: true });
+
+    try {
+      const res = await fetch('/api/send-whatsapp-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: receiptData.customerName,
+          phone: receiptData.phoneNumber,
+          service: receiptData.selectedService,
+          totalAmount: receiptData.totalAmount || receiptData.portalFee,
+          appId: receiptData.appId,
+          paymentMode: receiptData.paymentMode,
+          utrNumber: receiptData.utrNumber,
+          userCategory: receiptData.userCategory,
+          submittedAt: receiptData.submittedAt
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setWhatsappStatus({
+          loading: false,
+          sent: true,
+          message: data.message || 'WhatsApp invoice dispatched successfully!',
+          directWhatsAppUrl: data.directWhatsAppUrl
+        });
+      } else {
+        setWhatsappStatus({
+          loading: false,
+          sent: false,
+          error: data.error || 'WhatsApp message dispatch failed. You can send it directly using the button below.',
+          directWhatsAppUrl: data.directWhatsAppUrl
+        });
+      }
+    } catch (err: any) {
+      console.error('Frontend WhatsApp dispatch exception:', err);
+      const cleanDigits = (receiptData.phoneNumber || '').replace(/[^\d]/g, '');
+      const fallbackPhone = cleanDigits.length === 10 ? `91${cleanDigits}` : cleanDigits;
+      const fallbackText = encodeURIComponent(`🧾 Official Invoice - ${receiptData.selectedService}\nToken: ${receiptData.appId}\nAmount: ₹${receiptData.totalAmount || 50}`);
+
+      setWhatsappStatus({
+        loading: false,
+        sent: false,
+        error: 'Backend API connection failed. Send invoice directly to customer via WhatsApp below.',
+        directWhatsAppUrl: `https://api.whatsapp.com/send?phone=${fallbackPhone}&text=${fallbackText}`
+      });
+    }
+  };
+
   // Dynamic document requirement helper linking service selection to specific required documents
   const getServiceDocRequirement = (serviceVal: string, customText?: string): { mandatory: boolean; requiredDocTypes: DocumentTypeConfig[] } => {
     if (!serviceVal) return { mandatory: false, requiredDocTypes: [] };
@@ -511,6 +573,9 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     setPostSubmitPaymentMode('none');
     setIsPaymentConfirmed(false);
 
+    // Automatically trigger WhatsApp invoice notification dispatch
+    triggerWhatsAppInvoiceDispatch(mockReceipt);
+
     // Save initial application directly to Cloud Firestore & server API immediately
     const nowIso = new Date().toISOString();
     const initialPayload = {
@@ -614,6 +679,9 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     };
 
     setSubmissionReceipt(updatedReceipt);
+
+    // Trigger updated WhatsApp invoice notification with payment confirmation
+    triggerWhatsAppInvoiceDispatch(updatedReceipt);
 
     const docsSummaryStr = updatedReceipt.uploadedDocuments && updatedReceipt.uploadedDocuments.length > 0 
       ? updatedReceipt.uploadedDocuments.join(', ') 
@@ -1774,6 +1842,75 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                     <p className="text-[10px] font-bold text-slate-700 pt-0.5">
                       Authorized VLE: <span className="font-extrabold">Wasim Ahmad Khanday</span>
                     </p>
+                  </div>
+                </div>
+
+                {/* WHATSAPP AUTOMATED INVOICE NOTIFICATION STATUS BOX */}
+                <div className="bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/80 rounded-xl p-3.5 space-y-2.5 no-print text-left">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-emerald-600 text-white rounded-lg shadow-xs">
+                        <MessageCircle className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white block">
+                          Automated WhatsApp Invoice
+                        </span>
+                        <p className="text-[10px] text-slate-600 dark:text-slate-300 font-medium">
+                          Target Mobile: <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{submissionReceipt?.phoneNumber}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    {whatsappStatus?.loading ? (
+                      <span className="text-[10px] font-extrabold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md animate-pulse">
+                        Dispatching...
+                      </span>
+                    ) : whatsappStatus?.sent ? (
+                      <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-200 dark:bg-emerald-900 dark:text-emerald-200 px-2.5 py-0.5 rounded-md flex items-center gap-1">
+                        <Check className="w-3 h-3 stroke-[3]" /> Invoice Sent
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-extrabold text-slate-800 bg-slate-200 dark:bg-slate-800 dark:text-slate-200 px-2 py-0.5 rounded-md">
+                        Notice / Direct Dispatch
+                      </span>
+                    )}
+                  </div>
+
+                  {whatsappStatus?.message && (
+                    <p className="text-[10.5px] text-emerald-800 dark:text-emerald-300 font-semibold bg-emerald-100/80 dark:bg-emerald-950/80 p-2 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                      ✅ {whatsappStatus.message}
+                    </p>
+                  )}
+
+                  {whatsappStatus?.error && (
+                    <p className="text-[10.5px] text-amber-800 dark:text-amber-300 font-semibold bg-amber-100/80 dark:bg-amber-950/80 p-2 rounded-lg border border-amber-200 dark:border-amber-800">
+                      ℹ️ {whatsappStatus.error}
+                    </p>
+                  )}
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-emerald-200 dark:border-emerald-800/80">
+                    <button
+                      type="button"
+                      onClick={() => triggerWhatsAppInvoiceDispatch(submissionReceipt)}
+                      disabled={whatsappStatus?.loading}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[10.5px] uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      <span>{whatsappStatus?.loading ? 'Sending...' : 'Re-send WhatsApp Invoice'}</span>
+                    </button>
+
+                    {whatsappStatus?.directWhatsAppUrl && (
+                      <a
+                        href={whatsappStatus.directWhatsAppUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 bg-slate-900 hover:bg-black text-white font-extrabold text-[10.5px] uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <ExternalLink className="w-3 h-3 text-amber-400" />
+                        <span>Open Invoice on WhatsApp</span>
+                      </a>
+                    )}
                   </div>
                 </div>
 

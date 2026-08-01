@@ -211,6 +211,168 @@ app.post('/api/appointments', (req, res) => {
   res.json({ success: true, data: appointment, message: 'Application submitted successfully with documents attached.' });
 });
 
+// Helper: Format phone number into clean E.164 standard (e.g. +919876543210)
+function formatPhoneNumberE164(phone: string): string {
+  if (!phone) return '';
+  const cleaned = phone.replace(/[^\d+]/g, '');
+  if (!cleaned) return '';
+  if (cleaned.startsWith('+')) return cleaned;
+  if (cleaned.length === 10) return `+91${cleaned}`; // Default to India (+91) for 10-digit numbers
+  return `+${cleaned}`;
+}
+
+// Public API: Automated WhatsApp Invoice Notification System
+app.post('/api/send-whatsapp-invoice', async (req: Request, res: Response) => {
+  try {
+    const { 
+      name, 
+      phone, 
+      service, 
+      totalAmount, 
+      appId, 
+      paymentMode, 
+      utrNumber,
+      userCategory,
+      submittedAt 
+    } = req.body;
+
+    if (!name || !phone || !service) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Missing required parameters: name, phone, and service are mandatory.' 
+      });
+    }
+
+    const formattedPhone = formatPhoneNumberE164(phone);
+    if (!formattedPhone || formattedPhone.length < 10) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid WhatsApp phone number format. Please enter a valid 10-digit mobile number.' 
+      });
+    }
+
+    const db = getDb();
+    const storeName = db.settings.cafeName || 'APNA CSC Digital Portal';
+    const dateStr = submittedAt || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    const amountStr = totalAmount ? `₹${totalAmount}` : '₹50';
+    const token = appId || `APEX-2026-${Math.floor(100000 + Math.random() * 900000)}`;
+    const payModeStr = (paymentMode || 'cash').toUpperCase();
+    const utrStr = utrNumber && utrNumber !== 'N/A' ? utrNumber : 'N/A';
+
+    // Formatted WhatsApp Invoice Message
+    const messageText = 
+`🧾 *${storeName.toUpperCase()} - OFFICIAL INVOICE*
+----------------------------------------
+📌 *Token ID:* \`${token}\`
+👤 *Customer Name:* ${name}
+📝 *Service Applied:* ${service}
+📅 *Date:* ${dateStr}
+
+💰 *PAYMENT & FEE BREAKDOWN:*
+• Category: ${userCategory || 'General'}
+• Fee Amount: ${amountStr}
+• Payment Mode: ${payModeStr}
+• UTR Ref No: \`${utrStr}\`
+
+----------------------------------------
+✅ *Status:* Application Successfully Registered
+📲 *Track Real-time Status:* https://apnacsc.in/track?id=${token}
+
+_Thank you for choosing ${storeName}! If you have any questions, reply directly to this chat._`;
+
+    // Direct WhatsApp API Link for frontend one-click fallback
+    const cleanDigits = formattedPhone.replace('+', '');
+    const directWhatsAppUrl = `https://api.whatsapp.com/send?phone=${cleanDigits}&text=${encodeURIComponent(messageText)}`;
+
+    // Provider 1: Check Twilio credentials
+    const twilioSid = process.env.TWILIO_ACCOUNT_SID;
+    const twilioToken = process.env.TWILIO_AUTH_TOKEN;
+    const twilioSender = process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886';
+
+    // Provider 2: Check Meta WhatsApp Cloud API credentials
+    const metaToken = process.env.WHATSAPP_CLOUD_API_TOKEN;
+    const metaPhoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+    let dispatchMethod = 'simulated';
+    let apiResponse = null;
+
+    if (twilioSid && twilioToken) {
+      dispatchMethod = 'twilio';
+      try {
+        const auth = Buffer.from(`${twilioSid}:${twilioToken}`).toString('base64');
+        const params = new URLSearchParams();
+        params.append('From', twilioSender.startsWith('whatsapp:') ? twilioSender : `whatsapp:${twilioSender}`);
+        params.append('To', `whatsapp:${formattedPhone}`);
+        params.append('Body', messageText);
+
+        const twilioRes = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: params
+        });
+
+        apiResponse = await twilioRes.json();
+        console.log('✅ Twilio WhatsApp Message Dispatched:', apiResponse);
+      } catch (twErr: any) {
+        console.error('❌ Twilio WhatsApp Dispatch Error:', twErr?.message || twErr);
+      }
+    } else if (metaToken && metaPhoneId) {
+      dispatchMethod = 'meta_cloud_api';
+      try {
+        const metaRes = await fetch(`https://graph.facebook.com/v18.0/${metaPhoneId}/messages`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${metaToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            recipient_type: 'individual',
+            to: cleanDigits,
+            type: 'text',
+            text: { preview_url: false, body: messageText }
+          })
+        });
+
+        apiResponse = await metaRes.json();
+        console.log('✅ Meta WhatsApp Cloud API Dispatched:', apiResponse);
+      } catch (metaErr: any) {
+        console.error('❌ Meta WhatsApp Dispatch Error:', metaErr?.message || metaErr);
+      }
+    } else {
+      console.log('\n========================================');
+      console.log(`💬 SIMULATED WHATSAPP INVOICE DISPATCHED`);
+      console.log(`📱 RECIPIENT PHONE: ${formattedPhone}`);
+      console.log(`🏷️ TOKEN ID: ${token}`);
+      console.log('----------------------------------------');
+      console.log(messageText);
+      console.log('========================================\n');
+    }
+
+    return res.json({
+      success: true,
+      dispatchMethod,
+      formattedPhone,
+      token,
+      messageText,
+      directWhatsAppUrl,
+      apiResponse,
+      message: dispatchMethod !== 'simulated' 
+        ? 'WhatsApp invoice notification dispatched successfully via API.' 
+        : 'WhatsApp invoice generated and simulated in server logs.'
+    });
+  } catch (error: any) {
+    console.error('WhatsApp API Handler Error:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Failed to process WhatsApp notification request: ' + (error?.message || 'Unknown error') 
+    });
+  }
+});
+
 // Admin Authentication: Login
 app.post('/api/admin/login', (req, res) => {
   const { username, password } = req.body;
