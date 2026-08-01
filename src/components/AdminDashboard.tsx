@@ -988,18 +988,28 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
               try {
                 if (file) {
-                  // Explicitly reference storage instance with Date.now() timestamp prefix to prevent file collision/overwrites
-                  const safeFileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-                  console.log(`2. Storage Ref created: receipts/${safeFileName}`);
-                  const activeStorage = storage || getStorage();
-                  const storageRef = ref(activeStorage, `receipts/${safeFileName}`);
+                  try {
+                    // Explicitly reference storage instance with Date.now() timestamp prefix
+                    const safeFileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+                    console.log(`2. Storage Ref created: receipts/${safeFileName}`);
+                    const activeStorage = storage || getStorage();
+                    const storageRef = ref(activeStorage, `receipts/${safeFileName}`);
 
-                  console.log('3. Uploading bytes to Firebase Storage...');
-                  const snapshot = await uploadBytes(storageRef, file);
-                  console.log('4. Upload completed. Fetching download URL via snapshot.ref...');
+                    console.log('3. Uploading bytes to Firebase Storage...');
+                    const snapshot = await uploadBytes(storageRef, file);
+                    console.log('4. Upload completed. Fetching download URL via snapshot.ref...');
 
-                  finalUrl = await getDownloadURL(snapshot.ref);
-                  console.log('5. Download URL obtained successfully:', finalUrl);
+                    finalUrl = await getDownloadURL(snapshot.ref);
+                    console.log('5. Download URL obtained successfully:', finalUrl);
+                  } catch (stgErr: any) {
+                    console.warn('Firebase Storage upload failed/unconfigured, using base64 fallback:', stgErr);
+                    if (receiptDataUrl) {
+                      finalUrl = receiptDataUrl;
+                      console.log('5b. Fallback to base64 Data URL succeeded.');
+                    } else {
+                      throw stgErr;
+                    }
+                  }
                 }
 
                 if (!finalUrl) {

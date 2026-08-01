@@ -35,126 +35,142 @@ export default function Navbar({
 
   return (
     <header className="w-full z-50 flex flex-col relative" id="main-gov-header">
-      {/* 1. TOP UTILITY GOVT BAR - CSC.GOV.IN DESIGN */}
-      <div className="bg-[#f2f4f7] dark:bg-slate-950 border-b border-slate-300 dark:border-slate-900 text-xs font-sans text-slate-700 dark:text-slate-300 py-1.5 px-3 sm:px-4 shadow-xs">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-3">
-          {/* Left: Text Size controllers (Hidden on mobile) */}
-          <div className="hidden sm:flex items-center gap-1.5 self-center sm:self-auto">
-            <span className="text-slate-700 dark:text-slate-300 font-bold text-[11px] mr-0.5">Text Size :</span>
-            <button 
-              onClick={() => setFontSize('normal')}
-              className="px-2 py-0.5 text-[11px] font-extrabold text-white bg-[#0072bc] hover:bg-[#005a9c] rounded shadow-xs transition-colors cursor-pointer"
-              title="Normal Text Size"
-            >
-              -A
-            </button>
-            <button 
-              onClick={() => setFontSize('large')}
-              className="px-2 py-0.5 text-[11px] font-extrabold text-white bg-[#0072bc] hover:bg-[#005a9c] rounded shadow-xs transition-colors cursor-pointer"
-              title="Large Text Size"
-            >
-              A
-            </button>
-            <button 
-              onClick={() => setFontSize('larger')}
-              className="px-2 py-0.5 text-[11px] font-extrabold text-white bg-[#0072bc] hover:bg-[#005a9c] rounded shadow-xs transition-colors cursor-pointer"
-              title="Larger Text Size"
-            >
-              +A
-            </button>
+      {/* 1. TOP UTILITY GOVT BAR - EXACT CSC DOST DESIGN */}
+      <div className="bg-[#0b1329] text-xs font-sans text-slate-200 py-1.5 px-3 sm:px-4 border-b border-slate-800 shadow-xs">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
+          {/* Left: IN badge, VLE Hub, Helpdesk & Operating hours */}
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 sm:gap-3 text-[11px] font-sans">
+            <div className="flex items-center gap-1.5">
+              <span className="bg-[#f59e0b] text-slate-950 font-extrabold text-[10px] px-1.5 py-0.2 rounded uppercase">IN</span>
+              <span className="font-extrabold text-amber-400">CSC VLE HUB</span>
+              <span className="text-slate-400">|</span>
+              <span className="text-slate-300 font-medium">Node ID: <strong className="text-white">212515670018</strong></span>
+            </div>
+
+            <div className="hidden sm:block text-slate-500">|</div>
+
+            <div className="flex items-center gap-2">
+              <span>📞 Helpdesk: <strong className="text-white font-bold">+91 70068 33767</strong></span>
+              <span className="text-slate-400 hidden lg:inline">|</span>
+              <span className="text-amber-300 font-semibold hidden lg:inline">🕒 Hours: 09:00 AM to 08:30 PM</span>
+            </div>
           </div>
 
-          {/* Right: Helpdesk number and operating hours */}
-          <div className="flex items-center gap-3 text-[11px] font-sans text-slate-700 dark:text-slate-300">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-slate-800 dark:text-slate-200">📞</span>
-              <span className="leading-snug">
-                Helpdesk <span className="font-bold text-slate-950 dark:text-white">+91 70068 33767</span> - <span className="text-[#9a5b00] dark:text-amber-400 font-extrabold">Hours: 09:00 AM to 08:30 PM</span>
-              </span>
+          {/* Right: Language, Text Size controllers & WhatsApp Support link */}
+          <div className="flex items-center gap-2.5 self-center md:self-auto">
+            {/* Language Switcher */}
+            <div className="flex items-center bg-[#1e293b] p-0.5 rounded text-[10px] font-bold">
+              <button 
+                onClick={() => setLang('EN')} 
+                className={`px-2 py-0.5 rounded transition-all cursor-pointer ${lang === 'EN' ? 'bg-blue-600 text-white font-extrabold' : 'text-slate-300 hover:text-white'}`}
+              >
+                ENG
+              </button>
+              <button 
+                onClick={() => setLang('HI')} 
+                className={`px-2 py-0.5 rounded transition-all cursor-pointer ${lang === 'HI' ? 'bg-blue-600 text-white font-extrabold' : 'text-slate-300 hover:text-white'}`}
+              >
+                हिंदी
+              </button>
             </div>
+
+            {/* Text Size Controls */}
+            <div className="hidden sm:flex items-center gap-1">
+              <button 
+                onClick={() => setFontSize('normal')}
+                className={`px-1.5 py-0.5 text-[10px] font-extrabold rounded transition-colors cursor-pointer ${fontSize === 'normal' ? 'bg-blue-600 text-white' : 'bg-[#1e293b] text-slate-300 hover:bg-slate-700'}`}
+                title="Normal Text Size"
+              >
+                -A
+              </button>
+              <button 
+                onClick={() => setFontSize('large')}
+                className={`px-1.5 py-0.5 text-[10px] font-extrabold rounded transition-colors cursor-pointer ${fontSize === 'large' ? 'bg-blue-600 text-white' : 'bg-[#1e293b] text-slate-300 hover:bg-slate-700'}`}
+                title="Large Text Size"
+              >
+                A
+              </button>
+              <button 
+                onClick={() => setFontSize('larger')}
+                className={`px-1.5 py-0.5 text-[10px] font-extrabold rounded transition-colors cursor-pointer ${fontSize === 'larger' ? 'bg-blue-600 text-white' : 'bg-[#1e293b] text-slate-300 hover:bg-slate-700'}`}
+                title="Larger Text Size"
+              >
+                +A
+              </button>
+            </div>
+
+            <a
+              href="https://wa.me/917006833767?text=Hello!%20I%20need%20assistance%20with%20a%20service."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] rounded-md flex items-center gap-1.5 shadow-sm transition-all"
+            >
+              <span>💬</span>
+              <span>WhatsApp Live Support</span>
+            </a>
           </div>
         </div>
       </div>
 
-      {/* 2. INDIAN FLAG TRICOLOR BAR */}
-      <div className="w-full h-[3px] sm:h-[4px] bg-gradient-to-r from-[#FF9933] via-white to-[#128807] shadow-xs z-10"></div>
-
-      {/* 3. MAIN CO-BRANDED PORTAL HEADER */}
-      <div className="bg-white dark:bg-slate-900 py-3 sm:py-4 px-4 border-b border-slate-200 dark:border-slate-800 shadow-xs">
+      {/* 2. MAIN CO-BRANDED PORTAL HEADER - EXACT SCREENSHOT BRANDING */}
+      <div className="bg-gradient-to-r from-[#18204e] via-[#1c2661] to-[#171e4a] py-3.5 px-4 border-b border-blue-900/60 shadow-md">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 md:gap-6">
           
-          {/* Logo Column: Common Services Centre (CSC) */}
-          <div className="flex items-center gap-3 sm:gap-4 text-left">
-            <img 
-              src="/favicon.svg" 
-              alt="CSC DOST Logo" 
-              className="w-9 h-9 sm:w-12 sm:h-12 md:w-14 md:h-14 object-contain shrink-0 drop-shadow-sm" 
-              referrerPolicy="no-referrer" 
-            />
-            <div className="text-left">
-              <h1 className="text-sm sm:text-xl md:text-[26px] font-extrabold text-[#0051a5] dark:text-blue-400 font-sans tracking-tight leading-tight">
-                Common Services Centre (CSC)
-              </h1>
-              <p className="text-[8px] sm:text-[10.5px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5">
-                A Digital Shop for Digital India • CSC DOST
+          {/* Logo Column: CSC DOST Logo & Tagline */}
+          <div className="flex items-center gap-3 text-left">
+            <div className="relative shrink-0">
+              <img 
+                src="/favicon.svg" 
+                alt="CSC DOST Logo" 
+                className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 object-contain drop-shadow-[0_0_12px_rgba(59,130,246,0.6)]" 
+                referrerPolicy="no-referrer" 
+              />
+            </div>
+            <div className="text-left space-y-0.5">
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white font-sans tracking-tight leading-none drop-shadow-sm">
+                  CSC DOST
+                </h1>
+                <span className="bg-[#f59e0b] text-slate-950 text-[10px] sm:text-xs font-black px-2 py-0.5 rounded uppercase tracking-wider shadow-xs">
+                  CSC VLE HUB
+                </span>
+              </div>
+              <p className="text-[10px] sm:text-xs text-yellow-300 font-bold tracking-tight">
+                "A Digital Shop for Digital India" <span className="text-slate-300 font-medium">| Authorized Desk</span>
               </p>
             </div>
           </div>
 
-          {/* Right Column: Dynamic Co-branded CSC Digital Seva & Digital India Logo lockup (Hidden on mobile to save vertical space) */}
-          <div className="hidden md:flex justify-end items-center gap-4">
-            <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-950 p-2.5 px-4 border border-slate-200/80 dark:border-slate-850 rounded-2xl shadow-xs hover:shadow-sm transition-all max-w-full overflow-hidden">
+          {/* Right Column: Co-branded Digital India & VLE Lockup */}
+          <div className="hidden md:flex justify-end items-center">
+            <div className="flex items-center gap-4 bg-[#111738]/90 border border-blue-400/30 p-2.5 px-4 rounded-xl shadow-inner">
               
-              {/* Left Brand: Digital India */}
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <div className="relative w-10 h-10 flex-shrink-0 flex items-center justify-center">
-                  {/* Saffron (orange) top-right curve */}
-                  <div className="absolute inset-0 rounded-full border-[3px] border-t-orange-500 border-r-orange-500 border-b-transparent border-l-transparent transform rotate-45"></div>
-                  {/* Green bottom-left curve */}
-                  <div className="absolute inset-0 rounded-full border-[3px] border-b-emerald-600 border-l-emerald-600 border-t-transparent border-r-transparent transform rotate-45 animate-pulse"></div>
-                  {/* Inner logo: Blue 'i' with a blue diamond dot */}
-                  <div className="relative z-10 flex flex-col items-center justify-center">
-                    <span className="text-blue-700 dark:text-blue-500 font-extrabold text-lg italic leading-none -mt-1 select-none">i</span>
-                    {/* Tiny diamond representing 'Power to Empower' */}
-                    <div className="w-1.5 h-1.5 bg-blue-700 dark:bg-blue-500 rotate-45 -mt-0.5 shadow-xs"></div>
-                  </div>
+              {/* Digital India Brand */}
+              <div className="flex items-center gap-2.5 flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-blue-900/80 border border-amber-400/60 text-amber-400 flex items-center justify-center font-extrabold text-xs shadow-xs">
+                  IN
                 </div>
                 
                 <div className="flex flex-col text-left font-sans select-none">
-                  <span className="text-[12px] font-black italic text-slate-850 dark:text-white tracking-tight leading-none">
-                    digital <span className="text-blue-700 dark:text-blue-400">india</span>
+                  <span className="text-[12px] font-black italic text-white tracking-tight leading-none">
+                    DIGITAL <span className="text-blue-400">INDIA</span>
                   </span>
-                  <span className="text-[6.5px] text-slate-500 dark:text-slate-400 font-extrabold uppercase tracking-widest leading-none mt-1">
+                  <span className="text-[7px] text-slate-300 font-extrabold uppercase tracking-widest leading-none mt-1">
                     Power To Empower
                   </span>
                 </div>
               </div>
 
               {/* Vertical Divider */}
-              <div className="h-9 w-[1px] bg-slate-200 dark:bg-slate-800 self-center"></div>
+              <div className="h-8 w-[1px] bg-blue-800/80 self-center"></div>
 
-              {/* Right Brand: CSC & Digital Seva */}
+              {/* VLE Code display */}
               <div className="flex flex-col text-left font-sans flex-shrink-0">
-                {/* CSC Logo header line */}
-                <div className="flex items-center gap-1">
-                  <span className="text-sm font-black tracking-tighter text-[#0051a5] dark:text-blue-400">C</span>
-                  <span className="text-sm font-black tracking-tighter text-[#708090] dark:text-slate-400 border-x border-slate-300 dark:border-slate-700 px-0.5">S</span>
-                  <span className="text-sm font-black tracking-tighter text-[#0051a5] dark:text-blue-400">C</span>
-                  <span className="text-[5.5px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-tight scale-90 origin-left">
-                    e-Gov Services
-                  </span>
-                </div>
-
-                {/* DIGITAL SEVA main brand with orange divider line */}
-                <div className="mt-0.5 border-b border-orange-500 pb-0.5 pr-1">
-                  <span className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-wider block leading-none">
-                    DIGITAL <span className="text-blue-800 dark:text-blue-400">SEVA</span>
-                  </span>
-                </div>
-
-                {/* Common Services Center subtitle */}
-                <span className="text-[7.5px] text-cyan-600 dark:text-cyan-400 font-bold leading-normal mt-0.5 select-none">
-                  Common Services Center
+                <span className="text-[8px] font-extrabold text-slate-400 uppercase tracking-widest leading-none">
+                  VLE CODE
+                </span>
+                <span className="text-[13px] font-black text-emerald-400 tracking-wider leading-tight mt-0.5">
+                  212515670018
                 </span>
               </div>
 
@@ -164,79 +180,54 @@ export default function Navbar({
         </div>
       </div>
 
-      {/* 4. NAVIGATION MENU BAR */}
-      <nav className="bg-gradient-to-r from-[#0d3164] via-[#0c2a54] to-[#0d3164] dark:from-[#091f3b] dark:via-[#051426] dark:to-[#091f3b] text-white shadow-lg sticky top-0 z-50 border-y border-white/10 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-12 sm:h-14">
+      {/* 3. NAVIGATION MENU BAR */}
+      <nav className="bg-[#ffffff] text-slate-800 shadow-md sticky top-0 z-50 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-12 sm:h-13">
           
           {/* Navigation Links */}
-          <div className="flex items-center gap-1 sm:gap-3 lg:gap-5 text-xs sm:text-sm lg:text-base font-black uppercase tracking-wider h-full">
+          <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 text-xs sm:text-sm font-black uppercase tracking-wider h-full">
             {[
-              { id: 'hero', label: 'Home', icon: Home, highlight: false },
-              { id: 'services', label: 'E-Services', icon: Briefcase, highlight: true },
-              { id: 'sarkari-board', label: 'Sarkari Bulletins', icon: Flame, badge: 'Hot' }
+              { id: 'hero', label: 'HOME', icon: Home },
+              { id: 'services', label: 'E-SERVICES', icon: Briefcase },
+              { id: 'sarkari-board', label: 'SARKARI BULLETINS', icon: Flame, isCurrentTab: true },
+              { id: 'csc-info', label: 'CSC CENTRE INFO', icon: Info },
+              { id: 'staff', label: 'STAFF PORTAL', icon: ShieldCheck, isStaff: true }
             ].map((item) => {
-              const IconComp = item.icon;
-              const isActive = activeItem === item.id;
+              const isActive = activeItem === item.id || item.isCurrentTab;
               return (
                 <button 
                   key={item.id}
-                  onClick={() => scrollInto(item.id)} 
-                  className={`relative px-3 sm:px-4 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 group cursor-pointer overflow-hidden ${
-                    isActive 
-                      ? 'bg-white/15 text-white shadow-inner font-extrabold border border-white/15' 
-                      : 'text-slate-200/90 hover:text-white hover:bg-white/10'
+                  onClick={() => {
+                    if (item.isStaff && onOpenAdmin) {
+                      onOpenAdmin();
+                    } else {
+                      scrollInto(item.id);
+                    }
+                  }} 
+                  className={`px-3.5 py-1.5 rounded-lg transition-all duration-200 flex items-center gap-1.5 font-black text-xs cursor-pointer ${
+                    item.isCurrentTab 
+                      ? 'bg-[#28307d] text-white shadow-sm' 
+                      : 'text-slate-700 hover:text-[#28307d] hover:bg-slate-100'
                   }`}
                 >
-                  <IconComp className={`w-4 h-4 sm:w-5 sm:h-5 transform group-hover:scale-110 transition-transform ${
-                    isActive ? 'text-amber-400' : 'text-slate-300 group-hover:text-amber-300'
-                  }`} />
-                  
-                  <span className={`relative z-10 transition-colors ${
-                    item.highlight 
-                      ? 'text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-400 font-extrabold' 
-                      : isActive 
-                      ? 'text-amber-300' 
-                      : 'text-slate-100 group-hover:text-white'
-                  }`}>
-                    {item.label}
-                  </span>
-
-                  {item.badge && (
-                    <span className="px-1.5 py-0.5 bg-red-600 text-[9px] text-white font-extrabold uppercase rounded-md leading-none animate-pulse shadow-xs">
-                      {item.badge}
-                    </span>
-                  )}
-
-                  {isActive && (
-                    <span className="absolute bottom-0 left-3 right-3 h-[3px] bg-amber-400 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.8)]"></span>
-                  )}
+                  <span>{item.label}</span>
                 </button>
               );
             })}
           </div>
 
-          {/* Right side controls & Staff Portal button */}
+          {/* Right side: Blinking Live Update Badge */}
           <div className="flex items-center gap-2">
-            {onOpenAdmin && (
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenAdmin();
-                }}
-                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black uppercase tracking-wider shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
-                title="CSC Staff & Admin Portal"
-              >
-                <ShieldCheck className="w-4 h-4 text-slate-950" />
-                <span className="hidden sm:inline">Staff Portal</span>
-              </button>
-            )}
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-full text-[11px] font-black tracking-wider transition-all shadow-sm cursor-pointer animate-pulse">
+              <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
+              <span>LIVE UPDATE &gt;</span>
+            </div>
 
             {/* Responsive Mobile Menu Trigger Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-white/95 hover:text-amber-400 hover:bg-white/10 rounded-xl transition-all cursor-pointer"
+              className="md:hidden p-2 text-slate-700 hover:text-blue-900 rounded-lg cursor-pointer"
               aria-label="Open Menu"
-              id="mobile-menu-trigger"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -246,44 +237,30 @@ export default function Navbar({
 
         {/* MOBILE MENU DRAWER */}
         {mobileMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 w-full bg-[#0d2a54] dark:bg-[#06152a] backdrop-blur-lg border-b border-white/10 dark:border-slate-800 p-4 space-y-2 shadow-2xl animate-fade-in z-50">
-            <div className="flex flex-col gap-1.5">
+          <div className="md:hidden bg-slate-900 text-white p-4 space-y-2 border-t border-slate-800 shadow-2xl animate-fade-in z-50">
+            <div className="flex flex-col gap-1">
               {[
-                { id: 'hero', label: 'Home', icon: Home, highlight: false },
-                { id: 'services', label: 'E-Services', icon: Briefcase, highlight: true },
-                { id: 'sarkari-board', label: 'Sarkari Bulletins', icon: Flame, badge: 'Hot' }
-              ].map((item) => {
-                const IconComp = item.icon;
-                const isActive = activeItem === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => scrollInto(item.id)}
-                    className={`w-full p-3 rounded-xl flex items-center justify-between text-left transition-all ${
-                      isActive
-                        ? 'bg-white/15 border border-amber-500/30 text-amber-300 font-extrabold'
-                        : 'hover:bg-white/5 text-slate-100 hover:text-white'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <IconComp className={`w-4 h-4 ${isActive ? 'text-amber-400' : 'text-slate-300'}`} />
-                      <span className={`text-xs uppercase tracking-wider font-semibold ${
-                        item.highlight ? 'text-amber-300 font-bold' : ''
-                      }`}>
-                        {item.label}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {item.badge && (
-                        <span className="px-1.5 py-0.5 bg-red-600 text-[8px] text-white font-extrabold uppercase rounded-md animate-pulse">
-                          {item.badge}
-                        </span>
-                      )}
-                      {isActive && <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,1)]"></div>}
-                    </div>
-                  </button>
-                );
-              })}
+                { id: 'hero', label: 'HOME' },
+                { id: 'services', label: 'E-SERVICES' },
+                { id: 'sarkari-board', label: 'SARKARI BULLETINS' },
+                { id: 'csc-info', label: 'CSC CENTRE INFO' },
+                { id: 'staff', label: 'STAFF PORTAL', isStaff: true }
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    if (item.isStaff && onOpenAdmin) {
+                      onOpenAdmin();
+                    } else {
+                      scrollInto(item.id);
+                    }
+                  }}
+                  className="w-full text-left px-3 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 rounded-lg"
+                >
+                  {item.label}
+                </button>
+              ))}
             </div>
           </div>
         )}

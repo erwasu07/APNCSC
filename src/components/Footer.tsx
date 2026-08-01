@@ -211,8 +211,7 @@ export default function Footer({ cafeName, onOpenPrivacyPolicy, onOpenAdmin }: F
           {/* GIGW FOOTER CREDITS */}
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] text-slate-500 font-semibold font-mono border-t border-slate-950 pt-2">
             <div className="text-center md:text-left space-y-1">
-              <p>© 2026 Verified Common Service Centre  ID :- 212515670018</p>
-              <p className="text-slate-600">All Rights Reserved. Author: @Wasim Ahmad Khanday</p>
+              <p>© 2026 Verified Common Service Centre ID :- 212515670018. All Rights Reserved. Author: Wasim Ahmad Khanday</p>
             </div>
             <div className="flex flex-col items-center md:items-end gap-1 text-[9px]">
               <span>Last Updated: 11 Jul 2026 (Live Release)</span>

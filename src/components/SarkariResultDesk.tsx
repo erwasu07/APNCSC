@@ -644,102 +644,103 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
   };
 
   return (
-    <section id="sarkari-portal-section" className="pt-2 md:pt-6 pb-12 md:pb-16 bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900 border-t border-slate-200/60 dark:border-slate-800 transition-colors duration-300 w-full">
-      <div className="w-full max-w-7xl mx-auto px-0 sm:px-4 md:px-6">
-        
-        {/* 📢 CSC DOST OFFICIAL & WHATSAPP CHANNEL BANNER */}
-        <div className="mb-6 sm:mb-8 bg-white dark:bg-slate-900 border-x-0 sm:border-x border-y sm:border border-slate-200/80 dark:border-slate-800 rounded-none sm:rounded-2xl shadow-sm p-4 sm:p-6 text-center animate-fade-in relative overflow-hidden w-full">
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
-          <div className="max-w-4xl mx-auto space-y-3 relative z-10">
-            <div className="flex items-center justify-center">
-              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-red-600 text-white text-xs sm:text-sm font-black rounded-full uppercase tracking-wider font-mono shadow-lg shadow-red-500/40 ring-4 ring-red-400/30 animate-pulse">
-                <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
-                <span>🔴 LIVE UPDATE</span>
+    <section id="sarkari-portal-section" className="pt-0 pb-12 md:pb-16 bg-slate-50 dark:bg-slate-950 transition-colors duration-300 w-full">
+      
+      {/* 1. 📢 YELLOW TOP NEWS TICKER STRIP (Exact CSC DOST Portal Style) */}
+      <div className="bg-[#f59e0b] border-b border-amber-500 py-2 px-4 shadow-sm w-full mb-6 text-slate-950">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs font-sans">
+          <div className="flex items-center gap-2.5 flex-1 min-w-[280px] overflow-hidden">
+            <span className="bg-slate-950 text-amber-300 font-extrabold text-[11px] px-2.5 py-1 rounded uppercase tracking-wider shrink-0 flex items-center gap-1 shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+              <span>🔥 LATEST NEWS:</span>
+            </span>
+            <div className="overflow-hidden whitespace-nowrap text-xs font-bold text-slate-950 flex-1">
+              <span className="inline-block animate-marquee">
+                📢 SSC CGL 2026 Official Notification Released — Apply before August 25, 2026 at CSC DOST Desk! &nbsp;&nbsp;•&nbsp;&nbsp; ⚡ Railway RRB NTPC Non-Technical 2026 Exam City &amp; Admit Card Live! &nbsp;&nbsp;•&nbsp;&nbsp; 📄 J&amp;K BOPEE &amp; JKSSB Constable Final List Uploaded &nbsp;&nbsp;•&nbsp;&nbsp; 💳 Fast-Track PAN, Ayushman Card &amp; E-Shram Digital Generation Active
               </span>
             </div>
+          </div>
+          <a
+            href="#bulletin-board-section"
+            className="bg-[#0f172a] hover:bg-black text-white font-black text-[11px] px-3.5 py-1.5 rounded transition-all shadow-xs shrink-0 flex items-center gap-1 cursor-pointer"
+          >
+            <span>View All Bulletins</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </a>
+        </div>
+      </div>
 
-            <p className="text-sm sm:text-base md:text-lg text-slate-800 dark:text-slate-100 leading-relaxed font-sans max-w-3xl mx-auto">
-              <strong className="font-extrabold text-slate-950 dark:text-white">CSC Dost Official</strong> – Your trusted portal for online applications, exam results, admit cards, career news, government schemes, and scholarships.
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-6">
+        
+        {/* 2. 🏛️ APEX SECURE PORTAL HEADER & VERIFIED DESK CARD */}
+        <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="space-y-1.5 max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="bg-[#2f2b80] text-white text-[10px] font-black px-2.5 py-0.5 rounded uppercase tracking-widest font-mono">
+                APEX SECURE PORTAL
+              </span>
+              <span className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800 text-[10px] font-black px-2.5 py-0.5 rounded uppercase tracking-widest font-mono flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>🔒 SECURE SSL - Gateway Active</span>
+              </span>
+            </div>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight font-display leading-tight">
+              Digital Application &amp; Appointment Desk
+            </h1>
+            <p className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">
+              Instant Online Government Form Filing, Sarkari Jobs Apply, and PVC e-Services Verification
             </p>
+          </div>
 
-            <div className="pt-1 flex justify-center">
-              <a
-                href="https://whatsapp.com/channel/0029VbDgSe75a248qEZAbL3g"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2.5 px-7 py-3 bg-[#00a884] hover:bg-[#008f70] active:scale-95 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-emerald-500/20 transition-all cursor-pointer group"
-                id="join-whatsapp-channel-btn"
-              >
-                <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 fill-current group-hover:rotate-12 transition-transform" />
-                <span>Join WhatsApp Channel</span>
-              </a>
+          {/* Top Right Verified Desk Badge Card */}
+          <div className="bg-amber-50/70 dark:bg-slate-950 p-3.5 rounded-xl border border-amber-300/80 dark:border-amber-800/60 shadow-xs flex items-center gap-3 shrink-0 self-start md:self-auto">
+            <div className="w-9 h-9 rounded-full bg-amber-500 text-slate-950 font-black flex items-center justify-center shrink-0 text-base shadow-xs">
+              ✓
+            </div>
+            <div className="space-y-0.5 text-xs">
+              <span className="font-black text-slate-900 dark:text-white block uppercase tracking-wider text-[11px]">
+                Verified CSC Desk #212515670018
+              </span>
+              <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400 block">
+                Official VLE Desk Lead: <strong className="font-extrabold underline text-amber-800 dark:text-amber-300">Wasim Ahmad Khanday</strong>
+              </span>
             </div>
           </div>
         </div>
 
-        {/* 🔍 PUBLIC CUSTOMER TRACK APPLICATION SECTION */}
-        <TrackApplication />
-
-        {/* 🚀 DIGITAL APPLICATION & BOOKING PORTAL WITH UPI INTEGRATION */}
-        <div id="booking-portal-form" className="mb-12 scroll-mt-24 w-full">
+        {/* 🚀 2-COLUMN HERO MAIN GRID: LEFT = APPLICATION FORM, RIGHT = TRACKER WIDGET */}
+        <div id="booking-portal-form" className="mb-10 scroll-mt-24 w-full">
           {!isFormSubmitted ? (
-            <div className="relative overflow-hidden bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-none sm:rounded-2xl shadow-xl border-x-0 sm:border-x border-y sm:border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 md:p-8 w-full">
-              {/* Subtle Ambient Decorative Gradients */}
-              <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-amber-500/5 via-orange-500/5 to-transparent rounded-full blur-3xl pointer-events-none"></div>
-              <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               
-              <div className="relative z-10">
-                {/* Header Section */}
-                <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-tr from-amber-500 via-orange-500 to-red-600 rounded-xl flex items-center justify-center text-white font-black shadow-md shadow-orange-500/20 transform rotate-2">
-                      <Shield className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <div className="flex flex-wrap gap-1.5 mb-1.5">
-                        <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded-full text-[9px] font-black tracking-wider uppercase font-mono">
-                          <Sparkles className="w-2.5 h-2.5 text-amber-500 animate-pulse" />
-                          Apex Secure Portal
-                        </div>
-                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-full text-[9px] font-black tracking-wider uppercase font-mono border border-emerald-500/10 dark:border-emerald-500/20">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                          Government Approved Authorized CSC Center
-                        </div>
-                      </div>
-                      <h3 className="text-lg sm:text-xl font-black tracking-tight uppercase font-display text-slate-900 dark:text-white">
-                        Digital Application &amp; Appointment Desk
-                      </h3>
-                    </div>
+              {/* LEFT COLUMN: OFFICIAL APPLICATION FORM */}
+              <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-md overflow-hidden">
+                
+                {/* Dark Blue Header Banner */}
+                <div className="bg-[#18204e] text-white px-5 py-3.5 flex items-center justify-between border-b border-indigo-900">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-amber-400" />
+                    <h2 className="text-sm font-extrabold uppercase tracking-wide font-sans text-white">
+                      📑 Official Application Form
+                    </h2>
                   </div>
-                  <div className="text-right hidden sm:block">
-                    <p className="text-[9px] text-slate-400 dark:text-slate-500 font-extrabold uppercase tracking-widest">Gateway active</p>
-                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold font-mono flex items-center gap-1 justify-end">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                      SECURE SSL
-                    </p>
-                  </div>
+                  <span className="text-[10px] font-mono font-bold bg-indigo-950/80 text-amber-300 px-2.5 py-0.5 rounded border border-indigo-700">
+                    Form Ref: CSC-2026-v4
+                  </span>
                 </div>
 
-                {/* Progressive Customer Friendly Step Indicators */}
-                <div className="grid grid-cols-2 gap-2 mb-6 text-xs bg-slate-50 dark:bg-slate-950/40 p-2 rounded-xl border border-slate-100 dark:border-slate-850">
-                  <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-800 dark:text-white shadow-sm font-bold border border-slate-100 dark:border-slate-800">
-                    <span className="w-5 h-5 rounded-full bg-amber-500 text-white font-black flex items-center justify-center text-[10px]">1</span>
-                    <span className="truncate">Applicant Credentials</span>
-                  </div>
-                  <div className="flex items-center gap-2 px-2.5 py-1.5 text-slate-400 dark:text-slate-500 font-bold">
-                    <span className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-black flex items-center justify-center text-[10px]">2</span>
-                    <span className="truncate">Instant Fee &amp; UPI</span>
-                  </div>
-                </div>
+                {/* Form Container */}
+                <div className="p-5 sm:p-6 space-y-4">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    Please provide your correct details below. Our CSC team will process your application on the official government portal.
+                  </p>
 
-                <form onSubmit={handleFormSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                  {/* Left Column: Customer Details & Service */}
-                  <div className="lg:col-span-7 space-y-4">
+                  <form onSubmit={handleFormSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                       {/* Full Name */}
                       <div className="space-y-1">
-                        <label htmlFor="applicant-name-input" className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1 cursor-pointer">
-                          Applicant Name <span className="text-red-500">*</span>
+                        <label htmlFor="applicant-name-input" className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1 cursor-pointer">
+                          Applicant Full Name <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
@@ -747,18 +748,21 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                             id="applicant-name-input"
                             type="text"
                             required
-                            placeholder="Full Name (as in records)"
+                            placeholder="e.g. Wasim Ahmad"
                             value={formData.customerName}
                             onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-                            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:border-amber-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-amber-500/10 dark:focus:ring-amber-400/10 transition-all font-semibold text-sm outline-none"
+                            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-semibold text-xs outline-none"
                           />
                         </div>
+                        <span className="text-[9.5px] text-slate-400 dark:text-slate-500 font-medium block">
+                          Must match Aadhaar records
+                        </span>
                       </div>
 
                       {/* Phone Number */}
                       <div className="space-y-1">
-                        <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                          WhatsApp Mobile <span className="text-red-500">*</span>
+                        <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                          WhatsApp Mobile Number <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                           <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
@@ -767,35 +771,38 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                             required
                             pattern="[0-9]{10}"
                             title="Please enter a valid 10-digit mobile number"
-                            placeholder="10-Digit mobile number"
+                            placeholder="e.g. 7006833767"
                             value={formData.phoneNumber}
                             onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:border-amber-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-amber-500/10 dark:focus:ring-amber-400/10 transition-all font-semibold text-sm outline-none font-mono"
+                            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-mono font-semibold text-xs outline-none"
                           />
                         </div>
+                        <span className="text-[9.5px] text-slate-400 dark:text-slate-500 font-medium block">
+                          For instant SMS/WhatsApp Token Receipts
+                        </span>
                       </div>
 
                       {/* Email Address */}
                       <div className="space-y-1">
-                        <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                          Email Address <span className="text-slate-400 dark:text-slate-600">(Optional)</span>
+                        <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                          Email Address <span className="text-slate-400 font-normal">(Optional)</span>
                         </label>
                         <div className="relative">
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
                           <input
                             type="email"
-                            placeholder="contact@example.com"
+                            placeholder="e.g. applicant@email.com"
                             value={formData.emailAddress}
                             onChange={(e) => setFormData({ ...formData, emailAddress: e.target.value })}
-                            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:border-amber-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-amber-500/10 dark:focus:ring-amber-400/10 transition-all font-semibold text-sm outline-none"
+                            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-semibold text-xs outline-none"
                           />
                         </div>
                       </div>
 
                       {/* Date of Birth */}
                       <div className="space-y-1">
-                        <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                          Date of Birth <span className="text-slate-400 dark:text-slate-600">(As per Aadhaar)</span>
+                        <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                          Date of Birth <span className="text-slate-400 font-normal">(Aadhaar Records)</span>
                         </label>
                         <div className="relative">
                           <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
@@ -803,7 +810,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                             type="date"
                             value={formData.dateOfBirth}
                             onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:border-amber-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-amber-500/10 dark:focus:ring-amber-400/10 transition-all font-semibold text-sm outline-none cursor-pointer"
+                            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-semibold text-xs outline-none cursor-pointer"
                           />
                         </div>
                       </div>
@@ -986,60 +993,75 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                         className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:border-amber-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-amber-500/10 dark:focus:ring-amber-400/10 transition-all font-medium text-xs outline-none"
                       />
                     </div>
-                  </div>
 
-                  {/* Right Column: Fee Breakdown & Form Submission Action */}
-                  <div className="lg:col-span-5 space-y-4">
-                    {/* Interactive Fee Breakdown Card */}
-                    <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-150 dark:border-slate-850 rounded-xl p-4 space-y-2.5 shadow-sm">
-                      <div className="flex justify-between items-center text-[10px] text-slate-400 dark:text-slate-500 font-extrabold uppercase tracking-wider pb-1.5 border-b border-slate-200/60 dark:border-slate-800">
-                        <span>Description</span>
-                        <span>Amount</span>
-                      </div>
-                      
-                      <div className="flex justify-between items-center text-xs font-semibold">
-                        <span className="text-slate-600 dark:text-slate-400">Exam Govt Fee ({formData.userCategory === 'genObc' ? 'Gen/OBC' : 'SC/ST'}):</span>
-                        <span className="font-mono font-bold text-slate-800 dark:text-white">₹{formData.applicationFee}</span>
+                    {/* Fee Breakdown & Form Submit Button inside Form */}
+                    <div className="pt-2 space-y-3.5">
+                      <div className="bg-slate-50 dark:bg-slate-950 p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 space-y-2">
+                        <div className="flex justify-between items-center text-xs font-semibold">
+                          <span className="text-slate-600 dark:text-slate-400">Exam Govt Fee ({formData.userCategory === 'genObc' ? 'Gen/OBC' : 'SC/ST'}):</span>
+                          <span className="font-mono font-bold text-slate-800 dark:text-white">₹{formData.applicationFee}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs font-semibold">
+                          <span className="text-slate-600 dark:text-slate-400">Portal &amp; Filing Charges:</span>
+                          <span className="font-mono font-bold text-amber-600 dark:text-amber-400">₹{formData.portalFee}</span>
+                        </div>
+                        <div className="h-[1px] bg-slate-200 dark:bg-slate-800 my-1"></div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-extrabold uppercase text-slate-700 dark:text-slate-300">Total Payable Amount:</span>
+                          <span className="text-lg font-black font-mono text-emerald-600 dark:text-emerald-400">
+                            ₹{formData.portalFee + formData.applicationFee}
+                          </span>
+                        </div>
                       </div>
 
-                      <div className="flex justify-between items-center text-xs font-semibold">
-                        <span className="text-slate-600 dark:text-slate-400">Portal &amp; Filing Charges:</span>
-                        <span className="font-mono font-bold text-amber-600 dark:text-amber-400">₹{formData.portalFee}</span>
-                      </div>
-
-                      <div className="h-[1px] bg-slate-200/80 dark:bg-slate-800 my-1.5"></div>
-
-                      <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-550">Total Fee:</span>
-                        <span className="text-xl font-black font-mono text-emerald-600 dark:text-emerald-400">
-                          ₹{formData.portalFee + formData.applicationFee}
-                        </span>
-                      </div>
+                      <button
+                        type="submit"
+                        className="w-full py-3 px-4 bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 hover:from-amber-600 hover:via-orange-600 hover:to-red-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <FileCheck className="w-4 h-4" />
+                        <span>Submit Application &amp; Proceed to Payment</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
                     </div>
-
-                    {/* Step Notice Banner */}
-                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-amber-800 dark:text-amber-300 text-xs font-medium space-y-1">
-                      <div className="flex items-center gap-1.5 font-bold uppercase tracking-wide text-[11px]">
-                        <Info className="w-4 h-4 text-amber-500 shrink-0" />
-                        <span>Payment Step Information</span>
-                      </div>
-                      <p className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
-                        Submit your application form details first. On the next step, you will be able to select your payment option (Pay Online or Cash Counter).
-                      </p>
-                    </div>
-
-                    {/* Form Submit Button */}
-                    <button
-                      type="submit"
-                      className="w-full py-3.5 px-4 bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 hover:from-amber-600 hover:via-orange-600 hover:to-red-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <FileCheck className="w-4 h-4" />
-                      <span>Submit Application &amp; Proceed to Payment</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                </form>
+                  </form>
+                </div>
               </div>
+
+              {/* RIGHT COLUMN: APPLICATION TRACKER WIDGET */}
+              <div className="lg:col-span-5 space-y-4">
+                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-md overflow-hidden">
+                  
+                  {/* Dark Navy Header Banner */}
+                  <div className="bg-[#0f172a] text-white px-5 py-3.5 flex items-center justify-between border-b border-slate-800">
+                    <div className="flex items-center gap-2">
+                      <Search className="w-4 h-4 text-amber-400" />
+                      <h3 className="text-sm font-extrabold uppercase tracking-wide font-sans text-white">
+                        🔍 Application Tracker Widget
+                      </h3>
+                    </div>
+                    <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider font-mono">
+                      REAL-TIME
+                    </span>
+                  </div>
+
+                  {/* Tracker Widget Container */}
+                  <div className="p-4 sm:p-5">
+                    <TrackApplication />
+                  </div>
+                </div>
+
+                {/* CSC Official Guarantee Banner */}
+                <div className="bg-amber-50 dark:bg-slate-900 border border-amber-200 dark:border-amber-800/80 p-4 rounded-xl text-xs space-y-1.5 shadow-xs">
+                  <div className="flex items-center gap-2 text-amber-800 dark:text-amber-400 font-extrabold uppercase tracking-wider text-[11px]">
+                    <Shield className="w-4 h-4 text-amber-500" />
+                    <span>CSC Government Portal Guarantee</span>
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
+                    All applications filed through CSC DOST are processed directly on official government servers (SSC, Railway, Passport, PAN, Ayushman, J&amp;K BOPEE). You will receive instant SMS &amp; WhatsApp reference receipts upon completion.
+                  </p>
+                </div>
+              </div>
+
             </div>
           ) : !isPaymentConfirmed ? (
             /* POST-SUBMISSION PAYMENT MODE SELECTION STEP */
