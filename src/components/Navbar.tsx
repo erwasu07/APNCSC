@@ -26,7 +26,12 @@ export default function Navbar({
     setActiveItem(id);
     setMobileMenuOpen(false);
     setTimeout(() => {
-      const element = document.getElementById(id);
+      if (id === 'hero' || id === 'home') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      const targetId = (id === 'csc-info' || id === 'node-info') ? 'node-info' : id;
+      const element = document.getElementById(targetId);
       if (element) {
         element.scrollIntoView({ behavior: 'smooth' });
       }
@@ -34,7 +39,7 @@ export default function Navbar({
   };
 
   return (
-    <header className="w-full z-50 flex flex-col relative" id="main-gov-header">
+    <header className="w-full z-50 flex flex-col relative" id="hero">
       {/* 1. TOP UTILITY GOVT BAR - EXACT CSC DOST DESIGN */}
       <div className="bg-[#0b1329] text-xs font-sans text-slate-200 py-1.5 px-3 sm:px-4 border-b border-slate-800 shadow-xs">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
@@ -190,19 +195,14 @@ export default function Navbar({
               { id: 'hero', label: 'HOME', icon: Home },
               { id: 'services', label: 'E-SERVICES', icon: Briefcase },
               { id: 'sarkari-board', label: 'SARKARI BULLETINS', icon: Flame, isCurrentTab: true },
-              { id: 'csc-info', label: 'CSC CENTRE INFO', icon: Info },
-              { id: 'staff', label: 'STAFF PORTAL', icon: ShieldCheck, isStaff: true }
+              { id: 'node-info', label: 'CSC CENTRE INFO', icon: Info }
             ].map((item) => {
               const isActive = activeItem === item.id || item.isCurrentTab;
               return (
                 <button 
                   key={item.id}
                   onClick={() => {
-                    if (item.isStaff && onOpenAdmin) {
-                      onOpenAdmin();
-                    } else {
-                      scrollInto(item.id);
-                    }
+                    scrollInto(item.id);
                   }} 
                   className={`px-3.5 py-1.5 rounded-lg transition-all duration-200 flex items-center gap-1.5 font-black text-xs cursor-pointer ${
                     item.isCurrentTab 
@@ -243,18 +243,13 @@ export default function Navbar({
                 { id: 'hero', label: 'HOME' },
                 { id: 'services', label: 'E-SERVICES' },
                 { id: 'sarkari-board', label: 'SARKARI BULLETINS' },
-                { id: 'csc-info', label: 'CSC CENTRE INFO' },
-                { id: 'staff', label: 'STAFF PORTAL', isStaff: true }
+                { id: 'node-info', label: 'CSC CENTRE INFO' }
               ].map((item) => (
                 <button
                   key={item.id}
                   onClick={() => {
                     setMobileMenuOpen(false);
-                    if (item.isStaff && onOpenAdmin) {
-                      onOpenAdmin();
-                    } else {
-                      scrollInto(item.id);
-                    }
+                    scrollInto(item.id);
                   }}
                   className="w-full text-left px-3 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 rounded-lg"
                 >

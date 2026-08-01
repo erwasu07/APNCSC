@@ -712,10 +712,10 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
         </div>
       </div>
 
-      <div className="w-full max-w-7xl mx-auto px-4 md:px-6">
+      <div className="w-full max-w-7xl mx-auto px-1.5 sm:px-4 md:px-6">
         
         {/* 2. 🏛️ APEX SECURE PORTAL HEADER & VERIFIED DESK CARD */}
-        <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="space-y-1.5 max-w-2xl">
             <div className="flex flex-wrap items-center gap-2">
               <span className="bg-[#2f2b80] text-white text-[10px] font-black px-2.5 py-0.5 rounded uppercase tracking-widest font-mono">
