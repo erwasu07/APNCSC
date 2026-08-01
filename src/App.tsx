@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import SarkariResultDesk from './components/SarkariResultDesk';
 import ExploreServicesDesk from './components/ExploreServicesDesk';
+import NodeInformation from './components/NodeInformation';
 import AdminDashboard from './components/AdminDashboard';
 import Footer from './components/Footer';
 import PrivacyPolicyModal, { PolicyTab } from './components/PrivacyPolicyModal';
@@ -182,7 +183,10 @@ export default function App() {
             <SarkariResultDesk onApplyService={handleServiceSelect} selectedService={selectedService} />
 
             {/* Explore All Government & Digital Services Directory */}
-            <ExploreServicesDesk onApplyService={handleServiceSelect} />
+            <ExploreServicesDesk onApplyService={handleServiceSelect} selectedService={selectedService} />
+
+            {/* Common Service Centre Node Information */}
+            <NodeInformation />
           </div>
         )}
       </main>

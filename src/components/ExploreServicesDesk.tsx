@@ -2,37 +2,38 @@ import React, { useState } from 'react';
 import { 
   Sparkles, 
   ArrowRight, 
+  ArrowUpRight,
   ChevronRight, 
   X, 
   FileText, 
   Clock, 
   CheckCircle,
-  Cpu,
-  Bookmark,
   Shield,
-  Smartphone,
   CreditCard,
   Briefcase,
   Layers,
   Search,
   Check,
-  Download,
   Tag,
   Landmark,
   Laptop,
-  GraduationCap
+  GraduationCap,
+  Edit,
+  Fingerprint,
+  ShieldCheck,
+  FileCheck
 } from 'lucide-react';
 import { SERVICES_LIST, CATEGORY_LABELS, ServiceItem } from '../servicesData';
 
 interface ExploreServicesDeskProps {
   onApplyService: (serviceName: string) => void;
+  selectedService?: string;
 }
 
-export default function ExploreServicesDesk({ onApplyService }: ExploreServicesDeskProps) {
+export default function ExploreServicesDesk({ onApplyService, selectedService }: ExploreServicesDeskProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'csc' | 'digital' | 'education' | 'business'>('all');
-  const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [selectedServiceItem, setSelectedServiceItem] = useState<ServiceItem | null>(null);
 
   // Filter list based on both active tab and search query
   const filteredServices = SERVICES_LIST.filter(service => {
@@ -42,58 +43,8 @@ export default function ExploreServicesDesk({ onApplyService }: ExploreServicesD
     return matchesCategory && matchesSearch;
   });
 
-  // Group services by category for clean, box-based rendering
-  const getServicesByCategory = (category: 'csc' | 'digital' | 'education' | 'business') => {
-    return filteredServices.filter(s => s.category === category);
-  };
-
-  const getCategoryTheme = (category: string) => {
-    switch (category) {
-      case 'csc':
-        return {
-          bg: 'from-blue-50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/10',
-          border: 'border-blue-100 dark:border-blue-900/40',
-          badge: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
-          text: 'text-blue-600 dark:text-blue-400',
-          gradient: 'from-blue-600 to-indigo-600 font-display'
-        };
-      case 'digital':
-        return {
-          bg: 'from-purple-50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-950/10',
-          border: 'border-purple-100 dark:border-purple-900/40',
-          badge: 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300',
-          text: 'text-purple-600 dark:text-purple-400',
-          gradient: 'from-purple-600 to-pink-600 font-display'
-        };
-      case 'education':
-        return {
-          bg: 'from-emerald-50 to-teal-50/50 dark:from-emerald-950/20 dark:to-teal-950/10',
-          border: 'border-emerald-100 dark:border-emerald-900/40',
-          badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
-          text: 'text-emerald-600 dark:text-emerald-400',
-          gradient: 'from-emerald-600 to-teal-600 font-display'
-        };
-      case 'business':
-        return {
-          bg: 'from-amber-50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/10',
-          border: 'border-amber-100 dark:border-amber-900/40',
-          badge: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
-          text: 'text-amber-600 dark:text-amber-400',
-          gradient: 'from-amber-600 to-orange-600 font-display'
-        };
-      default:
-        return {
-          bg: 'from-slate-50 to-slate-100/50 dark:from-slate-900/40 dark:to-slate-850',
-          border: 'border-slate-200 dark:border-slate-800',
-          badge: 'bg-slate-100 text-slate-700 dark:bg-slate-850 dark:text-slate-300',
-          text: 'text-slate-600 dark:text-slate-400',
-          gradient: 'from-slate-700 to-slate-900 font-display'
-        };
-    }
-  };
-
   const handleApply = (service: ServiceItem) => {
-    setSelectedService(null);
+    setSelectedServiceItem(null);
     onApplyService(service.name);
     
     // Smooth scroll to Digital Application & Appointment Desk and focus Applicant Name
@@ -116,6 +67,21 @@ export default function ExploreServicesDesk({ onApplyService }: ExploreServicesD
     }, 350);
   };
 
+  const getServiceIcon = (id: string, category: string) => {
+    if (id.includes('pan')) return CreditCard;
+    if (id.includes('aadhaar')) return Fingerprint;
+    if (id.includes('voter')) return CheckCircle;
+    if (id.includes('ayushman')) return ShieldCheck;
+    if (id.includes('pmkisan')) return FileCheck;
+    if (id.includes('eshram')) return Edit;
+    if (id.includes('certif')) return FileText;
+    if (id.includes('passport')) return Shield;
+    if (category === 'csc') return Landmark;
+    if (category === 'digital') return Laptop;
+    if (category === 'education') return GraduationCap;
+    return Briefcase;
+  };
+
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'csc':
@@ -131,199 +97,274 @@ export default function ExploreServicesDesk({ onApplyService }: ExploreServicesD
     }
   };
 
-  const categoriesKeys: ('csc' | 'digital' | 'education' | 'business')[] = ['csc', 'digital', 'education', 'business'];
+  const getFeeDetails = (service: ServiceItem) => {
+    if (service.id === 'csc-pan') {
+      return { govtFee: '₹107', cscFee: '₹50', time: '2-3 Working Days' };
+    }
+    if (service.id === 'csc-aadhaar') {
+      return { govtFee: '₹50', cscFee: '₹30', time: '24 Hours Slot' };
+    }
+    if (service.id === 'csc-ayushman') {
+      return { govtFee: '₹0 (Free)', cscFee: '₹0 (Free)', time: 'Same Day' };
+    }
+    if (service.id === 'csc-voter') {
+      return { govtFee: '₹0 (Free)', cscFee: '₹30 (PVC Print)', time: '3-5 Working Days' };
+    }
+    if (service.id === 'csc-pmkisan') {
+      return { govtFee: '₹15', cscFee: '₹15', time: 'Same Day' };
+    }
+
+    // Default parser
+    const priceParts = service.price.split('+');
+    let govtFee = '₹50 - ₹107';
+    let cscFee = '₹30 - ₹50';
+
+    if (priceParts.length > 1) {
+      govtFee = priceParts[0].trim();
+      cscFee = priceParts[1].trim();
+    } else if (service.price.toLowerCase().includes('free')) {
+      govtFee = '₹0 (Free)';
+      cscFee = '₹0 - ₹20';
+    } else {
+      govtFee = service.price;
+      cscFee = '₹30';
+    }
+
+    return {
+      govtFee,
+      cscFee,
+      time: service.estimatedTime || '1-3 Working Days'
+    };
+  };
 
   return (
-    <div className="bg-white dark:bg-slate-900/40 border-b border-slate-200/50 dark:border-slate-800/60 py-6 sm:py-10 transition-colors duration-300 scroll-mt-24 w-full" id="services">
-      <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 md:px-6">
+    <div className="bg-white dark:bg-slate-900/40 border-b border-slate-200/50 dark:border-slate-800/60 py-8 sm:py-12 transition-colors duration-300 scroll-mt-24 w-full" id="services">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6">
         
-        {/* Desk Header & Intro */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 pb-6 border-b border-slate-100 dark:border-slate-800/80">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-blue-600 dark:bg-blue-400 animate-pulse"></span>
-              <span className="text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 font-mono">
-                E-Services Portal
+        {/* Desk Header & Intro (Image 1 Layout) */}
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8 pb-6 border-b border-slate-200 dark:border-slate-800">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-[10px] sm:text-[11px] font-black uppercase rounded tracking-wider font-mono">
+                CSC E-SERVICES DIRECTORY
+              </span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-xs">
+                100% Verified Govt Rates
               </span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-display uppercase">
-              Comprehensive Digital Directory
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight font-display">
+              Comprehensive E-Services Catalogue
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xl font-medium">
-              We provide offline &amp; online expert support for all essential Indian citizen services, business registrations, and quick digital filing.
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium max-w-2xl">
+              Transparent Pricing, Fast Turnaround Time &amp; Direct Online Application Booking
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Quick Search inside Services Directory */}
-            <div className="relative w-full sm:w-64 group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-cyan-500 to-indigo-500 rounded-xl blur-sm opacity-20 group-hover:opacity-60 group-focus-within:opacity-80 transition-all duration-300 -z-10"></div>
-              
-              <div className="relative">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300 z-10" />
-                <input
-                  type="text"
-                  placeholder="Search all services..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-12 py-2.5 bg-white dark:bg-slate-900 border border-slate-200/85 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none hover:border-transparent dark:hover:border-transparent focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/15 transition-all duration-300 shadow-md"
-                />
-                {searchQuery && (
-                  <button 
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors z-10"
-                  >
-                    CLEAR
-                  </button>
-                )}
-              </div>
-            </div>
+          {/* Search Input (Top Right - Image 1) */}
+          <div className="relative w-full lg:w-80 shrink-0">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search services (e.g. PAN, Aadhaar, Domicile)..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-8 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-600 font-medium shadow-xs"
+              id="services-search-input"
+            />
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Categories Tab Selectors */}
-        <div className="flex flex-wrap gap-2 mb-8">
+        {/* Category Filter Pills (Image 1 Layout) */}
+        <div className="flex flex-wrap items-center gap-2.5 mb-8">
           <button
             onClick={() => setSelectedCategory('all')}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-2 ${
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
               selectedCategory === 'all'
-                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-950 border-slate-900 dark:border-white shadow-sm'
-                : 'bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/60 dark:hover:bg-slate-850 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-slate-800'
+                ? 'bg-[#1e1b4b] dark:bg-white text-white dark:text-slate-950 shadow-md'
+                : 'bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300'
             }`}
+            id="service-cat-all"
           >
-            <Layers className="w-4 h-4" />
-            <span>All Categories</span>
-            <span className="text-[10px] opacity-60">({SERVICES_LIST.length})</span>
+            All Categories
           </button>
-          {categoriesKeys.map(key => {
-            const count = SERVICES_LIST.filter(s => s.category === key).length;
-            const theme = getCategoryTheme(key);
-            const CategoryIcon = getCategoryIcon(key);
-            return (
-              <button
-                key={key}
-                onClick={() => setSelectedCategory(key)}
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-2 ${
-                  selectedCategory === key
-                    ? `bg-slate-900 dark:bg-white text-white dark:text-slate-950 border-slate-900 dark:border-white shadow-sm`
-                    : 'bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/60 dark:hover:bg-slate-850 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-slate-800'
-                }`}
-              >
-                <CategoryIcon className={`w-4 h-4 ${selectedCategory === key ? '' : theme.text}`} />
-                <span>{CATEGORY_LABELS[key]}</span>
-                <span className="text-[10px] opacity-60">({count})</span>
-              </button>
-            );
-          })}
+
+          <button
+            onClick={() => setSelectedCategory('csc')}
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
+              selectedCategory === 'csc'
+                ? 'bg-[#1e1b4b] dark:bg-white text-white dark:text-slate-950 shadow-md'
+                : 'bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300'
+            }`}
+            id="service-cat-csc"
+          >
+            CSC Government Services
+          </button>
+
+          <button
+            onClick={() => setSelectedCategory('digital')}
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
+              selectedCategory === 'digital'
+                ? 'bg-[#1e1b4b] dark:bg-white text-white dark:text-slate-950 shadow-md'
+                : 'bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300'
+            }`}
+            id="service-cat-digital"
+          >
+            Digital &amp; Cyber Services
+          </button>
+
+          <button
+            onClick={() => setSelectedCategory('education')}
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
+              selectedCategory === 'education'
+                ? 'bg-[#1e1b4b] dark:bg-white text-white dark:text-slate-950 shadow-md'
+                : 'bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300'
+            }`}
+            id="service-cat-education"
+          >
+            Education &amp; Admissions
+          </button>
+
+          <button
+            onClick={() => setSelectedCategory('business')}
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
+              selectedCategory === 'business'
+                ? 'bg-[#1e1b4b] dark:bg-white text-white dark:text-slate-950 shadow-md'
+                : 'bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300'
+            }`}
+            id="service-cat-business"
+          >
+            Business Registrations
+          </button>
         </div>
 
-        {/* 4 Box Portals Grid - Modernized layouts representing sarkariresult.com with interactive list boxes */}
-        <div className="flex flex-row overflow-x-auto snap-x snap-mandatory gap-4 pb-6 lg:grid lg:grid-cols-2 xl:grid-cols-4 lg:gap-8 lg:overflow-x-visible w-full scrollbar-thin">
-          {categoriesKeys.map(cat => {
-            const list = getServicesByCategory(cat);
-            const isVisible = selectedCategory === 'all' || selectedCategory === cat;
-            const theme = getCategoryTheme(cat);
-            const CategoryIcon = getCategoryIcon(cat);
+        {/* 3-Column Cards Grid (Image 1 Layout) */}
+        {filteredServices.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto w-full">
+            {filteredServices.map(service => {
+              const ServiceIcon = getServiceIcon(service.id, service.category);
+              const fees = getFeeDetails(service);
+              const isSelected = selectedService === service.name;
 
-            if (!isVisible) return null;
-
-            return (
-              <div 
-                key={cat}
-                className="w-[85vw] sm:w-[320px] lg:w-auto flex-shrink-0 snap-start bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-sm md:shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col group"
-                id={`explore-box-${cat}`}
-              >
-                {/* Category Header */}
-                <div className={`bg-gradient-to-r ${theme.gradient} text-white px-3 py-2.5 sm:px-4 sm:py-3.5 flex items-center justify-between`}>
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="p-1.5 sm:p-2 bg-white/20 backdrop-blur-md rounded-lg sm:rounded-xl text-white shadow-inner flex-shrink-0">
-                      <CategoryIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </div>
-                    <h3 className="font-extrabold tracking-tight text-[11px] sm:text-xs md:text-sm uppercase font-display truncate">
-                      {CATEGORY_LABELS[cat]}
-                    </h3>
-                  </div>
-                  <span className="hidden sm:inline-block bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-md font-mono flex-shrink-0 ml-2">
-                    {list.length} Items
-                  </span>
-                </div>
-
-                {/* Services List Inside the Box */}
-                <div className="p-1 sm:p-3.5 divide-y divide-slate-150/40 dark:divide-slate-800/40 flex-grow max-h-[380px] sm:max-h-[460px] overflow-y-auto scrollbar-thin">
-                  {list.length > 0 ? (
-                    list.map(service => (
-                      <div
-                        key={service.id}
-                        onClick={() => setSelectedService(service)}
-                        onMouseEnter={() => setHoveredId(service.id)}
-                        onMouseLeave={() => setHoveredId(null)}
-                        className={`p-1.5 sm:p-3.5 rounded-lg sm:rounded-2xl cursor-pointer transition-all flex items-center justify-between gap-1 sm:gap-3 hover:bg-slate-50 dark:hover:bg-slate-850/60 ${
-                          hoveredId === service.id ? 'translate-x-1 bg-slate-50/50 dark:bg-slate-850/40' : ''
-                        }`}
-                        id={`explore-item-${service.id}`}
-                      >
-                        <div className="space-y-1 min-w-0 flex-grow">
-                          <div className="flex items-center gap-1 flex-wrap">
-                            <span className="text-[10px] sm:text-xs md:text-sm font-extrabold text-slate-850 dark:text-slate-100 leading-tight block truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors font-display">
-                              {service.name}
-                            </span>
-                            {service.popular && (
-                              <span className="px-1 py-0.2 bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 text-[7.5px] sm:text-[8px] font-black uppercase rounded tracking-wider flex-shrink-0">
-                                POPULAR
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-[8.5px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium block truncate">
-                            {service.description}
-                          </span>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-black text-emerald-600 dark:text-emerald-400 font-mono bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-500/10">
-                              <Tag className="w-2.5 h-2.5" />
-                              {service.price}
-                            </span>
-                          </div>
-                        </div>
-                        <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400 flex-shrink-0 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-colors" />
+              return (
+                <div
+                  key={service.id}
+                  className={`bg-white dark:bg-slate-900 border rounded-2xl p-5 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between space-y-4 group hover:-translate-y-1 ${
+                    isSelected 
+                      ? 'ring-2 ring-blue-600 border-blue-600 dark:border-blue-500' 
+                      : 'border-slate-200 dark:border-slate-800'
+                  }`}
+                  id={`service-card-${service.id}`}
+                >
+                  <div className="space-y-3">
+                    {/* Top Bar: Icon + Popular Badge */}
+                    <div className="flex items-center justify-between">
+                      <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-100 dark:border-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                        <ServiceIcon className="w-4 h-4" />
                       </div>
-                    ))
-                  ) : (
-                    <div className="py-16 text-center text-xs text-slate-400 font-medium">
-                      No matching services found
+                      {service.popular && (
+                        <span className="px-2.5 py-0.5 bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 text-[10px] font-black uppercase rounded-full border border-amber-200 dark:border-amber-800 font-mono tracking-wider">
+                          POPULAR
+                        </span>
+                      )}
                     </div>
-                  )}
+
+                    {/* Category Label */}
+                    <div className="text-[10px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-400 font-mono">
+                      {CATEGORY_LABELS[service.category]}
+                    </div>
+
+                    {/* Title */}
+                    <h3 
+                      onClick={() => setSelectedServiceItem(service)}
+                      className="text-base font-extrabold text-slate-900 dark:text-white leading-snug font-display cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors line-clamp-2"
+                    >
+                      {service.name}
+                    </h3>
+
+                    {/* Description */}
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium leading-relaxed line-clamp-2">
+                      {service.description}
+                    </p>
+
+                    {/* Fee Details Box (Image 1 Layout) */}
+                    <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-100 dark:border-slate-850 rounded-xl p-3.5 space-y-2 text-xs font-sans">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">Government Fee:</span>
+                        <span className="font-extrabold text-slate-900 dark:text-white font-mono">{fees.govtFee}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">CSC Service Charge:</span>
+                        <span className="font-extrabold text-slate-900 dark:text-white font-mono">{fees.cscFee}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-slate-800">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">Turnaround Time:</span>
+                        <span className="font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">{fees.time}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Apply Button */}
+                  <button
+                    onClick={() => handleApply(service)}
+                    className="w-full py-3 px-4 bg-[#1e1b4b] hover:bg-[#121033] dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer group-hover:shadow-md"
+                  >
+                    <span>Select Service &amp; Apply</span>
+                    <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  </button>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-16 bg-slate-50 dark:bg-slate-900/40 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl max-w-md mx-auto">
+            <p className="text-sm font-bold text-slate-700 dark:text-slate-300">No services found for "{searchQuery}"</p>
+            <p className="text-xs text-slate-400 mt-1">Try searching for keywords like "PAN", "Aadhaar", "Voter", or "GST"</p>
+            <button
+              onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}
+              className="mt-4 px-4 py-2 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-xl text-xs font-bold hover:opacity-90 transition-all"
+            >
+              Reset Filters
+            </button>
+          </div>
+        )}
 
       </div>
 
       {/* SERVICE DETAILS MODAL */}
-      {selectedService && (
+      {selectedServiceItem && (
         <div className="fixed inset-0 bg-slate-950/70 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
           <div 
             className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 transform scale-100 transition-all duration-300"
-            id={`explore-modal-${selectedService.id}`}
+            id={`explore-modal-${selectedServiceItem.id}`}
           >
             {/* Modal Header */}
             <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 relative bg-slate-50 dark:bg-slate-950/60 flex items-start justify-between">
               <div className="space-y-1.5 pr-8">
                 {(() => {
-                  const ModalCategoryIcon = getCategoryIcon(selectedService.category);
+                  const ModalCategoryIcon = getCategoryIcon(selectedServiceItem.category);
                   return (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                       <ModalCategoryIcon className="w-3 h-3" />
-                      <span>{CATEGORY_LABELS[selectedService.category]}</span>
+                      <span>{CATEGORY_LABELS[selectedServiceItem.category]}</span>
                     </span>
                   );
                 })()}
                 <h3 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
-                  {selectedService.name}
+                  {selectedServiceItem.name}
                 </h3>
               </div>
               <button
-                onClick={() => setSelectedService(null)}
+                onClick={() => setSelectedServiceItem(null)}
                 className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-full transition-all absolute right-4 top-4"
                 title="Close"
               >
@@ -339,7 +380,7 @@ export default function ExploreServicesDesk({ onApplyService }: ExploreServicesD
                   Service Description
                 </h4>
                 <p className="text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
-                  {selectedService.description}
+                  {selectedServiceItem.description}
                 </p>
               </div>
 
@@ -350,7 +391,7 @@ export default function ExploreServicesDesk({ onApplyService }: ExploreServicesD
                   <span className="font-bold text-slate-800 dark:text-slate-200">Official Service Fee / Govt Price</span>
                 </div>
                 <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-xs">
-                  {selectedService.price}
+                  {selectedServiceItem.price}
                 </span>
               </div>
 
@@ -360,7 +401,7 @@ export default function ExploreServicesDesk({ onApplyService }: ExploreServicesD
                   Required Documents / Information
                 </h4>
                 <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-150 dark:border-slate-850 rounded-2xl p-4 space-y-2">
-                  {selectedService.requirements.map((req, idx) => (
+                  {selectedServiceItem.requirements.map((req, idx) => (
                     <div key={idx} className="flex items-start gap-2.5">
                       <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                       <span className="text-slate-700 dark:text-slate-200 font-semibold leading-relaxed">
@@ -378,7 +419,7 @@ export default function ExploreServicesDesk({ onApplyService }: ExploreServicesD
                   <span className="font-bold text-slate-700 dark:text-slate-300">Estimated Processing Time</span>
                 </div>
                 <span className="font-mono font-black text-blue-600 dark:text-blue-400">
-                  {selectedService.estimatedTime}
+                  {selectedServiceItem.estimatedTime}
                 </span>
               </div>
             </div>
@@ -386,13 +427,13 @@ export default function ExploreServicesDesk({ onApplyService }: ExploreServicesD
             {/* Modal Footer */}
             <div className="px-6 py-4.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5 bg-slate-50 dark:bg-slate-950/30">
               <button
-                onClick={() => setSelectedService(null)}
+                onClick={() => setSelectedServiceItem(null)}
                 className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl transition-all"
               >
                 Close Window
               </button>
               <button
-                onClick={() => handleApply(selectedService)}
+                onClick={() => handleApply(selectedServiceItem)}
                 className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-blue-100 dark:shadow-none"
               >
                 Apply Online
@@ -407,4 +448,5 @@ export default function ExploreServicesDesk({ onApplyService }: ExploreServicesD
     </div>
   );
 }
+
 

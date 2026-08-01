@@ -49,7 +49,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<SarkariItem | null>(null);
   const [clickedItemId, setClickedItemId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'all' | 'jobs' | 'admit_cards' | 'results' | 'answer_keys' | 'syllabus' | 'admissions'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'jobs' | 'admit_cards' | 'results' | 'answer_keys' | 'syllabus' | 'admissions'>('jobs');
 
   // Interactive Digital Application Portal State
   const [formData, setFormData] = useState({
@@ -574,7 +574,49 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
   // Group items by category for the multi-box layout
   const getItemsByCategory = (cat: 'jobs' | 'admit_cards' | 'results' | 'answer_keys' | 'syllabus' | 'admissions') => {
-    return filteredItems.filter(item => item.category === cat);
+    return SARKARI_DATA.filter(item => {
+      const matchesSearch = 
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.shortInfo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.eligibility && item.eligibility.toLowerCase().includes(searchQuery.toLowerCase()));
+      return matchesSearch && item.category === cat;
+    });
+  };
+
+  const getOrgName = (item: SarkariItem) => {
+    const titleUpper = item.title.toUpperCase();
+    if (titleUpper.includes('SSC')) return 'STAFF SELECTION COMMISSION (SSC)';
+    if (titleUpper.includes('RRB') || titleUpper.includes('RAILWAY') || titleUpper.includes('RPF')) return 'RAILWAY RECRUITMENT BOARDS (RRB)';
+    if (titleUpper.includes('IBPS')) return 'INSTITUTE OF BANKING PERSONNEL SELECTION';
+    if (titleUpper.includes('JKSSB') || titleUpper.includes('J&K')) return 'J&K SERVICES SELECTION BOARD';
+    if (titleUpper.includes('UP POLICE') || titleUpper.includes('UPPRPB')) return 'UP POLICE RECRUITMENT BOARD';
+    if (titleUpper.includes('UPSC')) return 'UNION PUBLIC SERVICE COMMISSION (UPSC)';
+    if (titleUpper.includes('NEET') || titleUpper.includes('NTA') || titleUpper.includes('JEE') || titleUpper.includes('CUET')) return 'NATIONAL TESTING AGENCY (NTA)';
+    if (titleUpper.includes('CBSE') || titleUpper.includes('CTET')) return 'CENTRAL BOARD OF SECONDARY EDUCATION';
+    if (titleUpper.includes('DELHI UNIVERSITY') || titleUpper.includes('CSAS')) return 'DELHI UNIVERSITY ADMISSION BOARD';
+    if (titleUpper.includes('IGNOU')) return 'INDIRA GANDHI NATIONAL OPEN UNIVERSITY';
+    return item.advertisementNo || 'GOVERNMENT RECRUITMENT BOARD';
+  };
+
+  const getPostsText = (item: SarkariItem) => {
+    const match = item.title.match(/(\d[\d,]*\+?\s*(?:Posts|Vacancies|Positions))/i);
+    if (match) return match[1];
+    const shortMatch = item.shortInfo.match(/(\d[\d,]*\+?\s*(?:Posts|Vacancies|Positions))/i);
+    if (shortMatch) return shortMatch[1];
+    return 'Multiple Vacancies';
+  };
+
+  const getFormattedFees = (item: SarkariItem) => {
+    if (item.fees) {
+      return (
+        <span>
+          <span className="font-bold text-emerald-700 dark:text-emerald-400">Gen/OBC: {item.fees.genObc}</span>
+          <span className="text-slate-400 mx-1">|</span>
+          <span className="font-bold text-emerald-600 dark:text-emerald-400">SC/ST/Female: {item.fees.scSt}</span>
+        </span>
+      );
+    }
+    return <span className="font-bold text-emerald-700 dark:text-emerald-400">Gen: ₹500 | Reserved: ₹250</span>;
   };
 
   // Icon mapping helper
@@ -816,17 +858,17 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
+                    <div className="space-y-3">
                       {/* Service / Exam Dropdown */}
-                      <div className="sm:col-span-8 space-y-1">
-                        <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                           Select Service to Apply <span className="text-red-500">*</span>
                         </label>
                         <select
                           required
                           value={formData.selectedService}
                           onChange={(e) => handleServiceChange(e.target.value)}
-                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:border-amber-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-amber-500/10 dark:focus:ring-amber-400/10 transition-all font-bold text-sm outline-none cursor-pointer"
+                          className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-bold text-xs outline-none cursor-pointer"
                         >
                           <option value="">-- Choose a Service / Exam --</option>
                           
@@ -850,26 +892,50 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                         </select>
                       </div>
 
-                      {/* Caste / Category Selector */}
-                      <div className="sm:col-span-4 space-y-1">
-                        <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                          Category
+                      {/* Required Documents Banner (Matching Image 1) */}
+                      <div className="bg-slate-100/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-2.5 text-xs flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium">
+                        <Info className="w-4 h-4 text-amber-500 shrink-0" />
+                        <span>
+                          <strong className="font-extrabold text-slate-900 dark:text-white">Required Documents:</strong> Aadhaar Card, Passport Size Photo, Signature Specimen
+                        </span>
+                      </div>
+
+                      {/* Applicant Category (Determines Concession Fee) - Matching Image 1 */}
+                      <div className="space-y-1.5 pt-1">
+                        <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 block">
+                          Applicant Category (Determines Concession Fee)
                         </label>
-                        <select
-                          value={formData.userCategory}
-                          onChange={(e) => handleCategoryChange(e.target.value as 'genObc' | 'scSt')}
-                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:border-amber-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-amber-500/10 dark:focus:ring-amber-400/10 transition-all font-bold text-sm outline-none cursor-pointer"
-                        >
-                          <option value="genObc">General / OBC</option>
-                          <option value="scSt">SC / ST</option>
-                        </select>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleCategoryChange('genObc')}
+                            className={`py-2.5 px-3 rounded-lg text-xs font-black uppercase transition-all cursor-pointer text-center ${
+                              formData.userCategory === 'genObc'
+                                ? 'bg-[#28256e] text-white shadow-md'
+                                : 'bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
+                            }`}
+                          >
+                            General / OBC / Unreserved
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleCategoryChange('scSt')}
+                            className={`py-2.5 px-3 rounded-lg text-xs font-black uppercase transition-all cursor-pointer text-center ${
+                              formData.userCategory === 'scSt'
+                                ? 'bg-[#28256e] text-white shadow-md'
+                                : 'bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
+                            }`}
+                          >
+                            SC / ST / EWS / PwD / Female
+                          </button>
+                        </div>
                       </div>
                     </div>
 
                     {/* Custom Service Input if 'Other' is chosen */}
                     {formData.selectedService === 'other' && (
                       <div className="space-y-1 animate-fade-in">
-                        <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                           Please Specify Custom Service <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -878,7 +944,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                           placeholder="Type what service or application form you need us to fill..."
                           value={formData.customServiceText}
                           onChange={(e) => setFormData({ ...formData, customServiceText: e.target.value })}
-                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:border-amber-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-amber-500/10 dark:focus:ring-amber-400/10 transition-all font-semibold text-sm outline-none"
+                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-semibold text-xs outline-none"
                         />
                       </div>
                     )}
@@ -982,7 +1048,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
                     {/* Additional Details Text Area */}
                     <div className="space-y-1">
-                      <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                         Instructions / Required Document Info
                       </label>
                       <textarea
@@ -990,45 +1056,68 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                         placeholder="Add specific instructions, required document links, or special physical visit time slots..."
                         value={formData.additionalDetails}
                         onChange={(e) => setFormData({ ...formData, additionalDetails: e.target.value })}
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:border-amber-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-amber-500/10 dark:focus:ring-amber-400/10 transition-all font-medium text-xs outline-none"
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-medium text-xs outline-none"
                       />
                     </div>
 
-                    {/* Fee Breakdown & Form Submit Button inside Form */}
-                    <div className="pt-2 space-y-3.5">
-                      <div className="bg-slate-50 dark:bg-slate-950 p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 space-y-2">
-                        <div className="flex justify-between items-center text-xs font-semibold">
-                          <span className="text-slate-600 dark:text-slate-400">Exam Govt Fee ({formData.userCategory === 'genObc' ? 'Gen/OBC' : 'SC/ST'}):</span>
-                          <span className="font-mono font-bold text-slate-800 dark:text-white">₹{formData.applicationFee}</span>
+                    {/* TRANSPARENT DYNAMIC FEE CALCULATOR (Exact Image 1 Style) */}
+                    <div className="pt-2 space-y-3">
+                      <div className="bg-[#0b1120] text-white p-4 rounded-xl border border-slate-800 space-y-2.5 shadow-md">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-slate-200">
+                            <span>📊</span>
+                            <span>TRANSPARENT DYNAMIC FEE CALCULATOR</span>
+                          </div>
+                          <span className="bg-[#042f1e] text-[#00e699] border border-[#00b377]/60 text-[10px] font-mono font-extrabold px-2 py-0.5 rounded">
+                            Node Rate Locked
+                          </span>
                         </div>
-                        <div className="flex justify-between items-center text-xs font-semibold">
-                          <span className="text-slate-600 dark:text-slate-400">Portal &amp; Filing Charges:</span>
-                          <span className="font-mono font-bold text-amber-600 dark:text-amber-400">₹{formData.portalFee}</span>
+
+                        <div className="space-y-1.5 text-xs font-mono pt-1 text-slate-300">
+                          <div className="flex justify-between items-center">
+                            <span>Govt Prescribed Fee ({formData.userCategory === 'genObc' ? 'General/OBC' : 'SC/ST'}):</span>
+                            <span className="font-bold text-white">₹{formData.applicationFee}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span>CSC Node Portal Charge (Fixed):</span>
+                            <span className="font-bold text-white">₹{formData.portalFee}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span>GST (18% on CSC Charge):</span>
+                            <span className="font-bold text-white">₹{Math.round(formData.portalFee * 0.18)}</span>
+                          </div>
                         </div>
-                        <div className="h-[1px] bg-slate-200 dark:bg-slate-800 my-1"></div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs font-extrabold uppercase text-slate-700 dark:text-slate-300">Total Payable Amount:</span>
-                          <span className="text-lg font-black font-mono text-emerald-600 dark:text-emerald-400">
-                            ₹{formData.portalFee + formData.applicationFee}
+
+                        <div className="h-[1px] bg-slate-800 my-1"></div>
+
+                        <div className="flex justify-between items-center pt-0.5">
+                          <span className="text-xs font-black uppercase tracking-wider text-slate-200">TOTAL PAYABLE AMOUNT:</span>
+                          <span className="text-xl font-black font-mono text-[#00e699]">
+                            ₹{formData.portalFee + formData.applicationFee + Math.round(formData.portalFee * 0.18)}
                           </span>
                         </div>
                       </div>
 
+                      {/* Solid Emerald Green Submit Button (Matching Image 1) */}
                       <button
                         type="submit"
-                        className="w-full py-3 px-4 bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 hover:from-amber-600 hover:via-orange-600 hover:to-red-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        className="w-full py-3.5 px-4 bg-[#00a86b] hover:bg-[#008f5a] text-white font-black text-sm uppercase tracking-wider rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
                       >
-                        <FileCheck className="w-4 h-4" />
                         <span>Submit Application &amp; Proceed to Payment</span>
                         <ArrowRight className="w-4 h-4" />
                       </button>
+
+                      <p className="text-[10px] text-center text-slate-500 dark:text-slate-400 font-medium flex items-center justify-center gap-1">
+                        <span>🔒</span>
+                        <span>Encrypted 256-bit SSL transaction verified by CSC e-Governance Ltd.</span>
+                      </p>
                     </div>
                   </form>
                 </div>
               </div>
 
-              {/* RIGHT COLUMN: APPLICATION TRACKER WIDGET */}
-              <div className="lg:col-span-5 space-y-4">
+              {/* RIGHT COLUMN: APPLICATION TRACKER WIDGET & CSC DOST OPERATING GUARANTEE (Matching Image 1) */}
+              <div className="lg:col-span-5 space-y-5">
                 <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-md overflow-hidden">
                   
                   {/* Dark Navy Header Banner */}
@@ -1050,15 +1139,33 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                   </div>
                 </div>
 
-                {/* CSC Official Guarantee Banner */}
-                <div className="bg-amber-50 dark:bg-slate-900 border border-amber-200 dark:border-amber-800/80 p-4 rounded-xl text-xs space-y-1.5 shadow-xs">
-                  <div className="flex items-center gap-2 text-amber-800 dark:text-amber-400 font-extrabold uppercase tracking-wider text-[11px]">
-                    <Shield className="w-4 h-4 text-amber-500" />
-                    <span>CSC Government Portal Guarantee</span>
+                {/* CSC DOST OPERATING GUARANTEE CARD (Matching Image 1 Exact Layout) */}
+                <div className="bg-[#12183b] text-white rounded-2xl border border-indigo-900/60 p-5 shadow-md space-y-4">
+                  <div className="flex items-center gap-2 text-[#fbbf24] font-black uppercase text-xs sm:text-sm tracking-wider">
+                    <Sparkles className="w-4 h-4 text-[#fbbf24]" />
+                    <span>CSC DOST OPERATING GUARANTEE</span>
                   </div>
-                  <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
-                    All applications filed through CSC DOST are processed directly on official government servers (SSC, Railway, Passport, PAN, Ayushman, J&amp;K BOPEE). You will receive instant SMS &amp; WhatsApp reference receipts upon completion.
-                  </p>
+
+                  <ul className="space-y-3 text-xs leading-relaxed text-slate-200 font-medium">
+                    <li className="flex items-start gap-2.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 mt-1.5"></span>
+                      <span>
+                        <strong className="text-white font-bold">Instant Token Generation:</strong> Every submission receives a verified digital receipt.
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 mt-1.5"></span>
+                      <span>
+                        <strong className="text-white font-bold">WhatsApp Confirmation:</strong> Live tracking link dispatched directly to your mobile.
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 mt-1.5"></span>
+                      <span>
+                        <strong className="text-white font-bold">Zero Hidden Charges:</strong> All government and portal rates explicitly broken down.
+                      </span>
+                    </li>
+                  </ul>
                 </div>
               </div>
 
@@ -1328,130 +1435,126 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
               </div>
             </div>
           ) : (
-            /* PRINTABLE DIGITAL SUCCESS SLIP / RECEIPT */
-            <div id="printable-digital-slip" className="bg-white text-slate-900 rounded-none sm:rounded-2xl shadow-xl p-4 sm:p-5 md:p-8 border-x-0 sm:border-x border-y sm:border border-emerald-500/40 max-w-2xl mx-auto animate-fade-in relative w-full">
-              {/* Authenticity Watermark Decors */}
-              <div className="absolute inset-0 flex items-center justify-center opacity-[0.02] select-none pointer-events-none">
-                <Shield className="w-80 h-80 text-slate-900" />
-              </div>
+            /* PRINTABLE DIGITAL SUCCESS SLIP / RECEIPT (Exact Image 2 Style) */
+            <div id="printable-digital-slip" className="bg-white text-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-slate-300 max-w-xl mx-auto animate-fade-in relative w-full">
               
-              <div className="text-center pb-4 border-b border-dashed border-slate-200">
-                <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mx-auto mb-2 animate-bounce" style={{ animationDuration: '3.5s' }}>
-                  <CheckCircle className="w-7 h-7" />
+              {/* Dark Navy Header Bar */}
+              <div className="bg-[#1e2358] text-white px-5 py-3.5 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-wide">
+                  <CheckCircle className="w-4 h-4 text-emerald-400" />
+                  <span>Official CSC e-Receipt</span>
                 </div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 rounded-full text-xs font-black tracking-wider uppercase mb-1.5 border border-emerald-300">
-                  <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Application Form Submitted &amp; Payment Confirmed</span>
-                </div>
-                <h3 className="text-lg font-black uppercase tracking-tight text-slate-900 font-display">
-                  Apex Cyber Cafe digital slip
-                </h3>
-                <p className="text-[10px] text-slate-500 font-mono">
-                  TOKEN ID: <span className="font-bold text-slate-800">{submissionReceipt?.appId}</span> | REG_ACTIVE
-                </p>
+                <button
+                  onClick={() => setIsFormSubmitted(false)}
+                  className="p-1 hover:bg-white/10 rounded text-slate-300 hover:text-white transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
-              {/* Receipt Information Grid Table */}
-              <div className="py-4 space-y-3">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-3 gap-x-2 text-[11px]">
-                  <div>
-                    <span className="text-slate-400 block font-bold uppercase tracking-wider">Applicant Name:</span>
-                    <span className="text-xs font-black text-slate-800">{submissionReceipt?.customerName}</span>
-                  </div>
-
-                  <div>
-                    <span className="text-slate-400 block font-bold uppercase tracking-wider">WhatsApp Mobile:</span>
-                    <span className="text-xs font-black text-slate-800 font-mono">{submissionReceipt?.phoneNumber}</span>
-                  </div>
-
-                  <div>
-                    <span className="text-slate-400 block font-bold uppercase tracking-wider">Date of Birth:</span>
-                    <span className="text-xs font-bold text-slate-800 font-mono">{submissionReceipt?.dateOfBirth}</span>
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <span className="text-slate-400 block font-bold uppercase tracking-wider">Applied E-Service:</span>
-                    <span className="text-xs font-black text-slate-900 bg-amber-50 px-2 rounded-md border border-amber-200 inline-block mt-0.5">
-                      {submissionReceipt?.selectedService}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-slate-400 block font-bold uppercase tracking-wider">Category Status:</span>
-                    <span className="text-xs font-extrabold text-slate-800">{submissionReceipt?.userCategory}</span>
-                  </div>
-
-                  <div>
-                    <span className="text-slate-400 block font-bold uppercase tracking-wider">Receipt Timestamp:</span>
-                    <span className="text-xs font-bold text-slate-800 font-mono">{submissionReceipt?.submittedAt}</span>
-                  </div>
-
-                  <div>
-                    <span className="text-slate-400 block font-bold uppercase tracking-wider">Filing Status:</span>
-                    <span className="text-xs font-extrabold text-emerald-600 flex items-center gap-1 mt-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                      Pending Upload
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-slate-400 block font-bold uppercase tracking-wider">Processing Fee:</span>
-                    <span className="text-xs font-black text-emerald-600 font-mono">
-                      ₹{submissionReceipt?.totalAmount} ({submissionReceipt?.paymentMode === 'online' ? 'Online Paid' : 'Cash Pending'})
-                    </span>
-                  </div>
-
-                  {submissionReceipt?.paymentMode === 'online' && (
-                    <div className="sm:col-span-2 bg-amber-50 dark:bg-amber-950/40 p-2 rounded-lg border border-amber-200 dark:border-amber-800">
-                      <span className="text-amber-700 dark:text-amber-400 block font-black uppercase text-[10px] tracking-wider">UPI Payment UTR / Ref ID:</span>
-                      <span className="text-xs font-black font-mono text-slate-900 dark:text-white">{submissionReceipt?.utrNumber}</span>
-                    </div>
-                  )}
-
-                  {submissionReceipt?.uploadedDocuments && submissionReceipt?.uploadedDocuments.length > 0 && (
-                    <div className="sm:col-span-3 bg-emerald-50/80 p-2.5 rounded-xl border border-emerald-200">
-                      <span className="text-emerald-800 block font-black uppercase text-[10px] tracking-wider mb-1 flex items-center gap-1">
-                        <Paperclip className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Attached Customer Documents ({submissionReceipt.uploadedDocuments.length}):</span>
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {submissionReceipt.uploadedDocuments.map((doc: string, idx: number) => (
-                          <span key={idx} className="px-2 py-0.5 bg-white rounded-lg border border-emerald-300 text-[10px] font-bold text-slate-800 font-mono shadow-xs">
-                            📄 {doc}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+              {/* Main Modal Body */}
+              <div className="p-5 sm:p-6 space-y-4">
+                
+                {/* Header Branding */}
+                <div className="text-center space-y-1">
+                  <span className="inline-block bg-[#f59e0b] text-slate-950 text-[10px] font-black px-3 py-1 rounded-md uppercase tracking-wider font-mono shadow-xs">
+                    CSC DOST • VLE NODE #212515670018
+                  </span>
+                  <h3 className="text-base sm:text-lg font-black uppercase tracking-tight text-slate-900 font-display pt-1">
+                    COMMON SERVICES CENTRE PORTAL
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-medium italic">
+                    Ministry of Electronics &amp; IT, Govt of India Authorized Desk
+                  </p>
                 </div>
 
-                {submissionReceipt?.additionalDetails && submissionReceipt?.additionalDetails !== 'None' && (
-                  <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 text-[10px] mt-2">
-                    <span className="text-slate-400 block font-bold uppercase tracking-wider mb-1">Applicant instructions/docs note:</span>
-                    <p className="text-slate-700 font-semibold">{submissionReceipt?.additionalDetails}</p>
-                  </div>
-                )}
-              </div>
+                {/* ALLOCATED APPLICATION TOKEN ID Box (Light Mint Green) */}
+                <div className="bg-[#e6f7f0] border-2 border-[#10b981] rounded-xl p-3.5 text-center space-y-1 shadow-xs">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[#047857]">
+                    ALLOCATED APPLICATION TOKEN ID
+                  </p>
+                  <p className="text-2xl sm:text-3xl font-black font-mono text-[#047857] tracking-wider">
+                    {submissionReceipt?.appId || 'CSC-6938-PAN'}
+                  </p>
+                  <p className="text-[11px] font-bold text-[#059669]">
+                    Status: <span className="underline">Received</span>
+                  </p>
+                </div>
 
-              {/* Digital Stamp Sign off */}
-              <div className="pt-4 border-t border-dashed border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-slate-50 border border-slate-100 rounded-lg">
+                {/* Receipt Details Table */}
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 text-xs font-sans">
+                  <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
+                    <span className="text-slate-500 font-medium">Applicant Name:</span>
+                    <span className="font-extrabold text-slate-900 uppercase">{submissionReceipt?.customerName}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
+                    <span className="text-slate-500 font-medium">WhatsApp Mobile:</span>
+                    <span className="font-extrabold text-slate-900 font-mono">{submissionReceipt?.phoneNumber}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
+                    <span className="text-slate-500 font-medium">Service Category:</span>
+                    <span className="font-extrabold text-slate-900">{submissionReceipt?.userCategory === 'genObc' ? 'General/OBC' : 'SC/ST'}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
+                    <span className="text-slate-500 font-medium">E-Service Applied:</span>
+                    <span className="font-extrabold text-[#28256e] text-right max-w-[240px] truncate">{submissionReceipt?.selectedService}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
+                    <span className="text-slate-500 font-medium">Submission Date &amp; Time:</span>
+                    <span className="font-bold text-slate-800 font-mono text-[11px]">{submissionReceipt?.submittedAt}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-slate-500 font-medium">Estimated Turnaround:</span>
+                    <span className="font-extrabold text-emerald-600">2-3 Working Days</span>
+                  </div>
+                </div>
+
+                {/* Dark Navy Fee Summary Box */}
+                <div className="bg-[#0b1120] text-white rounded-xl p-3.5 space-y-2 font-mono text-xs">
+                  <div className="flex justify-between items-center text-slate-300">
+                    <span>Government Prescribed Fee:</span>
+                    <span className="font-bold text-white">₹{submissionReceipt?.applicationFee || 107}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-300">
+                    <span>CSC Processing Charge:</span>
+                    <span className="font-bold text-white">₹{submissionReceipt?.portalFee || 50}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-300">
+                    <span>GST (18%):</span>
+                    <span className="font-bold text-white">₹{Math.round((submissionReceipt?.portalFee || 50) * 0.18)}</span>
+                  </div>
+                  <div className="h-[1px] bg-slate-800 my-1"></div>
+                  <div className="flex justify-between items-center font-sans">
+                    <span className="font-extrabold uppercase text-slate-200">Total Paid Amount:</span>
+                    <span className="text-xl font-black font-mono text-[#00e699]">
+                      ₹{submissionReceipt?.totalAmount || 166}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Digital India Security Seal */}
+                <div className="bg-white border border-slate-200 rounded-xl p-3 flex items-center gap-3">
+                  <div className="p-1 bg-slate-50 border border-slate-200 rounded-lg shrink-0">
                     <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&color=128807&data=${encodeURIComponent(`Token:${submissionReceipt?.appId}|Name:${submissionReceipt?.customerName}`)}`}
-                      alt="Verification Token"
-                      className="w-10 h-10"
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&color=0b1120&data=${encodeURIComponent(`Token:${submissionReceipt?.appId}|VLE:Wasim Ahmad Khanday`)}`}
+                      alt="CSC Security Seal"
+                      className="w-12 h-12"
                       referrerPolicy="no-referrer"
                     />
                   </div>
-                  <div className="text-left">
-                    <p className="text-[8px] text-slate-400 font-extrabold uppercase tracking-widest leading-none mb-0.5">Digital signature</p>
-                    <p className="text-[10px] font-black text-slate-800">APEX SECURE AUTHENTICATED</p>
-                    <p className="text-[9px] text-slate-500">Verification code: CSC-{submissionReceipt?.appId.slice(-5)}</p>
+                  <div className="text-left space-y-0.5">
+                    <p className="text-xs font-black text-slate-900 uppercase">Digital India Security Seal</p>
+                    <p className="text-[10px] text-slate-500 leading-tight">
+                      Scan QR code at any CSC kiosk to verify authenticity.
+                    </p>
+                    <p className="text-[10px] font-bold text-slate-700 pt-0.5">
+                      Authorized VLE: <span className="font-extrabold">Wasim Ahmad Khanday</span>
+                    </p>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2 no-print">
+                {/* Bottom Actions */}
+                <div className="flex flex-wrap items-center justify-end gap-2.5 pt-2 no-print">
                   <button
                     onClick={() => {
                       if (!submissionReceipt) return;
@@ -1478,7 +1581,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
                   <button
                     onClick={() => window.print()}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-xs uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer border border-slate-200"
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-xs uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer border border-slate-200 font-sans"
                   >
                     <Printer className="w-3.5 h-3.5" />
                     <span>Print Slip</span>
@@ -1515,403 +1618,247 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
           )}
         </div>
 
-        {/* Section Header */}
-        <div id="sarkari-board" className="text-center max-w-3xl mx-auto mb-12 scroll-mt-24">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight font-display">
-            Sarkari Exam &amp; Jobs Bulletin Board
-          </h2>
-          <p className="text-slate-500 dark:text-slate-400 mt-3 text-sm sm:text-base">
-            Never miss any government exam, results, or admit card update. Check vacancies and apply securely.
-          </p>
-        </div>
-
-        {/* Live Search & Filter Desk Controls */}
-        <div className="bg-white dark:bg-slate-900/60 border-x-0 sm:border-x border-y sm:border border-slate-200/80 dark:border-slate-800/80 rounded-none sm:rounded-3xl p-4 sm:p-6 shadow-sm mb-8 md:mb-12 max-w-4xl mx-auto w-full">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-            
-            {/* Search Input Box */}
-            <div className="md:col-span-5 relative group">
-              {/* Premium Outer Glow on Hover */}
-              <div className="absolute -inset-1.5 bg-gradient-to-r from-red-500 via-orange-500 to-amber-500 rounded-2xl blur-md opacity-20 group-hover:opacity-60 group-focus-within:opacity-80 transition-all duration-300 -z-10"></div>
-              
-              <div className="relative">
-                <Search className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300 z-10" />
-                <input
-                  type="text"
-                  placeholder="Search live jobs, admit cards, results..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-11 pr-12 py-3.5 bg-white dark:bg-slate-900 border-2 border-slate-200/60 dark:border-slate-800 rounded-2xl text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none hover:border-transparent dark:hover:border-transparent focus:border-red-500 dark:focus:border-red-400 focus:ring-4 focus:ring-red-500/15 transition-all duration-300 font-bold text-sm shadow-md"
-                  id="sarkari-search-input"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors z-10"
-                  >
-                    Clear
-                  </button>
-                )}
+        {/* Section Header & Search Input (Image 1 Layout) */}
+        <div id="sarkari-board" className="max-w-7xl mx-auto mb-8 scroll-mt-24 space-y-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+            {/* Title & Subtitle */}
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 rounded-full text-xs font-black uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+                <span>SARKARI BULLETIN BOARD</span>
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 font-mono pl-1 border-l border-red-300 dark:border-red-800">Updated Hourly</span>
               </div>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight font-display">
+                Sarkari Exam, Recruitment &amp; Results Desk
+              </h2>
+              <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm font-medium">
+                Verified Government Exam Notifications, Admit Cards &amp; Results for Digital India Aspirants
+              </p>
             </div>
 
-            {/* Quick Filter Navigation Tabs */}
-            <div className="md:col-span-7 flex flex-nowrap sm:flex-wrap overflow-x-auto pb-1 gap-2 justify-start md:justify-end scrollbar-none">
-              <button
-                onClick={() => setActiveTab('all')}
-                className={`px-4 py-2.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-xs md:text-sm font-extrabold flex-shrink-0 transition-all cursor-pointer ${
-                  activeTab === 'all'
-                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-md'
-                    : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300'
-                }`}
-                id="sarkari-tab-all"
-              >
-                All Board
-              </button>
-              {Object.entries(SARKARI_CATEGORIES).map(([key, info]) => (
+            {/* Top Right Search Input Box */}
+            <div className="relative w-full md:w-80 shrink-0">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search exams, recruitment..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-8 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-indigo-600 font-medium shadow-xs"
+                id="sarkari-search-input"
+              />
+              {searchQuery && (
                 <button
-                  key={key}
-                  onClick={() => setActiveTab(key as any)}
-                  className={`px-4 py-2.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-xs md:text-sm font-extrabold flex-shrink-0 transition-all cursor-pointer ${
-                    activeTab === key
-                      ? 'bg-red-600 text-white shadow-md shadow-red-100 dark:shadow-none'
-                      : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300'
-                  }`}
-                  id={`sarkari-tab-${key}`}
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-extrabold text-slate-400 hover:text-slate-600"
                 >
-                  {info.label}
+                  ✕
                 </button>
-              ))}
+              )}
             </div>
-
           </div>
-          {searchQuery && (
-            <p className="text-xs text-slate-400 mt-3 font-medium text-center md:text-left">
-              Found <span className="text-slate-700 dark:text-slate-200 font-bold">{filteredItems.length}</span> matching entries for your query.
-            </p>
-          )}
+
+          {/* Quick Filter Navigation Tabs (Image 1 Pills Layout) */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              onClick={() => setActiveTab('jobs')}
+              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
+                activeTab === 'jobs'
+                  ? 'bg-[#1e1b4b] text-white shadow-md'
+                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-850'
+              }`}
+              id="sarkari-tab-jobs"
+            >
+              <Briefcase className="w-4 h-4 text-blue-400" />
+              <span>Latest Jobs</span>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-black font-mono ${
+                activeTab === 'jobs' ? 'bg-amber-400 text-slate-950' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+              }`}>
+                {getItemsByCategory('jobs').length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('admit_cards')}
+              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
+                activeTab === 'admit_cards'
+                  ? 'bg-[#1e1b4b] text-white shadow-md'
+                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-850'
+              }`}
+              id="sarkari-tab-admit"
+            >
+              <FileText className="w-4 h-4 text-orange-400" />
+              <span>Admit Cards</span>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-black font-mono ${
+                activeTab === 'admit_cards' ? 'bg-amber-400 text-slate-950' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+              }`}>
+                {getItemsByCategory('admit_cards').length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('results')}
+              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
+                activeTab === 'results'
+                  ? 'bg-[#1e1b4b] text-white shadow-md'
+                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-850'
+              }`}
+              id="sarkari-tab-results"
+            >
+              <Award className="w-4 h-4 text-emerald-400" />
+              <span>Results</span>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-black font-mono ${
+                activeTab === 'results' ? 'bg-amber-400 text-slate-950' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+              }`}>
+                {getItemsByCategory('results').length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('answer_keys')}
+              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
+                activeTab === 'answer_keys'
+                  ? 'bg-[#1e1b4b] text-white shadow-md'
+                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-850'
+              }`}
+              id="sarkari-tab-keys"
+            >
+              <Key className="w-4 h-4 text-purple-400" />
+              <span>Answer Keys</span>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-black font-mono ${
+                activeTab === 'answer_keys' ? 'bg-amber-400 text-slate-950' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+              }`}>
+                {getItemsByCategory('answer_keys').length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('syllabus')}
+              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
+                activeTab === 'syllabus'
+                  ? 'bg-[#1e1b4b] text-white shadow-md'
+                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-850'
+              }`}
+              id="sarkari-tab-syllabus"
+            >
+              <BookOpen className="w-4 h-4 text-pink-400" />
+              <span>Syllabus</span>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-black font-mono ${
+                activeTab === 'syllabus' ? 'bg-amber-400 text-slate-950' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+              }`}>
+                {getItemsByCategory('syllabus').length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('admissions')}
+              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
+                activeTab === 'admissions'
+                  ? 'bg-[#1e1b4b] text-white shadow-md'
+                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-850'
+              }`}
+              id="sarkari-tab-admissions"
+            >
+              <GraduationCap className="w-4 h-4 text-teal-400" />
+              <span>Admissions</span>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-black font-mono ${
+                activeTab === 'admissions' ? 'bg-amber-400 text-slate-950' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+              }`}>
+                {getItemsByCategory('admissions').length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('all')}
+              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
+                activeTab === 'all'
+                  ? 'bg-[#1e1b4b] text-white shadow-md'
+                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-850'
+              }`}
+              id="sarkari-tab-all"
+            >
+              <Info className="w-4 h-4 text-slate-400" />
+              <span>All Notices</span>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-black font-mono ${
+                activeTab === 'all' ? 'bg-amber-400 text-slate-950' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+              }`}>
+                {filteredItems.length}
+              </span>
+            </button>
+          </div>
         </div>
 
-        {/* SARKARI BOXES GRID (The 6-Box Portal Layout resembling sarkariresult.com but beautifully modernized) */}
+        {/* CARDS GRID (Image 1 Layout) */}
         {filteredItems.length > 0 ? (
-          <div className="flex flex-row overflow-x-auto snap-x snap-mandatory gap-4 pb-6 md:pb-0 scrollbar-thin md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-10 md:overflow-x-visible w-full">
-            
-            {/* Box 1: Latest Jobs */}
-            {(activeTab === 'all' || activeTab === 'jobs') && (
-              <div 
-                className="w-[88vw] sm:w-[360px] md:w-auto flex-shrink-0 snap-start bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-sm md:shadow-md overflow-hidden flex flex-col hover:shadow-2xl dark:hover:shadow-slate-950 transition-all duration-300 group hover:-translate-y-2.5"
-                id="sarkari-box-jobs"
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto w-full">
+            {filteredItems.map(item => (
+              <div
+                key={item.id}
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between space-y-4 group hover:-translate-y-1"
+                id={`sarkari-card-${item.id}`}
               >
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-3.5 sm:px-5 sm:py-4 md:px-7 md:py-5 flex items-center justify-between">
-                  <div className="flex items-center gap-2.5 sm:gap-3">
-                    <Briefcase className="w-5 h-5 sm:w-5 sm:h-5 flex-shrink-0" />
-                    <h3 className="font-extrabold tracking-wide text-xs sm:text-sm md:text-base uppercase font-display leading-tight truncate">Latest Jobs</h3>
+                <div className="space-y-3">
+                  {/* Card Header Tag & New Badge */}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-extrabold text-[10px] uppercase rounded-md tracking-wider font-mono truncate max-w-[75%]">
+                      {getOrgName(item)}
+                    </span>
+                    {item.isNew && (
+                      <span className="px-2 py-0.5 bg-red-500 text-white font-black text-[9px] uppercase tracking-wider rounded font-mono animate-pulse shrink-0">
+                        ⚡ NEW
+                      </span>
+                    )}
                   </div>
-                  <span className="inline-block bg-white/20 text-white text-[10px] sm:text-xs font-mono px-2.5 py-0.5 rounded-full font-bold">
-                    {getItemsByCategory('jobs').length}
-                  </span>
-                </div>
-                <div className="p-2.5 sm:p-3 md:p-4.5 divide-y divide-slate-100 dark:divide-slate-850 flex-grow max-h-[420px] sm:max-h-[520px] overflow-y-auto scrollbar-thin">
-                  {getItemsByCategory('jobs').length > 0 ? (
-                    getItemsByCategory('jobs').map(item => (
-                      <div
-                        key={item.id}
-                        onClick={() => handleItemClick(item)}
-                        className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl cursor-pointer transition-all flex items-start gap-2 sm:gap-3 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 group/item ${
-                          clickedItemId === item.id ? 'bg-blue-100 dark:bg-blue-900/30 scale-[0.98]' : ''
-                        }`}
-                        id={`sarkari-item-${item.id}`}
-                      >
-                        <span className="w-2 h-2 bg-blue-500 rounded-full mt-1.5 flex-shrink-0 group-hover/item:scale-125 transition-transform"></span>
-                        <div className="flex-grow min-w-0 space-y-1">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="text-xs sm:text-xs md:text-sm font-extrabold text-slate-850 dark:text-slate-100 group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors font-display leading-tight break-words sm:line-clamp-2">
-                              {item.title}
-                            </span>
-                            {item.isNew && (
-                              <span className="px-1.5 py-0.5 bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 text-[8.5px] sm:text-[9.5px] font-black uppercase rounded animate-pulse flex-shrink-0 font-mono tracking-wider">
-                                New
-                              </span>
-                            )}
-                          </div>
-                          {item.lastDate && (
-                            <span className="text-[10px] sm:text-xs font-mono text-rose-500 dark:text-rose-400 font-extrabold block leading-none">
-                              Last Date: {item.lastDate}
-                            </span>
-                          )}
-                        </div>
-                        <ChevronRight className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-slate-400 group-hover/item:text-blue-500 dark:group-hover/item:text-blue-400 group-hover/item:translate-x-1 transition-all self-center flex-shrink-0" />
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-center text-xs sm:text-sm text-slate-400 py-12 font-medium">No active jobs found</p>
-                  )}
-                </div>
-              </div>
-            )}
 
-            {/* Box 2: Admit Cards */}
-            {(activeTab === 'all' || activeTab === 'admit_cards') && (
-              <div 
-                className="w-[88vw] sm:w-[360px] md:w-auto flex-shrink-0 snap-start bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-sm md:shadow-md overflow-hidden flex flex-col hover:shadow-2xl dark:hover:shadow-slate-950 transition-all duration-300 group hover:-translate-y-2.5"
-                id="sarkari-box-admit"
-              >
-                <div className="bg-gradient-to-r from-orange-600 to-amber-600 text-white px-4 py-3.5 sm:px-5 sm:py-4 md:px-7 md:py-5 flex items-center justify-between">
-                  <div className="flex items-center gap-2.5 sm:gap-3">
-                    <FileText className="w-5 h-5 sm:w-5 sm:h-5 flex-shrink-0" />
-                    <h3 className="font-extrabold tracking-wide text-xs sm:text-sm md:text-base uppercase font-display leading-tight truncate">Admit Cards</h3>
+                  {/* Title */}
+                  <h3 
+                    onClick={() => handleItemClick(item)}
+                    className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white leading-snug font-display cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors line-clamp-2"
+                  >
+                    {item.title}
+                  </h3>
+
+                  {/* Gray Info Box */}
+                  <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-100 dark:border-slate-850 rounded-xl p-3.5 space-y-2 text-xs font-sans">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">Total Posts:</span>
+                      <span className="font-extrabold text-slate-900 dark:text-white font-mono">{getPostsText(item)}</span>
+                    </div>
+
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium shrink-0">Eligibility:</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 text-right line-clamp-1">{item.eligibility || 'Graduate / 12th Pass'}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">Fee Details:</span>
+                      <div className="text-right text-[11px] font-mono">
+                        {getFormattedFees(item)}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-slate-800">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5 text-red-500" />
+                        <span>Last Date:</span>
+                      </span>
+                      <span className="font-mono font-black text-red-600 dark:text-red-400">
+                        {item.lastDate || item.postDate || '2026-08-30'}
+                      </span>
+                    </div>
                   </div>
-                  <span className="inline-block bg-white/20 text-white text-[10px] sm:text-xs font-mono px-2.5 py-0.5 rounded-full font-bold">
-                    {getItemsByCategory('admit_cards').length}
-                  </span>
                 </div>
-                <div className="p-2.5 sm:p-3 md:p-4.5 divide-y divide-slate-100 dark:divide-slate-850 flex-grow max-h-[420px] sm:max-h-[520px] overflow-y-auto scrollbar-thin">
-                  {getItemsByCategory('admit_cards').length > 0 ? (
-                    getItemsByCategory('admit_cards').map(item => (
-                      <div
-                        key={item.id}
-                        onClick={() => handleItemClick(item)}
-                        className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl cursor-pointer transition-all flex items-start gap-2 sm:gap-3 hover:bg-orange-50/50 dark:hover:bg-orange-950/20 group/item ${
-                          clickedItemId === item.id ? 'bg-orange-100 dark:bg-orange-900/30 scale-[0.98]' : ''
-                        }`}
-                        id={`sarkari-item-${item.id}`}
-                      >
-                        <span className="w-2 h-2 bg-orange-500 rounded-full mt-1.5 flex-shrink-0 group-hover/item:scale-125 transition-transform"></span>
-                        <div className="flex-grow min-w-0 space-y-1">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="text-xs sm:text-xs md:text-sm font-extrabold text-slate-850 dark:text-slate-100 group-hover/item:text-orange-600 dark:group-hover/item:text-orange-400 transition-colors font-display leading-tight break-words sm:line-clamp-2">
-                              {item.title}
-                            </span>
-                            {item.isNew && (
-                              <span className="px-1.5 py-0.5 bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 text-[8.5px] sm:text-[9.5px] font-black uppercase rounded animate-pulse flex-shrink-0 font-mono tracking-wider">
-                                New
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-[10px] sm:text-xs font-mono text-slate-400 dark:text-slate-500 block leading-none">
-                            Released: {item.postDate}
-                          </span>
-                        </div>
-                        <ChevronRight className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-slate-400 group-hover/item:text-orange-500 dark:group-hover/item:text-orange-400 group-hover/item:translate-x-1 transition-all self-center flex-shrink-0" />
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-center text-xs sm:text-sm text-slate-400 py-12 font-medium">No admit cards found</p>
-                  )}
-                </div>
-              </div>
-            )}
 
-            {/* Box 3: Exam Results */}
-            {(activeTab === 'all' || activeTab === 'results') && (
-              <div 
-                className="w-[88vw] sm:w-[360px] md:w-auto flex-shrink-0 snap-start bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-sm md:shadow-md overflow-hidden flex flex-col hover:shadow-2xl dark:hover:shadow-slate-950 transition-all duration-300 group hover:-translate-y-2.5"
-                id="sarkari-box-results"
-              >
-                <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-4 py-3.5 sm:px-5 sm:py-4 md:px-7 md:py-5 flex items-center justify-between">
-                  <div className="flex items-center gap-2.5 sm:gap-3">
-                    <Award className="w-5 h-5 sm:w-5 sm:h-5 flex-shrink-0" />
-                    <h3 className="font-extrabold tracking-wide text-xs sm:text-sm md:text-base uppercase font-display leading-tight truncate">Exam Results</h3>
-                  </div>
-                  <span className="inline-block bg-white/20 text-white text-[10px] sm:text-xs font-mono px-2.5 py-0.5 rounded-full font-bold">
-                    {getItemsByCategory('results').length}
-                  </span>
-                </div>
-                <div className="p-2.5 sm:p-3 md:p-4.5 divide-y divide-slate-100 dark:divide-slate-850 flex-grow max-h-[420px] sm:max-h-[520px] overflow-y-auto scrollbar-thin">
-                  {getItemsByCategory('results').length > 0 ? (
-                    getItemsByCategory('results').map(item => (
-                      <div
-                        key={item.id}
-                        onClick={() => handleItemClick(item)}
-                        className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl cursor-pointer transition-all flex items-start gap-2 sm:gap-3 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 group/item ${
-                          clickedItemId === item.id ? 'bg-emerald-100 dark:bg-emerald-900/30 scale-[0.98]' : ''
-                        }`}
-                        id={`sarkari-item-${item.id}`}
-                      >
-                        <span className="w-2 h-2 bg-emerald-500 rounded-full mt-1.5 flex-shrink-0 group-hover/item:scale-125 transition-transform"></span>
-                        <div className="flex-grow min-w-0 space-y-1">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="text-xs sm:text-xs md:text-sm font-extrabold text-slate-850 dark:text-slate-100 group-hover/item:text-emerald-600 dark:group-hover/item:text-emerald-400 transition-colors font-display leading-tight break-words sm:line-clamp-2">
-                              {item.title}
-                            </span>
-                            {item.isNew && (
-                              <span className="px-1.5 py-0.5 bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 text-[8.5px] sm:text-[9.5px] font-black uppercase rounded animate-pulse flex-shrink-0 font-mono tracking-wider">
-                                New
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-[10px] sm:text-xs font-mono text-emerald-600 dark:text-emerald-400 font-extrabold block leading-none">
-                            Declared On: {item.postDate}
-                          </span>
-                        </div>
-                        <ChevronRight className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-slate-400 group-hover/item:text-emerald-500 dark:group-hover/item:text-emerald-400 group-hover/item:translate-x-1 transition-all self-center flex-shrink-0" />
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-center text-xs sm:text-sm text-slate-400 py-12 font-medium">No results found</p>
-                  )}
-                </div>
+                {/* Apply Button */}
+                <button
+                  onClick={() => handleApplyNow(item)}
+                  className="w-full py-3 px-4 bg-[#1e1b4b] hover:bg-[#121033] text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <span>Apply via CSC Desk</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </button>
               </div>
-            )}
-
-            {/* Box 4: Answer Keys */}
-            {(activeTab === 'all' || activeTab === 'answer_keys') && (
-              <div 
-                className="w-[88vw] sm:w-[360px] md:w-auto flex-shrink-0 snap-start bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-sm md:shadow-md overflow-hidden flex flex-col hover:shadow-2xl dark:hover:shadow-slate-950 transition-all duration-300 group hover:-translate-y-2.5"
-                id="sarkari-box-keys"
-              >
-                <div className="bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white px-4 py-3.5 sm:px-5 sm:py-4 md:px-7 md:py-5 flex items-center justify-between">
-                  <div className="flex items-center gap-2.5 sm:gap-3">
-                    <Key className="w-5 h-5 sm:w-5 sm:h-5 flex-shrink-0" />
-                    <h3 className="font-extrabold tracking-wide text-xs sm:text-sm md:text-base uppercase font-display leading-tight truncate">Answer Keys</h3>
-                  </div>
-                  <span className="inline-block bg-white/20 text-white text-[10px] sm:text-xs font-mono px-2.5 py-0.5 rounded-full font-bold">
-                    {getItemsByCategory('answer_keys').length}
-                  </span>
-                </div>
-                <div className="p-2.5 sm:p-3 md:p-4.5 divide-y divide-slate-100 dark:divide-slate-850 flex-grow max-h-[420px] sm:max-h-[520px] overflow-y-auto scrollbar-thin">
-                  {getItemsByCategory('answer_keys').length > 0 ? (
-                    getItemsByCategory('answer_keys').map(item => (
-                      <div
-                        key={item.id}
-                        onClick={() => handleItemClick(item)}
-                        className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl cursor-pointer transition-all flex items-start gap-2 sm:gap-3 hover:bg-purple-50/50 dark:hover:bg-purple-950/20 group/item ${
-                          clickedItemId === item.id ? 'bg-purple-100 dark:bg-purple-900/30 scale-[0.98]' : ''
-                        }`}
-                        id={`sarkari-item-${item.id}`}
-                      >
-                        <span className="w-2 h-2 bg-purple-500 rounded-full mt-1.5 flex-shrink-0 group-hover/item:scale-125 transition-transform"></span>
-                        <div className="flex-grow min-w-0 space-y-1">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="text-xs sm:text-xs md:text-sm font-extrabold text-slate-850 dark:text-slate-100 group-hover/item:text-purple-600 dark:group-hover/item:text-purple-400 transition-colors font-display leading-tight break-words sm:line-clamp-2">
-                              {item.title}
-                            </span>
-                            {item.isNew && (
-                              <span className="px-1.5 py-0.5 bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 text-[8.5px] sm:text-[9.5px] font-black uppercase rounded animate-pulse flex-shrink-0 font-mono tracking-wider">
-                                New
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-[10px] sm:text-xs font-mono text-slate-400 dark:text-slate-500 block leading-none">
-                            Key Update: {item.postDate}
-                          </span>
-                        </div>
-                        <ChevronRight className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-slate-400 group-hover/item:text-purple-500 dark:group-hover/item:text-purple-400 group-hover/item:translate-x-1 transition-all self-center flex-shrink-0" />
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-center text-xs sm:text-sm text-slate-400 py-12 font-medium">No answer keys found</p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Box 5: Exam Syllabus */}
-            {(activeTab === 'all' || activeTab === 'syllabus') && (
-              <div 
-                className="w-[88vw] sm:w-[360px] md:w-auto flex-shrink-0 snap-start bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-sm md:shadow-md overflow-hidden flex flex-col hover:shadow-2xl dark:hover:shadow-slate-950 transition-all duration-300 group hover:-translate-y-2.5"
-                id="sarkari-box-syllabus"
-              >
-                <div className="bg-gradient-to-r from-pink-600 to-rose-600 text-white px-4 py-3.5 sm:px-5 sm:py-4 md:px-7 md:py-5 flex items-center justify-between">
-                  <div className="flex items-center gap-2.5 sm:gap-3">
-                    <BookOpen className="w-5 h-5 sm:w-5 sm:h-5 flex-shrink-0" />
-                    <h3 className="font-extrabold tracking-wide text-xs sm:text-sm md:text-base uppercase font-display leading-tight truncate">Syllabus</h3>
-                  </div>
-                  <span className="inline-block bg-white/20 text-white text-[10px] sm:text-xs font-mono px-2.5 py-0.5 rounded-full font-bold">
-                    {getItemsByCategory('syllabus').length}
-                  </span>
-                </div>
-                <div className="p-2.5 sm:p-3 md:p-4.5 divide-y divide-slate-100 dark:divide-slate-850 flex-grow max-h-[420px] sm:max-h-[520px] overflow-y-auto scrollbar-thin">
-                  {getItemsByCategory('syllabus').length > 0 ? (
-                    getItemsByCategory('syllabus').map(item => (
-                      <div
-                        key={item.id}
-                        onClick={() => handleItemClick(item)}
-                        className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl cursor-pointer transition-all flex items-start gap-2 sm:gap-3 hover:bg-pink-50/50 dark:hover:bg-pink-950/20 group/item ${
-                          clickedItemId === item.id ? 'bg-pink-100 dark:bg-pink-900/30 scale-[0.98]' : ''
-                        }`}
-                        id={`sarkari-item-${item.id}`}
-                      >
-                        <span className="w-2 h-2 bg-pink-500 rounded-full mt-1.5 flex-shrink-0 group-hover/item:scale-125 transition-transform"></span>
-                        <div className="flex-grow min-w-0 space-y-1">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="text-xs sm:text-xs md:text-sm font-extrabold text-slate-850 dark:text-slate-100 group-hover/item:text-pink-600 dark:group-hover/item:text-pink-400 transition-colors font-display leading-tight break-words sm:line-clamp-2">
-                              {item.title}
-                            </span>
-                            {item.isNew && (
-                              <span className="px-1.5 py-0.5 bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 text-[8.5px] sm:text-[9.5px] font-black uppercase rounded animate-pulse flex-shrink-0 font-mono tracking-wider">
-                                New
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-[10px] sm:text-xs font-mono text-slate-400 dark:text-slate-500 block leading-none">
-                            Updated: {item.postDate}
-                          </span>
-                        </div>
-                        <ChevronRight className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-slate-400 group-hover/item:text-pink-500 dark:group-hover/item:text-pink-400 group-hover/item:translate-x-1 transition-all self-center flex-shrink-0" />
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-center text-xs sm:text-sm text-slate-400 py-12 font-medium">No syllabus found</p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Box 6: Admissions */}
-            {(activeTab === 'all' || activeTab === 'admissions') && (
-              <div 
-                className="w-[88vw] sm:w-[360px] md:w-auto flex-shrink-0 snap-start bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-sm md:shadow-md overflow-hidden flex flex-col hover:shadow-2xl dark:hover:shadow-slate-950 transition-all duration-300 group hover:-translate-y-2.5"
-                id="sarkari-box-admissions"
-              >
-                <div className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white px-4 py-3.5 sm:px-5 sm:py-4 md:px-7 md:py-5 flex items-center justify-between">
-                  <div className="flex items-center gap-2.5 sm:gap-3">
-                    <GraduationCap className="w-5 h-5 sm:w-5 sm:h-5 flex-shrink-0" />
-                    <h3 className="font-extrabold tracking-wide text-xs sm:text-sm md:text-base uppercase font-display leading-tight truncate">Admissions</h3>
-                  </div>
-                  <span className="inline-block bg-white/20 text-white text-[10px] sm:text-xs font-mono px-2.5 py-0.5 rounded-full font-bold">
-                    {getItemsByCategory('admissions').length}
-                  </span>
-                </div>
-                <div className="p-2.5 sm:p-3 md:p-4.5 divide-y divide-slate-100 dark:divide-slate-850 flex-grow max-h-[420px] sm:max-h-[520px] overflow-y-auto scrollbar-thin">
-                  {getItemsByCategory('admissions').length > 0 ? (
-                    getItemsByCategory('admissions').map(item => (
-                      <div
-                        key={item.id}
-                        onClick={() => handleItemClick(item)}
-                        className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl cursor-pointer transition-all flex items-start gap-2 sm:gap-3 hover:bg-teal-50/50 dark:hover:bg-teal-950/20 group/item ${
-                          clickedItemId === item.id ? 'bg-teal-100 dark:bg-teal-900/30 scale-[0.98]' : ''
-                        }`}
-                        id={`sarkari-item-${item.id}`}
-                      >
-                        <span className="w-2 h-2 bg-teal-500 rounded-full mt-1.5 flex-shrink-0 group-hover/item:scale-125 transition-transform"></span>
-                        <div className="flex-grow min-w-0 space-y-1">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="text-xs sm:text-xs md:text-sm font-extrabold text-slate-850 dark:text-slate-100 group-hover/item:text-teal-600 dark:group-hover/item:text-teal-400 transition-colors font-display leading-tight break-words sm:line-clamp-2">
-                              {item.title}
-                            </span>
-                            {item.isNew && (
-                              <span className="px-1.5 py-0.5 bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 text-[8.5px] sm:text-[9.5px] font-black uppercase rounded animate-pulse flex-shrink-0 font-mono tracking-wider">
-                                New
-                              </span>
-                            )}
-                          </div>
-                          {item.lastDate && (
-                            <span className="text-[10px] sm:text-xs font-mono text-teal-600 dark:text-teal-400 font-extrabold block leading-none">
-                              Last Date: {item.lastDate}
-                            </span>
-                          )}
-                        </div>
-                        <ChevronRight className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-slate-400 group-hover/item:text-teal-500 dark:group-hover/item:text-teal-400 group-hover/item:translate-x-1 transition-all self-center flex-shrink-0" />
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-center text-xs sm:text-sm text-slate-400 py-12 font-medium">No admissions found</p>
-                  )}
-                </div>
-              </div>
-            )}
-
+            ))}
           </div>
         ) : (
           <div className="text-center py-16 bg-slate-50 dark:bg-slate-900/40 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl max-w-md mx-auto">
