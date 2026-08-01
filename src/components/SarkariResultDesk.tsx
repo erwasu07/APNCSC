@@ -938,9 +938,80 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
   return (
     <section id="sarkari-portal-section" className="pt-0 pb-12 md:pb-16 bg-slate-50 dark:bg-slate-950 transition-colors duration-300 w-full">
       
-      {/* 1. 📢 YELLOW TOP NEWS TICKER STRIP (Exact CSC DOST Portal Style) */}
-      <div className="bg-[#f59e0b] border-b border-amber-500 py-2 px-3 sm:px-4 shadow-sm w-full mb-6 text-slate-950">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 text-xs font-sans relative">
+      {/* 1. 📢 YELLOW TOP NEWS TICKER STRIP */}
+      <div className="bg-[#f59e0b] border-b border-amber-500 py-2.5 px-3 sm:px-4 shadow-sm w-full mb-6 text-slate-950">
+        {/* MOBILE VIEW: Centered Header & 4 Stacked Clickable News Lines */}
+        <div className="sm:hidden max-w-7xl mx-auto space-y-2.5 text-slate-950 py-0.5">
+          {/* Centered LATEST NEWS Header */}
+          <div className="flex justify-center items-center w-full">
+            <span className="bg-slate-950 text-amber-300 font-extrabold text-[11px] px-3.5 py-1 rounded-full uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+              <span>LATEST NEWS:</span>
+            </span>
+          </div>
+
+          {/* 4 Vertical News Item Lines with Anchor Links */}
+          <div className="flex flex-col gap-2 pt-0.5">
+            <a
+              href="#service-link"
+              className="p-2.5 rounded-xl bg-amber-400/90 hover:bg-amber-300 border border-amber-500/90 transition-all cursor-pointer shadow-2xs hover:shadow-xs group block"
+            >
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-950">
+                <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase shrink-0">
+                  JOB
+                </span>
+                <span className="group-hover:underline leading-tight">
+                  🔥 <strong>SSC CGL 2026</strong> Official Notification Released — Apply at CSC Desk!
+                </span>
+              </div>
+            </a>
+
+            <a
+              href="#service-link"
+              className="p-2.5 rounded-xl bg-amber-400/90 hover:bg-amber-300 border border-amber-500/90 transition-all cursor-pointer shadow-2xs hover:shadow-xs group block"
+            >
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-950">
+                <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase shrink-0">
+                  RESULT
+                </span>
+                <span className="group-hover:underline leading-tight">
+                  🏆 <strong>NEET UG 2026</strong> Merit List &amp; Cutoff Scorecard Released
+                </span>
+              </div>
+            </a>
+
+            <a
+              href="#service-link"
+              className="p-2.5 rounded-xl bg-amber-400/90 hover:bg-amber-300 border border-amber-500/90 transition-all cursor-pointer shadow-2xs hover:shadow-xs group block"
+            >
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-950">
+                <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase shrink-0">
+                  ANSWER KEY
+                </span>
+                <span className="group-hover:underline leading-tight">
+                  🔑 <strong>NTA JEE Main 2026</strong> Session 1 Final Answer Key Out
+                </span>
+              </div>
+            </a>
+
+            <a
+              href="#service-link"
+              className="p-2.5 rounded-xl bg-amber-400/90 hover:bg-amber-300 border border-amber-500/90 transition-all cursor-pointer shadow-2xs hover:shadow-xs group block"
+            >
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-950">
+                <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase shrink-0">
+                  ADMISSION
+                </span>
+                <span className="group-hover:underline leading-tight">
+                  🎓 <strong>CUET UG 2026</strong> Online Registration Form Open
+                </span>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        {/* DESKTOP VIEW: Horizontal Ticker Marquee */}
+        <div className="hidden sm:flex max-w-7xl mx-auto items-center justify-between gap-3 text-xs font-sans relative">
           <div className="flex items-center gap-2.5 flex-1 min-w-0 overflow-hidden">
             <span className="bg-slate-950 text-amber-300 font-extrabold text-[11px] px-2.5 py-1 rounded uppercase tracking-wider shrink-0 flex items-center gap-1.5 shadow-xs z-10">
               <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
@@ -950,115 +1021,100 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
               <div className="animate-marquee whitespace-nowrap group-hover:[animation-play-state:paused] flex items-center">
                 {/* 8 News Items - Primary Copy */}
                 <div className="inline-flex items-center gap-6 pr-6 shrink-0">
-                  {/* Job Notifications (2) */}
-                  <span className="inline-flex items-center gap-1.5">
+                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">JOB</span>
                     🔥 <strong>SSC CGL 2026</strong> Official Notification Released — Apply at CSC Desk!
-                  </span>
+                  </a>
                   <span className="text-amber-800 font-black">•</span>
-                  <span className="inline-flex items-center gap-1.5">
+                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">JOB</span>
                     ⚡ <strong>UPPSC RO/ARO 2026</strong> Online Application Form Open
-                  </span>
+                  </a>
                   <span className="text-amber-800 font-black">•</span>
 
-                  {/* Form Results (2) */}
-                  <span className="inline-flex items-center gap-1.5">
+                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">RESULT</span>
                     🏆 <strong>NEET UG 2026</strong> Merit List &amp; Cutoff Scorecard Released
-                  </span>
+                  </a>
                   <span className="text-amber-800 font-black">•</span>
-                  <span className="inline-flex items-center gap-1.5">
+                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">RESULT</span>
                     🎯 <strong>IBPS PO Mains Result 2026</strong> Declared — Check Score
-                  </span>
+                  </a>
                   <span className="text-amber-800 font-black">•</span>
 
-                  {/* Answer Keys (2) */}
-                  <span className="inline-flex items-center gap-1.5">
+                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ANSWER KEY</span>
                     🔑 <strong>NTA JEE Main 2026</strong> Session 1 Final Answer Key Out
-                  </span>
+                  </a>
                   <span className="text-amber-800 font-black">•</span>
-                  <span className="inline-flex items-center gap-1.5">
+                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ANSWER KEY</span>
                     📝 <strong>SSC GD Constable 2026</strong> Official Answer Key Released
-                  </span>
+                  </a>
                   <span className="text-amber-800 font-black">•</span>
 
-                  {/* Admission Updates (2) */}
-                  <span className="inline-flex items-center gap-1.5">
+                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ADMISSION</span>
                     🎓 <strong>CUET UG 2026</strong> Online Registration Form Open
-                  </span>
+                  </a>
                   <span className="text-amber-800 font-black">•</span>
-                  <span className="inline-flex items-center gap-1.5">
+                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ADMISSION</span>
                     🏫 <strong>Bihar B.Ed CET 2026</strong> Admission Online Form Active
-                  </span>
+                  </a>
                   <span className="text-amber-800 font-black">•</span>
                 </div>
 
-                {/* 8 News Items - Duplicate Copy for Infinite Seamless Loop */}
+                {/* Duplicate Copy for Infinite Ticker */}
                 <div className="inline-flex items-center gap-6 pr-6 shrink-0" aria-hidden="true">
-                  {/* Job Notifications (2) */}
-                  <span className="inline-flex items-center gap-1.5">
+                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">JOB</span>
                     🔥 <strong>SSC CGL 2026</strong> Official Notification Released — Apply at CSC Desk!
-                  </span>
+                  </a>
                   <span className="text-amber-800 font-black">•</span>
-                  <span className="inline-flex items-center gap-1.5">
+                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">JOB</span>
                     ⚡ <strong>UPPSC RO/ARO 2026</strong> Online Application Form Open
-                  </span>
+                  </a>
                   <span className="text-amber-800 font-black">•</span>
 
-                  {/* Form Results (2) */}
-                  <span className="inline-flex items-center gap-1.5">
+                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">RESULT</span>
                     🏆 <strong>NEET UG 2026</strong> Merit List &amp; Cutoff Scorecard Released
-                  </span>
+                  </a>
                   <span className="text-amber-800 font-black">•</span>
-                  <span className="inline-flex items-center gap-1.5">
+                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">RESULT</span>
                     🎯 <strong>IBPS PO Mains Result 2026</strong> Declared — Check Score
-                  </span>
+                  </a>
                   <span className="text-amber-800 font-black">•</span>
 
-                  {/* Answer Keys (2) */}
-                  <span className="inline-flex items-center gap-1.5">
+                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ANSWER KEY</span>
                     🔑 <strong>NTA JEE Main 2026</strong> Session 1 Final Answer Key Out
-                  </span>
+                  </a>
                   <span className="text-amber-800 font-black">•</span>
-                  <span className="inline-flex items-center gap-1.5">
+                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ANSWER KEY</span>
                     📝 <strong>SSC GD Constable 2026</strong> Official Answer Key Released
-                  </span>
+                  </a>
                   <span className="text-amber-800 font-black">•</span>
 
-                  {/* Admission Updates (2) */}
-                  <span className="inline-flex items-center gap-1.5">
+                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ADMISSION</span>
                     🎓 <strong>CUET UG 2026</strong> Online Registration Form Open
-                  </span>
+                  </a>
                   <span className="text-amber-800 font-black">•</span>
-                  <span className="inline-flex items-center gap-1.5">
+                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ADMISSION</span>
                     🏫 <strong>Bihar B.Ed CET 2026</strong> Admission Online Form Active
-                  </span>
+                  </a>
                   <span className="text-amber-800 font-black">•</span>
                 </div>
               </div>
             </div>
           </div>
-          <a
-            href="#bulletin-board-section"
-            className="bg-[#0f172a] hover:bg-black text-white font-black text-[11px] px-3.5 py-1.5 rounded transition-all shadow-xs shrink-0 flex items-center gap-1 cursor-pointer z-10"
-          >
-            <span>View All Bulletins</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </a>
         </div>
       </div>
 
