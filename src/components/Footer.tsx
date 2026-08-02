@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUp, Eye, Lock, ShieldCheck, Info } from 'lucide-react';
+import { ArrowUp, Lock, Info } from 'lucide-react';
 import { PolicyTab } from './PrivacyPolicyModal';
 
 interface FooterProps {
@@ -34,11 +34,11 @@ export default function Footer({ cafeName, onOpenPrivacyPolicy, onOpenAdmin }: F
       <footer id="footer" className="bg-[#030712] text-slate-300 py-12 px-4 sm:px-6 md:px-8 border-t border-slate-900 font-sans transition-colors">
         <div className="max-w-7xl mx-auto space-y-10">
           
-          {/* Main 3-Column Footer Grid (Image 6 Exact Layout) */}
+          {/* Main Footer Grid */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
             
-            {/* Column 1: Branding & VLE Credentials */}
-            <div className="md:col-span-5 space-y-4">
+            {/* Column 1: Branding */}
+            <div className="md:col-span-6 space-y-4">
               <div className="flex items-center gap-2">
                 <span className="bg-[#f59e0b] text-slate-950 text-xs font-black px-2.5 py-1 rounded-md uppercase tracking-wider font-mono">
                   CSC
@@ -51,19 +51,6 @@ export default function Footer({ cafeName, onOpenPrivacyPolicy, onOpenAdmin }: F
               <p className="text-xs text-slate-400 leading-relaxed max-w-md font-medium">
                 Authorized Common Services Centre Digital Shop providing online sarkari application filing, exam hall tickets, PAN card updates, and e-KYC services across Digital India.
               </p>
-
-              {/* Dark Credentials Box */}
-              <div className="bg-[#0a0f1d] border border-slate-800 rounded-xl p-3.5 space-y-1.5 text-xs font-mono text-slate-300 max-w-md">
-                <p>
-                  <span className="text-slate-500">VLE Station ID:</span> <strong className="text-white">212515670018</strong>
-                </p>
-                <p>
-                  <span className="text-slate-500">Authorized VLE Lead:</span> <strong className="text-white">Wasim Ahmad Khanday</strong>
-                </p>
-                <p>
-                  <span className="text-slate-500">Helpdesk Contact:</span> <strong className="text-white">+91 70068 33767</strong>
-                </p>
-              </div>
             </div>
 
             {/* Column 2: Portal Policies */}
@@ -115,28 +102,11 @@ export default function Footer({ cafeName, onOpenPrivacyPolicy, onOpenAdmin }: F
               </ul>
             </div>
 
-            {/* Column 3: Visitor Statistics Counter Box */}
-            <div className="md:col-span-3 space-y-3">
-              <h4 className="text-xs font-black uppercase text-white tracking-wider border-l-2 border-emerald-500 pl-2">
-                Visitor Statistics
-              </h4>
-
-              <div className="bg-[#0a0f1d] border border-slate-800 rounded-2xl p-4 text-center space-y-2 shadow-inner">
-                <div className="text-[10px] font-bold text-emerald-400 tracking-widest uppercase flex items-center justify-center gap-1.5">
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>LIVE PORTAL HITS COUNTER</span>
-                </div>
-                <p className="text-2xl sm:text-3xl font-black font-mono text-[#f59e0b] tracking-wider">
-                  24,958,180
-                </p>
-                <p className="text-[10px] text-emerald-400 font-bold">
-                  ● Live Updates Active • Digital India Hub
-                </p>
-              </div>
-
+            {/* Column 3: Actions */}
+            <div className="md:col-span-2 flex justify-start md:justify-end">
               <button
                 onClick={scrollToTop}
-                className="w-full py-2.5 bg-[#111827] hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-extrabold uppercase rounded-xl text-center transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                className="px-4 py-2.5 bg-[#111827] hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-extrabold uppercase rounded-xl text-center transition-all cursor-pointer flex items-center gap-1.5"
               >
                 <ArrowUp className="w-3.5 h-3.5" />
                 <span>Back To Top</span>
