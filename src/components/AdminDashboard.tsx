@@ -328,6 +328,31 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       }
     }
 
+    // Local tab & window cross-communication event listeners
+    const handleLocalSync = () => {
+      updateCombinedApplications();
+    };
+
+    window.addEventListener('csc_appointment_created', handleLocalSync);
+    window.addEventListener('storage', handleLocalSync);
+
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel('csc_portal_sync');
+      bc.onmessage = (event) => {
+        if (event.data?.type === 'NEW_APPOINTMENT' && event.data?.payload) {
+          const app = event.data.payload;
+          const key = app.appId || app.id || app.token;
+          if (key) {
+            appsMap.set(key, app);
+          }
+        }
+        updateCombinedApplications();
+      };
+    } catch (e) {
+      console.warn('BroadcastChannel not supported:', e);
+    }
+
     try {
       unsubApps = onSnapshot(
         collection(db, 'applications'),
@@ -369,6 +394,9 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       if (supabaseChannel && supabaseClient) {
         supabaseClient.removeChannel(supabaseChannel);
       }
+      window.removeEventListener('csc_appointment_created', handleLocalSync);
+      window.removeEventListener('storage', handleLocalSync);
+      if (bc) bc.close();
     };
   }, [isAuthenticated]);
 
@@ -420,6 +448,17 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           : a
       )
     );
+
+    const sb = getSupabaseClient();
+    if (sb) {
+      (async () => {
+        try {
+          await sb.from('applications').update(updatePayload).or(`appId.eq.${appId},id.eq.${appId}`);
+        } catch (err) {
+          console.warn('Supabase status update warning:', err);
+        }
+      })();
+    }
 
     setActionSuccess(`Status updated to ${newStatus}`);
     setTimeout(() => setActionSuccess(null), 3000);

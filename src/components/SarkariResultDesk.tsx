@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import TrackApplication from './TrackApplication';
 import { db } from '../lib/firebase';
+import { getSupabaseClient } from '../lib/supabase';
 import { doc, setDoc } from 'firebase/firestore';
 import { 
   Briefcase, 
@@ -626,7 +627,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       statusUpdatedAt: nowIso
     };
 
-    // 1. Save directly to Cloud Firestore in both 'applications' and 'appointments' collections
+    // 1. Save directly to Cloud Firestore and Supabase
     try {
       setDoc(doc(db, 'applications', mockReceipt.appId), initialPayload, { merge: true }).catch(fsErr => {
         console.error('Firestore "applications" save error:', fsErr);
@@ -634,8 +635,37 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       setDoc(doc(db, 'appointments', mockReceipt.appId), initialPayload, { merge: true }).catch(fsErr => {
         console.error('Firestore "appointments" save error:', fsErr);
       });
+
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        (async () => {
+          try {
+            await supabase.from('applications').upsert([
+              {
+                appId: mockReceipt.appId,
+                id: mockReceipt.appId,
+                applicantName: mockReceipt.customerName,
+                customerName: mockReceipt.customerName,
+                phoneNumber: mockReceipt.phoneNumber,
+                emailAddress: mockReceipt.emailAddress,
+                selectedService: mockReceipt.selectedService,
+                userCategory: mockReceipt.userCategory,
+                paymentMode: mockReceipt.paymentMode,
+                utrNumber: mockReceipt.utrNumber,
+                totalAmount: mockReceipt.totalAmount,
+                status: 'Pending',
+                submittedAt: nowIso,
+                documents: uploadedFiles,
+                payload: initialPayload
+              }
+            ], { onConflict: 'appId' });
+          } catch (sbErr) {
+            console.error('Supabase "applications" upsert error:', sbErr);
+          }
+        })();
+      }
     } catch (fsErr) {
-      console.error('Firestore save execution exception:', fsErr);
+      console.error('Database save execution exception:', fsErr);
     }
 
     // 2. Always POST to server API as secondary persistence
@@ -737,7 +767,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       statusUpdatedAt: nowIso
     };
 
-    // Save directly to Cloud Firestore in both 'applications' and 'appointments' collections
+    // Save directly to Cloud Firestore and Supabase
     try {
       setDoc(doc(db, 'applications', updatedReceipt.appId), payload, { merge: true }).catch(fsErr => {
         console.error('Firestore "applications" payment update error:', fsErr);
@@ -745,8 +775,38 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       setDoc(doc(db, 'appointments', updatedReceipt.appId), payload, { merge: true }).catch(fsErr => {
         console.error('Firestore "appointments" payment update error:', fsErr);
       });
+
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        (async () => {
+          try {
+            await supabase.from('applications').upsert([
+              {
+                appId: updatedReceipt.appId,
+                id: updatedReceipt.appId,
+                applicantName: updatedReceipt.customerName,
+                customerName: updatedReceipt.customerName,
+                phoneNumber: updatedReceipt.phoneNumber,
+                emailAddress: updatedReceipt.emailAddress,
+                selectedService: updatedReceipt.selectedService,
+                userCategory: updatedReceipt.userCategory,
+                paymentMode: updatedReceipt.paymentMode,
+                utrNumber: updatedReceipt.utrNumber,
+                totalAmount: updatedReceipt.totalAmount,
+                status: 'Pending',
+                submittedAt: nowIso,
+                updatedAt: nowIso,
+                documents: uploadedFiles,
+                payload: payload
+              }
+            ], { onConflict: 'appId' });
+          } catch (sbErr) {
+            console.error('Supabase "applications" payment update error:', sbErr);
+          }
+        })();
+      }
     } catch (fsErr) {
-      console.error('Firestore payment update execution error:', fsErr);
+      console.error('Database payment update execution error:', fsErr);
     }
 
     // 1. Update local storage with lightweight payload (no heavy base64 to avoid quota error)
