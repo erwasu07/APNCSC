@@ -269,8 +269,19 @@ export default function Navbar({
             })}
           </div>
 
-          {/* Right side: Mobile Menu Trigger Button */}
+          {/* Right side: Staff Portal Link & Mobile Menu Trigger Button */}
           <div className="flex items-center gap-2">
+            {onOpenAdmin && (
+              <button
+                onClick={onOpenAdmin}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs uppercase tracking-wider rounded-lg transition-all shadow-xs cursor-pointer border border-amber-600"
+                title="Open Staff Portal Login Page"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>Staff Portal</span>
+              </button>
+            )}
+
             {/* Responsive Mobile Menu Trigger Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -334,6 +345,19 @@ export default function Navbar({
                   {item.label}
                 </button>
               ))}
+
+              {onOpenAdmin && (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenAdmin();
+                  }}
+                  className="w-full text-left px-3 py-2 mt-1 text-xs font-black text-amber-300 bg-amber-500/15 hover:bg-amber-500/25 rounded-lg flex items-center gap-2 border border-amber-500/30 cursor-pointer"
+                >
+                  <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>🔑 Staff Portal Login</span>
+                </button>
+              )}
             </div>
           </div>
         )}

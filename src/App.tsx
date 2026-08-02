@@ -96,7 +96,17 @@ export default function App() {
     localStorage.setItem('theme', 'light');
   }, [darkMode]);
 
-  // Handle service redirection trigger
+  const handleOpenStaffPortal = () => {
+    setIsAdminView(true);
+    window.location.hash = '#staff';
+  };
+
+  const handleCloseStaffPortal = () => {
+    setIsAdminView(false);
+    if (window.location.hash === '#staff' || window.location.hash === '#admin') {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  };
   const handleServiceSelect = (serviceName: string) => {
     setSelectedService(serviceName);
     setTimeout(() => {
@@ -155,7 +165,7 @@ export default function App() {
         setDarkMode={setDarkMode}
         cafeName={settings.cafeName}
         onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
-        onOpenAdmin={() => setIsAdminView(true)}
+        onOpenAdmin={handleOpenStaffPortal}
       />
 
       {/* Main Container */}
@@ -164,7 +174,7 @@ export default function App() {
           <div className="px-2 sm:px-4 md:px-0">
             <div className="mb-4 px-2 sm:px-0">
               <button
-                onClick={() => setIsAdminView(false)}
+                onClick={handleCloseStaffPortal}
                 className="px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -173,7 +183,7 @@ export default function App() {
             </div>
             <AdminDashboard
               cafeName={settings.cafeName}
-              onClose={() => setIsAdminView(false)}
+              onClose={handleCloseStaffPortal}
             />
           </div>
         ) : (
@@ -195,7 +205,7 @@ export default function App() {
       <Footer 
         cafeName={settings.cafeName} 
         onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
-        onOpenAdmin={() => setIsAdminView(true)}
+        onOpenAdmin={handleOpenStaffPortal}
       />
 
       {/* Privacy Policy & Terms Interactive Modal */}

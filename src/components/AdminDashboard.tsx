@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { db, auth, storage } from '../lib/firebase';
 import { collection, onSnapshot, doc, updateDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -57,6 +57,24 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
+
+  const usernameInputRef = useRef<HTMLInputElement>(null);
+
+  // Automatically focus Username input field upon redirection to Staff Login
+  useEffect(() => {
+    if (!isAuthenticated) {
+      const timer = setTimeout(() => {
+        if (usernameInputRef.current) {
+          try {
+            usernameInputRef.current.focus({ preventScroll: false });
+          } catch {
+            usernameInputRef.current.focus();
+          }
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated]);
 
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -493,8 +511,11 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               <div className="relative">
                 <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                 <input
+                  ref={usernameInputRef}
+                  id="staff-username-input"
                   type="text"
                   required
+                  autoFocus
                   placeholder="Enter staff username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
