@@ -66,11 +66,8 @@ export default function Footer({ cafeName, onOpenPrivacyPolicy, onOpenAdmin }: F
               </div>
             </div>
 
-            {/* Column 2: Government Portal Policies */}
+            {/* Column 2: Portal Policies */}
             <div className="md:col-span-4 space-y-3">
-              <h4 className="text-xs font-black uppercase text-white tracking-wider border-l-2 border-[#f59e0b] pl-2">
-                Government Portal Policies
-              </h4>
               <ul className="space-y-2 text-xs font-medium text-slate-400">
                 <li>
                   <button
@@ -78,14 +75,6 @@ export default function Footer({ cafeName, onOpenPrivacyPolicy, onOpenAdmin }: F
                     className="hover:text-white transition-colors cursor-pointer"
                   >
                     • Privacy Policy (DPDP Act Compliant)
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => onOpenPrivacyPolicy?.('terms')}
-                    className="hover:text-white transition-colors cursor-pointer"
-                  >
-                    • Terms &amp; Conditions of Service
                   </button>
                 </li>
                 <li>
@@ -109,7 +98,7 @@ export default function Footer({ cafeName, onOpenPrivacyPolicy, onOpenAdmin }: F
                     onClick={() => onOpenPrivacyPolicy?.('disclaimer')}
                     className="hover:text-white transition-colors cursor-pointer"
                   >
-                    • Government Service Disclaimer
+                    • Service Disclaimer
                   </button>
                 </li>
                 <li className="pt-1">
