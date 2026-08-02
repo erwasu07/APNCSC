@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Calendar, PhoneCall, Cpu, Sparkles, Eye, Languages, Home, Briefcase, Flame, Info, Menu, X, Star, ShieldCheck } from 'lucide-react';
+import { Shield, Calendar, PhoneCall, Cpu, Sparkles, Eye, Languages, Home, Briefcase, Flame, Info, Menu, X, Star, ShieldCheck, Lock, Key } from 'lucide-react';
 import { PolicyTab } from './PrivacyPolicyModal';
 
 interface NavbarProps {
@@ -224,11 +224,11 @@ export default function Navbar({
             {onOpenAdmin && (
               <button
                 onClick={onOpenAdmin}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs uppercase tracking-wider rounded-lg transition-all shadow-xs cursor-pointer border border-amber-600"
+                className="hidden sm:flex items-center gap-1.5 p-2 bg-[#0a0f1d] hover:bg-slate-800 text-amber-500 hover:text-amber-400 rounded-lg transition-all cursor-pointer border border-slate-800 shadow-xs"
                 title="Open Staff Portal Login Page"
               >
-                <ShieldCheck className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span>Staff Portal</span>
+                <Lock className="w-4 h-4 text-amber-500" />
+                <Key className="w-4 h-4 text-amber-400" />
               </button>
             )}
 
