@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db, auth, storage } from '../lib/firebase';
-import { uploadReceiptFileToSupabase } from '../lib/supabase';
+import { uploadReceiptFileToSupabase, getSupabaseClient } from '../lib/supabase';
 import { collection, onSnapshot, doc, updateDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
@@ -282,6 +282,52 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       setLoading(false);
     };
 
+    let supabaseChannel: any = null;
+    const supabaseClient = getSupabaseClient();
+
+    if (supabaseClient) {
+      try {
+        // Initial fetch from Supabase
+        supabaseClient.from('applications').select('*').then(({ data, error }) => {
+          if (data && !error) {
+            data.forEach((app: any) => {
+              const key = app.appId || app.id || app.token;
+              if (key) appsMap.set(key, app);
+            });
+            updateCombinedApplications();
+          }
+        });
+
+        // Realtime postgres_changes listener for Supabase
+        supabaseChannel = supabaseClient
+          .channel('realtime-staff-portal-apps')
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'applications' },
+            (payload) => {
+              if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+                const newApp = payload.new;
+                const key = newApp.appId || newApp.id || newApp.token;
+                if (key) {
+                  appsMap.set(key, newApp);
+                  updateCombinedApplications();
+                }
+              } else if (payload.eventType === 'DELETE') {
+                const oldApp = payload.old;
+                const key = oldApp.appId || oldApp.id || oldApp.token;
+                if (key) {
+                  appsMap.delete(key);
+                  updateCombinedApplications();
+                }
+              }
+            }
+          )
+          .subscribe();
+      } catch (sbErr) {
+        console.warn('Supabase Realtime subscription notice:', sbErr);
+      }
+    }
+
     try {
       unsubApps = onSnapshot(
         collection(db, 'applications'),
@@ -320,6 +366,9 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     return () => {
       if (unsubApps) unsubApps();
       if (unsubApts) unsubApts();
+      if (supabaseChannel && supabaseClient) {
+        supabaseClient.removeChannel(supabaseChannel);
+      }
     };
   }, [isAuthenticated]);
 
