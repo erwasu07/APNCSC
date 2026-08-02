@@ -115,6 +115,12 @@ export default function Footer({ cafeName, onOpenPrivacyPolicy, onOpenAdmin }: F
               >
                 • Service Disclaimer
               </button>
+              <button
+                onClick={() => onOpenPrivacyPolicy?.('refund')}
+                className="hover:text-white transition-colors cursor-pointer font-semibold text-amber-400/90 hover:text-amber-300"
+              >
+                • Refund and Cancellation Policy
+              </button>
             </div>
 
             {/* Copyright & Subtext */}

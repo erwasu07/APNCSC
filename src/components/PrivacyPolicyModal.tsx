@@ -39,10 +39,11 @@ import {
   LifeBuoy,
   UploadCloud,
   Clock,
-  MessageCircle
+  MessageCircle,
+  RotateCcw
 } from 'lucide-react';
 
-export type PolicyTab = 'privacy' | 'terms' | 'hyperlink' | 'copyright' | 'disclaimer' | 'help';
+export type PolicyTab = 'privacy' | 'terms' | 'hyperlink' | 'copyright' | 'disclaimer' | 'help' | 'refund';
 
 interface PrivacyPolicyModalProps {
   isOpen: boolean;
@@ -67,6 +68,7 @@ export default function PrivacyPolicyModal({
     else if (initialTab === 'copyright') setActiveSection('cr-1');
     else if (initialTab === 'disclaimer') setActiveSection('dc-1');
     else if (initialTab === 'help') setActiveSection('hp-1');
+    else if (initialTab === 'refund') setActiveSection('rf-1');
   }, [initialTab, isOpen]);
 
   useEffect(() => {
@@ -320,6 +322,34 @@ Email Support: cscdost.support@gmail.com
 Phone / WhatsApp: 7006833767
 Working Hours: Monday to Saturday, 09:00 AM – 08:30 PM`;
 
+  const refundText = `CSC Dost - Refund and Cancellation Policy
+Effective Date: August 2, 2026
+Website: https://www.cscdost.online/
+Business Name: CSC Dost ("we," "our," or "us")
+
+Thank you for choosing CSC Dost. We strive to provide excellent service and timely delivery for all our products and online services. Please read our Refund Policy carefully to understand your rights and the conditions under which a refund may be granted.
+
+1. ELIGIBILITY FOR A REFUND (NON-DELIVERY ONLY)
+At CSC Dost, refunds are strictly applicable only in the event that the goods or services are not delivered to the customer.
+If you have made a payment on our platform and, due to technical issues, stock unavailability, or any other error on our end, we are entirely unable to deliver the purchased goods or complete the requested service, you are entitled to a full refund.
+
+2. STRICTLY NO REFUNDS UPON DELIVERY
+Once the goods have been successfully delivered to the customer, or an online service/application has been successfully processed and delivered, the sale is considered final and no refunds will be issued under any circumstances.
+We encourage all users to carefully review their orders, application details, and requirements before making a payment, as we do not offer refunds for changes of mind, incorrect information provided by the user, or after-delivery disputes.
+
+3. REFUND PROCESSING TIMELINE
+If your order qualifies for a refund under our non-delivery rule, our team will initiate the refund process immediately upon verification.
+The approved refund amount will be credited back to your original method of payment (bank account, UPI, credit/debit card) within 7 working days.
+
+4. HOW TO REQUEST A REFUND FOR NON-DELIVERY
+If you have been charged but have not received your goods or services within the promised timeframe, please reach out to our support team so we can investigate and process your refund.
+Please contact us with your Order ID/Transaction ID at:
+Email: cscdost.support@gmail.com
+Phone: +91 70068 33767
+Office Address: Sangran Qazigund, Anantnag, Jammu and Kashmir 192221
+
+We will review your claim, verify the delivery status, and initiate the 7-day refund process if the non-delivery is confirmed.`;
+
   const handleCopy = () => {
     let textToCopy = privacyText;
     if (activeTab === 'terms') textToCopy = termsText;
@@ -327,6 +357,7 @@ Working Hours: Monday to Saturday, 09:00 AM – 08:30 PM`;
     if (activeTab === 'copyright') textToCopy = copyrightText;
     if (activeTab === 'disclaimer') textToCopy = disclaimerText;
     if (activeTab === 'help') textToCopy = helpText;
+    if (activeTab === 'refund') textToCopy = refundText;
 
     navigator.clipboard.writeText(textToCopy);
     setCopied(true);
@@ -406,6 +437,13 @@ Working Hours: Monday to Saturday, 09:00 AM – 08:30 PM`;
     { id: 'hp-4', label: '4. Contact Support' }
   ];
 
+  const refundSections = [
+    { id: 'rf-1', label: '1. Eligibility (Non-Delivery)' },
+    { id: 'rf-2', label: '2. No Refund Upon Delivery' },
+    { id: 'rf-3', label: '3. Timeline (7 Days)' },
+    { id: 'rf-4', label: '4. How to Request' }
+  ];
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto bg-slate-950/80 backdrop-blur-md animate-fade-in">
       <div 
@@ -430,6 +468,8 @@ Working Hours: Monday to Saturday, 09:00 AM – 08:30 PM`;
                 ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
                 : activeTab === 'disclaimer'
                 ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+                : activeTab === 'refund'
+                ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
                 : 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20'
             }`}>
               {activeTab === 'privacy' && <ShieldCheck className="w-6 h-6" />}
@@ -438,6 +478,7 @@ Working Hours: Monday to Saturday, 09:00 AM – 08:30 PM`;
               {activeTab === 'copyright' && <Copyright className="w-6 h-6" />}
               {activeTab === 'disclaimer' && <AlertTriangle className="w-6 h-6" />}
               {activeTab === 'help' && <LifeBuoy className="w-6 h-6" />}
+              {activeTab === 'refund' && <RotateCcw className="w-6 h-6" />}
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -448,6 +489,7 @@ Working Hours: Monday to Saturday, 09:00 AM – 08:30 PM`;
                   {activeTab === 'copyright' && 'Copyright Policy'}
                   {activeTab === 'disclaimer' && 'Disclaimer'}
                   {activeTab === 'help' && 'Help & Support Center'}
+                  {activeTab === 'refund' && 'Refund & Cancellation Policy'}
                 </h2>
                 <span className="text-[10px] font-black uppercase tracking-wider bg-orange-100 dark:bg-orange-950/80 text-orange-700 dark:text-orange-300 px-2.5 py-0.5 rounded-full border border-orange-200 dark:border-orange-800">
                   CSC DOST
@@ -455,7 +497,7 @@ Working Hours: Monday to Saturday, 09:00 AM – 08:30 PM`;
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1.5 mt-0.5">
                 <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                <span>Effective Date: <strong>July 29, 2026</strong></span>
+                <span>Effective Date: <strong>August 2, 2026</strong></span>
               </p>
             </div>
           </div>
@@ -521,6 +563,17 @@ Working Hours: Monday to Saturday, 09:00 AM – 08:30 PM`;
                 <span>Disclaimer</span>
               </button>
               <button
+                onClick={() => { setActiveTab('refund'); setActiveSection('rf-1'); }}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                  activeTab === 'refund' 
+                    ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs' 
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Refund Policy</span>
+              </button>
+              <button
                 onClick={() => { setActiveTab('help'); setActiveSection('hp-1'); }}
                 className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
                   activeTab === 'help' 
@@ -578,6 +631,8 @@ Working Hours: Monday to Saturday, 09:00 AM – 08:30 PM`;
               ? copyrightSections
               : activeTab === 'disclaimer'
               ? disclaimerSections
+              : activeTab === 'refund'
+              ? refundSections
               : helpSections
           ).map((item) => (
             <button
@@ -595,6 +650,8 @@ Working Hours: Monday to Saturday, 09:00 AM – 08:30 PM`;
                     ? 'bg-amber-600 text-white shadow-xs'
                     : activeTab === 'disclaimer'
                     ? 'bg-rose-600 text-white shadow-xs'
+                    : activeTab === 'refund'
+                    ? 'bg-indigo-600 text-white shadow-xs'
                     : 'bg-teal-600 text-white shadow-xs'
                   : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
               }`}
@@ -2290,6 +2347,196 @@ Working Hours: Monday to Saturday, 09:00 AM – 08:30 PM`;
                       Mon – Sat: 09:00 AM – 08:30 PM
                     </span>
                   </div>
+                </div>
+              </section>
+            </>
+          )}
+
+          {/* ============================================================ */}
+          {/* TAB 7: REFUND & CANCELLATION POLICY CONTENT */}
+          {/* ============================================================ */}
+          {activeTab === 'refund' && (
+            <>
+              {/* WELCOME / HERO NOTICE CARD */}
+              <div className="p-5 rounded-2xl bg-gradient-to-r from-indigo-50 via-slate-50 to-purple-50 dark:from-indigo-950/40 dark:via-slate-900 dark:to-purple-950/40 border border-indigo-200 dark:border-indigo-900/60 shadow-sm space-y-3">
+                <div className="flex items-center gap-2 text-indigo-900 dark:text-indigo-300 font-extrabold text-sm uppercase tracking-wide">
+                  <Building2 className="w-4 h-4 text-orange-500" />
+                  <span>Refund &amp; Cancellation Policy</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  <div className="bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <span className="text-slate-400 text-[10px] uppercase font-extrabold block">Official Website</span>
+                    <a href="https://www.cscdost.online/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline flex items-center gap-1 mt-0.5">
+                      <span>https://www.cscdost.online/</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                  <div className="bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <span className="text-slate-400 text-[10px] uppercase font-extrabold block">Effective Date</span>
+                    <span className="font-bold text-slate-900 dark:text-white">August 2, 2026</span>
+                  </div>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 pt-1 leading-relaxed">
+                  Thank you for choosing <strong>CSC Dost</strong>. We strive to provide excellent service and timely delivery for all our products and online services. Please read our Refund Policy carefully to understand your rights and the conditions under which a refund may be granted.
+                </p>
+              </div>
+
+              {/* 1. ELIGIBILITY FOR A REFUND (NON-DELIVERY ONLY) */}
+              <section id="rf-1" className="space-y-4 pt-2 border-t border-slate-200 dark:border-slate-800/80">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-emerald-500 text-white rounded-xl shadow-xs">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                      1. Eligibility for a Refund (Non-Delivery Only)
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Conditions governing full refunds on our platform.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/60 space-y-2">
+                  <div className="flex items-center gap-2 text-emerald-900 dark:text-emerald-300 font-bold text-xs uppercase tracking-wide">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Strictly Applicable for Non-Delivery</span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                    At <strong>CSC Dost</strong>, refunds are strictly applicable only in the event that the goods or services are not delivered to the customer.
+                  </p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed pt-1">
+                    If you have made a payment on our platform and, due to technical issues, stock unavailability, or any other error on our end, we are entirely unable to deliver the purchased goods or complete the requested service, you are entitled to a <strong>100% full refund</strong>.
+                  </p>
+                </div>
+              </section>
+
+              {/* 2. STRICTLY NO REFUNDS UPON DELIVERY */}
+              <section id="rf-2" className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800/80">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-rose-500 text-white rounded-xl shadow-xs">
+                    <AlertTriangle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                      2. Strictly No Refunds Upon Delivery
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Finality of successfully fulfilled orders and services.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/60 space-y-2">
+                  <div className="flex items-center gap-2 text-rose-900 dark:text-rose-300 font-bold text-xs uppercase tracking-wide">
+                    <AlertTriangle className="w-4 h-4 text-rose-600" />
+                    <span>All Delivered Sales Are Final</span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                    Once the goods have been successfully delivered to the customer, or an online service/application has been successfully processed and delivered, the sale is considered final and no refunds will be issued under any circumstances.
+                  </p>
+                  <div className="p-3 bg-white/80 dark:bg-slate-900/80 rounded-xl border border-rose-100 dark:border-rose-900/40 text-xs text-slate-600 dark:text-slate-400">
+                    💡 <strong>Important Note:</strong> We encourage all users to carefully review their orders, application details, and requirements before making a payment, as we do not offer refunds for changes of mind, incorrect information provided by the user, or after-delivery disputes.
+                  </div>
+                </div>
+              </section>
+
+              {/* 3. REFUND PROCESSING TIMELINE */}
+              <section id="rf-3" className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800/80">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-blue-500 text-white rounded-xl shadow-xs">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                      3. Refund Processing Timeline
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Guaranteed processing duration for verified non-deliveries.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 space-y-1.5">
+                    <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-blue-500" />
+                      Immediate Verification
+                    </span>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                      If your order qualifies for a refund under our non-delivery rule, our support team will initiate the refund process immediately upon verification.
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 space-y-1.5">
+                    <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide flex items-center gap-1.5">
+                      <CreditCard className="w-4 h-4 text-indigo-500" />
+                      7 Working Days Credit
+                    </span>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                      The approved refund amount will be credited back to your original method of payment (bank account, UPI, credit/debit card) within <strong>7 working days</strong>.
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* 4. HOW TO REQUEST A REFUND FOR NON-DELIVERY */}
+              <section id="rf-4" className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white shadow-xl space-y-4 border border-indigo-800/60">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-indigo-800/80 pb-3.5">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-indigo-500 text-slate-950 rounded-2xl font-bold">
+                      <RotateCcw className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-extrabold text-white">
+                        4. How to Request a Refund for Non-Delivery
+                      </h3>
+                      <p className="text-xs text-indigo-200/80">
+                        Contact our support team with your Order ID/Transaction ID for fast claim resolution.
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-3 py-1 rounded-full font-bold shrink-0">
+                    7-Day Refund Claim Desk
+                  </span>
+                </div>
+
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  If you have been charged but have not received your goods or services within the promised timeframe, please reach out to our support team so we can investigate and process your refund immediately. Please provide your Order ID / Transaction ID when contacting us.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="p-3.5 bg-slate-900/90 rounded-2xl border border-slate-800 space-y-1.5">
+                    <span className="text-indigo-400 text-[10px] uppercase font-extrabold flex items-center gap-1">
+                      <Mail className="w-3.5 h-3.5" /> Support Email
+                    </span>
+                    <a href="mailto:cscdost.support@gmail.com" className="font-bold text-white hover:text-indigo-300 hover:underline block truncate">
+                      cscdost.support@gmail.com
+                    </a>
+                  </div>
+
+                  <div className="p-3.5 bg-slate-900/90 rounded-2xl border border-slate-800 space-y-1.5">
+                    <span className="text-indigo-400 text-[10px] uppercase font-extrabold flex items-center gap-1">
+                      <Phone className="w-3.5 h-3.5" /> Phone / WhatsApp
+                    </span>
+                    <a href="tel:7006833767" className="font-bold text-white hover:text-indigo-300 hover:underline block">
+                      +91 70068 33767
+                    </a>
+                  </div>
+
+                  <div className="p-3.5 bg-slate-900/90 rounded-2xl border border-slate-800 space-y-1.5">
+                    <span className="text-indigo-400 text-[10px] uppercase font-extrabold flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5" /> CSC Center Address
+                    </span>
+                    <span className="font-bold text-slate-200 block text-[11px] leading-tight">
+                      Sangran Qazigund, Anantnag, J&amp;K 192221
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-indigo-950/80 rounded-2xl border border-indigo-800/80 text-[11px] text-indigo-200 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>We will review your claim, verify the delivery status, and initiate the 7-day refund process if non-delivery is confirmed.</span>
                 </div>
               </section>
             </>
