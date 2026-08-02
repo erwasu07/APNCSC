@@ -8,7 +8,7 @@ interface TrackApplicationProps {
 
 export default function TrackApplication({ initialTokenId = '' }: TrackApplicationProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeToken, setActiveToken] = useState(initialTokenId || 'APEX-2026');
+  const [activeToken, setActiveToken] = useState(initialTokenId || '');
 
   useEffect(() => {
     if (initialTokenId) {
@@ -40,7 +40,7 @@ export default function TrackApplication({ initialTokenId = '' }: TrackApplicati
                 </span>
               </div>
               <p className="text-[10px] text-amber-300 font-mono font-bold truncate">
-                Form Ref: <span className="underline decoration-amber-400/50">{activeToken || 'CSC-2026-v4'}</span>
+                Form Ref: <span className="underline decoration-amber-400/50">{activeToken || 'Enter Token ID'}</span>
               </p>
             </div>
           </button>

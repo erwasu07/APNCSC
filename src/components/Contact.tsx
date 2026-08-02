@@ -147,7 +147,7 @@ export default function Contact({ settings, selectedService, setSelectedService 
 
           const web3Item = {
             id: data.data?.id || `w3f-contact-${Date.now()}`,
-            appId: data.data?.appId || `APEX-2026-${Math.floor(100000 + Math.random() * 900000)}`,
+            appId: data.data?.appId || `CSC-2026-${Math.floor(1 + Math.random() * 999)}`,
             name: name,
             email: email,
             phone: phone,

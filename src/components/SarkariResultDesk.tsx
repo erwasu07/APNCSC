@@ -546,8 +546,36 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       return;
     }
 
-    const randomNum = Math.floor(100000 + Math.random() * 900000);
-    const mockAppId = `APEX-2026-${randomNum}`;
+    // Generate auto-incrementing token starting with prefix CSC-2026-
+    const getNextCscTokenId = (): string => {
+      try {
+        let maxSeq = 0;
+        const existingApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+        if (Array.isArray(existingApps)) {
+          existingApps.forEach((a: any) => {
+            const id = a.appId || a.id || '';
+            const match = id.match(/CSC-2026-(\d+)/i);
+            if (match && match[1]) {
+              const num = parseInt(match[1], 10);
+              if (!isNaN(num) && num > maxSeq) {
+                maxSeq = num;
+              }
+            }
+          });
+        }
+        const lastStored = parseInt(localStorage.getItem('csc_token_seq') || '0', 10);
+        if (!isNaN(lastStored) && lastStored > maxSeq) {
+          maxSeq = lastStored;
+        }
+        const nextSeq = maxSeq + 1;
+        localStorage.setItem('csc_token_seq', nextSeq.toString());
+        return `CSC-2026-${nextSeq}`;
+      } catch {
+        return `CSC-2026-1`;
+      }
+    };
+
+    const mockAppId = getNextCscTokenId();
     const uploadedDocsList = uploadedFiles.map(f => `${f.name} (${(f.size / 1024).toFixed(1)} KB)`);
 
     const mockReceipt = {
@@ -1050,12 +1078,12 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
       <div className="w-full max-w-7xl mx-auto px-1.5 sm:px-4 md:px-6">
         
-        {/* 2. 🏛️ APEX SECURE PORTAL HEADER & VERIFIED DESK CARD */}
+        {/* 2. 🏛️ CSC DOST SECURE PORTAL HEADER & VERIFIED DESK CARD */}
         <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="space-y-1.5 max-w-2xl">
             <div className="flex flex-wrap items-center gap-2">
               <span className="bg-[#2f2b80] text-white text-[10px] font-black px-2.5 py-0.5 rounded uppercase tracking-widest font-mono">
-                APEX SECURE PORTAL
+                CSC DOST SECURE PORTAL
               </span>
               <span className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800 text-[10px] font-black px-2.5 py-0.5 rounded uppercase tracking-widest font-mono flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>

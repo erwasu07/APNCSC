@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import {
   Search,
   CheckCircle2,
@@ -9,11 +9,9 @@ import {
   FileCheck,
   X,
   MessageCircle,
-  Sparkles,
   Download,
-  ShieldCheck,
   Loader2,
-  ArrowRight
+  AlertCircle
 } from 'lucide-react';
 
 export interface WorkflowStep {
@@ -43,7 +41,6 @@ export interface TrackingData {
   serviceName?: string;
   feeAmount?: string;
   whatsappNumber?: string;
-  recentTokens?: string[];
   workflowSteps?: WorkflowStep[];
   vleRemark?: VleRemarkData;
   finalReceiptUrl?: string;
@@ -56,76 +53,56 @@ interface TrackApplicationModalProps {
   initialTokenId?: string;
 }
 
-// Default Model Data matching user design & live data format
-export const DEFAULT_TRACKING_DATA: TrackingData = {
-  appId: 'APEX-2026',
-  deskId: '21251670018',
-  statusTitle: 'Completed & Card Ready for Download',
-  statusCategory: 'Welfare & PM Schemes',
-  appliedDate: '01/08/2026',
-  currentStep: 4,
-  totalSteps: 4,
-  applicantName: 'Wasim Ahmad Khan',
-  serviceName: 'Ayushman Bharat PM-JAY',
-  feeAmount: '₹50 (Pay Online (UPI/Card))',
-  whatsappNumber: '+91 7006833767',
-  recentTokens: ['APEX-2026', 'CSC-2026-9482', 'CSC-2026-8812'],
-  workflowSteps: [
-    {
-      stepNumber: 1,
-      title: 'Application & Aadhaar KYC Received',
-      description: 'Applicant submitted ration card & Aadhaar biometric at CSC Desk',
-      timestamp: '01/08/2026, 10:15 AM',
-      status: 'completed'
-    },
-    {
-      stepNumber: 2,
-      title: 'Document Scrutiny & BIS Portal Submission',
-      description: 'VLE Wasim Ahmad verified family roster on PM-JAY BIS 3.0 portal',
-      timestamp: '01/08/2026, 10:30 AM',
-      status: 'completed'
-    },
-    {
-      stepNumber: 3,
-      title: 'Government Authority Approval',
-      description: 'Ayushman card approved by SHA J&K Nodal Officer',
-      timestamp: '01/08/2026, 11:45 AM',
-      status: 'completed'
-    },
-    {
-      stepNumber: 4,
-      title: 'Token Completed & Card Printed',
-      description: 'E-Card PDF downloaded and WhatsApp acknowledgment receipt dispatched',
-      timestamp: '01/08/2026, 11:50 AM',
-      status: 'completed'
-    }
-  ],
-  vleRemark: {
-    nodeId: '21251670018',
-    remarkText: 'SEHAT & PM-JAY verification approved by State Health Agency. PVC Card print ready at CSC Desk #21251670018.',
-    vleName: 'Wasim',
-    vlePhone: '+917006833767'
-  }
-};
-
 export default function TrackApplicationModal({
   isOpen,
   onClose,
-  initialTokenId = 'APEX-2026'
+  initialTokenId = ''
 }: TrackApplicationModalProps) {
-  const [searchInput, setSearchInput] = useState(initialTokenId || 'APEX-2026');
-  const [activeToken, setActiveToken] = useState(initialTokenId || 'APEX-2026');
-  const [liveData, setLiveData] = useState<TrackingData | null>(DEFAULT_TRACKING_DATA);
+  const [searchInput, setSearchInput] = useState(initialTokenId || '');
+  const [activeToken, setActiveToken] = useState(initialTokenId || '');
+  const [liveData, setLiveData] = useState<TrackingData | null>(null);
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [recentTokens, setRecentTokens] = useState<string[]>([]);
 
-  // Sync token if prop changes
+  // Load user's recent tokens from localStorage
   useEffect(() => {
-    if (initialTokenId) {
-      setSearchInput(initialTokenId);
-      setActiveToken(initialTokenId);
+    if (!isOpen) return;
+    try {
+      const tokensSet = new Set<string>();
+      const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+      if (Array.isArray(localApps)) {
+        localApps.forEach((a: any) => {
+          const t = a.appId || a.id;
+          if (t) tokensSet.add(String(t));
+        });
+      }
+      const web3Apps = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
+      if (Array.isArray(web3Apps)) {
+        web3Apps.forEach((a: any) => {
+          const t = a.appId || a.id;
+          if (t) tokensSet.add(String(t));
+        });
+      }
+      setRecentTokens(Array.from(tokensSet).slice(0, 5));
+    } catch {
+      setRecentTokens([]);
     }
-  }, [initialTokenId]);
+  }, [isOpen]);
+
+  // Sync token if prop changes or when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const tok = initialTokenId ? initialTokenId.trim() : '';
+      setSearchInput(tok);
+      setActiveToken(tok);
+      if (!tok) {
+        setLiveData(null);
+        setNotFound(false);
+        setLoading(false);
+      }
+    }
+  }, [isOpen, initialTokenId]);
 
   // Handle ESC key to close modal
   useEffect(() => {
@@ -138,164 +115,187 @@ export default function TrackApplicationModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Fetch real-time data when activeToken changes
+  // Fetch real-time application data from Firestore / LocalStorage / Server API
   useEffect(() => {
-    if (!isOpen || !activeToken) return;
-
-    if (activeToken.toUpperCase() === 'APEX-2026') {
-      setLiveData(DEFAULT_TRACKING_DATA);
+    if (!isOpen || !activeToken || !activeToken.trim()) {
+      setLiveData(null);
       setNotFound(false);
       setLoading(false);
       return;
     }
 
+    const cleanToken = activeToken.trim();
     setLoading(true);
     setNotFound(false);
+    setLiveData(null);
 
-    const cleanToken = activeToken.trim();
     let unsubApp: (() => void) | null = null;
 
+    const buildTrackingObject = (raw: any): TrackingData => {
+      const rawStatus = (raw.status || '').toLowerCase();
+      const isCompleted = rawStatus.includes('completed');
+      const isApproved = rawStatus.includes('approved') || rawStatus.includes('process');
+      const isRejected = rawStatus.includes('reject');
+
+      let statusTitle = 'Application Under Staff Review';
+      let currentStep = 2;
+
+      if (isCompleted) {
+        statusTitle = 'Completed & Receipt Ready for Download';
+        currentStep = 4;
+      } else if (isApproved) {
+        statusTitle = 'Approved & Under Department Process';
+        currentStep = 3;
+      } else if (isRejected) {
+        statusTitle = 'Application Rejected / Action Required';
+        currentStep = 2;
+      }
+
+      const formattedDate = raw.createdAt
+        ? new Date(raw.createdAt).toLocaleDateString('en-IN')
+        : raw.submittedAt
+        ? new Date(raw.submittedAt).toLocaleDateString('en-IN')
+        : 'Recent';
+
+      const formattedTime = raw.createdAt
+        ? new Date(raw.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : 'Recently';
+
+      return {
+        appId: raw.appId || raw.id || cleanToken,
+        deskId: raw.deskId || '21251670018',
+        statusTitle,
+        statusCategory: raw.userCategory || raw.category || raw.selectedService || 'CSC Government Service',
+        appliedDate: formattedDate,
+        currentStep,
+        totalSteps: 4,
+        applicantName: raw.customerName || raw.name || 'Applicant',
+        serviceName: raw.selectedService || raw.service || 'CSC Government Service',
+        feeAmount: `₹${raw.totalAmount || raw.portalFee || 50} (${raw.paymentMode === 'cash' ? 'Pay Cash at Counter' : 'Online Payment'})`,
+        whatsappNumber: raw.phoneNumber || raw.phone || '+91 7006833767',
+        workflowSteps: [
+          {
+            stepNumber: 1,
+            title: 'Application Received & Queued',
+            description: 'Application submitted with required documents at CSC Desk',
+            timestamp: formattedTime,
+            status: 'completed'
+          },
+          {
+            stepNumber: 2,
+            title: 'Document Scrutiny & Verification',
+            description: isRejected ? 'Verification rejected by staff' : 'VLE desk verified attached documents & identity details',
+            timestamp: 'Updated',
+            status: isCompleted || isApproved ? 'completed' : isRejected ? 'rejected' : 'in_progress'
+          },
+          {
+            stepNumber: 3,
+            title: 'Official Department Filing',
+            description: 'Submitted to official state/central government portal',
+            timestamp: 'Updated',
+            status: isCompleted ? 'completed' : isApproved ? 'in_progress' : 'pending'
+          },
+          {
+            stepNumber: 4,
+            title: 'Final Certificate / Receipt Generated',
+            description: isCompleted ? 'E-Document issued and ready for download' : 'Awaiting final portal completion',
+            timestamp: 'Updated',
+            status: isCompleted ? 'completed' : 'pending'
+          }
+        ],
+        vleRemark: {
+          nodeId: '21251670018',
+          remarkText: raw.vleRemark || (isCompleted ? 'Application completed successfully. Final processed receipt and e-document uploaded.' : `Application status is currently ${raw.status || 'Pending'}. CSC Desk #21251670018 active.`),
+          vleName: 'Wasim',
+          vlePhone: '+917006833767'
+        },
+        finalReceiptUrl: raw.finalReceiptUrl,
+        status: raw.status || 'Pending'
+      };
+    };
+
     try {
+      // 1. Subscribe to Firestore real-time doc in 'applications' collection
       unsubApp = onSnapshot(
         doc(db, 'applications', cleanToken),
         (docSnap) => {
           if (docSnap.exists()) {
-            const raw = docSnap.data();
-            const rawStatus = (raw.status || '').toLowerCase();
-            const isCompleted = rawStatus.includes('completed');
-            const isApproved = rawStatus.includes('approved') || rawStatus.includes('process');
-            const isRejected = rawStatus.includes('reject');
-
-            let statusTitle = 'Application Under Staff Review';
-            let currentStep = 2;
-
-            if (isCompleted) {
-              statusTitle = 'Completed & Receipt Ready for Download';
-              currentStep = 4;
-            } else if (isApproved) {
-              statusTitle = 'Approved & Under Department Process';
-              currentStep = 3;
-            } else if (isRejected) {
-              statusTitle = 'Application Rejected / Action Required';
-              currentStep = 2;
-            }
-
-            const formatted: TrackingData = {
-              appId: raw.appId || cleanToken,
-              deskId: raw.deskId || '21251670018',
-              statusTitle,
-              statusCategory: raw.category || raw.selectedService || 'CSC Government Service',
-              appliedDate: raw.createdAt ? new Date(raw.createdAt).toLocaleDateString('en-IN') : 'Recent',
-              currentStep,
-              totalSteps: 4,
-              applicantName: raw.customerName || raw.name || 'Applicant',
-              serviceName: raw.selectedService || raw.service || 'CSC Government Service',
-              feeAmount: `₹${raw.totalAmount || raw.portalFee || 50} (Paid)`,
-              whatsappNumber: raw.phoneNumber || raw.phone || '+91 7006833767',
-              recentTokens: DEFAULT_TRACKING_DATA.recentTokens,
-              workflowSteps: [
-                {
-                  stepNumber: 1,
-                  title: 'Application Received & Queued',
-                  description: 'Application submitted with required documents at CSC Desk',
-                  timestamp: raw.createdAt ? new Date(raw.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recently',
-                  status: 'completed'
-                },
-                {
-                  stepNumber: 2,
-                  title: 'Document Scrutiny & Verification',
-                  description: isRejected ? 'Verification rejected by staff' : 'VLE desk verified attached documents & identity details',
-                  timestamp: 'Recently',
-                  status: isCompleted || isApproved ? 'completed' : isRejected ? 'rejected' : 'in_progress'
-                },
-                {
-                  stepNumber: 3,
-                  title: 'Official Department Filing',
-                  description: 'Submitted to official state/central government portal',
-                  timestamp: 'Recently',
-                  status: isCompleted ? 'completed' : isApproved ? 'in_progress' : 'pending'
-                },
-                {
-                  stepNumber: 4,
-                  title: 'Final Certificate / Receipt Generated',
-                  description: isCompleted ? 'E-Document issued and ready for download' : 'Awaiting final portal completion',
-                  timestamp: 'Recently',
-                  status: isCompleted ? 'completed' : 'pending'
-                }
-              ],
-              vleRemark: {
-                nodeId: '21251670018',
-                remarkText: raw.vleRemark || (isCompleted ? 'Application completed successfully. Final processed receipt and e-document uploaded.' : `Application status is currently ${raw.status || 'Pending'}. CSC Desk #21251670018 active.`),
-                vleName: 'Wasim',
-                vlePhone: '+917006833767'
-              },
-              finalReceiptUrl: raw.finalReceiptUrl,
-              status: raw.status
-            };
-            setLiveData(formatted);
+            setLiveData(buildTrackingObject(docSnap.data()));
             setNotFound(false);
+            setLoading(false);
           } else {
-            // Check local storage fallback
-            try {
-              const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-              const found = localApps.find((a: any) => (a.appId || a.id || '').toLowerCase() === cleanToken.toLowerCase());
-              if (found) {
-                const st = (found.status || '').toLowerCase();
-                const isComp = st.includes('completed');
-                const isAppr = st.includes('approved') || st.includes('process');
-                const isRej = st.includes('reject');
-
-                setLiveData({
-                  appId: found.appId || cleanToken,
-                  deskId: '21251670018',
-                  statusTitle: isComp ? 'Completed & Receipt Ready' : isAppr ? 'Approved & Under Process' : isRej ? 'Application Rejected' : 'Application Received & Under Review',
-                  statusCategory: found.service || found.selectedService || 'CSC Service',
-                  appliedDate: 'Recent',
-                  currentStep: isComp ? 4 : isAppr ? 3 : 2,
-                  totalSteps: 4,
-                  applicantName: found.customerName || found.name || 'Applicant',
-                  serviceName: found.selectedService || found.service || 'Service',
-                  feeAmount: `₹${found.totalAmount || 50}`,
-                  whatsappNumber: found.phoneNumber || found.phone || '+91 7006833767',
-                  workflowSteps: [
-                    { stepNumber: 1, title: 'Application Received & Queued', description: 'Submitted at CSC Desk', timestamp: 'Recently', status: 'completed' },
-                    { stepNumber: 2, title: 'Document Verification', description: 'VLE verified identity details', timestamp: 'Recently', status: isComp || isAppr ? 'completed' : 'in_progress' },
-                    { stepNumber: 3, title: 'Department Filing', description: 'Submitted to portal', timestamp: 'Recently', status: isComp ? 'completed' : isAppr ? 'in_progress' : 'pending' },
-                    { stepNumber: 4, title: 'Receipt Generated', description: isComp ? 'Ready for download' : 'Awaiting completion', timestamp: 'Recently', status: isComp ? 'completed' : 'pending' },
-                  ],
-                  vleRemark: {
-                    nodeId: '21251670018',
-                    remarkText: found.vleRemark || `Application status: ${found.status || 'Pending'}. CSC Desk #21251670018.`,
-                    vleName: 'Wasim',
-                    vlePhone: '+917006833767'
-                  },
-                  finalReceiptUrl: found.finalReceiptUrl,
-                  status: found.status || 'Pending'
-                });
+            // Check 'appointments' collection fallback in Firestore
+            getDoc(doc(db, 'appointments', cleanToken)).then((aptSnap) => {
+              if (aptSnap.exists()) {
+                setLiveData(buildTrackingObject(aptSnap.data()));
                 setNotFound(false);
+                setLoading(false);
               } else {
-                setLiveData(null);
-                setNotFound(true);
+                // Check LocalStorage fallback
+                checkLocalAndServerFallback(cleanToken, buildTrackingObject);
               }
-            } catch {
-              setLiveData(null);
-              setNotFound(true);
-            }
+            }).catch(() => {
+              checkLocalAndServerFallback(cleanToken, buildTrackingObject);
+            });
           }
-          setLoading(false);
         },
-        () => {
-          setLoading(false);
+        (err) => {
+          console.warn('Firestore snapshot error, checking fallback:', err);
+          checkLocalAndServerFallback(cleanToken, buildTrackingObject);
         }
       );
     } catch {
-      setLoading(false);
+      checkLocalAndServerFallback(cleanToken, buildTrackingObject);
     }
 
     return () => {
       if (unsubApp) unsubApp();
     };
   }, [activeToken, isOpen]);
+
+  const checkLocalAndServerFallback = (cleanToken: string, buildTrackingObject: (raw: any) => TrackingData) => {
+    try {
+      const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+      const web3Apps = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
+      const combined = [...localApps, ...web3Apps];
+      
+      const found = combined.find((a: any) => {
+        const id = (a.appId || a.id || '').toString().toLowerCase();
+        return id === cleanToken.toLowerCase();
+      });
+
+      if (found) {
+        setLiveData(buildTrackingObject(found));
+        setNotFound(false);
+        setLoading(false);
+        return;
+      }
+
+      // Secondary server endpoint fetch
+      fetch(`/api/appointments/${encodeURIComponent(cleanToken)}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data && (data.appId || data.id || data.customerName)) {
+            setLiveData(buildTrackingObject(data));
+            setNotFound(false);
+          } else {
+            setLiveData(null);
+            setNotFound(true);
+          }
+        })
+        .catch(() => {
+          setLiveData(null);
+          setNotFound(true);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    } catch {
+      setLiveData(null);
+      setNotFound(true);
+      setLoading(false);
+    }
+  };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -309,8 +309,6 @@ export default function TrackApplicationModal({
   };
 
   if (!isOpen) return null;
-
-  const displayData = liveData || DEFAULT_TRACKING_DATA;
 
   return (
     <div
@@ -339,7 +337,7 @@ export default function TrackApplicationModal({
                 </span>
               </div>
               <p className="text-[11px] text-slate-300 font-medium">
-                Verify real-time filing status with Model CSC Desk #{displayData.deskId || '21251670018'}
+                Verify real-time filing status with CSC Desk #21251670018
               </p>
             </div>
           </div>
@@ -360,132 +358,194 @@ export default function TrackApplicationModal({
             <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
               <input
                 type="text"
-                placeholder="Enter Token ID (e.g. APEX-2026)"
+                placeholder="Enter Token ID (e.g. CSC-2026-1)"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-mono font-bold text-sm tracking-wide focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-amber-400 transition-all placeholder-slate-400"
+                autoFocus
               />
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !searchInput.trim()}
                 className="px-6 py-2.5 bg-[#161a38] dark:bg-slate-800 hover:bg-[#0f1228] dark:hover:bg-slate-700 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm shrink-0 flex items-center gap-2 disabled:opacity-50"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>SEARCH</span>}
               </button>
             </form>
 
-            {/* Recent Tokens Pills */}
-            <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
-              <span className="text-slate-500 dark:text-slate-400 font-medium">Recent Tokens:</span>
-              {DEFAULT_TRACKING_DATA.recentTokens?.map((tok) => {
-                const isActive = tok.toLowerCase() === activeToken.toLowerCase();
-                return (
-                  <button
-                    key={tok}
-                    type="button"
-                    onClick={() => handleSelectRecentToken(tok)}
-                    className={`px-3 py-1 rounded-lg text-xs font-mono font-extrabold transition-all cursor-pointer ${
-                      isActive
-                        ? 'bg-[#1e1b4b] text-white shadow-xs'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
-                    }`}
-                  >
-                    {tok}
-                  </button>
-                );
-              })}
-            </div>
+            {/* User Submitted Recent Tokens Pills */}
+            {recentTokens.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 text-xs font-bold pt-1">
+                <span className="text-slate-500 dark:text-slate-400 font-medium">Your Recent Tokens:</span>
+                {recentTokens.map((tok) => {
+                  const isActive = tok.toLowerCase() === activeToken.toLowerCase();
+                  return (
+                    <button
+                      key={tok}
+                      type="button"
+                      onClick={() => handleSelectRecentToken(tok)}
+                      className={`px-3 py-1 rounded-lg text-xs font-mono font-extrabold transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-[#1e1b4b] text-white shadow-xs'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
+                      }`}
+                    >
+                      {tok}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
+
+          {/* INITIAL PROMPT (When no search token entered yet) */}
+          {!activeToken && !loading && (
+            <div className="p-8 bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center mx-auto">
+                <FileCheck className="w-6 h-6 stroke-[2]" />
+              </div>
+              <div className="space-y-1 max-w-md mx-auto">
+                <h3 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                  Enter Your Application Token ID
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+                  Please enter the Token Reference Number (e.g. <span className="font-mono font-bold text-amber-600 dark:text-amber-400">CSC-2026-1</span>) from your submission receipt to fetch live status, staff verification details, and download official receipts.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* LOADING STATE */}
           {loading && (
-            <div className="p-6 text-center bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
-              <Loader2 className="w-6 h-6 animate-spin text-emerald-600 mx-auto" />
-              <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
-                Fetching live application status for <span className="font-mono text-emerald-600">{activeToken}</span>...
+            <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
+              <Loader2 className="w-7 h-7 animate-spin text-amber-500 mx-auto" />
+              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                Fetching live application details for <span className="font-mono text-amber-600 dark:text-amber-400">{activeToken}</span>...
               </p>
             </div>
           )}
 
           {/* NOT FOUND STATE */}
           {notFound && !loading && (
-            <div className="p-5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-2xl text-center space-y-1.5">
-              <XCircle className="w-7 h-7 text-red-500 mx-auto" />
+            <div className="p-6 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-2xl text-center space-y-2">
+              <XCircle className="w-8 h-8 text-red-500 mx-auto" />
               <h4 className="text-xs font-black uppercase tracking-wider text-red-700 dark:text-red-300">
-                Token ID Not Found
+                Application Record Not Found
               </h4>
-              <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
-                No matching record found for token <strong className="font-mono text-slate-900 dark:text-white underline">{activeToken}</strong>. Please verify your Token ID.
+              <p className="text-xs text-slate-600 dark:text-slate-300 font-medium max-w-md mx-auto">
+                No application matches Token ID <strong className="font-mono text-slate-900 dark:text-white underline">{activeToken}</strong>. Please check the reference number on your slip or contact Helpdesk (+91 70068 33767).
               </p>
             </div>
           )}
 
-          {/* MAIN TRACKING CONTENT */}
-          {!loading && !notFound && (
+          {/* MAIN LIVE TRACKING CONTENT */}
+          {!loading && !notFound && liveData && (
             <>
               {/* STATUS BANNER */}
-              <div className="bg-[#ecfdf5] dark:bg-emerald-950/40 border border-[#a7f3d0] dark:border-emerald-800/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+              <div className={`border rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs ${
+                liveData.status?.toLowerCase().includes('completed')
+                  ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/80'
+                  : liveData.status?.toLowerCase().includes('reject')
+                  ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800/80'
+                  : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/80'
+              }`}>
                 <div className="space-y-1 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-400">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
                       TOKEN STATUS
                     </span>
-                    <span className="px-2 py-0.5 bg-white dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700 rounded-full font-mono text-[11px] font-extrabold shadow-2xs">
-                      {displayData.appId}
+                    <span className="px-2 py-0.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 rounded-full font-mono text-[11px] font-extrabold shadow-2xs">
+                      {liveData.appId}
                     </span>
                   </div>
 
-                  <h3 className="text-lg sm:text-xl font-black text-emerald-950 dark:text-emerald-100 font-display leading-snug">
-                    {displayData.statusTitle || 'Completed & Card Ready for Download'}
+                  <h3 className="text-lg sm:text-xl font-black font-display leading-snug text-slate-900 dark:text-white">
+                    {liveData.statusTitle}
                   </h3>
 
-                  <p className="text-xs font-medium text-emerald-800 dark:text-emerald-300">
-                    Applied on <span className="font-mono font-bold">{displayData.appliedDate || '01/08/2026'}</span> | Category: <span className="font-bold">{displayData.statusCategory || 'Welfare & PM Schemes'}</span>
+                  <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                    Applied on <span className="font-mono font-bold">{liveData.appliedDate}</span> | Service: <span className="font-bold">{liveData.serviceName}</span>
                   </p>
                 </div>
 
-                <div className="shrink-0 bg-white dark:bg-emerald-900/90 border border-emerald-300 dark:border-emerald-700 px-3.5 py-1.5 rounded-xl text-center shadow-2xs">
-                  <span className="text-xs font-black text-emerald-950 dark:text-emerald-100">
-                    Step {displayData.currentStep || 4} / {displayData.totalSteps || 4}
+                <div className="shrink-0 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3.5 py-1.5 rounded-xl text-center shadow-2xs">
+                  <span className="text-xs font-black text-slate-900 dark:text-white">
+                    Step {liveData.currentStep} / {liveData.totalSteps}
                   </span>
                 </div>
               </div>
 
+              {/* DOWNLOAD RECEIPT BANNER IF COMPLETED OR FILE PRESENT */}
+              {(liveData.finalReceiptUrl || liveData.status?.toLowerCase().includes('completed')) && (
+                <div className="p-4 bg-emerald-600 text-white rounded-2xl shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white/20 rounded-xl shrink-0">
+                      <Download className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider">
+                        Official Application Receipt Ready
+                      </h4>
+                      <p className="text-[11px] text-emerald-100 font-medium">
+                        The staff member has uploaded your final processed receipt document.
+                      </p>
+                    </div>
+                  </div>
+
+                  {liveData.finalReceiptUrl ? (
+                    <a
+                      href={liveData.finalReceiptUrl}
+                      download={`Receipt-${liveData.appId}.pdf`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-5 py-2.5 bg-white hover:bg-emerald-50 text-emerald-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-2 shrink-0 w-full sm:w-auto justify-center"
+                    >
+                      <Download className="w-4 h-4 stroke-[2.5]" />
+                      <span>Download Receipt</span>
+                    </a>
+                  ) : (
+                    <span className="text-xs italic font-semibold text-emerald-100">
+                      Available at counter
+                    </span>
+                  )}
+                </div>
+              )}
+
               {/* 4-GRID APPLICANT DETAILS */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="bg-slate-50/90 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3 space-y-1">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 block">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
                     APPLICANT
                   </span>
-                  <p className="text-xs font-black text-slate-900 dark:text-white truncate" title={displayData.applicantName}>
-                    {displayData.applicantName || 'Wasim Ahmad Khan'}
+                  <p className="text-xs font-black text-slate-900 dark:text-white truncate" title={liveData.applicantName}>
+                    {liveData.applicantName}
                   </p>
                 </div>
 
                 <div className="bg-slate-50/90 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3 space-y-1">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 block">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
                     SERVICE / JOB
                   </span>
-                  <p className="text-xs font-black text-slate-900 dark:text-white truncate" title={displayData.serviceName}>
-                    {displayData.serviceName || 'Ayushman Bharat PM-JAY'}
+                  <p className="text-xs font-black text-slate-900 dark:text-white truncate" title={liveData.serviceName}>
+                    {liveData.serviceName}
                   </p>
                 </div>
 
                 <div className="bg-slate-50/90 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3 space-y-1">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 block">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
                     FEE AMOUNT
                   </span>
                   <p className="text-xs font-black text-emerald-700 dark:text-emerald-400 truncate">
-                    {displayData.feeAmount || '₹50 (Pay Online (UPI/Card))'}
+                    {liveData.feeAmount}
                   </p>
                 </div>
 
                 <div className="bg-slate-50/90 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3 space-y-1">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 block">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
                     WHATSAPP NUMBER
                   </span>
                   <p className="text-xs font-black font-mono text-slate-900 dark:text-white truncate">
-                    {displayData.whatsappNumber || '+91 7006833767'}
+                    {liveData.whatsappNumber}
                   </p>
                 </div>
               </div>
@@ -497,10 +557,11 @@ export default function TrackApplicationModal({
                 </h4>
 
                 <div className="relative pl-2 sm:pl-3 space-y-5">
-                  {displayData.workflowSteps?.map((step, idx) => {
-                    const isLast = idx === (displayData.workflowSteps?.length || 0) - 1;
+                  {liveData.workflowSteps?.map((step, idx) => {
+                    const isLast = idx === (liveData.workflowSteps?.length || 0) - 1;
                     const isCompleted = step.status === 'completed';
                     const isInProgress = step.status === 'in_progress';
+                    const isRejected = step.status === 'rejected';
 
                     return (
                       <div key={idx} className="relative flex items-start gap-3 sm:gap-4 group">
@@ -522,6 +583,10 @@ export default function TrackApplicationModal({
                           ) : isInProgress ? (
                             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-amber-500 text-white flex items-center justify-center animate-pulse shadow-xs">
                               <Clock className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+                            </div>
+                          ) : isRejected ? (
+                            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-xs">
+                              <XCircle className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
                             </div>
                           ) : (
                             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 flex items-center justify-center">
@@ -554,46 +619,25 @@ export default function TrackApplicationModal({
               <div className="bg-[#eef2ff] dark:bg-indigo-950/40 border border-[#c7d2fe] dark:border-indigo-800/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="space-y-1 flex-1">
                   <h5 className="text-xs font-black text-slate-900 dark:text-white font-display">
-                    VLE Desk Remark (#{displayData.vleRemark?.nodeId || displayData.deskId || '21251670018'}):
+                    VLE Desk Remark (#{liveData.vleRemark?.nodeId || '21251670018'}):
                   </h5>
                   <p className="text-xs text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
-                    {displayData.vleRemark?.remarkText ||
-                      'SEHAT & PM-JAY verification approved by State Health Agency. PVC Card print ready at CSC Desk #21251670018.'}
+                    {liveData.vleRemark?.remarkText}
                   </p>
                 </div>
 
                 <a
-                  href={`https://api.whatsapp.com/send?phone=${(displayData.vleRemark?.vlePhone || '+917006833767').replace(/[^\d]/g, '')}&text=${encodeURIComponent(
-                    `Hello VLE ${displayData.vleRemark?.vleName || 'Wasim'}, regarding my application token ${displayData.appId}`
+                  href={`https://api.whatsapp.com/send?phone=${(liveData.vleRemark?.vlePhone || '+917006833767').replace(/[^\d]/g, '')}&text=${encodeURIComponent(
+                    `Hello VLE ${liveData.vleRemark?.vleName || 'Wasim'}, regarding my application token ${liveData.appId}`
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-4 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl transition-all cursor-pointer shadow-xs flex items-center gap-2 shrink-0 w-full sm:w-auto justify-center"
                 >
                   <MessageCircle className="w-4 h-4 fill-current" />
-                  <span>WhatsApp VLE {displayData.vleRemark?.vleName || 'Wasim'}</span>
+                  <span>WhatsApp VLE {liveData.vleRemark?.vleName || 'Wasim'}</span>
                 </a>
               </div>
-
-              {/* DOWNLOAD RECEIPT ACTION IF COMPLETED */}
-              {displayData.finalReceiptUrl && (
-                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 rounded-2xl flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-200 text-xs font-bold">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span>Official E-Document / Receipt PDF Ready</span>
-                  </div>
-
-                  <a
-                    href={displayData.finalReceiptUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-xs flex items-center gap-1.5 shrink-0"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Download</span>
-                  </a>
-                </div>
-              )}
             </>
           )}
         </div>

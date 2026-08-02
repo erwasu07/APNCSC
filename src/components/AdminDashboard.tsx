@@ -756,7 +756,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="px-2.5 py-1 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-mono font-black text-xs rounded-lg border border-amber-500/20">
-                      {app.appId || `APEX-${idx + 1}`}
+                      {app.appId || `CSC-2026-${idx + 1}`}
                     </span>
                     <span className="text-xs text-slate-500 dark:text-slate-400 font-mono font-semibold">
                       📅 Submitted: {formatDisplayDate(app.createdAt || app.submittedAt || app.date)}
