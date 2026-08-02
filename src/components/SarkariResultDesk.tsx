@@ -2346,31 +2346,33 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
               </div>
 
               {/* Required Documents Checklist for CSC Desk Application */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-xs">
-                <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white font-mono flex items-center gap-2">
-                  <FileCheck className="w-4 h-4 text-emerald-500" />
-                  <span>Documents Required for CSC Desk Submission</span>
-                </h4>
+              {!['answer_keys', 'syllabus', 'results'].includes(selectedItem.category) && (
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-xs">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white font-mono flex items-center gap-2">
+                    <FileCheck className="w-4 h-4 text-emerald-500" />
+                    <span>Documents Required for CSC Desk Submission</span>
+                  </h4>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-850">
-                    <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span className="font-medium text-slate-700 dark:text-slate-300">Aadhaar Card / Govt Photo ID</span>
-                  </div>
-                  <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-850">
-                    <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span className="font-medium text-slate-700 dark:text-slate-300">Educational Certificate / Marksheet</span>
-                  </div>
-                  <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-850">
-                    <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span className="font-medium text-slate-700 dark:text-slate-300">Passport Photo &amp; Signature Scan</span>
-                  </div>
-                  <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-850">
-                    <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span className="font-medium text-slate-700 dark:text-slate-300">Caste / Domicile Certificate (if applicable)</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-850">
+                      <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span className="font-medium text-slate-700 dark:text-slate-300">Aadhaar Card / Govt Photo ID</span>
+                    </div>
+                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-850">
+                      <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span className="font-medium text-slate-700 dark:text-slate-300">Educational Certificate / Marksheet</span>
+                    </div>
+                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-850">
+                      <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span className="font-medium text-slate-700 dark:text-slate-300">Passport Photo &amp; Signature Scan</span>
+                    </div>
+                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-850">
+                      <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span className="font-medium text-slate-700 dark:text-slate-300">Caste / Domicile Certificate (if applicable)</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
             </div>
 
@@ -2386,15 +2388,17 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                 <span>Close</span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => handleApplyNow(selectedItem)}
-                className="px-6 sm:px-8 py-3 bg-[#1e1b4b] hover:bg-[#121033] text-white text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl transition-all flex items-center gap-2.5 shadow-lg shadow-indigo-900/30 cursor-pointer hover:scale-[1.02]"
-                id="sarkari-post-apply-btn"
-              >
-                <span>Apply via CSC Desk</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              {!['answer_keys', 'syllabus', 'results'].includes(selectedItem.category) && (
+                <button
+                  type="button"
+                  onClick={() => handleApplyNow(selectedItem)}
+                  className="px-6 sm:px-8 py-3 bg-[#1e1b4b] hover:bg-[#121033] text-white text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl transition-all flex items-center gap-2.5 shadow-lg shadow-indigo-900/30 cursor-pointer hover:scale-[1.02]"
+                  id="sarkari-post-apply-btn"
+                >
+                  <span>Apply via CSC Desk</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
           </div>
