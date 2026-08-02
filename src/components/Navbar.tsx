@@ -86,17 +86,8 @@ export default function Navbar({
       {/* 1. TOP UTILITY GOVT BAR - EXACT CSC DOST DESIGN */}
       <div className="bg-[#0b1329] text-xs font-sans text-slate-200 py-1.5 px-3 sm:px-4 border-b border-slate-800 shadow-xs">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
-          {/* Left: IN badge, VLE Hub, Helpdesk & Operating hours */}
+          {/* Left: Helpdesk & Operating hours */}
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 sm:gap-3 text-[11px] font-sans">
-            <div className="flex items-center gap-1.5">
-              <span className="bg-[#f59e0b] text-slate-950 font-extrabold text-[10px] px-1.5 py-0.2 rounded uppercase">IN</span>
-              <span className="font-extrabold text-amber-400">CSC VLE HUB</span>
-              <span className="text-slate-400">|</span>
-              <span className="text-slate-300 font-medium">Node ID: <strong className="text-white">212515670018</strong></span>
-            </div>
-
-            <div className="hidden sm:block text-slate-500">|</div>
-
             <div className="flex items-center gap-2">
               <span>📞 Helpdesk: <strong className="text-white font-bold">+91 70068 33767</strong></span>
               <span className="text-slate-400 hidden lg:inline">|</span>
@@ -170,68 +161,27 @@ export default function Navbar({
         </div>
       </div>
 
-      {/* 2. MAIN CO-BRANDED PORTAL HEADER - EXACT SCREENSHOT BRANDING */}
-      <div className="bg-gradient-to-r from-[#18204e] via-[#1c2661] to-[#171e4a] py-3.5 px-4 border-b border-blue-900/60 shadow-md">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 md:gap-6">
+      {/* 2. MAIN PORTAL HEADER - CENTERED CSC DOST BRANDING */}
+      <div className="bg-gradient-to-r from-[#18204e] via-[#1c2661] to-[#171e4a] py-4 px-4 border-b border-blue-900/60 shadow-md">
+        <div className="max-w-7xl mx-auto flex items-center justify-center">
           
-          {/* Logo Column: CSC DOST Logo & Tagline */}
-          <div className="flex items-center gap-3 text-left">
+          {/* Centered CSC DOST Logo & Tagline */}
+          <div className="flex items-center justify-center gap-3 text-center">
             <div className="relative shrink-0">
               <img 
                 src="/favicon.svg" 
                 alt="CSC DOST Logo" 
-                className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 object-contain drop-shadow-[0_0_12px_rgba(59,130,246,0.6)]" 
+                className="w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 object-contain drop-shadow-[0_0_12px_rgba(59,130,246,0.6)]" 
                 referrerPolicy="no-referrer" 
               />
             </div>
-            <div className="text-left space-y-0.5">
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white font-sans tracking-tight leading-none drop-shadow-sm">
-                  CSC DOST
-                </h1>
-                <span className="bg-[#f59e0b] text-slate-950 text-[10px] sm:text-xs font-black px-2 py-0.5 rounded uppercase tracking-wider shadow-xs">
-                  CSC VLE HUB
-                </span>
-              </div>
-              <p className="text-[10px] sm:text-xs text-yellow-300 font-bold tracking-tight">
-                "A Digital Shop for Digital India" <span className="text-slate-300 font-medium">| Authorized Desk</span>
+            <div className="text-center sm:text-left space-y-1">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white font-sans tracking-tight leading-none drop-shadow-sm">
+                CSC DOST
+              </h1>
+              <p className="text-xs sm:text-sm text-yellow-300 font-bold tracking-tight">
+                "A Digital Shop for Digital India"
               </p>
-            </div>
-          </div>
-
-          {/* Right Column: Co-branded Digital India & VLE Lockup */}
-          <div className="hidden md:flex justify-end items-center">
-            <div className="flex items-center gap-4 bg-[#111738]/90 border border-blue-400/30 p-2.5 px-4 rounded-xl shadow-inner">
-              
-              {/* Digital India Brand */}
-              <div className="flex items-center gap-2.5 flex-shrink-0">
-                <div className="w-8 h-8 rounded-full bg-blue-900/80 border border-amber-400/60 text-amber-400 flex items-center justify-center font-extrabold text-xs shadow-xs">
-                  IN
-                </div>
-                
-                <div className="flex flex-col text-left font-sans select-none">
-                  <span className="text-[12px] font-black italic text-white tracking-tight leading-none">
-                    DIGITAL <span className="text-blue-400">INDIA</span>
-                  </span>
-                  <span className="text-[7px] text-slate-300 font-extrabold uppercase tracking-widest leading-none mt-1">
-                    Power To Empower
-                  </span>
-                </div>
-              </div>
-
-              {/* Vertical Divider */}
-              <div className="h-8 w-[1px] bg-blue-800/80 self-center"></div>
-
-              {/* VLE Code display */}
-              <div className="flex flex-col text-left font-sans flex-shrink-0">
-                <span className="text-[8px] font-extrabold text-slate-400 uppercase tracking-widest leading-none">
-                  VLE CODE
-                </span>
-                <span className="text-[13px] font-black text-emerald-400 tracking-wider leading-tight mt-0.5">
-                  212515670018
-                </span>
-              </div>
-
             </div>
           </div>
 

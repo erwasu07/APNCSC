@@ -1070,29 +1070,17 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
             </p>
           </div>
 
-          {/* Top Right Verified Desk Badge Card */}
-          <div className="bg-amber-50/70 dark:bg-slate-950 p-3.5 rounded-xl border border-amber-300/80 dark:border-amber-800/60 shadow-xs flex items-center gap-3 shrink-0 self-start md:self-auto">
-            <div className="w-9 h-9 rounded-full bg-amber-500 text-slate-950 font-black flex items-center justify-center shrink-0 text-base shadow-xs">
-              ✓
-            </div>
-            <div className="space-y-0.5 text-xs">
-              <span className="font-black text-slate-900 dark:text-white block uppercase tracking-wider text-[11px]">
-                Verified CSC Desk #212515670018
-              </span>
-              <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400 block">
-                Official VLE Desk Lead: <strong className="font-extrabold underline text-amber-800 dark:text-amber-300">Wasim Ahmad Khanday</strong>
-              </span>
-            </div>
-          </div>
+          {/* Top Right Track Order Pill */}
+          <TrackApplication />
         </div>
 
-        {/* 🚀 2-COLUMN HERO MAIN GRID: LEFT = APPLICATION FORM, RIGHT = TRACKER WIDGET */}
+        {/* 🚀 HERO MAIN APPLICATION FORM */}
         <div id="booking-portal-form" className="mb-10 scroll-mt-24 w-full">
           {!isFormSubmitted ? (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div className="max-w-4xl mx-auto">
               
-              {/* LEFT COLUMN: OFFICIAL APPLICATION FORM */}
-              <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-md overflow-hidden">
+              {/* OFFICIAL APPLICATION FORM */}
+              <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-md overflow-hidden">
                 
                 {/* Dark Blue Header Banner */}
                 <div className="bg-[#18204e] text-white px-5 py-3.5 flex items-center justify-between border-b border-indigo-900">
@@ -1403,11 +1391,6 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                     </div>
                   </form>
                 </div>
-              </div>
-
-              {/* RIGHT COLUMN: APPLICATION TRACKER WIDGET */}
-              <div className="lg:col-span-5 space-y-5">
-                <TrackApplication />
               </div>
 
             </div>

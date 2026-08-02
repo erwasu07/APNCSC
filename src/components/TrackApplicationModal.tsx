@@ -161,14 +161,32 @@ export default function TrackApplicationModal({
         (docSnap) => {
           if (docSnap.exists()) {
             const raw = docSnap.data();
-            const isComp = raw.status === 'Completed' || raw.status === 'Approved';
+            const rawStatus = (raw.status || '').toLowerCase();
+            const isCompleted = rawStatus.includes('completed');
+            const isApproved = rawStatus.includes('approved') || rawStatus.includes('process');
+            const isRejected = rawStatus.includes('reject');
+
+            let statusTitle = 'Application Under Staff Review';
+            let currentStep = 2;
+
+            if (isCompleted) {
+              statusTitle = 'Completed & Receipt Ready for Download';
+              currentStep = 4;
+            } else if (isApproved) {
+              statusTitle = 'Approved & Under Department Process';
+              currentStep = 3;
+            } else if (isRejected) {
+              statusTitle = 'Application Rejected / Action Required';
+              currentStep = 2;
+            }
+
             const formatted: TrackingData = {
               appId: raw.appId || cleanToken,
               deskId: raw.deskId || '21251670018',
-              statusTitle: isComp ? 'Completed & Document Ready' : (raw.status || 'Under Staff Review'),
+              statusTitle,
               statusCategory: raw.category || raw.selectedService || 'CSC Government Service',
-              appliedDate: raw.createdAt ? new Date(raw.createdAt).toLocaleDateString('en-IN') : '01/08/2026',
-              currentStep: isComp ? 4 : 2,
+              appliedDate: raw.createdAt ? new Date(raw.createdAt).toLocaleDateString('en-IN') : 'Recent',
+              currentStep,
               totalSteps: 4,
               applicantName: raw.customerName || raw.name || 'Applicant',
               serviceName: raw.selectedService || raw.service || 'CSC Government Service',
@@ -180,34 +198,34 @@ export default function TrackApplicationModal({
                   stepNumber: 1,
                   title: 'Application Received & Queued',
                   description: 'Application submitted with required documents at CSC Desk',
-                  timestamp: raw.createdAt ? new Date(raw.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '10:00 AM',
+                  timestamp: raw.createdAt ? new Date(raw.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recently',
                   status: 'completed'
                 },
                 {
                   stepNumber: 2,
                   title: 'Document Scrutiny & Verification',
-                  description: 'VLE desk verified attached documents & identity details',
-                  timestamp: '10:20 AM',
-                  status: isComp ? 'completed' : 'in_progress'
+                  description: isRejected ? 'Verification rejected by staff' : 'VLE desk verified attached documents & identity details',
+                  timestamp: 'Recently',
+                  status: isCompleted || isApproved ? 'completed' : isRejected ? 'rejected' : 'in_progress'
                 },
                 {
                   stepNumber: 3,
                   title: 'Official Department Filing',
                   description: 'Submitted to official state/central government portal',
-                  timestamp: '11:00 AM',
-                  status: isComp ? 'completed' : 'pending'
+                  timestamp: 'Recently',
+                  status: isCompleted ? 'completed' : isApproved ? 'in_progress' : 'pending'
                 },
                 {
                   stepNumber: 4,
-                  title: 'Final Certificate / Card Generated',
-                  description: isComp ? 'E-Document issued and ready for download' : 'Awaiting final portal approval',
-                  timestamp: '11:30 AM',
-                  status: isComp ? 'completed' : 'pending'
+                  title: 'Final Certificate / Receipt Generated',
+                  description: isCompleted ? 'E-Document issued and ready for download' : 'Awaiting final portal completion',
+                  timestamp: 'Recently',
+                  status: isCompleted ? 'completed' : 'pending'
                 }
               ],
               vleRemark: {
                 nodeId: '21251670018',
-                remarkText: raw.vleRemark || `Application status is currently ${raw.status || 'Pending'}. CSC Desk #21251670018 processing active.`,
+                remarkText: raw.vleRemark || (isCompleted ? 'Application completed successfully. Final processed receipt and e-document uploaded.' : `Application status is currently ${raw.status || 'Pending'}. CSC Desk #21251670018 active.`),
                 vleName: 'Wasim',
                 vlePhone: '+917006833767'
               },
@@ -217,24 +235,42 @@ export default function TrackApplicationModal({
             setLiveData(formatted);
             setNotFound(false);
           } else {
-            // Check local storage
+            // Check local storage fallback
             try {
               const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
               const found = localApps.find((a: any) => (a.appId || a.id || '').toLowerCase() === cleanToken.toLowerCase());
               if (found) {
+                const st = (found.status || '').toLowerCase();
+                const isComp = st.includes('completed');
+                const isAppr = st.includes('approved') || st.includes('process');
+                const isRej = st.includes('reject');
+
                 setLiveData({
                   appId: found.appId || cleanToken,
-                  statusTitle: 'Application Submitted & Queued',
-                  statusCategory: found.service || 'CSC Service',
-                  appliedDate: 'Today',
-                  currentStep: 2,
+                  deskId: '21251670018',
+                  statusTitle: isComp ? 'Completed & Receipt Ready' : isAppr ? 'Approved & Under Process' : isRej ? 'Application Rejected' : 'Application Received & Under Review',
+                  statusCategory: found.service || found.selectedService || 'CSC Service',
+                  appliedDate: 'Recent',
+                  currentStep: isComp ? 4 : isAppr ? 3 : 2,
                   totalSteps: 4,
-                  applicantName: found.customerName || 'Applicant',
-                  serviceName: found.selectedService || 'Service',
+                  applicantName: found.customerName || found.name || 'Applicant',
+                  serviceName: found.selectedService || found.service || 'Service',
                   feeAmount: `₹${found.totalAmount || 50}`,
-                  whatsappNumber: found.phoneNumber || '+91 7006833767',
-                  workflowSteps: DEFAULT_TRACKING_DATA.workflowSteps,
-                  vleRemark: DEFAULT_TRACKING_DATA.vleRemark
+                  whatsappNumber: found.phoneNumber || found.phone || '+91 7006833767',
+                  workflowSteps: [
+                    { stepNumber: 1, title: 'Application Received & Queued', description: 'Submitted at CSC Desk', timestamp: 'Recently', status: 'completed' },
+                    { stepNumber: 2, title: 'Document Verification', description: 'VLE verified identity details', timestamp: 'Recently', status: isComp || isAppr ? 'completed' : 'in_progress' },
+                    { stepNumber: 3, title: 'Department Filing', description: 'Submitted to portal', timestamp: 'Recently', status: isComp ? 'completed' : isAppr ? 'in_progress' : 'pending' },
+                    { stepNumber: 4, title: 'Receipt Generated', description: isComp ? 'Ready for download' : 'Awaiting completion', timestamp: 'Recently', status: isComp ? 'completed' : 'pending' },
+                  ],
+                  vleRemark: {
+                    nodeId: '21251670018',
+                    remarkText: found.vleRemark || `Application status: ${found.status || 'Pending'}. CSC Desk #21251670018.`,
+                    vleName: 'Wasim',
+                    vlePhone: '+917006833767'
+                  },
+                  finalReceiptUrl: found.finalReceiptUrl,
+                  status: found.status || 'Pending'
                 });
                 setNotFound(false);
               } else {

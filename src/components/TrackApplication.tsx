@@ -17,9 +17,9 @@ export default function TrackApplication({ initialTokenId = '' }: TrackApplicati
   }, [initialTokenId]);
 
   return (
-    <div id="track-application-section" className="mb-2 scroll-mt-20 w-full max-w-md mx-auto px-0">
+    <div id="track-application-section" className="w-full sm:w-auto shrink-0 self-start md:self-auto">
       {/* Space-Saving Compact Track Order Pill / Badge (Image 2 Style) */}
-      <div className="bg-slate-900/95 dark:bg-slate-900/95 text-white rounded-2xl p-3 shadow-md border border-slate-800 hover:border-amber-500/50 transition-all group">
+      <div className="bg-[#10172a] text-white rounded-2xl p-2.5 px-3.5 shadow-md border border-slate-800 hover:border-amber-500/50 transition-all group">
         <div className="flex items-center justify-between gap-2.5">
           <button
             onClick={() => setIsModalOpen(true)}
