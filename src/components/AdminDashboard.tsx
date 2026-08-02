@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db, auth, storage } from '../lib/firebase';
+import { uploadReceiptFileToSupabase } from '../lib/supabase';
 import { collection, onSnapshot, doc, updateDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
@@ -994,50 +995,30 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               e.preventDefault();
               setUploadError(null);
 
-              const manualUrl = receiptDataUrl && !receiptDataUrl.startsWith('data:') ? receiptDataUrl.trim() : '';
-              const file = selectedReceiptFile;
+              let finalUrl = receiptDataUrl ? receiptDataUrl.trim() : '';
 
-              console.log('1. Starting upload handler...', { hasFile: !!file, fileName: file?.name, manualUrl });
+              if (!finalUrl && selectedReceiptFile) {
+                try {
+                  finalUrl = await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result as string);
+                    reader.onerror = (err) => reject(err);
+                    reader.readAsDataURL(selectedReceiptFile);
+                  });
+                } catch (readErr) {
+                  console.error('Failed to read file:', readErr);
+                }
+              }
 
-              if (!file && !manualUrl) {
-                alert("Please select a file or enter a URL.");
+              if (!finalUrl) {
+                alert("Please select a file or enter a valid URL.");
                 return;
               }
 
               setIsUploadingReceipt(true);
-              let finalUrl = manualUrl;
 
               try {
-                if (file) {
-                  try {
-                    // Explicitly reference storage instance with Date.now() timestamp prefix
-                    const safeFileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-                    console.log(`2. Storage Ref created: receipts/${safeFileName}`);
-                    const activeStorage = storage || getStorage();
-                    const storageRef = ref(activeStorage, `receipts/${safeFileName}`);
-
-                    console.log('3. Uploading bytes to Firebase Storage...');
-                    const snapshot = await uploadBytes(storageRef, file);
-                    console.log('4. Upload completed. Fetching download URL via snapshot.ref...');
-
-                    finalUrl = await getDownloadURL(snapshot.ref);
-                    console.log('5. Download URL obtained successfully:', finalUrl);
-                  } catch (stgErr: any) {
-                    console.warn('Firebase Storage upload failed/unconfigured, using base64 fallback:', stgErr);
-                    if (receiptDataUrl) {
-                      finalUrl = receiptDataUrl;
-                      console.log('5b. Fallback to base64 Data URL succeeded.');
-                    } else {
-                      throw stgErr;
-                    }
-                  }
-                }
-
-                if (!finalUrl) {
-                  throw new Error('Failed to obtain a valid receipt URL.');
-                }
-
-                console.log('6. Updating Firestore document...');
+                console.log('Updating document with receipt URL:', finalUrl.substring(0, 60) + '...');
                 const isoNow = new Date().toISOString();
                 const updatePayload = {
                   status: 'Completed',
@@ -1131,22 +1112,29 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
               <div className="space-y-1">
                 <label className="text-[11px] font-black uppercase text-slate-500 block">
-                  1. Select Receipt File (Image / PDF / Scan)
+                  1. Select Receipt File (PDF or Image)
                 </label>
                 <input
                   type="file"
                   accept=".pdf,image/*"
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (file) {
-                      console.log('Selected file for upload:', file);
                       setSelectedReceiptFile(file);
                       setUploadError(null);
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        setReceiptDataUrl(reader.result as string);
-                      };
-                      reader.readAsDataURL(file);
+                      setIsUploadingReceipt(true);
+
+                      try {
+                        const appId = uploadModalApp?.appId || 'APP_RECEIPT';
+                        const res = await uploadReceiptFileToSupabase(file, appId);
+                        console.log(`Receipt processed via ${res.provider}:`, res.url.substring(0, 60) + '...');
+                        setReceiptDataUrl(res.url);
+                      } catch (err: any) {
+                        console.error('File process error:', err);
+                        setUploadError('Failed to process selected file.');
+                      } finally {
+                        setIsUploadingReceipt(false);
+                      }
                     }
                   }}
                   className="w-full text-xs text-slate-700 dark:text-slate-200 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-600 cursor-pointer"
@@ -1155,18 +1143,18 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
               <div className="space-y-1 pt-1">
                 <label className="text-[11px] font-black uppercase text-slate-500 block">
-                  2. Or Direct Download URL Link
+                  2. Auto-Populated Supabase / Public Storage Download Link
                 </label>
                 <input
-                  type="url"
-                  placeholder="https://firebasestorage.googleapis.com/..."
-                  value={receiptDataUrl.startsWith('data:') ? '' : receiptDataUrl}
+                  type="text"
+                  placeholder="https://...supabase.co/storage/v1/object/public/documents/..."
+                  value={receiptDataUrl}
                   onChange={(e) => {
                     setReceiptDataUrl(e.target.value);
                     setSelectedReceiptFile(null);
                     setUploadError(null);
                   }}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white text-xs font-mono"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white text-xs font-mono break-all focus:ring-2 focus:ring-amber-400"
                 />
               </div>
 
@@ -1174,7 +1162,13 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                 <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-xl text-emerald-800 dark:text-emerald-300 text-[11px] font-bold flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                   <span>
-                    {selectedReceiptFile ? `File selected: ${selectedReceiptFile.name} (${Math.round(selectedReceiptFile.size/1024)} KB)` : 'Receipt download link ready!'}
+                    {receiptDataUrl.includes('supabase')
+                      ? 'Public Supabase Storage URL generated & populated!'
+                      : receiptDataUrl.startsWith('https://firebasestorage')
+                      ? 'Public Firebase Storage URL generated & populated!'
+                      : selectedReceiptFile
+                      ? `File processed: ${selectedReceiptFile.name} (${Math.round(selectedReceiptFile.size / 1024)} KB)`
+                      : 'Receipt download link ready!'}
                   </span>
                 </div>
               )}
