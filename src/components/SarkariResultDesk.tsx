@@ -1156,11 +1156,11 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
         </div>
       </div>
 
-      <div className="w-full max-w-7xl mx-auto px-1.5 sm:px-4 md:px-6">
+      <div className="w-full max-w-5xl mx-auto px-2 sm:px-4">
         
         {/* 2. 🏛️ CSC DOST SECURE PORTAL HEADER & VERIFIED DESK CARD */}
-        <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <div className="space-y-1.5 max-w-2xl">
+        <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+          <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               <span className="bg-[#2f2b80] text-white text-[10px] font-black px-2.5 py-0.5 rounded uppercase tracking-widest font-mono">
                 CSC DOST SECURE PORTAL
@@ -1170,10 +1170,10 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                 <span>🔒 SECURE SSL - Gateway Active</span>
               </span>
             </div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight font-display leading-tight">
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight font-display leading-tight">
               Digital Application &amp; Appointment Desk
             </h1>
-            <p className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
               Instant Online Government Form Filing, Sarkari Jobs Apply, and PVC e-Services Verification
             </p>
           </div>
@@ -1183,12 +1183,12 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
         </div>
 
         {/* 🚀 HERO MAIN APPLICATION FORM */}
-        <div id="booking-portal-form" className="mb-10 scroll-mt-24 w-full">
+        <div id="booking-portal-form" className="mb-8 scroll-mt-24 w-full">
           {!isFormSubmitted ? (
-            <div className="max-w-4xl mx-auto">
+            <div className="w-full">
               
               {/* OFFICIAL APPLICATION FORM */}
-              <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-md overflow-hidden">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-md overflow-hidden">
                 
                 {/* Dark Blue Header Banner */}
                 <div className="bg-[#18204e] text-white px-5 py-3.5 flex items-center justify-between border-b border-indigo-900">
