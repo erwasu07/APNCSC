@@ -1431,8 +1431,8 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                                           <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100 block truncate">
                                             {uploadedDoc.name}
                                           </span>
-                                          <span className="text-[9px] text-slate-400 font-mono block">
-                                            {(uploadedDoc.size / 1024).toFixed(1)} KB
+                                          <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-extrabold font-mono block">
+                                            ✓ Legible Scan • {(uploadedDoc.size / 1024).toFixed(1)} KB
                                           </span>
                                         </div>
                                         <button
@@ -1470,13 +1470,21 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                           </p>
                         )}
 
-                        {/* Attached Files Counter Summary */}
-                        {uploadedFiles.length > 0 && (
-                          <div className="pt-1 flex items-center justify-between text-[10px] text-slate-600 dark:text-slate-400 font-bold">
-                            <span>Total Uploaded Documents: {uploadedFiles.length} of {docRequirement.requiredDocTypes.length}</span>
-                            <span className="text-emerald-600 dark:text-emerald-400">✓ Ready for submission</span>
+                        {/* Document Readiness Progress Visualizer */}
+                        <div className="pt-2 border-t border-amber-200/80 dark:border-amber-800/60 space-y-1.5">
+                          <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                            <span>Document Readiness Checklist</span>
+                            <span className={uploadedFiles.length >= docRequirement.requiredDocTypes.length ? "text-emerald-600 dark:text-emerald-400 font-extrabold" : "text-amber-600 dark:text-amber-400 font-extrabold"}>
+                              {uploadedFiles.length} of {docRequirement.requiredDocTypes.length} Uploaded
+                            </span>
                           </div>
-                        )}
+                          <div className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-emerald-500 transition-all duration-300"
+                              style={{ width: `${Math.min(100, (uploadedFiles.length / (docRequirement.requiredDocTypes.length || 1)) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
                       </div>
                     )}
 

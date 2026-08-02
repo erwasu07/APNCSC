@@ -40,7 +40,15 @@ import {
   Info,
   Flame,
   Check,
-  Upload
+  Upload,
+  MessageSquare,
+  Copy,
+  CheckSquare,
+  Square,
+  Send,
+  TrendingUp,
+  Edit3,
+  Share2
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -83,6 +91,12 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   const [filterStatus, setFilterStatus] = useState<string>('pending');
   const [selectedDocPreview, setSelectedDocPreview] = useState<{ name: string; url: string; type?: string } | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
+  // States for Bulk Actions & Staff Utilities
+  const [selectedAppIds, setSelectedAppIds] = useState<string[]>([]);
+  const [editingStaffNotesAppId, setEditingStaffNotesAppId] = useState<string | null>(null);
+  const [staffNoteInput, setStaffNoteInput] = useState<string>('');
+  const [copiedAppId, setCopiedAppId] = useState<string | null>(null);
 
   // States for Mark Completed Upload Modal
   const [uploadModalApp, setUploadModalApp] = useState<any | null>(null);
@@ -506,6 +520,99 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     }
   };
 
+  // Selection toggle logic
+  const toggleSelectApp = (appId: string) => {
+    setSelectedAppIds(prev =>
+      prev.includes(appId) ? prev.filter(id => id !== appId) : [...prev, appId]
+    );
+  };
+
+  const toggleSelectAll = (filteredList: any[]) => {
+    const allFilteredIds = filteredList.map(a => a.appId || a.id).filter(Boolean);
+    if (selectedAppIds.length >= allFilteredIds.length && allFilteredIds.length > 0) {
+      setSelectedAppIds([]);
+    } else {
+      setSelectedAppIds(allFilteredIds);
+    }
+  };
+
+  // Bulk Status Update
+  const handleBulkStatusChange = async (newStatus: string) => {
+    if (selectedAppIds.length === 0) return;
+    for (const id of selectedAppIds) {
+      await handleUpdateStatus(id, newStatus);
+    }
+    setActionSuccess(`Bulk Status updated to "${newStatus}" for ${selectedAppIds.length} application(s).`);
+    setSelectedAppIds([]);
+    setTimeout(() => setActionSuccess(null), 3500);
+  };
+
+  // Bulk Delete
+  const handleBulkDelete = async () => {
+    if (selectedAppIds.length === 0) return;
+    if (window.confirm(`Permanently remove ${selectedAppIds.length} selected applications?`)) {
+      for (const id of selectedAppIds) {
+        try {
+          await deleteDoc(doc(db, 'applications', id));
+          await deleteDoc(doc(db, 'appointments', id));
+        } catch (e) {
+          console.warn('Bulk delete error:', e);
+        }
+      }
+      setApplications(prev => prev.filter(a => !selectedAppIds.includes(a.appId) && !selectedAppIds.includes(a.id)));
+      setActionSuccess(`Deleted ${selectedAppIds.length} applications.`);
+      setSelectedAppIds([]);
+      setTimeout(() => setActionSuccess(null), 3000);
+    }
+  };
+
+  // Save Internal Staff Note / Remark
+  const handleSaveStaffNote = async (appId: string, noteText: string) => {
+    if (!appId) return;
+    const isoNow = new Date().toISOString();
+    const updatePayload = { staffNotes: noteText, staffNoteUpdatedAt: isoNow };
+
+    try {
+      await setDoc(doc(db, 'applications', appId), updatePayload, { merge: true });
+    } catch (e) {
+      console.warn('Firestore staffNote error:', e);
+    }
+
+    setApplications(prev =>
+      prev.map(a => (a.appId === appId || a.id === appId) ? { ...a, ...updatePayload } : a)
+    );
+
+    setEditingStaffNotesAppId(null);
+    setActionSuccess(`Staff note saved for ${appId}`);
+    setTimeout(() => setActionSuccess(null), 2500);
+  };
+
+  // Send Direct WhatsApp Update to Applicant
+  const handleSendWhatsAppNotification = (app: any) => {
+    const rawPhone = app.phone || app.phoneNumber || '';
+    const cleanPhone = rawPhone.replace(/\D/g, '');
+    const phoneWithCode = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+    const name = app.name || app.customerName || 'Valued Customer';
+    const appId = app.appId || app.id || 'N/A';
+    const service = app.service || app.selectedService || 'CSC Service';
+    const status = app.status || 'Pending';
+
+    const text = encodeURIComponent(
+      `Hello ${name},\n\nUpdate regarding your CSC Application:\n*Token ID:* ${appId}\n*Service:* ${service}\n*Status:* ${status}\n\nThank you,\nCSC Digital Services Desk`
+    );
+
+    window.open(`https://wa.me/${phoneWithCode}?text=${text}`, '_blank');
+  };
+
+  // Copy 1-Click Application Summary
+  const handleCopyAppInfo = (app: any) => {
+    const appId = app.appId || app.id;
+    const summary = `CSC Token: ${appId}\nName: ${app.name || app.customerName}\nPhone: ${app.phone || app.phoneNumber}\nService: ${app.service || app.selectedService}\nFee: ₹${app.totalAmount || 0}\nStatus: ${app.status || 'Pending'}`;
+    navigator.clipboard.writeText(summary);
+    setCopiedAppId(appId);
+    setTimeout(() => setCopiedAppId(null), 2000);
+  };
+
   // Export to CSV
   const handleExportCSV = () => {
     if (applications.length === 0) return;
@@ -736,13 +843,22 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       )}
 
       {/* Metrics Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
           <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
             Total Submissions
           </span>
           <span className="text-2xl font-black text-slate-900 dark:text-white font-mono mt-1 block">
             {applications.length}
+          </span>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block flex items-center gap-1">
+            <IndianRupee className="w-3 h-3" /> Total Revenue
+          </span>
+          <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono mt-1 block">
+            ₹{applications.reduce((acc, a) => acc + (Number(a.totalAmount) || 0), 0)}
           </span>
         </div>
 
@@ -764,15 +880,58 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           </span>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-500 block">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs col-span-2 md:col-span-1">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-500 block">
             Uploaded Docs Total
           </span>
-          <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono mt-1 block">
+          <span className="text-2xl font-black text-purple-600 dark:text-purple-400 font-mono mt-1 block">
             {applications.reduce((acc, app) => acc + (app.documents?.length || app.uploadedDocuments?.length || 0), 0)}
           </span>
         </div>
       </div>
+
+      {/* Bulk Action Toolbar Banner (Appears when items are selected) */}
+      {selectedAppIds.length > 0 && (
+        <div className="p-4 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-950 rounded-2xl shadow-lg flex flex-wrap items-center justify-between gap-3 animate-fade-in border border-amber-400">
+          <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider">
+            <CheckSquare className="w-5 h-5 text-slate-950" />
+            <span>{selectedAppIds.length} Application(s) Selected</span>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => handleBulkStatusChange('Approved & Under Process')}
+              className="px-3 py-1.5 bg-slate-950 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+            >
+              <Check className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Bulk Approve</span>
+            </button>
+
+            <button
+              onClick={() => handleBulkStatusChange('Completed')}
+              className="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+              <span>Bulk Complete</span>
+            </button>
+
+            <button
+              onClick={handleBulkDelete}
+              className="px-3 py-1.5 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Bulk Delete</span>
+            </button>
+
+            <button
+              onClick={() => setSelectedAppIds([])}
+              className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-slate-950 rounded-xl text-xs font-extrabold transition-all cursor-pointer"
+            >
+              Deselect All
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Search & Filter Bar */}
       <div className="bg-white dark:bg-slate-900 border-x-0 sm:border-x border-y sm:border border-slate-200 dark:border-slate-800 rounded-none sm:rounded-2xl p-3.5 sm:p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3 w-full">
@@ -796,6 +955,19 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         </div>
 
         <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+          <button
+            onClick={() => toggleSelectAll(filteredApplications)}
+            className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-700 flex items-center gap-1"
+            title="Select or deselect all shown applications"
+          >
+            {selectedAppIds.length >= filteredApplications.length && filteredApplications.length > 0 ? (
+              <CheckSquare className="w-3.5 h-3.5 text-amber-500" />
+            ) : (
+              <Square className="w-3.5 h-3.5 text-slate-400" />
+            )}
+            <span>Select All</span>
+          </button>
+
           {['pending', 'approved', 'completed', 'rejected', 'online', 'cash'].map((st) => (
             <button
               key={st}
@@ -844,9 +1016,35 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                 {/* Application Header Card */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex flex-wrap items-center gap-2">
+                    {/* Checkbox for Bulk Actions */}
+                    <button
+                      type="button"
+                      onClick={() => toggleSelectApp(app.appId || app.id)}
+                      className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                      title="Select for bulk action"
+                    >
+                      {selectedAppIds.includes(app.appId || app.id) ? (
+                        <CheckSquare className="w-4 h-4 text-amber-500" />
+                      ) : (
+                        <Square className="w-4 h-4 text-slate-400" />
+                      )}
+                    </button>
+
                     <span className="px-2.5 py-1 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-mono font-black text-xs rounded-lg border border-amber-500/20">
                       {app.appId || `CSC-2026-${idx + 1}`}
                     </span>
+
+                    {/* Copy Info Button */}
+                    <button
+                      type="button"
+                      onClick={() => handleCopyAppInfo(app)}
+                      className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1"
+                      title="Copy application details"
+                    >
+                      <Copy className="w-3 h-3 text-amber-500" />
+                      <span>{copiedAppId === (app.appId || app.id) ? 'Copied!' : 'Copy Info'}</span>
+                    </button>
+
                     <span className="text-xs text-slate-500 dark:text-slate-400 font-mono font-semibold">
                       📅 Submitted: {formatDisplayDate(app.createdAt || app.submittedAt || app.date)}
                     </span>
@@ -882,10 +1080,23 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
                   <div>
                     <span className="text-[10px] font-extrabold uppercase text-slate-400 block">Mobile &amp; Email</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200 block">
-                      📞 {app.phone || app.phoneNumber || 'N/A'}
-                    </span>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate block">
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="font-bold text-slate-800 dark:text-slate-200">
+                        📞 {app.phone || app.phoneNumber || 'N/A'}
+                      </span>
+                      {(app.phone || app.phoneNumber) && (
+                        <button
+                          type="button"
+                          onClick={() => handleSendWhatsAppNotification(app)}
+                          className="px-1.5 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded text-[10px] font-extrabold transition-all cursor-pointer flex items-center gap-1"
+                          title="Send update on WhatsApp"
+                        >
+                          <MessageSquare className="w-3 h-3 text-emerald-500" />
+                          <span>WhatsApp</span>
+                        </button>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate block mt-0.5">
                       ✉️ {app.email || app.emailAddress || 'N/A'}
                     </span>
                   </div>
@@ -988,6 +1199,61 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                         </span>
                       ))}
                     </div>
+                  )}
+                </div>
+
+                {/* STAFF INTERNAL REMARKS / NOTES SECTION */}
+                <div className="p-3 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40 rounded-xl text-xs space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-extrabold uppercase tracking-wider text-[10px] text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                      <Edit3 className="w-3 h-3" /> Staff Internal Remarks &amp; Comments
+                    </span>
+                    {editingStaffNotesAppId !== (app.appId || app.id) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingStaffNotesAppId(app.appId || app.id);
+                          setStaffNoteInput(app.staffNotes || '');
+                        }}
+                        className="text-[10px] font-bold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
+                      >
+                        {app.staffNotes ? 'Edit Note' : '+ Add Note'}
+                      </button>
+                    )}
+                  </div>
+
+                  {editingStaffNotesAppId === (app.appId || app.id) ? (
+                    <div className="flex items-center gap-2 mt-1">
+                      <input
+                        type="text"
+                        placeholder="e.g., Called applicant on 2 Aug for signature update..."
+                        value={staffNoteInput}
+                        onChange={(e) => setStaffNoteInput(e.target.value)}
+                        className="flex-1 px-3 py-1.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-medium focus:ring-2 focus:ring-amber-500/30 outline-none text-slate-900 dark:text-white"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleSaveStaffNote(app.appId || app.id, staffNoteInput)}
+                        className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold rounded-lg text-xs transition-all cursor-pointer shadow-xs"
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingStaffNotesAppId(null)}
+                        className="px-2.5 py-1.5 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : app.staffNotes ? (
+                    <p className="text-slate-800 dark:text-slate-200 font-medium italic">
+                      "{app.staffNotes}"
+                    </p>
+                  ) : (
+                    <p className="text-slate-400 italic text-[11px]">
+                      No staff remarks added yet. Click "+ Add Note" to record processing comments.
+                    </p>
                   )}
                 </div>
 
