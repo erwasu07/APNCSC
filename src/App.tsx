@@ -149,11 +149,9 @@ export default function App() {
     }, 350);
   };
 
-  // WhatsApp click trigger
+  // WhatsApp Channel click trigger
   const handleWhatsAppFloating = () => {
-    const text = encodeURIComponent(`Hello! I need assistance with a service. Is someone available?`);
-    const cleanNumber = settings.whatsapp.replace(/[^0-9+]/g, '');
-    window.open(`https://wa.me/${cleanNumber}?text=${text}`, '_blank');
+    window.open('https://whatsapp.com/channel/0029VbDgSe75a248qEZAbL3g', '_blank');
   };
 
   return (
@@ -215,17 +213,17 @@ export default function App() {
         initialTab={legalModalTab}
       />
 
-      {/* Floating WhatsApp Chat Button */}
+      {/* Floating WhatsApp Channel Button */}
       <button
         onClick={handleWhatsAppFloating}
-        className="fixed bottom-24 right-6 p-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-2xl hover:scale-105 transition-all z-40 flex items-center justify-center animate-bounce group"
-        title="Instant Help on WhatsApp"
+        className="fixed bottom-24 right-6 p-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-2xl hover:scale-105 transition-all z-40 flex items-center justify-center animate-bounce group cursor-pointer"
+        title="Join Our Official WhatsApp Channel"
         id="whatsapp-floating-badge"
         style={{ animationDuration: '4s' }}
       >
         <MessageSquare className="w-6 h-6" />
-        <span className="max-w-0 overflow-hidden group-hover:max-w-xs group-hover:ml-2 text-xs font-bold transition-all duration-300">
-          WhatsApp Live Support
+        <span className="max-w-0 overflow-hidden group-hover:max-w-xs group-hover:ml-2 text-xs font-bold transition-all duration-300 whitespace-nowrap">
+          Join WhatsApp Channel
         </span>
       </button>
 

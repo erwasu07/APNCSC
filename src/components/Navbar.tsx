@@ -149,13 +149,14 @@ export default function Navbar({
             </div>
 
             <a
-              href="https://wa.me/917006833767?text=Hello!%20I%20need%20assistance%20with%20a%20service."
+              href="https://whatsapp.com/channel/0029VbDgSe75a248qEZAbL3g"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] rounded-md flex items-center gap-1.5 shadow-sm transition-all"
+              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] rounded-md flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+              title="Join our official WhatsApp Channel for instant job & result updates"
             >
               <span>💬</span>
-              <span>WhatsApp Live Support</span>
+              <span>Join WhatsApp Channel</span>
             </a>
           </div>
         </div>

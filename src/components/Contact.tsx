@@ -222,9 +222,7 @@ export default function Contact({ settings, selectedService, setSelectedService 
   };
 
   const handleWhatsApp = () => {
-    const text = encodeURIComponent(`Hi ${settings.cafeName}, I am visiting today. Are you open right now?`);
-    const cleanNumber = settings.whatsapp.replace(/[^0-9+]/g, '');
-    window.open(`https://wa.me/${cleanNumber}?text=${text}`, '_blank');
+    window.open('https://whatsapp.com/channel/0029VbDgSe75a248qEZAbL3g', '_blank');
   };
 
   return (
@@ -297,11 +295,12 @@ export default function Contact({ settings, selectedService, setSelectedService 
               <div className="pt-2 flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={handleWhatsApp}
-                  className="flex-1 py-3 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-bold text-xs rounded-2xl border border-emerald-200/50 flex items-center justify-center gap-1.5 transition-all"
+                  className="flex-1 py-3 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-bold text-xs rounded-2xl border border-emerald-200/50 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                   id="contact-whatsapp-btn"
+                  title="Join Our WhatsApp Channel"
                 >
                   <MessageSquare className="w-4 h-4" />
-                  Chat on WhatsApp
+                  Join WhatsApp Channel
                 </button>
                 <a
                   href={`tel:${settings.phone}`}
