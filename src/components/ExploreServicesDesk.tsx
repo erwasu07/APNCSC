@@ -302,111 +302,131 @@ export default function ExploreServicesDesk({ onApplyService, selectedService }:
 
       {/* SERVICE DETAILS MODAL */}
       {selectedServiceItem && (
-        <div className="fixed inset-0 bg-slate-950/70 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-950/80 dark:bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 z-50 animate-fade-in overflow-hidden">
           <div 
-            className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 transform scale-100 transition-all duration-300"
+            className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 transform scale-100 transition-all duration-300"
             id={`explore-modal-${selectedServiceItem.id}`}
           >
-            {/* Modal Header */}
-            <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 relative bg-slate-50 dark:bg-slate-950/60 flex items-start justify-between">
-              <div className="space-y-1.5 pr-8">
-                {(() => {
-                  const ModalCategoryIcon = getCategoryIcon(selectedServiceItem.category);
-                  return (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                      <ModalCategoryIcon className="w-3 h-3" />
-                      <span>{CATEGORY_LABELS[selectedServiceItem.category]}</span>
+            {/* Top Breadcrumb & Header Banner */}
+            <div className="px-5 sm:px-8 py-5 border-b border-slate-200 dark:border-slate-800 relative bg-gradient-to-r from-slate-900 via-[#1e1b4b] to-slate-900 text-white shrink-0">
+              <div className="space-y-2 pr-10">
+                <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-slate-300">
+                  <span>E-Services Catalogue</span>
+                  <span>/</span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-blue-900/60 text-blue-200 border border-blue-700/50">
+                    {CATEGORY_LABELS[selectedServiceItem.category]}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 pt-0.5">
+                  <span className="text-xs font-black uppercase tracking-wider text-indigo-300 font-mono bg-indigo-950/80 px-2.5 py-0.5 rounded border border-indigo-700/50">
+                    CSC VERIFIED SERVICE
+                  </span>
+                  {selectedServiceItem.popular && (
+                    <span className="px-2 py-0.5 bg-amber-500 text-white font-black text-[9px] uppercase tracking-wider rounded animate-pulse font-mono">
+                      ⚡ POPULAR SERVICE
                     </span>
-                  );
-                })()}
-                <h3 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
+                  )}
+                </div>
+
+                <h3 className="text-lg sm:text-2xl font-black tracking-tight leading-snug font-display text-white">
                   {selectedServiceItem.name}
                 </h3>
               </div>
+
               <button
                 onClick={() => setSelectedServiceItem(null)}
-                className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-full transition-all absolute right-4 top-4 cursor-pointer"
-                title="Close"
+                className="p-2 bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white rounded-full transition-all absolute right-4 top-5 cursor-pointer"
+                title="Close Service View"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 overflow-y-auto space-y-5 text-xs scrollbar-thin">
+            <div className="p-5 sm:p-8 overflow-y-auto space-y-5 text-xs sm:text-sm scrollbar-thin bg-slate-50/50 dark:bg-slate-950/50">
               
-              {/* Important Notifications Section */}
-              <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-2xl space-y-2">
-                <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-black text-xs uppercase font-mono tracking-wider">
-                  <Bell className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 animate-bounce" />
-                  <span>Important Notifications</span>
+              {/* Service Processing Advisory Strip */}
+              <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-start gap-3">
+                <Bell className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5 animate-bounce" />
+                <div className="space-y-1">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 font-mono">
+                    Service Processing Advisory
+                  </h4>
+                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                    Please ensure all supporting identity proofs and application details are uploaded clearly. Authorized CSC processing ensures official validation and error-free submission.
+                  </p>
                 </div>
-                <p className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed font-medium">
-                  Please ensure all supporting identity proofs and application details are uploaded clearly. Authorized CSC processing ensures official validation.
-                </p>
               </div>
 
-              {/* Description */}
-              <div className="space-y-1">
-                <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 font-mono">
+              {/* Description Box */}
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-2 shadow-xs">
+                <h4 className="text-xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 font-mono">
                   Service Description
                 </h4>
-                <p className="text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                <p className="text-slate-700 dark:text-slate-300 text-xs sm:text-sm leading-relaxed font-normal">
                   {selectedServiceItem.description}
                 </p>
               </div>
 
-              {/* Price Block */}
-              <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  <span className="font-bold text-slate-800 dark:text-slate-200">Official Service Fee / Govt Price</span>
+              {/* Price & Turnaround Time Side-by-Side */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span className="font-bold text-slate-800 dark:text-slate-200 text-xs">Official Fee / Price</span>
+                  </div>
+                  <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-xs">
+                    {selectedServiceItem.price}
+                  </span>
                 </div>
-                <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-xs">
-                  {selectedServiceItem.price}
-                </span>
+
+                <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-2xl flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <span className="font-bold text-slate-800 dark:text-slate-200 text-xs">Estimated Time</span>
+                  </div>
+                  <span className="font-mono font-black text-blue-600 dark:text-blue-400 text-xs">
+                    {selectedServiceItem.estimatedTime}
+                  </span>
+                </div>
               </div>
 
-              {/* Requirements documents checklist */}
-              <div className="space-y-2">
-                <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 font-mono">
-                  Required Documents / Information
+              {/* Required Documents / Information */}
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-xs">
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white font-mono flex items-center gap-2">
+                  <FileCheck className="w-4 h-4 text-emerald-500" />
+                  <span>Required Documents / Information</span>
                 </h4>
-                <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-150 dark:border-slate-850 rounded-2xl p-4 space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   {selectedServiceItem.requirements.map((req, idx) => (
-                    <div key={idx} className="flex items-start gap-2.5">
-                      <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                      <span className="text-slate-700 dark:text-slate-200 font-semibold leading-relaxed">
-                        {req}
-                      </span>
+                    <div key={idx} className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-850">
+                      <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span className="font-medium text-slate-700 dark:text-slate-300">{req}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Estimated turnaround time block */}
-              <div className="p-3 bg-blue-500/5 border border-blue-500/10 rounded-xl flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  <span className="font-bold text-slate-700 dark:text-slate-300">Estimated Processing Time</span>
-                </div>
-                <span className="font-mono font-black text-blue-600 dark:text-blue-400">
-                  {selectedServiceItem.estimatedTime}
-                </span>
-              </div>
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5 bg-slate-50 dark:bg-slate-950/30">
+            <div className="p-4 sm:p-5 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 bg-white dark:bg-slate-900 shrink-0">
               <button
+                type="button"
                 onClick={() => setSelectedServiceItem(null)}
-                className="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-slate-200 dark:border-slate-700 flex items-center gap-1.5"
+                id="eservice-modal-close-btn"
               >
-                Close
+                <X className="w-4 h-4" />
+                <span>Close</span>
               </button>
+
               <button
+                type="button"
                 onClick={() => handleApply(selectedServiceItem)}
-                className="px-6 py-2.5 bg-[#1e1b4b] hover:bg-[#121033] text-white text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 shadow-md cursor-pointer"
+                className="px-6 py-2.5 bg-[#1e1b4b] hover:bg-[#121033] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-indigo-900/30 cursor-pointer hover:scale-[1.02]"
+                id="eservice-modal-apply-btn"
               >
                 <span>Apply via CSC Desk</span>
                 <ArrowRight className="w-4 h-4" />
