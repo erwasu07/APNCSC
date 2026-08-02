@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import TrackApplication from './TrackApplication';
 import { db } from '../lib/firebase';
 import { getSupabaseClient, uploadMultipleDocumentsToSupabase } from '../lib/supabase';
+import { processRazorpayPayment } from '../lib/razorpay';
 import { doc, setDoc } from 'firebase/firestore';
 import { 
   Briefcase, 
@@ -216,7 +217,9 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
   const [uploadedFiles, setUploadedFiles] = useState<UploadedDocument[]>([]);
   const [isProcessingFiles, setIsProcessingFiles] = useState(false);
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
-  const [postSubmitPaymentMode, setPostSubmitPaymentMode] = useState<'none' | 'online' | 'cash'>('none');
+  const [postSubmitPaymentMode, setPostSubmitPaymentMode] = useState<'none' | 'razorpay' | 'online' | 'cash'>('none');
+  const [isRazorpayLoading, setIsRazorpayLoading] = useState(false);
+  const [razorpayError, setRazorpayError] = useState<string | null>(null);
   const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
   const [submissionReceipt, setSubmissionReceipt] = useState<any>(null);
   const [activeAlertTab, setActiveAlertTab] = useState<'alerts' | 'updates' | 'help'>('alerts');
@@ -726,6 +729,134 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
         formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }, 100);
+  };
+
+  const handlePayWithRazorpay = () => {
+    if (!submissionReceipt) return;
+
+    setIsRazorpayLoading(true);
+    setRazorpayError(null);
+
+    processRazorpayPayment({
+      amount: submissionReceipt.totalAmount || 50,
+      appId: submissionReceipt.appId,
+      customerName: submissionReceipt.customerName,
+      email: submissionReceipt.emailAddress,
+      phone: submissionReceipt.phoneNumber,
+      serviceName: submissionReceipt.selectedService,
+      onSuccess: async (paymentId, orderId, signature) => {
+        setIsRazorpayLoading(false);
+
+        const updatedReceipt = {
+          ...submissionReceipt,
+          paymentMode: 'razorpay',
+          utrNumber: paymentId,
+          paymentId: paymentId,
+          orderId: orderId,
+          paymentStatus: 'Paid via Razorpay'
+        };
+
+        setSubmissionReceipt(updatedReceipt);
+        setFormData(prev => ({ ...prev, utrNumber: paymentId, paymentMode: 'online' }));
+        setPostSubmitPaymentMode('razorpay');
+        setIsPaymentConfirmed(true);
+
+        // Process and upload attached documents to Supabase Storage if configured
+        let processedDocs: UploadedDocument[] = uploadedFiles;
+        try {
+          processedDocs = await uploadMultipleDocumentsToSupabase(uploadedFiles, updatedReceipt.appId);
+          setUploadedFiles(processedDocs);
+        } catch (upErr) {
+          console.warn('Supabase payment document upload notice:', upErr);
+        }
+
+        // Save/update application in Cloud Firestore & central server database
+        const nowIso = new Date().toISOString();
+        const updatedPayload = {
+          appId: updatedReceipt.appId,
+          name: updatedReceipt.customerName,
+          email: updatedReceipt.emailAddress,
+          phone: updatedReceipt.phoneNumber,
+          service: updatedReceipt.selectedService,
+          dateOfBirth: updatedReceipt.dateOfBirth,
+          userCategory: updatedReceipt.userCategory,
+          paymentMode: 'Razorpay Online',
+          utrNumber: paymentId,
+          razorpayPaymentId: paymentId,
+          razorpayOrderId: orderId,
+          totalAmount: updatedReceipt.totalAmount,
+          message: formData.additionalDetails || 'None',
+          documents: processedDocs,
+          status: 'Paid',
+          paymentStatus: 'Paid via Razorpay',
+          submittedAt: nowIso,
+          updatedAt: nowIso,
+          statusUpdatedAt: nowIso
+        };
+
+        try {
+          setDoc(doc(db, 'applications', updatedReceipt.appId), updatedPayload, { merge: true }).catch(console.error);
+          setDoc(doc(db, 'appointments', updatedReceipt.appId), updatedPayload, { merge: true }).catch(console.error);
+
+          const supabase = getSupabaseClient();
+          if (supabase) {
+            supabase.from('applications').upsert([
+              {
+                appId: updatedReceipt.appId,
+                id: updatedReceipt.appId,
+                applicantName: updatedReceipt.customerName,
+                phoneNumber: updatedReceipt.phoneNumber,
+                emailAddress: updatedReceipt.emailAddress,
+                selectedService: updatedReceipt.selectedService,
+                userCategory: updatedReceipt.userCategory,
+                paymentMode: 'Razorpay Online',
+                utrNumber: paymentId,
+                totalAmount: updatedReceipt.totalAmount,
+                status: 'Paid',
+                submittedAt: nowIso,
+                documents: processedDocs,
+                payload: updatedPayload
+              }
+            ], { onConflict: 'appId' }).catch(console.error);
+          }
+        } catch (dbErr) {
+          console.error('Database save error after Razorpay payment:', dbErr);
+        }
+
+        // Save updated local application to localStorage
+        try {
+          const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+          localStorage.setItem('csc_local_applications', JSON.stringify([updatedPayload, ...existing.filter((i: any) => i.appId !== updatedReceipt.appId)]));
+        } catch (e) {
+          console.warn('localStorage update warning:', e);
+        }
+
+        // Broadcast live synchronization events
+        try {
+          window.dispatchEvent(new CustomEvent('csc_appointment_updated', { detail: updatedPayload }));
+          window.dispatchEvent(new Event('storage'));
+        } catch (e) {
+          console.error(e);
+        }
+
+        // Secondary POST to server API
+        fetch(`/api/appointments/${updatedReceipt.appId}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'Paid via Razorpay' })
+        }).catch(console.error);
+
+        // Trigger updated WhatsApp invoice notification with payment confirmation
+        triggerWhatsAppInvoiceDispatch(updatedReceipt);
+      },
+      onError: (errMsg) => {
+        setIsRazorpayLoading(false);
+        setRazorpayError(errMsg);
+      },
+      onDismiss: () => {
+        setIsRazorpayLoading(false);
+      }
+    });
   };
 
   const handleConfirmPayment = async () => {
@@ -1592,86 +1723,186 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
               <div className="space-y-4">
                 <label className="text-xs font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-300 block flex items-center justify-between">
                   <span>Choose Payment Method:</span>
-                  <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-100/80 dark:bg-amber-950/80 px-2.5 py-0.5 rounded-full border border-amber-300 dark:border-amber-800">
-                    Select an option below
+                  <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">
+                    Razorpay Gateway Enabled
                   </span>
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  
+                  {/* OPTION 1: RAZORPAY GATEWAY (RECOMMENDED) */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPostSubmitPaymentMode('razorpay');
+                      setUtrError(null);
+                      setRazorpayError(null);
+                    }}
+                    className={`group relative p-3.5 rounded-2xl border-2 flex flex-col justify-between gap-2.5 transition-all duration-200 cursor-pointer text-left shadow-xs hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 ${
+                      postSubmitPaymentMode === 'razorpay'
+                        ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-500/15 dark:bg-emerald-500/25 text-slate-900 dark:text-white font-extrabold shadow-md ring-4 ring-emerald-500/25 scale-[1.01]'
+                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-emerald-500 dark:hover:border-emerald-400 hover:bg-emerald-50/80 dark:hover:bg-emerald-950/40'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className={`p-2.5 rounded-xl shrink-0 transition-colors duration-200 ${
+                        postSubmitPaymentMode === 'razorpay'
+                          ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-300/50'
+                          : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white'
+                      }`}>
+                        <CreditCard className="w-5 h-5" />
+                      </div>
+                      <span className="text-[9px] bg-emerald-600 text-white font-black px-2 py-0.5 rounded-md uppercase tracking-wider">
+                        ★ Instant
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-xs font-black uppercase tracking-wider block text-slate-900 dark:text-white">Razorpay Gateway</span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-tight block mt-0.5">UPI, Cards, Netbanking &amp; Wallets</span>
+                    </div>
+                  </button>
+
+                  {/* OPTION 2: SCAN GOOGLE PAY QR */}
                   <button
                     type="button"
                     onClick={() => {
                       setPostSubmitPaymentMode('online');
                       setUtrError(null);
+                      setRazorpayError(null);
                     }}
-                    className={`group relative p-4 rounded-2xl border-2 flex items-center justify-between gap-3 transition-all duration-200 cursor-pointer text-left shadow-xs hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 ${
+                    className={`group relative p-3.5 rounded-2xl border-2 flex flex-col justify-between gap-2.5 transition-all duration-200 cursor-pointer text-left shadow-xs hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 ${
                       postSubmitPaymentMode === 'online'
                         ? 'border-blue-600 dark:border-blue-500 bg-blue-500/15 dark:bg-blue-500/25 text-slate-900 dark:text-white font-extrabold shadow-md ring-4 ring-blue-500/25 scale-[1.01]'
                         : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50/80 dark:hover:bg-blue-950/40'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className={`p-3 rounded-xl shrink-0 transition-colors duration-200 ${
+                    <div className="flex items-center justify-between w-full">
+                      <div className={`p-2.5 rounded-xl shrink-0 transition-colors duration-200 ${
                         postSubmitPaymentMode === 'online'
                           ? 'bg-blue-600 text-white shadow-sm ring-2 ring-blue-300/50'
                           : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white'
                       }`}>
-                        <QrCode className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <span className="text-xs font-black uppercase tracking-wider block group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Pay Online</span>
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Scan Google Pay / UPI QR Code</span>
+                        <QrCode className="w-5 h-5" />
                       </div>
                     </div>
-                    {postSubmitPaymentMode === 'online' ? (
-                      <div className="bg-blue-600 text-white p-1 rounded-full shrink-0 shadow-xs animate-in zoom-in-75">
-                        <Check className="w-4 h-4 stroke-[3]" />
-                      </div>
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-700 group-hover:border-blue-500 shrink-0 transition-colors" />
-                    )}
+                    <div>
+                      <span className="text-xs font-black uppercase tracking-wider block text-slate-900 dark:text-white">Scan UPI QR</span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-tight block mt-0.5">Scan GPay QR + Enter UTR Ref</span>
+                    </div>
                   </button>
 
+                  {/* OPTION 3: CASH COUNTER */}
                   <button
                     type="button"
                     onClick={() => {
                       setPostSubmitPaymentMode('cash');
                       setUtrError(null);
+                      setRazorpayError(null);
                     }}
-                    className={`group relative p-4 rounded-2xl border-2 flex items-center justify-between gap-3 transition-all duration-200 cursor-pointer text-left shadow-xs hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 ${
+                    className={`group relative p-3.5 rounded-2xl border-2 flex flex-col justify-between gap-2.5 transition-all duration-200 cursor-pointer text-left shadow-xs hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 ${
                       postSubmitPaymentMode === 'cash'
-                        ? 'border-emerald-600 dark:border-emerald-500 bg-emerald-500/15 dark:bg-emerald-500/25 text-slate-900 dark:text-white font-extrabold shadow-md ring-4 ring-emerald-500/25 scale-[1.01]'
-                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-emerald-500 dark:hover:border-emerald-400 hover:bg-emerald-50/80 dark:hover:bg-emerald-950/40'
+                        ? 'border-amber-600 dark:border-amber-500 bg-amber-500/15 dark:bg-amber-500/25 text-slate-900 dark:text-white font-extrabold shadow-md ring-4 ring-amber-500/25 scale-[1.01]'
+                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-amber-500 dark:hover:border-amber-400 hover:bg-amber-50/80 dark:hover:bg-amber-950/40'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className={`p-3 rounded-xl shrink-0 transition-colors duration-200 ${
+                    <div className="flex items-center justify-between w-full">
+                      <div className={`p-2.5 rounded-xl shrink-0 transition-colors duration-200 ${
                         postSubmitPaymentMode === 'cash'
-                          ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-300/50'
-                          : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white'
+                          ? 'bg-amber-600 text-white shadow-sm ring-2 ring-amber-300/50'
+                          : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 group-hover:bg-amber-600 group-hover:text-white'
                       }`}>
-                        <IndianRupee className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <span className="text-xs font-black uppercase tracking-wider block group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Cash Counter</span>
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Pay in person at Cyber Cafe</span>
+                        <IndianRupee className="w-5 h-5" />
                       </div>
                     </div>
-                    {postSubmitPaymentMode === 'cash' ? (
-                      <div className="bg-emerald-600 text-white p-1 rounded-full shrink-0 shadow-xs animate-in zoom-in-75">
-                        <Check className="w-4 h-4 stroke-[3]" />
-                      </div>
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-700 group-hover:border-emerald-500 shrink-0 transition-colors" />
-                    )}
+                    <div>
+                      <span className="text-xs font-black uppercase tracking-wider block text-slate-900 dark:text-white">Cash Counter</span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-tight block mt-0.5">Pay in person at Cyber Cafe</span>
+                    </div>
                   </button>
+
                 </div>
 
-                {/* QR CODE DISPLAY LOGIC: REMAINS HIDDEN UNTIL 'Pay Online' IS SELECTED */}
+                {/* PAYMENT METHOD DETAILS DISPLAY LOGIC */}
                 {postSubmitPaymentMode === 'none' ? (
                   <div className="bg-slate-50 dark:bg-slate-950 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl p-6 text-center text-slate-500 dark:text-slate-400">
                     <p className="text-xs font-semibold">
-                      👈 Please select either <span className="font-extrabold text-blue-600 dark:text-blue-400">Pay Online</span> or <span className="font-extrabold text-emerald-600 dark:text-emerald-400">Cash Counter</span> above to proceed.
+                      👈 Please select <span className="font-extrabold text-emerald-600 dark:text-emerald-400">Razorpay Gateway</span>, <span className="font-extrabold text-blue-600 dark:text-blue-400">Scan UPI QR</span>, or <span className="font-extrabold text-amber-600 dark:text-amber-400">Cash Counter</span> above to proceed.
                     </p>
+                  </div>
+                ) : postSubmitPaymentMode === 'razorpay' ? (
+                  /* RAZORPAY PAYMENT GATEWAY CARD */
+                  <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-2xl p-6 shadow-md border border-emerald-500/30 dark:border-emerald-500/20 flex flex-col items-center text-center animate-fade-in relative overflow-hidden space-y-4">
+                    {/* Top Decorative Emerald Stripe */}
+                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"></div>
+
+                    {/* Razorpay Header & Branding */}
+                    <div className="pt-1 space-y-1">
+                      <div className="inline-flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700">
+                        <span className="text-xs font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 font-mono">⚡ Razorpay</span>
+                        <span className="text-slate-400 text-[10px]">•</span>
+                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">PCI-DSS 256-bit Secure</span>
+                      </div>
+                      <h4 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                        Instant Online Payment Gateway
+                      </h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md">
+                        Pay total amount of <strong className="text-emerald-600 dark:text-emerald-400 font-extrabold font-mono">₹{submissionReceipt?.totalAmount}</strong> using Google Pay, PhonePe, Paytm, Credit/Debit Cards, or NetBanking.
+                      </p>
+                    </div>
+
+                    {/* Payment Options Supported Pills */}
+                    <div className="w-full bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10.5px] font-extrabold text-slate-700 dark:text-slate-300">
+                      <div className="flex items-center justify-center gap-1.5 p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs">
+                        <span>📱</span>
+                        <span>UPI / GPay / PhonePe</span>
+                      </div>
+                      <div className="flex items-center justify-center gap-1.5 p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs">
+                        <span>💳</span>
+                        <span>Debit / Credit Cards</span>
+                      </div>
+                      <div className="flex items-center justify-center gap-1.5 p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs">
+                        <span>🏦</span>
+                        <span>NetBanking (50+ Banks)</span>
+                      </div>
+                      <div className="flex items-center justify-center gap-1.5 p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs">
+                        <span>👛</span>
+                        <span>Wallets &amp; PayLater</span>
+                      </div>
+                    </div>
+
+                    {/* Test Mode Key Indicator */}
+                    <div className="w-full text-[10px] text-slate-500 dark:text-slate-400 font-mono bg-blue-50 dark:bg-blue-950/50 p-2 rounded-lg border border-blue-200 dark:border-blue-900/60 flex items-center justify-between">
+                      <span>🔑 Razorpay Test Key ID:</span>
+                      <span className="font-bold text-blue-700 dark:text-blue-300">rzp_test_TKwuWkZNJrp68J</span>
+                    </div>
+
+                    {/* Error message display if any */}
+                    {razorpayError && (
+                      <div className="w-full text-xs text-red-600 dark:text-red-400 font-bold bg-red-50 dark:bg-red-950/80 p-3 rounded-xl border border-red-300 dark:border-red-800 text-left animate-pulse flex items-start gap-2">
+                        <span className="shrink-0 text-sm">⚠️</span>
+                        <span>{razorpayError}</span>
+                      </div>
+                    )}
+
+                    {/* Primary Razorpay Action Button */}
+                    <button
+                      type="button"
+                      onClick={handlePayWithRazorpay}
+                      disabled={isRazorpayLoading}
+                      className="w-full py-3.5 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm uppercase tracking-wider rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {isRazorpayLoading ? (
+                        <>
+                          <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                          <span>Launching Razorpay Checkout...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="w-5 h-5" />
+                          <span>Pay ₹{submissionReceipt?.totalAmount} via Razorpay Gateway</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </>
+                      )}
+                    </button>
                   </div>
                 ) : postSubmitPaymentMode === 'online' ? (
                   /* QR CODE IS REVEALED AND DISPLAYED ONLY NOW AFTER Pay Online IS CLICKED */
