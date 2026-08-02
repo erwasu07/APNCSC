@@ -2173,13 +2173,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
               })}
           </div>
 
-        {/* Informative Notice Bar bottom of boxes */}
-        <div className="mt-12 p-4 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200/80 dark:border-yellow-900/30 rounded-2xl flex items-start gap-3 max-w-4xl mx-auto">
-          <Info className="w-5 h-5 text-yellow-600 dark:text-yellow-500 flex-shrink-0 mt-0.5 animate-pulse" />
-          <p className="text-xs text-yellow-800 dark:text-yellow-300 font-medium leading-relaxed">
-            <strong>Important Advice:</strong> Government application portals require error-free data entry, high-quality scanning of signatures/marksheets, and compliant dimension adjustments. Visit our physical café or make an appointment online to submit your form securely with zero errors!
-          </p>
-        </div>
+
 
       </div>
 
