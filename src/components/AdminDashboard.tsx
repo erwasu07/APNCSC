@@ -224,7 +224,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
           let mergedDocs = existing.documents || [];
           if (Array.isArray(app.documents) && app.documents.length > 0) {
-            if (app.documents.some((d: any) => d.dataUrl) || mergedDocs.length === 0) {
+            if (app.documents.some((d: any) => d.dataUrl || d.url) || mergedDocs.length === 0) {
               mergedDocs = app.documents;
             }
           }
@@ -951,9 +951,9 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
                           <div className="flex items-center gap-1 shrink-0">
                             {/* Preview Button */}
-                            {doc.dataUrl && (
+                            {(doc.dataUrl || doc.url) && (
                               <button
-                                onClick={() => setSelectedDocPreview({ name: doc.name, url: doc.dataUrl, type: doc.type })}
+                                onClick={() => setSelectedDocPreview({ name: doc.name, url: doc.dataUrl || doc.url, type: doc.type })}
                                 className="p-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
                                 title="View/Preview Document"
                               >
@@ -963,10 +963,12 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                             )}
 
                             {/* Download Button */}
-                            {doc.dataUrl && (
+                            {(doc.dataUrl || doc.url) && (
                               <a
-                                href={doc.dataUrl}
+                                href={doc.dataUrl || doc.url}
                                 download={doc.name}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="p-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
                                 title="Download Document"
                               >

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import TrackApplication from './TrackApplication';
 import { db } from '../lib/firebase';
-import { getSupabaseClient } from '../lib/supabase';
+import { getSupabaseClient, uploadMultipleDocumentsToSupabase } from '../lib/supabase';
 import { doc, setDoc } from 'firebase/firestore';
 import { 
   Briefcase, 
@@ -360,7 +360,8 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
           name: file.name,
           size: file.size,
           type: file.type || 'application/octet-stream',
-          dataUrl
+          dataUrl,
+          rawFile: file
         };
         setUploadedFiles(prev => [
           ...prev.filter(f => f.docTypeId !== docType.id),
@@ -407,7 +408,8 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
             name: file.name,
             size: file.size,
             type: file.type || 'application/octet-stream',
-            dataUrl
+            dataUrl,
+            rawFile: file
           };
           setUploadedFiles(prev => [...prev, newDoc]);
           loadedCount++;
@@ -605,6 +607,15 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     // Automatically trigger WhatsApp invoice notification dispatch
     triggerWhatsAppInvoiceDispatch(mockReceipt);
 
+    // Process and upload attached documents to Supabase Storage if configured
+    let processedDocs: UploadedDocument[] = uploadedFiles;
+    try {
+      processedDocs = await uploadMultipleDocumentsToSupabase(uploadedFiles, mockReceipt.appId);
+      setUploadedFiles(processedDocs);
+    } catch (upErr) {
+      console.warn('Supabase document upload notice:', upErr);
+    }
+
     // Save initial application directly to Cloud Firestore & server API immediately
     const nowIso = new Date().toISOString();
     const initialPayload = {
@@ -619,7 +630,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       utrNumber: 'N/A',
       totalAmount: mockReceipt.totalAmount,
       message: formData.additionalDetails || 'None',
-      documents: uploadedFiles,
+      documents: processedDocs,
       status: 'Pending',
       submittedAt: nowIso,
       createdAt: nowIso,
@@ -655,7 +666,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                 totalAmount: mockReceipt.totalAmount,
                 status: 'Pending',
                 submittedAt: nowIso,
-                documents: uploadedFiles,
+                documents: processedDocs,
                 payload: initialPayload
               }
             ], { onConflict: 'appId' });
@@ -745,6 +756,15 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       ? updatedReceipt.uploadedDocuments.join(', ') 
       : 'None Attached';
 
+    // Process and upload attached documents to Supabase Storage if configured
+    let processedDocs: UploadedDocument[] = uploadedFiles;
+    try {
+      processedDocs = await uploadMultipleDocumentsToSupabase(uploadedFiles, updatedReceipt.appId);
+      setUploadedFiles(processedDocs);
+    } catch (upErr) {
+      console.warn('Supabase payment document upload notice:', upErr);
+    }
+
     // Save/update application in Cloud Firestore & central server database
     const nowIso = new Date().toISOString();
     const payload = {
@@ -759,7 +779,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       utrNumber: updatedReceipt.utrNumber,
       totalAmount: updatedReceipt.totalAmount,
       message: formData.additionalDetails || 'None',
-      documents: uploadedFiles,
+      documents: processedDocs,
       status: 'Pending',
       submittedAt: nowIso,
       createdAt: nowIso,
@@ -796,7 +816,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                 status: 'Pending',
                 submittedAt: nowIso,
                 updatedAt: nowIso,
-                documents: uploadedFiles,
+                documents: processedDocs,
                 payload: payload
               }
             ], { onConflict: 'appId' });

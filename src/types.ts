@@ -6,6 +6,8 @@ export interface UploadedDocument {
   size: number;
   type: string;
   dataUrl?: string;
+  url?: string;
+  rawFile?: any;
 }
 
 export interface ContactRequest {
