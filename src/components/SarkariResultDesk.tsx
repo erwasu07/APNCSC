@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import TrackApplication from './TrackApplication';
+import { AdSenseSlot } from './AdSenseSlot';
 import { db } from '../lib/firebase';
 import { getSupabaseClient, uploadMultipleDocumentsToSupabase } from '../lib/supabase';
 import { processRazorpayPayment } from '../lib/razorpay';
@@ -2459,15 +2460,49 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                 </div>
               </div>
 
-              {/* Brief Overview Card */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-2 shadow-xs">
-                <h4 className="text-xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 font-mono flex items-center gap-1.5">
-                  <Info className="w-4 h-4" />
-                  <span>Notification Overview</span>
-                </h4>
-                <p className="text-slate-700 dark:text-slate-300 text-xs sm:text-sm leading-relaxed font-normal">
-                  {selectedItem.shortInfo}
-                </p>
+              {/* Google AdSense Banner Ad Slot */}
+              <AdSenseSlot className="my-2" />
+
+              {/* Prominent Short Information / Short Description Card */}
+              <div className="bg-white dark:bg-slate-900 border border-blue-200/80 dark:border-blue-900/60 rounded-2xl p-5 space-y-3.5 shadow-sm">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                  <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-blue-900 dark:text-blue-300 font-mono flex items-center gap-2">
+                    <FileText className="w-4.5 h-4.5 text-blue-600 dark:text-blue-400" />
+                    <span>Short Description / Notification Summary</span>
+                  </h4>
+                  <span className="px-2.5 py-0.5 bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-[10px] font-mono font-bold rounded-full border border-blue-200 dark:border-blue-800">
+                    Official Notice
+                  </span>
+                </div>
+
+                <div className="text-slate-800 dark:text-slate-200 text-xs sm:text-sm leading-relaxed space-y-2.5 font-normal">
+                  <p className="p-3 bg-slate-50 dark:bg-slate-950/80 rounded-xl border border-slate-200/70 dark:border-slate-850">
+                    <strong className="font-extrabold text-blue-900 dark:text-blue-200">{getOrgName(selectedItem)}</strong> has officially published the official notification for <strong className="font-black text-slate-950 dark:text-white">{selectedItem.title}</strong>. {selectedItem.shortInfo || 'Interested and eligible candidates can read the complete notification details, eligibility criteria, age limits, and fee structure below before submitting their online application form.'}
+                  </p>
+                  
+                  {/* Quick Post Metadata Chips */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 font-mono text-[11px]">
+                    <div className="p-2 bg-slate-100 dark:bg-slate-800/60 rounded-lg flex flex-col">
+                      <span className="text-slate-500 dark:text-slate-400 text-[9px] uppercase font-bold">Post Date</span>
+                      <span className="font-extrabold text-slate-900 dark:text-slate-100">{selectedItem.postDate}</span>
+                    </div>
+                    <div className="p-2 bg-slate-100 dark:bg-slate-800/60 rounded-lg flex flex-col">
+                      <span className="text-slate-500 dark:text-slate-400 text-[9px] uppercase font-bold">Category</span>
+                      <span className="font-extrabold text-blue-600 dark:text-blue-400 uppercase">{selectedItem.category.replace('_', ' ')}</span>
+                    </div>
+                    {selectedItem.advertisementNo ? (
+                      <div className="p-2 bg-slate-100 dark:bg-slate-800/60 rounded-lg flex flex-col col-span-2 sm:col-span-1">
+                        <span className="text-slate-500 dark:text-slate-400 text-[9px] uppercase font-bold">Advt No.</span>
+                        <span className="font-extrabold text-amber-600 dark:text-amber-400 truncate">{selectedItem.advertisementNo}</span>
+                      </div>
+                    ) : (
+                      <div className="p-2 bg-slate-100 dark:bg-slate-800/60 rounded-lg flex flex-col col-span-2 sm:col-span-1">
+                        <span className="text-slate-500 dark:text-slate-400 text-[9px] uppercase font-bold">Status</span>
+                        <span className="font-extrabold text-emerald-600 dark:text-emerald-400">Active / Form Open</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Important Dates & Application Fees Side-by-Side */}
