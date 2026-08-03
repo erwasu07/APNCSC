@@ -68,10 +68,14 @@ function authenticateAdmin(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-// Public API: Increments website views
-app.post('/api/tracker/view', (req, res) => {
-  const newCount = incrementViews();
-  res.json({ success: true, totalViews: newCount });
+// Public API: Increments website views (handles GET, POST, OPTIONS)
+app.all('/api/tracker/view', (req, res) => {
+  if (req.method === 'POST') {
+    const newCount = incrementViews();
+    return res.json({ success: true, totalViews: newCount });
+  }
+  const analytics = getAnalytics();
+  res.json({ success: true, totalViews: analytics.views });
 });
 
 // Public API: Retrieve active announcements and public info

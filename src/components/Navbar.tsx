@@ -91,7 +91,7 @@ export default function Navbar({
       {/* PROMINENT DISCLAIMER BANNER FOR GOOGLE SAFE BROWSING & SEARCH CONSOLE COMPLIANCE */}
       <div className="bg-amber-500/15 border-b border-amber-500/30 text-slate-800 dark:text-amber-200 text-[11px] font-sans py-1.5 px-3 text-center leading-tight">
         <div className="max-w-7xl mx-auto flex items-center justify-center gap-1.5 flex-wrap">
-          <span className="font-extrabold bg-amber-600 text-white px-2 py-0.5 rounded text-[10px] uppercase tracking-wider">Disclaimer</span>
+          <span className="font-black bg-amber-800 text-white px-2 py-0.5 rounded text-[10px] uppercase tracking-wider">Disclaimer</span>
           <span>
             <strong>CSC DOST (cscdost.online)</strong> is an independent private service portal. We are <strong>NOT an official government website</strong> and NOT affiliated with CSC e-Governance Services India Ltd. Official government portals: <a href="https://csc.gov.in" target="_blank" rel="noopener noreferrer" className="underline font-bold hover:text-amber-500">csc.gov.in</a> | <a href="https://digitalseva.csc.gov.in" target="_blank" rel="noopener noreferrer" className="underline font-bold hover:text-amber-500">digitalseva.csc.gov.in</a>.
           </span>
@@ -170,7 +170,7 @@ export default function Navbar({
               href="https://whatsapp.com/channel/0029VbDgSe75a248qEZAbL3g"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-2.5 py-0.5 sm:py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10.5px] sm:text-[11px] rounded-md flex items-center gap-1 shadow-sm transition-all cursor-pointer shrink-0"
+              className="px-2.5 py-0.5 sm:py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-[10.5px] sm:text-[11px] rounded-md flex items-center gap-1 shadow-sm transition-all cursor-pointer shrink-0"
               title="Join our official WhatsApp Channel for instant job & result updates"
             >
               <span>💬</span>

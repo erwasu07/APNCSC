@@ -1576,7 +1576,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                             className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-semibold text-xs outline-none"
                           />
                         </div>
-                        <span className="text-[9.5px] text-slate-400 dark:text-slate-500 font-medium block">
+                        <span className="text-[10px] text-slate-600 dark:text-slate-300 font-semibold block">
                           Must match Aadhaar records
                         </span>
                       </div>
@@ -1599,7 +1599,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                             className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-mono font-semibold text-xs outline-none"
                           />
                         </div>
-                        <span className="text-[9.5px] text-slate-400 dark:text-slate-500 font-medium block">
+                        <span className="text-[10px] text-slate-600 dark:text-slate-300 font-semibold block">
                           For instant SMS/WhatsApp Token Receipts
                         </span>
                       </div>
@@ -1830,7 +1830,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                     <div className="pt-1.5 space-y-2">
                       <button
                         type="submit"
-                        className="w-full py-2.5 px-4 bg-[#00a86b] hover:bg-[#008f5a] text-white font-extrabold text-xs uppercase tracking-wider rounded-lg shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        className="w-full py-2.5 px-4 bg-[#007a4b] hover:bg-[#00603b] text-white font-extrabold text-xs uppercase tracking-wider rounded-lg shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <span>Submit Application &amp; Proceed to Payment</span>
                         <ArrowRight className="w-3.5 h-3.5" />
@@ -2364,7 +2364,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                               </p>
                               <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono text-slate-500">
                                 {item.isNew && (
-                                  <span className="px-1.5 py-0.2 bg-red-600 text-white font-extrabold text-[9.5px] rounded animate-pulse">
+                                  <span className="px-1.5 py-0.2 bg-red-700 text-white font-black text-[9.5px] rounded animate-pulse">
                                     ⚡ NEW
                                   </span>
                                 )}

@@ -263,7 +263,7 @@ export default function ExploreServicesDesk({ onApplyService, selectedService }:
                             {item.name}
                           </span>
                           {item.popular && (
-                            <span className="px-1.5 py-0.2 bg-amber-500 text-white text-[9px] font-black uppercase rounded shrink-0 font-mono">
+                            <span className="px-1.5 py-0.2 bg-amber-600 text-slate-950 text-[9px] font-black uppercase rounded shrink-0 font-mono">
                               HOT
                             </span>
                           )}
@@ -323,7 +323,7 @@ export default function ExploreServicesDesk({ onApplyService, selectedService }:
                     CSC VERIFIED SERVICE
                   </span>
                   {selectedServiceItem.popular && (
-                    <span className="px-2 py-0.5 bg-amber-500 text-white font-black text-[9px] uppercase tracking-wider rounded animate-pulse font-mono">
+                    <span className="px-2 py-0.5 bg-amber-600 text-slate-950 font-black text-[9px] uppercase tracking-wider rounded animate-pulse font-mono">
                       ⚡ POPULAR SERVICE
                     </span>
                   )}
