@@ -1739,18 +1739,18 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                               return (
                                 <div
                                   key={docType.id}
-                                  className={`p-2.5 rounded-xl border transition-all flex flex-col justify-between gap-2 ${
+                                  className={`p-2.5 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
                                     uploadedDoc
-                                      ? 'bg-emerald-50/90 dark:bg-emerald-950/30 border-emerald-400 dark:border-emerald-800 shadow-xs'
+                                      ? 'bg-emerald-50/90 dark:bg-emerald-950/30 border-emerald-400 dark:border-emerald-800 shadow-2xs'
                                       : 'bg-white dark:bg-slate-900 border-amber-300 dark:border-amber-800/80 hover:border-amber-500 shadow-2xs'
                                   }`}
                                 >
-                                  <div className="space-y-0.5">
-                                    <div className="flex items-center justify-between gap-1">
-                                      <span className="text-[11px] font-black uppercase tracking-wide text-slate-900 dark:text-white truncate">
+                                  <div className="space-y-0.5 flex-1 min-w-0 pr-1">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span className="text-[11px] font-black uppercase tracking-wide text-slate-900 dark:text-white leading-tight">
                                         {docType.name}
                                       </span>
-                                      <span className="text-[8px] bg-red-600 text-white font-bold px-1.5 py-0.2 rounded uppercase shrink-0">
+                                      <span className="text-[8px] bg-red-600 text-white font-black px-1.5 py-0.2 rounded uppercase shrink-0">
                                         Required
                                       </span>
                                     </div>
@@ -1759,26 +1759,24 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                                     </p>
                                   </div>
 
-                                  <div className="pt-1 border-t border-slate-100 dark:border-slate-800/60">
+                                  <div className="shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-slate-800/60">
                                     {uploadedDoc ? (
-                                      <div className="w-full flex items-center justify-between bg-emerald-100/80 dark:bg-emerald-950/80 px-2 py-1 rounded-lg border border-emerald-300 dark:border-emerald-800">
-                                        <div className="flex items-center gap-1.5 min-w-0">
-                                          <CheckCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                                          <span className="text-[10px] font-bold text-slate-900 dark:text-slate-100 truncate">
-                                            {uploadedDoc.name}
-                                          </span>
-                                        </div>
+                                      <div className="flex items-center gap-1.5 bg-emerald-100/90 dark:bg-emerald-950/90 px-2.5 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 max-w-[180px]">
+                                        <CheckCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                        <span className="text-[10px] font-bold text-slate-900 dark:text-slate-100 truncate flex-1">
+                                          {uploadedDoc.name}
+                                        </span>
                                         <button
                                           type="button"
                                           onClick={() => handleRemoveDocByTypeId(docType.id)}
-                                          className="p-0.5 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-500 rounded transition-colors cursor-pointer shrink-0 ml-1"
+                                          className="p-0.5 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-500 rounded transition-colors cursor-pointer shrink-0 ml-0.5"
                                           title="Remove Document"
                                         >
                                           <X className="w-3.5 h-3.5" />
                                         </button>
                                       </div>
                                     ) : (
-                                      <label className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-slate-950 font-black text-[11px] uppercase tracking-wider rounded-lg shadow-2xs transition-all cursor-pointer">
+                                      <label className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-slate-950 font-black text-[11px] uppercase tracking-wider rounded-lg shadow-2xs transition-all cursor-pointer shrink-0 whitespace-nowrap">
                                         <UploadCloud className="w-3.5 h-3.5" />
                                         <span>Choose File</span>
                                         <input

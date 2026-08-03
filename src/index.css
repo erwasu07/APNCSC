@@ -14,24 +14,26 @@
 
 @layer base {
   html {
-    max-width: 100vw;
     width: 100%;
+    max-width: 100%;
     overflow-x: hidden !important;
     position: relative;
     touch-action: manipulation;
+    overscroll-behavior-x: none;
   }
   body {
-    max-width: 100vw;
     width: 100%;
+    max-width: 100%;
     overflow-x: hidden !important;
     position: relative;
     margin: 0;
     padding: 0;
     touch-action: manipulation;
+    overscroll-behavior-x: none;
   }
   #root {
-    max-width: 100vw;
     width: 100%;
+    max-width: 100%;
     overflow-x: hidden !important;
     scroll-behavior: smooth;
     font-family: var(--font-sans);
@@ -127,16 +129,20 @@ body {
 /* Marquee ticker animation for continuous horizontal news banner */
 @keyframes marquee {
   0% {
-    transform: translateX(0%);
+    transform: translate3d(0%, 0, 0);
   }
   100% {
-    transform: translateX(-50%);
+    transform: translate3d(-50%, 0, 0);
   }
 }
 
 .animate-marquee {
   display: inline-flex;
   width: max-content;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
   animation: marquee 35s linear infinite;
 }
 
