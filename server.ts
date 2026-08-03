@@ -28,8 +28,8 @@ const app = express();
 const PORT = 3000;
 
 // Initialize Razorpay instance with configured keys
-const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || 'rzp_test_TKwuWkZNJrp68J';
-const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'KT7pjS5cqEN1LSQKF3aQNxqj';
+const RAZORPAY_KEY_ID = (process.env.RAZORPAY_KEY_ID || 'rzp_live_TKzCEWX1HvPA4c').trim();
+const RAZORPAY_KEY_SECRET = (process.env.RAZORPAY_KEY_SECRET || '54Dj7PDhG28hg4vtiggd97xL').trim();
 
 let razorpayInstance: Razorpay | null = null;
 function getRazorpay(): Razorpay {
@@ -90,7 +90,8 @@ app.get('/api/public-data', (req, res) => {
 
 // Get public Razorpay Key ID
 app.get('/api/razorpay/config', (req: Request, res: Response) => {
-  res.json({
+  res.setHeader('Content-Type', 'application/json');
+  return res.status(200).json({
     success: true,
     keyId: RAZORPAY_KEY_ID
   });
@@ -98,8 +99,9 @@ app.get('/api/razorpay/config', (req: Request, res: Response) => {
 
 // Create Razorpay Order
 app.post('/api/razorpay/create-order', async (req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'application/json');
   try {
-    const { amount, appId, customerName, email, phone, service } = req.body;
+    const { amount, appId, customerName, email, phone, service } = req.body || {};
 
     if (!amount || Number(amount) <= 0) {
       return res.status(400).json({ success: false, error: 'Valid payment amount is required.' });
@@ -126,16 +128,17 @@ app.post('/api/razorpay/create-order', async (req: Request, res: Response) => {
 
     console.log(`💳 Razorpay Order Created [ID: ${order.id}] for ${customerName || 'Customer'} - ₹${amount}`);
 
-    res.json({
+    return res.status(200).json({
       success: true,
       order,
       keyId: RAZORPAY_KEY_ID
     });
   } catch (error: any) {
     console.error('Razorpay Order Creation Error:', error);
-    res.status(500).json({
+    const errMessage = error?.error?.description || error?.description || error?.message || 'Server error';
+    return res.status(500).json({
       success: false,
-      error: 'Failed to create Razorpay payment order: ' + (error?.message || 'Server error')
+      error: 'Failed to create Razorpay payment order: ' + errMessage
     });
   }
 });
@@ -164,7 +167,7 @@ app.post('/api/razorpay/verify-payment', (req: Request, res: Response) => {
       console.log(`✅ Razorpay Payment Verified [Payment ID: ${razorpay_payment_id}] for Order ${razorpay_order_id}`);
 
       if (appId) {
-        updateAppointmentStatus(appId, 'Paid via Razorpay');
+        updateAppointmentStatus(appId, 'completed');
       }
 
       res.json({

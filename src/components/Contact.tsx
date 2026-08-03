@@ -99,7 +99,8 @@ export default function Contact({ settings, selectedService, setSelectedService 
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, email, phone, service, message })
         });
-        const data = await res.json();
+        const text1 = await res.text();
+        const data = text1 ? JSON.parse(text1) : {};
         if (res.ok) {
           setStatusMessage({
             type: 'success',
@@ -130,7 +131,8 @@ export default function Contact({ settings, selectedService, setSelectedService 
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, email, phone, service, appointmentDate, appointmentTime, message })
         });
-        const data = await res.json();
+        const text2 = await res.text();
+        const data = text2 ? JSON.parse(text2) : {};
 
         // Web3Forms direct integration & real-time extraction dispatch
         try {

@@ -217,7 +217,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
   const [uploadedFiles, setUploadedFiles] = useState<UploadedDocument[]>([]);
   const [isProcessingFiles, setIsProcessingFiles] = useState(false);
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
-  const [postSubmitPaymentMode, setPostSubmitPaymentMode] = useState<'none' | 'razorpay' | 'online' | 'cash'>('none');
+  const [postSubmitPaymentMode, setPostSubmitPaymentMode] = useState<'none' | 'razorpay' | 'online' | 'cash'>('razorpay');
   const [isRazorpayLoading, setIsRazorpayLoading] = useState(false);
   const [razorpayError, setRazorpayError] = useState<string | null>(null);
   const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
@@ -255,7 +255,8 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
         })
       });
 
-      const data = await res.json();
+      const receiptResText = await res.text();
+      const data = receiptResText ? JSON.parse(receiptResText) : {};
       if (res.ok && data.success) {
         setWhatsappStatus({
           loading: false,
@@ -512,7 +513,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
       // Reset form submission view if a new service is selected
       setIsFormSubmitted(false);
-      setPostSubmitPaymentMode('none');
+      setPostSubmitPaymentMode('razorpay');
       setIsPaymentConfirmed(false);
 
       // Smooth scroll to Digital Application & Appointment Desk and auto focus Applicant Name
@@ -605,7 +606,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
     setSubmissionReceipt(mockReceipt);
     setIsFormSubmitted(true);
-    setPostSubmitPaymentMode('none');
+    setPostSubmitPaymentMode('razorpay');
     setIsPaymentConfirmed(false);
 
     // Automatically trigger WhatsApp invoice notification dispatch
@@ -689,7 +690,10 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(initialPayload)
     })
-      .then(res => res.json())
+      .then(async res => {
+        const text = await res.text();
+        return text ? JSON.parse(text) : {};
+      })
       .then(data => {
         console.log('Server registration successful:', data);
       })
@@ -817,7 +821,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                 documents: processedDocs,
                 payload: updatedPayload
               }
-            ], { onConflict: 'appId' }).catch(console.error);
+            ], { onConflict: 'appId' }).then(null, console.error);
           }
         } catch (dbErr) {
           console.error('Database save error after Razorpay payment:', dbErr);
@@ -851,12 +855,112 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       },
       onError: (errMsg) => {
         setIsRazorpayLoading(false);
-        setRazorpayError(errMsg);
+        setRazorpayError(errMsg + ' You can also pay directly using https://razorpay.me/@cscdost');
       },
       onDismiss: () => {
         setIsRazorpayLoading(false);
       }
     });
+  };
+
+  const handleConfirmManualRazorpayPayment = async () => {
+    if (!submissionReceipt) return;
+
+    const utr = formData.utrNumber.trim() || `RZP_${Date.now()}`;
+
+    const updatedReceipt = {
+      ...submissionReceipt,
+      paymentMode: 'razorpay',
+      utrNumber: utr,
+      paymentId: utr,
+      paymentStatus: 'Paid via Razorpay Page'
+    };
+
+    setSubmissionReceipt(updatedReceipt);
+    setFormData(prev => ({ ...prev, utrNumber: utr, paymentMode: 'online' }));
+    setPostSubmitPaymentMode('razorpay');
+    setIsPaymentConfirmed(true);
+
+    let processedDocs: UploadedDocument[] = uploadedFiles;
+    try {
+      processedDocs = await uploadMultipleDocumentsToSupabase(uploadedFiles, updatedReceipt.appId);
+      setUploadedFiles(processedDocs);
+    } catch (upErr) {
+      console.warn('Supabase payment document upload notice:', upErr);
+    }
+
+    const nowIso = new Date().toISOString();
+    const updatedPayload = {
+      appId: updatedReceipt.appId,
+      name: updatedReceipt.customerName,
+      email: updatedReceipt.emailAddress,
+      phone: updatedReceipt.phoneNumber,
+      service: updatedReceipt.selectedService,
+      dateOfBirth: updatedReceipt.dateOfBirth,
+      userCategory: updatedReceipt.userCategory,
+      paymentMode: 'Razorpay Online (razorpay.me)',
+      utrNumber: utr,
+      razorpayPaymentId: utr,
+      totalAmount: updatedReceipt.totalAmount,
+      message: formData.additionalDetails || 'None',
+      documents: processedDocs,
+      status: 'Paid',
+      paymentStatus: 'Paid via Razorpay Page',
+      submittedAt: nowIso,
+      updatedAt: nowIso,
+      statusUpdatedAt: nowIso
+    };
+
+    try {
+      setDoc(doc(db, 'applications', updatedReceipt.appId), updatedPayload, { merge: true }).catch(console.error);
+      setDoc(doc(db, 'appointments', updatedReceipt.appId), updatedPayload, { merge: true }).catch(console.error);
+
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        supabase.from('applications').upsert([
+          {
+            appId: updatedReceipt.appId,
+            id: updatedReceipt.appId,
+            applicantName: updatedReceipt.customerName,
+            phoneNumber: updatedReceipt.phoneNumber,
+            emailAddress: updatedReceipt.emailAddress,
+            selectedService: updatedReceipt.selectedService,
+            userCategory: updatedReceipt.userCategory,
+            paymentMode: 'Razorpay Online (razorpay.me)',
+            utrNumber: utr,
+            totalAmount: updatedReceipt.totalAmount,
+            status: 'Paid',
+            submittedAt: nowIso,
+            documents: processedDocs,
+            payload: updatedPayload
+          }
+        ], { onConflict: 'appId' }).then(null, console.error);
+      }
+    } catch (dbErr) {
+      console.error('Database save error after Razorpay payment:', dbErr);
+    }
+
+    try {
+      const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+      localStorage.setItem('csc_local_applications', JSON.stringify([updatedPayload, ...existing.filter((i: any) => i.appId !== updatedReceipt.appId)]));
+    } catch (e) {
+      console.warn('localStorage update warning:', e);
+    }
+
+    try {
+      window.dispatchEvent(new CustomEvent('csc_appointment_updated', { detail: updatedPayload }));
+      window.dispatchEvent(new Event('storage'));
+    } catch (e) {
+      console.error(e);
+    }
+
+    fetch(`/api/appointments/${updatedReceipt.appId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'Paid via Razorpay Page' })
+    }).catch(console.error);
+
+    triggerWhatsAppInvoiceDispatch(updatedReceipt);
   };
 
   const handleConfirmPayment = async () => {
@@ -984,7 +1088,8 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      const data = await res.json();
+      const aptText = await res.text();
+      const data = aptText ? JSON.parse(aptText) : {};
 
       const savedItem = data.data || {
         id: `apt-local-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -1389,8 +1494,9 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                       </div>
                     </div>
 
-                    <div className="space-y-3">
-                      {/* Service / Exam Dropdown */}
+                    {/* Service & Category Row (Side-by-Side 2-Column Grid) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      {/* Select Service to Apply */}
                       <div className="space-y-1">
                         <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                           Select Service to Apply <span className="text-red-500">*</span>
@@ -1399,7 +1505,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                           required
                           value={formData.selectedService}
                           onChange={(e) => handleServiceChange(e.target.value)}
-                          className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-bold text-xs outline-none cursor-pointer"
+                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-semibold text-xs outline-none cursor-pointer"
                         >
                           <option value="">-- Choose a Service / Exam --</option>
                           
@@ -1423,47 +1529,32 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                         </select>
                       </div>
 
-                      {/* Required Documents Banner */}
-                      <div className="bg-slate-100/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-2.5 text-xs flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium">
-                        <Info className="w-4 h-4 text-amber-500 shrink-0" />
-                        <span>
-                          <strong className="font-extrabold text-slate-900 dark:text-white">Required Documents:</strong>{' '}
-                          {docRequirement.mandatory && docRequirement.requiredDocTypes.length > 0
-                            ? docRequirement.requiredDocTypes.map(d => d.shortName).join(', ')
-                            : 'No documents required for this service'}
-                        </span>
-                      </div>
-
-                      {/* Applicant Category (Determines Concession Fee) */}
-                      <div className="space-y-1.5 pt-1">
-                        <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 block">
-                          Applicant Category (Determines Concession Fee)
+                      {/* Applicant Category Dropdown */}
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                          Applicant Category <span className="text-red-500">*</span>
                         </label>
-                        <div className="grid grid-cols-2 gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleCategoryChange('genObc')}
-                            className={`py-2.5 px-3 rounded-lg text-xs font-black uppercase transition-all cursor-pointer text-center ${
-                              formData.userCategory === 'genObc'
-                                ? 'bg-[#28256e] text-white shadow-md'
-                                : 'bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
-                            }`}
-                          >
-                            General / OBC / Unreserved
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleCategoryChange('scSt')}
-                            className={`py-2.5 px-3 rounded-lg text-xs font-black uppercase transition-all cursor-pointer text-center ${
-                              formData.userCategory === 'scSt'
-                                ? 'bg-[#28256e] text-white shadow-md'
-                                : 'bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
-                            }`}
-                          >
-                            SC / ST / EWS / PwD / Female
-                          </button>
-                        </div>
+                        <select
+                          required
+                          value={formData.userCategory}
+                          onChange={(e) => handleCategoryChange(e.target.value)}
+                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-semibold text-xs outline-none cursor-pointer"
+                        >
+                          <option value="genObc">General / OBC / Unreserved</option>
+                          <option value="scSt">SC / ST / EWS / PwD / Female (Concession)</option>
+                        </select>
                       </div>
+                    </div>
+
+                    {/* Required Documents Banner */}
+                    <div className="bg-slate-100/90 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-xs flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium">
+                      <Info className="w-4 h-4 text-amber-500 shrink-0" />
+                      <span>
+                        <strong className="font-extrabold text-slate-900 dark:text-white">Required Documents:</strong>{' '}
+                        {docRequirement.mandatory && docRequirement.requiredDocTypes.length > 0
+                          ? docRequirement.requiredDocTypes.map(d => d.shortName).join(', ')
+                          : 'No documents required for this service'}
+                      </span>
                     </div>
 
                     {/* Custom Service Input if 'Other' is chosen */}
@@ -1622,14 +1713,14 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
 
 
-                    {/* Solid Emerald Green Submit Button */}
-                    <div className="pt-2 space-y-3">
+                    {/* Compact Emerald Green Submit Button */}
+                    <div className="pt-1.5 space-y-2">
                       <button
                         type="submit"
-                        className="w-full py-3.5 px-4 bg-[#00a86b] hover:bg-[#008f5a] text-white font-black text-sm uppercase tracking-wider rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        className="w-full py-2.5 px-4 bg-[#00a86b] hover:bg-[#008f5a] text-white font-extrabold text-xs uppercase tracking-wider rounded-lg shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <span>Submit Application &amp; Proceed to Payment</span>
-                        <ArrowRight className="w-4 h-4" />
+                        <ArrowRight className="w-3.5 h-3.5" />
                       </button>
 
                       <p className="text-[10px] text-center text-slate-500 dark:text-slate-400 font-medium flex items-center justify-center gap-1">
@@ -1837,16 +1928,35 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                     {/* Razorpay Header & Branding */}
                     <div className="pt-1 space-y-1">
                       <div className="inline-flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700">
-                        <span className="text-xs font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 font-mono">⚡ Razorpay</span>
+                        <span className="text-xs font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 font-mono">⚡ Razorpay Official Handle</span>
                         <span className="text-slate-400 text-[10px]">•</span>
                         <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">PCI-DSS 256-bit Secure</span>
                       </div>
                       <h4 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">
-                        Instant Online Payment Gateway
+                        Razorpay Instant Online Payment
                       </h4>
                       <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md">
-                        Pay total amount of <strong className="text-emerald-600 dark:text-emerald-400 font-extrabold font-mono">₹{submissionReceipt?.totalAmount}</strong> using Google Pay, PhonePe, Paytm, Credit/Debit Cards, or NetBanking.
+                        Pay total amount of <strong className="text-emerald-600 dark:text-emerald-400 font-extrabold font-mono">₹{submissionReceipt?.totalAmount}</strong> using Google Pay, PhonePe, Paytm, UPI, Credit/Debit Cards, or NetBanking directly via Razorpay's Official Handle.
                       </p>
+                    </div>
+
+                    {/* Official Razorpay.me Link Highlight Card */}
+                    <div className="w-full bg-blue-50 dark:bg-blue-950/60 p-3.5 rounded-xl border border-blue-200 dark:border-blue-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-blue-700 dark:text-blue-300">Official Payment Link</span>
+                        <p className="text-xs font-mono font-bold text-blue-900 dark:text-blue-100">
+                          https://razorpay.me/@cscdost
+                        </p>
+                      </div>
+                      <a
+                        href="https://razorpay.me/@cscdost"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs uppercase tracking-wider rounded-lg shadow transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <span>Open Razorpay.me</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
                     </div>
 
                     {/* Payment Options Supported Pills */}
@@ -1869,40 +1979,92 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                       </div>
                     </div>
 
-                    {/* Test Mode Key Indicator */}
-                    <div className="w-full text-[10px] text-slate-500 dark:text-slate-400 font-mono bg-blue-50 dark:bg-blue-950/50 p-2 rounded-lg border border-blue-200 dark:border-blue-900/60 flex items-center justify-between">
-                      <span>🔑 Razorpay Test Key ID:</span>
-                      <span className="font-bold text-blue-700 dark:text-blue-300">rzp_test_TKwuWkZNJrp68J</span>
+                    {/* Primary Razorpay Action Buttons */}
+                    <div className="w-full space-y-2.5">
+                      {/* Primary Popup Checkout Button */}
+                      <button
+                        type="button"
+                        onClick={handlePayWithRazorpay}
+                        disabled={isRazorpayLoading}
+                        className="w-full py-3.5 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm uppercase tracking-wider rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      >
+                        {isRazorpayLoading ? (
+                          <>
+                            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                            <span>Launching Razorpay Gateway...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="w-5 h-5" />
+                            <span>Pay ₹{submissionReceipt?.totalAmount} via Razorpay Gateway</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </>
+                        )}
+                      </button>
+
+                      {/* Direct razorpay.me Handle Link Button */}
+                      <a
+                        href="https://razorpay.me/@cscdost"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs uppercase tracking-wider rounded-xl border border-slate-300 dark:border-slate-700 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <ExternalLink className="w-4 h-4 text-blue-600" />
+                        <span>Or Pay via Direct Link (razorpay.me/@cscdost)</span>
+                      </a>
                     </div>
 
-                    {/* Error message display if any */}
+                    {/* Error message display with direct fallback link */}
                     {razorpayError && (
-                      <div className="w-full text-xs text-red-600 dark:text-red-400 font-bold bg-red-50 dark:bg-red-950/80 p-3 rounded-xl border border-red-300 dark:border-red-800 text-left animate-pulse flex items-start gap-2">
-                        <span className="shrink-0 text-sm">⚠️</span>
-                        <span>{razorpayError}</span>
+                      <div className="w-full text-xs text-amber-900 dark:text-amber-200 font-medium bg-amber-50 dark:bg-amber-950/80 p-3.5 rounded-xl border border-amber-300 dark:border-amber-800 text-left space-y-2">
+                        <div className="flex items-start gap-2">
+                          <span className="shrink-0 text-sm">⚠️</span>
+                          <div>
+                            <p className="font-bold">{razorpayError}</p>
+                            <p className="mt-1 text-[11px] text-amber-800 dark:text-amber-300">
+                              Please click the direct Razorpay payment button above or open razorpay.me/@cscdost to complete your payment smoothly.
+                            </p>
+                          </div>
+                        </div>
+                        <a
+                          href="https://razorpay.me/@cscdost"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg flex items-center justify-center gap-1.5 transition-all"
+                        >
+                          <span>Open razorpay.me/@cscdost</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
                       </div>
                     )}
 
-                    {/* Primary Razorpay Action Button */}
-                    <button
-                      type="button"
-                      onClick={handlePayWithRazorpay}
-                      disabled={isRazorpayLoading}
-                      className="w-full py-3.5 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm uppercase tracking-wider rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                    >
-                      {isRazorpayLoading ? (
-                        <>
-                          <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                          <span>Launching Razorpay Checkout...</span>
-                        </>
-                      ) : (
-                        <>
-                          <CreditCard className="w-5 h-5" />
-                          <span>Pay ₹{submissionReceipt?.totalAmount} via Razorpay Gateway</span>
-                          <ArrowRight className="w-4 h-4" />
-                        </>
-                      )}
-                    </button>
+                    {/* UTR / Transaction Ref Confirmation Section */}
+                    <div className="w-full mt-2 text-left border-t border-slate-200 dark:border-slate-800 pt-3 space-y-2">
+                      <label className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center justify-between">
+                        <span>Enter Txn Ref / UTR No. (After Paying)</span>
+                        <span className="text-[9px] text-emerald-600 font-extrabold uppercase bg-emerald-50 dark:bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">Payment Confirmation</span>
+                      </label>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          type="text"
+                          placeholder="e.g., pay_P123abc or 12-Digit UTR"
+                          value={formData.utrNumber}
+                          onChange={(e) => {
+                            const val = e.target.value.trim();
+                            setFormData(prev => ({ ...prev, utrNumber: val }));
+                          }}
+                          className="flex-1 px-3 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleConfirmManualRazorpayPayment}
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-lg shadow transition-all cursor-pointer shrink-0 flex items-center justify-center gap-1.5"
+                        >
+                          <span>Confirm Payment</span>
+                          <CheckCircle className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ) : postSubmitPaymentMode === 'online' ? (
                   /* QR CODE IS REVEALED AND DISPLAYED ONLY NOW AFTER Pay Online IS CLICKED */

@@ -45,7 +45,8 @@ export default function App() {
     try {
       const res = await fetch('/api/public-data');
       if (res.ok) {
-        const data = await res.json();
+        const txt = await res.text();
+        const data = txt ? JSON.parse(txt) : {};
         if (data.settings) setSettings(data.settings);
         if (data.announcements) setAnnouncements(data.announcements);
         if (data.gallery) setGallery(data.gallery);

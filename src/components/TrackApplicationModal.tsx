@@ -273,7 +273,11 @@ export default function TrackApplicationModal({
 
       // Secondary server endpoint fetch
       fetch(`/api/appointments/${encodeURIComponent(cleanToken)}`)
-        .then((res) => (res.ok ? res.json() : null))
+        .then(async (res) => {
+          if (!res.ok) return null;
+          const txt = await res.text();
+          return txt ? JSON.parse(txt) : null;
+        })
         .then((data) => {
           if (data && (data.appId || data.id || data.customerName)) {
             setLiveData(buildTrackingObject(data));
