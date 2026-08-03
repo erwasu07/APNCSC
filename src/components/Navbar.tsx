@@ -8,6 +8,7 @@ interface NavbarProps {
   cafeName: string;
   onOpenPrivacyPolicy?: (tab?: PolicyTab) => void;
   onOpenAdmin?: () => void;
+  onHomeClick?: () => void;
 }
 
 export default function Navbar({
@@ -15,7 +16,8 @@ export default function Navbar({
   setDarkMode,
   cafeName,
   onOpenPrivacyPolicy,
-  onOpenAdmin
+  onOpenAdmin,
+  onHomeClick
 }: NavbarProps) {
   const [lang, setLang] = useState<'EN' | 'HI'>(() => {
     if (typeof window !== 'undefined') {
@@ -68,17 +70,20 @@ export default function Navbar({
   const scrollInto = (id: string) => {
     setActiveItem(id);
     setMobileMenuOpen(false);
-    setTimeout(() => {
-      if (id === 'hero' || id === 'home') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        return;
+    if (id === 'hero' || id === 'home') {
+      if (onHomeClick) {
+        onHomeClick();
       }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    setTimeout(() => {
       const targetId = (id === 'csc-info' || id === 'node-info') ? 'node-info' : id;
       const element = document.getElementById(targetId);
       if (element) {
         element.scrollIntoView({ behavior: 'smooth' });
       }
-    }, 100);
+    }, 50);
   };
 
   return (
@@ -167,7 +172,12 @@ export default function Navbar({
         <div className="max-w-7xl mx-auto flex items-center justify-center">
           
           {/* Centered CSC DOST Logo & Tagline */}
-          <div className="flex items-center justify-center gap-3 text-center">
+          <button 
+            type="button"
+            onClick={() => scrollInto('hero')}
+            className="flex items-center justify-center gap-3 text-center cursor-pointer hover:opacity-95 transition-opacity bg-transparent border-0 p-0"
+            title="Go to Homepage"
+          >
             <div className="relative shrink-0">
               <img 
                 src="/favicon.svg" 
@@ -184,7 +194,7 @@ export default function Navbar({
                 "A Digital Shop for Digital India"
               </p>
             </div>
-          </div>
+          </button>
 
         </div>
       </div>
@@ -198,22 +208,24 @@ export default function Navbar({
             {[
               { id: 'hero', label: 'HOME', icon: Home },
               { id: 'services', label: 'E-SERVICES', icon: Briefcase },
-              { id: 'sarkari-board', label: 'SARKARI BULLETINS', icon: Flame, isCurrentTab: true },
+              { id: 'sarkari-board', label: 'SARKARI BULLETINS', icon: Flame },
               { id: 'node-info', label: 'CSC CENTRE INFO', icon: Info }
             ].map((item) => {
-              const isActive = activeItem === item.id || item.isCurrentTab;
+              const isActive = activeItem === item.id;
+              const IconComp = item.icon;
               return (
                 <button 
                   key={item.id}
                   onClick={() => {
                     scrollInto(item.id);
                   }} 
-                  className={`px-3.5 py-1.5 rounded-lg transition-all duration-200 flex items-center gap-1.5 font-black text-xs cursor-pointer ${
-                    item.isCurrentTab 
+                  className={`px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-lg transition-all duration-200 flex items-center gap-1.5 font-black text-xs cursor-pointer ${
+                    isActive 
                       ? 'bg-[#28307d] text-white shadow-sm' 
                       : 'text-slate-700 hover:text-[#28307d] hover:bg-slate-100'
                   }`}
                 >
+                  <IconComp className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isActive ? 'text-amber-300' : 'text-slate-500'}`} />
                   <span>{item.label}</span>
                 </button>
               );

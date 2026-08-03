@@ -150,6 +150,15 @@ export default function App() {
     }, 350);
   };
 
+  const handleGoHome = () => {
+    setIsAdminView(false);
+    setSelectedService('');
+    if (window.location.hash) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // WhatsApp Channel click trigger
   const handleWhatsAppFloating = () => {
     window.open('https://whatsapp.com/channel/0029VbDgSe75a248qEZAbL3g', '_blank');
@@ -165,6 +174,7 @@ export default function App() {
         cafeName={settings.cafeName}
         onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
         onOpenAdmin={handleOpenStaffPortal}
+        onHomeClick={handleGoHome}
       />
 
       {/* Main Container */}

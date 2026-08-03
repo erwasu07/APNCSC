@@ -37,7 +37,8 @@ import {
   UploadCloud,
   Paperclip,
   CreditCard,
-  Eye
+  Eye,
+  Home
 } from 'lucide-react';
 import { SARKARI_DATA, SARKARI_CATEGORIES, SarkariItem } from '../data/sarkariData';
 import { SERVICES_LIST } from '../servicesData';
@@ -1142,17 +1143,126 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       if (slipContainer) {
         slipContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
+    }, 100);
+  };
 
-      if (typeof window !== 'undefined') {
+  const handlePrintSlip = () => {
+    const slipElement = document.getElementById('printable-digital-slip');
+    if (!slipElement) {
+      window.print();
+      return;
+    }
+
+    // Clone element and strip no-print elements
+    const clone = slipElement.cloneNode(true) as HTMLElement;
+    const noPrintElements = clone.querySelectorAll('.no-print');
+    noPrintElements.forEach(el => el.remove());
+
+    // Try popup window print first
+    try {
+      const printWindow = window.open('', '_blank', 'width=850,height=950,top=50,left=50');
+      if (printWindow) {
+        printWindow.document.open();
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Official CSC e-Receipt #${submissionReceipt?.appId || 'CSC-2026'}</title>
+              <script src="https://cdn.tailwindcss.com"></script>
+              <style>
+                @media print {
+                  @page { size: portrait; margin: 8mm; }
+                  body { background: #ffffff !important; color: #0f172a !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                  .no-print { display: none !important; }
+                }
+              </style>
+            </head>
+            <body class="bg-slate-50 p-4 sm:p-8 flex items-center justify-center min-h-screen">
+              <div class="w-full max-w-2xl bg-white rounded-2xl shadow-lg border border-slate-200">
+                ${clone.outerHTML}
+              </div>
+              <script>
+                window.onload = function() {
+                  setTimeout(function() {
+                    window.focus();
+                    window.print();
+                  }, 400);
+                };
+              </script>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        return;
+      }
+    } catch (e) {
+      console.warn('Popup print window blocked, using fallback iframe print:', e);
+    }
+
+    // Hidden iframe fallback print method (works inside sandboxed iFrames)
+    try {
+      const existingIframe = document.getElementById('csc-print-iframe');
+      if (existingIframe) {
+        existingIframe.remove();
+      }
+
+      const printIframe = document.createElement('iframe');
+      printIframe.id = 'csc-print-iframe';
+      printIframe.style.position = 'fixed';
+      printIframe.style.right = '0';
+      printIframe.style.bottom = '0';
+      printIframe.style.width = '0';
+      printIframe.style.height = '0';
+      printIframe.style.border = '0';
+      document.body.appendChild(printIframe);
+
+      const iframeDoc = printIframe.contentDocument || printIframe.contentWindow?.document;
+      if (iframeDoc) {
+        iframeDoc.open();
+        iframeDoc.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>CSC e-Receipt #${submissionReceipt?.appId || 'CSC-2026'}</title>
+              <script src="https://cdn.tailwindcss.com"></script>
+              <style>
+                @media print {
+                  @page { size: portrait; margin: 8mm; }
+                  body { background: #ffffff !important; color: #000000 !important; font-family: sans-serif; }
+                  .no-print { display: none !important; }
+                }
+              </style>
+            </head>
+            <body class="p-4 bg-white text-slate-900">
+              <div class="max-w-2xl mx-auto">
+                ${clone.outerHTML}
+              </div>
+            </body>
+          </html>
+        `);
+        iframeDoc.close();
         setTimeout(() => {
           try {
+            printIframe.contentWindow?.focus();
+            printIframe.contentWindow?.print();
+          } catch {
             window.print();
-          } catch (e) {
-            console.log('Print trigger error:', e);
+          } finally {
+            setTimeout(() => {
+              if (document.body.contains(printIframe)) {
+                document.body.removeChild(printIframe);
+              }
+            }, 2000);
           }
-        }, 350);
+        }, 400);
+        return;
       }
-    }, 100);
+    } catch (err) {
+      console.warn('Iframe print failed:', err);
+    }
+
+    // Direct window print fallback
+    window.print();
   };
 
   // Filter items based on search query and category tab
@@ -1924,143 +2034,199 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
             </div>
           ) : (
             /* PRINTABLE DIGITAL SUCCESS SLIP / RECEIPT (Exact Image 2 Style) */
-            <div id="printable-digital-slip" className="bg-white text-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-slate-300 max-w-xl mx-auto animate-fade-in relative w-full">
+            <div id="printable-digital-slip" className="bg-white text-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-slate-300 max-w-2xl mx-auto animate-fade-in relative w-full font-sans">
               
-              {/* Dark Navy Header Bar */}
-              <div className="bg-[#1e2358] text-white px-5 py-3.5 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-wide">
+              {/* Header Bar (no-print) */}
+              <div className="bg-[#1e2358] text-white px-6 py-3 flex items-center justify-between no-print">
+                <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wide">
                   <CheckCircle className="w-4 h-4 text-emerald-400" />
                   <span>Official CSC e-Receipt</span>
                 </div>
                 <button
                   onClick={() => setIsFormSubmitted(false)}
                   className="p-1 hover:bg-white/10 rounded text-slate-300 hover:text-white transition-colors cursor-pointer"
+                  title="Close Receipt"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Main Modal Body */}
-              <div className="p-5 sm:p-6 space-y-4">
+              {/* Main Receipt Content */}
+              <div className="p-6 sm:p-8 space-y-6">
                 
-                {/* Header Branding */}
-                <div className="text-center space-y-1">
-                  <span className="inline-block bg-[#f59e0b] text-slate-950 text-[10px] font-black px-3 py-1 rounded-md uppercase tracking-wider font-mono shadow-xs">
-                    CSC DOST • VLE NODE #212515670018
-                  </span>
-                  <h3 className="text-base sm:text-lg font-black uppercase tracking-tight text-slate-900 font-display pt-1">
-                    COMMON SERVICES CENTRE PORTAL
-                  </h3>
-                  <p className="text-[11px] text-slate-500 font-medium italic">
-                    Ministry of Electronics &amp; IT, Govt of India Authorized Desk
-                  </p>
-                </div>
+                {/* Top Section: Logo/Provider Info & Green Receipt Banner */}
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-slate-200 pb-5">
+                  {/* Left: Organization / Provider Details */}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-9 h-9 rounded-lg bg-blue-900 text-white flex items-center justify-center font-black text-xs shadow-xs">
+                        CSC
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-black text-slate-900 tracking-tight leading-tight">
+                          CSC DOST Portal
+                        </h2>
+                        <p className="text-[11px] font-bold text-amber-600">
+                          VLE Node #212515670018
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-slate-500 max-w-xs pt-1 leading-snug">
+                      Common Services Centre Portal • Ministry of Electronics &amp; IT, Govt of India Authorized Desk
+                    </p>
+                  </div>
 
-                {/* ALLOCATED APPLICATION TOKEN ID Box (Light Mint Green) */}
-                <div className="bg-[#e6f7f0] border-2 border-[#10b981] rounded-xl p-3.5 text-center space-y-1 shadow-xs">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-[#047857]">
-                    ALLOCATED APPLICATION TOKEN ID
-                  </p>
-                  <p className="text-2xl sm:text-3xl font-black font-mono text-[#047857] tracking-wider">
-                    {submissionReceipt?.appId || 'CSC-6938-PAN'}
-                  </p>
-                  <p className="text-[11px] font-bold text-[#059669]">
-                    Status: <span className="underline">Received</span>
-                  </p>
-                </div>
-
-                {/* Receipt Details Table */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 text-xs font-sans">
-                  <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
-                    <span className="text-slate-500 font-medium">Applicant Name:</span>
-                    <span className="font-extrabold text-slate-900 uppercase">{submissionReceipt?.customerName}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
-                    <span className="text-slate-500 font-medium">WhatsApp Mobile:</span>
-                    <span className="font-extrabold text-slate-900 font-mono">{submissionReceipt?.phoneNumber}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
-                    <span className="text-slate-500 font-medium">Service Category:</span>
-                    <span className="font-extrabold text-slate-900">{submissionReceipt?.userCategory === 'genObc' ? 'General/OBC' : 'SC/ST'}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
-                    <span className="text-slate-500 font-medium">E-Service Applied:</span>
-                    <span className="font-extrabold text-[#28256e] text-right max-w-[240px] truncate">{submissionReceipt?.selectedService}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
-                    <span className="text-slate-500 font-medium">Submission Date &amp; Time:</span>
-                    <span className="font-bold text-slate-800 font-mono text-[11px]">{submissionReceipt?.submittedAt}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-1">
-                    <span className="text-slate-500 font-medium">Estimated Turnaround:</span>
-                    <span className="font-extrabold text-emerald-600">2-3 Working Days</span>
+                  {/* Right: Receipt Number Green Banner (Image 2 style) */}
+                  <div className="text-left sm:text-right shrink-0">
+                    <div className="bg-[#65a30d] text-white px-4 py-2 rounded-md font-bold text-base shadow-xs inline-block">
+                      Receipt for #{submissionReceipt?.appId || 'CSC-2026-4'}
+                    </div>
+                    <p className="text-[11px] text-slate-500 font-mono mt-1">
+                      Transaction Date: <span className="font-semibold text-slate-800">{submissionReceipt?.submittedAt}</span>
+                    </p>
                   </div>
                 </div>
 
-                {/* Dark Navy Fee Summary Box */}
-                <div className="bg-[#0b1120] text-white rounded-xl p-3.5 space-y-2 font-mono text-xs">
-                  <div className="flex justify-between items-center text-slate-300">
-                    <span>Government Prescribed Fee:</span>
-                    <span className="font-bold text-white">₹{submissionReceipt?.applicationFee || 107}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-slate-300">
-                    <span>CSC Processing Charge:</span>
-                    <span className="font-bold text-white">₹{submissionReceipt?.portalFee || 50}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-slate-300">
-                    <span>GST (18%):</span>
-                    <span className="font-bold text-white">₹{Math.round((submissionReceipt?.portalFee || 50) * 0.18)}</span>
-                  </div>
-                  <div className="h-[1px] bg-slate-800 my-1"></div>
-                  <div className="flex justify-between items-center font-sans">
-                    <span className="font-extrabold uppercase text-slate-200">Total Paid Amount:</span>
-                    <span className="text-xl font-black font-mono text-[#00e699]">
-                      ₹{submissionReceipt?.totalAmount || 166}
+                {/* Recipient Details Section */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block mb-1">
+                      RECIPIENT / APPLICANT
                     </span>
-                  </div>
-                </div>
-
-                {/* Digital India Security Seal */}
-                <div className="bg-white border border-slate-200 rounded-xl p-3 flex items-center gap-3">
-                  <div className="p-1 bg-slate-50 border border-slate-200 rounded-lg shrink-0">
-                    <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&color=0b1120&data=${encodeURIComponent(`Token:${submissionReceipt?.appId}|VLE:Wasim Ahmad Khanday`)}`}
-                      alt="CSC Security Seal"
-                      className="w-12 h-12"
-                      referrerPolicy="no-referrer"
-                    />
-                  </div>
-                  <div className="text-left space-y-0.5">
-                    <p className="text-xs font-black text-slate-900 uppercase">Digital India Security Seal</p>
-                    <p className="text-[10px] text-slate-500 leading-tight">
-                      Scan QR code at any CSC kiosk to verify authenticity.
+                    <p className="text-sm font-black text-slate-900 uppercase">
+                      {submissionReceipt?.customerName}
                     </p>
-                    <p className="text-[10px] font-bold text-slate-700 pt-0.5">
-                      Authorized VLE: <span className="font-extrabold">Wasim Ahmad Khanday</span>
+                    <p className="text-slate-600 font-mono mt-0.5">
+                      📱 WhatsApp: {submissionReceipt?.phoneNumber}
+                    </p>
+                  </div>
+                  <div className="sm:text-right">
+                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block mb-1">
+                      SERVICE DETAILS
+                    </span>
+                    <p className="font-bold text-slate-800">
+                      Category: <span className="font-extrabold text-slate-900">{submissionReceipt?.userCategory === 'genObc' ? 'General / OBC' : 'SC / ST'}</span>
+                    </p>
+                    <p className="text-slate-600 mt-0.5 font-medium">
+                      Status: <span className="text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded text-[10.5px]">Payment Confirmed</span>
                     </p>
                   </div>
                 </div>
 
+                {/* Itemized Service Table (Exact Image 2 Style with Green Table Header) */}
+                <div className="overflow-x-auto rounded-lg border border-slate-200">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-[#65a30d] text-white font-black uppercase tracking-wider text-[11px]">
+                        <th className="py-2.5 px-3">PRODUCT / SERVICE</th>
+                        <th className="py-2.5 px-3">DESCRIPTION</th>
+                        <th className="py-2.5 px-3 text-center">QTY</th>
+                        <th className="py-2.5 px-3 text-right">COST (₹)</th>
+                        <th className="py-2.5 px-3 text-right">TOTAL (₹)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 text-slate-800 font-medium">
+                      <tr>
+                        <td className="py-3 px-3 font-bold text-slate-900">
+                          {submissionReceipt?.selectedService}
+                        </td>
+                        <td className="py-3 px-3 text-slate-500 text-[11px]">
+                          Government Prescribed Fee ({submissionReceipt?.userCategory === 'genObc' ? 'General/OBC' : 'SC/ST'})
+                        </td>
+                        <td className="py-3 px-3 text-center font-mono">1</td>
+                        <td className="py-3 px-3 text-right font-mono">₹{submissionReceipt?.applicationFee || 0}</td>
+                        <td className="py-3 px-3 text-right font-mono font-bold">₹{submissionReceipt?.applicationFee || 0}</td>
+                      </tr>
+                      <tr>
+                        <td className="py-3 px-3 font-bold text-slate-900">
+                          CSC Node Portal Charge
+                        </td>
+                        <td className="py-3 px-3 text-slate-500 text-[11px]">
+                          Fixed Handling &amp; Verification Processing
+                        </td>
+                        <td className="py-3 px-3 text-center font-mono">1</td>
+                        <td className="py-3 px-3 text-right font-mono">₹{submissionReceipt?.portalFee || 50}</td>
+                        <td className="py-3 px-3 text-right font-mono font-bold">₹{submissionReceipt?.portalFee || 50}</td>
+                      </tr>
+                      <tr>
+                        <td className="py-3 px-3 font-bold text-slate-900">
+                          GST (18%)
+                        </td>
+                        <td className="py-3 px-3 text-slate-500 text-[11px]">
+                          18% GST on CSC Node Service Charge
+                        </td>
+                        <td className="py-3 px-3 text-center font-mono">1</td>
+                        <td className="py-3 px-3 text-right font-mono">₹{Math.round((submissionReceipt?.portalFee || 50) * 0.18)}</td>
+                        <td className="py-3 px-3 text-right font-mono font-bold">₹{Math.round((submissionReceipt?.portalFee || 50) * 0.18)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
 
+                {/* Bottom Summary Section (Image 2 Style) */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 pt-2">
+                  {/* Left: Thank you message & Security Seal */}
+                  <div className="space-y-3">
+                    <p className="text-xs font-bold text-slate-700 italic">
+                      Thanks for choosing CSC DOST Services!
+                    </p>
+                    
+                    {/* Digital India Security Seal */}
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 flex items-center gap-3 max-w-xs">
+                      <div className="p-1 bg-white border border-slate-200 rounded shrink-0">
+                        <img
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&color=0b1120&data=${encodeURIComponent(`Token:${submissionReceipt?.appId}|VLE:Wasim Ahmad Khanday`)}`}
+                          alt="CSC Security Seal"
+                          className="w-10 h-10"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                      <div className="text-left space-y-0.5">
+                        <p className="text-[10px] font-black text-slate-900 uppercase">Digital India Security Seal</p>
+                        <p className="text-[9px] text-slate-500 leading-tight">
+                          Scan QR code at any CSC kiosk to verify authenticity.
+                        </p>
+                        <p className="text-[9.5px] font-bold text-slate-700">
+                          VLE: <span className="font-extrabold text-slate-900">Wasim Ahmad Khanday</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
-                {/* Bottom Actions */}
-                <div className="flex flex-wrap items-center justify-end gap-2.5 pt-2 no-print">
+                  {/* Right: Receipt Payment Calculation Block */}
+                  <div className="w-full sm:w-64 bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs space-y-1.5 font-mono">
+                    <p className="font-sans font-black text-xs text-slate-800 uppercase pb-1 border-b border-slate-200">
+                      Receipt for Payment
+                    </p>
+                    <div className="flex justify-between text-slate-600">
+                      <span>Subtotal:</span>
+                      <span>₹{(submissionReceipt?.applicationFee || 0) + (submissionReceipt?.portalFee || 50)}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-600">
+                      <span>GST (18%):</span>
+                      <span>₹{Math.round((submissionReceipt?.portalFee || 50) * 0.18)}</span>
+                    </div>
+                    <div className="pt-1 border-t border-slate-300 flex justify-between font-sans text-sm font-black text-slate-900">
+                      <span>Total Paid:</span>
+                      <span className="font-mono text-emerald-700 font-extrabold text-base">₹{submissionReceipt?.totalAmount}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Action Bar (no-print) */}
+                <div className="flex flex-wrap items-center justify-end gap-2.5 pt-3 border-t border-slate-200 no-print">
                   <button
                     onClick={() => {
                       if (!submissionReceipt) return;
-                      const msg = `*New Application Query Submitted on Website!*
+                      const msg = `*New Application Submitted on CSC DOST!*
 *Token ID:* ${submissionReceipt.appId}
 *Name:* ${submissionReceipt.customerName}
 *Mobile:* ${submissionReceipt.phoneNumber}
-*Email:* ${submissionReceipt.emailAddress}
-*DOB:* ${submissionReceipt.dateOfBirth}
 *Service Requested:* ${submissionReceipt.selectedService}
 *Category:* ${submissionReceipt.userCategory}
 *Payment Mode:* ${submissionReceipt.paymentMode}
-*Payment UTR / Ref No:* ${submissionReceipt.utrNumber}
-*Attached Documents:* ${submissionReceipt.uploadedDocuments && submissionReceipt.uploadedDocuments.length > 0 ? submissionReceipt.uploadedDocuments.join(', ') : 'None'}
-*Amount:* ₹${submissionReceipt.totalAmount}
-*Instructions:* ${submissionReceipt.additionalDetails}`;
+*Payment Ref:* ${submissionReceipt.utrNumber || 'N/A'}
+*Amount Paid:* ₹${submissionReceipt.totalAmount}`;
                       window.open(`https://wa.me/917006833767?text=${encodeURIComponent(msg)}`, '_blank');
                     }}
                     className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-emerald-600/30"
@@ -2070,8 +2236,9 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                   </button>
 
                   <button
-                    onClick={() => window.print()}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-xs uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer border border-slate-200 font-sans"
+                    type="button"
+                    onClick={handlePrintSlip}
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-xs uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer border border-slate-200 font-sans shadow-xs"
                   >
                     <Printer className="w-3.5 h-3.5" />
                     <span>Print Slip</span>
@@ -2097,10 +2264,12 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                         portalFee: 50,
                         applicationFee: 0
                       });
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                    className="px-4 py-2 bg-gradient-to-r from-slate-900 to-slate-800 hover:from-black hover:to-slate-900 text-white font-black text-xs uppercase tracking-wider rounded-lg transition-all cursor-pointer shadow-sm"
+                    className="px-4 py-2 bg-gradient-to-r from-slate-900 to-slate-800 hover:from-black hover:to-slate-900 text-white font-black text-xs uppercase tracking-wider rounded-lg transition-all cursor-pointer shadow-sm flex items-center gap-1.5 font-sans"
                   >
-                    Apply Another
+                    <Home className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Return to Home</span>
                   </button>
                 </div>
               </div>
