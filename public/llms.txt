@@ -1,14 +1,14 @@
 # CSC DOST
 
-> Independent Digital Assistance & Information Service Desk
+> Digital Assistance & Information Service Desk operated by Authorized CSC VLE
 
-CSC DOST (cscdost.online) is an independent private digital service portal providing online application assistance, sarkari job/result updates, admit card notifications, and document printing guidance.
+CSC DOST (cscdost.online) is operated by Authorized CSC Village Level Entrepreneur (VLE) Wasim Ahmad Khanday (CSC ID: 212515670018, Registration Date: 11-11-2020) issued by CSC e-Governance Services India Limited, Ministry of Electronics & IT, Government of India.
 
 ## Main Pages & Services
 - [Sarkari Results Desk](https://www.cscdost.online/#sarkari-portal-section): Latest government job results, answer keys, admit cards, and notifications.
 - [Digital Services Desk](https://www.cscdost.online/#services-section): Online application assistance for PAN Card, Voter ID, e-Shram, Passport, and certificates.
 - [Application Tracker](https://www.cscdost.online/#track-section): Live status check and token receipt download portal.
-- [Contact & Support](https://www.cscdost.online/#contact): Cyber cafe contact details, operating hours, and location.
+- [CSC Centre Info](https://www.cscdost.online/#node-info): Authorized VLE Certificate proof, location, contact, and physical station info.
 
 ## Official Disclaimer
-CSC DOST (cscdost.online) is NOT an official government portal and is not affiliated with CSC e-Governance Services India Ltd. Official government portals can be accessed directly at [csc.gov.in](https://csc.gov.in) and [digitalseva.csc.gov.in](https://digitalseva.csc.gov.in).
+CSC DOST (cscdost.online) is a private digital assistance portal facilitating online form filing. Official government portals can be accessed directly at [csc.gov.in](https://csc.gov.in) and [digitalseva.csc.gov.in](https://digitalseva.csc.gov.in).

@@ -1832,7 +1832,7 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                     <span>Independent Service Facilitator</span>
                   </div>
                   <p>
-                    <strong>CSC Dost is an independent digital service facilitator.</strong> While we assist citizens in accessing, filling out, and submitting online forms for various government and non-government services, we are <strong>not</strong> a government department, nor do we claim to be the official portal for any state or central government entity.
+                    <strong>CSC DOST is operated by Authorized CSC Village Level Entrepreneur (VLE) Wasim Ahmad Khanday (CSC ID: 212515670018, Registration Date: 11-11-2020)</strong> issued by CSC e-Governance Services India Limited, Ministry of Electronics &amp; IT, Government of India. While we assist citizens in filling out and submitting online applications on official portals, this portal acts as an independent digital assistance desk.
                   </p>
                   <p className="text-slate-500 dark:text-slate-400 text-[11px]">
                     Any official logos, department names, or government schemes mentioned on our website are used purely for identification and informational purposes to help users find the right services.
