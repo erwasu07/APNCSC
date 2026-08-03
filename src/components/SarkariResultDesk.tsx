@@ -1735,26 +1735,23 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
             </div>
           ) : !isPaymentConfirmed ? (
             /* POST-SUBMISSION PAYMENT MODE SELECTION STEP */
-            <div id="booking-portal-form" className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 border border-slate-200 dark:border-slate-800 max-w-2xl mx-auto animate-fade-in">
-              <div className="text-center pb-5 border-b border-slate-200 dark:border-slate-800 space-y-2">
-                <div className="w-12 h-12 bg-amber-100 dark:bg-amber-950/60 rounded-full flex items-center justify-center text-amber-600 dark:text-amber-400 mx-auto">
-                  <CreditCard className="w-7 h-7" />
+            <div id="booking-portal-form" className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-5 border border-slate-200 dark:border-slate-800 max-w-lg mx-auto animate-fade-in">
+              <div className="text-center pb-4 border-b border-slate-200 dark:border-slate-800 space-y-1.5">
+                <div className="w-10 h-10 bg-amber-100 dark:bg-amber-950/60 rounded-full flex items-center justify-center text-amber-600 dark:text-amber-400 mx-auto">
+                  <CreditCard className="w-5 h-5" />
                 </div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 rounded-full text-xs font-extrabold uppercase tracking-wider border border-amber-200 dark:border-amber-800">
+                <div className="inline-flex items-center gap-1.5 px-3 py-0.5 bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 rounded-full text-[11px] font-extrabold uppercase tracking-wider border border-amber-200 dark:border-amber-800">
                   <span>Step 2 of 2</span>
                   <span>•</span>
                   <span>Select Payment Method</span>
                 </div>
-                <h3 className="text-xl font-black uppercase text-slate-900 dark:text-white font-display">
+                <h3 className="text-lg font-black uppercase text-slate-900 dark:text-white font-display">
                   Select Payment Option
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                  Token Reference ID: <span className="font-bold text-slate-800 dark:text-slate-200">{submissionReceipt?.appId}</span>
-                </p>
               </div>
 
               {/* Applicant & Service Summary */}
-              <div className="my-5 p-4 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 grid grid-cols-2 gap-3 text-xs">
+              <div className="my-4 p-3.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 grid grid-cols-2 gap-2.5 text-xs">
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase font-extrabold">Applicant Name</span>
                   <span className="font-bold text-slate-800 dark:text-slate-100">{submissionReceipt?.customerName}</span>
@@ -1773,52 +1770,15 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                 </div>
               </div>
 
-              {/* TRANSPARENT DYNAMIC FEE CALCULATOR (Moved to Step 2) */}
-              <div className="mb-5 bg-[#0b1120] text-white p-4 rounded-xl border border-slate-800 space-y-2.5 shadow-md">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-slate-200">
-                    <span>📊</span>
-                    <span>TRANSPARENT DYNAMIC FEE CALCULATOR</span>
-                  </div>
-                  <span className="bg-[#042f1e] text-[#00e699] border border-[#00b377]/60 text-[10px] font-mono font-extrabold px-2 py-0.5 rounded">
-                    Node Rate Locked
-                  </span>
-                </div>
-
-                <div className="space-y-1.5 text-xs font-mono pt-1 text-slate-300">
-                  <div className="flex justify-between items-center">
-                    <span>Govt Prescribed Fee ({submissionReceipt?.userCategory || 'General/OBC'}):</span>
-                    <span className="font-bold text-white">₹{submissionReceipt?.applicationFee || 0}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>CSC Node Portal Charge (Fixed):</span>
-                    <span className="font-bold text-white">₹{submissionReceipt?.portalFee || 50}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>GST (18% on CSC Charge):</span>
-                    <span className="font-bold text-white">₹{Math.round((submissionReceipt?.portalFee || 50) * 0.18)}</span>
-                  </div>
-                </div>
-
-                <div className="h-[1px] bg-slate-800 my-1"></div>
-
-                <div className="flex justify-between items-center pt-0.5">
-                  <span className="text-xs font-black uppercase tracking-wider text-slate-200">TOTAL PAYABLE AMOUNT:</span>
-                  <span className="text-xl font-black font-mono text-[#00e699]">
-                    ₹{submissionReceipt?.totalAmount || 0}
-                  </span>
-                </div>
-              </div>
-
-              {/* Payment Mode Buttons: ONLY APPEAR AFTER SUBMITTING APPLICATION FORM */}
-              <div className="space-y-4">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-300 block flex items-center justify-between">
+              {/* Payment Mode Buttons */}
+              <div className="space-y-3">
+                <label className="text-xs font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-300 flex items-center justify-between">
                   <span>Choose Payment Method:</span>
                   <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">
-                    Razorpay Gateway Enabled
+                    Razorpay Gateway
                   </span>
                 </label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-2.5">
                   
                   {/* OPTION 1: RAZORPAY GATEWAY (RECOMMENDED) */}
                   <button
@@ -1828,60 +1788,28 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                       setUtrError(null);
                       setRazorpayError(null);
                     }}
-                    className={`group relative p-3.5 rounded-2xl border-2 flex flex-col justify-between gap-2.5 transition-all duration-200 cursor-pointer text-left shadow-xs hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 ${
+                    className={`group relative p-3 rounded-xl border-2 flex items-center justify-between gap-2 transition-all duration-200 cursor-pointer text-left shadow-2xs hover:shadow-md ${
                       postSubmitPaymentMode === 'razorpay'
-                        ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-500/15 dark:bg-emerald-500/25 text-slate-900 dark:text-white font-extrabold shadow-md ring-4 ring-emerald-500/25 scale-[1.01]'
-                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-emerald-500 dark:hover:border-emerald-400 hover:bg-emerald-50/80 dark:hover:bg-emerald-950/40'
+                        ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-500/10 dark:bg-emerald-500/20 text-slate-900 dark:text-white font-extrabold shadow-sm ring-2 ring-emerald-500/20'
+                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-emerald-500 dark:hover:border-emerald-400'
                     }`}
                   >
-                    <div className="flex items-center justify-between w-full">
-                      <div className={`p-2.5 rounded-xl shrink-0 transition-colors duration-200 ${
+                    <div className="flex items-center gap-2.5">
+                      <div className={`p-2 rounded-lg shrink-0 ${
                         postSubmitPaymentMode === 'razorpay'
-                          ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-300/50'
-                          : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white'
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                       }`}>
-                        <CreditCard className="w-5 h-5" />
+                        <CreditCard className="w-4 h-4" />
                       </div>
-                      <span className="text-[9px] bg-emerald-600 text-white font-black px-2 py-0.5 rounded-md uppercase tracking-wider">
-                        ★ Instant
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-xs font-black uppercase tracking-wider block text-slate-900 dark:text-white">Razorpay Gateway</span>
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-tight block mt-0.5">UPI, Cards, Netbanking &amp; Wallets</span>
+                      <div>
+                        <span className="text-xs font-black uppercase tracking-wider block text-slate-900 dark:text-white">Razorpay</span>
+                        <span className="text-[9.5px] text-slate-500 dark:text-slate-400 font-medium block">UPI / Cards / NetBanking</span>
+                      </div>
                     </div>
                   </button>
 
-                  {/* OPTION 2: SCAN GOOGLE PAY QR */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPostSubmitPaymentMode('online');
-                      setUtrError(null);
-                      setRazorpayError(null);
-                    }}
-                    className={`group relative p-3.5 rounded-2xl border-2 flex flex-col justify-between gap-2.5 transition-all duration-200 cursor-pointer text-left shadow-xs hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 ${
-                      postSubmitPaymentMode === 'online'
-                        ? 'border-blue-600 dark:border-blue-500 bg-blue-500/15 dark:bg-blue-500/25 text-slate-900 dark:text-white font-extrabold shadow-md ring-4 ring-blue-500/25 scale-[1.01]'
-                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50/80 dark:hover:bg-blue-950/40'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <div className={`p-2.5 rounded-xl shrink-0 transition-colors duration-200 ${
-                        postSubmitPaymentMode === 'online'
-                          ? 'bg-blue-600 text-white shadow-sm ring-2 ring-blue-300/50'
-                          : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white'
-                      }`}>
-                        <QrCode className="w-5 h-5" />
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-xs font-black uppercase tracking-wider block text-slate-900 dark:text-white">Scan UPI QR</span>
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-tight block mt-0.5">Scan GPay QR + Enter UTR Ref</span>
-                    </div>
-                  </button>
-
-                  {/* OPTION 3: CASH COUNTER */}
+                  {/* OPTION 2: CASH COUNTER */}
                   <button
                     type="button"
                     onClick={() => {
@@ -1889,317 +1817,106 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                       setUtrError(null);
                       setRazorpayError(null);
                     }}
-                    className={`group relative p-3.5 rounded-2xl border-2 flex flex-col justify-between gap-2.5 transition-all duration-200 cursor-pointer text-left shadow-xs hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 ${
+                    className={`group relative p-3 rounded-xl border-2 flex items-center justify-between gap-2 transition-all duration-200 cursor-pointer text-left shadow-2xs hover:shadow-md ${
                       postSubmitPaymentMode === 'cash'
-                        ? 'border-amber-600 dark:border-amber-500 bg-amber-500/15 dark:bg-amber-500/25 text-slate-900 dark:text-white font-extrabold shadow-md ring-4 ring-amber-500/25 scale-[1.01]'
-                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-amber-500 dark:hover:border-amber-400 hover:bg-amber-50/80 dark:hover:bg-amber-950/40'
+                        ? 'border-amber-600 dark:border-amber-500 bg-amber-500/10 dark:bg-amber-500/20 text-slate-900 dark:text-white font-extrabold shadow-sm ring-2 ring-amber-500/20'
+                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-amber-500 dark:hover:border-amber-400'
                     }`}
                   >
-                    <div className="flex items-center justify-between w-full">
-                      <div className={`p-2.5 rounded-xl shrink-0 transition-colors duration-200 ${
+                    <div className="flex items-center gap-2.5">
+                      <div className={`p-2 rounded-lg shrink-0 ${
                         postSubmitPaymentMode === 'cash'
-                          ? 'bg-amber-600 text-white shadow-sm ring-2 ring-amber-300/50'
-                          : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 group-hover:bg-amber-600 group-hover:text-white'
+                          ? 'bg-amber-600 text-white'
+                          : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
                       }`}>
-                        <IndianRupee className="w-5 h-5" />
+                        <IndianRupee className="w-4 h-4" />
                       </div>
-                    </div>
-                    <div>
-                      <span className="text-xs font-black uppercase tracking-wider block text-slate-900 dark:text-white">Cash Counter</span>
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-tight block mt-0.5">Pay in person at Cyber Cafe</span>
+                      <div>
+                        <span className="text-xs font-black uppercase tracking-wider block text-slate-900 dark:text-white">Cash Counter</span>
+                        <span className="text-[9.5px] text-slate-500 dark:text-slate-400 font-medium block">Pay in person</span>
+                      </div>
                     </div>
                   </button>
 
                 </div>
 
                 {/* PAYMENT METHOD DETAILS DISPLAY LOGIC */}
-                {postSubmitPaymentMode === 'none' ? (
-                  <div className="bg-slate-50 dark:bg-slate-950 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl p-6 text-center text-slate-500 dark:text-slate-400">
-                    <p className="text-xs font-semibold">
-                      👈 Please select <span className="font-extrabold text-emerald-600 dark:text-emerald-400">Razorpay Gateway</span>, <span className="font-extrabold text-blue-600 dark:text-blue-400">Scan UPI QR</span>, or <span className="font-extrabold text-amber-600 dark:text-amber-400">Cash Counter</span> above to proceed.
-                    </p>
-                  </div>
-                ) : postSubmitPaymentMode === 'razorpay' ? (
+                {postSubmitPaymentMode === 'razorpay' ? (
                   /* RAZORPAY PAYMENT GATEWAY CARD */
-                  <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-2xl p-6 shadow-md border border-emerald-500/30 dark:border-emerald-500/20 flex flex-col items-center text-center animate-fade-in relative overflow-hidden space-y-4">
-                    {/* Top Decorative Emerald Stripe */}
-                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"></div>
-
-                    {/* Razorpay Header & Branding */}
-                    <div className="pt-1 space-y-1">
-                      <div className="inline-flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700">
-                        <span className="text-xs font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 font-mono">⚡ Razorpay Official Handle</span>
-                        <span className="text-slate-400 text-[10px]">•</span>
-                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">PCI-DSS 256-bit Secure</span>
+                  <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-xl p-4 shadow-sm border border-emerald-500/30 dark:border-emerald-500/20 flex flex-col items-center text-center animate-fade-in relative overflow-hidden space-y-3">
+                    <div className="space-y-1">
+                      <div className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 font-mono">⚡ Razorpay Online</span>
+                        <span className="text-slate-400 text-[9px]">•</span>
+                        <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">256-bit SSL Secure</span>
                       </div>
-                      <h4 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">
-                        Razorpay Instant Online Payment
-                      </h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md">
-                        Pay total amount of <strong className="text-emerald-600 dark:text-emerald-400 font-extrabold font-mono">₹{submissionReceipt?.totalAmount}</strong> using Google Pay, PhonePe, Paytm, UPI, Credit/Debit Cards, or NetBanking directly via Razorpay's Official Handle.
+                      <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">
+                        Pay <strong className="text-emerald-600 dark:text-emerald-400 font-black font-mono">₹{submissionReceipt?.totalAmount}</strong> securely via GPay, PhonePe, Paytm, UPI, Debit/Credit Card or NetBanking.
                       </p>
                     </div>
 
-                    {/* Official Razorpay.me Link Highlight Card */}
-                    <div className="w-full bg-blue-50 dark:bg-blue-950/60 p-3.5 rounded-xl border border-blue-200 dark:border-blue-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
-                      <div className="space-y-0.5">
-                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-blue-700 dark:text-blue-300">Official Payment Link</span>
-                        <p className="text-xs font-mono font-bold text-blue-900 dark:text-blue-100">
-                          https://razorpay.me/@cscdost
-                        </p>
-                      </div>
-                      <a
-                        href="https://razorpay.me/@cscdost"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="shrink-0 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs uppercase tracking-wider rounded-lg shadow transition-all flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <span>Open Razorpay.me</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
-                    </div>
-
-                    {/* Payment Options Supported Pills */}
-                    <div className="w-full bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10.5px] font-extrabold text-slate-700 dark:text-slate-300">
-                      <div className="flex items-center justify-center gap-1.5 p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs">
-                        <span>📱</span>
-                        <span>UPI / GPay / PhonePe</span>
-                      </div>
-                      <div className="flex items-center justify-center gap-1.5 p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs">
-                        <span>💳</span>
-                        <span>Debit / Credit Cards</span>
-                      </div>
-                      <div className="flex items-center justify-center gap-1.5 p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs">
-                        <span>🏦</span>
-                        <span>NetBanking (50+ Banks)</span>
-                      </div>
-                      <div className="flex items-center justify-center gap-1.5 p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs">
-                        <span>👛</span>
-                        <span>Wallets &amp; PayLater</span>
-                      </div>
-                    </div>
-
-                    {/* Primary Razorpay Action Buttons */}
-                    <div className="w-full space-y-2.5">
-                      {/* Primary Popup Checkout Button */}
+                    {/* Primary Razorpay Action Button */}
+                    <div className="w-full">
                       <button
                         type="button"
                         onClick={handlePayWithRazorpay}
                         disabled={isRazorpayLoading}
-                        className="w-full py-3.5 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm uppercase tracking-wider rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                        className="w-full py-3 px-5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                       >
                         {isRazorpayLoading ? (
                           <>
                             <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                            <span>Launching Razorpay Gateway...</span>
+                            <span>Launching Gateway...</span>
                           </>
                         ) : (
                           <>
-                            <CreditCard className="w-5 h-5" />
+                            <CreditCard className="w-4 h-4" />
                             <span>Pay ₹{submissionReceipt?.totalAmount} via Razorpay Gateway</span>
                             <ArrowRight className="w-4 h-4" />
                           </>
                         )}
                       </button>
-
-                      {/* Direct razorpay.me Handle Link Button */}
-                      <a
-                        href="https://razorpay.me/@cscdost"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs uppercase tracking-wider rounded-xl border border-slate-300 dark:border-slate-700 transition-all flex items-center justify-center gap-2 cursor-pointer"
-                      >
-                        <ExternalLink className="w-4 h-4 text-blue-600" />
-                        <span>Or Pay via Direct Link (razorpay.me/@cscdost)</span>
-                      </a>
                     </div>
 
-                    {/* Error message display with direct fallback link */}
+                    {/* Error message display with fallback */}
                     {razorpayError && (
-                      <div className="w-full text-xs text-amber-900 dark:text-amber-200 font-medium bg-amber-50 dark:bg-amber-950/80 p-3.5 rounded-xl border border-amber-300 dark:border-amber-800 text-left space-y-2">
+                      <div className="w-full text-xs text-amber-900 dark:text-amber-200 font-medium bg-amber-50 dark:bg-amber-950/80 p-3 rounded-lg border border-amber-300 dark:border-amber-800 text-left space-y-1.5">
                         <div className="flex items-start gap-2">
-                          <span className="shrink-0 text-sm">⚠️</span>
-                          <div>
-                            <p className="font-bold">{razorpayError}</p>
-                            <p className="mt-1 text-[11px] text-amber-800 dark:text-amber-300">
-                              Please click the direct Razorpay payment button above or open razorpay.me/@cscdost to complete your payment smoothly.
-                            </p>
-                          </div>
+                          <span className="shrink-0 text-xs">⚠️</span>
+                          <p className="font-bold text-[11px]">{razorpayError}</p>
                         </div>
                         <a
                           href="https://razorpay.me/@cscdost"
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg flex items-center justify-center gap-1.5 transition-all"
+                          className="w-full py-1.5 px-3 bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] rounded flex items-center justify-center gap-1.5 transition-all"
                         >
-                          <span>Open razorpay.me/@cscdost</span>
-                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>Open Direct Payment Link</span>
+                          <ExternalLink className="w-3 h-3" />
                         </a>
                       </div>
                     )}
-
-                    {/* UTR / Transaction Ref Confirmation Section */}
-                    <div className="w-full mt-2 text-left border-t border-slate-200 dark:border-slate-800 pt-3 space-y-2">
-                      <label className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center justify-between">
-                        <span>Enter Txn Ref / UTR No. (After Paying)</span>
-                        <span className="text-[9px] text-emerald-600 font-extrabold uppercase bg-emerald-50 dark:bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">Payment Confirmation</span>
-                      </label>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <input
-                          type="text"
-                          placeholder="e.g., pay_P123abc or 12-Digit UTR"
-                          value={formData.utrNumber}
-                          onChange={(e) => {
-                            const val = e.target.value.trim();
-                            setFormData(prev => ({ ...prev, utrNumber: val }));
-                          }}
-                          className="flex-1 px-3 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleConfirmManualRazorpayPayment}
-                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-lg shadow transition-all cursor-pointer shrink-0 flex items-center justify-center gap-1.5"
-                        >
-                          <span>Confirm Payment</span>
-                          <CheckCircle className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : postSubmitPaymentMode === 'online' ? (
-                  /* QR CODE IS REVEALED AND DISPLAYED ONLY NOW AFTER Pay Online IS CLICKED */
-                  <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-2xl p-5 shadow-md border border-slate-200 dark:border-slate-800 flex flex-col items-center text-center animate-fade-in relative overflow-hidden">
-                    {/* Decorative Google Colors Bar */}
-                    <div className="absolute top-0 left-0 right-0 h-1.5 flex">
-                      <div className="w-1/4 bg-[#4285F4]"></div>
-                      <div className="w-1/4 bg-[#34A853]"></div>
-                      <div className="w-1/4 bg-[#FBBC05]"></div>
-                      <div className="w-1/4 bg-[#EA4335]"></div>
-                    </div>
-
-                    {/* Google Pay Header */}
-                    <div className="mt-1 mb-2 flex flex-col items-center">
-                      <div className="flex items-center justify-center gap-1 font-extrabold text-lg text-slate-800 dark:text-white tracking-tight">
-                        <span className="text-[#4285F4]">G</span>
-                        <span className="text-[#EA4335]">o</span>
-                        <span className="text-[#FBBC05]">o</span>
-                        <span className="text-[#4285F4]">g</span>
-                        <span className="text-[#34A853]">l</span>
-                        <span className="text-[#EA4335]">e</span>
-                        <span className="ml-1 text-slate-800 dark:text-slate-100 font-bold">Pay</span>
-                      </div>
-                      
-                      <h4 className="text-sm font-black text-slate-900 dark:text-white mt-1">
-                        Model Common Service Centre
-                      </h4>
-                      <p className="text-xs font-bold text-slate-500 dark:text-slate-400 font-mono">
-                        +91 70068 33767
-                      </p>
-                      <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">
-                        Scan &amp; Pay ₹{submissionReceipt?.totalAmount}
-                      </p>
-                    </div>
-
-                    {/* High Quality QR Code Image */}
-                    <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-inner my-1 flex flex-col items-center relative">
-                      <img
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=000000&data=${encodeURIComponent(
-                          `upi://pay?pa=7006833767-2@okbizaxis&pn=Model%20Common%20Service%20Centre&am=${submissionReceipt?.totalAmount}&cu=INR&tn=CSC_DOST_${encodeURIComponent((submissionReceipt?.customerName || 'Payment').replace(/\s+/g, '_'))}`
-                        )}`}
-                        alt="Google Pay QR Code"
-                        className="w-44 h-44 object-contain"
-                        referrerPolicy="no-referrer"
-                      />
-                    </div>
-
-                    {/* UPI ID Banner with Copy Button */}
-                    <div className="mt-2 w-full max-w-xs">
-                      <div className="flex items-center justify-between gap-1 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
-                        <span className="text-xs font-mono font-extrabold text-slate-800 dark:text-slate-200 truncate">
-                          7006833767-2@okbizaxis
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            navigator.clipboard.writeText('7006833767-2@okbizaxis');
-                            setCopiedUpi(true);
-                            setTimeout(() => setCopiedUpi(false), 2000);
-                          }}
-                          className="px-2 py-0.5 bg-amber-500 hover:bg-amber-600 text-white rounded-md text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 shrink-0"
-                          title="Copy UPI ID"
-                        >
-                          {copiedUpi ? (
-                            <>
-                              <Check className="w-3 h-3 text-white" />
-                              <span>Copied</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-3 h-3" />
-                              <span>Copy</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Mandatory UTR Input */}
-                    <div className="w-full mt-4 text-left border-t border-slate-200 dark:border-slate-800 pt-3 space-y-2">
-                      <label className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center justify-between">
-                        <span>12-Digit UTR / Transaction Ref ID <span className="text-red-500">*</span></span>
-                        <span className="text-[9px] text-red-500 font-extrabold uppercase bg-red-50 dark:bg-red-950 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800">Mandatory</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="Enter 12-Digit UTR No. (e.g., 420819123456)"
-                        value={formData.utrNumber}
-                        onChange={(e) => {
-                          setFormData({ ...formData, utrNumber: e.target.value });
-                          if (utrError) setUtrError(null);
-                        }}
-                        className={`w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border ${utrError ? 'border-red-500 ring-2 ring-red-500/20' : 'border-amber-400 dark:border-amber-500 focus:border-amber-500'} rounded-xl text-slate-900 dark:text-white font-mono font-extrabold text-xs focus:ring-2 focus:ring-amber-500/20 outline-none`}
-                      />
-                      {utrError ? (
-                        <p className="text-xs text-red-500 font-bold animate-pulse">
-                          ⚠️ {utrError}
-                        </p>
-                      ) : (
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                          * Copy the 12-digit UTR/Ref No. from GPay/PhonePe/Paytm payment receipt and paste above.
-                        </p>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={handleConfirmPayment}
-                        className="w-full mt-3 py-3 px-4 bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 hover:from-amber-600 hover:via-orange-600 hover:to-red-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <FileCheck className="w-4 h-4" />
-                        <span>Confirm Online Payment &amp; Generate Slip</span>
-                      </button>
-                    </div>
                   </div>
                 ) : (
-                  /* CASH COUNTER OPTION: QR CODE REMAINS HIDDEN */
-                  <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl p-5 text-center flex flex-col items-center justify-center space-y-3 animate-fade-in">
-                    <Clock className="w-8 h-8 text-amber-500 animate-pulse" />
+                  /* CASH COUNTER OPTION */
+                  <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-center flex flex-col items-center justify-center space-y-2.5 animate-fade-in">
+                    <Clock className="w-6 h-6 text-amber-500 animate-pulse" />
                     <div>
-                      <h5 className="text-sm font-black uppercase text-slate-900 dark:text-white tracking-wide">
-                        Visit &amp; Pay At Cyber Cafe Branch Counter
+                      <h5 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wide">
+                        Pay At Counter
                       </h5>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1 leading-relaxed">
-                        Your application details have been saved. You can pay the total amount of <span className="font-bold text-amber-600 dark:text-amber-400 font-mono">₹{submissionReceipt?.totalAmount}</span> in cash or UPI directly at our counter using Token ID: <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">{submissionReceipt?.appId}</span>.
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 max-w-xs mt-0.5 leading-relaxed">
+                        Pay <span className="font-bold text-amber-600 dark:text-amber-400 font-mono">₹{submissionReceipt?.totalAmount}</span> in cash at our counter.
                       </p>
                     </div>
 
                     <button
                       type="button"
                       onClick={handleConfirmPayment}
-                      className="w-full py-3 px-4 bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 hover:from-amber-600 hover:via-orange-600 hover:to-red-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 hover:from-amber-600 hover:via-orange-600 hover:to-red-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <FileCheck className="w-4 h-4" />
-                      <span>Confirm Cash Payment Mode &amp; Generate Slip</span>
+                      <span>Confirm Cash Payment &amp; Generate Slip</span>
                     </button>
                   </div>
                 )}
@@ -2324,74 +2041,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                   </div>
                 </div>
 
-                {/* WHATSAPP AUTOMATED INVOICE NOTIFICATION STATUS BOX */}
-                <div className="bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/80 rounded-xl p-3.5 space-y-2.5 no-print text-left">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 bg-emerald-600 text-white rounded-lg shadow-xs">
-                        <MessageCircle className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <span className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white block">
-                          Automated WhatsApp Invoice
-                        </span>
-                        <p className="text-[10px] text-slate-600 dark:text-slate-300 font-medium">
-                          Target Mobile: <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{submissionReceipt?.phoneNumber}</span>
-                        </p>
-                      </div>
-                    </div>
 
-                    {whatsappStatus?.loading ? (
-                      <span className="text-[10px] font-extrabold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md animate-pulse">
-                        Dispatching...
-                      </span>
-                    ) : whatsappStatus?.sent ? (
-                      <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-200 dark:bg-emerald-900 dark:text-emerald-200 px-2.5 py-0.5 rounded-md flex items-center gap-1">
-                        <Check className="w-3 h-3 stroke-[3]" /> Invoice Sent
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-extrabold text-slate-800 bg-slate-200 dark:bg-slate-800 dark:text-slate-200 px-2 py-0.5 rounded-md">
-                        Notice / Direct Dispatch
-                      </span>
-                    )}
-                  </div>
-
-                  {whatsappStatus?.message && (
-                    <p className="text-[10.5px] text-emerald-800 dark:text-emerald-300 font-semibold bg-emerald-100/80 dark:bg-emerald-950/80 p-2 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                      ✅ {whatsappStatus.message}
-                    </p>
-                  )}
-
-                  {whatsappStatus?.error && (
-                    <p className="text-[10.5px] text-amber-800 dark:text-amber-300 font-semibold bg-amber-100/80 dark:bg-amber-950/80 p-2 rounded-lg border border-amber-200 dark:border-amber-800">
-                      ℹ️ {whatsappStatus.error}
-                    </p>
-                  )}
-
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-emerald-200 dark:border-emerald-800/80">
-                    <button
-                      type="button"
-                      onClick={() => triggerWhatsAppInvoiceDispatch(submissionReceipt)}
-                      disabled={whatsappStatus?.loading}
-                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[10.5px] uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
-                    >
-                      <MessageCircle className="w-3.5 h-3.5" />
-                      <span>{whatsappStatus?.loading ? 'Sending...' : 'Re-send WhatsApp Invoice'}</span>
-                    </button>
-
-                    {whatsappStatus?.directWhatsAppUrl && (
-                      <a
-                        href={whatsappStatus.directWhatsAppUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-3 py-1.5 bg-slate-900 hover:bg-black text-white font-extrabold text-[10.5px] uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-                      >
-                        <ExternalLink className="w-3 h-3 text-amber-400" />
-                        <span>Open Invoice on WhatsApp</span>
-                      </a>
-                    )}
-                  </div>
-                </div>
 
                 {/* Bottom Actions */}
                 <div className="flex flex-wrap items-center justify-end gap-2.5 pt-2 no-print">
