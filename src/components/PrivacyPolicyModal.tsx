@@ -110,16 +110,22 @@ Welcome to CSC Dost. We are committed to protecting your privacy and ensuring th
 4. DATA SECURITY
 Technical, physical, and administrative safeguards to protect your personal data and sensitive documents.
 
-5. THIRD-PARTY LINKS
+5. GOOGLE ADSENSE & THIRD-PARTY ADVERTISING COOKIES
+- We use Google AdSense to display relevant advertisements on https://www.cscdost.online/.
+- Google, as a third-party vendor, uses cookies (including the DoubleClick cookie) to serve ads based on users' visits to our site and other websites across the internet.
+- Google's use of advertising cookies enables it and its partners to serve ads to our users based on their visit to our site and/or other sites on the Internet.
+- Users may opt out of personalized advertising by visiting Google Ads Settings (https://adssettings.google.com/) or by visiting www.aboutads.info.
+
+6. THIRD-PARTY LINKS
 External links to government/payment portals are subject to their own privacy policies.
 
-6. CHILDREN'S PRIVACY
+7. CHILDREN'S PRIVACY
 Intended for general audience. No intentional collection from minors under 18 without guardian consent.
 
-7. CHANGES TO THIS PRIVACY POLICY
+8. CHANGES TO THIS PRIVACY POLICY
 Updates will be posted with an updated Effective Date.
 
-8. CONTACT US
+9. CONTACT US
 Website: https://www.cscdost.online/
 Email: cscdost.support@gmail.com
 Phone: 7006833767`;

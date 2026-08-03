@@ -2392,68 +2392,69 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
       {/* DETAILED SARKARI DEDICATED POST PAGE VIEW */}
       {selectedItem && (
-        <div className="fixed inset-0 bg-slate-950/80 dark:bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 z-50 animate-fade-in overflow-hidden">
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 z-50 animate-fade-in overflow-hidden">
           <div 
-            className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 transform scale-100 transition-all duration-300"
+            className="bg-white rounded-3xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl border border-slate-200 transform scale-100 transition-all duration-300"
             id={`sarkari-detail-modal-${selectedItem.id}`}
           >
-            {/* Top Breadcrumb & Header Banner */}
-            <div className="px-5 sm:px-8 py-5 border-b border-slate-200 dark:border-slate-800 relative bg-gradient-to-r from-slate-900 via-[#1e1b4b] to-slate-900 text-white shrink-0">
+            {/* Top Breadcrumb & Clean High-Contrast Light/Blue Header Banner */}
+            <div className="px-5 sm:px-8 py-4 sm:py-5 border-b border-slate-200 relative bg-gradient-to-r from-[#172554] via-[#1e3a8a] to-[#1e1b4b] text-white shrink-0 shadow-sm">
               <div className="space-y-2 pr-10">
-                <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-slate-300">
-                  <span>Sarkari Desk</span>
+                <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-slate-200">
+                  <span className="font-bold text-amber-300">Sarkari Desk</span>
                   <span>/</span>
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${SARKARI_CATEGORIES[selectedItem.category].color}`}>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${SARKARI_CATEGORIES[selectedItem.category].color}`}>
                     {SARKARI_CATEGORIES[selectedItem.category].label}
                   </span>
                   {selectedItem.advertisementNo && (
                     <>
                       <span>/</span>
-                      <span className="text-amber-400 font-bold">{selectedItem.advertisementNo}</span>
+                      <span className="text-yellow-300 font-bold">{selectedItem.advertisementNo}</span>
                     </>
                   )}
                 </div>
 
                 <div className="flex items-center gap-2 pt-0.5">
-                  <span className="text-xs font-black uppercase tracking-wider text-indigo-300 font-mono bg-indigo-950/80 px-2.5 py-0.5 rounded border border-indigo-700/50">
+                  <span className="text-xs font-black uppercase tracking-wider text-blue-100 font-mono bg-blue-900/80 px-2.5 py-0.5 rounded border border-blue-400/30 shadow-xs">
                     {getOrgName(selectedItem)}
                   </span>
                   {selectedItem.isNew && (
-                    <span className="px-2 py-0.5 bg-red-500 text-white font-black text-[9px] uppercase tracking-wider rounded animate-pulse">
+                    <span className="px-2 py-0.5 bg-red-600 text-white font-black text-[9px] uppercase tracking-wider rounded animate-pulse shadow-xs">
                       ⚡ LATEST NOTIFICATION
                     </span>
                   )}
                 </div>
 
-                <h3 className="text-lg sm:text-2xl font-black tracking-tight leading-snug font-display text-white">
+                <h3 className="text-lg sm:text-2xl font-black tracking-tight leading-snug font-sans text-white drop-shadow-xs">
                   {selectedItem.title}
                 </h3>
               </div>
 
               <button
+                type="button"
                 onClick={() => setSelectedItem(null)}
-                className="p-2 bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white rounded-full transition-all absolute right-4 top-5 cursor-pointer"
+                className="p-2 bg-white/15 hover:bg-white/30 text-white rounded-full transition-all absolute right-3.5 top-4 cursor-pointer border border-white/20 shadow-xs"
                 title="Close Post View"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Scrollable Post Content Body */}
-            <div className="p-5 sm:p-8 overflow-y-auto space-y-6 text-sm scrollbar-thin bg-slate-50/50 dark:bg-slate-950/50">
+            {/* Scrollable Post Content Body - Clean High-Contrast Light Theme */}
+            <div className="p-4 sm:p-7 overflow-y-auto space-y-5 text-sm scrollbar-thin bg-slate-50">
               
               {/* Important Alert Strip */}
-              <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-start gap-3">
-                <Bell className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5 animate-bounce" />
+              <div className="p-4 bg-amber-50 border border-amber-300 rounded-2xl flex items-start gap-3 shadow-2xs">
+                <Bell className="w-5 h-5 text-amber-700 shrink-0 mt-0.5 animate-bounce" />
                 <div className="space-y-1">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 font-mono">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-amber-900 font-mono">
                     Candidate Verification Advisory
                   </h4>
-                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                  <p className="text-xs text-slate-800 leading-relaxed font-medium">
                     Ensure all certificates (Aadhaar, Educational Marksheets, Category / Caste Certificates) match your full name and date of birth exactly before submitting. Applications processed through our CSC Desk undergo mandatory VLE verification.
                   </p>
                   {selectedItem.lastDate && (
-                    <p className="text-xs font-bold text-red-600 dark:text-red-400 font-mono pt-1">
+                    <p className="text-xs font-bold text-red-700 font-mono pt-1">
                       ⏰ Application Closing Deadline: <span className="underline">{selectedItem.lastDate}</span>
                     </p>
                   )}
@@ -2464,41 +2465,41 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
               <AdSenseSlot className="my-2" />
 
               {/* Prominent Short Information / Short Description Card */}
-              <div className="bg-white dark:bg-slate-900 border border-blue-200/80 dark:border-blue-900/60 rounded-2xl p-5 space-y-3.5 shadow-sm">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
-                  <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-blue-900 dark:text-blue-300 font-mono flex items-center gap-2">
-                    <FileText className="w-4.5 h-4.5 text-blue-600 dark:text-blue-400" />
+              <div className="bg-white border border-blue-200 rounded-2xl p-5 space-y-3.5 shadow-xs">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                  <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-blue-900 font-mono flex items-center gap-2">
+                    <FileText className="w-4.5 h-4.5 text-blue-700" />
                     <span>Short Description / Notification Summary</span>
                   </h4>
-                  <span className="px-2.5 py-0.5 bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-[10px] font-mono font-bold rounded-full border border-blue-200 dark:border-blue-800">
+                  <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-mono font-bold rounded-full border border-blue-200">
                     Official Notice
                   </span>
                 </div>
 
-                <div className="text-slate-800 dark:text-slate-200 text-xs sm:text-sm leading-relaxed space-y-2.5 font-normal">
-                  <p className="p-3 bg-slate-50 dark:bg-slate-950/80 rounded-xl border border-slate-200/70 dark:border-slate-850">
-                    <strong className="font-extrabold text-blue-900 dark:text-blue-200">{getOrgName(selectedItem)}</strong> has officially published the official notification for <strong className="font-black text-slate-950 dark:text-white">{selectedItem.title}</strong>. {selectedItem.shortInfo || 'Interested and eligible candidates can read the complete notification details, eligibility criteria, age limits, and fee structure below before submitting their online application form.'}
+                <div className="text-slate-800 text-xs sm:text-sm leading-relaxed space-y-2.5 font-normal">
+                  <p className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <strong className="font-extrabold text-blue-900">{getOrgName(selectedItem)}</strong> has officially published the official notification for <strong className="font-black text-slate-950">{selectedItem.title}</strong>. {selectedItem.shortInfo || 'Interested and eligible candidates can read the complete notification details, eligibility criteria, age limits, and fee structure below before submitting their online application form.'}
                   </p>
                   
                   {/* Quick Post Metadata Chips */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 font-mono text-[11px]">
-                    <div className="p-2 bg-slate-100 dark:bg-slate-800/60 rounded-lg flex flex-col">
-                      <span className="text-slate-500 dark:text-slate-400 text-[9px] uppercase font-bold">Post Date</span>
-                      <span className="font-extrabold text-slate-900 dark:text-slate-100">{selectedItem.postDate}</span>
+                    <div className="p-2 bg-slate-100 rounded-lg flex flex-col border border-slate-200/60">
+                      <span className="text-slate-600 text-[9px] uppercase font-bold">Post Date</span>
+                      <span className="font-extrabold text-slate-900">{selectedItem.postDate}</span>
                     </div>
-                    <div className="p-2 bg-slate-100 dark:bg-slate-800/60 rounded-lg flex flex-col">
-                      <span className="text-slate-500 dark:text-slate-400 text-[9px] uppercase font-bold">Category</span>
-                      <span className="font-extrabold text-blue-600 dark:text-blue-400 uppercase">{selectedItem.category.replace('_', ' ')}</span>
+                    <div className="p-2 bg-slate-100 rounded-lg flex flex-col border border-slate-200/60">
+                      <span className="text-slate-600 text-[9px] uppercase font-bold">Category</span>
+                      <span className="font-extrabold text-blue-700 uppercase">{selectedItem.category.replace('_', ' ')}</span>
                     </div>
                     {selectedItem.advertisementNo ? (
-                      <div className="p-2 bg-slate-100 dark:bg-slate-800/60 rounded-lg flex flex-col col-span-2 sm:col-span-1">
-                        <span className="text-slate-500 dark:text-slate-400 text-[9px] uppercase font-bold">Advt No.</span>
-                        <span className="font-extrabold text-amber-600 dark:text-amber-400 truncate">{selectedItem.advertisementNo}</span>
+                      <div className="p-2 bg-slate-100 rounded-lg flex flex-col col-span-2 sm:col-span-1 border border-slate-200/60">
+                        <span className="text-slate-600 text-[9px] uppercase font-bold">Advt No.</span>
+                        <span className="font-extrabold text-amber-700 truncate">{selectedItem.advertisementNo}</span>
                       </div>
                     ) : (
-                      <div className="p-2 bg-slate-100 dark:bg-slate-800/60 rounded-lg flex flex-col col-span-2 sm:col-span-1">
-                        <span className="text-slate-500 dark:text-slate-400 text-[9px] uppercase font-bold">Status</span>
-                        <span className="font-extrabold text-emerald-600 dark:text-emerald-400">Active / Form Open</span>
+                      <div className="p-2 bg-slate-100 rounded-lg flex flex-col col-span-2 sm:col-span-1 border border-slate-200/60">
+                        <span className="text-slate-600 text-[9px] uppercase font-bold">Status</span>
+                        <span className="font-extrabold text-emerald-700">Active / Form Open</span>
                       </div>
                     )}
                   </div>
@@ -2509,57 +2510,57 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 
                 {/* Important Dates Box */}
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-xs">
-                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-rose-600 dark:text-rose-400 font-mono pb-2 border-b border-slate-100 dark:border-slate-800">
-                    <Calendar className="w-4 h-4 text-rose-500" />
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 shadow-xs">
+                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-rose-700 font-mono pb-2 border-b border-slate-100">
+                    <Calendar className="w-4 h-4 text-rose-600" />
                     <span>Key Examination Schedule</span>
                   </div>
                   <div className="space-y-2 text-xs font-mono">
-                    <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800/60">
-                      <span className="text-slate-500 dark:text-slate-400">Post / Release Date:</span>
-                      <span className="font-bold text-slate-900 dark:text-white">{selectedItem.postDate}</span>
+                    <div className="flex justify-between items-center py-1 border-b border-slate-100">
+                      <span className="text-slate-600 font-medium">Post / Release Date:</span>
+                      <span className="font-bold text-slate-900">{selectedItem.postDate}</span>
                     </div>
-                    <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800/60">
-                      <span className="text-slate-500 dark:text-slate-400">Application Start:</span>
-                      <span className="font-bold text-emerald-600 dark:text-emerald-400">{selectedItem.postDate}</span>
+                    <div className="flex justify-between items-center py-1 border-b border-slate-100">
+                      <span className="text-slate-600 font-medium">Application Start:</span>
+                      <span className="font-bold text-emerald-700">{selectedItem.postDate}</span>
                     </div>
-                    <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800/60">
-                      <span className="text-slate-500 dark:text-slate-400">Last Date for Online Form:</span>
-                      <span className="font-extrabold text-red-600 dark:text-red-400">{selectedItem.lastDate || 'As per notification'}</span>
+                    <div className="flex justify-between items-center py-1 border-b border-slate-100">
+                      <span className="text-slate-600 font-medium">Last Date for Online Form:</span>
+                      <span className="font-extrabold text-red-600">{selectedItem.lastDate || 'As per notification'}</span>
                     </div>
-                    <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800/60">
-                      <span className="text-slate-500 dark:text-slate-400">Last Date Pay Fee:</span>
-                      <span className="font-bold text-slate-800 dark:text-slate-200">{selectedItem.lastDate || 'Same as last date'}</span>
+                    <div className="flex justify-between items-center py-1 border-b border-slate-100">
+                      <span className="text-slate-600 font-medium">Last Date Pay Fee:</span>
+                      <span className="font-bold text-slate-900">{selectedItem.lastDate || 'Same as last date'}</span>
                     </div>
                     <div className="flex justify-between items-center py-1">
-                      <span className="text-slate-500 dark:text-slate-400">Exam Date / Admit Card:</span>
-                      <span className="font-bold text-indigo-600 dark:text-indigo-400">To be notified soon</span>
+                      <span className="text-slate-600 font-medium">Exam Date / Admit Card:</span>
+                      <span className="font-bold text-indigo-700">To be notified soon</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Fee Structure Box */}
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-xs">
-                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-mono pb-2 border-b border-slate-100 dark:border-slate-800">
-                    <IndianRupee className="w-4 h-4 text-emerald-500" />
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 shadow-xs">
+                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-emerald-700 font-mono pb-2 border-b border-slate-100">
+                    <IndianRupee className="w-4 h-4 text-emerald-600" />
                     <span>Application Fee Breakdown</span>
                   </div>
                   <div className="space-y-2 text-xs font-mono">
-                    <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800/60">
-                      <span className="text-slate-500 dark:text-slate-400">General / OBC / EWS:</span>
-                      <span className="font-extrabold text-slate-900 dark:text-white">{selectedItem.fees?.genObc || '₹100'}</span>
+                    <div className="flex justify-between items-center py-1 border-b border-slate-100">
+                      <span className="text-slate-600 font-medium">General / OBC / EWS:</span>
+                      <span className="font-extrabold text-slate-900">{selectedItem.fees?.genObc || '₹100'}</span>
                     </div>
-                    <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800/60">
-                      <span className="text-slate-500 dark:text-slate-400">SC / ST / PH (Divyang):</span>
-                      <span className="font-extrabold text-emerald-600 dark:text-emerald-400">{selectedItem.fees?.scSt || '₹0'}</span>
+                    <div className="flex justify-between items-center py-1 border-b border-slate-100">
+                      <span className="text-slate-600 font-medium">SC / ST / PH (Divyang):</span>
+                      <span className="font-extrabold text-emerald-700">{selectedItem.fees?.scSt || '₹0'}</span>
                     </div>
-                    <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800/60">
-                      <span className="text-slate-500 dark:text-slate-400">All Category Female:</span>
-                      <span className="font-extrabold text-emerald-600 dark:text-emerald-400">Exempted / Minimal</span>
+                    <div className="flex justify-between items-center py-1 border-b border-slate-100">
+                      <span className="text-slate-600 font-medium">All Category Female:</span>
+                      <span className="font-extrabold text-emerald-700">Exempted / Minimal</span>
                     </div>
                     <div className="flex justify-between items-center py-1">
-                      <span className="text-slate-500 dark:text-slate-400">CSC Portal Filing Fee:</span>
-                      <span className="font-bold text-amber-600 dark:text-amber-400">₹50 Fixed</span>
+                      <span className="text-slate-600 font-medium">CSC Portal Filing Fee:</span>
+                      <span className="font-bold text-amber-700">₹50 Fixed</span>
                     </div>
                   </div>
                 </div>
@@ -2567,25 +2568,25 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
               </div>
 
               {/* Age Specifications & Qualification Box */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4 shadow-xs">
-                <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white font-mono flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-blue-500" />
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-xs">
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 font-mono flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-blue-600" />
                   <span>Eligibility &amp; Qualification Criteria</span>
                 </h4>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                   {selectedItem.ageLimit && (
-                    <div className="p-3.5 bg-amber-500/5 border border-amber-500/20 rounded-xl space-y-1">
-                      <span className="text-[10px] font-black uppercase text-amber-700 dark:text-amber-400 font-mono block">Age Limit Criteria</span>
-                      <p className="font-bold text-slate-800 dark:text-slate-200">
+                    <div className="p-3.5 bg-amber-50/80 border border-amber-200 rounded-xl space-y-1">
+                      <span className="text-[10px] font-black uppercase text-amber-800 font-mono block">Age Limit Criteria</span>
+                      <p className="font-bold text-slate-900">
                         {selectedItem.ageLimit}
                       </p>
                     </div>
                   )}
 
-                  <div className="p-3.5 bg-blue-500/5 border border-blue-500/20 rounded-xl space-y-1">
-                    <span className="text-[10px] font-black uppercase text-blue-700 dark:text-blue-400 font-mono block">Educational Qualification</span>
-                    <p className="font-semibold text-slate-800 dark:text-slate-200">
+                  <div className="p-3.5 bg-blue-50/80 border border-blue-200 rounded-xl space-y-1">
+                    <span className="text-[10px] font-black uppercase text-blue-800 font-mono block">Educational Qualification</span>
+                    <p className="font-semibold text-slate-900">
                       {selectedItem.eligibility || 'Graduate Degree / 10th / 12th Pass from recognized board in India.'}
                     </p>
                   </div>
@@ -2594,28 +2595,28 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
               {/* Required Documents Checklist for CSC Desk Application */}
               {!['answer_keys', 'syllabus', 'results'].includes(selectedItem.category) && (
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-xs">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white font-mono flex items-center gap-2">
-                    <FileCheck className="w-4 h-4 text-emerald-500" />
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 shadow-xs">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 font-mono flex items-center gap-2">
+                    <FileCheck className="w-4 h-4 text-emerald-600" />
                     <span>Documents Required for CSC Desk Submission</span>
                   </h4>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-850">
-                      <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span className="font-medium text-slate-700 dark:text-slate-300">Aadhaar Card / Govt Photo ID</span>
+                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200/80">
+                      <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span className="font-medium text-slate-800">Aadhaar Card / Govt Photo ID</span>
                     </div>
-                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-850">
-                      <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span className="font-medium text-slate-700 dark:text-slate-300">Educational Certificate / Marksheet</span>
+                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200/80">
+                      <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span className="font-medium text-slate-800">Educational Certificate / Marksheet</span>
                     </div>
-                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-850">
-                      <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span className="font-medium text-slate-700 dark:text-slate-300">Passport Photo &amp; Signature Scan</span>
+                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200/80">
+                      <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span className="font-medium text-slate-800">Passport Photo &amp; Signature Scan</span>
                     </div>
-                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-850">
-                      <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span className="font-medium text-slate-700 dark:text-slate-300">Caste / Domicile Certificate (if applicable)</span>
+                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200/80">
+                      <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span className="font-medium text-slate-800">Caste / Domicile Certificate (if applicable)</span>
                     </div>
                   </div>
                 </div>
@@ -2624,11 +2625,11 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
             </div>
 
             {/* Bottom Navigation Buttons (Fixed Bar) */}
-            <div className="p-4 sm:p-6 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 bg-white dark:bg-slate-900 shrink-0">
+            <div className="p-4 sm:p-5 border-t border-slate-200 flex items-center justify-between gap-3 bg-white shrink-0">
               <button
                 type="button"
                 onClick={() => setSelectedItem(null)}
-                className="px-5 sm:px-6 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-extrabold uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-slate-200 dark:border-slate-700 flex items-center gap-1.5"
+                className="px-5 sm:px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-extrabold uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-slate-300 flex items-center gap-1.5"
                 id="sarkari-post-close-btn"
               >
                 <X className="w-4 h-4" />
@@ -2639,7 +2640,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                 <button
                   type="button"
                   onClick={() => handleApplyNow(selectedItem)}
-                  className="px-6 sm:px-8 py-3 bg-[#1e1b4b] hover:bg-[#121033] text-white text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl transition-all flex items-center gap-2.5 shadow-lg shadow-indigo-900/30 cursor-pointer hover:scale-[1.02]"
+                  className="px-6 sm:px-8 py-2.5 bg-[#172554] hover:bg-[#1e3a8a] text-white text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl transition-all flex items-center gap-2.5 shadow-md shadow-blue-900/20 cursor-pointer hover:scale-[1.01]"
                   id="sarkari-post-apply-btn"
                 >
                   <span>Apply via CSC Desk</span>
