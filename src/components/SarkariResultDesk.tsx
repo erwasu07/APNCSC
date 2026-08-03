@@ -1454,48 +1454,48 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
                 {/* Duplicate Copy for Infinite Ticker */}
                 <div className="inline-flex items-center gap-4 sm:gap-6 pr-4 sm:pr-6 shrink-0" aria-hidden="true">
-                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
+                  <span className="inline-flex items-center gap-1.5">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">JOB</span>
                     🔥 <strong>SSC CGL 2026</strong> Official Notification Released — Apply at CSC Desk!
-                  </a>
+                  </span>
                   <span className="text-amber-800 font-black">•</span>
-                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
+                  <span className="inline-flex items-center gap-1.5">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">JOB</span>
                     ⚡ <strong>UPPSC RO/ARO 2026</strong> Online Application Form Open
-                  </a>
+                  </span>
                   <span className="text-amber-800 font-black">•</span>
 
-                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
+                  <span className="inline-flex items-center gap-1.5">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">RESULT</span>
                     🏆 <strong>NEET UG 2026</strong> Merit List &amp; Cutoff Scorecard Released
-                  </a>
+                  </span>
                   <span className="text-amber-800 font-black">•</span>
-                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
+                  <span className="inline-flex items-center gap-1.5">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">RESULT</span>
                     🎯 <strong>IBPS PO Mains Result 2026</strong> Declared — Check Score
-                  </a>
+                  </span>
                   <span className="text-amber-800 font-black">•</span>
 
-                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
+                  <span className="inline-flex items-center gap-1.5">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ANSWER KEY</span>
                     🔑 <strong>NTA JEE Main 2026</strong> Session 1 Final Answer Key Out
-                  </a>
+                  </span>
                   <span className="text-amber-800 font-black">•</span>
-                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
+                  <span className="inline-flex items-center gap-1.5">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ANSWER KEY</span>
                     📝 <strong>SSC GD Constable 2026</strong> Official Answer Key Released
-                  </a>
+                  </span>
                   <span className="text-amber-800 font-black">•</span>
 
-                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
+                  <span className="inline-flex items-center gap-1.5">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ADMISSION</span>
                     🎓 <strong>CUET UG 2026</strong> Online Registration Form Open
-                  </a>
+                  </span>
                   <span className="text-amber-800 font-black">•</span>
-                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
+                  <span className="inline-flex items-center gap-1.5">
                     <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ADMISSION</span>
                     🏫 <strong>Bihar B.Ed CET 2026</strong> Admission Online Form Active
-                  </a>
+                  </span>
                   <span className="text-amber-800 font-black">•</span>
                 </div>
               </div>
@@ -1609,10 +1609,11 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                       {/* Select Service to Apply */}
                       <div className="space-y-1">
-                        <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                        <label htmlFor="service-apply-select" className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                           Select Service to Apply <span className="text-red-500">*</span>
                         </label>
                         <select
+                          id="service-apply-select"
                           required
                           value={formData.selectedService}
                           onChange={(e) => handleServiceChange(e.target.value)}
@@ -1642,10 +1643,11 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
                       {/* Applicant Category Dropdown */}
                       <div className="space-y-1">
-                        <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                        <label htmlFor="applicant-category-select" className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                           Applicant Category <span className="text-red-500">*</span>
                         </label>
                         <select
+                          id="applicant-category-select"
                           required
                           value={formData.userCategory}
                           onChange={(e) => handleCategoryChange(e.target.value)}

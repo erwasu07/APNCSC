@@ -1,0 +1,6 @@
+# robots.txt for https://www.cscdost.online/
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://www.cscdost.online/sitemap.xml

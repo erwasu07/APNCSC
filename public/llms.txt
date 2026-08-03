@@ -1,0 +1,14 @@
+# CSC DOST (cscdost.online)
+
+> Independent Digital Assistance & Information Service Desk
+
+## Overview
+CSC DOST (cscdost.online) is an independent private digital service portal providing online application assistance, sarkari job/result updates, admit card notifications, and document printing guidance.
+
+## Key Services
+- **Sarkari Result Desk**: Latest government job results, answer keys, admit cards, and notifications.
+- **Online Form Filing Assistance**: Guidance and support for PAN card, Voter ID, e-Shram, Passport filing, and state certificates.
+- **Application Tracking**: Track token reference numbers and status updates.
+
+## Official Disclaimer
+CSC DOST (cscdost.online) is NOT an official government portal and is not affiliated with CSC e-Governance Services India Ltd. Official government services can be accessed directly at https://csc.gov.in and https://digitalseva.csc.gov.in.
