@@ -127,7 +127,7 @@ export default function Footer({ cafeName, onOpenPrivacyPolicy, onOpenAdmin }: F
             <div className="text-[11px] text-slate-500 font-mono space-y-1">
               <p>© 2026 Verified Common Service Centre ID :- 212515670018. All Rights Reserved. Author: Wasim Ahmad Khanday</p>
               <p className="text-[10px] text-slate-600">
-                Designed and developed for Ministry of Electronics &amp; IT (MeitY) CSC e-Governance initiative.
+                Designed and developed for CSC e-Governance initiative.
               </p>
             </div>
           </div>

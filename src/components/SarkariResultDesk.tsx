@@ -2072,7 +2072,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                       </div>
                     </div>
                     <p className="text-[11px] text-slate-500 max-w-xs pt-1 leading-snug">
-                      Common Services Centre Portal • Ministry of Electronics &amp; IT, Govt of India Authorized Desk
+                      Common Services Centre Portal • Digital Services Authorized Desk
                     </p>
                   </div>
 
