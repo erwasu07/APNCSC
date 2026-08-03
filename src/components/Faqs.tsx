@@ -6,8 +6,8 @@ export default function Faqs() {
 
   const faqItems = [
     {
-      q: 'What is a Common Services Center (CSC) and what can you help me apply for?',
-      a: 'CSC is an official digital access point approved by the Government of India. We help citizens apply for permanent documents like PAN Cards, Voter IDs, e-Shram Cards, Passport filing, Ayushman Bharat health insurance, Driving Licenses, and state-level certificates (Caste, Income, Domicile, and Marriage Certificates).'
+      q: 'What is CSC DOST and what can you help me apply for?',
+      a: 'CSC DOST (cscdost.online) is an independent digital assistance service center. We assist citizens in filling online application forms for PAN Cards, Voter IDs, e-Shram Cards, Passport applications, Ayushman Bharat health cards, Driving Licenses, and state-level certificates (Caste, Income, Domicile, and Marriage Certificates) on official government portals.'
     },
     {
       q: 'What original documents do I need to bring for Aadhaar updates?',

@@ -1,4 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+import sharp from 'sharp';
+import fs from 'fs';
+import path from 'path';
+
+// Generate 24 spokes for Ashoka Chakra SVG
+let spokesHtml = '';
+for (let i = 0; i < 24; i++) {
+  const angle = i * 15;
+  spokesHtml += `<line x1="0" y1="0" x2="0" y2="-30" transform="rotate(${angle})" stroke="#000080" stroke-width="2"/>`;
+}
+
+const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
     <linearGradient id="saffronGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#FF9933"/>
@@ -62,7 +73,7 @@
     <circle cx="0" cy="0" r="32" stroke="#000080" stroke-width="5" fill="#FFFFFF"/>
     <circle cx="0" cy="0" r="30" stroke="#000080" stroke-width="2" fill="none"/>
     <circle cx="0" cy="0" r="6" fill="#000080"/>
-    <line x1="0" y1="0" x2="0" y2="-30" transform="rotate(0)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(15)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(30)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(45)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(60)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(75)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(90)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(105)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(120)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(135)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(150)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(165)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(180)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(195)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(210)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(225)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(240)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(255)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(270)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(285)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(300)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(315)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(330)" stroke="#000080" stroke-width="2"/><line x1="0" y1="0" x2="0" y2="-30" transform="rotate(345)" stroke="#000080" stroke-width="2"/>
+    ${spokesHtml}
   </g>
 
   <!-- Shopping Cart Icon on Left -->
@@ -88,4 +99,43 @@
       <path d="M 45 42 L 35 55 M 56 42 L 48 55 M 66 42 L 58 55" stroke="#000080" stroke-width="4" stroke-linecap="round"/>
     </g>
   </g>
-</svg>
+</svg>`;
+
+async function generateFavicons() {
+  const publicDir = path.join(process.cwd(), 'public');
+  const distDir = path.join(process.cwd(), 'dist');
+
+  // Save SVG
+  fs.writeFileSync(path.join(publicDir, 'favicon.svg'), svgContent);
+  console.log('Saved favicon.svg');
+
+  const svgBuffer = Buffer.from(svgContent);
+
+  // Generate PNGs at various resolutions
+  const sizes = [
+    { name: 'favicon.png', size: 512 },
+    { name: 'apple-touch-icon.png', size: 180 },
+    { name: 'favicon-32x32.png', size: 32 },
+    { name: 'favicon-16x16.png', size: 16 },
+    { name: 'favicon.ico', size: 48 }, // ICO fallback as PNG
+  ];
+
+  for (const item of sizes) {
+    const outputPath = path.join(publicDir, item.name);
+    await sharp(svgBuffer)
+      .resize(item.size, item.size)
+      .png()
+      .toFile(outputPath);
+    console.log(`Generated ${item.name} (${item.size}x${item.size})`);
+
+    // If dist exists, copy there too
+    if (fs.existsSync(distDir)) {
+      fs.copyFileSync(outputPath, path.join(distDir, item.name));
+      fs.copyFileSync(path.join(publicDir, 'favicon.svg'), path.join(distDir, 'favicon.svg'));
+    }
+  }
+
+  console.log('All favicons generated successfully!');
+}
+
+generateFavicons().catch(console.error);

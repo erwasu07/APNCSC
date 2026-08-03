@@ -228,7 +228,7 @@ export default function App() {
       <button
         onClick={handleWhatsAppFloating}
         className="fixed bottom-24 right-6 p-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-2xl hover:scale-105 transition-all z-40 flex items-center justify-center animate-bounce group cursor-pointer"
-        title="Join Our Official WhatsApp Channel"
+        title="Join Our CSC DOST WhatsApp Channel"
         id="whatsapp-floating-badge"
         style={{ animationDuration: '4s' }}
       >

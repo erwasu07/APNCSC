@@ -49,7 +49,7 @@ export default function Footer({ cafeName, onOpenPrivacyPolicy, onOpenAdmin }: F
               </div>
 
               <p className="text-xs text-slate-400 leading-relaxed max-w-xl font-medium">
-                Authorized Common Services Centre Digital Shop providing online sarkari application filing, exam hall tickets, PAN card updates, and e-KYC services across Digital India.
+                Independent Digital Assistance Service Center providing online application assistance, exam hall ticket updates, PAN card filing guidance, and digital documentation support.
               </p>
             </div>
 
@@ -87,6 +87,17 @@ export default function Footer({ cafeName, onOpenPrivacyPolicy, onOpenAdmin }: F
 
           </div>
 
+          {/* Explicit Legal Disclaimer Box for Google Search Console / Safe Browsing Compliance */}
+          <div className="p-4 bg-slate-900/80 border border-amber-500/30 rounded-2xl text-xs text-slate-300 space-y-1.5">
+            <div className="flex items-center gap-2 text-amber-400 font-bold uppercase tracking-wider text-[11px]">
+              <Info className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>Independent Service Portal Disclaimer</span>
+            </div>
+            <p className="leading-relaxed text-[11px] text-slate-300 font-sans">
+              <strong>CSC DOST (cscdost.online)</strong> is a privately operated digital assistance and informational website managed by Wasim Ahmad Khanday. We provide online form filling assistance, document printing guidance, and exam/job news. We are <strong>NOT an official government portal</strong> and are <strong>NOT affiliated</strong> with CSC e-Governance Services India Limited, Digital Seva, or any government body. All government logos, scheme names, and trademarks belong to their respective official entities. Official services can be accessed directly at <a href="https://csc.gov.in" target="_blank" rel="noopener noreferrer" className="text-amber-400 underline font-semibold">csc.gov.in</a> or <a href="https://digitalseva.csc.gov.in" target="_blank" rel="noopener noreferrer" className="text-amber-400 underline font-semibold">digitalseva.csc.gov.in</a>.
+            </p>
+          </div>
+
           {/* Bottom Copyright & Policies Section */}
           <div className="pt-6 border-t border-slate-900 space-y-3 text-center md:text-left">
             {/* Policy Links in One Horizontal Line */}
@@ -101,7 +112,7 @@ export default function Footer({ cafeName, onOpenPrivacyPolicy, onOpenAdmin }: F
                 onClick={() => onOpenPrivacyPolicy?.('hyperlink')}
                 className="hover:text-white transition-colors cursor-pointer"
               >
-                • Official Hyperlink Policy
+                • Hyperlink Policy
               </button>
               <button
                 onClick={() => onOpenPrivacyPolicy?.('copyright')}
@@ -125,9 +136,9 @@ export default function Footer({ cafeName, onOpenPrivacyPolicy, onOpenAdmin }: F
 
             {/* Copyright & Subtext */}
             <div className="text-[11px] text-slate-500 font-mono space-y-1">
-              <p>© 2026 Verified Common Service Centre ID :- 212515670018. All Rights Reserved. Author: Wasim Ahmad Khanday</p>
-              <p className="text-[10px] text-slate-600">
-                Designed and developed for CSC e-Governance initiative.
+              <p>© 2026 CSC DOST (cscdost.online). All Rights Reserved. Operator: Wasim Ahmad Khanday.</p>
+              <p className="text-[10px] text-slate-500 font-sans">
+                Independent Digital Assistance &amp; Informational Portal.
               </p>
             </div>
           </div>

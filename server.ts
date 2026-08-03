@@ -672,6 +672,9 @@ app.post('/api/admin/restore', authenticateAdmin, (req, res) => {
   res.json({ success: true, message: 'Database restored successfully from backup.' });
 });
 
+// Explicitly serve static public assets like favicons
+app.use(express.static(path.join(process.cwd(), 'public')));
+
 // Setup Vite Dev Server / Static Hosting Middleware
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {

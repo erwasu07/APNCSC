@@ -81,7 +81,7 @@ export default function Hero({ settings, announcements, onVisitClick }: HeroProp
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
             <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-900/40 rounded-full text-orange-600 dark:text-orange-400 text-xs font-bold uppercase tracking-wider">
               <ShieldCheck className="w-4 h-4" />
-              Government Approved Authorized CSC Center
+              Independent Digital Services &amp; Assistance Desk
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-blue-950 dark:text-white leading-tight tracking-tight font-display">
@@ -89,7 +89,7 @@ export default function Hero({ settings, announcements, onVisitClick }: HeroProp
             </h1>
 
             <p className="text-slate-600 dark:text-slate-300 text-base sm:text-lg max-w-2xl leading-relaxed">
-              Skip the long queues. APNACSC provides safe e-governance registrations, official certificates applications, online form filling, and professional high-speed printing under one roof.
+              Skip the long queues. CSC DOST provides reliable online form filling assistance, document printing, application tracking, and career news under one roof.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
