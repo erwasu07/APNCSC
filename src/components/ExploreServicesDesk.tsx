@@ -23,7 +23,9 @@ import {
   ShieldCheck,
   FileCheck,
   Eye,
-  Bell
+  Bell,
+  Building2,
+  MapPin
 } from 'lucide-react';
 import { SERVICES_LIST, CATEGORY_LABELS, ServiceItem } from '../servicesData';
 
@@ -34,7 +36,7 @@ interface ExploreServicesDeskProps {
 
 export default function ExploreServicesDesk({ onApplyService, selectedService }: ExploreServicesDeskProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'csc' | 'digital' | 'education' | 'business'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'revenue' | 'jk_state' | 'csc' | 'digital' | 'education' | 'business'>('all');
   const [selectedServiceItem, setSelectedServiceItem] = useState<ServiceItem | null>(null);
 
   // Filter list based on both active tab and search query
@@ -161,7 +163,7 @@ export default function ExploreServicesDesk({ onApplyService, selectedService }:
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search services (e.g. PAN, Aadhaar, Domicile)..."
+                placeholder="Search services (e.g. Fard, Mutation, Jamabandi, PAN)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-8 pr-8 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-600 font-medium shadow-xs"
@@ -177,48 +179,158 @@ export default function ExploreServicesDesk({ onApplyService, selectedService }:
               )}
             </div>
           </div>
+
+          {/* CATEGORY TABS BAR */}
+          <div className="flex items-center gap-1.5 overflow-x-auto py-3 no-scrollbar border-b border-slate-200/60 dark:border-slate-800/60">
+            {[
+              { id: 'all', label: 'All Services', count: SERVICES_LIST.length },
+              { id: 'jk_state', label: 'J&K State e-Services', highlight: true, count: SERVICES_LIST.filter(s => s.category === 'jk_state').length },
+              { id: 'revenue', label: 'JK Revenue Services', highlight: true, count: SERVICES_LIST.filter(s => s.category === 'revenue').length },
+              { id: 'csc', label: 'CSC Govt Services', count: SERVICES_LIST.filter(s => s.category === 'csc').length },
+              { id: 'digital', label: 'Digital & Cyber', count: SERVICES_LIST.filter(s => s.category === 'digital').length },
+              { id: 'education', label: 'Education & Admissions', count: SERVICES_LIST.filter(s => s.category === 'education').length },
+              { id: 'business', label: 'Business & Registrations', count: SERVICES_LIST.filter(s => s.category === 'business').length },
+            ].map(tab => {
+              const isActive = selectedCategory === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setSelectedCategory(tab.id as any)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shrink-0 transition-all flex items-center gap-1.5 cursor-pointer font-mono ${
+                    isActive
+                      ? tab.highlight 
+                        ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 ring-2 ring-amber-400' 
+                        : 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                      : tab.highlight
+                        ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 hover:bg-amber-500/20'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  }`}
+                  id={`services-tab-${tab.id}`}
+                >
+                  <span>{tab.label}</span>
+                  <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold ${
+                    isActive
+                      ? 'bg-black/20 text-current'
+                      : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                  }`}>
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* COMPACT E-SERVICES BOXES GRID (BLUE THEME) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 max-w-7xl mx-auto w-full">
           {[
             {
+              id: 'jk_state_box',
+              categoryKey: 'jk_state',
+              title: 'J&K State e-Services (ServiceOnline / e-UNNAT)',
+              subtitle: 'Official J&K Government Certificates & Welfare Applications',
+              icon: Landmark,
+              badge: 'J&K STATE PORTAL',
+              itemIds: [
+                'jk-domicile-cert',
+                'jk-rba-cert',
+                'jk-obc-cert',
+                'jk-st-cert',
+                'jk-sc-cert',
+                'jk-alc-ib-cert',
+                'jk-pahari-cert',
+                'jk-ews-cert',
+                'jk-birth-cert',
+                'jk-death-cert',
+                'jk-marriage-cert',
+                'jk-character-cert',
+                'jk-dependent-cert',
+                'jk-unemployment-cert',
+                'jk-pension-isss',
+                'jk-ladli-beti',
+                'jk-mgnrega-jobcard',
+                'jk-trade-license',
+                'jk-building-licenses',
+                'jk-drone-permission',
+                'jk-assistive-aids',
+                'jk-senior-citizen',
+                'jk-horticulture-passbook'
+              ]
+            },
+            {
+              id: 'jk_revenue',
+              categoryKey: 'revenue',
+              title: 'JK Revenue Services (Govt of J&K)',
+              subtitle: 'Revenue Department Land Records & Certificates',
+              icon: Building2,
+              badge: 'OFFICIAL REVENUE PORTAL',
+              itemIds: [
+                'rev-attestation-mutation',
+                'rev-clu',
+                'rev-copy-mutation',
+                'rev-encumbrance-cert',
+                'rev-aks-masavi',
+                'rev-chulah-chowkidara',
+                'rev-girdawari',
+                'rev-jamabandi',
+                'rev-fard',
+                'rev-field-book',
+                'rev-court-files',
+                'rev-income-cert',
+                'rev-income-dependency',
+                'rev-land-passbook',
+                'rev-legal-heir',
+                'rev-demarcation',
+                'rev-prc-files',
+                'rev-property-cert',
+                'rev-shajra-nasab'
+              ]
+            },
+            {
               id: 'csc_identity',
+              categoryKey: 'csc',
               title: 'CSC Government & Identity Cards',
               icon: Landmark,
               itemIds: ['csc-pan', 'csc-aadhaar', 'csc-voter', 'csc-passport', 'csc-dl']
             },
             {
               id: 'welfare_health',
+              categoryKey: 'csc',
               title: 'Welfare Schemes & Health Cards',
               icon: ShieldCheck,
               itemIds: ['csc-ayushman', 'csc-pmkisan', 'csc-eshram', 'csc-ration']
             },
             {
               id: 'certificates_state',
+              categoryKey: 'csc',
               title: 'State Revenue & Certificates',
               icon: FileText,
               itemIds: ['csc-certificates']
             },
             {
               id: 'digital_cyber',
+              categoryKey: 'digital',
               title: 'Digital & Cyber Services',
               icon: Laptop,
               itemIds: ['csc-utility', 'dig-print', 'dig-photo', 'dig-form']
             },
             {
               id: 'education_exams',
+              categoryKey: 'education',
               title: 'Education & Admissions',
               icon: GraduationCap,
               itemIds: ['edu-admissions', 'edu-scholarship', 'edu-exams']
             },
             {
               id: 'business_tax',
+              categoryKey: 'business',
               title: 'Business & Registrations',
               icon: Briefcase,
               itemIds: ['biz-gst', 'biz-udyam', 'biz-dsc']
             }
-          ].map(box => {
+          ]
+          .filter(box => selectedCategory === 'all' || box.categoryKey === selectedCategory)
+          .map(box => {
             const BoxIcon = box.icon;
             const boxItems = SERVICES_LIST.filter(s => {
               const isBoxMatch = box.itemIds.includes(s.id);
@@ -230,35 +342,63 @@ export default function ExploreServicesDesk({ onApplyService, selectedService }:
               return isBoxMatch && isSearchMatch;
             });
 
+            const isFullWidthBox = (box.id === 'jk_revenue' || box.id === 'jk_state_box') && (selectedCategory === box.categoryKey || boxItems.length > 10);
+            const isSpecialHighlight = box.id === 'jk_revenue' || box.id === 'jk_state_box';
+
             return (
               <div
                 key={box.id}
-                className="bg-white dark:bg-slate-900 border-2 border-blue-600 dark:border-blue-700 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
+                className={`bg-white dark:bg-slate-900 border-2 ${
+                  box.id === 'jk_state_box'
+                    ? 'border-emerald-600 dark:border-emerald-500 shadow-md'
+                    : box.id === 'jk_revenue'
+                    ? 'border-amber-500 dark:border-amber-600 shadow-md'
+                    : 'border-blue-600 dark:border-blue-700 shadow-sm'
+                } rounded-2xl hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between ${
+                  isFullWidthBox ? 'md:col-span-2 lg:col-span-3' : ''
+                }`}
                 id={`eservices-box-${box.id}`}
               >
-                {/* Box Blue Header Bar */}
-                <div className="bg-[#1d4ed8] text-white px-4 py-2.5 flex items-center justify-between">
+                {/* Box Header Bar */}
+                <div className={`${
+                  box.id === 'jk_state_box'
+                    ? 'bg-gradient-to-r from-emerald-700 via-teal-800 to-emerald-900'
+                    : box.id === 'jk_revenue'
+                    ? 'bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800'
+                    : 'bg-[#1d4ed8]'
+                } text-white px-4 py-2.5 flex items-center justify-between`}>
                   <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wide font-display">
                     <BoxIcon className="w-4 h-4 text-amber-300 shrink-0" />
                     <span>{box.title}</span>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full bg-black/25 text-white font-mono text-[10px] font-black">
-                    {boxItems.length}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {box.badge && (
+                      <span className="hidden sm:inline-block px-2 py-0.5 rounded bg-black/30 text-amber-200 font-mono text-[9px] font-black uppercase">
+                        {box.badge}
+                      </span>
+                    )}
+                    <span className="px-2 py-0.5 rounded-full bg-black/25 text-white font-mono text-[10px] font-black">
+                      {boxItems.length}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Items List Inside Box */}
-                <div className="p-3 divide-y divide-slate-100 dark:divide-slate-800/60 flex-grow">
+                <div className={`p-3 divide-y divide-slate-100 dark:divide-slate-800/60 flex-grow ${
+                  isFullWidthBox ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 divide-y-0' : ''
+                }`}>
                   {boxItems.length > 0 ? (
                     boxItems.map(item => (
                       <div
                         key={item.id}
                         onClick={() => setSelectedServiceItem(item)}
-                        className="py-2 px-2 flex items-center justify-between gap-2 hover:bg-blue-50/70 dark:hover:bg-blue-950/40 rounded-lg transition-colors group cursor-pointer"
+                        className="py-2 px-2 flex items-center justify-between gap-2 hover:bg-blue-50/70 dark:hover:bg-blue-950/40 rounded-lg transition-colors group cursor-pointer border-b border-slate-100 dark:border-slate-800/50 last:border-0"
                         id={`eservice-item-${item.id}`}
                       >
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0 group-hover:scale-125 transition-transform" />
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 group-hover:scale-125 transition-transform ${
+                            item.category === 'revenue' ? 'bg-amber-500' : 'bg-blue-600'
+                          }`} />
                           <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">
                             {item.name}
                           </span>

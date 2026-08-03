@@ -1689,7 +1689,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
                     {/* DYNAMIC MANDATORY DOCUMENT UPLOAD SECTION */}
                     {docRequirement.mandatory && docRequirement.requiredDocTypes.length > 0 && (
-                      <div className="bg-amber-50/90 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/80 rounded-2xl p-4 space-y-3.5 animate-fade-in my-2 shadow-sm">
+                      <div className="bg-amber-50/90 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/80 rounded-2xl p-3 space-y-2.5 animate-fade-in my-2 shadow-sm">
                         
                         {/* Section Title */}
                         <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -1712,11 +1712,11 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                         </div>
 
                         {/* Dynamic Bullet Points List of Mandatory Documents */}
-                        <div className="bg-white/90 dark:bg-slate-900/90 p-3 rounded-xl border border-amber-200 dark:border-amber-900/60 shadow-inner">
-                          <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-400 block mb-1.5">
+                        <div className="bg-white/90 dark:bg-slate-900/90 p-2.5 rounded-xl border border-amber-200 dark:border-amber-900/60 shadow-inner">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-400 block mb-1">
                             📌 MANDATORY DOCUMENTS REQUIRED FOR THIS SERVICE:
                           </span>
-                          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px] font-bold text-slate-800 dark:text-slate-200">
                             {docRequirement.requiredDocTypes.map((docType) => (
                               <li key={docType.id} className="flex items-center gap-1.5">
                                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
@@ -1726,62 +1726,59 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                           </ul>
                         </div>
 
-                        {/* SEPARATE INDIVIDUAL FILE INPUT FIELDS FOR EACH DOCUMENT TYPE */}
-                        <div className="space-y-2.5 pt-1">
-                          <span className="text-[10.5px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 block">
+                        {/* SEPARATE COMPACT DOCUMENT UPLOAD FIELDS (2-COLUMN GRID) */}
+                        <div className="space-y-1.5 pt-0.5">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 block">
                             📁 Separate Document Upload Fields ({docRequirement.requiredDocTypes.length} Required):
                           </span>
 
-                          <div className="grid grid-cols-1 gap-2.5">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {docRequirement.requiredDocTypes.map((docType) => {
                               const uploadedDoc = uploadedFiles.find(f => f.docTypeId === docType.id);
 
                               return (
                                 <div
                                   key={docType.id}
-                                  className={`p-3 rounded-xl border transition-all ${
+                                  className={`p-2.5 rounded-xl border transition-all flex flex-col justify-between gap-2 ${
                                     uploadedDoc
                                       ? 'bg-emerald-50/90 dark:bg-emerald-950/30 border-emerald-400 dark:border-emerald-800 shadow-xs'
                                       : 'bg-white dark:bg-slate-900 border-amber-300 dark:border-amber-800/80 hover:border-amber-500 shadow-2xs'
                                   }`}
                                 >
-                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                    <div className="space-y-0.5">
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="text-[11.5px] font-black uppercase tracking-wide text-slate-900 dark:text-white">
-                                          {docType.name}
-                                        </span>
-                                        <span className="text-[8.5px] bg-red-600 text-white font-bold px-1.5 py-0.2 rounded uppercase">
-                                          Required
-                                        </span>
-                                      </div>
-                                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                                        {docType.description}
-                                      </p>
+                                  <div className="space-y-0.5">
+                                    <div className="flex items-center justify-between gap-1">
+                                      <span className="text-[11px] font-black uppercase tracking-wide text-slate-900 dark:text-white truncate">
+                                        {docType.name}
+                                      </span>
+                                      <span className="text-[8px] bg-red-600 text-white font-bold px-1.5 py-0.2 rounded uppercase shrink-0">
+                                        Required
+                                      </span>
                                     </div>
+                                    <p className="text-[9.5px] text-slate-500 dark:text-slate-400 font-medium leading-tight">
+                                      {docType.description}
+                                    </p>
+                                  </div>
 
+                                  <div className="pt-1 border-t border-slate-100 dark:border-slate-800/60">
                                     {uploadedDoc ? (
-                                      <div className="flex items-center gap-2 bg-white dark:bg-slate-950 px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 shrink-0">
-                                        <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                                        <div className="max-w-[150px] text-left">
-                                          <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100 block truncate">
+                                      <div className="w-full flex items-center justify-between bg-emerald-100/80 dark:bg-emerald-950/80 px-2 py-1 rounded-lg border border-emerald-300 dark:border-emerald-800">
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                          <CheckCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                          <span className="text-[10px] font-bold text-slate-900 dark:text-slate-100 truncate">
                                             {uploadedDoc.name}
-                                          </span>
-                                          <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-extrabold font-mono block">
-                                            ✓ Legible Scan • {(uploadedDoc.size / 1024).toFixed(1)} KB
                                           </span>
                                         </div>
                                         <button
                                           type="button"
                                           onClick={() => handleRemoveDocByTypeId(docType.id)}
-                                          className="p-1 hover:bg-red-50 dark:hover:bg-red-950 text-slate-400 hover:text-red-500 rounded-md transition-colors cursor-pointer ml-1"
+                                          className="p-0.5 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-500 rounded transition-colors cursor-pointer shrink-0 ml-1"
                                           title="Remove Document"
                                         >
                                           <X className="w-3.5 h-3.5" />
                                         </button>
                                       </div>
                                     ) : (
-                                      <label className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs uppercase tracking-wider rounded-lg shadow-2xs transition-all cursor-pointer shrink-0">
+                                      <label className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-slate-950 font-black text-[11px] uppercase tracking-wider rounded-lg shadow-2xs transition-all cursor-pointer">
                                         <UploadCloud className="w-3.5 h-3.5" />
                                         <span>Choose File</span>
                                         <input
