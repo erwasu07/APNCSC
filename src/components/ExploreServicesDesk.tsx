@@ -103,35 +103,35 @@ export default function ExploreServicesDesk({ onApplyService, selectedService }:
 
   const getFeeDetails = (service: ServiceItem) => {
     if (service.id === 'csc-pan') {
-      return { govtFee: '₹107', cscFee: '₹50', time: '2-3 Working Days' };
+      return { govtFee: '₹107', cscFee: '₹70 (CSC Charge)', time: '2-3 Working Days' };
     }
     if (service.id === 'csc-aadhaar') {
-      return { govtFee: '₹50', cscFee: '₹30', time: '24 Hours Slot' };
+      return { govtFee: '₹50', cscFee: '₹70 (CSC Charge)', time: '24 Hours Slot' };
     }
     if (service.id === 'csc-ayushman') {
-      return { govtFee: '₹0 (Free)', cscFee: '₹0 (Free)', time: 'Same Day' };
+      return { govtFee: '₹0 (Free)', cscFee: '₹70 (CSC Charge)', time: 'Same Day' };
     }
     if (service.id === 'csc-voter') {
-      return { govtFee: '₹0 (Free)', cscFee: '₹30 (PVC Print)', time: '3-5 Working Days' };
+      return { govtFee: '₹0 (Free)', cscFee: '₹70 (CSC Charge)', time: '3-5 Working Days' };
     }
     if (service.id === 'csc-pmkisan') {
-      return { govtFee: '₹15', cscFee: '₹15', time: 'Same Day' };
+      return { govtFee: '₹15', cscFee: '₹70 (CSC Charge)', time: 'Same Day' };
     }
 
     // Default parser
     const priceParts = service.price.split('+');
-    let govtFee = '₹50 - ₹107';
-    let cscFee = '₹30 - ₹50';
+    let govtFee = 'Govt Fee As Applicable';
+    let cscFee = '₹70 (CSC Charge)';
 
     if (priceParts.length > 1) {
       govtFee = priceParts[0].trim();
-      cscFee = priceParts[1].trim();
+      cscFee = '₹70 (CSC Charge)';
     } else if (service.price.toLowerCase().includes('free')) {
       govtFee = '₹0 (Free)';
-      cscFee = '₹0 - ₹20';
+      cscFee = '₹70 (CSC Charge)';
     } else {
       govtFee = service.price;
-      cscFee = '₹30';
+      cscFee = '₹70 (CSC Charge)';
     }
 
     return {

@@ -212,7 +212,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     paymentMode: 'online' as 'cash' | 'online',
     utrNumber: '',
     additionalDetails: '',
-    portalFee: 50, // Processing charge
+    portalFee: 70, // Fixed CSC Processing charge
     applicationFee: 0, // Exam application fee
   });
 
@@ -281,7 +281,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       console.error('Frontend WhatsApp dispatch exception:', err);
       const cleanDigits = (receiptData.phoneNumber || '').replace(/[^\d]/g, '');
       const fallbackPhone = cleanDigits.length === 10 ? `91${cleanDigits}` : cleanDigits;
-      const fallbackText = encodeURIComponent(`🧾 Official Invoice - ${receiptData.selectedService}\nToken: ${receiptData.appId}\nAmount: ₹${receiptData.totalAmount || 50}`);
+      const fallbackText = encodeURIComponent(`🧾 Official Invoice - ${receiptData.selectedService}\nToken: ${receiptData.appId}\nAmount: ₹${receiptData.totalAmount || 70}`);
 
       setWhatsappStatus({
         loading: false,
@@ -637,7 +637,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     setRazorpayError(null);
 
     processRazorpayPayment({
-      amount: submissionReceipt.totalAmount || 50,
+      amount: submissionReceipt.totalAmount || 70,
       appId: 'CSC_ONLINE_PAYMENT',
       customerName: submissionReceipt.customerName,
       email: submissionReceipt.emailAddress,
@@ -2459,11 +2459,11 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                         </p>
                         <div className="flex justify-between text-slate-600 dark:text-slate-400">
                           <span>Subtotal:</span>
-                          <span>₹{(submissionReceipt?.applicationFee || 0) + (submissionReceipt?.portalFee || 50)}</span>
+                          <span>₹{(submissionReceipt?.applicationFee || 0) + (submissionReceipt?.portalFee || 70)}</span>
                         </div>
                         <div className="flex justify-between text-slate-600 dark:text-slate-400">
                           <span>GST (18%):</span>
-                          <span>₹{Math.round((submissionReceipt?.portalFee || 50) * 0.18)}</span>
+                          <span>₹{Math.round((submissionReceipt?.portalFee || 70) * 0.18)}</span>
                         </div>
                         <div className="pt-1 border-t border-slate-300 dark:border-slate-700 flex justify-between font-sans text-sm font-black text-slate-900 dark:text-white">
                           <span>Total Paid:</span>
@@ -2525,7 +2525,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                         paymentMode: 'online',
                         utrNumber: '',
                         additionalDetails: '',
-                        portalFee: 50,
+                        portalFee: 70,
                         applicationFee: 0
                       });
                       window.scrollTo({ top: 0, behavior: 'smooth' });

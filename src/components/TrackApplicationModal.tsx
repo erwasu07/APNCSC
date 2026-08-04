@@ -187,7 +187,7 @@ export default function TrackApplicationModal({
         totalSteps: 4,
         applicantName: raw.customerName || raw.name || 'Applicant',
         serviceName: raw.selectedService || raw.service || 'CSC Government Service',
-        feeAmount: `₹${raw.totalAmount || raw.portalFee || 50} (${raw.paymentMode === 'cash' ? 'Pay Cash at Counter' : 'Online Payment'})`,
+        feeAmount: `₹${raw.totalAmount || raw.portalFee || 70} (${raw.paymentMode === 'cash' ? 'Pay Cash at Counter' : 'Online Payment'})`,
         whatsappNumber: raw.phoneNumber || raw.phone || '+91 7006833767',
         workflowSteps: [
           {
