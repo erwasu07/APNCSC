@@ -362,7 +362,7 @@ export default function TrackApplicationModal({
             <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
               <input
                 type="text"
-                placeholder="Enter Token ID (e.g. CSC-2026-1)"
+                placeholder="Enter Token ID (e.g. CSC21251567001)"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-mono font-bold text-sm tracking-wide focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-amber-400 transition-all placeholder-slate-400"
@@ -413,7 +413,7 @@ export default function TrackApplicationModal({
                   Enter Your Application Token ID
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
-                  Please enter the Token Reference Number (e.g. <span className="font-mono font-bold text-amber-600 dark:text-amber-400">CSC-2026-1</span>) from your submission receipt to fetch live status, staff verification details, and download official receipts.
+                  Please enter the Token Reference Number (e.g. <span className="font-mono font-bold text-amber-600 dark:text-amber-400">CSC21251567001</span>) from your submission receipt to fetch live status, staff verification details, and download official receipts.
                 </p>
               </div>
             </div>

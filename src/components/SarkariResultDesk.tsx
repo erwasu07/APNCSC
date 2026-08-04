@@ -558,7 +558,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       return;
     }
 
-    // Generate auto-incrementing token starting with prefix CSC-2026-
+    // Generate auto-incrementing token starting with prefix CSC21251567...
     const getNextCscTokenId = (): string => {
       try {
         let maxSeq = 0;
@@ -566,9 +566,15 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
         if (Array.isArray(existingApps)) {
           existingApps.forEach((a: any) => {
             const id = a.appId || a.id || '';
-            const match = id.match(/CSC-2026-(\d+)/i);
-            if (match && match[1]) {
-              const num = parseInt(match[1], 10);
+            const matchNew = id.match(/^CSC21251567(\d+)/i);
+            const matchOld = id.match(/^CSC-2026-(\d+)/i);
+            if (matchNew && matchNew[1]) {
+              const num = parseInt(matchNew[1], 10);
+              if (!isNaN(num) && num > maxSeq) {
+                maxSeq = num;
+              }
+            } else if (matchOld && matchOld[1]) {
+              const num = parseInt(matchOld[1], 10);
               if (!isNaN(num) && num > maxSeq) {
                 maxSeq = num;
               }
@@ -581,9 +587,10 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
         }
         const nextSeq = maxSeq + 1;
         localStorage.setItem('csc_token_seq', nextSeq.toString());
-        return `CSC-2026-${nextSeq}`;
+        const seqPadded = String(nextSeq).padStart(3, '0');
+        return `CSC21251567${seqPadded}`;
       } catch {
-        return `CSC-2026-1`;
+        return `CSC21251567001`;
       }
     };
 
@@ -1170,7 +1177,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
           <!DOCTYPE html>
           <html>
             <head>
-              <title>Official CSC e-Receipt #${submissionReceipt?.appId || 'CSC-2026'}</title>
+              <title>Official CSC e-Receipt #${submissionReceipt?.appId || 'CSC21251567001'}</title>
               <script src="https://cdn.tailwindcss.com"></script>
               <style>
                 @media print {
@@ -1226,7 +1233,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
           <!DOCTYPE html>
           <html>
             <head>
-              <title>CSC e-Receipt #${submissionReceipt?.appId || 'CSC-2026'}</title>
+              <title>CSC e-Receipt #${submissionReceipt?.appId || 'CSC21251567001'}</title>
               <script src="https://cdn.tailwindcss.com"></script>
               <style>
                 @media print {
@@ -2071,7 +2078,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                       </h2>
                     </div>
                     <span className="bg-indigo-950/80 text-amber-300 border border-indigo-700/60 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
-                      Form Ref: CSC-2026-v4
+                      Form Ref: CSC21251567001
                     </span>
                   </div>
 
@@ -2333,123 +2340,385 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
               </div>
             ) : (
-              /* SUBMISSION SUCCESS RECEIPT */
-              <div className="bg-white rounded-2xl border-2 border-emerald-600 shadow-xl overflow-hidden animate-fade-in text-slate-900 font-sans" id="printable-receipt-area">
+              /* SUBMISSION STEP: PAYMENT OPTIONS & CONFIRMATION DESK */
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border-2 border-indigo-600 shadow-xl overflow-hidden animate-fade-in text-slate-900 dark:text-white font-sans" id="printable-receipt-area">
                 
-                {/* Receipt Green Banner */}
-                <div className="bg-emerald-700 text-white p-4 sm:p-5 flex items-center justify-between border-b border-emerald-800">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                      <CheckCircle className="w-5 h-5 text-amber-300" />
+                {/* Header Banner */}
+                <div className="bg-gradient-to-r from-[#172554] via-[#1e3a8a] to-[#1e1b4b] text-white p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 border-b border-indigo-900">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center shrink-0 font-black shadow-md">
+                      <CreditCard className="w-5 h-5" />
                     </div>
                     <div>
-                      <span className="text-[10px] font-mono font-black uppercase tracking-widest text-emerald-200">
-                        CSC DOST APPLICATION RECEIPT
+                      <span className="text-[10px] font-mono font-black uppercase tracking-widest text-amber-300">
+                        OFFICIAL CSC PAYMENT GATEWAY DESK
                       </span>
                       <h3 className="text-base sm:text-lg font-black uppercase tracking-wide">
-                        Application Submitted Successfully!
+                        {!isPaymentConfirmed ? 'Select Payment Mode to Complete Filing' : 'Application & Payment Confirmed!'}
                       </h3>
                     </div>
                   </div>
-                  <span className="px-3 py-1 bg-amber-400 text-slate-950 rounded-lg text-xs font-mono font-black shadow-xs">
-                    {submissionReceipt?.appId}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1 bg-amber-400 text-slate-950 rounded-lg text-xs font-mono font-black shadow-xs">
+                      {submissionReceipt?.appId}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="p-4 sm:p-6 space-y-4 text-xs sm:text-sm">
+                <div className="p-4 sm:p-6 space-y-5 text-xs sm:text-sm">
                   
                   {/* Token Box Notice */}
-                  <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between gap-2">
+                  <div className="p-3.5 bg-indigo-50/80 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 rounded-xl flex items-center justify-between gap-2">
                     <div>
-                      <p className="text-xs font-bold text-emerald-900 font-sans">
-                        Your Application Token Ref ID is saved in CSC Records
+                      <p className="text-xs font-bold text-indigo-950 dark:text-indigo-200 font-sans">
+                        Application Ref Token ID Generated & Saved in CSC Records
                       </p>
-                      <p className="text-[11px] text-emerald-700 font-mono font-medium">
-                        Token ID: <strong className="text-emerald-950 font-black">{submissionReceipt?.appId}</strong>
+                      <p className="text-[11px] text-indigo-700 dark:text-indigo-300 font-mono font-medium">
+                        Token ID: <strong className="text-indigo-950 dark:text-amber-300 font-black">{submissionReceipt?.appId}</strong>
                       </p>
                     </div>
                     <button
+                      type="button"
                       onClick={() => {
                         if (submissionReceipt?.appId) {
                           navigator.clipboard.writeText(submissionReceipt.appId);
                           alert(`Token ID ${submissionReceipt.appId} copied to clipboard!`);
                         }
                       }}
-                      className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-[10px] font-bold uppercase tracking-wider font-mono cursor-pointer shrink-0"
+                      className="px-2.5 py-1 bg-indigo-700 hover:bg-indigo-800 text-white rounded text-[10px] font-bold uppercase tracking-wider font-mono cursor-pointer shrink-0"
                     >
                       Copy Token
                     </button>
                   </div>
 
-                  {/* Details Summary Table */}
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2 font-sans">
-                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-1.5 flex items-center gap-1.5">
-                      <FileCheck className="w-3.5 h-3.5 text-emerald-700" />
-                      <span>Application &amp; Applicant Details</span>
-                    </h4>
+                  {/* Summary & Payable Fee Card */}
+                  <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-3 font-sans">
+                    <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+                      <span className="text-xs font-black uppercase text-slate-800 dark:text-slate-200">Applicant: {submissionReceipt?.customerName}</span>
+                      <span className="text-xs font-mono text-slate-600 dark:text-slate-400">Mobile: {submissionReceipt?.phoneNumber}</span>
+                    </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
-                        <span className="text-slate-500 font-medium">Applicant Name:</span>
-                        <p className="font-bold text-slate-900">{submissionReceipt?.customerName}</p>
+                        <span className="text-[10px] text-slate-500 uppercase font-mono block">Selected Service / Exam</span>
+                        <p className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">{submissionReceipt?.selectedService}</p>
                       </div>
 
-                      <div>
-                        <span className="text-slate-500 font-medium">Mobile Number:</span>
-                        <p className="font-bold text-slate-900 font-mono">{submissionReceipt?.phoneNumber}</p>
-                      </div>
-
-                      <div>
-                        <span className="text-slate-500 font-medium">Service Name:</span>
-                        <p className="font-bold text-slate-900">{submissionReceipt?.selectedService}</p>
-                      </div>
-
-                      <div>
-                        <span className="text-slate-500 font-medium">Category:</span>
-                        <p className="font-bold text-slate-900 uppercase">{submissionReceipt?.userCategory}</p>
-                      </div>
-
-                      <div>
-                        <span className="text-slate-500 font-medium">Payment Mode:</span>
-                        <p className="font-bold text-slate-900 uppercase font-mono">{submissionReceipt?.paymentMode}</p>
-                      </div>
-
-                      <div>
-                        <span className="text-slate-500 font-medium">Payment Ref / UTR:</span>
-                        <p className="font-bold text-slate-900 font-mono">{submissionReceipt?.utrNumber || 'Pending / N/A'}</p>
+                      <div className="text-right">
+                        <span className="text-[10px] text-slate-500 uppercase font-mono block">Total Payable Fee</span>
+                        <span className="text-xl font-mono font-black text-emerald-600 dark:text-emerald-400">₹{submissionReceipt?.totalAmount}</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Amount Paid Box */}
-                  <div className="p-3.5 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-between">
-                    <span className="font-bold text-slate-800 text-xs uppercase font-sans">Total Amount Paid</span>
-                    <span className="text-lg font-mono font-black text-emerald-700">₹{submissionReceipt?.totalAmount}</span>
-                  </div>
+                  {!isPaymentConfirmed ? (
+                    /* INTERACTIVE PAYMENT SELECTION DESK */
+                    <div className="space-y-4 pt-1">
+                      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+                        <Sparkles className="w-4 h-4 text-amber-500" />
+                        <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white font-sans">
+                          Choose Payment Option to Pay ₹{submissionReceipt?.totalAmount}
+                        </h4>
+                      </div>
 
-                  {/* Payment Breakdown */}
-                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1 font-mono">
-                    <p className="font-bold text-slate-800 border-b border-slate-200 pb-1 font-sans uppercase">
-                      Fee Breakdown
-                    </p>
-                    <div className="flex justify-between text-slate-600">
-                      <span>Subtotal:</span>
-                      <span>₹{(submissionReceipt?.applicationFee || 0) + (submissionReceipt?.portalFee || 50)}</span>
+                      {/* Payment Method Selector Tabs */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setPostSubmitPaymentMode('razorpay')}
+                          className={`p-3 rounded-xl border text-left transition-all cursor-pointer font-sans ${
+                            postSubmitPaymentMode === 'razorpay'
+                              ? 'bg-indigo-600 text-white border-indigo-700 shadow-md ring-2 ring-indigo-400'
+                              : 'bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <CreditCard className="w-4 h-4 text-amber-400" />
+                            <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-amber-400 text-slate-950 font-mono">INSTANT</span>
+                          </div>
+                          <p className="text-xs font-black uppercase">Razorpay Gateway</p>
+                          <p className="text-[10px] opacity-80">UPI / GPay / PhonePe / Cards</p>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setPostSubmitPaymentMode('online')}
+                          className={`p-3 rounded-xl border text-left transition-all cursor-pointer font-sans ${
+                            postSubmitPaymentMode === 'online'
+                              ? 'bg-indigo-600 text-white border-indigo-700 shadow-md ring-2 ring-indigo-400'
+                              : 'bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <QrCode className="w-4 h-4 text-amber-400" />
+                            <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-emerald-500 text-white font-mono">QR SCAN</span>
+                          </div>
+                          <p className="text-xs font-black uppercase">UPI QR Code</p>
+                          <p className="text-[10px] opacity-80">Scan &amp; Enter UTR ID</p>
+                        </button>
+
+                        <a
+                          href="https://razorpay.me/@cscdost"
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={() => setPostSubmitPaymentMode('razorpay')}
+                          className="p-3 rounded-xl border text-left transition-all cursor-pointer font-sans bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <ExternalLink className="w-4 h-4 text-blue-500" />
+                            <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-blue-600 text-white font-mono">DIRECT</span>
+                          </div>
+                          <p className="text-xs font-black uppercase">Razorpay.me</p>
+                          <p className="text-[10px] opacity-80">Direct Web Pay Page</p>
+                        </a>
+
+                        <button
+                          type="button"
+                          onClick={() => setPostSubmitPaymentMode('cash')}
+                          className={`p-3 rounded-xl border text-left transition-all cursor-pointer font-sans ${
+                            postSubmitPaymentMode === 'cash'
+                              ? 'bg-indigo-600 text-white border-indigo-700 shadow-md ring-2 ring-indigo-400'
+                              : 'bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <Building2 className="w-4 h-4 text-amber-400" />
+                            <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-slate-700 text-white font-mono">COUNTER</span>
+                          </div>
+                          <p className="text-xs font-black uppercase">Pay Cash</p>
+                          <p className="text-[10px] opacity-80">In-Person at CSC Desk</p>
+                        </button>
+                      </div>
+
+                      {/* TAB 1: RAZORPAY ONLINE GATEWAY PAYMENT */}
+                      {postSubmitPaymentMode === 'razorpay' && (
+                        <div className="bg-indigo-50/90 dark:bg-indigo-950/70 border-2 border-indigo-500/50 rounded-2xl p-4 sm:p-5 space-y-4 animate-fade-in">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Shield className="w-5 h-5 text-indigo-600 dark:text-amber-400" />
+                              <h5 className="text-xs font-black uppercase tracking-wider text-indigo-950 dark:text-white font-sans">
+                                Razorpay Secure Payment Checkout
+                              </h5>
+                            </div>
+                            <span className="text-[10px] font-mono font-black text-indigo-700 dark:text-indigo-300">
+                              256-Bit SSL Encrypted
+                            </span>
+                          </div>
+
+                          <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                            Click below to launch official Razorpay Checkout popup. Pay seamlessly using <strong>Google Pay, PhonePe, Paytm, BHIM UPI, Credit/Debit Cards, Net Banking, or Mobikwik</strong>.
+                          </p>
+
+                          {razorpayError && (
+                            <div className="p-3 bg-red-100 dark:bg-red-950/80 border border-red-300 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-xs font-medium space-y-1">
+                              <p className="font-bold">⚠️ Payment Notice:</p>
+                              <p>{razorpayError}</p>
+                            </div>
+                          )}
+
+                          <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
+                            <button
+                              type="button"
+                              disabled={isRazorpayLoading}
+                              onClick={handlePayWithRazorpay}
+                              className="w-full sm:flex-1 py-3.5 px-6 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                            >
+                              {isRazorpayLoading ? (
+                                <>
+                                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                  <span>Launching Razorpay Gateway...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <CreditCard className="w-4 h-4 text-amber-300" />
+                                  <span>PAY ₹{submissionReceipt?.totalAmount} NOW VIA RAZORPAY GATEWAY</span>
+                                </>
+                              )}
+                            </button>
+
+                            <a
+                              href="https://razorpay.me/@cscdost"
+                              target="_blank"
+                              rel="noreferrer"
+                              className="w-full sm:w-auto px-4 py-3.5 bg-slate-800 hover:bg-slate-900 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-slate-700 shrink-0"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
+                              <span>Open Razorpay.me</span>
+                            </a>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* TAB 2: UPI QR CODE SCAN & PAY */}
+                      {postSubmitPaymentMode === 'online' && (
+                        <div className="bg-emerald-50/90 dark:bg-emerald-950/50 border-2 border-emerald-500/50 rounded-2xl p-4 sm:p-5 space-y-4 animate-fade-in">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <QrCode className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                              <h5 className="text-xs font-black uppercase tracking-wider text-emerald-950 dark:text-emerald-200 font-sans">
+                                Instant Scan &amp; Pay via UPI QR Code
+                              </h5>
+                            </div>
+                            <span className="text-[10px] font-mono font-black text-emerald-800 dark:text-emerald-300">
+                              UPI ID: 7006833767@ybl
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center bg-white dark:bg-slate-900 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                            {/* QR Code Graphic Container */}
+                            <div className="flex flex-col items-center justify-center p-3 bg-white rounded-xl border border-slate-200 shadow-sm">
+                              <img
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`upi://pay?pa=7006833767@ybl&pn=CSC%20Digital%20Services&am=${submissionReceipt?.totalAmount || 50}&cu=INR&tn=CSC_Token_${submissionReceipt?.appId}`)}`}
+                                alt="CSC UPI Payment QR Code"
+                                className="w-36 h-36 object-contain"
+                              />
+                              <span className="text-[10px] font-mono font-bold text-slate-800 mt-1">Scan with GPay / PhonePe / Paytm</span>
+                            </div>
+
+                            <div className="sm:col-span-2 space-y-3">
+                              <p className="text-xs text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
+                                1. Open any UPI App (Google Pay, PhonePe, Paytm, BHIM) on your mobile.<br />
+                                2. Scan QR Code or transfer to UPI ID: <strong className="font-mono text-emerald-700 dark:text-emerald-400">7006833767@ybl</strong> / <strong className="font-mono text-emerald-700 dark:text-emerald-400">cscdost@upi</strong><br />
+                                3. Pay exact amount <strong>₹{submissionReceipt?.totalAmount}</strong> and copy the 12-digit UTR/Ref No below.
+                              </p>
+
+                              <div className="space-y-1.5">
+                                <label className="block text-[11px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                                  Enter 12-Digit UPI UTR / Transaction Ref ID <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. 421589123456"
+                                  value={formData.utrNumber}
+                                  onChange={(e) => setFormData(prev => ({ ...prev, utrNumber: e.target.value.trim() }))}
+                                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
+                                />
+                              </div>
+
+                              {utrError && (
+                                <p className="text-xs font-bold text-red-600 dark:text-red-400">⚠️ {utrError}</p>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={handleConfirmPayment}
+                                className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                              >
+                                <CheckCircle className="w-4 h-4 text-amber-300" />
+                                <span>VERIFY &amp; CONFIRM UPI PAYMENT</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* TAB 3: PAY CASH AT COUNTER */}
+                      {postSubmitPaymentMode === 'cash' && (
+                        <div className="bg-amber-50/90 dark:bg-amber-950/50 border-2 border-amber-500/50 rounded-2xl p-4 sm:p-5 space-y-3 animate-fade-in">
+                          <div className="flex items-center gap-2">
+                            <Building2 className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                            <h5 className="text-xs font-black uppercase tracking-wider text-amber-950 dark:text-amber-200 font-sans">
+                              Pay Cash in Person at CSC Counter
+                            </h5>
+                          </div>
+
+                          <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                            You can visit our official CSC Center desk and deposit cash fee <strong>₹{submissionReceipt?.totalAmount}</strong> against Application Token ID <strong>{submissionReceipt?.appId}</strong>.
+                          </p>
+
+                          <button
+                            type="button"
+                            onClick={handleConfirmPayment}
+                            className="w-full py-3 px-4 bg-slate-900 hover:bg-black text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                          >
+                            <Building2 className="w-4 h-4 text-amber-400" />
+                            <span>CONFIRM APPLICATION &amp; PAY CASH AT DESK</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex justify-between text-slate-600">
-                      <span>GST (18%):</span>
-                      <span>₹{Math.round((submissionReceipt?.portalFee || 50) * 0.18)}</span>
+                  ) : (
+                    /* CONFIRMED VERIFIED APPLICATION RECEIPT VIEW */
+                    <div className="space-y-4 pt-1 animate-fade-in">
+                      <div className="p-3.5 bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-800 rounded-xl flex items-center gap-2.5">
+                        <CheckCircle className="w-5 h-5 text-emerald-700 dark:text-emerald-400 shrink-0" />
+                        <div>
+                          <p className="text-xs font-black text-emerald-950 dark:text-emerald-200 uppercase font-sans">
+                            Payment Confirmed &amp; Application Processed
+                          </p>
+                          <p className="text-[11px] text-emerald-800 dark:text-emerald-300 font-mono font-medium">
+                            Payment Mode: <strong className="uppercase">{submissionReceipt?.paymentMode}</strong> | Ref ID: <strong className="font-bold">{submissionReceipt?.utrNumber}</strong>
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Details Summary Table */}
+                      <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-2 font-sans">
+                        <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-1.5 flex items-center gap-1.5">
+                          <FileCheck className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
+                          <span>Official Receipt Details</span>
+                        </h4>
+
+                        <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                          <div>
+                            <span className="text-slate-500 font-medium">Applicant Name:</span>
+                            <p className="font-bold text-slate-900 dark:text-white">{submissionReceipt?.customerName}</p>
+                          </div>
+
+                          <div>
+                            <span className="text-slate-500 font-medium">Mobile Number:</span>
+                            <p className="font-bold text-slate-900 dark:text-white font-mono">{submissionReceipt?.phoneNumber}</p>
+                          </div>
+
+                          <div>
+                            <span className="text-slate-500 font-medium">Service Name:</span>
+                            <p className="font-bold text-slate-900 dark:text-white">{submissionReceipt?.selectedService}</p>
+                          </div>
+
+                          <div>
+                            <span className="text-slate-500 font-medium">Category:</span>
+                            <p className="font-bold text-slate-900 dark:text-white uppercase">{submissionReceipt?.userCategory}</p>
+                          </div>
+
+                          <div>
+                            <span className="text-slate-500 font-medium">Payment Mode:</span>
+                            <p className="font-bold text-emerald-700 dark:text-emerald-400 uppercase font-mono font-black">{submissionReceipt?.paymentMode}</p>
+                          </div>
+
+                          <div>
+                            <span className="text-slate-500 font-medium">Payment Ref / UTR:</span>
+                            <p className="font-bold text-slate-900 dark:text-white font-mono">{submissionReceipt?.utrNumber || 'N/A'}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Payment Breakdown */}
+                      <div className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs space-y-1 font-mono">
+                        <p className="font-bold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-800 pb-1 font-sans uppercase">
+                          Fee Breakdown
+                        </p>
+                        <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                          <span>Subtotal:</span>
+                          <span>₹{(submissionReceipt?.applicationFee || 0) + (submissionReceipt?.portalFee || 50)}</span>
+                        </div>
+                        <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                          <span>GST (18%):</span>
+                          <span>₹{Math.round((submissionReceipt?.portalFee || 50) * 0.18)}</span>
+                        </div>
+                        <div className="pt-1 border-t border-slate-300 dark:border-slate-700 flex justify-between font-sans text-sm font-black text-slate-900 dark:text-white">
+                          <span>Total Paid:</span>
+                          <span className="font-mono text-emerald-600 dark:text-emerald-400 font-extrabold text-base">₹{submissionReceipt?.totalAmount}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="pt-1 border-t border-slate-300 flex justify-between font-sans text-sm font-black text-slate-900">
-                      <span>Total Paid:</span>
-                      <span className="font-mono text-emerald-700 font-extrabold text-base">₹{submissionReceipt?.totalAmount}</span>
-                    </div>
-                  </div>
+                  )}
+
                 </div>
 
                 {/* Bottom Action Bar (no-print) */}
-                <div className="flex flex-wrap items-center justify-end gap-2.5 pt-3 p-4 border-t border-slate-200 no-print">
+                <div className="flex flex-wrap items-center justify-end gap-2.5 pt-3 p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 no-print">
                   <button
+                    type="button"
                     onClick={() => {
                       if (!submissionReceipt) return;
                       const msg = `*New Application Submitted on CSC DOST!*
@@ -2472,13 +2741,14 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                   <button
                     type="button"
                     onClick={handlePrintSlip}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-xs uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer border border-slate-200 font-sans shadow-xs"
+                    className="px-4 py-2 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-800 dark:text-slate-200 font-black text-xs uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-700 font-sans shadow-xs"
                   >
                     <Printer className="w-3.5 h-3.5" />
                     <span>Print Slip</span>
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => {
                       setIsFormSubmitted(false);
                       setUtrError(null);

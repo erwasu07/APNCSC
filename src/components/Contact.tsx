@@ -149,7 +149,7 @@ export default function Contact({ settings, selectedService, setSelectedService 
 
           const web3Item = {
             id: data.data?.id || `w3f-contact-${Date.now()}`,
-            appId: data.data?.appId || `CSC-2026-${Math.floor(1 + Math.random() * 999)}`,
+            appId: data.data?.appId || `CSC21251567${String(Math.floor(1 + Math.random() * 999)).padStart(3, '0')}`,
             name: name,
             email: email,
             phone: phone,

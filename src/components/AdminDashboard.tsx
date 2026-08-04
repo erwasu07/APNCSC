@@ -1031,7 +1031,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                     </button>
 
                     <span className="px-2.5 py-1 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-mono font-black text-xs rounded-lg border border-amber-500/20">
-                      {app.appId || `CSC-2026-${idx + 1}`}
+                      {app.appId || `CSC21251567${String(idx + 1).padStart(3, '0')}`}
                     </span>
 
                     {/* Copy Info Button */}
