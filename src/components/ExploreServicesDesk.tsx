@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, 
   ArrowRight, 
@@ -25,7 +25,11 @@ import {
   Eye,
   Bell,
   Building2,
-  MapPin
+  MapPin,
+  Share2,
+  Copy,
+  MessageSquare,
+  Send
 } from 'lucide-react';
 import { SERVICES_LIST, CATEGORY_LABELS, ServiceItem } from '../servicesData';
 
@@ -38,6 +42,59 @@ export default function ExploreServicesDesk({ onApplyService, selectedService }:
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'cards_adda' | 'revenue' | 'jk_state' | 'csc' | 'digital' | 'education' | 'business'>('all');
   const [selectedServiceItem, setSelectedServiceItem] = useState<ServiceItem | null>(null);
+
+  // Sharing & Notification States
+  const [shareToast, setShareToast] = useState<string | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [activeShareData, setActiveShareData] = useState<{ title: string; text: string; url: string; name: string } | null>(null);
+
+  // Auto-open service modal if ?service=... is present in URL
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const serviceId = params.get('service');
+      if (serviceId) {
+        const match = SERVICES_LIST.find(s => s.id === serviceId);
+        if (match) {
+          setSelectedServiceItem(match);
+        }
+      }
+    }
+  }, []);
+
+  const triggerToast = (msg: string) => {
+    setShareToast(msg);
+    setTimeout(() => setShareToast(null), 3000);
+  };
+
+  const handleShareService = async (item: ServiceItem) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.cscdost.com';
+    const shareUrl = `${origin}/?service=${item.id}`;
+    const shareTitle = `📌 ${item.name} - CSC DOST Service`;
+    const shareText = `📌 *${item.name}*\n💰 Price: ${item.price}\n⏱️ Time: ${item.estimatedTime}\n\n${item.description}\n\n👉 Apply online via CSC DOST Portal:\n${shareUrl}`;
+
+    const dataPayload = { title: shareTitle, text: shareText, url: shareUrl, name: item.name };
+    setActiveShareData(dataPayload);
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl
+        });
+        return;
+      } catch (err) {
+        // Fallback to share options popup if user cancelled or error
+      }
+    }
+    setShowShareModal(true);
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    triggerToast(`Copied ${label} to clipboard!`);
+  };
 
   // Filter list based on both active tab and search query
   const filteredServices = SERVICES_LIST.filter(service => {
@@ -503,13 +560,26 @@ export default function ExploreServicesDesk({ onApplyService, selectedService }:
                 </h3>
               </div>
 
-              <button
-                onClick={() => setSelectedServiceItem(null)}
-                className="p-2 bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white rounded-full transition-all absolute right-4 top-5 cursor-pointer"
-                title="Close Service View"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2 absolute right-4 top-4 sm:top-5">
+                <button
+                  type="button"
+                  onClick={() => handleShareService(selectedServiceItem)}
+                  className="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-md cursor-pointer hover:scale-105"
+                  title="Share this service"
+                  id="eservice-modal-top-share-btn"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Share Service</span>
+                </button>
+                <button
+                  onClick={() => setSelectedServiceItem(null)}
+                  className="p-2 bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white rounded-full transition-all cursor-pointer"
+                  title="Close Service View"
+                  id="eservice-modal-top-close-btn"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Modal Body */}
@@ -580,16 +650,28 @@ export default function ExploreServicesDesk({ onApplyService, selectedService }:
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 sm:p-5 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 bg-white dark:bg-slate-900 shrink-0">
-              <button
-                type="button"
-                onClick={() => setSelectedServiceItem(null)}
-                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-slate-200 dark:border-slate-700 flex items-center gap-1.5"
-                id="eservice-modal-close-btn"
-              >
-                <X className="w-4 h-4" />
-                <span>Close</span>
-              </button>
+            <div className="p-4 sm:p-5 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 shrink-0">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedServiceItem(null)}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-extrabold uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-slate-200 dark:border-slate-700 flex items-center gap-1.5"
+                  id="eservice-modal-close-btn"
+                >
+                  <X className="w-4 h-4" />
+                  <span>Close</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleShareService(selectedServiceItem)}
+                  className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 shadow-sm cursor-pointer hover:scale-[1.02]"
+                  id="eservice-modal-share-btn"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span>Share Service</span>
+                </button>
+              </div>
 
               <button
                 type="button"
@@ -603,6 +685,99 @@ export default function ExploreServicesDesk({ onApplyService, selectedService }:
             </div>
 
           </div>
+        </div>
+      )}
+
+      {/* SHARE OPTIONS POPUP MODAL */}
+      {showShareModal && activeShareData && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-[60] animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl relative text-slate-900 dark:text-white">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Share2 className="w-5 h-5 text-amber-500" />
+                <h3 className="font-extrabold text-base font-display">Share Service</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowShareModal(false)}
+                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+              Share <strong className="text-slate-900 dark:text-white">{activeShareData.name}</strong> directly with applicants, friends or on social channels:
+            </p>
+
+            <div className="grid grid-cols-1 gap-2.5">
+              {/* WhatsApp Share */}
+              <a
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(activeShareData.text)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xs transition-all shadow-md group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <MessageSquare className="w-5 h-5 text-white" />
+                  <span>Share on WhatsApp</span>
+                </div>
+                <ArrowUpRight className="w-4 h-4 opacity-80 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              </a>
+
+              {/* Telegram Share */}
+              <a
+                href={`https://t.me/share/url?url=${encodeURIComponent(activeShareData.url)}&text=${encodeURIComponent(activeShareData.title)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-3.5 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl font-bold text-xs transition-all shadow-md group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <Send className="w-5 h-5 text-white" />
+                  <span>Share on Telegram</span>
+                </div>
+                <ArrowUpRight className="w-4 h-4 opacity-80 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              </a>
+
+              {/* Copy Direct Link */}
+              <button
+                type="button"
+                onClick={() => copyToClipboard(activeShareData.url, 'Service Direct Link')}
+                className="flex items-center justify-between p-3.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-2xl font-bold text-xs transition-all border border-slate-200 dark:border-slate-700 cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <Copy className="w-5 h-5 text-amber-500" />
+                  <span>Copy Direct Post Link</span>
+                </div>
+                <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">URL Only</span>
+              </button>
+
+              {/* Copy Full Service Info */}
+              <button
+                type="button"
+                onClick={() => copyToClipboard(activeShareData.text, 'Full Service Details')}
+                className="flex items-center justify-between p-3.5 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 text-indigo-950 dark:text-indigo-200 rounded-2xl font-bold text-xs transition-all border border-indigo-200 dark:border-indigo-800/80 cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                  <span>Copy Full Post Text & Link</span>
+                </div>
+                <span className="text-[10px] font-mono text-indigo-500">Text + Link</span>
+              </button>
+            </div>
+
+            <div className="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
+              {activeShareData.url}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TOAST FEEDBACK NOTIFICATION */}
+      {shareToast && (
+        <div className="fixed bottom-6 right-6 z-[70] bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-2 animate-bounce font-bold text-xs">
+          <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{shareToast}</span>
         </div>
       )}
 

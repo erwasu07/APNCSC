@@ -943,6 +943,47 @@ export const SARKARI_DATA: SarkariItem[] = [
   },
   // 🏔️ OFFICIAL JKSSB RECRUITMENT NOTIFICATIONS (jkssb.nic.in/Advertisement.html)
   {
+    id: 'jkssb-advt-08-2026',
+    title: 'JKSSB Advt 08 of 2026: Various UT / Divisional / District Cadre Posts (Health, Higher Edu, Agriculture & Labour)',
+    category: 'jkssb',
+    postDate: '04/08/2026',
+    lastDate: '09/10/2026 (Apply Online: 10/09/2026 to 09/10/2026)',
+    advertisementNo: 'Notification No. 08 of 2026 (Dated: 04.08.2026)',
+    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) invites online application forms for 518 UT/Divisional/District Cadre vacancies across Health & Medical Education (421), Higher Education (48), Agriculture Production (46), and Labour & Employment (3) Departments.',
+    ageLimit: 'OM: 18 - 40 Years | SC/ST/RBA/ALC/IB/EWS: 18 - 43 Years | PWD: 18 - 42 Years | Ex-Servicemen: Up to 48 Years (As on 01.01.2026)',
+    eligibility: 'Must be a Domicile of UT of Jammu & Kashmir. Academic / Professional Qualifications vary by post (Degree, Diploma, Matriculation, etc. in concerned discipline).',
+    totalPosts: '518 Posts',
+    fees: { genObc: '₹500', scSt: '₹400' },
+    officialLink: 'https://jkssb.nic.in/Advertisement.html',
+    isNew: true,
+    departmentBreakdown: [
+      {
+        department: 'Health and Medical Education Department',
+        postName: 'UT / Divisional / District Cadre Paramedical & Medical Posts',
+        posts: 421,
+        qualification: 'Degree / Diploma / Certificate in relevant Paramedical, Nursing, Pharmacy or Medical Technology field'
+      },
+      {
+        department: 'Higher Education Department',
+        postName: 'Non-Teaching / Technical & Cadre Staff',
+        posts: 48,
+        qualification: 'Bachelor Degree / Master Degree / Diploma in relevant subject from a recognized University'
+      },
+      {
+        department: 'Agriculture Production Department',
+        postName: 'Agriculture & Horticulture Technical Cadre Posts',
+        posts: 46,
+        qualification: 'B.Sc Agriculture / Horticulture or Diploma / Degree in relevant Agriculture / Technical trade'
+      },
+      {
+        department: 'Labour and Employment Department',
+        postName: 'Labour Department Cadre Posts',
+        posts: 3,
+        qualification: 'Bachelor Degree in any discipline from a recognized University'
+      }
+    ]
+  },
+  {
     id: 'jkssb-advt-06-2026',
     title: 'JKSSB Advt 06 of 2026: Public Works (R&B) Dept Draftsman & Works Supervisor Recruitment',
     category: 'jkssb',

@@ -42,7 +42,10 @@ import {
   Eye,
   Home,
   Building2,
-  Train
+  Train,
+  Share2,
+  Send,
+  ArrowUpRight
 } from 'lucide-react';
 import { SARKARI_DATA, SARKARI_CATEGORIES, SarkariItem } from '../data/sarkariData';
 import { SERVICES_LIST } from '../servicesData';
@@ -237,6 +240,60 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     directWhatsAppUrl?: string;
     error?: string;
   } | null>(null);
+
+  // Share & Toast Notification State
+  const [shareToast, setShareToast] = useState<string | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [activeShareData, setActiveShareData] = useState<{ title: string; text: string; url: string; name: string } | null>(null);
+
+  // Auto-open post modal if ?post=... is present in URL
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const postId = params.get('post');
+      if (postId) {
+        const match = SARKARI_DATA.find(i => i.id === postId);
+        if (match) {
+          setSelectedItem(match);
+        }
+      }
+    }
+  }, []);
+
+  const triggerToast = (msg: string) => {
+    setShareToast(msg);
+    setTimeout(() => setShareToast(null), 3000);
+  };
+
+  const handleShareSarkari = async (item: SarkariItem) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.cscdost.com';
+    const shareUrl = `${origin}/?post=${item.id}`;
+    const orgName = getOrgName(item);
+    const shareTitle = `📢 ${item.title}`;
+    const shareText = `📢 *${item.title}*\n🏢 *Board/Dept:* ${orgName}\n${item.advertisementNo ? `📄 *Advt No:* ${item.advertisementNo}\n` : ''}${item.lastDate ? `⏰ *Last Date:* ${item.lastDate}\n` : ''}${item.totalPosts ? `👥 *Vacancies/Seats:* ${item.totalPosts}\n` : ''}\n${item.shortInfo ? item.shortInfo + '\n\n' : ''}👉 View full details & Apply online via CSC DOST Portal:\n${shareUrl}`;
+
+    const dataPayload = { title: shareTitle, text: shareText, url: shareUrl, name: item.title };
+    setActiveShareData(dataPayload);
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl
+        });
+        return;
+      } catch (err) {
+        // Fallback to share modal if cancelled or unsupported
+      }
+    }
+    setShowShareModal(true);
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    triggerToast(`Copied ${label} to clipboard!`);
+  };
 
   const triggerWhatsAppInvoiceDispatch = async (receiptData: any) => {
     if (!receiptData || !receiptData.phoneNumber) return;
@@ -2581,14 +2638,27 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                 </h3>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setSelectedItem(null)}
-                className="p-2 bg-white/15 hover:bg-white/30 text-white rounded-full transition-all absolute right-3.5 top-4 cursor-pointer border border-white/20 shadow-xs"
-                title="Close Post View"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2 absolute right-3.5 top-3.5 sm:top-4">
+                <button
+                  type="button"
+                  onClick={() => handleShareSarkari(selectedItem)}
+                  className="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-md cursor-pointer hover:scale-105"
+                  title="Share this Post"
+                  id="sarkari-post-top-share-btn"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Share Post</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedItem(null)}
+                  className="p-2 bg-white/15 hover:bg-white/30 text-white rounded-full transition-all cursor-pointer border border-white/20 shadow-xs"
+                  title="Close Post View"
+                  id="sarkari-post-top-close-btn"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Scrollable Post Content Body - Clean High-Contrast Light Theme */}
@@ -3014,16 +3084,28 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
             </div>
 
             {/* Bottom Navigation Buttons (Fixed Bar) */}
-            <div className="p-4 sm:p-5 border-t border-slate-200 flex items-center justify-between gap-3 bg-white shrink-0">
-              <button
-                type="button"
-                onClick={() => setSelectedItem(null)}
-                className="px-5 sm:px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-extrabold uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-slate-300 flex items-center gap-1.5"
-                id="sarkari-post-close-btn"
-              >
-                <X className="w-4 h-4" />
-                <span>Close</span>
-              </button>
+            <div className="p-4 sm:p-5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 bg-white shrink-0">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedItem(null)}
+                  className="px-4 sm:px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-extrabold uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-slate-300 flex items-center gap-1.5"
+                  id="sarkari-post-close-btn"
+                >
+                  <X className="w-4 h-4" />
+                  <span>Close</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleShareSarkari(selectedItem)}
+                  className="px-4 sm:px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-2 shadow-sm hover:scale-[1.01]"
+                  id="sarkari-post-share-btn"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span>Share Post</span>
+                </button>
+              </div>
 
               {!['answer_keys', 'syllabus', 'results'].includes(selectedItem.category) && (
                 <button
@@ -3039,6 +3121,99 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
             </div>
 
           </div>
+        </div>
+      )}
+
+      {/* SHARE OPTIONS POPUP MODAL */}
+      {showShareModal && activeShareData && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-[60] animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl relative text-slate-900 dark:text-white">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Share2 className="w-5 h-5 text-amber-500" />
+                <h3 className="font-extrabold text-base font-display">Share Notification / Post</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowShareModal(false)}
+                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+              Share <strong className="text-slate-900 dark:text-white">{activeShareData.name}</strong> directly with candidates, friends or on social channels:
+            </p>
+
+            <div className="grid grid-cols-1 gap-2.5">
+              {/* WhatsApp Share */}
+              <a
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(activeShareData.text)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xs transition-all shadow-md group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <MessageSquare className="w-5 h-5 text-white" />
+                  <span>Share on WhatsApp</span>
+                </div>
+                <ArrowUpRight className="w-4 h-4 opacity-80 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              </a>
+
+              {/* Telegram Share */}
+              <a
+                href={`https://t.me/share/url?url=${encodeURIComponent(activeShareData.url)}&text=${encodeURIComponent(activeShareData.title)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-3.5 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl font-bold text-xs transition-all shadow-md group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <Send className="w-5 h-5 text-white" />
+                  <span>Share on Telegram</span>
+                </div>
+                <ArrowUpRight className="w-4 h-4 opacity-80 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              </a>
+
+              {/* Copy Direct Link */}
+              <button
+                type="button"
+                onClick={() => copyToClipboard(activeShareData.url, 'Post Direct Link')}
+                className="flex items-center justify-between p-3.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-2xl font-bold text-xs transition-all border border-slate-200 dark:border-slate-700 cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <Copy className="w-5 h-5 text-amber-500" />
+                  <span>Copy Direct Post Link</span>
+                </div>
+                <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">URL Only</span>
+              </button>
+
+              {/* Copy Full Post Info */}
+              <button
+                type="button"
+                onClick={() => copyToClipboard(activeShareData.text, 'Full Post Details')}
+                className="flex items-center justify-between p-3.5 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 text-indigo-950 dark:text-indigo-200 rounded-2xl font-bold text-xs transition-all border border-indigo-200 dark:border-indigo-800/80 cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                  <span>Copy Full Post Text & Link</span>
+                </div>
+                <span className="text-[10px] font-mono text-indigo-500">Text + Link</span>
+              </button>
+            </div>
+
+            <div className="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
+              {activeShareData.url}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TOAST FEEDBACK NOTIFICATION */}
+      {shareToast && (
+        <div className="fixed bottom-6 right-6 z-[70] bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-2 animate-bounce font-bold text-xs">
+          <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{shareToast}</span>
         </div>
       )}
 
