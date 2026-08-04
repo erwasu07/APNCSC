@@ -94,7 +94,7 @@ export default function Footer({ cafeName, onOpenPrivacyPolicy, onOpenAdmin }: F
               <span>Authorized VLE &amp; Service Portal Disclaimer</span>
             </div>
             <p className="leading-relaxed text-[11px] text-slate-300 font-sans">
-              <strong>CSC DOST (cscdost.online)</strong> is operated by <strong>Authorized CSC Village Level Entrepreneur (VLE) Wasim Ahmad Khanday (CSC ID: 212515670018, Reg. Date: 11-11-2020)</strong> issued by CSC e-Governance Services India Limited, Ministry of Electronics and Information Technology, Government of India. We provide online application form filling assistance, document printing, and exam updates. This portal is a private digital assistance desk facilitating citizen applications on official government portals. Official portals can be accessed directly at <a href="https://csc.gov.in" target="_blank" rel="noopener noreferrer" className="text-amber-400 underline font-semibold">csc.gov.in</a> or <a href="https://digitalseva.csc.gov.in" target="_blank" rel="noopener noreferrer" className="text-amber-400 underline font-semibold">digitalseva.csc.gov.in</a>.
+              <strong>CSC DOST (cscdost.com / cscdost.online)</strong> is operated by <strong>Authorized CSC Village Level Entrepreneur (VLE) Wasim Ahmad Khanday (CSC ID: 212515670018, Reg. Date: 11-11-2020)</strong> issued by CSC e-Governance Services India Limited, Ministry of Electronics and Information Technology, Government of India. We provide online application form filling assistance, document printing, and exam updates. This portal is a private digital assistance desk facilitating citizen applications on official government portals. Official portals can be accessed directly at <a href="https://csc.gov.in" target="_blank" rel="noopener noreferrer" className="text-amber-400 underline font-semibold">csc.gov.in</a> or <a href="https://digitalseva.csc.gov.in" target="_blank" rel="noopener noreferrer" className="text-amber-400 underline font-semibold">digitalseva.csc.gov.in</a>.
             </p>
           </div>
 
@@ -136,7 +136,7 @@ export default function Footer({ cafeName, onOpenPrivacyPolicy, onOpenAdmin }: F
 
             {/* Copyright & Subtext */}
             <div className="text-[11px] text-slate-500 font-mono space-y-1">
-              <p>© 2026 CSC DOST (cscdost.online). All Rights Reserved. Operator: Wasim Ahmad Khanday.</p>
+              <p>© 2026 CSC DOST (cscdost.com / cscdost.online). All Rights Reserved. Operator: Wasim Ahmad Khanday.</p>
               <p className="text-[10px] text-slate-500 font-sans">
                 Independent Digital Assistance &amp; Informational Portal.
               </p>
