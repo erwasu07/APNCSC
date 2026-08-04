@@ -23,6 +23,7 @@ import {
   ExternalLink,
   ChevronRight,
   Info,
+  AlertCircle,
   User,
   Smartphone,
   Mail,
@@ -543,6 +544,42 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
   const docRequirement = getServiceDocRequirement(formData.selectedService, formData.customServiceText);
 
+  // Helper to generate auto-incrementing official CSC token starting with prefix CSC21251567...
+  const getNextCscTokenId = (): string => {
+    try {
+      let maxSeq = 0;
+      const existingApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+      if (Array.isArray(existingApps)) {
+        existingApps.forEach((a: any) => {
+          const id = a.appId || a.id || '';
+          const matchNew = id.match(/^CSC21251567(\d+)/i);
+          const matchOld = id.match(/^CSC-2026-(\d+)/i);
+          if (matchNew && matchNew[1]) {
+            const num = parseInt(matchNew[1], 10);
+            if (!isNaN(num) && num > maxSeq) {
+              maxSeq = num;
+            }
+          } else if (matchOld && matchOld[1]) {
+            const num = parseInt(matchOld[1], 10);
+            if (!isNaN(num) && num > maxSeq) {
+              maxSeq = num;
+            }
+          }
+        });
+      }
+      const lastStored = parseInt(localStorage.getItem('csc_token_seq') || '0', 10);
+      if (!isNaN(lastStored) && lastStored > maxSeq) {
+        maxSeq = lastStored;
+      }
+      const nextSeq = maxSeq + 1;
+      localStorage.setItem('csc_token_seq', nextSeq.toString());
+      const seqPadded = String(nextSeq).padStart(3, '0');
+      return `CSC21251567${seqPadded}`;
+    } catch {
+      return `CSC21251567001`;
+    }
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setUtrError(null);
@@ -558,47 +595,11 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       return;
     }
 
-    // Generate auto-incrementing token starting with prefix CSC21251567...
-    const getNextCscTokenId = (): string => {
-      try {
-        let maxSeq = 0;
-        const existingApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-        if (Array.isArray(existingApps)) {
-          existingApps.forEach((a: any) => {
-            const id = a.appId || a.id || '';
-            const matchNew = id.match(/^CSC21251567(\d+)/i);
-            const matchOld = id.match(/^CSC-2026-(\d+)/i);
-            if (matchNew && matchNew[1]) {
-              const num = parseInt(matchNew[1], 10);
-              if (!isNaN(num) && num > maxSeq) {
-                maxSeq = num;
-              }
-            } else if (matchOld && matchOld[1]) {
-              const num = parseInt(matchOld[1], 10);
-              if (!isNaN(num) && num > maxSeq) {
-                maxSeq = num;
-              }
-            }
-          });
-        }
-        const lastStored = parseInt(localStorage.getItem('csc_token_seq') || '0', 10);
-        if (!isNaN(lastStored) && lastStored > maxSeq) {
-          maxSeq = lastStored;
-        }
-        const nextSeq = maxSeq + 1;
-        localStorage.setItem('csc_token_seq', nextSeq.toString());
-        const seqPadded = String(nextSeq).padStart(3, '0');
-        return `CSC21251567${seqPadded}`;
-      } catch {
-        return `CSC21251567001`;
-      }
-    };
-
-    const mockAppId = getNextCscTokenId();
     const uploadedDocsList = uploadedFiles.map(f => `${f.name} (${(f.size / 1024).toFixed(1)} KB)`);
 
-    const mockReceipt = {
-      appId: mockAppId,
+    // Note: Official Reference Token ID is NOT assigned or stored until Razorpay payment is completed!
+    const pendingReceipt = {
+      appId: '', // Unassigned until payment confirmation
       customerName: formData.customerName,
       phoneNumber: formData.phoneNumber,
       emailAddress: formData.emailAddress || 'N/A',
@@ -615,133 +616,16 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       submittedAt: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('en-US')
     };
 
-    setSubmissionReceipt(mockReceipt);
+    setSubmissionReceipt(pendingReceipt);
     setIsFormSubmitted(true);
     setPostSubmitPaymentMode('razorpay');
     setIsPaymentConfirmed(false);
 
-    // Automatically trigger WhatsApp invoice notification dispatch
-    triggerWhatsAppInvoiceDispatch(mockReceipt);
-
-    // Process and upload attached documents to Supabase Storage if configured
-    let processedDocs: UploadedDocument[] = uploadedFiles;
-    try {
-      processedDocs = await uploadMultipleDocumentsToSupabase(uploadedFiles, mockReceipt.appId);
-      setUploadedFiles(processedDocs);
-    } catch (upErr) {
-      console.warn('Supabase document upload notice:', upErr);
-    }
-
-    // Save initial application directly to Cloud Firestore & server API immediately
-    const nowIso = new Date().toISOString();
-    const initialPayload = {
-      appId: mockReceipt.appId,
-      name: mockReceipt.customerName,
-      email: mockReceipt.emailAddress,
-      phone: mockReceipt.phoneNumber,
-      service: mockReceipt.selectedService,
-      dateOfBirth: mockReceipt.dateOfBirth,
-      userCategory: mockReceipt.userCategory,
-      paymentMode: 'cash',
-      utrNumber: 'N/A',
-      totalAmount: mockReceipt.totalAmount,
-      message: formData.additionalDetails || 'None',
-      documents: processedDocs,
-      status: 'Pending',
-      submittedAt: nowIso,
-      createdAt: nowIso,
-      updatedAt: nowIso,
-      statusUpdatedAt: nowIso
-    };
-
-    // 1. Save directly to Cloud Firestore and Supabase
-    try {
-      setDoc(doc(db, 'applications', mockReceipt.appId), initialPayload, { merge: true }).catch(fsErr => {
-        console.error('Firestore "applications" save error:', fsErr);
-      });
-      setDoc(doc(db, 'appointments', mockReceipt.appId), initialPayload, { merge: true }).catch(fsErr => {
-        console.error('Firestore "appointments" save error:', fsErr);
-      });
-
-      const supabase = getSupabaseClient();
-      if (supabase) {
-        (async () => {
-          try {
-            await supabase.from('applications').upsert([
-              {
-                appId: mockReceipt.appId,
-                id: mockReceipt.appId,
-                applicantName: mockReceipt.customerName,
-                customerName: mockReceipt.customerName,
-                phoneNumber: mockReceipt.phoneNumber,
-                emailAddress: mockReceipt.emailAddress,
-                selectedService: mockReceipt.selectedService,
-                userCategory: mockReceipt.userCategory,
-                paymentMode: mockReceipt.paymentMode,
-                utrNumber: mockReceipt.utrNumber,
-                totalAmount: mockReceipt.totalAmount,
-                status: 'Pending',
-                submittedAt: nowIso,
-                documents: processedDocs,
-                payload: initialPayload
-              }
-            ], { onConflict: 'appId' });
-          } catch (sbErr) {
-            console.error('Supabase "applications" upsert error:', sbErr);
-          }
-        })();
-      }
-    } catch (fsErr) {
-      console.error('Database save execution exception:', fsErr);
-    }
-
-    // 2. Always POST to server API as secondary persistence
-    fetch('/api/appointments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(initialPayload)
-    })
-      .then(async res => {
-        const text = await res.text();
-        return text ? JSON.parse(text) : {};
-      })
-      .then(data => {
-        console.log('Server registration successful:', data);
-      })
-      .catch(err => console.error('Initial API submission save error:', err));
-
-    // 2. Save lightweight version to localStorage (avoiding quota overflow)
-    try {
-      const lightDocs = uploadedFiles.map(f => ({
-        id: f.id,
-        name: f.name,
-        size: f.size,
-        type: f.type
-      }));
-      const lightPayload = { ...initialPayload, documents: lightDocs };
-
-      const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-      localStorage.setItem('csc_local_applications', JSON.stringify([lightPayload, ...existing.filter((i: any) => i.appId !== mockReceipt.appId)]));
-    } catch (e) {
-      console.warn('localStorage quota warning (handled safely):', e);
-    }
-
-    // 3. Broadcast live synchronization events across tabs and windows
-    try {
-      window.dispatchEvent(new CustomEvent('csc_appointment_created', { detail: initialPayload }));
-      window.dispatchEvent(new Event('storage'));
-      const bc = new BroadcastChannel('csc_portal_sync');
-      bc.postMessage({ type: 'NEW_APPOINTMENT', payload: initialPayload });
-      bc.close();
-    } catch (bcErr) {
-      console.error('Broadcast Channel error:', bcErr);
-    }
-
-    // Keep form cleanly scrolled into view on customer screen
+    // Keep payment desk cleanly scrolled into view
     setTimeout(() => {
-      const formEl = document.getElementById('booking-portal-form');
-      if (formEl) {
-        formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const element = document.getElementById('printable-receipt-area');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }, 100);
   };
@@ -754,7 +638,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
     processRazorpayPayment({
       amount: submissionReceipt.totalAmount || 50,
-      appId: submissionReceipt.appId,
+      appId: 'CSC_ONLINE_PAYMENT',
       customerName: submissionReceipt.customerName,
       email: submissionReceipt.emailAddress,
       phone: submissionReceipt.phoneNumber,
@@ -762,13 +646,18 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       onSuccess: async (paymentId, orderId, signature) => {
         setIsRazorpayLoading(false);
 
+        // Generate official CSC Token ID ONLY upon successful payment!
+        const officialAppId = getNextCscTokenId();
+
         const updatedReceipt = {
           ...submissionReceipt,
+          appId: officialAppId,
           paymentMode: 'razorpay',
           utrNumber: paymentId,
           paymentId: paymentId,
           orderId: orderId,
-          paymentStatus: 'Paid via Razorpay'
+          paymentStatus: 'Paid via Razorpay',
+          isPaid: true
         };
 
         setSubmissionReceipt(updatedReceipt);
@@ -776,19 +665,19 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
         setPostSubmitPaymentMode('razorpay');
         setIsPaymentConfirmed(true);
 
-        // Process and upload attached documents to Supabase Storage if configured
+        // Upload attached documents to Supabase Storage with official token
         let processedDocs: UploadedDocument[] = uploadedFiles;
         try {
-          processedDocs = await uploadMultipleDocumentsToSupabase(uploadedFiles, updatedReceipt.appId);
+          processedDocs = await uploadMultipleDocumentsToSupabase(uploadedFiles, officialAppId);
           setUploadedFiles(processedDocs);
         } catch (upErr) {
           console.warn('Supabase payment document upload notice:', upErr);
         }
 
-        // Save/update application in Cloud Firestore & central server database
+        // Save application in Cloud Firestore & central server database ONLY NOW that payment is confirmed
         const nowIso = new Date().toISOString();
         const updatedPayload = {
-          appId: updatedReceipt.appId,
+          appId: officialAppId,
           name: updatedReceipt.customerName,
           email: updatedReceipt.emailAddress,
           phone: updatedReceipt.phoneNumber,
@@ -804,21 +693,22 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
           documents: processedDocs,
           status: 'Paid',
           paymentStatus: 'Paid via Razorpay',
+          isPaid: true,
           submittedAt: nowIso,
           updatedAt: nowIso,
           statusUpdatedAt: nowIso
         };
 
         try {
-          setDoc(doc(db, 'applications', updatedReceipt.appId), updatedPayload, { merge: true }).catch(console.error);
-          setDoc(doc(db, 'appointments', updatedReceipt.appId), updatedPayload, { merge: true }).catch(console.error);
+          setDoc(doc(db, 'applications', officialAppId), updatedPayload, { merge: true }).catch(console.error);
+          setDoc(doc(db, 'appointments', officialAppId), updatedPayload, { merge: true }).catch(console.error);
 
           const supabase = getSupabaseClient();
           if (supabase) {
             supabase.from('applications').upsert([
               {
-                appId: updatedReceipt.appId,
-                id: updatedReceipt.appId,
+                appId: officialAppId,
+                id: officialAppId,
                 applicantName: updatedReceipt.customerName,
                 phoneNumber: updatedReceipt.phoneNumber,
                 emailAddress: updatedReceipt.emailAddress,
@@ -838,10 +728,11 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
           console.error('Database save error after Razorpay payment:', dbErr);
         }
 
-        // Save updated local application to localStorage
+        // Save paid application to localStorage for recent tokens tracking
         try {
           const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-          localStorage.setItem('csc_local_applications', JSON.stringify([updatedPayload, ...existing.filter((i: any) => i.appId !== updatedReceipt.appId)]));
+          const cleanedExisting = existing.filter((i: any) => i.appId !== officialAppId && i.paymentMode !== 'pending');
+          localStorage.setItem('csc_local_applications', JSON.stringify([updatedPayload, ...cleanedExisting]));
         } catch (e) {
           console.warn('localStorage update warning:', e);
         }
@@ -855,13 +746,13 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
         }
 
         // Secondary POST to server API
-        fetch(`/api/appointments/${updatedReceipt.appId}/status`, {
-          method: 'PATCH',
+        fetch('/api/appointments', {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'Paid via Razorpay' })
+          body: JSON.stringify(updatedPayload)
         }).catch(console.error);
 
-        // Trigger updated WhatsApp invoice notification with payment confirmation
+        // Trigger official WhatsApp invoice notification dispatch with generated token
         triggerWhatsAppInvoiceDispatch(updatedReceipt);
       },
       onError: (errMsg) => {
@@ -878,13 +769,16 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     if (!submissionReceipt) return;
 
     const utr = formData.utrNumber.trim() || `RZP_${Date.now()}`;
+    const officialAppId = getNextCscTokenId();
 
     const updatedReceipt = {
       ...submissionReceipt,
+      appId: officialAppId,
       paymentMode: 'razorpay',
       utrNumber: utr,
       paymentId: utr,
-      paymentStatus: 'Paid via Razorpay Page'
+      paymentStatus: 'Paid via Razorpay Page',
+      isPaid: true
     };
 
     setSubmissionReceipt(updatedReceipt);
@@ -894,7 +788,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
     let processedDocs: UploadedDocument[] = uploadedFiles;
     try {
-      processedDocs = await uploadMultipleDocumentsToSupabase(uploadedFiles, updatedReceipt.appId);
+      processedDocs = await uploadMultipleDocumentsToSupabase(uploadedFiles, officialAppId);
       setUploadedFiles(processedDocs);
     } catch (upErr) {
       console.warn('Supabase payment document upload notice:', upErr);
@@ -902,7 +796,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
     const nowIso = new Date().toISOString();
     const updatedPayload = {
-      appId: updatedReceipt.appId,
+      appId: officialAppId,
       name: updatedReceipt.customerName,
       email: updatedReceipt.emailAddress,
       phone: updatedReceipt.phoneNumber,
@@ -917,21 +811,22 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       documents: processedDocs,
       status: 'Paid',
       paymentStatus: 'Paid via Razorpay Page',
+      isPaid: true,
       submittedAt: nowIso,
       updatedAt: nowIso,
       statusUpdatedAt: nowIso
     };
 
     try {
-      setDoc(doc(db, 'applications', updatedReceipt.appId), updatedPayload, { merge: true }).catch(console.error);
-      setDoc(doc(db, 'appointments', updatedReceipt.appId), updatedPayload, { merge: true }).catch(console.error);
+      setDoc(doc(db, 'applications', officialAppId), updatedPayload, { merge: true }).catch(console.error);
+      setDoc(doc(db, 'appointments', officialAppId), updatedPayload, { merge: true }).catch(console.error);
 
       const supabase = getSupabaseClient();
       if (supabase) {
         supabase.from('applications').upsert([
           {
-            appId: updatedReceipt.appId,
-            id: updatedReceipt.appId,
+            appId: officialAppId,
+            id: officialAppId,
             applicantName: updatedReceipt.customerName,
             phoneNumber: updatedReceipt.phoneNumber,
             emailAddress: updatedReceipt.emailAddress,
@@ -953,7 +848,8 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
     try {
       const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-      localStorage.setItem('csc_local_applications', JSON.stringify([updatedPayload, ...existing.filter((i: any) => i.appId !== updatedReceipt.appId)]));
+      const cleanedExisting = existing.filter((i: any) => i.appId !== officialAppId && i.paymentMode !== 'pending');
+      localStorage.setItem('csc_local_applications', JSON.stringify([updatedPayload, ...cleanedExisting]));
     } catch (e) {
       console.warn('localStorage update warning:', e);
     }
@@ -965,10 +861,10 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       console.error(e);
     }
 
-    fetch(`/api/appointments/${updatedReceipt.appId}/status`, {
-      method: 'PATCH',
+    fetch('/api/appointments', {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'Paid via Razorpay Page' })
+      body: JSON.stringify(updatedPayload)
     }).catch(console.error);
 
     triggerWhatsAppInvoiceDispatch(updatedReceipt);
@@ -2359,8 +2255,10 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 bg-amber-400 text-slate-950 rounded-lg text-xs font-mono font-black shadow-xs">
-                      {submissionReceipt?.appId}
+                    <span className={`px-3 py-1 rounded-lg text-xs font-mono font-black shadow-xs uppercase ${
+                      isPaymentConfirmed ? 'bg-amber-400 text-slate-950' : 'bg-amber-400 text-slate-950 font-sans'
+                    }`}>
+                      {isPaymentConfirmed ? submissionReceipt?.appId : 'PAYMENT PENDING'}
                     </span>
                   </div>
                 </div>
@@ -2368,28 +2266,42 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                 <div className="p-4 sm:p-6 space-y-5 text-xs sm:text-sm">
                   
                   {/* Token Box Notice */}
-                  <div className="p-3.5 bg-indigo-50/80 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 rounded-xl flex items-center justify-between gap-2">
-                    <div>
-                      <p className="text-xs font-bold text-indigo-950 dark:text-indigo-200 font-sans">
-                        Application Ref Token ID Generated & Saved in CSC Records
-                      </p>
-                      <p className="text-[11px] text-indigo-700 dark:text-indigo-300 font-mono font-medium">
-                        Token ID: <strong className="text-indigo-950 dark:text-amber-300 font-black">{submissionReceipt?.appId}</strong>
-                      </p>
+                  {isPaymentConfirmed ? (
+                    <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 rounded-xl flex items-center justify-between gap-2">
+                      <div>
+                        <p className="text-xs font-bold text-emerald-950 dark:text-emerald-200 font-sans">
+                          Your Official Application Token Ref ID is Generated & Saved in CSC Records
+                        </p>
+                        <p className="text-[11px] text-emerald-700 dark:text-emerald-300 font-mono font-medium">
+                          Token ID: <strong className="text-emerald-950 dark:text-amber-300 font-black">{submissionReceipt?.appId}</strong>
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (submissionReceipt?.appId) {
+                            navigator.clipboard.writeText(submissionReceipt.appId);
+                            alert(`Token ID ${submissionReceipt.appId} copied to clipboard!`);
+                          }
+                        }}
+                        className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-[10px] font-bold uppercase tracking-wider font-mono cursor-pointer shrink-0"
+                      >
+                        Copy Token
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (submissionReceipt?.appId) {
-                          navigator.clipboard.writeText(submissionReceipt.appId);
-                          alert(`Token ID ${submissionReceipt.appId} copied to clipboard!`);
-                        }
-                      }}
-                      className="px-2.5 py-1 bg-indigo-700 hover:bg-indigo-800 text-white rounded text-[10px] font-bold uppercase tracking-wider font-mono cursor-pointer shrink-0"
-                    >
-                      Copy Token
-                    </button>
-                  </div>
+                  ) : (
+                    <div className="p-3.5 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center justify-between gap-2">
+                      <div>
+                        <p className="text-xs font-bold text-amber-950 dark:text-amber-200 font-sans flex items-center gap-1.5">
+                          <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                          <span>Application Form Details Saved — Complete Payment to Issue Official Reference Token ID</span>
+                        </p>
+                        <p className="text-[11px] text-amber-800 dark:text-amber-300 font-mono font-medium mt-0.5">
+                          Your official CSC Reference Token ID and downloadable receipt will be issued immediately upon payment.
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Summary & Payable Fee Card */}
                   <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-3 font-sans">

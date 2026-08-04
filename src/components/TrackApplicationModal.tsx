@@ -65,7 +65,7 @@ export default function TrackApplicationModal({
   const [notFound, setNotFound] = useState(false);
   const [recentTokens, setRecentTokens] = useState<string[]>([]);
 
-  // Load user's recent tokens from localStorage
+  // Load user's recent tokens from localStorage (ONLY paid applications with valid Token IDs)
   useEffect(() => {
     if (!isOpen) return;
     try {
@@ -73,15 +73,31 @@ export default function TrackApplicationModal({
       const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
       if (Array.isArray(localApps)) {
         localApps.forEach((a: any) => {
+          const isPaid = a.isPaid === true ||
+                         a.paymentMode === 'razorpay' || 
+                         a.paymentMode === 'online' || 
+                         a.paymentMode === 'Razorpay Online' ||
+                         a.paymentMode === 'Razorpay Online (razorpay.me)' ||
+                         (a.paymentStatus && a.paymentStatus.toLowerCase().includes('paid')) ||
+                         (a.status && a.status.toLowerCase().includes('paid'));
           const t = a.appId || a.id;
-          if (t) tokensSet.add(String(t));
+          if (t && isPaid && !String(t).includes('PENDING') && String(t) !== 'CSC-2026-1') {
+            tokensSet.add(String(t));
+          }
         });
       }
       const web3Apps = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
       if (Array.isArray(web3Apps)) {
         web3Apps.forEach((a: any) => {
+          const isPaid = a.isPaid === true ||
+                         a.paymentMode === 'razorpay' || 
+                         a.paymentMode === 'online' || 
+                         a.paymentMode === 'Razorpay Online' ||
+                         (a.paymentStatus && a.paymentStatus.toLowerCase().includes('paid'));
           const t = a.appId || a.id;
-          if (t) tokensSet.add(String(t));
+          if (t && isPaid && !String(t).includes('PENDING')) {
+            tokensSet.add(String(t));
+          }
         });
       }
       setRecentTokens(Array.from(tokensSet).slice(0, 5));
