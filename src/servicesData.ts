@@ -1,7 +1,7 @@
 export interface ServiceItem {
   id: string;
   name: string;
-  category: 'csc' | 'revenue' | 'jk_state' | 'digital' | 'education' | 'business';
+  category: 'csc' | 'revenue' | 'jk_state' | 'cards_adda' | 'digital' | 'education' | 'business';
   description: string;
   requirements: string[];
   estimatedTime: string;
@@ -13,6 +13,7 @@ export const CATEGORY_LABELS = {
   csc: 'CSC Government Services',
   revenue: 'JK Revenue Services',
   jk_state: 'J&K State e-Services',
+  cards_adda: 'Instant & Smart Card Services',
   digital: 'Digital & Cyber Services',
   education: 'Education & Admissions',
   business: 'Business & Registrations'
@@ -609,6 +610,140 @@ export const SERVICES_LIST: ServiceItem[] = [
     requirements: ['Aadhaar Card', 'Land Fard / Jamabandi Copy', 'Bank Account Passbook', 'Khasra Details'],
     estimatedTime: '15 Days',
     price: '₹50 (CSC Charge)'
+  },
+
+  // CardsAdda Distribution Portal Services
+  {
+    id: 'ca-ayushman-pvc',
+    name: 'Ayushman Health Card Apply & PVC Smart Card',
+    category: 'cards_adda',
+    description: 'Instant Ayushman Bharat Health Card download and high-quality waterproof PVC Smart Card printing with HD barcode.',
+    requirements: ['Aadhaar Card', 'Ayushman PMJAY ID or Registered Mobile Number'],
+    estimatedTime: 'Instant / Same Day',
+    price: '₹30 - ₹50 (PVC Print)',
+    popular: true
+  },
+  {
+    id: 'ca-dl-pvc',
+    name: 'Driving License (DL) - All India PVC Smart Card',
+    category: 'cards_adda',
+    description: 'Official Driving License search, PDF download, and durable chip-style PVC Smart Card printing.',
+    requirements: ['Driving License Number', 'Date of Birth', 'Aadhaar Card'],
+    estimatedTime: 'Instant / Same Day',
+    price: '₹50 (PVC Smart Card)',
+    popular: true
+  },
+  {
+    id: 'ca-epan-download',
+    name: 'E-PAN Card Instant Download & Search',
+    category: 'cards_adda',
+    description: 'Instant E-PAN card PDF download and PAN verification using PAN number or Aadhaar details.',
+    requirements: ['PAN Number', 'Aadhaar Number', 'Aadhaar-linked Mobile Number'],
+    estimatedTime: 'Instant',
+    price: '₹30 (Portal Charge)',
+    popular: true
+  },
+  {
+    id: 'ca-lost-pan-find',
+    name: 'Missing / Lost PAN Card Finder (Aadhaar Based)',
+    category: 'cards_adda',
+    description: 'Retrieve lost or unknown PAN number using Aadhaar details and applicant name lookup.',
+    requirements: ['Aadhaar Number', 'Full Name as per Aadhaar', 'Date of Birth'],
+    estimatedTime: 'Same Day',
+    price: '₹50 (Search Charge)',
+    popular: true
+  },
+  {
+    id: 'ca-vehicle-rc-pvc',
+    name: 'All India Vehicle RC Smart Card & Download',
+    category: 'cards_adda',
+    description: 'Vehicle Registration Certificate (RC) PDF search, smart card layout, and high-density PVC printing.',
+    requirements: ['Vehicle Registration Number (RC No.)', 'Chassis Number (Last 5 Digits)'],
+    estimatedTime: 'Instant / Same Day',
+    price: '₹50 (PVC Smart Card)',
+    popular: true
+  },
+  {
+    id: 'ca-aadhaar-pvc',
+    name: 'Aadhaar PVC Smart Card Official Print',
+    category: 'cards_adda',
+    description: 'Waterproof Aadhaar PVC Smart Card printing with secure QR code scan and microtext layout.',
+    requirements: ['Aadhaar Number / EID', 'Aadhaar OTP or e-Aadhaar PDF File'],
+    estimatedTime: 'Same Day',
+    price: '₹40 - ₹50 (PVC Print)'
+  },
+  {
+    id: 'ca-voter-pvc',
+    name: 'Voter ID PVC Card & Instant Search (Without OTP)',
+    category: 'cards_adda',
+    description: 'Voter ID e-EPIC search and download without OTP requirement, plus PVC Smart Card printing.',
+    requirements: ['Voter EPIC Number or Applicant Name & State', 'Photo'],
+    estimatedTime: 'Instant / Same Day',
+    price: '₹30 - ₹50 (PVC Print)',
+    popular: true
+  },
+  {
+    id: 'ca-voter-mobile-link',
+    name: 'Voter Mobile Number Link & Update',
+    category: 'cards_adda',
+    description: 'Fast online/offline mobile number linking with Voter EPIC card for instant e-EPIC download.',
+    requirements: ['Voter EPIC Number', 'Aadhaar Card', 'Mobile Number'],
+    estimatedTime: '1 - 3 Days',
+    price: '₹30 (Service Charge)'
+  },
+  {
+    id: 'ca-dsc-class3',
+    name: 'Digital Signature Certificate (DSC Class 3)',
+    category: 'cards_adda',
+    description: 'Issuance of Class 3 Digital Signature Certificate (DSC) for e-Tendering, GST, Income Tax, and ROC.',
+    requirements: ['Aadhaar Card', 'PAN Card', 'Passport Photo', 'Video KYC Verification'],
+    estimatedTime: '1 Day',
+    price: '₹500 - ₹1200 (USB Token Included)'
+  },
+  {
+    id: 'ca-nsdl-instant-pan',
+    name: 'Instant NSDL PAN Card (New & Correction)',
+    category: 'cards_adda',
+    description: 'Instant NSDL e-PAN card generation within 2 hours with Aadhaar OTP or Thumb Biometric verification.',
+    requirements: ['Aadhaar Card', 'Aadhaar Linked Mobile / Biometric', 'Passport Photo'],
+    estimatedTime: '2 Hours (e-PAN)',
+    price: '₹107 (Govt Fee) + ₹40 (Portal Fee)'
+  },
+  {
+    id: 'ca-agri-stack',
+    name: 'Agri Stack Farmer ID Smart Card Download',
+    category: 'cards_adda',
+    description: 'Agri Stack Farmer ID card search, verification, and PVC Smart Card download for agricultural benefits.',
+    requirements: ['Aadhaar Card', 'Land Khata / Survey Number', 'Mobile Number'],
+    estimatedTime: 'Instant / 1 Day',
+    price: '₹30 (PVC Print)'
+  },
+  {
+    id: 'ca-ration-rice-pvc',
+    name: 'AP Rice Card & TG Ration Card Smart Card',
+    category: 'cards_adda',
+    description: 'AP Rice Card & Telangana Ration Card PDF search, photo/QR download, and PVC Smart Card printing.',
+    requirements: ['Ration Card Number / Aadhaar Number', 'Family Head Details'],
+    estimatedTime: 'Instant',
+    price: '₹30 (PVC Print)'
+  },
+  {
+    id: 'ca-gst-registration',
+    name: 'GST Registration & Portal Assistance',
+    category: 'cards_adda',
+    description: 'New GSTIN registration application, LUT filing, and GST Portal account setup.',
+    requirements: ['PAN Card', 'Aadhaar Card', 'Business Address Proof / Electricity Bill'],
+    estimatedTime: '3 - 7 Days',
+    price: '₹300 - ₹500 (Assistance Charge)'
+  },
+  {
+    id: 'ca-tn-birth-cert',
+    name: 'TN Birth Certificate Instant Download',
+    category: 'cards_adda',
+    description: 'Instant search and official PDF download of Tamil Nadu Birth & Death certificates.',
+    requirements: ['Registration Number or Child Name & Date of Birth', 'District / Hospital'],
+    estimatedTime: 'Instant',
+    price: '₹30 (Portal Fee)'
   }
 ];
 

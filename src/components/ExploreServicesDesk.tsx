@@ -36,7 +36,7 @@ interface ExploreServicesDeskProps {
 
 export default function ExploreServicesDesk({ onApplyService, selectedService }: ExploreServicesDeskProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'revenue' | 'jk_state' | 'csc' | 'digital' | 'education' | 'business'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'cards_adda' | 'revenue' | 'jk_state' | 'csc' | 'digital' | 'education' | 'business'>('all');
   const [selectedServiceItem, setSelectedServiceItem] = useState<ServiceItem | null>(null);
 
   // Filter list based on both active tab and search query
@@ -184,6 +184,7 @@ export default function ExploreServicesDesk({ onApplyService, selectedService }:
           <div className="flex items-center gap-1.5 overflow-x-auto py-3 no-scrollbar border-b border-slate-200/60 dark:border-slate-800/60">
             {[
               { id: 'all', label: 'All Services', count: SERVICES_LIST.length },
+              { id: 'cards_adda', label: 'Instant & Smart Cards', highlight: true, count: SERVICES_LIST.filter(s => s.category === 'cards_adda').length },
               { id: 'jk_state', label: 'J&K State e-Services', highlight: true, count: SERVICES_LIST.filter(s => s.category === 'jk_state').length },
               { id: 'revenue', label: 'JK Revenue Services', highlight: true, count: SERVICES_LIST.filter(s => s.category === 'revenue').length },
               { id: 'csc', label: 'CSC Govt Services', count: SERVICES_LIST.filter(s => s.category === 'csc').length },
@@ -224,6 +225,30 @@ export default function ExploreServicesDesk({ onApplyService, selectedService }:
         {/* COMPACT E-SERVICES BOXES GRID (BLUE THEME) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 max-w-7xl mx-auto w-full">
           {[
+            {
+              id: 'cards_adda_box',
+              categoryKey: 'cards_adda',
+              title: 'Instant & Smart Card Services',
+              subtitle: 'Instant e-PAN, DL, Vehicle RC, Ayushman, Voter & PVC Smart Card Services',
+              icon: CreditCard,
+              badge: 'INSTANT & SMART CARDS',
+              itemIds: [
+                'ca-ayushman-pvc',
+                'ca-dl-pvc',
+                'ca-epan-download',
+                'ca-lost-pan-find',
+                'ca-vehicle-rc-pvc',
+                'ca-aadhaar-pvc',
+                'ca-voter-pvc',
+                'ca-voter-mobile-link',
+                'ca-dsc-class3',
+                'ca-nsdl-instant-pan',
+                'ca-agri-stack',
+                'ca-ration-rice-pvc',
+                'ca-gst-registration',
+                'ca-tn-birth-cert'
+              ]
+            },
             {
               id: 'jk_state_box',
               categoryKey: 'jk_state',
@@ -342,14 +367,16 @@ export default function ExploreServicesDesk({ onApplyService, selectedService }:
               return isBoxMatch && isSearchMatch;
             });
 
-            const isFullWidthBox = (box.id === 'jk_revenue' || box.id === 'jk_state_box') && (selectedCategory === box.categoryKey || boxItems.length > 10);
-            const isSpecialHighlight = box.id === 'jk_revenue' || box.id === 'jk_state_box';
+            const isFullWidthBox = (box.id === 'cards_adda_box' || box.id === 'jk_revenue' || box.id === 'jk_state_box') && (selectedCategory === box.categoryKey || boxItems.length > 10);
+            const isSpecialHighlight = box.id === 'cards_adda_box' || box.id === 'jk_revenue' || box.id === 'jk_state_box';
 
             return (
               <div
                 key={box.id}
                 className={`bg-white dark:bg-slate-900 border-2 ${
-                  box.id === 'jk_state_box'
+                  box.id === 'cards_adda_box'
+                    ? 'border-purple-600 dark:border-purple-500 shadow-md'
+                    : box.id === 'jk_state_box'
                     ? 'border-emerald-600 dark:border-emerald-500 shadow-md'
                     : box.id === 'jk_revenue'
                     ? 'border-amber-500 dark:border-amber-600 shadow-md'
@@ -361,7 +388,9 @@ export default function ExploreServicesDesk({ onApplyService, selectedService }:
               >
                 {/* Box Header Bar */}
                 <div className={`${
-                  box.id === 'jk_state_box'
+                  box.id === 'cards_adda_box'
+                    ? 'bg-gradient-to-r from-purple-700 via-indigo-800 to-purple-900'
+                    : box.id === 'jk_state_box'
                     ? 'bg-gradient-to-r from-emerald-700 via-teal-800 to-emerald-900'
                     : box.id === 'jk_revenue'
                     ? 'bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800'
