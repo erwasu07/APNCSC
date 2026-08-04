@@ -2354,7 +2354,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                         OFFICIAL CSC PAYMENT GATEWAY DESK
                       </span>
                       <h3 className="text-base sm:text-lg font-black uppercase tracking-wide">
-                        {!isPaymentConfirmed ? 'Select Payment Mode to Complete Filing' : 'Application & Payment Confirmed!'}
+                        {!isPaymentConfirmed ? 'Complete Payment via Razorpay Gateway' : 'Application & Payment Confirmed!'}
                       </h3>
                     </div>
                   </div>
@@ -2412,230 +2412,78 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                   </div>
 
                   {!isPaymentConfirmed ? (
-                    /* INTERACTIVE PAYMENT SELECTION DESK */
+                    /* EXCLUSIVE RAZORPAY PAYMENT GATEWAY DESK */
                     <div className="space-y-4 pt-1">
                       <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
                         <Sparkles className="w-4 h-4 text-amber-500" />
                         <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white font-sans">
-                          Choose Payment Option to Pay ₹{submissionReceipt?.totalAmount}
+                          Pay ₹{submissionReceipt?.totalAmount} via Official Razorpay Payment Gateway
                         </h4>
                       </div>
 
-                      {/* Payment Method Selector Tabs */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setPostSubmitPaymentMode('razorpay')}
-                          className={`p-3 rounded-xl border text-left transition-all cursor-pointer font-sans ${
-                            postSubmitPaymentMode === 'razorpay'
-                              ? 'bg-indigo-600 text-white border-indigo-700 shadow-md ring-2 ring-indigo-400'
-                              : 'bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <CreditCard className="w-4 h-4 text-amber-400" />
-                            <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-amber-400 text-slate-950 font-mono">INSTANT</span>
-                          </div>
-                          <p className="text-xs font-black uppercase">Razorpay Gateway</p>
-                          <p className="text-[10px] opacity-80">UPI / GPay / PhonePe / Cards</p>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setPostSubmitPaymentMode('online')}
-                          className={`p-3 rounded-xl border text-left transition-all cursor-pointer font-sans ${
-                            postSubmitPaymentMode === 'online'
-                              ? 'bg-indigo-600 text-white border-indigo-700 shadow-md ring-2 ring-indigo-400'
-                              : 'bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <QrCode className="w-4 h-4 text-amber-400" />
-                            <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-emerald-500 text-white font-mono">QR SCAN</span>
-                          </div>
-                          <p className="text-xs font-black uppercase">UPI QR Code</p>
-                          <p className="text-[10px] opacity-80">Scan &amp; Enter UTR ID</p>
-                        </button>
-
-                        <a
-                          href="https://razorpay.me/@cscdost"
-                          target="_blank"
-                          rel="noreferrer"
-                          onClick={() => setPostSubmitPaymentMode('razorpay')}
-                          className="p-3 rounded-xl border text-left transition-all cursor-pointer font-sans bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <ExternalLink className="w-4 h-4 text-blue-500" />
-                            <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-blue-600 text-white font-mono">DIRECT</span>
-                          </div>
-                          <p className="text-xs font-black uppercase">Razorpay.me</p>
-                          <p className="text-[10px] opacity-80">Direct Web Pay Page</p>
-                        </a>
-
-                        <button
-                          type="button"
-                          onClick={() => setPostSubmitPaymentMode('cash')}
-                          className={`p-3 rounded-xl border text-left transition-all cursor-pointer font-sans ${
-                            postSubmitPaymentMode === 'cash'
-                              ? 'bg-indigo-600 text-white border-indigo-700 shadow-md ring-2 ring-indigo-400'
-                              : 'bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <Building2 className="w-4 h-4 text-amber-400" />
-                            <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-slate-700 text-white font-mono">COUNTER</span>
-                          </div>
-                          <p className="text-xs font-black uppercase">Pay Cash</p>
-                          <p className="text-[10px] opacity-80">In-Person at CSC Desk</p>
-                        </button>
-                      </div>
-
-                      {/* TAB 1: RAZORPAY ONLINE GATEWAY PAYMENT */}
-                      {postSubmitPaymentMode === 'razorpay' && (
-                        <div className="bg-indigo-50/90 dark:bg-indigo-950/70 border-2 border-indigo-500/50 rounded-2xl p-4 sm:p-5 space-y-4 animate-fade-in">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Shield className="w-5 h-5 text-indigo-600 dark:text-amber-400" />
+                      {/* RAZORPAY ONLINE GATEWAY PAYMENT BOX */}
+                      <div className="bg-indigo-50/90 dark:bg-indigo-950/70 border-2 border-indigo-500/50 rounded-2xl p-4 sm:p-6 space-y-4 animate-fade-in shadow-md">
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-200/80 dark:border-indigo-800/80 pb-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold">
+                              <Shield className="w-4 h-4 text-amber-300" />
+                            </div>
+                            <div>
                               <h5 className="text-xs font-black uppercase tracking-wider text-indigo-950 dark:text-white font-sans">
-                                Razorpay Secure Payment Checkout
+                                Razorpay Secure Payment Gateway
                               </h5>
-                            </div>
-                            <span className="text-[10px] font-mono font-black text-indigo-700 dark:text-indigo-300">
-                              256-Bit SSL Encrypted
-                            </span>
-                          </div>
-
-                          <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-                            Click below to launch official Razorpay Checkout popup. Pay seamlessly using <strong>Google Pay, PhonePe, Paytm, BHIM UPI, Credit/Debit Cards, Net Banking, or Mobikwik</strong>.
-                          </p>
-
-                          {razorpayError && (
-                            <div className="p-3 bg-red-100 dark:bg-red-950/80 border border-red-300 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-xs font-medium space-y-1">
-                              <p className="font-bold">⚠️ Payment Notice:</p>
-                              <p>{razorpayError}</p>
-                            </div>
-                          )}
-
-                          <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
-                            <button
-                              type="button"
-                              disabled={isRazorpayLoading}
-                              onClick={handlePayWithRazorpay}
-                              className="w-full sm:flex-1 py-3.5 px-6 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
-                            >
-                              {isRazorpayLoading ? (
-                                <>
-                                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                  <span>Launching Razorpay Gateway...</span>
-                                </>
-                              ) : (
-                                <>
-                                  <CreditCard className="w-4 h-4 text-amber-300" />
-                                  <span>PAY ₹{submissionReceipt?.totalAmount} NOW VIA RAZORPAY GATEWAY</span>
-                                </>
-                              )}
-                            </button>
-
-                            <a
-                              href="https://razorpay.me/@cscdost"
-                              target="_blank"
-                              rel="noreferrer"
-                              className="w-full sm:w-auto px-4 py-3.5 bg-slate-800 hover:bg-slate-900 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-slate-700 shrink-0"
-                            >
-                              <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
-                              <span>Open Razorpay.me</span>
-                            </a>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* TAB 2: UPI QR CODE SCAN & PAY */}
-                      {postSubmitPaymentMode === 'online' && (
-                        <div className="bg-emerald-50/90 dark:bg-emerald-950/50 border-2 border-emerald-500/50 rounded-2xl p-4 sm:p-5 space-y-4 animate-fade-in">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <QrCode className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                              <h5 className="text-xs font-black uppercase tracking-wider text-emerald-950 dark:text-emerald-200 font-sans">
-                                Instant Scan &amp; Pay via UPI QR Code
-                              </h5>
-                            </div>
-                            <span className="text-[10px] font-mono font-black text-emerald-800 dark:text-emerald-300">
-                              UPI ID: 7006833767@ybl
-                            </span>
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center bg-white dark:bg-slate-900 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800">
-                            {/* QR Code Graphic Container */}
-                            <div className="flex flex-col items-center justify-center p-3 bg-white rounded-xl border border-slate-200 shadow-sm">
-                              <img
-                                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`upi://pay?pa=7006833767@ybl&pn=CSC%20Digital%20Services&am=${submissionReceipt?.totalAmount || 50}&cu=INR&tn=CSC_Token_${submissionReceipt?.appId}`)}`}
-                                alt="CSC UPI Payment QR Code"
-                                className="w-36 h-36 object-contain"
-                              />
-                              <span className="text-[10px] font-mono font-bold text-slate-800 mt-1">Scan with GPay / PhonePe / Paytm</span>
-                            </div>
-
-                            <div className="sm:col-span-2 space-y-3">
-                              <p className="text-xs text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
-                                1. Open any UPI App (Google Pay, PhonePe, Paytm, BHIM) on your mobile.<br />
-                                2. Scan QR Code or transfer to UPI ID: <strong className="font-mono text-emerald-700 dark:text-emerald-400">7006833767@ybl</strong> / <strong className="font-mono text-emerald-700 dark:text-emerald-400">cscdost@upi</strong><br />
-                                3. Pay exact amount <strong>₹{submissionReceipt?.totalAmount}</strong> and copy the 12-digit UTR/Ref No below.
+                              <p className="text-[10px] text-indigo-700 dark:text-indigo-300 font-mono font-semibold">
+                                Instant Auto-Confirmation &amp; Official E-Receipt
                               </p>
-
-                              <div className="space-y-1.5">
-                                <label className="block text-[11px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                                  Enter 12-Digit UPI UTR / Transaction Ref ID <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="e.g. 421589123456"
-                                  value={formData.utrNumber}
-                                  onChange={(e) => setFormData(prev => ({ ...prev, utrNumber: e.target.value.trim() }))}
-                                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
-                                />
-                              </div>
-
-                              {utrError && (
-                                <p className="text-xs font-bold text-red-600 dark:text-red-400">⚠️ {utrError}</p>
-                              )}
-
-                              <button
-                                type="button"
-                                onClick={handleConfirmPayment}
-                                className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                              >
-                                <CheckCircle className="w-4 h-4 text-amber-300" />
-                                <span>VERIFY &amp; CONFIRM UPI PAYMENT</span>
-                              </button>
                             </div>
                           </div>
+                          <span className="px-2.5 py-1 bg-amber-400 text-slate-950 text-[10px] font-mono font-black rounded-md uppercase tracking-wider shadow-xs">
+                            256-BIT SSL ENCRYPTED
+                          </span>
                         </div>
-                      )}
 
-                      {/* TAB 3: PAY CASH AT COUNTER */}
-                      {postSubmitPaymentMode === 'cash' && (
-                        <div className="bg-amber-50/90 dark:bg-amber-950/50 border-2 border-amber-500/50 rounded-2xl p-4 sm:p-5 space-y-3 animate-fade-in">
-                          <div className="flex items-center gap-2">
-                            <Building2 className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                            <h5 className="text-xs font-black uppercase tracking-wider text-amber-950 dark:text-amber-200 font-sans">
-                              Pay Cash in Person at CSC Counter
-                            </h5>
+                        <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                          Click below to launch official Razorpay Checkout popup. Supports all payment options: <strong>Google Pay, PhonePe, Paytm, BHIM UPI, Credit/Debit Cards, Net Banking, and Wallet</strong>.
+                        </p>
+
+                        {razorpayError && (
+                          <div className="p-3 bg-red-100 dark:bg-red-950/80 border border-red-300 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-xs font-medium space-y-1">
+                            <p className="font-bold">⚠️ Payment Notice:</p>
+                            <p>{razorpayError}</p>
                           </div>
+                        )}
 
-                          <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-                            You can visit our official CSC Center desk and deposit cash fee <strong>₹{submissionReceipt?.totalAmount}</strong> against Application Token ID <strong>{submissionReceipt?.appId}</strong>.
-                          </p>
-
+                        <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
                           <button
                             type="button"
-                            onClick={handleConfirmPayment}
-                            className="w-full py-3 px-4 bg-slate-900 hover:bg-black text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                            disabled={isRazorpayLoading}
+                            onClick={handlePayWithRazorpay}
+                            className="w-full sm:flex-1 py-4 px-6 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60"
                           >
-                            <Building2 className="w-4 h-4 text-amber-400" />
-                            <span>CONFIRM APPLICATION &amp; PAY CASH AT DESK</span>
+                            {isRazorpayLoading ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                <span>Launching Razorpay Gateway...</span>
+                              </>
+                            ) : (
+                              <>
+                                <CreditCard className="w-5 h-5 text-amber-300" />
+                                <span>PAY ₹{submissionReceipt?.totalAmount} NOW VIA RAZORPAY GATEWAY</span>
+                              </>
+                            )}
                           </button>
+
+                          <a
+                            href="https://razorpay.me/@cscdost"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-full sm:w-auto px-4 py-4 bg-slate-800 hover:bg-slate-900 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-slate-700 shrink-0"
+                          >
+                            <ExternalLink className="w-4 h-4 text-amber-400" />
+                            <span>Razorpay.me Page</span>
+                          </a>
                         </div>
-                      )}
+                      </div>
                     </div>
                   ) : (
                     /* CONFIRMED VERIFIED APPLICATION RECEIPT VIEW */
