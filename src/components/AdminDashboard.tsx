@@ -348,7 +348,25 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     };
 
     window.addEventListener('csc_appointment_created', handleLocalSync);
+    window.addEventListener('csc_appointment_updated', handleLocalSync);
     window.addEventListener('storage', handleLocalSync);
+
+    // Initial server API fetch as fallback
+    fetch('/api/appointments')
+      .then(res => res.json())
+      .then(resData => {
+        const list = resData?.data || resData || [];
+        if (Array.isArray(list)) {
+          list.forEach((item: any) => {
+            const key = item.appId || item.id || item.token;
+            if (key && !appsMap.has(key)) {
+              appsMap.set(key, item);
+            }
+          });
+          updateCombinedApplications();
+        }
+      })
+      .catch(() => {});
 
     let bc: BroadcastChannel | null = null;
     try {
@@ -409,6 +427,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         supabaseClient.removeChannel(supabaseChannel);
       }
       window.removeEventListener('csc_appointment_created', handleLocalSync);
+      window.removeEventListener('csc_appointment_updated', handleLocalSync);
       window.removeEventListener('storage', handleLocalSync);
       if (bc) bc.close();
     };

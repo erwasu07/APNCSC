@@ -249,6 +249,23 @@ app.get('/api/appointments', (req, res) => {
   res.json({ success: true, data: db.appointments || [] });
 });
 
+// Public API: Get single application by token / ID
+app.get('/api/appointments/:id', (req, res) => {
+  const { id } = req.params;
+  const db = getDb();
+  const targetId = (id || '').toString().toLowerCase();
+  const found = (db.appointments || []).find((a: any) => {
+    const appIdStr = (a.appId || a.id || '').toString().toLowerCase();
+    const utrStr = (a.utrNumber || '').toString().toLowerCase();
+    return appIdStr === targetId || utrStr === targetId;
+  });
+
+  if (found) {
+    return res.json(found);
+  }
+  return res.status(404).json({ error: 'Application record not found' });
+});
+
 // Update appointment status
 app.patch('/api/appointments/:id/status', (req, res) => {
   const { id } = req.params;
@@ -266,6 +283,7 @@ app.patch('/api/appointments/:id/status', (req, res) => {
 app.post('/api/appointments', (req, res) => {
   const { 
     appId, 
+    id,
     name, 
     email, 
     phone, 
@@ -278,7 +296,8 @@ app.post('/api/appointments', (req, res) => {
     paymentMode,
     utrNumber,
     totalAmount,
-    documents 
+    documents,
+    status 
   } = req.body;
 
   if (!name || !phone || !service) {
@@ -288,8 +307,11 @@ app.post('/api/appointments', (req, res) => {
   const currentDate = new Date().toISOString().split('T')[0];
   const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
+  const finalAppId = appId || id || `CSC21251567${Math.floor(100 + Math.random() * 900)}`;
+
   const appointment = addAppointment({
-    appId: appId || `APEX-2026-${Math.floor(100000 + Math.random() * 900000)}`,
+    appId: finalAppId,
+    id: finalAppId,
     name,
     email: email || '',
     phone,
@@ -302,7 +324,8 @@ app.post('/api/appointments', (req, res) => {
     paymentMode: paymentMode || 'cash',
     utrNumber: utrNumber || 'N/A',
     totalAmount: totalAmount || 0,
-    documents: Array.isArray(documents) ? documents : []
+    documents: Array.isArray(documents) ? documents : [],
+    status: status || 'Pending'
   });
   const db = getDb();
 

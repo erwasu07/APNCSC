@@ -654,9 +654,11 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
     const uploadedDocsList = uploadedFiles.map(f => `${f.name} (${(f.size / 1024).toFixed(1)} KB)`);
 
-    // Note: Official Reference Token ID is NOT assigned or stored until Razorpay payment is completed!
+    // Assign official Reference Token ID immediately upon form submission!
+    const officialAppId = getNextCscTokenId();
+
     const pendingReceipt = {
-      appId: '', // Unassigned until payment confirmation
+      appId: officialAppId,
       customerName: formData.customerName,
       phoneNumber: formData.phoneNumber,
       emailAddress: formData.emailAddress || 'N/A',
@@ -678,13 +680,88 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     setPostSubmitPaymentMode('razorpay');
     setIsPaymentConfirmed(false);
 
-    // Keep payment desk cleanly scrolled into view
+    // Save initial application record immediately across storage & databases so it appears in Admin & Track Order
+    const nowIso = new Date().toISOString();
+    const initialPayload = {
+      appId: officialAppId,
+      id: officialAppId,
+      name: formData.customerName,
+      email: formData.emailAddress || 'N/A',
+      phone: formData.phoneNumber,
+      service: pendingReceipt.selectedService,
+      dateOfBirth: formData.dateOfBirth || 'N/A',
+      userCategory: pendingReceipt.userCategory,
+      paymentMode: 'Pending Payment',
+      utrNumber: 'N/A',
+      totalAmount: pendingReceipt.totalAmount,
+      message: formData.additionalDetails || 'None',
+      documents: uploadedFiles,
+      status: 'Pending',
+      submittedAt: nowIso,
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      statusUpdatedAt: nowIso
+    };
+
+    try {
+      setDoc(doc(db, 'applications', officialAppId), initialPayload, { merge: true }).catch(console.error);
+      setDoc(doc(db, 'appointments', officialAppId), initialPayload, { merge: true }).catch(console.error);
+
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        supabase.from('applications').upsert([{
+          appId: officialAppId,
+          id: officialAppId,
+          applicantName: formData.customerName,
+          phoneNumber: formData.phoneNumber,
+          emailAddress: formData.emailAddress || 'N/A',
+          selectedService: pendingReceipt.selectedService,
+          userCategory: pendingReceipt.userCategory,
+          paymentMode: 'Pending Payment',
+          utrNumber: 'N/A',
+          totalAmount: pendingReceipt.totalAmount,
+          status: 'Pending',
+          submittedAt: nowIso,
+          documents: uploadedFiles,
+          payload: initialPayload
+        }], { onConflict: 'appId' }).then(null, console.error);
+      }
+    } catch (dbErr) {
+      console.error('Database initial save notice:', dbErr);
+    }
+
+    try {
+      const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+      localStorage.setItem('csc_local_applications', JSON.stringify([initialPayload, ...existing.filter((i: any) => i.appId !== officialAppId)]));
+    } catch (e) {
+      console.warn('localStorage save warning:', e);
+    }
+
+    fetch('/api/appointments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(initialPayload)
+    }).catch(console.error);
+
+    try {
+      window.dispatchEvent(new CustomEvent('csc_appointment_created', { detail: initialPayload }));
+      window.dispatchEvent(new CustomEvent('csc_appointment_updated', { detail: initialPayload }));
+      window.dispatchEvent(new Event('storage'));
+      const bc = new BroadcastChannel('csc_portal_sync');
+      bc.postMessage({ type: 'NEW_APPOINTMENT', payload: initialPayload });
+      bc.close();
+    } catch (e) {
+      console.error(e);
+    }
+
+    // Keep payment desk cleanly scrolled into view and trigger automatic slip print
     setTimeout(() => {
-      const element = document.getElementById('printable-receipt-area');
+      const element = document.getElementById('printable-receipt-area') || document.getElementById('printable-digital-slip');
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-    }, 100);
+      handlePrintSlip();
+    }, 400);
   };
 
   const handlePayWithRazorpay = () => {
@@ -703,8 +780,8 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       onSuccess: async (paymentId, orderId, signature) => {
         setIsRazorpayLoading(false);
 
-        // Generate official CSC Token ID ONLY upon successful payment!
-        const officialAppId = getNextCscTokenId();
+        // Retain official CSC Token ID or generate fallback
+        const officialAppId = submissionReceipt.appId || getNextCscTokenId();
 
         const updatedReceipt = {
           ...submissionReceipt,
@@ -731,10 +808,11 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
           console.warn('Supabase payment document upload notice:', upErr);
         }
 
-        // Save application in Cloud Firestore & central server database ONLY NOW that payment is confirmed
+        // Save application in Cloud Firestore & central server database
         const nowIso = new Date().toISOString();
         const updatedPayload = {
           appId: officialAppId,
+          id: officialAppId,
           name: updatedReceipt.customerName,
           email: updatedReceipt.emailAddress,
           phone: updatedReceipt.phoneNumber,
@@ -788,7 +866,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
         // Save paid application to localStorage for recent tokens tracking
         try {
           const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-          const cleanedExisting = existing.filter((i: any) => i.appId !== officialAppId && i.paymentMode !== 'pending');
+          const cleanedExisting = existing.filter((i: any) => i.appId !== officialAppId);
           localStorage.setItem('csc_local_applications', JSON.stringify([updatedPayload, ...cleanedExisting]));
         } catch (e) {
           console.warn('localStorage update warning:', e);
@@ -797,6 +875,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
         // Broadcast live synchronization events
         try {
           window.dispatchEvent(new CustomEvent('csc_appointment_updated', { detail: updatedPayload }));
+          window.dispatchEvent(new CustomEvent('csc_appointment_created', { detail: updatedPayload }));
           window.dispatchEvent(new Event('storage'));
         } catch (e) {
           console.error(e);
@@ -811,6 +890,10 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
         // Trigger official WhatsApp invoice notification dispatch with generated token
         triggerWhatsAppInvoiceDispatch(updatedReceipt);
+
+        setTimeout(() => {
+          handlePrintSlip();
+        }, 500);
       },
       onError: (errMsg) => {
         setIsRazorpayLoading(false);
@@ -826,7 +909,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     if (!submissionReceipt) return;
 
     const utr = formData.utrNumber.trim() || `RZP_${Date.now()}`;
-    const officialAppId = getNextCscTokenId();
+    const officialAppId = submissionReceipt.appId || getNextCscTokenId();
 
     const updatedReceipt = {
       ...submissionReceipt,
@@ -854,6 +937,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     const nowIso = new Date().toISOString();
     const updatedPayload = {
       appId: officialAppId,
+      id: officialAppId,
       name: updatedReceipt.customerName,
       email: updatedReceipt.emailAddress,
       phone: updatedReceipt.phoneNumber,
@@ -905,7 +989,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
     try {
       const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-      const cleanedExisting = existing.filter((i: any) => i.appId !== officialAppId && i.paymentMode !== 'pending');
+      const cleanedExisting = existing.filter((i: any) => i.appId !== officialAppId);
       localStorage.setItem('csc_local_applications', JSON.stringify([updatedPayload, ...cleanedExisting]));
     } catch (e) {
       console.warn('localStorage update warning:', e);
@@ -913,6 +997,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
     try {
       window.dispatchEvent(new CustomEvent('csc_appointment_updated', { detail: updatedPayload }));
+      window.dispatchEvent(new CustomEvent('csc_appointment_created', { detail: updatedPayload }));
       window.dispatchEvent(new Event('storage'));
     } catch (e) {
       console.error(e);
@@ -925,6 +1010,10 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     }).catch(console.error);
 
     triggerWhatsAppInvoiceDispatch(updatedReceipt);
+
+    setTimeout(() => {
+      handlePrintSlip();
+    }, 500);
   };
 
   const handleConfirmPayment = async () => {
@@ -969,6 +1058,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     const nowIso = new Date().toISOString();
     const payload = {
       appId: updatedReceipt.appId,
+      id: updatedReceipt.appId,
       name: updatedReceipt.customerName,
       email: updatedReceipt.emailAddress,
       phone: updatedReceipt.phoneNumber,
@@ -1029,7 +1119,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       console.error('Database payment update execution error:', fsErr);
     }
 
-    // 1. Update local storage with lightweight payload (no heavy base64 to avoid quota error)
+    // 1. Update local storage
     try {
       const lightDocs = uploadedFiles.map(f => ({
         id: f.id,
@@ -1065,6 +1155,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       };
 
       window.dispatchEvent(new CustomEvent('csc_appointment_created', { detail: savedItem }));
+      window.dispatchEvent(new CustomEvent('csc_appointment_updated', { detail: savedItem }));
       window.dispatchEvent(new Event('storage'));
       const bc = new BroadcastChannel('csc_portal_sync');
       bc.postMessage({ type: 'NEW_APPOINTMENT', payload: savedItem });
@@ -1102,15 +1193,16 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     setIsPaymentConfirmed(true);
 
     setTimeout(() => {
-      const slipContainer = document.getElementById('printable-digital-slip');
+      const slipContainer = document.getElementById('printable-digital-slip') || document.getElementById('printable-receipt-area');
       if (slipContainer) {
         slipContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-    }, 100);
+      handlePrintSlip();
+    }, 400);
   };
 
   const handlePrintSlip = () => {
-    const slipElement = document.getElementById('printable-digital-slip');
+    const slipElement = document.getElementById('printable-digital-slip') || document.getElementById('printable-receipt-area');
     if (!slipElement) {
       window.print();
       return;
@@ -1121,48 +1213,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     const noPrintElements = clone.querySelectorAll('.no-print');
     noPrintElements.forEach(el => el.remove());
 
-    // Try popup window print first
-    try {
-      const printWindow = window.open('', '_blank', 'width=850,height=950,top=50,left=50');
-      if (printWindow) {
-        printWindow.document.open();
-        printWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <title>Official CSC e-Receipt #${submissionReceipt?.appId || 'CSC21251567001'}</title>
-              <script src="https://cdn.tailwindcss.com"></script>
-              <style>
-                @media print {
-                  @page { size: portrait; margin: 8mm; }
-                  body { background: #ffffff !important; color: #0f172a !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-                  .no-print { display: none !important; }
-                }
-              </style>
-            </head>
-            <body class="bg-slate-50 p-4 sm:p-8 flex items-center justify-center min-h-screen">
-              <div class="w-full max-w-2xl bg-white rounded-2xl shadow-lg border border-slate-200">
-                ${clone.outerHTML}
-              </div>
-              <script>
-                window.onload = function() {
-                  setTimeout(function() {
-                    window.focus();
-                    window.print();
-                  }, 400);
-                };
-              </script>
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-        return;
-      }
-    } catch (e) {
-      console.warn('Popup print window blocked, using fallback iframe print:', e);
-    }
-
-    // Hidden iframe fallback print method (works inside sandboxed iFrames)
+    // Clean up iframe if already present
     try {
       const existingIframe = document.getElementById('csc-print-iframe');
       if (existingIframe) {
@@ -1186,18 +1237,18 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
           <!DOCTYPE html>
           <html>
             <head>
-              <title>CSC e-Receipt #${submissionReceipt?.appId || 'CSC21251567001'}</title>
+              <title>Official CSC e-Receipt #${submissionReceipt?.appId || 'CSC21251567001'}</title>
               <script src="https://cdn.tailwindcss.com"></script>
               <style>
                 @media print {
                   @page { size: portrait; margin: 8mm; }
-                  body { background: #ffffff !important; color: #000000 !important; font-family: sans-serif; }
+                  body { background: #ffffff !important; color: #0f172a !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                   .no-print { display: none !important; }
                 }
               </style>
             </head>
             <body class="p-4 bg-white text-slate-900">
-              <div class="max-w-2xl mx-auto">
+              <div class="max-w-2xl mx-auto border border-slate-300 p-6 rounded-2xl shadow-sm">
                 ${clone.outerHTML}
               </div>
             </body>
@@ -1215,9 +1266,9 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
               if (document.body.contains(printIframe)) {
                 document.body.removeChild(printIframe);
               }
-            }, 2000);
+            }, 3000);
           }
-        }, 400);
+        }, 500);
         return;
       }
     } catch (err) {
@@ -2095,10 +2146,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                           value={formData.selectedService}
                           onChange={(e) => {
                             const sVal = e.target.value;
-                            setFormData(prev => ({
-                              ...prev,
-                              selectedService: sVal
-                            }));
+                            handleServiceChange(sVal);
                             setUploadedFiles([]);
                             setDocumentError(null);
                           }}
@@ -2106,15 +2154,25 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                         >
                           <option value="">-- Choose a Service / Exam --</option>
                           
-                          <optgroup label="🔥 SARKARI EXAMS & RECRUITMENT">
-                            {SARKARI_DATA.slice(0, 15).map(s => (
+                          {/* Fallback option if selected service is active but not in standard list */}
+                          {formData.selectedService && 
+                           !SARKARI_DATA.some(s => s.title === formData.selectedService) && 
+                           !SERVICES_LIST.some(serv => serv.name === formData.selectedService) && 
+                           formData.selectedService !== 'Custom Unlisted Request' && (
+                             <option value={formData.selectedService}>
+                               📌 Selected: {formData.selectedService}
+                             </option>
+                          )}
+
+                          <optgroup label="🔥 SARKARI EXAMS & RECRUITMENT NOTIFICATIONS">
+                            {SARKARI_DATA.map(s => (
                               <option key={s.id} value={s.title}>
-                                {s.title} ({s.lastDate ? `Last: ${s.lastDate}` : 'Active'})
+                                {s.title} {s.lastDate ? `(Last Date: ${s.lastDate})` : ''}
                               </option>
                             ))}
                           </optgroup>
 
-                          <optgroup label="⚡ POPULAR CSC E-SERVICES">
+                          <optgroup label="⚡ COMPREHENSIVE CSC E-SERVICES & DIGITAL CATALOGUE">
                             {SERVICES_LIST.map(serv => (
                               <option key={serv.id} value={serv.name}>
                                 {serv.name} ({serv.price})

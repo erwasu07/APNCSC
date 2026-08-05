@@ -270,14 +270,18 @@ export default function TrackApplicationModal({
   }, [activeToken, isOpen]);
 
   const checkLocalAndServerFallback = (cleanToken: string, buildTrackingObject: (raw: any) => TrackingData) => {
+    const normClean = cleanToken.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+
     try {
       const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
       const web3Apps = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
       const combined = [...localApps, ...web3Apps];
       
       const found = combined.find((a: any) => {
-        const id = (a.appId || a.id || '').toString().toLowerCase();
-        return id === cleanToken.toLowerCase();
+        const id = (a.appId || a.id || '').toString();
+        const normId = id.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        const utr = (a.utrNumber || '').toString().replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        return normId === normClean || (utr && utr === normClean);
       });
 
       if (found) {
@@ -295,19 +299,44 @@ export default function TrackApplicationModal({
           return txt ? JSON.parse(txt) : null;
         })
         .then((data) => {
-          if (data && (data.appId || data.id || data.customerName)) {
+          if (data && (data.appId || data.id || data.customerName || data.name)) {
             setLiveData(buildTrackingObject(data));
             setNotFound(false);
+            setLoading(false);
           } else {
-            setLiveData(null);
-            setNotFound(true);
+            // Check full list fallback from /api/appointments
+            fetch('/api/appointments')
+              .then(res => res.json())
+              .then(resData => {
+                const list = resData?.data || resData || [];
+                if (Array.isArray(list)) {
+                  const match = list.find((item: any) => {
+                    const idStr = (item.appId || item.id || item.token || '').toString();
+                    const normId = idStr.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+                    const utrStr = (item.utrNumber || '').toString().replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+                    return normId === normClean || (utrStr && utrStr === normClean);
+                  });
+                  if (match) {
+                    setLiveData(buildTrackingObject(match));
+                    setNotFound(false);
+                    setLoading(false);
+                    return;
+                  }
+                }
+                setLiveData(null);
+                setNotFound(true);
+                setLoading(false);
+              })
+              .catch(() => {
+                setLiveData(null);
+                setNotFound(true);
+                setLoading(false);
+              });
           }
         })
         .catch(() => {
           setLiveData(null);
           setNotFound(true);
-        })
-        .finally(() => {
           setLoading(false);
         });
     } catch {
