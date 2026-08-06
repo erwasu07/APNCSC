@@ -2233,7 +2233,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                         OFFICIAL CSC PAYMENT GATEWAY DESK
                       </span>
                       <h3 className="text-base sm:text-lg font-black uppercase tracking-wide">
-                        {!isPaymentConfirmed ? 'Complete Payment via Razorpay Gateway' : 'Application & Payment Confirmed!'}
+                        {!isPaymentConfirmed ? 'Complete Payment via Dynamic UPI Gateway' : 'Application & Payment Confirmed!'}
                       </h3>
                     </div>
                   </div>
