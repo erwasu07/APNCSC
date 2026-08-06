@@ -311,14 +311,67 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         .then(res => res.json())
         .then(resData => {
           const list = resData?.data || resData || [];
+          const serverKeys = new Set<string>();
           if (Array.isArray(list)) {
             list.forEach((item: any) => {
               const key = item.appId || item.id || item.token;
               if (key) {
                 serverApiMap.set(key, item);
+                serverKeys.add(key);
               }
             });
             updateCombinedApplications();
+
+            // Auto-sync local applications to central server DB if missing
+            try {
+              const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+              const web3Apps = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
+              const allLocal = [...localApps, ...web3Apps];
+
+              allLocal.forEach((item: any) => {
+                if (!item) return;
+                const key = item.appId || item.id || item.token;
+                if (key && !serverKeys.has(key)) {
+                  const docs = Array.isArray(item.documents) ? item.documents.map((f: any) => ({
+                    id: f.id || `doc-${Math.random().toString(36).substring(2, 6)}`,
+                    name: f.name || 'Document',
+                    size: typeof f.size === 'number' ? f.size : 0,
+                    type: f.type || 'application/octet-stream',
+                    url: f.url
+                  })) : [];
+
+                  const syncPayload = {
+                    appId: key,
+                    id: key,
+                    name: item.name || item.customerName || item.applicantName || 'Applicant',
+                    phone: item.phone || item.phoneNumber || item.mobile || 'N/A',
+                    email: item.email || item.emailAddress || 'N/A',
+                    service: item.service || item.selectedService || item.eService || 'General CSC Service',
+                    dateOfBirth: item.dateOfBirth || 'N/A',
+                    userCategory: item.userCategory || 'General/OBC',
+                    paymentMode: item.paymentMode || 'cash',
+                    utrNumber: item.utrNumber || 'N/A',
+                    totalAmount: item.totalAmount || 0,
+                    message: item.message || item.additionalDetails || 'None',
+                    documents: docs,
+                    status: item.status || 'Pending',
+                    submittedAt: item.submittedAt || item.createdAt || new Date().toISOString()
+                  };
+
+                  fetch('/api/appointments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(syncPayload)
+                  }).then(() => {
+                    serverKeys.add(key);
+                    serverApiMap.set(key, syncPayload);
+                    updateCombinedApplications();
+                  }).catch(() => {});
+                }
+              });
+            } catch (e) {
+              console.warn('Auto sync local apps notice:', e);
+            }
           }
         })
         .catch(err => console.warn('Server API fetch warning:', err));

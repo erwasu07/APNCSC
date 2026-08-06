@@ -601,8 +601,27 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
   const docRequirement = getServiceDocRequirement(formData.selectedService, formData.customServiceText);
 
-  // Helper to generate auto-incrementing official CSC token starting with prefix CSC21251567...
-  const getNextCscTokenId = (): string => {
+  // Helper to generate auto-incrementing globally unique official CSC token starting with prefix CSC21251567...
+  const getNextCscTokenIdAsync = async (): Promise<string> => {
+    try {
+      const res = await fetch('/api/appointments/next-token');
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.nextToken) {
+          const num = parseInt(data.seq, 10);
+          if (!isNaN(num)) {
+            const lastStored = parseInt(localStorage.getItem('csc_token_seq') || '0', 10);
+            if (num > lastStored) {
+              localStorage.setItem('csc_token_seq', num.toString());
+            }
+          }
+          return data.nextToken;
+        }
+      }
+    } catch (e) {
+      console.warn('Next token server fetch warning, using fallback sequence:', e);
+    }
+
     try {
       let maxSeq = 0;
       const existingApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
@@ -610,14 +629,8 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
         existingApps.forEach((a: any) => {
           const id = a.appId || a.id || '';
           const matchNew = id.match(/^CSC21251567(\d+)/i);
-          const matchOld = id.match(/^CSC-2026-(\d+)/i);
           if (matchNew && matchNew[1]) {
             const num = parseInt(matchNew[1], 10);
-            if (!isNaN(num) && num > maxSeq) {
-              maxSeq = num;
-            }
-          } else if (matchOld && matchOld[1]) {
-            const num = parseInt(matchOld[1], 10);
             if (!isNaN(num) && num > maxSeq) {
               maxSeq = num;
             }
@@ -628,12 +641,18 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       if (!isNaN(lastStored) && lastStored > maxSeq) {
         maxSeq = lastStored;
       }
+
+      if (maxSeq === 0) {
+        maxSeq = Math.floor((Date.now() % 10000000) / 1000);
+      }
+
       const nextSeq = maxSeq + 1;
       localStorage.setItem('csc_token_seq', nextSeq.toString());
       const seqPadded = String(nextSeq).padStart(3, '0');
       return `CSC21251567${seqPadded}`;
     } catch {
-      return `CSC21251567001`;
+      const randSeq = Math.floor(100 + Math.random() * 900);
+      return `CSC21251567${randSeq}`;
     }
   };
 
@@ -655,7 +674,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     const uploadedDocsList = uploadedFiles.map(f => `${f.name} (${(f.size / 1024).toFixed(1)} KB)`);
 
     // Assign official Reference Token ID immediately upon form submission!
-    const officialAppId = getNextCscTokenId();
+    const officialAppId = await getNextCscTokenIdAsync();
 
     const pendingReceipt = {
       appId: officialAppId,
@@ -779,7 +798,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     if (!submissionReceipt) return;
 
     const finalUtr = utrNumber.trim() || `UPI${Date.now().toString().slice(-8)}${Math.floor(100 + Math.random() * 900)}`;
-    const officialAppId = submissionReceipt.appId || getNextCscTokenId();
+    const officialAppId = submissionReceipt.appId || await getNextCscTokenIdAsync();
 
     const updatedReceipt = {
       ...submissionReceipt,

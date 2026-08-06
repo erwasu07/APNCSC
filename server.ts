@@ -288,6 +288,26 @@ app.get('/api/appointments', (req, res) => {
   res.json({ success: true, data: db.appointments || [] });
 });
 
+// Public API: Get next available globally unique token ID
+app.get('/api/appointments/next-token', (req, res) => {
+  const db = getDb();
+  let maxSeq = 0;
+  (db.appointments || []).forEach((a: any) => {
+    const idStr = (a.appId || a.id || '').toString();
+    const match = idStr.match(/^CSC21251567(\d+)/i);
+    if (match && match[1]) {
+      const num = parseInt(match[1], 10);
+      if (!isNaN(num) && num > maxSeq) {
+        maxSeq = num;
+      }
+    }
+  });
+  const nextSeq = maxSeq + 1;
+  const seqPadded = String(nextSeq).padStart(3, '0');
+  const nextToken = `CSC21251567${seqPadded}`;
+  res.json({ success: true, nextToken, seq: nextSeq });
+});
+
 // Public API: Get single application by token / ID
 app.get('/api/appointments/:id', (req, res) => {
   const { id } = req.params;
@@ -398,7 +418,9 @@ app.post('/api/appointments', (req, res) => {
     utrNumber: utrNumber || 'N/A',
     totalAmount: typeof totalAmount === 'number' ? totalAmount : Number(totalAmount) || 0,
     documents: sanitizedDocs,
-    status: status || 'Pending'
+    status: status || 'Pending',
+    submittedAt: submittedAt || createdAt || `${currentDate} ${currentTime}`,
+    createdAt: createdAt || submittedAt || new Date().toISOString()
   });
   const db = getDb();
 

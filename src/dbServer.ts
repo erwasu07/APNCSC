@@ -95,23 +95,30 @@ export function addContactRequest(req: Omit<ContactRequest, 'id' | 'status' | 'd
   return newReq;
 }
 
-export function addAppointment(apt: Omit<Appointment, 'id' | 'status' | 'date'> & { id?: string; status?: string }): Appointment {
+export function addAppointment(apt: Omit<Appointment, 'id' | 'status' | 'date'> & { id?: string; appId?: string; status?: string; submittedAt?: string; createdAt?: string }): Appointment {
   const db = getDb();
-  const existingIdx = db.appointments.findIndex(a => (apt.appId && a.appId === apt.appId) || (apt.id && a.id === apt.id));
+  const targetAppId = apt.appId || apt.id;
+  const existingIdx = db.appointments.findIndex(a => 
+    (targetAppId && ((a as any).appId === targetAppId || a.id === targetAppId))
+  );
   if (existingIdx !== -1) {
     db.appointments[existingIdx] = {
       ...db.appointments[existingIdx],
       ...apt,
+      appId: targetAppId || (db.appointments[existingIdx] as any).appId || db.appointments[existingIdx].id,
+      id: db.appointments[existingIdx].id || targetAppId || `apt-${Date.now()}`,
       status: (apt.status as any) || db.appointments[existingIdx].status || 'pending'
     };
     saveDb(db);
     return db.appointments[existingIdx];
   } else {
+    const finalId = apt.id || targetAppId || `apt-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const newApt: Appointment = {
       ...apt,
-      id: apt.id || `apt-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      appId: targetAppId || finalId,
+      id: finalId,
       status: (apt.status as any) || 'pending',
-      date: new Date().toISOString()
+      date: apt.submittedAt || apt.createdAt || new Date().toISOString()
     };
     db.appointments.unshift(newApt);
     saveDb(db);
