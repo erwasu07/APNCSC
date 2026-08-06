@@ -208,7 +208,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     }
   };
 
-  // Connect real-time Cloud Firestore listener for applications & appointments
+  // Connect real-time Cloud Firestore listener and central Server API for applications & appointments
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -216,8 +216,10 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     let unsubApps: (() => void) | null = null;
     let unsubApts: (() => void) | null = null;
 
-    const appsMap = new Map<string, any>();
-    const aptsMap = new Map<string, any>();
+    const serverApiMap = new Map<string, any>();
+    const firestoreAppsMap = new Map<string, any>();
+    const firestoreAptsMap = new Map<string, any>();
+    const supabaseMap = new Map<string, any>();
 
     const updateCombinedApplications = () => {
       let localApps: any[] = [];
@@ -230,7 +232,14 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       }
 
       const map = new Map<string, any>();
-      [...web3Apps, ...localApps, ...Array.from(appsMap.values()), ...Array.from(aptsMap.values())].forEach((app) => {
+      [
+        ...web3Apps,
+        ...localApps,
+        ...Array.from(serverApiMap.values()),
+        ...Array.from(firestoreAppsMap.values()),
+        ...Array.from(firestoreAptsMap.values()),
+        ...Array.from(supabaseMap.values())
+      ].forEach((app) => {
         if (!app) return;
         const key = app.appId || app.id || app.token || app.tokenNo;
         if (key) {
@@ -296,6 +305,31 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       setLoading(false);
     };
 
+    // Central Server API fetch helper
+    const fetchServerAppointments = () => {
+      fetch('/api/appointments')
+        .then(res => res.json())
+        .then(resData => {
+          const list = resData?.data || resData || [];
+          if (Array.isArray(list)) {
+            list.forEach((item: any) => {
+              const key = item.appId || item.id || item.token;
+              if (key) {
+                serverApiMap.set(key, item);
+              }
+            });
+            updateCombinedApplications();
+          }
+        })
+        .catch(err => console.warn('Server API fetch warning:', err));
+    };
+
+    // Initial fetch from Server API
+    fetchServerAppointments();
+
+    // Poll Server API every 5 seconds to ensure cross-device real-time consistency
+    const pollInterval = setInterval(fetchServerAppointments, 5000);
+
     let supabaseChannel: any = null;
     const supabaseClient = getSupabaseClient();
 
@@ -306,7 +340,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           if (data && !error) {
             data.forEach((app: any) => {
               const key = app.appId || app.id || app.token;
-              if (key) appsMap.set(key, app);
+              if (key) supabaseMap.set(key, app);
             });
             updateCombinedApplications();
           }
@@ -323,14 +357,14 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                 const newApp = payload.new;
                 const key = newApp.appId || newApp.id || newApp.token;
                 if (key) {
-                  appsMap.set(key, newApp);
+                  supabaseMap.set(key, newApp);
                   updateCombinedApplications();
                 }
               } else if (payload.eventType === 'DELETE') {
                 const oldApp = payload.old;
                 const key = oldApp.appId || oldApp.id || oldApp.token;
                 if (key) {
-                  appsMap.delete(key);
+                  supabaseMap.delete(key);
                   updateCombinedApplications();
                 }
               }
@@ -344,29 +378,13 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
     // Local tab & window cross-communication event listeners
     const handleLocalSync = () => {
+      fetchServerAppointments();
       updateCombinedApplications();
     };
 
     window.addEventListener('csc_appointment_created', handleLocalSync);
     window.addEventListener('csc_appointment_updated', handleLocalSync);
     window.addEventListener('storage', handleLocalSync);
-
-    // Initial server API fetch as fallback
-    fetch('/api/appointments')
-      .then(res => res.json())
-      .then(resData => {
-        const list = resData?.data || resData || [];
-        if (Array.isArray(list)) {
-          list.forEach((item: any) => {
-            const key = item.appId || item.id || item.token;
-            if (key && !appsMap.has(key)) {
-              appsMap.set(key, item);
-            }
-          });
-          updateCombinedApplications();
-        }
-      })
-      .catch(() => {});
 
     let bc: BroadcastChannel | null = null;
     try {
@@ -376,7 +394,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           const app = event.data.payload;
           const key = app.appId || app.id || app.token;
           if (key) {
-            appsMap.set(key, app);
+            serverApiMap.set(key, app);
           }
         }
         updateCombinedApplications();
@@ -389,9 +407,9 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       unsubApps = onSnapshot(
         collection(db, 'applications'),
         (snapshot) => {
-          appsMap.clear();
+          firestoreAppsMap.clear();
           snapshot.forEach((docSnap) => {
-            appsMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
+            firestoreAppsMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
           });
           updateCombinedApplications();
         },
@@ -404,9 +422,9 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       unsubApts = onSnapshot(
         collection(db, 'appointments'),
         (snapshot) => {
-          aptsMap.clear();
+          firestoreAptsMap.clear();
           snapshot.forEach((docSnap) => {
-            aptsMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
+            firestoreAptsMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
           });
           updateCombinedApplications();
         },
@@ -421,6 +439,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     }
 
     return () => {
+      clearInterval(pollInterval);
       if (unsubApps) unsubApps();
       if (unsubApts) unsubApts();
       if (supabaseChannel && supabaseClient) {
@@ -481,6 +500,13 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           : a
       )
     );
+
+    // Update central server API
+    fetch(`/api/appointments/${appId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    }).catch(err => console.warn('Server status update warning:', err));
 
     const sb = getSupabaseClient();
     if (sb) {
@@ -825,7 +851,15 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           <button
             onClick={() => {
               setLoading(true);
-              setTimeout(() => setLoading(false), 600);
+              fetch('/api/appointments')
+                .then(res => res.json())
+                .then(() => {
+                  window.dispatchEvent(new Event('csc_appointment_updated'));
+                })
+                .catch(console.error)
+                .finally(() => {
+                  setTimeout(() => setLoading(false), 400);
+                });
             }}
             className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-white/10 cursor-pointer"
             title="Refresh Data"

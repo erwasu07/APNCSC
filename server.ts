@@ -10,6 +10,7 @@ import {
   addAppointment, 
   updateContactStatus, 
   updateAppointmentStatus, 
+  deleteAppointment,
   updateSettings, 
   addAnnouncement, 
   updateAnnouncement, 
@@ -312,6 +313,17 @@ app.patch('/api/appointments/:id/status', (req, res) => {
   const success = updateAppointmentStatus(id, status);
   if (success) {
     res.json({ success: true, message: 'Status updated successfully' });
+  } else {
+    res.status(404).json({ error: 'Appointment not found' });
+  }
+});
+
+// Delete appointment
+app.delete('/api/appointments/:id', (req, res) => {
+  const { id } = req.params;
+  const success = deleteAppointment(id);
+  if (success) {
+    res.json({ success: true, message: 'Appointment deleted successfully' });
   } else {
     res.status(404).json({ error: 'Appointment not found' });
   }

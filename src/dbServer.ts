@@ -141,6 +141,17 @@ export function updateAppointmentStatus(id: string, status: Appointment['status'
   return false;
 }
 
+export function deleteAppointment(id: string): boolean {
+  const db = getDb();
+  const lengthBefore = db.appointments.length;
+  db.appointments = db.appointments.filter(a => a.id !== id && (a as any).appId !== id);
+  if (db.appointments.length !== lengthBefore) {
+    saveDb(db);
+    return true;
+  }
+  return false;
+}
+
 export function updateSettings(settings: WebsiteSettings): void {
   const db = getDb();
   db.settings = settings;
