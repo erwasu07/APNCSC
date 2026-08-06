@@ -737,10 +737,21 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       console.warn('localStorage save warning:', e);
     }
 
+    const apiDocs = uploadedFiles.map(f => ({
+      id: f.id,
+      name: f.name,
+      size: f.size,
+      type: f.type,
+      url: f.url,
+      dataUrl: f.dataUrl && f.dataUrl.length < 50000 ? f.dataUrl : undefined
+    }));
+    const lightInitialPayload = { ...initialPayload, documents: apiDocs };
+
     fetch('/api/appointments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(initialPayload)
+      body: JSON.stringify(lightInitialPayload),
+      keepalive: true
     }).catch(console.error);
 
     try {
@@ -870,10 +881,21 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     }
 
     // Secondary POST to server API
+    const apiUpdatedDocs = processedDocs.map(f => ({
+      id: f.id,
+      name: f.name,
+      size: f.size,
+      type: f.type,
+      url: f.url,
+      dataUrl: f.dataUrl && f.dataUrl.length < 50000 ? f.dataUrl : undefined
+    }));
+    const lightUpdatedPayload = { ...updatedPayload, documents: apiUpdatedDocs };
+
     fetch('/api/appointments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedPayload)
+      body: JSON.stringify(lightUpdatedPayload),
+      keepalive: true
     }).catch(console.error);
 
     // Trigger official WhatsApp invoice notification dispatch with generated token
@@ -1005,10 +1027,21 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
     // 2. Perform server API update
     try {
+      const apiConfirmDocs = processedDocs.map(f => ({
+        id: f.id,
+        name: f.name,
+        size: f.size,
+        type: f.type,
+        url: f.url,
+        dataUrl: f.dataUrl && f.dataUrl.length < 50000 ? f.dataUrl : undefined
+      }));
+      const lightConfirmPayload = { ...payload, documents: apiConfirmDocs };
+
       const res = await fetch('/api/appointments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(lightConfirmPayload),
+        keepalive: true
       });
       const aptText = await res.text();
       const data = aptText ? JSON.parse(aptText) : {};

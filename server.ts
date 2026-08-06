@@ -334,12 +334,23 @@ app.post('/api/appointments', (req, res) => {
   const { 
     appId, 
     id,
+    token,
+    tokenNo,
     name, 
+    customerName,
+    applicantName,
     email, 
+    emailAddress,
     phone, 
+    phoneNumber,
+    mobile,
     service, 
+    selectedService,
+    eService,
     appointmentDate, 
     appointmentTime, 
+    submittedAt,
+    createdAt,
     message,
     dateOfBirth,
     userCategory,
@@ -347,34 +358,46 @@ app.post('/api/appointments', (req, res) => {
     utrNumber,
     totalAmount,
     documents,
+    uploadedDocuments,
     status 
-  } = req.body;
+  } = req.body || {};
 
-  if (!name || !phone || !service) {
-    return res.status(400).json({ error: 'Please provide all required fields (Name, Phone, Service).' });
-  }
+  const finalName = (name || customerName || applicantName || 'Applicant').toString().trim();
+  const finalPhone = (phone || phoneNumber || mobile || 'N/A').toString().trim();
+  const finalService = (service || selectedService || eService || 'General CSC Service').toString().trim();
+  const finalEmail = (email || emailAddress || '').toString().trim();
 
   const currentDate = new Date().toISOString().split('T')[0];
   const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-  const finalAppId = appId || id || `CSC21251567${Math.floor(100 + Math.random() * 900)}`;
+  const finalAppId = appId || id || token || tokenNo || `CSC21251567${Math.floor(100 + Math.random() * 900)}`;
+
+  const rawDocs = Array.isArray(documents) ? documents : (Array.isArray(uploadedDocuments) ? uploadedDocuments : []);
+  const sanitizedDocs = rawDocs.map((docItem: any) => ({
+    id: docItem.id || `doc-${Math.random().toString(36).substring(2, 7)}`,
+    name: docItem.name || docItem.docTypeName || 'Document',
+    size: typeof docItem.size === 'number' ? docItem.size : 0,
+    type: docItem.type || 'application/octet-stream',
+    url: docItem.url || (docItem.dataUrl && docItem.dataUrl.startsWith('http') ? docItem.dataUrl : undefined),
+    dataUrl: docItem.dataUrl && docItem.dataUrl.length < 100000 ? docItem.dataUrl : undefined
+  }));
 
   const appointment = addAppointment({
     appId: finalAppId,
     id: finalAppId,
-    name,
-    email: email || '',
-    phone,
-    service,
+    name: finalName,
+    email: finalEmail,
+    phone: finalPhone,
+    service: finalService,
     appointmentDate: appointmentDate || currentDate,
-    appointmentTime: appointmentTime || currentTime,
-    message: message || '',
+    appointmentTime: appointmentTime || submittedAt || createdAt || currentTime,
+    message: message || 'None',
     dateOfBirth: dateOfBirth || 'N/A',
     userCategory: userCategory || 'General/OBC',
     paymentMode: paymentMode || 'cash',
     utrNumber: utrNumber || 'N/A',
-    totalAmount: totalAmount || 0,
-    documents: Array.isArray(documents) ? documents : [],
+    totalAmount: typeof totalAmount === 'number' ? totalAmount : Number(totalAmount) || 0,
+    documents: sanitizedDocs,
     status: status || 'Pending'
   });
   const db = getDb();

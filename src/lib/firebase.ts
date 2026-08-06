@@ -30,11 +30,17 @@ const firebaseConfig = {
 // Initialize Firebase App
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Firestore with specific database ID if provided
-const dbId = firebaseConfig.firestoreDatabaseId;
-export const db = dbId && dbId !== '(default)'
-  ? getFirestore(app, dbId)
-  : getFirestore(app);
+// Initialize Firestore safely
+let firestoreDb: ReturnType<typeof getFirestore>;
+try {
+  const dbId = firebaseConfig.firestoreDatabaseId;
+  firestoreDb = (dbId && dbId !== '(default)') ? getFirestore(app, dbId) : getFirestore(app);
+} catch (e) {
+  console.warn('Named Firestore database init failed, falling back to default:', e);
+  firestoreDb = getFirestore(app);
+}
+
+export const db = firestoreDb;
 
 // Initialize Firebase Authentication
 export const auth = getAuth(app);
