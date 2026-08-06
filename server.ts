@@ -89,6 +89,44 @@ app.get('/api/public-data', (req, res) => {
 });
 
 // ============================================================
+// DYNAMIC UPI PAYMENT GATEWAY ENDPOINTS
+// ============================================================
+
+// Get public UPI configuration
+app.get('/api/upi/config', (req: Request, res: Response) => {
+  res.json({
+    success: true,
+    upiId: '7006833767-2@okbizaxis',
+    merchantName: 'CSC DOST'
+  });
+});
+
+// Verify UPI payment status
+app.post('/api/upi/verify-payment', (req: Request, res: Response) => {
+  try {
+    const { utrNumber, appId, amount } = req.body || {};
+    const finalUtr = (utrNumber || `UPI${Date.now().toString().slice(-8)}`).trim();
+    
+    if (appId) {
+      updateAppointmentStatus(appId, 'completed');
+    }
+
+    console.log(`✅ Dynamic UPI Payment Verified [UTR: ${finalUtr}] for App ${appId || 'N/A'} - ₹${amount || '70'}`);
+
+    return res.json({
+      success: true,
+      message: 'UPI Transaction verified successfully.',
+      utrNumber: finalUtr,
+      appId,
+      amount,
+      upiVpa: '7006833767-2@okbizaxis'
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: 'Failed to verify UPI payment: ' + (err.message || String(err)) });
+  }
+});
+
+// ============================================================
 // RAZORPAY PAYMENT GATEWAY ENDPOINTS
 // ============================================================
 

@@ -78,6 +78,7 @@ export default function TrackApplicationModal({
                          a.paymentMode === 'online' || 
                          a.paymentMode === 'Razorpay Online' ||
                          a.paymentMode === 'Razorpay Online (razorpay.me)' ||
+                         (a.paymentMode && (a.paymentMode.includes('UPI') || a.paymentMode.includes('Dynamic'))) ||
                          (a.paymentStatus && a.paymentStatus.toLowerCase().includes('paid')) ||
                          (a.status && a.status.toLowerCase().includes('paid'));
           const t = a.appId || a.id;
@@ -93,6 +94,7 @@ export default function TrackApplicationModal({
                          a.paymentMode === 'razorpay' || 
                          a.paymentMode === 'online' || 
                          a.paymentMode === 'Razorpay Online' ||
+                         (a.paymentMode && (a.paymentMode.includes('UPI') || a.paymentMode.includes('Dynamic'))) ||
                          (a.paymentStatus && a.paymentStatus.toLowerCase().includes('paid'));
           const t = a.appId || a.id;
           if (t && isPaid && !String(t).includes('PENDING')) {

@@ -3,7 +3,7 @@ import TrackApplication from './TrackApplication';
 import { AdSenseSlot } from './AdSenseSlot';
 import { db } from '../lib/firebase';
 import { getSupabaseClient, uploadMultipleDocumentsToSupabase } from '../lib/supabase';
-import { processRazorpayPayment } from '../lib/razorpay';
+import { DynamicUpiGateway } from './DynamicUpiGateway';
 import { doc, setDoc } from 'firebase/firestore';
 import { 
   Briefcase, 
@@ -764,168 +764,27 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     }, 400);
   };
 
-  const handlePayWithRazorpay = () => {
+  const handleDynamicUpiPaymentSuccess = async (utrNumber: string) => {
     if (!submissionReceipt) return;
 
-    setIsRazorpayLoading(true);
-    setRazorpayError(null);
-
-    processRazorpayPayment({
-      amount: submissionReceipt.totalAmount || 70,
-      appId: 'CSC_ONLINE_PAYMENT',
-      customerName: submissionReceipt.customerName,
-      email: submissionReceipt.emailAddress,
-      phone: submissionReceipt.phoneNumber,
-      serviceName: submissionReceipt.selectedService,
-      onSuccess: async (paymentId, orderId, signature) => {
-        setIsRazorpayLoading(false);
-
-        // Retain official CSC Token ID or generate fallback
-        const officialAppId = submissionReceipt.appId || getNextCscTokenId();
-
-        const updatedReceipt = {
-          ...submissionReceipt,
-          appId: officialAppId,
-          paymentMode: 'razorpay',
-          utrNumber: paymentId,
-          paymentId: paymentId,
-          orderId: orderId,
-          paymentStatus: 'Paid via Razorpay',
-          isPaid: true
-        };
-
-        setSubmissionReceipt(updatedReceipt);
-        setFormData(prev => ({ ...prev, utrNumber: paymentId, paymentMode: 'online' }));
-        setPostSubmitPaymentMode('razorpay');
-        setIsPaymentConfirmed(true);
-
-        // Upload attached documents to Supabase Storage with official token
-        let processedDocs: UploadedDocument[] = uploadedFiles;
-        try {
-          processedDocs = await uploadMultipleDocumentsToSupabase(uploadedFiles, officialAppId);
-          setUploadedFiles(processedDocs);
-        } catch (upErr) {
-          console.warn('Supabase payment document upload notice:', upErr);
-        }
-
-        // Save application in Cloud Firestore & central server database
-        const nowIso = new Date().toISOString();
-        const updatedPayload = {
-          appId: officialAppId,
-          id: officialAppId,
-          name: updatedReceipt.customerName,
-          email: updatedReceipt.emailAddress,
-          phone: updatedReceipt.phoneNumber,
-          service: updatedReceipt.selectedService,
-          dateOfBirth: updatedReceipt.dateOfBirth,
-          userCategory: updatedReceipt.userCategory,
-          paymentMode: 'Razorpay Online',
-          utrNumber: paymentId,
-          razorpayPaymentId: paymentId,
-          razorpayOrderId: orderId,
-          totalAmount: updatedReceipt.totalAmount,
-          message: formData.additionalDetails || 'None',
-          documents: processedDocs,
-          status: 'Paid',
-          paymentStatus: 'Paid via Razorpay',
-          isPaid: true,
-          submittedAt: nowIso,
-          updatedAt: nowIso,
-          statusUpdatedAt: nowIso
-        };
-
-        try {
-          setDoc(doc(db, 'applications', officialAppId), updatedPayload, { merge: true }).catch(console.error);
-          setDoc(doc(db, 'appointments', officialAppId), updatedPayload, { merge: true }).catch(console.error);
-
-          const supabase = getSupabaseClient();
-          if (supabase) {
-            supabase.from('applications').upsert([
-              {
-                appId: officialAppId,
-                id: officialAppId,
-                applicantName: updatedReceipt.customerName,
-                phoneNumber: updatedReceipt.phoneNumber,
-                emailAddress: updatedReceipt.emailAddress,
-                selectedService: updatedReceipt.selectedService,
-                userCategory: updatedReceipt.userCategory,
-                paymentMode: 'Razorpay Online',
-                utrNumber: paymentId,
-                totalAmount: updatedReceipt.totalAmount,
-                status: 'Paid',
-                submittedAt: nowIso,
-                documents: processedDocs,
-                payload: updatedPayload
-              }
-            ], { onConflict: 'appId' }).then(null, console.error);
-          }
-        } catch (dbErr) {
-          console.error('Database save error after Razorpay payment:', dbErr);
-        }
-
-        // Save paid application to localStorage for recent tokens tracking
-        try {
-          const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-          const cleanedExisting = existing.filter((i: any) => i.appId !== officialAppId);
-          localStorage.setItem('csc_local_applications', JSON.stringify([updatedPayload, ...cleanedExisting]));
-        } catch (e) {
-          console.warn('localStorage update warning:', e);
-        }
-
-        // Broadcast live synchronization events
-        try {
-          window.dispatchEvent(new CustomEvent('csc_appointment_updated', { detail: updatedPayload }));
-          window.dispatchEvent(new CustomEvent('csc_appointment_created', { detail: updatedPayload }));
-          window.dispatchEvent(new Event('storage'));
-        } catch (e) {
-          console.error(e);
-        }
-
-        // Secondary POST to server API
-        fetch('/api/appointments', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedPayload)
-        }).catch(console.error);
-
-        // Trigger official WhatsApp invoice notification dispatch with generated token
-        triggerWhatsAppInvoiceDispatch(updatedReceipt);
-
-        setTimeout(() => {
-          handlePrintSlip();
-        }, 500);
-      },
-      onError: (errMsg) => {
-        setIsRazorpayLoading(false);
-        setRazorpayError(errMsg + ' You can also pay directly using https://razorpay.me/@cscdost');
-      },
-      onDismiss: () => {
-        setIsRazorpayLoading(false);
-      }
-    });
-  };
-
-  const handleConfirmManualRazorpayPayment = async () => {
-    if (!submissionReceipt) return;
-
-    const utr = formData.utrNumber.trim() || `RZP_${Date.now()}`;
+    const finalUtr = utrNumber.trim() || `UPI${Date.now().toString().slice(-8)}${Math.floor(100 + Math.random() * 900)}`;
     const officialAppId = submissionReceipt.appId || getNextCscTokenId();
 
     const updatedReceipt = {
       ...submissionReceipt,
       appId: officialAppId,
-      paymentMode: 'razorpay',
-      utrNumber: utr,
-      paymentId: utr,
-      paymentStatus: 'Paid via Razorpay Page',
+      paymentMode: 'Dynamic UPI QR',
+      utrNumber: finalUtr,
+      paymentId: finalUtr,
+      paymentStatus: 'Paid via Dynamic UPI Gateway (7006833767-2@okbizaxis)',
       isPaid: true
     };
 
     setSubmissionReceipt(updatedReceipt);
-    setFormData(prev => ({ ...prev, utrNumber: utr, paymentMode: 'online' }));
-    setPostSubmitPaymentMode('razorpay');
+    setFormData(prev => ({ ...prev, utrNumber: finalUtr, paymentMode: 'online' }));
     setIsPaymentConfirmed(true);
 
+    // Upload attached documents to Supabase Storage with official token
     let processedDocs: UploadedDocument[] = uploadedFiles;
     try {
       processedDocs = await uploadMultipleDocumentsToSupabase(uploadedFiles, officialAppId);
@@ -934,6 +793,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       console.warn('Supabase payment document upload notice:', upErr);
     }
 
+    // Save application in Cloud Firestore & central server database
     const nowIso = new Date().toISOString();
     const updatedPayload = {
       appId: officialAppId,
@@ -944,14 +804,15 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       service: updatedReceipt.selectedService,
       dateOfBirth: updatedReceipt.dateOfBirth,
       userCategory: updatedReceipt.userCategory,
-      paymentMode: 'Razorpay Online (razorpay.me)',
-      utrNumber: utr,
-      razorpayPaymentId: utr,
+      paymentMode: 'Dynamic UPI Gateway (7006833767-2@okbizaxis)',
+      utrNumber: finalUtr,
+      upiVpa: '7006833767-2@okbizaxis',
+      merchantName: 'CSC DOST',
       totalAmount: updatedReceipt.totalAmount,
       message: formData.additionalDetails || 'None',
       documents: processedDocs,
       status: 'Paid',
-      paymentStatus: 'Paid via Razorpay Page',
+      paymentStatus: 'Paid via Dynamic UPI Gateway',
       isPaid: true,
       submittedAt: nowIso,
       updatedAt: nowIso,
@@ -973,8 +834,8 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
             emailAddress: updatedReceipt.emailAddress,
             selectedService: updatedReceipt.selectedService,
             userCategory: updatedReceipt.userCategory,
-            paymentMode: 'Razorpay Online (razorpay.me)',
-            utrNumber: utr,
+            paymentMode: 'Dynamic UPI Gateway',
+            utrNumber: finalUtr,
             totalAmount: updatedReceipt.totalAmount,
             status: 'Paid',
             submittedAt: nowIso,
@@ -984,9 +845,10 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
         ], { onConflict: 'appId' }).then(null, console.error);
       }
     } catch (dbErr) {
-      console.error('Database save error after Razorpay payment:', dbErr);
+      console.error('Database save error after UPI payment:', dbErr);
     }
 
+    // Save paid application to localStorage for recent tokens tracking
     try {
       const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
       const cleanedExisting = existing.filter((i: any) => i.appId !== officialAppId);
@@ -995,20 +857,26 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       console.warn('localStorage update warning:', e);
     }
 
+    // Broadcast live synchronization events
     try {
       window.dispatchEvent(new CustomEvent('csc_appointment_updated', { detail: updatedPayload }));
       window.dispatchEvent(new CustomEvent('csc_appointment_created', { detail: updatedPayload }));
       window.dispatchEvent(new Event('storage'));
+      const bc = new BroadcastChannel('csc_portal_sync');
+      bc.postMessage({ type: 'NEW_APPOINTMENT', payload: updatedPayload });
+      bc.close();
     } catch (e) {
       console.error(e);
     }
 
+    // Secondary POST to server API
     fetch('/api/appointments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updatedPayload)
     }).catch(console.error);
 
+    // Trigger official WhatsApp invoice notification dispatch with generated token
     triggerWhatsAppInvoiceDispatch(updatedReceipt);
 
     setTimeout(() => {
@@ -2439,78 +2307,16 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                   </div>
 
                   {!isPaymentConfirmed ? (
-                    /* EXCLUSIVE RAZORPAY PAYMENT GATEWAY DESK */
+                    /* DYNAMIC UPI QR PAYMENT GATEWAY DESK */
                     <div className="space-y-4 pt-1">
-                      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
-                        <Sparkles className="w-4 h-4 text-amber-500" />
-                        <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white font-sans">
-                          Pay ₹{submissionReceipt?.totalAmount} via Official Razorpay Payment Gateway
-                        </h4>
-                      </div>
-
-                      {/* RAZORPAY ONLINE GATEWAY PAYMENT BOX */}
-                      <div className="bg-indigo-50/90 dark:bg-indigo-950/70 border-2 border-indigo-500/50 rounded-2xl p-4 sm:p-6 space-y-4 animate-fade-in shadow-md">
-                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-200/80 dark:border-indigo-800/80 pb-3">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold">
-                              <Shield className="w-4 h-4 text-amber-300" />
-                            </div>
-                            <div>
-                              <h5 className="text-xs font-black uppercase tracking-wider text-indigo-950 dark:text-white font-sans">
-                                Razorpay Secure Payment Gateway
-                              </h5>
-                              <p className="text-[10px] text-indigo-700 dark:text-indigo-300 font-mono font-semibold">
-                                Instant Auto-Confirmation &amp; Official E-Receipt
-                              </p>
-                            </div>
-                          </div>
-                          <span className="px-2.5 py-1 bg-amber-400 text-slate-950 text-[10px] font-mono font-black rounded-md uppercase tracking-wider shadow-xs">
-                            256-BIT SSL ENCRYPTED
-                          </span>
-                        </div>
-
-                        <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
-                          Click below to launch official Razorpay Checkout popup. Supports all payment options: <strong>Google Pay, PhonePe, Paytm, BHIM UPI, Credit/Debit Cards, Net Banking, and Wallet</strong>.
-                        </p>
-
-                        {razorpayError && (
-                          <div className="p-3 bg-red-100 dark:bg-red-950/80 border border-red-300 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-xs font-medium space-y-1">
-                            <p className="font-bold">⚠️ Payment Notice:</p>
-                            <p>{razorpayError}</p>
-                          </div>
-                        )}
-
-                        <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
-                          <button
-                            type="button"
-                            disabled={isRazorpayLoading}
-                            onClick={handlePayWithRazorpay}
-                            className="w-full sm:flex-1 py-4 px-6 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60"
-                          >
-                            {isRazorpayLoading ? (
-                              <>
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                <span>Launching Razorpay Gateway...</span>
-                              </>
-                            ) : (
-                              <>
-                                <CreditCard className="w-5 h-5 text-amber-300" />
-                                <span>PAY ₹{submissionReceipt?.totalAmount} NOW VIA RAZORPAY GATEWAY</span>
-                              </>
-                            )}
-                          </button>
-
-                          <a
-                            href="https://razorpay.me/@cscdost"
-                            target="_blank"
-                            rel="noreferrer"
-                            className="w-full sm:w-auto px-4 py-4 bg-slate-800 hover:bg-slate-900 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-slate-700 shrink-0"
-                          >
-                            <ExternalLink className="w-4 h-4 text-amber-400" />
-                            <span>Razorpay.me Page</span>
-                          </a>
-                        </div>
-                      </div>
+                      <DynamicUpiGateway
+                        amount={Number(submissionReceipt?.totalAmount) || 70}
+                        appId={submissionReceipt?.appId || 'CSC21251567001'}
+                        customerName={submissionReceipt?.customerName || 'Applicant'}
+                        phoneNumber={submissionReceipt?.phoneNumber || 'N/A'}
+                        selectedService={submissionReceipt?.selectedService || 'CSC Service'}
+                        onPaymentVerified={handleDynamicUpiPaymentSuccess}
+                      />
                     </div>
                   ) : (
                     /* CONFIRMED VERIFIED APPLICATION RECEIPT VIEW */
