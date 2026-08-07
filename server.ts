@@ -282,6 +282,48 @@ app.post('/api/contact', (req, res) => {
   res.json({ success: true, data: request, message: 'Message submitted successfully. Emails simulated in logs.' });
 });
 
+// Live Real-Time SSE Stream Engine
+const sseClients = new Set<express.Response>();
+
+export function broadcastRealtimeEvent(type: string, payload: any) {
+  const data = `data: ${JSON.stringify({ type, payload, timestamp: Date.now() })}\n\n`;
+  sseClients.forEach((client) => {
+    try {
+      client.write(data);
+    } catch {
+      sseClients.delete(client);
+    }
+  });
+}
+
+// Public API: Real-time event stream (Server-Sent Events)
+app.get('/api/realtime/stream', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.flushHeaders();
+
+  res.write(`data: ${JSON.stringify({ type: 'CONNECTED', timestamp: Date.now() })}\n\n`);
+
+  sseClients.add(res);
+
+  req.on('close', () => {
+    sseClients.delete(res);
+  });
+});
+
+// SSE Keep-Alive heartbeat interval (every 15s)
+setInterval(() => {
+  sseClients.forEach((client) => {
+    try {
+      client.write(`: ping\n\n`);
+    } catch {
+      sseClients.delete(client);
+    }
+  });
+}, 15000);
+
 // Public API: Get all submitted applications
 app.get('/api/appointments', (req, res) => {
   const db = getDb();
@@ -332,7 +374,10 @@ app.patch('/api/appointments/:id/status', (req, res) => {
   if (!status) return res.status(400).json({ error: 'Status is required' });
   const success = updateAppointmentStatus(id, status);
   if (success) {
-    res.json({ success: true, message: 'Status updated successfully' });
+    const db = getDb();
+    const updated = (db.appointments || []).find((a: any) => a.id === id || a.appId === id);
+    broadcastRealtimeEvent('APPOINTMENT_UPDATED', updated || { id, appId: id, status });
+    res.json({ success: true, message: 'Status updated successfully', data: updated });
   } else {
     res.status(404).json({ error: 'Appointment not found' });
   }
@@ -343,6 +388,7 @@ app.delete('/api/appointments/:id', (req, res) => {
   const { id } = req.params;
   const success = deleteAppointment(id);
   if (success) {
+    broadcastRealtimeEvent('APPOINTMENT_DELETED', { id, appId: id });
     res.json({ success: true, message: 'Appointment deleted successfully' });
   } else {
     res.status(404).json({ error: 'Appointment not found' });
@@ -423,6 +469,7 @@ app.post('/api/appointments', (req, res) => {
     createdAt: createdAt || submittedAt || new Date().toISOString()
   });
   const db = getDb();
+  broadcastRealtimeEvent('APPOINTMENT_ADDED', appointment);
 
   const docCount = Array.isArray(documents) ? documents.length : 0;
 

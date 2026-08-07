@@ -380,8 +380,24 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     // Initial fetch from Server API
     fetchServerAppointments();
 
-    // Poll Server API every 5 seconds to ensure cross-device real-time consistency
-    const pollInterval = setInterval(fetchServerAppointments, 5000);
+    // SSE Real-Time Stream Connection for 0ms multi-device live sync
+    let sseSource: EventSource | null = null;
+    try {
+      sseSource = new EventSource('/api/realtime/stream');
+      sseSource.onmessage = (evt) => {
+        try {
+          const msg = JSON.parse(evt.data);
+          if (msg && msg.type) {
+            fetchServerAppointments();
+          }
+        } catch (e) {}
+      };
+    } catch (e) {
+      console.warn('SSE stream init notice:', e);
+    }
+
+    // Poll Server API every 3 seconds as a background fallback
+    const pollInterval = setInterval(fetchServerAppointments, 3000);
 
     let supabaseChannel: any = null;
     const supabaseClient = getSupabaseClient();
@@ -493,6 +509,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
     return () => {
       clearInterval(pollInterval);
+      if (sseSource) sseSource.close();
       if (unsubApps) unsubApps();
       if (unsubApts) unsubApts();
       if (supabaseChannel && supabaseClient) {

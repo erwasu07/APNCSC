@@ -232,6 +232,28 @@ export default function TrackApplicationModal({
       };
     };
 
+    // Always run initial fallback check and subscribe to live updates
+    checkLocalAndServerFallback(cleanToken, buildTrackingObject);
+
+    // SSE real-time listener for live status updates
+    let sse: EventSource | null = null;
+    try {
+      sse = new EventSource('/api/realtime/stream');
+      sse.onmessage = (evt) => {
+        try {
+          const msg = JSON.parse(evt.data);
+          if (msg && msg.type) {
+            checkLocalAndServerFallback(cleanToken, buildTrackingObject);
+          }
+        } catch (e) {}
+      };
+    } catch (e) {}
+
+    // 2.5s poll interval while modal is open
+    const liveInterval = setInterval(() => {
+      checkLocalAndServerFallback(cleanToken, buildTrackingObject);
+    }, 2500);
+
     try {
       // 1. Subscribe to Firestore real-time doc in 'applications' collection
       unsubApp = onSnapshot(
@@ -242,31 +264,22 @@ export default function TrackApplicationModal({
             setNotFound(false);
             setLoading(false);
           } else {
-            // Check 'appointments' collection fallback in Firestore
             getDoc(doc(db, 'appointments', cleanToken)).then((aptSnap) => {
               if (aptSnap.exists()) {
                 setLiveData(buildTrackingObject(aptSnap.data()));
                 setNotFound(false);
                 setLoading(false);
-              } else {
-                // Check LocalStorage fallback
-                checkLocalAndServerFallback(cleanToken, buildTrackingObject);
               }
-            }).catch(() => {
-              checkLocalAndServerFallback(cleanToken, buildTrackingObject);
-            });
+            }).catch(() => {});
           }
         },
-        (err) => {
-          console.warn('Firestore snapshot error, checking fallback:', err);
-          checkLocalAndServerFallback(cleanToken, buildTrackingObject);
-        }
+        () => {}
       );
-    } catch {
-      checkLocalAndServerFallback(cleanToken, buildTrackingObject);
-    }
+    } catch {}
 
     return () => {
+      clearInterval(liveInterval);
+      if (sse) sse.close();
       if (unsubApp) unsubApp();
     };
   }, [activeToken, isOpen]);

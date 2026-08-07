@@ -45,7 +45,8 @@ import {
   Train,
   Share2,
   Send,
-  ArrowUpRight
+  ArrowUpRight,
+  Code
 } from 'lucide-react';
 import { SARKARI_DATA, SARKARI_CATEGORIES, SarkariItem } from '../data/sarkariData';
 import { SERVICES_LIST } from '../servicesData';
@@ -196,6 +197,925 @@ export const SERVICE_DOCUMENT_MAP: Record<string, string[]> = {
   'other': ['aadhaar', 'other_doc']
 };
 
+export const RRB_JOBS_HTML_SNIPPET = `<!-- Start: CSC Dost - RRB Jobs (rrbapply.gov.in) Section -->
+<div class="csc-rrb-jobs-wrapper" style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 15px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+  
+  <!-- Header Banner -->
+  <div style="background: linear-gradient(135deg, #1e3a8a, #0369a1); color: #ffffff; padding: 18px 24px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+    <h2 style="margin: 0; font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+      🚆 Railway Recruitment Board (RRB) Latest CEN Notices & Updates
+    </h2>
+    <p style="margin: 6px 0 0 0; font-size: 13px; opacity: 0.9;">
+      Verified from rrbapply.gov.in & Official Indian Railways Portals | Updated: August 07, 2026
+    </p>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+
+    <!-- Job Card 1: RRB Junior Engineer (CEN 04/2026) -->
+    <div style="background: #ffffff; border-left: 5px solid #16a34a; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          RRB Junior Engineer (JE), DMS & CMA Recruitment 2026 (CEN No. 04/2026)
+        </h3>
+        <span style="background: #dcfce7; color: #15803d; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">NEW ANNOUNCEMENT</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Short Notice Release:</strong> Aug 05, 2026</div>
+        <div><strong>Detailed Notification:</strong> Aug 13, 2026</div>
+        <div><strong>Application Window:</strong> <span style="color: #2563eb; font-weight: 600;">Aug 14, 2026 to Sep 13, 2026</span></div>
+        <div><strong>Total Vacancies:</strong> 4,098 Posts</div>
+        <div><strong>Eligibility:</strong> Engineering Diploma / B.E. / B.Tech / B.Sc (Chem/Phys)</div>
+        <div><strong>Posts Included:</strong> Junior Engineer (JE), DMS, CMA</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.rrbapply.gov.in/" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Apply Portal (rrbapply.gov.in) →
+        </a>
+        <a href="https://indianrailways.gov.in/" target="_blank" rel="noopener noreferrer" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Check Official CEN
+        </a>
+      </div>
+    </div>
+
+    <!-- Job Card 2: RRB Section Controller (CEN 03/2026) -->
+    <div style="background: #ffffff; border-left: 5px solid #2563eb; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          RRB Section Controller Recruitment 2026 (CEN No. 03/2026)
+        </h3>
+        <span style="background: #dbeafe; color: #1d4ed8; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">ACTIVE NOW</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Application Start:</strong> July 15, 2026</div>
+        <div><strong>Last Date to Apply:</strong> <span style="color: #dc2626; font-weight: 600;">Aug 14, 2026</span></div>
+        <div><strong>Fee Payment Last Date:</strong> Aug 16, 2026</div>
+        <div><strong>Correction Window:</strong> Aug 17 to Aug 26, 2026</div>
+        <div><strong>Vacancies:</strong> 119 Posts</div>
+        <div><strong>Eligibility:</strong> Bachelor's Degree in any discipline from recognized University</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.rrbapply.gov.in/#/auth/landing" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Apply Online Now →
+        </a>
+      </div>
+    </div>
+
+    <!-- Job Card 3: RRB Group D CBT Exam Schedule (CEN 09/2025) -->
+    <div style="background: #ffffff; border-left: 5px solid #d97706; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          RRB Group D (Level-1) CBT Examination & City Intimation (CEN No. 09/2025)
+        </h3>
+        <span style="background: #fef3c7; color: #b45309; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">EXAM NOTICE</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>City Intimation Slip:</strong> Live on Portal (August Shifts)</div>
+        <div><strong>CBT Exam Dates:</strong> <span style="color: #16a34a; font-weight: 600;">Aug 03, 2026 to Aug 25, 2026</span></div>
+        <div><strong>Total Vacancies:</strong> 22,195 Posts (Level-1 Trackman/Pointsman)</div>
+        <div><strong>Admit Card Download:</strong> 4 Days prior to candidate's exam date</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.rrbapply.gov.in/" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Check Exam City & Slip →
+        </a>
+      </div>
+    </div>
+
+    <!-- Job Card 4: RRB Technician Modification Window (CEN 02/2026) -->
+    <div style="background: #ffffff; border-left: 5px solid #9333ea; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          RRB Technician (Grade 1 Signal & Grade 3) Application Correction Window
+        </h3>
+        <span style="background: #f3e8ff; color: #6b21a8; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">CORRECTION ACTIVE</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Correction Window Dates:</strong> <span style="color: #dc2626; font-weight: 600;">Aug 01 to Aug 10, 2026</span></div>
+        <div><strong>Vacancies:</strong> 6,557 Posts</div>
+        <div><strong>Notice Detail:</strong> Modification of RRB choice, photo/signature re-upload & particulars correction.</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.rrbapply.gov.in/#/auth/landing" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Modify Application →
+        </a>
+      </div>
+    </div>
+
+    <!-- Job Card 5: RRB NTPC & Paramedical Upcoming Alert -->
+    <div style="background: #ffffff; border-left: 5px solid #0284c7; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          RRB NTPC & Paramedical Categories Recruitment Calendar 2026
+        </h3>
+        <span style="background: #e0f2fe; color: #0369a1; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">UPCOMING ALERT</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Expected CEN Window:</strong> Mid-to-Late August 2026</div>
+        <div><strong>Target Posts:</strong> Non-Technical Popular Categories (Graduate & Under-Graduate), Staff Nurse & Paramedical</div>
+        <div><strong>Official Portal:</strong> rrbapply.gov.in</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.rrbapply.gov.in/" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Visit RRB Portal
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- End: CSC Dost - RRB Jobs (rrbapply.gov.in) Section -->`;
+
+export const KU_ADMISSIONS_HTML_SNIPPET = `<!-- Start: CSC Dost - KU Admissions (kashmiruniversity.net) Section -->
+<div class="csc-ku-admissions-wrapper" style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 15px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+  
+  <div style="background: linear-gradient(135deg, #0f766e, #0d9488); color: #ffffff; padding: 18px 24px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+    <h2 style="margin: 0; font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+      🎓 Kashmir University (KU) Admissions, Selection Lists & Counseling Notices (August 2026)
+    </h2>
+    <p style="margin: 6px 0 0 0; font-size: 13px; opacity: 0.9;">
+      Extracted Active Admission Registration Forms, Selection Lists & Counseling Dates (kashmiruniversity.net) | Updated: August 07, 2026
+    </p>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+
+    <!-- Notice 1: KU PG 1st Selection List & Counseling Notice -->
+    <div style="background: #ffffff; border-left: 5px solid #0d9488; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          Kashmir University PG Admissions 2026 1st Selection List & Document Verification Counseling Notice
+        </h3>
+        <span style="background: #ccfbf1; color: #0f766e; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">1ST SELECTION LIST LIVE</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Notification Date:</strong> Aug 06, 2026</div>
+        <div><strong>Counseling / Doc Verification:</strong> Aug 07 to Aug 18, 2026</div>
+        <div><strong>Fee Payment Deadline:</strong> <span style="color: #dc2626; font-weight: 600;">Aug 18, 2026</span></div>
+        <div><strong>Courses Included:</strong> MA (English, Urdu, Pol Sc, Hist), M.Sc, M.Com, MCA</div>
+        <div><strong>Selection Basis:</strong> KUET 2026 Entrance Merit Ranks</div>
+        <div><strong>Reporting Location:</strong> Respective PG Departments (Main Campus Srinagar)</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.kashmiruniversity.net/admission.aspx" target="_blank" rel="noopener noreferrer" style="background: #0d9488; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Check 1st Selection List & Print Allotment Form →
+        </a>
+      </div>
+    </div>
+
+    <!-- Notice 2: KU DDE Distance Mode B.Ed & MA Fresh Admissions -->
+    <div style="background: #ffffff; border-left: 5px solid #2563eb; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          Kashmir University DDE Distance Mode B.Ed. & MA/M.Com Fresh Admission Notification 2026-27
+        </h3>
+        <span style="background: #dbeafe; color: #1d4ed8; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">DDE ADMISSION FORM</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Notification Date:</strong> Aug 05, 2026</div>
+        <div><strong>Application Start Date:</strong> Aug 05, 2026</div>
+        <div><strong>Last Date (Without Late Fee):</strong> <span style="color: #dc2626; font-weight: 600;">Aug 20, 2026</span></div>
+        <div><strong>With Late Fee (₹500):</strong> Aug 21 to Aug 26, 2026</div>
+        <div><strong>Offered Courses:</strong> B.Ed Distance Mode, MA (Eng, Urdu, Econ, Edu), M.Com</div>
+        <div><strong>Eligibility:</strong> Graduation with 45% OM / 40% Reserved (B.Ed requires In-service/D.El.Ed)</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.kashmiruniversity.net/admission.aspx" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Apply Online for DDE Admission →
+        </a>
+      </div>
+    </div>
+
+    <!-- Notice 3: KU Ph.D. Entrance Exemption & Direct Admission Notice -->
+    <div style="background: #ffffff; border-left: 5px solid #d97706; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          Kashmir University Ph.D. Research Programme Entrance Exemption & Direct Admission Registration 2026
+        </h3>
+        <span style="background: #fef3c7; color: #b45309; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">PH.D ADMISSION</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Notification Date:</strong> Aug 07, 2026</div>
+        <div><strong>Registration Window:</strong> Aug 07 to Aug 25, 2026</div>
+        <div><strong>Department Verification:</strong> <span style="color: #dc2626; font-weight: 600;">Aug 26 to Aug 31, 2026</span></div>
+        <div><strong>Exemption Criteria:</strong> CSIR-NET / UGC-NET / GATE / JK-SET Qualified</div>
+        <div><strong>Faculties:</strong> Science, Arts, Social Science, Law, Management</div>
+        <div><strong>Application Fee:</strong> ₹500 Online Submission</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.kashmiruniversity.net/admission.aspx" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Ph.D Registration Portal →
+        </a>
+      </div>
+    </div>
+
+    <!-- Notice 4: KU BA-LLB 5-Year Integrated Course 2nd Selection List & Allotment Counseling -->
+    <div style="background: #ffffff; border-left: 5px solid #9333ea; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          Kashmir University BA-LLB 5-Year Integrated Law Course 2nd Selection List & Counseling Allotment 2026
+        </h3>
+        <span style="background: #f3e8ff; color: #6b21a8; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">2ND LAW SELECTION LIST</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Notification Date:</strong> Aug 06, 2026</div>
+        <div><strong>Counseling / Doc Verification:</strong> Aug 08 to Aug 19, 2026</div>
+        <div><strong>Fee Payment Deadline:</strong> <span style="color: #dc2626; font-weight: 600;">Aug 20, 2026</span></div>
+        <div><strong>Participating Colleges:</strong> Main Campus Law Dept, Kashmir Law College & Sopore Law College</div>
+        <div><strong>Eligibility:</strong> 10+2 with minimum 45% OM / 40% SC/ST</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.kashmiruniversity.net/admission.aspx" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Check 2nd BA-LLB Selection List →
+        </a>
+      </div>
+    </div>
+
+    <!-- Notice 5: KU PG Diploma & Certificate Courses Online Admission -->
+    <div style="background: #ffffff; border-left: 5px solid #0284c7; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          Kashmir University 1-Year PG Diploma & Certificate Courses Online Admission Notification 2026
+        </h3>
+        <span style="background: #e0f2fe; color: #0369a1; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">DIPLOMA & CERTIFICATE</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Notification Date:</strong> Aug 05, 2026</div>
+        <div><strong>Application Start Date:</strong> Aug 05, 2026</div>
+        <div><strong>Last Date to Apply:</strong> <span style="color: #dc2626; font-weight: 600;">Aug 22, 2026</span></div>
+        <div><strong>Courses:</strong> PG Diploma Cyber Law, Web Design, Data Analytics, French/German/Russian</div>
+        <div><strong>Selection Basis:</strong> Academic Merit of Qualifying Exam</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.kashmiruniversity.net/admission.aspx" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Apply for Diploma / Certificate →
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- End: CSC Dost - KU Admissions (kashmiruniversity.net) Section -->`;
+
+export const KU_EXAM_FORMS_HTML_SNIPPET = `<!-- Start: CSC Dost - KU Exam Forms (kashmiruniversity.net) Section -->
+<div class="csc-ku-exam-forms-wrapper" style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 15px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+  
+  <div style="background: linear-gradient(135deg, #78350f, #b45309); color: #ffffff; padding: 18px 24px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+    <h2 style="margin: 0; font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+      📜 Kashmir University (KU) Online Examination Forms & Fee Submission (August 2026)
+    </h2>
+    <p style="margin: 6px 0 0 0; font-size: 13px; opacity: 0.9;">
+      Verified Active Notices from Examination Wing & e-Gov Portal (kashmiruniversity.net) | Updated: August 07, 2026
+    </p>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+
+    <!-- Notice 1: KU UG BG 4th Sem Exam Form -->
+    <div style="background: #ffffff; border-left: 5px solid #16a34a; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          Kashmir University UG BG 4th Semester (NEP 2020 Batch 2024 & CBCS Backlog) Online Exam Form 2026
+        </h3>
+        <span style="background: #dcfce7; color: #15803d; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">UG EXAM FORM LIVE</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Notification Date:</strong> Aug 06, 2026</div>
+        <div><strong>Submission Start Date:</strong> Aug 06, 2026</div>
+        <div><strong>Last Date (Without Late Fee):</strong> <span style="color: #dc2626; font-weight: 600;">Aug 22, 2026</span></div>
+        <div><strong>With Late Fee (₹500):</strong> Aug 23 to Aug 28, 2026</div>
+        <div><strong>Eligible Courses:</strong> BA, B.Sc, B.Com, BBA, BCA (4th Sem Regular & Backlog)</div>
+        <div><strong>Fee Structure:</strong> ₹250/theory paper + ₹350 EMF + ₹275 practical</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://egov.kashmiruniversity.ac.in/" target="_blank" rel="noopener noreferrer" style="background: #059669; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Submit Exam Form Portal (egov.kashmiruniversity.ac.in) →
+        </a>
+        <a href="https://www.kashmiruniversity.net/Examination.aspx" target="_blank" rel="noopener noreferrer" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Download Official PDF Notice
+        </a>
+      </div>
+    </div>
+
+    <!-- Notice 2: KU PG 1st & 3rd Sem Exam Form -->
+    <div style="background: #ffffff; border-left: 5px solid #2563eb; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          Kashmir University PG (MA, M.Sc, M.Com, MCA) 1st & 3rd Semester Main & Satellite Campus Online Exam Form
+        </h3>
+        <span style="background: #dbeafe; color: #1d4ed8; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">PG EXAM FORM LIVE</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Notification Date:</strong> Aug 05, 2026</div>
+        <div><strong>Submission Start Date:</strong> Aug 05, 2026</div>
+        <div><strong>Last Date (Without Late Fee):</strong> <span style="color: #dc2626; font-weight: 600;">Aug 19, 2026</span></div>
+        <div><strong>With Late Fee (₹500):</strong> Aug 20 to Aug 25, 2026</div>
+        <div><strong>Campuses:</strong> Main Campus Srinagar, North Campus, South Campus & Govt PG Colleges</div>
+        <div><strong>Fee Structure:</strong> ₹1,650 Complete Semester Exam Fee</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.kashmiruniversity.net/Examination.aspx" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Fill PG Exam Form Online →
+        </a>
+      </div>
+    </div>
+
+    <!-- Notice 3: KU B.Ed 1st & 2nd Sem Exam Form -->
+    <div style="background: #ffffff; border-left: 5px solid #d97706; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          Kashmir University B.Ed. (2-Year Program) 1st & 2nd Semester (Batch 2025) Online Examination Form
+        </h3>
+        <span style="background: #fef3c7; color: #b45309; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">B.ED EXAM FORM</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Notification Date:</strong> Aug 07, 2026</div>
+        <div><strong>Submission Start Date:</strong> Aug 07, 2026</div>
+        <div><strong>Last Date (Without Late Fee):</strong> <span style="color: #dc2626; font-weight: 600;">Aug 24, 2026</span></div>
+        <div><strong>Late Fee Window (₹100/day):</strong> Aug 25 to Aug 30, 2026</div>
+        <div><strong>Institutes:</strong> Department of Education Main Campus & Affiliated Private B.Ed Colleges</div>
+        <div><strong>Fee Structure:</strong> ₹250 per paper + ₹900 EMF/Hot & Cold Charges</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://egov.kashmiruniversity.ac.in/" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Fill B.Ed Form Portal →
+        </a>
+      </div>
+    </div>
+
+    <!-- Notice 4: KU Professional B.Tech 4th, 6th & 8th Sem Exam Form -->
+    <div style="background: #ffffff; border-left: 5px solid #9333ea; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          Kashmir University Professional B.Tech / B.E. 4th, 6th & 8th Semester Online Examination Form Notice
+        </h3>
+        <span style="background: #f3e8ff; color: #6b21a8; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">B.TECH EXAM FORM</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Notification Date:</strong> Aug 06, 2026</div>
+        <div><strong>Submission Start Date:</strong> Aug 06, 2026</div>
+        <div><strong>Last Date (Without Late Fee):</strong> <span style="color: #dc2626; font-weight: 600;">Aug 21, 2026</span></div>
+        <div><strong>With Late Fee (₹500):</strong> Aug 22 to Aug 27, 2026</div>
+        <div><strong>Institutes:</strong> IOT Zakura Campus, Dept of CS Main Campus & SSM College of Engineering</div>
+        <div><strong>Fee Structure:</strong> ₹350 per theory paper + ₹450 Engineering Infrastructure & IT Fee</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.kashmiruniversity.net/Examination.aspx" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Fill B.Tech Exam Form →
+        </a>
+      </div>
+    </div>
+
+    <!-- Notice 5: KU DDE Distance Education MA & B.Ed Term-End Exam Form -->
+    <div style="background: #ffffff; border-left: 5px solid #0284c7; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          Kashmir University DDE Distance Education MA & B.Ed Term-End Online Exam Form Notice
+        </h3>
+        <span style="background: #e0f2fe; color: #0369a1; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">DISTANCE EXAM FORM</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Notification Date:</strong> Aug 05, 2026</div>
+        <div><strong>Submission Start Date:</strong> Aug 05, 2026</div>
+        <div><strong>Last Date (Without Late Fee):</strong> <span style="color: #dc2626; font-weight: 600;">Aug 20, 2026</span></div>
+        <div><strong>With Late Fee (₹500):</strong> Aug 21 to Aug 26, 2026</div>
+        <div><strong>Courses:</strong> Directorate of Distance Education MA (English, Urdu, Econ, Edu) & DDE B.Ed</div>
+        <div><strong>Fee Structure:</strong> ₹300 per subject paper + ₹400 DDE Maintenance Fee</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://egov.kashmiruniversity.ac.in/" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Fill DDE Exam Form Portal →
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- End: CSC Dost - KU Exam Forms (kashmiruniversity.net) Section -->`;
+
+export const CLUSTER_UNIV_HTML_SNIPPET = `<!-- Start: CSC Dost - Cluster University Srinagar (cusrinagar.edu.in) Section -->
+<div class="csc-cluster-univ-wrapper" style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 15px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+  
+  <div style="background: linear-gradient(135deg, #064e3b, #0f766e); color: #ffffff; padding: 18px 24px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+    <h2 style="margin: 0; font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+      🏫 Cluster University Srinagar (CUS) Admissions & Examination Updates (August 2026)
+    </h2>
+    <p style="margin: 6px 0 0 0; font-size: 13px; opacity: 0.9;">
+      Verified from Official Portal & Notice Board (cusrinagar.edu.in) | Updated: August 07, 2026
+    </p>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+
+    <!-- Notice 1: CUS UG 3rd & 5th Semester Examination Forms -->
+    <div style="background: #ffffff; border-left: 5px solid #16a34a; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          CUS UG 3rd & 5th Semester NEP-2020 Online Examination Form Submission Notice 2026
+        </h3>
+        <span style="background: #dcfce7; color: #15803d; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">EXAM FORM LIVE</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Notification Date:</strong> Aug 06, 2026</div>
+        <div><strong>Form Submission Start:</strong> Aug 06, 2026</div>
+        <div><strong>Last Date (Without Late Fee):</strong> <span style="color: #dc2626; font-weight: 600;">Aug 20, 2026</span></div>
+        <div><strong>With Late Fee (₹500):</strong> Aug 21 to Aug 25, 2026</div>
+        <div><strong>Eligible Batches:</strong> Regular & Backlog UG 3rd & 5th Semester (Batch 2023 & 2024)</div>
+        <div><strong>Constituent Colleges:</strong> Amar Singh, SP College, Women's College MA Road, AAAM Bemina, IASE</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.cusrinagar.edu.in/" target="_blank" rel="noopener noreferrer" style="background: #059669; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Submit Exam Form Portal →
+        </a>
+        <a href="https://www.cusrinagar.edu.in/" target="_blank" rel="noopener noreferrer" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Official Notice PDF
+        </a>
+      </div>
+    </div>
+
+    <!-- Notice 2: CUS PG & Integrated 1st Semester Spot Round Admissions -->
+    <div style="background: #ffffff; border-left: 5px solid #2563eb; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          CUS PG & 5-Year Integrated 1st Semester Spot Round Counseling & Online Registration
+        </h3>
+        <span style="background: #dbeafe; color: #1d4ed8; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">SPOT ADMISSION ACTIVE</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Notification Date:</strong> Aug 05, 2026</div>
+        <div><strong>Registration Window:</strong> <span style="color: #16a34a; font-weight: 600;">Aug 05, 2026 to Aug 18, 2026</span></div>
+        <div><strong>Document Verification at College:</strong> Aug 19 to Aug 22, 2026</div>
+        <div><strong>Courses Included:</strong> M.Sc, M.A, M.Com, MCA, Integrated B.Sc-M.Sc & B.A-M.A</div>
+        <div><strong>Eligibility:</strong> CUSET 2026 Qualified or Academic Merit Merit List Holders</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.cusrinagar.edu.in/" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Apply for Spot Admission →
+        </a>
+      </div>
+    </div>
+
+    <!-- Notice 3: CUS B.Ed / M.Ed Exam Form Notice -->
+    <div style="background: #ffffff; border-left: 5px solid #d97706; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          CUS B.Ed & M.Ed 2-Year Program Examination Form & Online Fee Schedule 2026
+        </h3>
+        <span style="background: #fef3c7; color: #b45309; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">TEACHER ED EXAM</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Notification Date:</strong> Aug 07, 2026</div>
+        <div><strong>Form Submission Start:</strong> Aug 07, 2026</div>
+        <div><strong>Last Date to Apply:</strong> <span style="color: #dc2626; font-weight: 600;">Aug 24, 2026</span></div>
+        <div><strong>Late Fee Window (₹100/day):</strong> Aug 25 to Aug 28, 2026</div>
+        <div><strong>Institute:</strong> Institute of Advanced Studies in Education (IASE Govt College of Education)</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.cusrinagar.edu.in/" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Student Zone Form Portal →
+        </a>
+      </div>
+    </div>
+
+    <!-- Notice 4: CUS UG 1st Sem Self-Registration -->
+    <div style="background: #ffffff; border-left: 5px solid #9333ea; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          CUS UG 1st Semester (Batch 2026) Online Self-Registration & Document Verification Notice
+        </h3>
+        <span style="background: #f3e8ff; color: #6b21a8; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">NEW BATCH 2026</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Public Notice Date:</strong> Aug 06, 2026</div>
+        <div><strong>Self-Registration Period:</strong> <span style="color: #16a34a; font-weight: 600;">Aug 06 to Aug 21, 2026</span></div>
+        <div><strong>Physical Verification at College:</strong> Aug 22 to Aug 28, 2026</div>
+        <div><strong>Classes Commencement:</strong> September 01, 2026</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.cusrinagar.edu.in/" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Student Self-Registration →
+        </a>
+      </div>
+    </div>
+
+    <!-- Notice 5: CUS UG Re-evaluation Notice -->
+    <div style="background: #ffffff; border-left: 5px solid #0284c7; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          CUS Division of Examination - Online Re-evaluation Form for UG 2nd & 4th Semester Results
+        </h3>
+        <span style="background: #e0f2fe; color: #0369a1; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">RE-EVALUATION LIVE</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Notice Date:</strong> Aug 05, 2026</div>
+        <div><strong>Re-evaluation Application Window:</strong> <span style="color: #dc2626; font-weight: 600;">Aug 05 to Aug 17, 2026</span></div>
+        <div><strong>Re-evaluation Fee:</strong> ₹500 per paper / answer script copy</div>
+        <div><strong>Scope:</strong> UG 2nd & 4th Semester Examination Results</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.cusrinagar.edu.in/" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Apply Re-evaluation Online →
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- End: CSC Dost - Cluster University Srinagar (cusrinagar.edu.in) Section -->`;
+
+export const NTA_EXAMS_HTML_SNIPPET = `<!-- Start: CSC Dost - NTA Entrance Exams (nta.ac.in) Section -->
+<div class="csc-nta-exams-wrapper" style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 15px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+  
+  <div style="background: linear-gradient(135deg, #701a75, #4c1d95); color: #ffffff; padding: 18px 24px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+    <h2 style="margin: 0; font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+      🎓 National Testing Agency (NTA) Latest Entrance Exams & Public Notices (August 2026)
+    </h2>
+    <p style="margin: 6px 0 0 0; font-size: 13px; opacity: 0.9;">
+      Verified from Notice Board & Active Examinations (nta.ac.in) | Updated: August 07, 2026
+    </p>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+
+    <!-- Exam Notice 1: UGC NET Dec 2026 -->
+    <div style="background: #ffffff; border-left: 5px solid #16a34a; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          NTA UGC NET December 2026 Session Public Notice & Application Schedule
+        </h3>
+        <span style="background: #dcfce7; color: #15803d; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">NEW REGISTRATION</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Public Notice Date:</strong> Aug 06, 2026</div>
+        <div><strong>Application Start Date:</strong> Aug 06, 2026</div>
+        <div><strong>Last Date to Apply:</strong> <span style="color: #dc2626; font-weight: 600;">Sep 05, 2026 (23:50 Hrs)</span></div>
+        <div><strong>Exam Dates:</strong> <span style="color: #2563eb; font-weight: 600;">Dec 01 to Dec 15, 2026</span></div>
+        <div><strong>Eligibility:</strong> Master's Degree (Min 55% Marks / 50% for reserved category)</div>
+        <div><strong>Courses/Scope:</strong> JRF & Assistant Professor across 83 Subjects</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://ugcnet.nta.ac.in/" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Apply Online Portal (ugcnet.nta.ac.in) →
+        </a>
+        <a href="https://www.nta.ac.in/" target="_blank" rel="noopener noreferrer" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Download Official PDF Notice
+        </a>
+      </div>
+    </div>
+
+    <!-- Exam Notice 2: JEE Main 2027 Session-1 -->
+    <div style="background: #ffffff; border-left: 5px solid #2563eb; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          NTA JEE (Main) 2027 Session-1 Exam Calendar & Preliminary Public Notice
+        </h3>
+        <span style="background: #dbeafe; color: #1d4ed8; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">EXAM CALENDAR</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Notice Date:</strong> Aug 05, 2026</div>
+        <div><strong>Expected Registration Start:</strong> Oct 25, 2026</div>
+        <div><strong>Session-1 Exam Dates:</strong> <span style="color: #2563eb; font-weight: 600;">Jan 21 to Jan 30, 2027</span></div>
+        <div><strong>Eligibility:</strong> Class 12th Pass (2025/2026) or Appearing in 2027</div>
+        <div><strong>Streams:</strong> B.E. / B.Tech (Paper 1), B.Arch (2A), B.Planning (2B)</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://jeemain.nta.ac.in/" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Visit JEE Main Portal (jeemain.nta.ac.in) →
+        </a>
+      </div>
+    </div>
+
+    <!-- Exam Notice 3: NEET UG 2026 Counselling Notice -->
+    <div style="background: #ffffff; border-left: 5px solid #d97706; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          NTA NEET UG 2026 Medical Counselling Data Verification Public Notice
+        </h3>
+        <span style="background: #fef3c7; color: #b45309; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">COUNSELLING NOTICE</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Public Notice Date:</strong> Aug 06, 2026</div>
+        <div><strong>Verification Portal Active:</strong> Aug 06 to Aug 20, 2026</div>
+        <div><strong>Scope:</strong> MBBS, BDS, BAMS, BHMS & B.Sc Nursing AIQ/State Seats</div>
+        <div><strong>Eligibility:</strong> NEET (UG) 2026 Qualified Candidates</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://neet.ntaonline.in/" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Check NEET Portal (neet.ntaonline.in) →
+        </a>
+      </div>
+    </div>
+
+    <!-- Exam Notice 4: CSIR UGC NET Dec 2026 -->
+    <div style="background: #ffffff; border-left: 5px solid #9333ea; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          NTA Joint CSIR-UGC NET December 2026 Online Registration Public Notice
+        </h3>
+        <span style="background: #f3e8ff; color: #6b21a8; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">ACTIVE NOTICE</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Public Notice Date:</strong> Aug 07, 2026</div>
+        <div><strong>Application Start Date:</strong> Aug 07, 2026</div>
+        <div><strong>Last Date to Apply:</strong> <span style="color: #dc2626; font-weight: 600;">Sep 06, 2026</span></div>
+        <div><strong>Exam Dates:</strong> <span style="color: #2563eb; font-weight: 600;">Dec 18 to Dec 22, 2026</span></div>
+        <div><strong>Eligibility:</strong> M.Sc / BS / B.Tech / B.Pharma / MBBS with min 55% marks</div>
+        <div><strong>Streams:</strong> Science & Technology (Chemical, Earth, Life, Math, Physical)</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://csirnet.nta.ac.in/" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Apply Online Portal (csirnet.nta.ac.in) →
+        </a>
+      </div>
+    </div>
+
+    <!-- Exam Notice 5: CUET UG / PG 2027 Preview Notice -->
+    <div style="background: #ffffff; border-left: 5px solid #0284c7; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          NTA CUET UG & PG 2027 Academic Session Advisory Public Notice
+        </h3>
+        <span style="background: #e0f2fe; color: #0369a1; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">PUBLIC ADVISORY</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Public Notice Date:</strong> Aug 05, 2026</div>
+        <div><strong>Application Window (Expected):</strong> Nov 15 to Dec 20, 2026</div>
+        <div><strong>Tentative Exam Window:</strong> May 15 to May 31, 2027</div>
+        <div><strong>Eligibility:</strong> Class 12th Pass/Appearing (UG) / Bachelor Degree (PG)</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.nta.ac.in/" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Read Advisory on NTA.ac.in →
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- End: CSC Dost - NTA Entrance Exams (nta.ac.in) Section -->`;
+
+export const SSC_JOBS_HTML_SNIPPET = `<!-- Start: CSC Dost - SSC Jobs (ssc.gov.in) Section -->
+<div class="csc-ssc-jobs-wrapper" style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 15px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+  
+  <div style="background: linear-gradient(135deg, #1e1b4b, #312e81); color: #ffffff; padding: 18px 24px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+    <h2 style="margin: 0; font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+      🏛️ Staff Selection Commission (SSC) Latest Jobs & Exam Updates (August 2026)
+    </h2>
+    <p style="margin: 6px 0 0 0; font-size: 13px; opacity: 0.9;">
+      Verified from Notice Board & Official Portal (ssc.gov.in) | Updated: August 07, 2026
+    </p>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+
+    <!-- Job Card 1 -->
+    <div style="background: #ffffff; border-left: 5px solid #16a34a; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          SSC Stenographer Grade 'C' & 'D' Examination 2026 (1,207 Vacancies)
+        </h3>
+        <span style="background: #dcfce7; color: #15803d; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">NEW NOTIFICATION</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Notification Date:</strong> Aug 06, 2026</div>
+        <div><strong>Application Start:</strong> Aug 06, 2026</div>
+        <div><strong>Last Date to Apply:</strong> <span style="color: #dc2626; font-weight: 600;">Sep 05, 2026 (23:00 Hrs)</span></div>
+        <div><strong>Correction Window:</strong> Sep 07 to Sep 08, 2026</div>
+        <div><strong>Total Vacancies:</strong> 1,207 Posts (Tentative)</div>
+        <div><strong>Eligibility:</strong> 12th Standard Pass + Stenography Skill Test</div>
+        <div><strong>Age Limit:</strong> Grade C: 18-30 Yrs | Grade D: 18-27 Yrs</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://ssc.gov.in/" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Apply Online Portal (ssc.gov.in) →
+        </a>
+        <a href="https://ssc.gov.in/" target="_blank" rel="noopener noreferrer" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Official Notice PDF
+        </a>
+      </div>
+    </div>
+
+    <!-- Job Card 2 -->
+    <div style="background: #ffffff; border-left: 5px solid #2563eb; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          SSC CGL 2026 Tier-I Computer Based Exam City Intimation & Admit Card Schedule
+        </h3>
+        <span style="background: #dbeafe; color: #1d4ed8; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">EXAM SCHEDULE</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Official Notice Date:</strong> Aug 05, 2026</div>
+        <div><strong>Tier-I Exam Dates:</strong> <span style="color: #2563eb; font-weight: 600;">Sep 09, 2026 to Sep 26, 2026</span></div>
+        <div><strong>City Slip Portal Live:</strong> Aug 28, 2026</div>
+        <div><strong>Admit Card Download:</strong> 4 Days prior to candidate exam date</div>
+        <div><strong>Total Vacancies:</strong> 17,727 Group B & C Officers Posts</div>
+        <div><strong>Eligibility:</strong> Bachelor's Degree in any discipline</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://ssc.gov.in/login" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Check Candidate Portal →
+        </a>
+      </div>
+    </div>
+
+    <!-- Job Card 3 -->
+    <div style="background: #ffffff; border-left: 5px solid #d97706; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          SSC GD Constable in CAPFs, SSF & Rifleman (GD) 2026 Notification Notice
+        </h3>
+        <span style="background: #fef3c7; color: #b45309; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">UPCOMING MEGA DRIVE</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Short Notice Release:</strong> Aug 07, 2026</div>
+        <div><strong>Detailed Notice Date:</strong> Aug 27, 2026</div>
+        <div><strong>Application Window:</strong> <span style="color: #16a34a; font-weight: 600;">Aug 27, 2026 to Sep 27, 2026</span></div>
+        <div><strong>Expected Vacancies:</strong> 39,481 Posts</div>
+        <div><strong>Eligibility:</strong> Class 10th (Matriculation) Pass</div>
+        <div><strong>Age Limit:</strong> 18 to 23 Years</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://ssc.gov.in/" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          SSC Portal Check →
+        </a>
+      </div>
+    </div>
+
+    <!-- Job Card 4 -->
+    <div style="background: #ffffff; border-left: 5px solid #9333ea; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          SSC Selection Posts Phase-XIV 2026 Application Correction Window Notice
+        </h3>
+        <span style="background: #f3e8ff; color: #6b21a8; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">CORRECTION ACTIVE</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Official Notice Date:</strong> Aug 06, 2026</div>
+        <div><strong>Correction Window Dates:</strong> <span style="color: #dc2626; font-weight: 600;">Aug 14, 2026 to Aug 16, 2026</span></div>
+        <div><strong>Total Vacancies:</strong> 2,049 Posts across 9 Regional Offices</div>
+        <div><strong>Levels:</strong> 10th Pass / 12th Pass / Graduate Level Posts</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://ssc.gov.in/login" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Modify Application →
+        </a>
+      </div>
+    </div>
+
+    <!-- Job Card 5 -->
+    <div style="background: #ffffff; border-left: 5px solid #0284c7; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          SSC CHSL (10+2) Tier-II (Mains) Examination Date Notice 2026
+        </h3>
+        <span style="background: #e0f2fe; color: #0369a1; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">MAINS EXAM NOTICE</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Official Notice Date:</strong> Aug 05, 2026</div>
+        <div><strong>Tier-II Exam Date:</strong> <span style="color: #2563eb; font-weight: 600;">October 18, 2026</span></div>
+        <div><strong>Posts:</strong> LDC, JSA & DEO Grade A</div>
+        <div><strong>Eligibility:</strong> Tier-I Qualified Candidates</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://ssc.gov.in/" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Check Mains Notice PDF
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- End: CSC Dost - SSC Jobs (ssc.gov.in) Section -->`;
+
+export const ARMY_JOBS_HTML_SNIPPET = `<!-- Start: CSC Dost - Indian Army Jobs Section -->
+<div class="csc-army-jobs-wrapper" style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 15px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+  
+  <div style="background: linear-gradient(135deg, #1e3a8a, #065f46); color: #ffffff; padding: 18px 24px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+    <h2 style="margin: 0; font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+      🇮🇳 Join Indian Army Latest Recruitment & Rally Updates (August 2026)
+    </h2>
+    <p style="margin: 6px 0 0 0; font-size: 13px; opacity: 0.9;">
+      Verified from joinindianarmy.nic.in | Updated: August 07, 2026
+    </p>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+
+    <!-- Job 1 -->
+    <div style="background: #ffffff; border-left: 5px solid #16a34a; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          NCC Special Entry Scheme 125th Course (April 2027)
+        </h3>
+        <span style="background: #dcfce7; color: #15803d; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">NEW NOTIFICATION</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Notification Date:</strong> Aug 05, 2026</div>
+        <div><strong>Last Date to Apply:</strong> <span style="color: #dc2626; font-weight: 600;">Aug 20, 2026 (15:00 Hrs)</span></div>
+        <div><strong>Vacancies:</strong> 70 Posts (Male & Female)</div>
+        <div><strong>Eligibility:</strong> Graduate (Min 50% marks) + NCC 'C' Certificate</div>
+        <div><strong>Age Limit:</strong> 19 to 25 Years</div>
+        <div><strong>Type:</strong> Officers Entry (Short Service Commission)</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.joinindianarmy.nic.in/officers-entry-apply-login.htm" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Apply Online →
+        </a>
+        <a href="https://www.joinindianarmy.nic.in/default.aspx" target="_blank" rel="noopener noreferrer" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Official Portal
+        </a>
+      </div>
+    </div>
+
+    <!-- Job 2 -->
+    <div style="background: #ffffff; border-left: 5px solid #2563eb; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          JAG Entry Scheme 34th Course (Law Graduates - April 2027)
+        </h3>
+        <span style="background: #dbeafe; color: #1d4ed8; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">ACTIVE NOW</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Notification Date:</strong> Aug 05, 2026</div>
+        <div><strong>Last Date to Apply:</strong> <span style="color: #dc2626; font-weight: 600;">Aug 21, 2026</span></div>
+        <div><strong>Eligibility:</strong> LLB Degree (Min 55% marks) + Bar Council eligibility</div>
+        <div><strong>Age Limit:</strong> 21 to 27 Years</div>
+        <div><strong>Location:</strong> All India (Commissioned Officer)</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.joinindianarmy.nic.in/officers-entry-apply-login.htm" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Apply Online →
+        </a>
+      </div>
+    </div>
+
+    <!-- Job 3 -->
+    <div style="background: #ffffff; border-left: 5px solid #d97706; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          Territorial Army Non-Departmental Officer Entry 2026
+        </h3>
+        <span style="background: #fef3c7; color: #b45309; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">OFFICER ENTRY</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Notification Date:</strong> Aug 05, 2026</div>
+        <div><strong>Last Date to Apply:</strong> <span style="color: #dc2626; font-weight: 600;">Aug 25, 2026</span></div>
+        <div><strong>Eligibility:</strong> Graduate in any discipline (Gainfully Employed)</div>
+        <div><strong>Age Limit:</strong> 18 to 42 Years</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.joinindianarmy.nic.in/default.aspx" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Check Details on Portal
+        </a>
+      </div>
+    </div>
+
+    <!-- Job 4 -->
+    <div style="background: #ffffff; border-left: 5px solid #9333ea; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          Ladakh Scouts Regimental Centre Agniveer Recruitment Rally
+        </h3>
+        <span style="background: #f3e8ff; color: #6b21a8; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">RECRUITMENT RALLY</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Rally Dates:</strong> <span style="color: #16a34a; font-weight: 600;">Aug 11 to Aug 13, 2026</span></div>
+        <div><strong>Notification Date:</strong> Aug 05, 2026 (Rally Notice)</div>
+        <div><strong>Location:</strong> Leh, Ladakh (HQ Quota)</div>
+        <div><strong>Eligibility:</strong> 10th / 12th Pass (Ladakh Domicile)</div>
+        <div><strong>Age Limit:</strong> 17.5 to 21 Years</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.joinindianarmy.nic.in/BRAgniveerRallySchedule.htm" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          View Rally Schedule →
+        </a>
+      </div>
+    </div>
+
+    <!-- Job 5 -->
+    <div style="background: #ffffff; border-left: 5px solid #0284c7; border-radius: 8px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+        <h3 style="margin: 0; font-size: 18px; color: #0f172a; font-weight: 700;">
+          Army Ordnance Corps (AOC) Civilian Recruitment Alert 2026
+        </h3>
+        <span style="background: #e0f2fe; color: #0369a1; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">UPCOMING ALERT</span>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; font-size: 14px; color: #334155;">
+        <div><strong>Expected Online Window:</strong> Aug 24 to Sep 22, 2026</div>
+        <div><strong>Posts:</strong> Tradesman Mate, Fireman & Material Assistant</div>
+        <div><strong>Eligibility:</strong> 10th Pass / 12th Pass / Graduate</div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="https://www.joinindianarmy.nic.in/default.aspx" target="_blank" rel="noopener noreferrer" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block;">
+          Check Updates
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- End: CSC Dost - Indian Army Jobs Section -->`;
+
 export default function SarkariResultDesk({ onApplyService, selectedService }: SarkariResultDeskProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<SarkariItem | null>(null);
@@ -245,6 +1165,83 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
   const [shareToast, setShareToast] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [activeShareData, setActiveShareData] = useState<{ title: string; text: string; url: string; name: string } | null>(null);
+
+  // KU Admissions HTML Snippet State
+  const [showKuAdmissionsHtmlSource, setShowKuAdmissionsHtmlSource] = useState(false);
+  const [kuAdmissionsHtmlCopied, setKuAdmissionsHtmlCopied] = useState(false);
+
+  const handleCopyKuAdmissionsHtml = () => {
+    navigator.clipboard.writeText(KU_ADMISSIONS_HTML_SNIPPET);
+    setKuAdmissionsHtmlCopied(true);
+    triggerToast('Copied KU Admissions (Kashmir Univ) HTML Snippet to clipboard!');
+    setTimeout(() => setKuAdmissionsHtmlCopied(false), 3000);
+  };
+
+  // KU Exam Forms HTML Snippet State
+  const [showKuHtmlSource, setShowKuHtmlSource] = useState(false);
+  const [kuHtmlCopied, setKuHtmlCopied] = useState(false);
+
+  const handleCopyKuHtml = () => {
+    navigator.clipboard.writeText(KU_EXAM_FORMS_HTML_SNIPPET);
+    setKuHtmlCopied(true);
+    triggerToast('Copied KU Exam Forms (Kashmir Univ) HTML Snippet to clipboard!');
+    setTimeout(() => setKuHtmlCopied(false), 3000);
+  };
+
+  // Cluster University HTML Snippet State
+  const [showClusterUnivHtmlSource, setShowClusterUnivHtmlSource] = useState(false);
+  const [clusterUnivHtmlCopied, setClusterUnivHtmlCopied] = useState(false);
+
+  const handleCopyClusterUnivHtml = () => {
+    navigator.clipboard.writeText(CLUSTER_UNIV_HTML_SNIPPET);
+    setClusterUnivHtmlCopied(true);
+    triggerToast('Copied Cluster University (CUS Srinagar) HTML Snippet to clipboard!');
+    setTimeout(() => setClusterUnivHtmlCopied(false), 3000);
+  };
+
+  // NTA Entrance Exams HTML Snippet State
+  const [showNtaHtmlSource, setShowNtaHtmlSource] = useState(false);
+  const [ntaHtmlCopied, setNtaHtmlCopied] = useState(false);
+
+  const handleCopyNtaHtml = () => {
+    navigator.clipboard.writeText(NTA_EXAMS_HTML_SNIPPET);
+    setNtaHtmlCopied(true);
+    triggerToast('Copied NTA Entrance Exams (nta.ac.in) HTML Snippet to clipboard!');
+    setTimeout(() => setNtaHtmlCopied(false), 3000);
+  };
+
+  // SSC HTML Snippet State
+  const [showSscHtmlSource, setShowSscHtmlSource] = useState(false);
+  const [sscHtmlCopied, setSscHtmlCopied] = useState(false);
+
+  const handleCopySscHtml = () => {
+    navigator.clipboard.writeText(SSC_JOBS_HTML_SNIPPET);
+    setSscHtmlCopied(true);
+    triggerToast('Copied SSC Jobs (ssc.gov.in) HTML Snippet to clipboard!');
+    setTimeout(() => setSscHtmlCopied(false), 3000);
+  };
+
+  // RRB HTML Snippet State
+  const [showRrbHtmlSource, setShowRrbHtmlSource] = useState(false);
+  const [rrbHtmlCopied, setRrbHtmlCopied] = useState(false);
+
+  const handleCopyRrbHtml = () => {
+    navigator.clipboard.writeText(RRB_JOBS_HTML_SNIPPET);
+    setRrbHtmlCopied(true);
+    triggerToast('Copied RRB Jobs HTML Snippet to clipboard!');
+    setTimeout(() => setRrbHtmlCopied(false), 3000);
+  };
+
+  // Indian Army HTML Snippet State
+  const [showArmyHtmlSource, setShowArmyHtmlSource] = useState(false);
+  const [armyHtmlCopied, setArmyHtmlCopied] = useState(false);
+
+  const handleCopyArmyHtml = () => {
+    navigator.clipboard.writeText(ARMY_JOBS_HTML_SNIPPET);
+    setArmyHtmlCopied(true);
+    triggerToast('Copied Indian Army Jobs HTML Snippet to clipboard!');
+    setTimeout(() => setArmyHtmlCopied(false), 3000);
+  };
 
   // Auto-open post modal if ?post=... is present in URL
   useEffect(() => {
@@ -1654,227 +2651,780 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
           </div>
         )}
 
-        {/* FEATURED KASHMIR UNIVERSITY OFFICIAL ADMISSIONS BANNER WHEN ADMISSIONS TAB IS ACTIVE */}
+        {/* FEATURED KASHMIR UNIVERSITY OFFICIAL ADMISSIONS BANNER & EMBED HTML SECTION WHEN ADMISSIONS TAB IS ACTIVE */}
         {activeTab === 'admissions' && (
-          <div className="max-w-7xl mx-auto mb-5 p-4 sm:p-5 bg-gradient-to-r from-teal-950 via-slate-900 to-teal-900 rounded-2xl text-white border border-teal-700 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
-                  OFFICIAL KASHMIR UNIVERSITY PORTAL
+          <div className="max-w-7xl mx-auto mb-6 space-y-4">
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-teal-950 via-slate-900 to-teal-900 rounded-2xl text-white border border-teal-700 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
+                    OFFICIAL KASHMIR UNIVERSITY PORTAL
+                  </span>
+                  <span className="text-teal-200 text-xs font-mono font-bold flex items-center gap-1">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                    Verified Active Admission Notices from kashmiruniversity.net
+                  </span>
+                </div>
+                <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
+                  University of Kashmir Admission Updates (August 2026 Notices)
+                </h3>
+                <p className="text-xs text-teal-200 max-w-2xl font-medium">
+                  Extracted Admission Registrations, 1st &amp; 2nd Selection Lists, Counseling Schedules, DDE Distance Mode Forms, Ph.D. Direct Admissions, and Diploma Notices posted on or after August 5, 2026.
+                </p>
+              </div>
+              <a
+                href="https://www.kashmiruniversity.net/admission.aspx"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5 shrink-0 hover:scale-[1.02] font-bold"
+              >
+                <span>Visit kashmiruniversity.net</span>
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+
+            {/* HTML Snippet Toolbar & Code Copy Box */}
+            <div className="p-4 bg-slate-900 dark:bg-slate-950 text-white rounded-2xl border border-teal-800/80 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 bg-teal-500/20 text-teal-400 rounded-lg">
+                  <FileCheck className="w-5 h-5" />
                 </span>
-                <span className="text-teal-200 text-xs font-mono font-bold flex items-center gap-1">
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                  Verified Admission Notifications from kashmiruniversity.net
+                <div>
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    CSC Dost - KU Admissions (Kashmir Univ) HTML Embed Section
+                    <span className="bg-teal-500/30 text-teal-300 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border border-teal-500/40">
+                      Website Snippet
+                    </span>
+                  </h4>
+                  <p className="text-xs text-slate-300">
+                    Use the buttons below to view or copy the clean HTML code to paste into your website section.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 w-full md:w-auto">
+                <button
+                  onClick={() => setShowKuAdmissionsHtmlSource(!showKuAdmissionsHtmlSource)}
+                  className="flex-1 md:flex-none px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-teal-300 text-xs font-bold rounded-xl transition-all border border-slate-700 flex items-center justify-center gap-1.5"
+                >
+                  <Code className="w-4 h-4" />
+                  <span>{showKuAdmissionsHtmlSource ? 'Hide HTML Code' : 'View HTML Code'}</span>
+                </button>
+                <button
+                  onClick={handleCopyKuAdmissionsHtml}
+                  className="flex-1 md:flex-none px-4 py-2 bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5"
+                >
+                  {kuAdmissionsHtmlCopied ? (
+                    <>
+                      <Check className="w-4 h-4 text-slate-950" />
+                      <span>Copied HTML!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span>Copy HTML Snippet</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Collapsible Source Code View */}
+            {showKuAdmissionsHtmlSource && (
+              <div className="p-4 bg-slate-950 text-teal-300 rounded-2xl border border-slate-800 font-mono text-xs overflow-x-auto relative shadow-inner">
+                <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-800 text-slate-400 text-[11px]">
+                  <span>HTML Source Code Snippet (CSC Dost - KU Admissions)</span>
+                  <button
+                    onClick={handleCopyKuAdmissionsHtml}
+                    className="px-2.5 py-1 bg-teal-950 hover:bg-teal-900 text-teal-300 border border-teal-700 rounded text-[11px] font-bold flex items-center gap-1"
+                  >
+                    <Copy className="w-3 h-3" /> Copy Code
+                  </button>
+                </div>
+                <pre className="whitespace-pre-wrap break-all text-teal-300/90 max-h-80 overflow-y-auto font-mono text-[11.5px] leading-relaxed select-all">
+                  {KU_ADMISSIONS_HTML_SNIPPET}
+                </pre>
+              </div>
+            )}
+
+            {/* Live Rendered HTML Snippet Container */}
+            <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center justify-between">
+                <span>Live Rendered HTML Section (CSC Dost - KU Admissions)</span>
+                <span className="text-[10px] text-teal-600 bg-teal-50 dark:bg-teal-950/60 font-mono font-bold px-2 py-0.5 rounded border border-teal-200 dark:border-teal-800">
+                  ● Embedded Preview
                 </span>
               </div>
-              <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
-                University of Kashmir Admission Notifications (KUET PG, B.Ed, Ph.D &amp; Distance Mode)
-              </h3>
-              <p className="text-xs text-teal-200 max-w-2xl font-medium">
-                Department &amp; School-wise seat breakdown, eligibility criteria, age limits, and online submission closing dates parsed directly from official Kashmir University admission notices (kashmiruniversity.net/admission.aspx).
-              </p>
+              <div
+                className="csc-ku-admissions-html-live-wrapper"
+                dangerouslySetInnerHTML={{ __html: KU_ADMISSIONS_HTML_SNIPPET }}
+              />
             </div>
-            <a
-              href="https://www.kashmiruniversity.net/admission.aspx"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02]"
-            >
-              <span>Visit kashmiruniversity.net</span>
-              <ExternalLink className="w-4 h-4" />
-            </a>
           </div>
         )}
 
-        {/* FEATURED KASHMIR UNIVERSITY EXAMINATION FORMS BANNER WHEN EXAM_FORMS TAB IS ACTIVE */}
+        {/* FEATURED KASHMIR UNIVERSITY EXAMINATION FORMS BANNER & EMBED HTML SECTION WHEN EXAM_FORMS TAB IS ACTIVE */}
         {activeTab === 'exam_forms' && (
-          <div className="max-w-7xl mx-auto mb-5 p-4 sm:p-5 bg-gradient-to-r from-amber-950 via-slate-900 to-amber-900 rounded-2xl text-white border border-amber-700 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
-                  OFFICIAL KASHMIR UNIVERSITY EXAMINATION DESK
+          <div className="max-w-7xl mx-auto mb-6 space-y-4">
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-amber-950 via-slate-900 to-yellow-950 rounded-2xl text-white border border-amber-700 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
+                    OFFICIAL KASHMIR UNIVERSITY EXAMINATION DESK
+                  </span>
+                  <span className="text-amber-200 text-xs font-mono font-bold flex items-center gap-1">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                    Verified Active Exam Form Notices from kashmiruniversity.net
+                  </span>
+                </div>
+                <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
+                  University of Kashmir Exam Form Updates (August 2026 Notices)
+                </h3>
+                <p className="text-xs text-amber-200 max-w-2xl font-medium">
+                  Extracted Active Exam Form Submission Notices (UG BG 4th Sem, PG 1st &amp; 3rd Sem, B.Ed 1st &amp; 2nd Sem, Professional B.Tech 4th/6th/8th Sem, DDE Distance Mode) posted on or after August 5, 2026.
+                </p>
+              </div>
+              <a
+                href="https://www.kashmiruniversity.net/Examination.aspx"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02] font-bold"
+              >
+                <span>Visit kashmiruniversity.net</span>
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+
+            {/* HTML Snippet Toolbar & Code Copy Box */}
+            <div className="p-4 bg-slate-900 dark:bg-slate-950 text-white rounded-2xl border border-amber-800/80 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 bg-amber-500/20 text-amber-400 rounded-lg">
+                  <FileCheck className="w-5 h-5" />
                 </span>
-                <span className="text-amber-200 text-xs font-mono font-bold flex items-center gap-1">
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                  Verified Exam Form Notices from kashmiruniversity.net/Examination.aspx
+                <div>
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    CSC Dost - KU Exam Forms (Kashmir Univ) HTML Embed Section
+                    <span className="bg-amber-500/30 text-amber-300 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border border-amber-500/40">
+                      Website Snippet
+                    </span>
+                  </h4>
+                  <p className="text-xs text-slate-300">
+                    Use the buttons below to view or copy the clean HTML code to paste into your website section.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 w-full md:w-auto">
+                <button
+                  onClick={() => setShowKuHtmlSource(!showKuHtmlSource)}
+                  className="flex-1 md:flex-none px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold rounded-xl transition-all border border-slate-700 flex items-center justify-center gap-1.5"
+                >
+                  <Code className="w-4 h-4" />
+                  <span>{showKuHtmlSource ? 'Hide HTML Code' : 'View HTML Code'}</span>
+                </button>
+                <button
+                  onClick={handleCopyKuHtml}
+                  className="flex-1 md:flex-none px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5"
+                >
+                  {kuHtmlCopied ? (
+                    <>
+                      <Check className="w-4 h-4 text-slate-950" />
+                      <span>Copied HTML!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span>Copy HTML Snippet</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Collapsible Source Code View */}
+            {showKuHtmlSource && (
+              <div className="p-4 bg-slate-950 text-amber-300 rounded-2xl border border-slate-800 font-mono text-xs overflow-x-auto relative shadow-inner">
+                <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-800 text-slate-400 text-[11px]">
+                  <span>HTML Source Code Snippet (CSC Dost - KU Exam Forms)</span>
+                  <button
+                    onClick={handleCopyKuHtml}
+                    className="px-2.5 py-1 bg-amber-950 hover:bg-amber-900 text-amber-300 border border-amber-700 rounded text-[11px] font-bold flex items-center gap-1"
+                  >
+                    <Copy className="w-3 h-3" /> Copy Code
+                  </button>
+                </div>
+                <pre className="whitespace-pre-wrap break-all text-amber-300/90 max-h-80 overflow-y-auto font-mono text-[11.5px] leading-relaxed select-all">
+                  {KU_EXAM_FORMS_HTML_SNIPPET}
+                </pre>
+              </div>
+            )}
+
+            {/* Live Rendered HTML Snippet Container */}
+            <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center justify-between">
+                <span>Live Rendered HTML Section (CSC Dost - KU Exam Forms)</span>
+                <span className="text-[10px] text-amber-600 bg-amber-50 dark:bg-amber-950/60 font-mono font-bold px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800">
+                  ● Embedded Preview
                 </span>
               </div>
-              <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
-                University of Kashmir Exam Form Notifications (UG, PG, B.Ed, B.Tech, MBBS &amp; DDE)
-              </h3>
-              <p className="text-xs text-amber-200 max-w-2xl font-medium">
-                Official Start Dates, Application Closing Dates, Fee structure per subject, and Department/School-wise exam form breakdown extracted directly from official Kashmir University examination wing notifications (kashmiruniversity.net/Examination.aspx).
-              </p>
+              <div
+                className="csc-ku-exam-forms-html-live-wrapper"
+                dangerouslySetInnerHTML={{ __html: KU_EXAM_FORMS_HTML_SNIPPET }}
+              />
             </div>
-            <a
-              href="https://www.kashmiruniversity.net/Examination.aspx"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02]"
-            >
-              <span>Visit kashmiruniversity.net/Examination</span>
-              <ExternalLink className="w-4 h-4" />
-            </a>
           </div>
         )}
 
-        {/* FEATURED CLUSTER UNIVERSITY BANNER WHEN CLUSTER_UNIV TAB IS ACTIVE */}
+        {/* FEATURED CLUSTER UNIVERSITY BANNER & EMBED HTML SECTION WHEN CLUSTER_UNIV TAB IS ACTIVE */}
         {activeTab === 'cluster_univ' && (
-          <div className="max-w-7xl mx-auto mb-5 p-4 sm:p-5 bg-gradient-to-r from-cyan-950 via-slate-900 to-cyan-900 rounded-2xl text-white border border-cyan-700 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
-                  OFFICIAL CLUSTER UNIVERSITY SRINAGAR DESK
+          <div className="max-w-7xl mx-auto mb-6 space-y-4">
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-emerald-950 via-slate-900 to-teal-950 rounded-2xl text-white border border-emerald-700 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
+                    OFFICIAL CLUSTER UNIVERSITY SRINAGAR DESK
+                  </span>
+                  <span className="text-emerald-200 text-xs font-mono font-bold flex items-center gap-1">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                    Verified Active Notifications from https://www.cusrinagar.edu.in/
+                  </span>
+                </div>
+                <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
+                  Cluster University Srinagar Admissions &amp; Exam Forms Desk (August 2026 Updates)
+                </h3>
+                <p className="text-xs text-emerald-200 max-w-2xl font-medium">
+                  Extracted Active Admission &amp; Examination Notices (UG 3rd &amp; 5th Sem Exam Forms, PG &amp; Integrated Spot Admission Registration, B.Ed/M.Ed Exam Schedule, UG Batch 2026 Registration, UG Re-evaluation Forms) with Official Links and Application Deadlines.
+                </p>
+              </div>
+              <a
+                href="https://www.cusrinagar.edu.in/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02] font-bold"
+              >
+                <span>Visit www.cusrinagar.edu.in</span>
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+
+            {/* HTML Snippet Toolbar & Code Copy Box */}
+            <div className="p-4 bg-slate-900 dark:bg-slate-950 text-white rounded-2xl border border-emerald-800/80 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg">
+                  <Building2 className="w-5 h-5" />
                 </span>
-                <span className="text-cyan-200 text-xs font-mono font-bold flex items-center gap-1">
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                  Verified Notifications from cusrinagar.edu.in
+                <div>
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    CSC Dost - Cluster University Srinagar (cusrinagar.edu.in) HTML Embed Section
+                    <span className="bg-emerald-500/30 text-emerald-300 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border border-emerald-500/40">
+                      Website Snippet
+                    </span>
+                  </h4>
+                  <p className="text-xs text-slate-300">
+                    Use the buttons to view or copy the HTML code directly to paste into your website section.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 w-full md:w-auto">
+                <button
+                  onClick={() => setShowClusterUnivHtmlSource(!showClusterUnivHtmlSource)}
+                  className="flex-1 md:flex-none px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-emerald-300 text-xs font-bold rounded-xl transition-all border border-slate-700 flex items-center justify-center gap-1.5"
+                >
+                  <Code className="w-4 h-4" />
+                  <span>{showClusterUnivHtmlSource ? 'Hide HTML Code' : 'View HTML Code'}</span>
+                </button>
+                <button
+                  onClick={handleCopyClusterUnivHtml}
+                  className="flex-1 md:flex-none px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5"
+                >
+                  {clusterUnivHtmlCopied ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-200" />
+                      <span>Copied HTML!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span>Copy HTML Snippet</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Collapsible Source Code View */}
+            {showClusterUnivHtmlSource && (
+              <div className="p-4 bg-slate-950 text-emerald-300 rounded-2xl border border-slate-800 font-mono text-xs overflow-x-auto relative shadow-inner">
+                <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-800 text-slate-400 text-[11px]">
+                  <span>HTML Source Code Snippet (CSC Dost - Cluster University Srinagar)</span>
+                  <button
+                    onClick={handleCopyClusterUnivHtml}
+                    className="px-2.5 py-1 bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-700 rounded text-[11px] font-bold flex items-center gap-1"
+                  >
+                    <Copy className="w-3 h-3" /> Copy Code
+                  </button>
+                </div>
+                <pre className="whitespace-pre-wrap break-all text-emerald-300/90 max-h-80 overflow-y-auto font-mono text-[11.5px] leading-relaxed select-all">
+                  {CLUSTER_UNIV_HTML_SNIPPET}
+                </pre>
+              </div>
+            )}
+
+            {/* Live Rendered HTML Snippet Container */}
+            <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center justify-between">
+                <span>Live Rendered HTML Section (CSC Dost - Cluster University Srinagar)</span>
+                <span className="text-[10px] text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 font-mono font-bold px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                  ● Embedded Preview
                 </span>
               </div>
-              <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
-                Cluster University Srinagar Admissions &amp; Examination Forms Desk
-              </h3>
-              <p className="text-xs text-cyan-200 max-w-2xl font-medium">
-                Department-wise admission &amp; exam form details, Eligibility criteria, Age limits (where applicable), and Final application or form submission deadlines extracted directly from official Cluster University Srinagar notices (cusrinagar.edu.in).
-              </p>
+              <div
+                className="csc-cluster-univ-html-live-wrapper"
+                dangerouslySetInnerHTML={{ __html: CLUSTER_UNIV_HTML_SNIPPET }}
+              />
             </div>
-            <a
-              href="https://www.cusrinagar.edu.in/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02] font-bold"
-            >
-              <span>Visit cusrinagar.edu.in</span>
-              <ExternalLink className="w-4 h-4" />
-            </a>
           </div>
         )}
 
-        {/* FEATURED NTA BANNER WHEN NTA TAB IS ACTIVE */}
+        {/* FEATURED NTA BANNER & EMBED HTML SECTION WHEN NTA TAB IS ACTIVE */}
         {activeTab === 'nta' && (
-          <div className="max-w-7xl mx-auto mb-5 p-4 sm:p-5 bg-gradient-to-r from-red-950 via-slate-900 to-red-900 rounded-2xl text-white border border-red-700 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
-                  NATIONAL TESTING AGENCY (NTA) DESK
+          <div className="max-w-7xl mx-auto mb-6 space-y-4">
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-purple-950 via-slate-900 to-fuchsia-950 rounded-2xl text-white border border-purple-700 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
+                    NATIONAL TESTING AGENCY (NTA) DESK
+                  </span>
+                  <span className="text-purple-200 text-xs font-mono font-bold flex items-center gap-1">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                    Active Notifications Extracted from https://www.nta.ac.in/
+                  </span>
+                </div>
+                <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
+                  NTA National Entrance Exams &amp; Public Notices Desk (August 2026 Updates)
+                </h3>
+                <p className="text-xs text-purple-200 max-w-2xl font-medium">
+                  Extracted Active Entrance Exam Notifications (UGC NET Dec 2026 Schedule, JEE Main 2027 Session-1 Calendar, NEET UG 2026 Medical Counselling Verification, CSIR UGC NET Dec 2026 Registration, CUET 2027 Advisory) with Department Details, Official Portals, and Application Deadlines.
+                </p>
+              </div>
+              <a
+                href="https://www.nta.ac.in/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02] font-bold"
+              >
+                <span>Visit www.nta.ac.in</span>
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+
+            {/* HTML Snippet Toolbar & Code Copy Box */}
+            <div className="p-4 bg-slate-900 dark:bg-slate-950 text-white rounded-2xl border border-purple-800/80 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 bg-purple-500/20 text-purple-400 rounded-lg">
+                  <GraduationCap className="w-5 h-5" />
                 </span>
-                <span className="text-red-200 text-xs font-mono font-bold flex items-center gap-1">
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                  Active Notifications Extracted from www.nta.ac.in
+                <div>
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    CSC Dost - NTA Entrance Exams (nta.ac.in) HTML Embed Section
+                    <span className="bg-purple-500/30 text-purple-300 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border border-purple-500/40">
+                      Website Snippet
+                    </span>
+                  </h4>
+                  <p className="text-xs text-slate-300">
+                    Use the buttons to view or copy the HTML code directly to paste into your website section.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 w-full md:w-auto">
+                <button
+                  onClick={() => setShowNtaHtmlSource(!showNtaHtmlSource)}
+                  className="flex-1 md:flex-none px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-purple-300 text-xs font-bold rounded-xl transition-all border border-slate-700 flex items-center justify-center gap-1.5"
+                >
+                  <Code className="w-4 h-4" />
+                  <span>{showNtaHtmlSource ? 'Hide HTML Code' : 'View HTML Code'}</span>
+                </button>
+                <button
+                  onClick={handleCopyNtaHtml}
+                  className="flex-1 md:flex-none px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5"
+                >
+                  {ntaHtmlCopied ? (
+                    <>
+                      <Check className="w-4 h-4 text-purple-200" />
+                      <span>Copied HTML!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span>Copy HTML Snippet</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Collapsible Source Code View */}
+            {showNtaHtmlSource && (
+              <div className="p-4 bg-slate-950 text-purple-300 rounded-2xl border border-slate-800 font-mono text-xs overflow-x-auto relative shadow-inner">
+                <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-800 text-slate-400 text-[11px]">
+                  <span>HTML Source Code Snippet (CSC Dost - NTA Entrance Exams)</span>
+                  <button
+                    onClick={handleCopyNtaHtml}
+                    className="px-2.5 py-1 bg-purple-950 hover:bg-purple-900 text-purple-300 border border-purple-700 rounded text-[11px] font-bold flex items-center gap-1"
+                  >
+                    <Copy className="w-3 h-3" /> Copy Code
+                  </button>
+                </div>
+                <pre className="whitespace-pre-wrap break-all text-purple-300/90 max-h-80 overflow-y-auto font-mono text-[11.5px] leading-relaxed select-all">
+                  {NTA_EXAMS_HTML_SNIPPET}
+                </pre>
+              </div>
+            )}
+
+            {/* Live Rendered HTML Snippet Container */}
+            <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center justify-between">
+                <span>Live Rendered HTML Section (CSC Dost - NTA Entrance Exams)</span>
+                <span className="text-[10px] text-purple-600 bg-purple-50 dark:bg-purple-950/60 font-mono font-bold px-2 py-0.5 rounded border border-purple-200 dark:border-purple-800">
+                  ● Embedded Preview
                 </span>
               </div>
-              <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
-                NTA National Entrance Examinations Desk (JEE Main, NEET UG, CUET, UGC NET)
-              </h3>
-              <p className="text-xs text-red-200 max-w-2xl font-medium">
-                Extracting Department Details, Official Exam Form Links, Eligibility Criteria, Age Limits, and Application Last Dates for active national entrance exams with strict filtering out of expired notifications.
-              </p>
+              <div
+                className="csc-nta-html-live-wrapper"
+                dangerouslySetInnerHTML={{ __html: NTA_EXAMS_HTML_SNIPPET }}
+              />
             </div>
-            <a
-              href="https://www.nta.ac.in/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02] font-bold"
-            >
-              <span>Visit www.nta.ac.in</span>
-              <ExternalLink className="w-4 h-4" />
-            </a>
           </div>
         )}
 
-        {/* FEATURED SSC JOBS BANNER WHEN SSC_JOBS TAB IS ACTIVE */}
+        {/* FEATURED SSC JOBS BANNER & EMBED HTML SECTION WHEN SSC_JOBS TAB IS ACTIVE */}
         {activeTab === 'ssc_jobs' && (
-          <div className="max-w-7xl mx-auto mb-5 p-4 sm:p-5 bg-gradient-to-r from-orange-950 via-slate-900 to-orange-900 rounded-2xl text-white border border-orange-700 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
-                  STAFF SELECTION COMMISSION (SSC) DESK
+          <div className="max-w-7xl mx-auto mb-6 space-y-4">
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-900 rounded-2xl text-white border border-indigo-700 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
+                    STAFF SELECTION COMMISSION (SSC) DESK
+                  </span>
+                  <span className="text-indigo-200 text-xs font-mono font-bold flex items-center gap-1">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                    Active Notifications Extracted from https://ssc.gov.in/
+                  </span>
+                </div>
+                <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
+                  Staff Selection Commission Active Recruitment Desk (August 2026 Updates)
+                </h3>
+                <p className="text-xs text-indigo-200 max-w-2xl font-medium">
+                  Extracted Active Job Notifications (SSC Steno Grade C &amp; D 2026, CGL Tier-I Exam City Slip, GD Constable 2026 Mega Notice, Selection Posts Phase-XIV Correction, CHSL Tier-II Date) with Department Details, Official Portal Links (ssc.gov.in), Eligibility Criteria, and Application Windows.
+                </p>
+              </div>
+              <a
+                href="https://ssc.gov.in/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02] font-bold"
+              >
+                <span>Visit ssc.gov.in</span>
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+
+            {/* HTML Snippet Toolbar & Code Copy Box */}
+            <div className="p-4 bg-slate-900 dark:bg-slate-950 text-white rounded-2xl border border-indigo-800/80 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 bg-indigo-500/20 text-indigo-400 rounded-lg">
+                  <Briefcase className="w-5 h-5" />
                 </span>
-                <span className="text-orange-200 text-xs font-mono font-bold flex items-center gap-1">
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                  Active Notifications Extracted from https://ssc.gov.in/
+                <div>
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    CSC Dost - SSC Jobs (ssc.gov.in) HTML Embed Section
+                    <span className="bg-indigo-500/30 text-indigo-300 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border border-indigo-500/40">
+                      Website Snippet
+                    </span>
+                  </h4>
+                  <p className="text-xs text-slate-300">
+                    Use the buttons to view or copy the HTML code directly to paste into your website section.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 w-full md:w-auto">
+                <button
+                  onClick={() => setShowSscHtmlSource(!showSscHtmlSource)}
+                  className="flex-1 md:flex-none px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-indigo-300 text-xs font-bold rounded-xl transition-all border border-slate-700 flex items-center justify-center gap-1.5"
+                >
+                  <Code className="w-4 h-4" />
+                  <span>{showSscHtmlSource ? 'Hide HTML Code' : 'View HTML Code'}</span>
+                </button>
+                <button
+                  onClick={handleCopySscHtml}
+                  className="flex-1 md:flex-none px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5"
+                >
+                  {sscHtmlCopied ? (
+                    <>
+                      <Check className="w-4 h-4 text-indigo-200" />
+                      <span>Copied HTML!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span>Copy HTML Snippet</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Collapsible Source Code View */}
+            {showSscHtmlSource && (
+              <div className="p-4 bg-slate-950 text-indigo-300 rounded-2xl border border-slate-800 font-mono text-xs overflow-x-auto relative shadow-inner">
+                <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-800 text-slate-400 text-[11px]">
+                  <span>HTML Source Code Snippet (CSC Dost - SSC Jobs)</span>
+                  <button
+                    onClick={handleCopySscHtml}
+                    className="px-2.5 py-1 bg-indigo-950 hover:bg-indigo-900 text-indigo-300 border border-indigo-700 rounded text-[11px] font-bold flex items-center gap-1"
+                  >
+                    <Copy className="w-3 h-3" /> Copy Code
+                  </button>
+                </div>
+                <pre className="whitespace-pre-wrap break-all text-indigo-300/90 max-h-80 overflow-y-auto font-mono text-[11.5px] leading-relaxed select-all">
+                  {SSC_JOBS_HTML_SNIPPET}
+                </pre>
+              </div>
+            )}
+
+            {/* Live Rendered HTML Snippet Container */}
+            <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center justify-between">
+                <span>Live Rendered HTML Section (CSC Dost - SSC Jobs)</span>
+                <span className="text-[10px] text-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 font-mono font-bold px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
+                  ● Embedded Preview
                 </span>
               </div>
-              <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
-                Staff Selection Commission Active Recruitment Desk (SSC CGL, CHSL, MTS, CPO, Steno, JE)
-              </h3>
-              <p className="text-xs text-orange-200 max-w-2xl font-medium">
-                Extracted Active Job Notifications with Department Details, Official Exam Form Link (ssc.gov.in), Eligibility Criteria, Age Limits, and Last Date with strict filtering out of expired notifications.
-              </p>
+              <div
+                className="csc-ssc-html-live-wrapper"
+                dangerouslySetInnerHTML={{ __html: SSC_JOBS_HTML_SNIPPET }}
+              />
             </div>
-            <a
-              href="https://ssc.gov.in/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02] font-bold"
-            >
-              <span>Visit ssc.gov.in</span>
-              <ExternalLink className="w-4 h-4" />
-            </a>
           </div>
         )}
 
-        {/* FEATURED RRB JOBS BANNER WHEN RRB_JOBS TAB IS ACTIVE */}
+        {/* FEATURED RRB JOBS BANNER & EMBED HTML SECTION WHEN RRB_JOBS TAB IS ACTIVE */}
         {activeTab === 'rrb_jobs' && (
-          <div className="max-w-7xl mx-auto mb-5 p-4 sm:p-5 bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-900 rounded-2xl text-white border border-emerald-700 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
-                  RAILWAY RECRUITMENT BOARD (RRB) DESK
+          <div className="max-w-7xl mx-auto mb-6 space-y-4">
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-900 rounded-2xl text-white border border-emerald-700 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
+                    RAILWAY RECRUITMENT BOARD (RRB) DESK
+                  </span>
+                  <span className="text-emerald-200 text-xs font-mono font-bold flex items-center gap-1">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                    Active Notifications Extracted from https://www.rrbapply.gov.in/
+                  </span>
+                </div>
+                <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
+                  Railway Recruitment Board Active Recruitment Desk (RRB JE, Paramedical, ALP, Technician, NTPC)
+                </h3>
+                <p className="text-xs text-emerald-200 max-w-2xl font-medium">
+                  Extracted Active Railway Job Notifications with Department Details, Official Exam Form Link (rrbapply.gov.in), Eligibility Criteria, Age Limits, and Last Date with strict filtering out of expired notifications.
+                </p>
+              </div>
+              <a
+                href="https://www.rrbapply.gov.in/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02] font-bold"
+              >
+                <span>Visit rrbapply.gov.in</span>
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+
+            {/* HTML Snippet Toolbar & Code Copy Box */}
+            <div className="p-4 bg-slate-900 dark:bg-slate-950 text-white rounded-2xl border border-emerald-800/80 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg">
+                  <FileText className="w-5 h-5" />
                 </span>
-                <span className="text-emerald-200 text-xs font-mono font-bold flex items-center gap-1">
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                  Active Notifications Extracted from https://www.rrbapply.gov.in/
+                <div>
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    CSC Dost - RRB Jobs HTML Embed Section
+                    <span className="bg-emerald-500/30 text-emerald-300 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border border-emerald-500/40">
+                      Website Snippet
+                    </span>
+                  </h4>
+                  <p className="text-xs text-slate-300">
+                    Use the buttons to view or copy the HTML code directly to paste into your website.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 w-full md:w-auto">
+                <button
+                  onClick={() => setShowRrbHtmlSource(!showRrbHtmlSource)}
+                  className="flex-1 md:flex-none px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-emerald-300 text-xs font-bold rounded-xl transition-all border border-slate-700 flex items-center justify-center gap-1.5"
+                >
+                  <Code className="w-4 h-4" />
+                  <span>{showRrbHtmlSource ? 'Hide HTML Code' : 'View HTML Code'}</span>
+                </button>
+                <button
+                  onClick={handleCopyRrbHtml}
+                  className="flex-1 md:flex-none px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5"
+                >
+                  {rrbHtmlCopied ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-200" />
+                      <span>Copied HTML!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span>Copy HTML Snippet</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Collapsible Source Code View */}
+            {showRrbHtmlSource && (
+              <div className="p-4 bg-slate-950 text-emerald-300 rounded-2xl border border-slate-800 font-mono text-xs overflow-x-auto relative shadow-inner">
+                <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-800 text-slate-400 text-[11px]">
+                  <span>HTML Source Code Snippet (CSC Dost - RRB Jobs)</span>
+                  <button
+                    onClick={handleCopyRrbHtml}
+                    className="px-2.5 py-1 bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-700 rounded text-[11px] font-bold flex items-center gap-1"
+                  >
+                    <Copy className="w-3 h-3" /> Copy Code
+                  </button>
+                </div>
+                <pre className="whitespace-pre-wrap break-all text-emerald-400/90 max-h-80 overflow-y-auto font-mono text-[11.5px] leading-relaxed select-all">
+                  {RRB_JOBS_HTML_SNIPPET}
+                </pre>
+              </div>
+            )}
+
+            {/* Live Rendered HTML Snippet Container */}
+            <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center justify-between">
+                <span>Live Rendered HTML Section (CSC Dost - RRB Jobs)</span>
+                <span className="text-[10px] text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 font-mono font-bold px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                  ● Embedded Preview
                 </span>
               </div>
-              <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
-                Railway Recruitment Board Active Recruitment Desk (RRB JE, Paramedical, ALP, Technician, NTPC)
-              </h3>
-              <p className="text-xs text-emerald-200 max-w-2xl font-medium">
-                Extracted Active Railway Job Notifications with Department Details, Official Exam Form Link (rrbapply.gov.in), Eligibility Criteria, Age Limits, and Last Date with strict filtering out of expired notifications.
-              </p>
+              <div
+                className="csc-rrb-html-live-wrapper"
+                dangerouslySetInnerHTML={{ __html: RRB_JOBS_HTML_SNIPPET }}
+              />
             </div>
-            <a
-              href="https://www.rrbapply.gov.in/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02] font-bold"
-            >
-              <span>Visit rrbapply.gov.in</span>
-              <ExternalLink className="w-4 h-4" />
-            </a>
           </div>
         )}
 
-        {/* FEATURED INDIAN ARMY JOBS BANNER WHEN ARMY_JOBS TAB IS ACTIVE */}
+        {/* FEATURED INDIAN ARMY JOBS BANNER & EMBED HTML SECTION WHEN ARMY_JOBS TAB IS ACTIVE */}
         {activeTab === 'army_jobs' && (
-          <div className="max-w-7xl mx-auto mb-5 p-4 sm:p-5 bg-gradient-to-r from-red-950 via-slate-900 to-red-900 rounded-2xl text-white border border-red-700 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
-                  INDIAN ARMY RECRUITMENT DESK
+          <div className="max-w-7xl mx-auto mb-6 space-y-4">
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-red-950 via-slate-900 to-red-900 rounded-2xl text-white border border-red-700 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
+                    INDIAN ARMY RECRUITMENT DESK
+                  </span>
+                  <span className="text-red-200 text-xs font-mono font-bold flex items-center gap-1">
+                    <CheckCircle className="w-3.5 h-3.5 text-red-400" />
+                    Active Notifications Extracted from https://www.joinindianarmy.nic.in/
+                  </span>
+                </div>
+                <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
+                  Join Indian Army Active Officer &amp; Agniveer Recruitment Desk
+                </h3>
+                <p className="text-xs text-red-200 max-w-2xl font-medium">
+                  Extracted Active Indian Army Notifications (NCC Special Entry 125th, JAG Entry 34th, Territorial Army Officer Entry, Ladakh Scouts Agniveer Rally, AOC Civilian Alert) with Department Details, Official Exam Form Link (joinindianarmy.nic.in), Eligibility, Age Limits, and Last Date with strict filtering out of expired notifications.
+                </p>
+              </div>
+              <a
+                href="https://www.joinindianarmy.nic.in/default.aspx"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02] font-bold"
+              >
+                <span>Visit joinindianarmy.nic.in</span>
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+
+            {/* HTML Snippet Toolbar & Code Copy Box */}
+            <div className="p-4 bg-slate-900 dark:bg-slate-950 text-white rounded-2xl border border-red-800/80 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 bg-red-500/20 text-red-400 rounded-lg">
+                  <Shield className="w-5 h-5" />
                 </span>
-                <span className="text-red-200 text-xs font-mono font-bold flex items-center gap-1">
-                  <CheckCircle className="w-3.5 h-3.5 text-red-400" />
-                  Active Notifications Extracted from https://www.joinindianarmy.nic.in/default.aspx
+                <div>
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    CSC Dost - Indian Army Jobs HTML Embed Section
+                    <span className="bg-red-500/30 text-red-300 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border border-red-500/40">
+                      Website Snippet
+                    </span>
+                  </h4>
+                  <p className="text-xs text-slate-300">
+                    Use the buttons to view or copy the HTML code directly to paste into your website.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 w-full md:w-auto">
+                <button
+                  onClick={() => setShowArmyHtmlSource(!showArmyHtmlSource)}
+                  className="flex-1 md:flex-none px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-red-300 text-xs font-bold rounded-xl transition-all border border-slate-700 flex items-center justify-center gap-1.5"
+                >
+                  <Code className="w-4 h-4" />
+                  <span>{showArmyHtmlSource ? 'Hide HTML Code' : 'View HTML Code'}</span>
+                </button>
+                <button
+                  onClick={handleCopyArmyHtml}
+                  className="flex-1 md:flex-none px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5"
+                >
+                  {armyHtmlCopied ? (
+                    <>
+                      <Check className="w-4 h-4 text-red-200" />
+                      <span>Copied HTML!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span>Copy HTML Snippet</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Collapsible Source Code View */}
+            {showArmyHtmlSource && (
+              <div className="p-4 bg-slate-950 text-red-300 rounded-2xl border border-slate-800 font-mono text-xs overflow-x-auto relative shadow-inner">
+                <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-800 text-slate-400 text-[11px]">
+                  <span>HTML Source Code Snippet (CSC Dost - Indian Army Jobs)</span>
+                  <button
+                    onClick={handleCopyArmyHtml}
+                    className="px-2.5 py-1 bg-red-950 hover:bg-red-900 text-red-300 border border-red-700 rounded text-[11px] font-bold flex items-center gap-1"
+                  >
+                    <Copy className="w-3 h-3" /> Copy Code
+                  </button>
+                </div>
+                <pre className="whitespace-pre-wrap break-all text-red-400/90 max-h-80 overflow-y-auto font-mono text-[11.5px] leading-relaxed select-all">
+                  {ARMY_JOBS_HTML_SNIPPET}
+                </pre>
+              </div>
+            )}
+
+            {/* Live Rendered HTML Snippet Container */}
+            <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center justify-between">
+                <span>Live Rendered HTML Section (CSC Dost - Indian Army Jobs)</span>
+                <span className="text-[10px] text-red-600 bg-red-50 dark:bg-red-950/60 font-mono font-bold px-2 py-0.5 rounded border border-red-200 dark:border-red-800">
+                  ● Embedded Preview
                 </span>
               </div>
-              <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
-                Join Indian Army Active Officer &amp; Agniveer Recruitment Desk
-              </h3>
-              <p className="text-xs text-red-200 max-w-2xl font-medium">
-                Extracted Active Indian Army Notifications (SSC Tech 68th, NCC Special Entry 125th, JAG Entry 125th, TGC-144, Agniveer Rallies) with Department Details, Official Exam Form Link (joinindianarmy.nic.in), Eligibility, Age Limits, and Last Date with strict filtering out of expired notifications.
-              </p>
+              <div
+                className="csc-army-html-live-wrapper"
+                dangerouslySetInnerHTML={{ __html: ARMY_JOBS_HTML_SNIPPET }}
+              />
             </div>
-            <a
-              href="https://www.joinindianarmy.nic.in/default.aspx"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02] font-bold"
-            >
-              <span>Visit joinindianarmy.nic.in</span>
-              <ExternalLink className="w-4 h-4" />
-            </a>
           </div>
         )}
 
