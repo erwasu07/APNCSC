@@ -1,14 +1,51 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /applications/{applicationId} {
-      allow read, write: if true;
-    }
-    match /appointments/{appointmentId} {
-      allow read, write: if true;
-    }
+
+    // Default deny catch-all for all unspecified collections/documents
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128;
+    }
+
+    // Applications collection
+    match /applications/{appId} {
+      // Single document lookup (for applicant tracking by Token ID)
+      allow get: if isValidId(appId);
+
+      // Bulk collection listing (Staff / Admin Dashboard only)
+      allow list: if isSignedIn();
+
+      // Application submission & payment updates
+      allow create: if isValidId(appId) && request.resource.data.size() < 100;
+      allow update: if isValidId(appId) && request.resource.data.size() < 100;
+
+      // Deletion restricted to authenticated staff
+      allow delete: if isSignedIn();
+    }
+
+    // Appointments collection
+    match /appointments/{appId} {
+      // Single document lookup (for applicant tracking by Token ID)
+      allow get: if isValidId(appId);
+
+      // Bulk collection listing (Staff / Admin Dashboard only)
+      allow list: if isSignedIn();
+
+      // Appointment submission & updates
+      allow create: if isValidId(appId) && request.resource.data.size() < 100;
+      allow update: if isValidId(appId) && request.resource.data.size() < 100;
+
+      // Deletion restricted to authenticated staff
+      allow delete: if isSignedIn();
     }
   }
 }

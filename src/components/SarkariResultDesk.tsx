@@ -1719,31 +1719,38 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       statusUpdatedAt: nowIso
     };
 
-    try {
-      setDoc(doc(db, 'applications', officialAppId), initialPayload, { merge: true }).catch(console.error);
-      setDoc(doc(db, 'appointments', officialAppId), initialPayload, { merge: true }).catch(console.error);
+    // 1. Validate ID before submitting
+    if (!officialAppId) {
+      console.error('Submission failed: officialAppId is missing or undefined.');
+    } else {
+      try {
+        Promise.all([
+          setDoc(doc(db, 'applications', officialAppId), initialPayload, { merge: true }),
+          setDoc(doc(db, 'appointments', officialAppId), initialPayload, { merge: true })
+        ]).catch(err => console.error('Firestore initial setDoc error:', err));
 
-      const supabase = getSupabaseClient();
-      if (supabase) {
-        supabase.from('applications').upsert([{
-          appId: officialAppId,
-          id: officialAppId,
-          applicantName: formData.customerName,
-          phoneNumber: formData.phoneNumber,
-          emailAddress: formData.emailAddress || 'N/A',
-          selectedService: pendingReceipt.selectedService,
-          userCategory: pendingReceipt.userCategory,
-          paymentMode: 'Pending Payment',
-          utrNumber: 'N/A',
-          totalAmount: pendingReceipt.totalAmount,
-          status: 'Pending',
-          submittedAt: nowIso,
-          documents: uploadedFiles,
-          payload: initialPayload
-        }], { onConflict: 'appId' }).then(null, console.error);
+        const supabase = getSupabaseClient();
+        if (supabase) {
+          supabase.from('applications').upsert([{
+            appId: officialAppId,
+            id: officialAppId,
+            applicantName: formData.customerName,
+            phoneNumber: formData.phoneNumber,
+            emailAddress: formData.emailAddress || 'N/A',
+            selectedService: pendingReceipt.selectedService,
+            userCategory: pendingReceipt.userCategory,
+            paymentMode: 'Pending Payment',
+            utrNumber: 'N/A',
+            totalAmount: pendingReceipt.totalAmount,
+            status: 'Pending',
+            submittedAt: nowIso,
+            documents: uploadedFiles,
+            payload: initialPayload
+          }], { onConflict: 'appId' }).then(null, console.error);
+        }
+      } catch (dbErr) {
+        console.error('Database initial save notice:', dbErr);
       }
-    } catch (dbErr) {
-      console.error('Database initial save notice:', dbErr);
     }
 
     try {
@@ -1846,33 +1853,40 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       statusUpdatedAt: nowIso
     };
 
-    try {
-      setDoc(doc(db, 'applications', officialAppId), updatedPayload, { merge: true }).catch(console.error);
-      setDoc(doc(db, 'appointments', officialAppId), updatedPayload, { merge: true }).catch(console.error);
+    // 1. Validate ID before submitting
+    if (!officialAppId) {
+      console.error('Submission failed: officialAppId is missing or undefined.');
+    } else {
+      try {
+        Promise.all([
+          setDoc(doc(db, 'applications', officialAppId), updatedPayload, { merge: true }),
+          setDoc(doc(db, 'appointments', officialAppId), updatedPayload, { merge: true })
+        ]).catch(err => console.error('Firestore paid setDoc error:', err));
 
-      const supabase = getSupabaseClient();
-      if (supabase) {
-        supabase.from('applications').upsert([
-          {
-            appId: officialAppId,
-            id: officialAppId,
-            applicantName: updatedReceipt.customerName,
-            phoneNumber: updatedReceipt.phoneNumber,
-            emailAddress: updatedReceipt.emailAddress,
-            selectedService: updatedReceipt.selectedService,
-            userCategory: updatedReceipt.userCategory,
-            paymentMode: 'Dynamic UPI Gateway',
-            utrNumber: finalUtr,
-            totalAmount: updatedReceipt.totalAmount,
-            status: 'Paid',
-            submittedAt: nowIso,
-            documents: processedDocs,
-            payload: updatedPayload
-          }
-        ], { onConflict: 'appId' }).then(null, console.error);
+        const supabase = getSupabaseClient();
+        if (supabase) {
+          supabase.from('applications').upsert([
+            {
+              appId: officialAppId,
+              id: officialAppId,
+              applicantName: updatedReceipt.customerName,
+              phoneNumber: updatedReceipt.phoneNumber,
+              emailAddress: updatedReceipt.emailAddress,
+              selectedService: updatedReceipt.selectedService,
+              userCategory: updatedReceipt.userCategory,
+              paymentMode: 'Dynamic UPI Gateway',
+              utrNumber: finalUtr,
+              totalAmount: updatedReceipt.totalAmount,
+              status: 'Paid',
+              submittedAt: nowIso,
+              documents: processedDocs,
+              payload: updatedPayload
+            }
+          ], { onConflict: 'appId' }).then(null, console.error);
+        }
+      } catch (dbErr) {
+        console.error('Database save error after UPI payment:', dbErr);
       }
-    } catch (dbErr) {
-      console.error('Database save error after UPI payment:', dbErr);
     }
 
     // Save paid application to localStorage for recent tokens tracking
@@ -1983,46 +1997,51 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       statusUpdatedAt: nowIso
     };
 
-    // Save directly to Cloud Firestore and Supabase
-    try {
-      setDoc(doc(db, 'applications', updatedReceipt.appId), payload, { merge: true }).catch(fsErr => {
-        console.error('Firestore "applications" payment update error:', fsErr);
-      });
-      setDoc(doc(db, 'appointments', updatedReceipt.appId), payload, { merge: true }).catch(fsErr => {
-        console.error('Firestore "appointments" payment update error:', fsErr);
-      });
+    // Save directly to Cloud Firestore and Supabase with ID validation
+    const targetAppId = updatedReceipt?.appId || officialAppId;
+    if (!targetAppId) {
+      console.error('Submission failed: appId is missing or undefined.');
+    } else {
+      try {
+        Promise.all([
+          setDoc(doc(db, 'applications', targetAppId), payload, { merge: true }),
+          setDoc(doc(db, 'appointments', targetAppId), payload, { merge: true })
+        ]).catch(fsErr => {
+          console.error('Firestore payment update error:', fsErr);
+        });
 
-      const supabase = getSupabaseClient();
-      if (supabase) {
-        (async () => {
-          try {
-            await supabase.from('applications').upsert([
-              {
-                appId: updatedReceipt.appId,
-                id: updatedReceipt.appId,
-                applicantName: updatedReceipt.customerName,
-                customerName: updatedReceipt.customerName,
-                phoneNumber: updatedReceipt.phoneNumber,
-                emailAddress: updatedReceipt.emailAddress,
-                selectedService: updatedReceipt.selectedService,
-                userCategory: updatedReceipt.userCategory,
-                paymentMode: updatedReceipt.paymentMode,
-                utrNumber: updatedReceipt.utrNumber,
-                totalAmount: updatedReceipt.totalAmount,
-                status: 'Pending',
-                submittedAt: nowIso,
-                updatedAt: nowIso,
-                documents: processedDocs,
-                payload: payload
-              }
-            ], { onConflict: 'appId' });
-          } catch (sbErr) {
-            console.error('Supabase "applications" payment update error:', sbErr);
-          }
-        })();
+        const supabase = getSupabaseClient();
+        if (supabase) {
+          (async () => {
+            try {
+              await supabase.from('applications').upsert([
+                {
+                  appId: targetAppId,
+                  id: targetAppId,
+                  applicantName: updatedReceipt.customerName,
+                  customerName: updatedReceipt.customerName,
+                  phoneNumber: updatedReceipt.phoneNumber,
+                  emailAddress: updatedReceipt.emailAddress,
+                  selectedService: updatedReceipt.selectedService,
+                  userCategory: updatedReceipt.userCategory,
+                  paymentMode: updatedReceipt.paymentMode,
+                  utrNumber: updatedReceipt.utrNumber,
+                  totalAmount: updatedReceipt.totalAmount,
+                  status: 'Pending',
+                  submittedAt: nowIso,
+                  updatedAt: nowIso,
+                  documents: processedDocs,
+                  payload: payload
+                }
+              ], { onConflict: 'appId' });
+            } catch (sbErr) {
+              console.error('Supabase "applications" payment update error:', sbErr);
+            }
+          })();
+        }
+      } catch (fsErr) {
+        console.error('Database payment update execution error:', fsErr);
       }
-    } catch (fsErr) {
-      console.error('Database payment update execution error:', fsErr);
     }
 
     // 1. Update local storage
