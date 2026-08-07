@@ -473,32 +473,63 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     }
 
     try {
+      let appsCache: any[] = [];
+      let aptsCache: any[] = [];
+
+      const publishCombinedData = () => {
+        firestoreAppsMap.clear();
+        firestoreAptsMap.clear();
+
+        // Add applications to map
+        appsCache.forEach((app) => {
+          const key = app.appId || app.id || app.token;
+          if (key) firestoreAppsMap.set(key, app);
+        });
+
+        // Merge appointments (combining fields if same ID exists)
+        aptsCache.forEach((apt) => {
+          const key = apt.appId || apt.id || apt.token;
+          if (key) {
+            if (firestoreAppsMap.has(key)) {
+              firestoreAppsMap.set(key, { ...firestoreAppsMap.get(key), ...apt });
+            } else {
+              firestoreAptsMap.set(key, apt);
+            }
+          }
+        });
+
+        // Single atomic update to dashboard state
+        updateCombinedApplications();
+      };
+
+      // 1. Listen to "applications"
       unsubApps = onSnapshot(
         collection(db, 'applications'),
         (snapshot) => {
-          firestoreAppsMap.clear();
-          snapshot.forEach((docSnap) => {
-            firestoreAppsMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
-          });
-          updateCombinedApplications();
+          appsCache = snapshot.docs.map((docSnap) => ({
+            id: docSnap.id,
+            ...docSnap.data(),
+          }));
+          publishCombinedData();
         },
         (err) => {
-          console.error('Firestore "applications" snapshot error:', err);
+          console.error('Firestore "applications" error:', err);
           setLoading(false);
         }
       );
 
+      // 2. Listen to "appointments"
       unsubApts = onSnapshot(
         collection(db, 'appointments'),
         (snapshot) => {
-          firestoreAptsMap.clear();
-          snapshot.forEach((docSnap) => {
-            firestoreAptsMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
-          });
-          updateCombinedApplications();
+          aptsCache = snapshot.docs.map((docSnap) => ({
+            id: docSnap.id,
+            ...docSnap.data(),
+          }));
+          publishCombinedData();
         },
         (err) => {
-          console.error('Firestore "appointments" snapshot error:', err);
+          console.error('Firestore "appointments" error:', err);
           setLoading(false);
         }
       );
