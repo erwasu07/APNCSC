@@ -43,6 +43,7 @@ import {
   Check,
   Upload,
   MessageSquare,
+  Database,
   Copy,
   CheckSquare,
   Square,

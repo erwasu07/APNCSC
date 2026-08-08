@@ -2023,7 +2023,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     };
 
     // Save directly to Cloud Firestore and Supabase with ID validation
-    const targetAppId = updatedReceipt?.appId || officialAppId;
+    const targetAppId = updatedReceipt?.appId;
     if (!targetAppId) {
       console.error('Submission failed: appId is missing or undefined.');
     } else {
