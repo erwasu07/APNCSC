@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db, auth, storage } from '../lib/firebase';
 import { uploadReceiptFileToSupabase, getSupabaseClient } from '../lib/supabase';
+import { getPocketBaseClient, getPocketBaseUrl, setPocketBaseUrl, updatePocketBaseApplicationStatus } from '../lib/pocketbase';
 import { collection, onSnapshot, doc, updateDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
@@ -104,6 +105,31 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   const [selectedReceiptFile, setSelectedReceiptFile] = useState<File | null>(null);
   const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // PocketBase Integration Modal States
+  const [showPocketBaseModal, setShowPocketBaseModal] = useState(false);
+  const [pocketBaseUrlInput, setPocketBaseUrlInput] = useState<string>(() => getPocketBaseUrl());
+  const [pocketBaseTestResult, setPocketBaseTestResult] = useState<{ status: 'idle' | 'testing' | 'success' | 'error'; message?: string }>({ status: 'idle' });
+
+  const handleTestPocketBase = async () => {
+    setPocketBaseTestResult({ status: 'testing' });
+    try {
+      setPocketBaseUrl(pocketBaseUrlInput);
+      const pb = getPocketBaseClient();
+      if (!pb) {
+        setPocketBaseTestResult({ status: 'error', message: 'Failed to construct PocketBase instance.' });
+        return;
+      }
+      const health = await pb.health.check();
+      if (health && health.code === 200) {
+        setPocketBaseTestResult({ status: 'success', message: `Connected to PocketBase v${health.data?.version || '1.0'}!` });
+      } else {
+        setPocketBaseTestResult({ status: 'error', message: 'Server responded, but health check failed.' });
+      }
+    } catch (err: any) {
+      setPocketBaseTestResult({ status: 'error', message: err?.message || 'Unable to connect to PocketBase instance. Please verify server URL.' });
+    }
+  };
 
   // Monitor Firebase Auth state change
   useEffect(() => {
@@ -401,6 +427,67 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
     let supabaseChannel: any = null;
     const supabaseClient = getSupabaseClient();
+    const pocketbaseMap = new Map<string, any>();
+    const pb = getPocketBaseClient();
+
+    if (pb) {
+      try {
+        pb.collection('applications').getFullList({ sort: '-created' }).then((records) => {
+          records.forEach((rec: any) => {
+            const key = rec.appId || rec.id;
+            if (key) {
+              pocketbaseMap.set(key, {
+                ...rec,
+                appId: rec.appId || rec.id,
+                customerName: rec.applicantName || rec.customerName,
+                applicantName: rec.applicantName || rec.customerName,
+                phoneNumber: rec.phoneNumber,
+                emailAddress: rec.emailAddress,
+                selectedService: rec.selectedService,
+                userCategory: rec.userCategory,
+                totalAmount: Number(rec.totalAmount) || 0,
+                status: rec.status,
+                submittedAt: rec.submittedAt || rec.created,
+                ...(rec.payloadJson ? JSON.parse(rec.payloadJson) : {})
+              });
+            }
+          });
+          updateCombinedApplications();
+        }).catch(err => console.warn('PocketBase initial fetch notice:', err));
+
+        pb.collection('applications').subscribe('*', (e) => {
+          if (e.action === 'create' || e.action === 'update') {
+            const rec = e.record;
+            const key = rec.appId || rec.id;
+            if (key) {
+              pocketbaseMap.set(key, {
+                ...rec,
+                appId: rec.appId || rec.id,
+                customerName: rec.applicantName || rec.customerName,
+                applicantName: rec.applicantName || rec.customerName,
+                phoneNumber: rec.phoneNumber,
+                emailAddress: rec.emailAddress,
+                selectedService: rec.selectedService,
+                userCategory: rec.userCategory,
+                totalAmount: Number(rec.totalAmount) || 0,
+                status: rec.status,
+                submittedAt: rec.submittedAt || rec.created,
+                ...(rec.payloadJson ? JSON.parse(rec.payloadJson) : {})
+              });
+              updateCombinedApplications();
+            }
+          } else if (e.action === 'delete') {
+            const key = e.record.appId || e.record.id;
+            if (key) {
+              pocketbaseMap.delete(key);
+              updateCombinedApplications();
+            }
+          }
+        }).catch(pbSubErr => console.warn('PocketBase realtime subscribe notice:', pbSubErr));
+      } catch (pbErr) {
+        console.warn('PocketBase init notice:', pbErr);
+      }
+    }
 
     if (supabaseClient) {
       try {
@@ -619,6 +706,9 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         }
       })();
     }
+
+    // Also update in PocketBase
+    updatePocketBaseApplicationStatus(appId, { status: newStatus }).catch(pbErr => console.warn('PocketBase status update notice:', pbErr));
 
     setActionSuccess(`Status updated to ${newStatus}`);
     setTimeout(() => setActionSuccess(null), 3000);
@@ -967,6 +1057,15 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
+          </button>
+
+          <button
+            onClick={() => setShowPocketBaseModal(true)}
+            className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-md cursor-pointer border border-indigo-400/30"
+            title="PocketBase Migration & Backend Config"
+          >
+            <Database className="w-3.5 h-3.5 text-indigo-200" />
+            <span>PocketBase Backend</span>
           </button>
 
           <button
@@ -1718,6 +1817,294 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* POCKETBASE BACKEND & MIGRATION CONFIG MODAL */}
+      {showPocketBaseModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fade-in overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl my-8">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-indigo-950 text-white shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-indigo-600 rounded-xl">
+                  <Database className="w-5 h-5 text-indigo-100" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-white">
+                    PocketBase Migration &amp; Backend Suite
+                  </h3>
+                  <p className="text-[11px] text-indigo-300 font-medium">
+                    Configure server URL, test live connection, and view step-by-step setup guides
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowPocketBaseModal(false)}
+                className="p-1.5 text-indigo-300 hover:text-white hover:bg-indigo-900/50 rounded-xl transition-all cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Scrollable Body */}
+            <div className="p-6 overflow-y-auto space-y-6 text-slate-800 dark:text-slate-200 bg-slate-50/50 dark:bg-slate-950/50">
+              {/* SECTION 1: LIVE CONNECTION MANAGER */}
+              <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4" />
+                    <span>1. PocketBase Instance Connection</span>
+                  </h4>
+                  <span className="text-[11px] px-2 py-0.5 rounded-full font-bold bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
+                    Client Integration Ready
+                  </span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <input
+                    type="url"
+                    value={pocketBaseUrlInput}
+                    onChange={(e) => setPocketBaseUrlInput(e.target.value)}
+                    placeholder="http://127.0.0.1:8090 or https://pb.cscdost.com"
+                    className="flex-grow px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-mono font-medium focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <button
+                    onClick={handleTestPocketBase}
+                    disabled={pocketBaseTestResult.status === 'testing'}
+                    className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-black transition-all shadow-md shrink-0 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {pocketBaseTestResult.status === 'testing' ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Connecting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        <span>Test &amp; Save Server URL</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {pocketBaseTestResult.status === 'success' && (
+                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>{pocketBaseTestResult.message}</span>
+                  </div>
+                )}
+
+                {pocketBaseTestResult.status === 'error' && (
+                  <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-2">
+                    <XCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                    <span>{pocketBaseTestResult.message}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* SECTION 2: POCKETBASE COLLECTION SCHEMA SETUP */}
+              <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-3">
+                <h4 className="text-xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+                  <Database className="w-4 h-4" />
+                  <span>2. PocketBase Collection Configuration ("applications")</span>
+                </h4>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  Open your PocketBase Admin UI (e.g. <code className="font-mono bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">http://127.0.0.1:8090/_/</code>), click <strong>New Collection</strong>, name it <code className="font-mono text-indigo-600 dark:text-indigo-400 font-bold">applications</code>, and add the following fields:
+                </p>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-950/50">
+                        <th className="p-2 font-black">Field Name</th>
+                        <th className="p-2 font-black">Type</th>
+                        <th className="p-2 font-black">Options &amp; Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50 font-mono text-[11px]">
+                      <tr>
+                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">appId</td>
+                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Text</span></td>
+                        <td className="p-2 text-slate-500">Unique Application Token ID (e.g., CSC-2026-9872)</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">applicantName</td>
+                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Text</span></td>
+                        <td className="p-2 text-slate-500">Applicant Full Name</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">phoneNumber</td>
+                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Text</span></td>
+                        <td className="p-2 text-slate-500">Phone / Mobile number</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">emailAddress</td>
+                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Email / Text</span></td>
+                        <td className="p-2 text-slate-500">Email Address</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">selectedService</td>
+                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Text</span></td>
+                        <td className="p-2 text-slate-500">CSC Service Name requested</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">userCategory</td>
+                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Text</span></td>
+                        <td className="p-2 text-slate-500">General, SC/ST, OBC, etc.</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">paymentMode</td>
+                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Text</span></td>
+                        <td className="p-2 text-slate-500">Payment mode (UPI, Cash, Online)</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">utrNumber</td>
+                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Text</span></td>
+                        <td className="p-2 text-slate-500">UPI UTR / Reference number</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">totalAmount</td>
+                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Number</span></td>
+                        <td className="p-2 text-slate-500">Amount charged in INR</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">status</td>
+                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Text / Select</span></td>
+                        <td className="p-2 text-slate-500">Pending, Paid, Approved, Rejected, In Progress</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">submittedAt</td>
+                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Date / Text</span></td>
+                        <td className="p-2 text-slate-500">Timestamp string or Date</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">documents</td>
+                        <td className="p-2"><span className="px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-950 text-indigo-600 font-bold rounded">File</span></td>
+                        <td className="p-2 text-indigo-600 dark:text-indigo-400 font-bold">Max Select = Multi (e.g., 10), Max Size = 10MB</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">payloadJson</td>
+                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Json / Text</span></td>
+                        <td className="p-2 text-slate-500">Full application metadata payload</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* SECTION 3: API RULES FOR GUEST SUBMISSION & ADMIN PRIVACY */}
+              <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-3">
+                <h4 className="text-xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>3. PocketBase API / Security Rules</span>
+                </h4>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  In PocketBase Admin UI under collection settings for <strong>applications</strong>, set these exact API Rules so guests can submit applications without login, while only Admin/Staff can view and manage them:
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs">
+                  <div className="p-3 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl space-y-1">
+                    <div className="font-bold text-indigo-600 dark:text-indigo-400">List / Search Rule</div>
+                    <code className="text-emerald-600 dark:text-emerald-400 font-bold">@request.auth.id != ""</code>
+                    <p className="text-[10px] text-slate-500 font-sans">Only authenticated Admin/Staff can view all submissions</p>
+                  </div>
+
+                  <div className="p-3 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl space-y-1">
+                    <div className="font-bold text-indigo-600 dark:text-indigo-400">View Rule</div>
+                    <code className="text-emerald-600 dark:text-emerald-400 font-bold">@request.auth.id != ""</code>
+                    <p className="text-[10px] text-slate-500 font-sans">Only authenticated Admin/Staff can read individual submissions</p>
+                  </div>
+
+                  <div className="p-3 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl space-y-1">
+                    <div className="font-bold text-indigo-600 dark:text-indigo-400">Create Rule</div>
+                    <code className="text-amber-600 dark:text-amber-400 font-bold">""</code>
+                    <p className="text-[10px] text-slate-500 font-sans">Empty string allows guest public creation without login!</p>
+                  </div>
+
+                  <div className="p-3 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl space-y-1">
+                    <div className="font-bold text-indigo-600 dark:text-indigo-400">Update / Delete Rule</div>
+                    <code className="text-emerald-600 dark:text-emerald-400 font-bold">@request.auth.id != ""</code>
+                    <p className="text-[10px] text-slate-500 font-sans">Only authenticated Admin can update status or delete records</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 4: HTML & JAVASCRIPT INTEGRATION SNIPPET */}
+              <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-3">
+                <h4 className="text-xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  <span>4. HTML &amp; JS Code Integration Snippet</span>
+                </h4>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  Ready-to-use snippet for your website frontend (`cscdost.com`):
+                </p>
+
+                <div className="relative group">
+                  <pre className="p-4 bg-slate-950 text-slate-100 rounded-xl text-[11px] font-mono overflow-x-auto leading-relaxed border border-slate-800">
+{`<!-- 1. PocketBase JS SDK CDN -->
+<script src="https://unpkg.com/pocketbase/dist/pocketbase.umd.js"></script>
+
+<!-- 2. Application Form -->
+<form id="cscApplicationForm">
+  <input type="text" name="applicantName" placeholder="Full Name" required />
+  <input type="tel" name="phoneNumber" placeholder="Phone Number" required />
+  <input type="email" name="emailAddress" placeholder="Email Address" />
+  <input type="text" name="selectedService" value="PAN Card Application" />
+  <input type="file" name="documents" id="documentInput" multiple required />
+  <button type="submit">Submit Application</button>
+</form>
+
+<!-- 3. Form Submission Script -->
+<script>
+  const pb = new PocketBase('${pocketBaseUrlInput || 'http://127.0.0.1:8090'}');
+
+  document.getElementById('cscApplicationForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData();
+
+    // Generate unique appId token
+    const token = 'CSC-' + new Date().getFullYear() + '-' + Math.floor(100000 + Math.random() * 900000);
+    formData.append('appId', token);
+    formData.append('applicantName', form.applicantName.value);
+    formData.append('phoneNumber', form.phoneNumber.value);
+    formData.append('emailAddress', form.emailAddress.value || 'N/A');
+    formData.append('selectedService', form.selectedService.value);
+    formData.append('status', 'Pending');
+    formData.append('submittedAt', new Date().toISOString());
+
+    // Attach uploaded files
+    const fileInput = document.getElementById('documentInput');
+    for (let file of fileInput.files) {
+      formData.append('documents', file);
+    }
+
+    try {
+      const record = await pb.collection('applications').create(formData);
+      alert('Application submitted successfully! Your Token: ' + token);
+      form.reset();
+    } catch (err) {
+      console.error('Submission failed:', err);
+      alert('Error submitting application: ' + err.message);
+    }
+  });
+</script>`}
+                  </pre>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 flex justify-end shrink-0">
+              <button
+                onClick={() => setShowPocketBaseModal(false)}
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black rounded-xl shadow-md transition-all cursor-pointer"
+              >
+                Done
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

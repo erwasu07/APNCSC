@@ -3,6 +3,7 @@ import TrackApplication from './TrackApplication';
 import { AdSenseSlot } from './AdSenseSlot';
 import { db } from '../lib/firebase';
 import { getSupabaseClient, uploadMultipleDocumentsToSupabase } from '../lib/supabase';
+import { saveApplicationToPocketBase } from '../lib/pocketbase';
 import { DynamicUpiGateway } from './DynamicUpiGateway';
 import { doc, setDoc } from 'firebase/firestore';
 import { 
@@ -1729,6 +1730,18 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
           setDoc(doc(db, 'appointments', officialAppId), initialPayload, { merge: true })
         ]).catch(err => console.error('Firestore initial setDoc error:', err));
 
+        // Save to PocketBase Backend (Guest Application Submission with Files)
+        saveApplicationToPocketBase(officialAppId, {
+          ...initialPayload,
+          applicantName: formData.customerName,
+          phoneNumber: formData.phoneNumber,
+          emailAddress: formData.emailAddress,
+          selectedService: pendingReceipt.selectedService,
+          userCategory: pendingReceipt.userCategory,
+          totalAmount: pendingReceipt.totalAmount,
+          documents: uploadedFiles
+        }).catch(pbErr => console.warn('PocketBase initial save notice:', pbErr));
+
         const supabase = getSupabaseClient();
         if (supabase) {
           supabase.from('applications').upsert([{
@@ -1862,6 +1875,18 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
           setDoc(doc(db, 'applications', officialAppId), updatedPayload, { merge: true }),
           setDoc(doc(db, 'appointments', officialAppId), updatedPayload, { merge: true })
         ]).catch(err => console.error('Firestore paid setDoc error:', err));
+
+        // Save paid update to PocketBase
+        saveApplicationToPocketBase(officialAppId, {
+          ...updatedPayload,
+          applicantName: updatedReceipt.customerName,
+          phoneNumber: updatedReceipt.phoneNumber,
+          emailAddress: updatedReceipt.emailAddress,
+          selectedService: updatedReceipt.selectedService,
+          userCategory: updatedReceipt.userCategory,
+          totalAmount: updatedReceipt.totalAmount,
+          documents: processedDocs
+        }).catch(pbErr => console.warn('PocketBase UPI save notice:', pbErr));
 
         const supabase = getSupabaseClient();
         if (supabase) {
@@ -2009,6 +2034,18 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
         ]).catch(fsErr => {
           console.error('Firestore payment update error:', fsErr);
         });
+
+        // Save application to PocketBase
+        saveApplicationToPocketBase(targetAppId, {
+          ...payload,
+          applicantName: updatedReceipt.customerName,
+          phoneNumber: updatedReceipt.phoneNumber,
+          emailAddress: updatedReceipt.emailAddress,
+          selectedService: updatedReceipt.selectedService,
+          userCategory: updatedReceipt.userCategory,
+          totalAmount: updatedReceipt.totalAmount,
+          documents: processedDocs
+        }).catch(pbErr => console.warn('PocketBase payment update save notice:', pbErr));
 
         const supabase = getSupabaseClient();
         if (supabase) {
