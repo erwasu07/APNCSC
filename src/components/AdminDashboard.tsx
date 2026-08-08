@@ -114,8 +114,10 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
   const handleTestPocketBase = async () => {
     setPocketBaseTestResult({ status: 'testing' });
+    const cleanUrl = pocketBaseUrlInput.trim().replace(/\/+$/, '');
+    setPocketBaseUrl(cleanUrl);
+
     try {
-      setPocketBaseUrl(pocketBaseUrlInput);
       const pb = getPocketBaseClient();
       if (!pb) {
         setPocketBaseTestResult({ status: 'error', message: 'Failed to construct PocketBase instance.' });
@@ -123,12 +125,33 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       }
       const health = await pb.health.check();
       if (health && health.code === 200) {
-        setPocketBaseTestResult({ status: 'success', message: `Connected to PocketBase v${health.data?.version || '1.0'}!` });
+        setPocketBaseTestResult({
+          status: 'success',
+          message: `Saved & Connected! PocketBase v${health.data?.version || '1.0'} health check passed successfully.`
+        });
       } else {
-        setPocketBaseTestResult({ status: 'error', message: 'Server responded, but health check failed.' });
+        setPocketBaseTestResult({
+          status: 'error',
+          message: 'Server responded, but health check failed. Ensure PocketBase is running.'
+        });
       }
     } catch (err: any) {
-      setPocketBaseTestResult({ status: 'error', message: err?.message || 'Unable to connect to PocketBase instance. Please verify server URL.' });
+      console.warn('PocketBase connection test error:', err);
+      const isHttpsPage = window.location.protocol === 'https:';
+      const isHttpTarget = cleanUrl.startsWith('http://');
+
+      let diagnosticMsg = err?.message || 'Unable to connect to PocketBase instance.';
+
+      if (isHttpsPage && isHttpTarget) {
+        diagnosticMsg = `Browser Mixed Content Notice: This web app is hosted on HTTPS (${window.location.host}), so browsers block direct requests to insecure "http://" URLs like "${cleanUrl}". To use PocketBase, host it on HTTPS (e.g., https://pb.cscdost.com, Railway, Fly.io) or use an SSL proxy / Ngrok. Note: Client submissions will still save to Cloud Firestore automatically!`;
+      } else if (err?.message === 'Something went wrong.' || !err?.message || err?.name === 'TypeError') {
+        diagnosticMsg = `Connection Refused at "${cleanUrl}". Ensure your PocketBase server is actively running (e.g., "./pocketbase serve") and CORS is enabled for domain "${window.location.origin}".`;
+      }
+
+      setPocketBaseTestResult({
+        status: 'error',
+        message: diagnosticMsg
+      });
     }
   };
 

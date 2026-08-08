@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Calendar, PhoneCall, Cpu, Sparkles, Eye, Languages, Home, Briefcase, Flame, Info, Menu, X, Star, ShieldCheck, Lock, Key } from 'lucide-react';
+import { Shield, Calendar, PhoneCall, Cpu, Sparkles, Eye, Languages, Home, Briefcase, Flame, Info, Menu, X, Star, ShieldCheck, Lock, Key, Sun, Moon } from 'lucide-react';
 import { PolicyTab } from './PrivacyPolicyModal';
 
 interface NavbarProps {
@@ -166,6 +166,26 @@ export default function Navbar({
               </button>
             </div>
 
+            {/* Theme Mode Toggle (Light / Dark) */}
+            <button
+              type="button"
+              onClick={() => setDarkMode(!darkMode)}
+              className="px-2 py-0.5 rounded text-[10.5px] font-extrabold border border-slate-700 bg-[#1e293b] text-amber-300 hover:text-white hover:bg-slate-800 transition-all cursor-pointer flex items-center gap-1 shrink-0 shadow-xs"
+              title={darkMode ? "Switch to Light Theme Mode" : "Switch to Dark Theme Mode"}
+            >
+              {darkMode ? (
+                <>
+                  <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span className="whitespace-nowrap">Light Theme</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-3.5 h-3.5 text-blue-300 shrink-0" />
+                  <span className="whitespace-nowrap">Dark Theme</span>
+                </>
+              )}
+            </button>
+
             <a
               href="https://whatsapp.com/channel/0029VbDgSe75a248qEZAbL3g"
               target="_blank"
@@ -306,6 +326,31 @@ export default function Navbar({
                   हिंदी
                 </button>
               </div>
+            </div>
+
+            {/* Mobile Theme Mode Switcher */}
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <span className="text-xs text-slate-400 font-bold flex items-center gap-1.5">
+                {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-blue-400" />}
+                Theme Mode / थीम:
+              </span>
+              <button
+                type="button"
+                onClick={() => setDarkMode(!darkMode)}
+                className="px-3 py-1 rounded bg-slate-800 text-xs font-bold text-amber-300 border border-slate-700 hover:bg-slate-700 flex items-center gap-1.5 cursor-pointer"
+              >
+                {darkMode ? (
+                  <>
+                    <Sun className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Light Theme Mode</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon className="w-3.5 h-3.5 text-blue-300" />
+                    <span>Dark Theme Mode</span>
+                  </>
+                )}
+              </button>
             </div>
 
             <div className="flex flex-col gap-1">

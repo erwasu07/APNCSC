@@ -23,7 +23,12 @@ const FALLBACK_SETTINGS: WebsiteSettings = {
 };
 
 export default function App() {
-  const [darkMode, setDarkMode] = useState<boolean>(false);
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('theme') === 'dark';
+    }
+    return false;
+  });
   const [isAdminView, setIsAdminView] = useState<boolean>(false);
 
   const [selectedService, setSelectedService] = useState('');
@@ -91,10 +96,15 @@ export default function App() {
     }
   }, [settings]);
 
-  // Enforce light theme mode across portal
+  // Sync portal theme mode (dark vs light)
   useEffect(() => {
-    document.documentElement.classList.remove('dark');
-    localStorage.setItem('theme', 'light');
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
   }, [darkMode]);
 
   const handleOpenStaffPortal = () => {
