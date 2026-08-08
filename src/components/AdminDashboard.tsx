@@ -90,7 +90,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string>('pending');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [selectedDocPreview, setSelectedDocPreview] = useState<{ name: string; url: string; type?: string } | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
@@ -252,6 +252,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     const firestoreAppsMap = new Map<string, any>();
     const firestoreAptsMap = new Map<string, any>();
     const supabaseMap = new Map<string, any>();
+    const pocketbaseMap = new Map<string, any>();
 
     const updateCombinedApplications = () => {
       let localApps: any[] = [];
@@ -270,7 +271,8 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         ...Array.from(serverApiMap.values()),
         ...Array.from(firestoreAppsMap.values()),
         ...Array.from(firestoreAptsMap.values()),
-        ...Array.from(supabaseMap.values())
+        ...Array.from(supabaseMap.values()),
+        ...Array.from(pocketbaseMap.values())
       ].forEach((app) => {
         if (!app) return;
         const key = app.appId || app.id || app.token || app.tokenNo;
@@ -433,29 +435,59 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
     let supabaseChannel: any = null;
     const supabaseClient = getSupabaseClient();
-    const pocketbaseMap = new Map<string, any>();
     const pb = getPocketBaseClient();
+
+    const parsePocketBaseRecord = (rec: any) => {
+      const key = rec.appId || rec.id;
+      if (!key) return null;
+
+      const pbUrl = pb?.baseUrl || getPocketBaseUrl();
+      let pbDocs: any[] = [];
+      if (Array.isArray(rec.documents)) {
+        pbDocs = rec.documents.map((filename: string) => ({
+          id: filename,
+          name: filename,
+          url: `${pbUrl}/api/files/applications/${rec.id}/${filename}`,
+          dataUrl: `${pbUrl}/api/files/applications/${rec.id}/${filename}`
+        }));
+      } else if (typeof rec.documents === 'string' && rec.documents) {
+        pbDocs = [{
+          id: rec.documents,
+          name: rec.documents,
+          url: `${pbUrl}/api/files/applications/${rec.id}/${rec.documents}`,
+          dataUrl: `${pbUrl}/api/files/applications/${rec.id}/${rec.documents}`
+        }];
+      }
+
+      return {
+        ...rec,
+        appId: rec.appId || rec.id,
+        id: rec.id || rec.appId,
+        customerName: rec.applicantName || rec.customerName || rec.name,
+        applicantName: rec.applicantName || rec.customerName || rec.name,
+        name: rec.applicantName || rec.customerName || rec.name,
+        phoneNumber: rec.phoneNumber || rec.phone,
+        phone: rec.phoneNumber || rec.phone,
+        emailAddress: rec.emailAddress || rec.email,
+        email: rec.emailAddress || rec.email,
+        selectedService: rec.selectedService || rec.service,
+        service: rec.selectedService || rec.service,
+        userCategory: rec.userCategory || 'General',
+        totalAmount: Number(rec.totalAmount) || 0,
+        status: rec.status || 'Pending',
+        submittedAt: rec.submittedAt || rec.created,
+        documents: pbDocs.length > 0 ? pbDocs : (rec.documents || []),
+        ...(rec.payloadJson ? JSON.parse(rec.payloadJson) : {})
+      };
+    };
 
     if (pb) {
       try {
         pb.collection('applications').getFullList({ sort: '-created' }).then((records) => {
           records.forEach((rec: any) => {
-            const key = rec.appId || rec.id;
-            if (key) {
-              pocketbaseMap.set(key, {
-                ...rec,
-                appId: rec.appId || rec.id,
-                customerName: rec.applicantName || rec.customerName,
-                applicantName: rec.applicantName || rec.customerName,
-                phoneNumber: rec.phoneNumber,
-                emailAddress: rec.emailAddress,
-                selectedService: rec.selectedService,
-                userCategory: rec.userCategory,
-                totalAmount: Number(rec.totalAmount) || 0,
-                status: rec.status,
-                submittedAt: rec.submittedAt || rec.created,
-                ...(rec.payloadJson ? JSON.parse(rec.payloadJson) : {})
-              });
+            const parsed = parsePocketBaseRecord(rec);
+            if (parsed && parsed.appId) {
+              pocketbaseMap.set(parsed.appId, parsed);
             }
           });
           updateCombinedApplications();
@@ -463,23 +495,9 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
         pb.collection('applications').subscribe('*', (e) => {
           if (e.action === 'create' || e.action === 'update') {
-            const rec = e.record;
-            const key = rec.appId || rec.id;
-            if (key) {
-              pocketbaseMap.set(key, {
-                ...rec,
-                appId: rec.appId || rec.id,
-                customerName: rec.applicantName || rec.customerName,
-                applicantName: rec.applicantName || rec.customerName,
-                phoneNumber: rec.phoneNumber,
-                emailAddress: rec.emailAddress,
-                selectedService: rec.selectedService,
-                userCategory: rec.userCategory,
-                totalAmount: Number(rec.totalAmount) || 0,
-                status: rec.status,
-                submittedAt: rec.submittedAt || rec.created,
-                ...(rec.payloadJson ? JSON.parse(rec.payloadJson) : {})
-              });
+            const parsed = parsePocketBaseRecord(e.record);
+            if (parsed && parsed.appId) {
+              pocketbaseMap.set(parsed.appId, parsed);
               updateCombinedApplications();
             }
           } else if (e.action === 'delete') {
@@ -895,19 +913,24 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     const matchesQuery = !q || name.includes(q) || phone.includes(q) || appId.includes(q) || service.includes(q) || utr.includes(q);
 
     if (filterStatus === 'all') return matchesQuery;
-    if (filterStatus === 'online') return matchesQuery && app.paymentMode === 'online';
-    if (filterStatus === 'cash') return matchesQuery && app.paymentMode === 'cash';
 
     const statusStr = (app.status || 'Pending').toLowerCase();
+    const modeStr = (app.paymentMode || '').toLowerCase();
 
+    if (filterStatus === 'online') {
+      return matchesQuery && (modeStr === 'online' || modeStr === 'upi' || statusStr.includes('online') || statusStr.includes('upi'));
+    }
+    if (filterStatus === 'cash') {
+      return matchesQuery && (modeStr === 'cash' || statusStr.includes('cash'));
+    }
     if (filterStatus === 'pending') {
-      return matchesQuery && (statusStr === 'pending' || !app.status);
+      return matchesQuery && (statusStr.includes('pending') || !app.status);
     }
     if (filterStatus === 'approved') {
-      return matchesQuery && (statusStr.includes('approved') || statusStr.includes('process'));
+      return matchesQuery && (statusStr.includes('approved') || statusStr.includes('process') || statusStr.includes('under'));
     }
     if (filterStatus === 'completed') {
-      return matchesQuery && statusStr.includes('completed');
+      return matchesQuery && (statusStr.includes('completed') || statusStr.includes('done') || statusStr.includes('paid'));
     }
     if (filterStatus === 'rejected') {
       return matchesQuery && statusStr.includes('reject');
@@ -1227,7 +1250,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
             <span>Select All</span>
           </button>
 
-          {['pending', 'approved', 'completed', 'rejected', 'online', 'cash'].map((st) => (
+          {['all', 'pending', 'approved', 'completed', 'rejected', 'online', 'cash'].map((st) => (
             <button
               key={st}
               onClick={() => setFilterStatus(st)}
@@ -1237,7 +1260,9 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
-              {st === 'approved'
+              {st === 'all'
+                ? 'All Submissions'
+                : st === 'approved'
                 ? 'Under Process'
                 : st === 'online'
                 ? 'UPI Paid'
