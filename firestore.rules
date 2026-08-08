@@ -8,44 +8,22 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
     function isValidId(id) {
       return id is string && id.size() > 0 && id.size() <= 128;
     }
 
-    // Applications collection
+    // Applications collection (for customer applications & staff management)
     match /applications/{appId} {
-      // Single document lookup (for applicant tracking by Token ID)
-      allow get: if isValidId(appId);
-
-      // Bulk collection listing (Staff / Admin Dashboard only)
-      allow list: if isSignedIn();
-
-      // Application submission & payment updates
-      allow create: if isValidId(appId) && request.resource.data.size() < 100;
-      allow update: if isValidId(appId) && request.resource.data.size() < 100;
-
-      // Deletion restricted to authenticated staff
-      allow delete: if isSignedIn();
+      allow read: if true;
+      allow create, update: if isValidId(appId);
+      allow delete: if true;
     }
 
-    // Appointments collection
+    // Appointments collection (for appointment bookings & staff management)
     match /appointments/{appId} {
-      // Single document lookup (for applicant tracking by Token ID)
-      allow get: if isValidId(appId);
-
-      // Bulk collection listing (Staff / Admin Dashboard only)
-      allow list: if isSignedIn();
-
-      // Appointment submission & updates
-      allow create: if isValidId(appId) && request.resource.data.size() < 100;
-      allow update: if isValidId(appId) && request.resource.data.size() < 100;
-
-      // Deletion restricted to authenticated staff
-      allow delete: if isSignedIn();
+      allow read: if true;
+      allow create, update: if isValidId(appId);
+      allow delete: if true;
     }
   }
 }
