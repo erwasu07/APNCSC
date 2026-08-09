@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db, auth, storage } from '../lib/firebase';
 import { uploadReceiptFileToSupabase, getSupabaseClient } from '../lib/supabase';
-import { getPocketBaseClient, getPocketBaseUrl, setPocketBaseUrl, updatePocketBaseApplicationStatus } from '../lib/pocketbase';
+import { getFormEndpoint, setFormEndpoint } from '../lib/getform';
 import { collection, onSnapshot, doc, updateDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
@@ -107,50 +107,47 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // PocketBase Integration Modal States
-  const [showPocketBaseModal, setShowPocketBaseModal] = useState(false);
-  const [pocketBaseUrlInput, setPocketBaseUrlInput] = useState<string>(() => getPocketBaseUrl());
-  const [pocketBaseTestResult, setPocketBaseTestResult] = useState<{ status: 'idle' | 'testing' | 'success' | 'error'; message?: string }>({ status: 'idle' });
+  // Getform.io / Formspree & Supabase Integration Modal States
+  const [showGetformModal, setShowGetformModal] = useState(false);
+  const [snippetTab, setSnippetTab] = useState<'getform' | 'supabase' | 'sql'>('getform');
+  const [getformEndpointInput, setGetformEndpointInput] = useState<string>(() => getFormEndpoint());
+  const [getformTestResult, setGetformTestResult] = useState<{ status: 'idle' | 'testing' | 'success' | 'error'; message?: string }>({ status: 'idle' });
 
-  const handleTestPocketBase = async () => {
-    setPocketBaseTestResult({ status: 'testing' });
-    const cleanUrl = pocketBaseUrlInput.trim().replace(/\/+$/, '');
-    setPocketBaseUrl(cleanUrl);
+  const handleTestGetformEndpoint = async () => {
+    setGetformTestResult({ status: 'testing' });
+    const cleanUrl = getformEndpointInput.trim();
+    setFormEndpoint(cleanUrl);
+
+    if (!cleanUrl || cleanUrl.includes('YOUR_UNIQUE_ENDPOINT')) {
+      setGetformTestResult({
+        status: 'error',
+        message: 'Please replace YOUR_UNIQUE_ENDPOINT with your actual Getform.io or Formspree endpoint URL (e.g. https://getform.io/f/xyza123).'
+      });
+      return;
+    }
 
     try {
-      const pb = getPocketBaseClient();
-      if (!pb) {
-        setPocketBaseTestResult({ status: 'error', message: 'Failed to construct PocketBase instance.' });
-        return;
-      }
-      const health = await pb.health.check();
-      if (health && health.code === 200) {
-        setPocketBaseTestResult({
+      const res = await fetch(cleanUrl, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        body: new FormData()
+      });
+
+      if (res.ok || res.status === 200 || res.status === 400 || res.status === 422) {
+        setGetformTestResult({
           status: 'success',
-          message: `Saved & Connected! PocketBase v${health.data?.version || '1.0'} health check passed successfully.`
+          message: `Saved & Verified! Getform.io / Formspree endpoint is active and ready to process form submissions.`
         });
       } else {
-        setPocketBaseTestResult({
+        setGetformTestResult({
           status: 'error',
-          message: 'Server responded, but health check failed. Ensure PocketBase is running.'
+          message: `Endpoint responded with status ${res.status}. Please double-check your Getform.io or Formspree form ID.`
         });
       }
     } catch (err: any) {
-      console.warn('PocketBase connection test error:', err);
-      const isHttpsPage = window.location.protocol === 'https:';
-      const isHttpTarget = cleanUrl.startsWith('http://');
-
-      let diagnosticMsg = err?.message || 'Unable to connect to PocketBase instance.';
-
-      if (isHttpsPage && isHttpTarget) {
-        diagnosticMsg = `Browser Mixed Content Notice: This web app is hosted on HTTPS (${window.location.host}), so browsers block direct requests to insecure "http://" URLs like "${cleanUrl}". To use PocketBase, host it on HTTPS (e.g., https://pb.cscdost.com, Railway, Fly.io) or use an SSL proxy / Ngrok. Note: Client submissions will still save to Cloud Firestore automatically!`;
-      } else if (err?.message === 'Something went wrong.' || !err?.message || err?.name === 'TypeError') {
-        diagnosticMsg = `Connection Refused at "${cleanUrl}". Ensure your PocketBase server is actively running (e.g., "./pocketbase serve") and CORS is enabled for domain "${window.location.origin}".`;
-      }
-
-      setPocketBaseTestResult({
+      setGetformTestResult({
         status: 'error',
-        message: diagnosticMsg
+        message: `Network error or CORS notice testing endpoint: ${err?.message || String(err)}. URL saved successfully.`
       });
     }
   };
@@ -275,7 +272,6 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     const firestoreAppsMap = new Map<string, any>();
     const firestoreAptsMap = new Map<string, any>();
     const supabaseMap = new Map<string, any>();
-    const pocketbaseMap = new Map<string, any>();
 
     const updateCombinedApplications = () => {
       let localApps: any[] = [];
@@ -294,8 +290,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         ...Array.from(serverApiMap.values()),
         ...Array.from(firestoreAppsMap.values()),
         ...Array.from(firestoreAptsMap.values()),
-        ...Array.from(supabaseMap.values()),
-        ...Array.from(pocketbaseMap.values())
+        ...Array.from(supabaseMap.values())
       ].forEach((app) => {
         if (!app) return;
         const key = app.appId || app.id || app.token || app.tokenNo;
@@ -458,83 +453,6 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
     let supabaseChannel: any = null;
     const supabaseClient = getSupabaseClient();
-    const pb = getPocketBaseClient();
-
-    const parsePocketBaseRecord = (rec: any) => {
-      const key = rec.appId || rec.id;
-      if (!key) return null;
-
-      const pbUrl = pb?.baseUrl || getPocketBaseUrl();
-      let pbDocs: any[] = [];
-      if (Array.isArray(rec.documents)) {
-        pbDocs = rec.documents.map((filename: string) => ({
-          id: filename,
-          name: filename,
-          url: `${pbUrl}/api/files/applications/${rec.id}/${filename}`,
-          dataUrl: `${pbUrl}/api/files/applications/${rec.id}/${filename}`
-        }));
-      } else if (typeof rec.documents === 'string' && rec.documents) {
-        pbDocs = [{
-          id: rec.documents,
-          name: rec.documents,
-          url: `${pbUrl}/api/files/applications/${rec.id}/${rec.documents}`,
-          dataUrl: `${pbUrl}/api/files/applications/${rec.id}/${rec.documents}`
-        }];
-      }
-
-      return {
-        ...rec,
-        appId: rec.appId || rec.id,
-        id: rec.id || rec.appId,
-        customerName: rec.applicantName || rec.customerName || rec.name,
-        applicantName: rec.applicantName || rec.customerName || rec.name,
-        name: rec.applicantName || rec.customerName || rec.name,
-        phoneNumber: rec.phoneNumber || rec.phone,
-        phone: rec.phoneNumber || rec.phone,
-        emailAddress: rec.emailAddress || rec.email,
-        email: rec.emailAddress || rec.email,
-        selectedService: rec.selectedService || rec.service,
-        service: rec.selectedService || rec.service,
-        userCategory: rec.userCategory || 'General',
-        totalAmount: Number(rec.totalAmount) || 0,
-        status: rec.status || 'Pending',
-        submittedAt: rec.submittedAt || rec.created,
-        documents: pbDocs.length > 0 ? pbDocs : (rec.documents || []),
-        ...(rec.payloadJson ? JSON.parse(rec.payloadJson) : {})
-      };
-    };
-
-    if (pb) {
-      try {
-        pb.collection('applications').getFullList({ sort: '-created' }).then((records) => {
-          records.forEach((rec: any) => {
-            const parsed = parsePocketBaseRecord(rec);
-            if (parsed && parsed.appId) {
-              pocketbaseMap.set(parsed.appId, parsed);
-            }
-          });
-          updateCombinedApplications();
-        }).catch(err => console.warn('PocketBase initial fetch notice:', err));
-
-        pb.collection('applications').subscribe('*', (e) => {
-          if (e.action === 'create' || e.action === 'update') {
-            const parsed = parsePocketBaseRecord(e.record);
-            if (parsed && parsed.appId) {
-              pocketbaseMap.set(parsed.appId, parsed);
-              updateCombinedApplications();
-            }
-          } else if (e.action === 'delete') {
-            const key = e.record.appId || e.record.id;
-            if (key) {
-              pocketbaseMap.delete(key);
-              updateCombinedApplications();
-            }
-          }
-        }).catch(pbSubErr => console.warn('PocketBase realtime subscribe notice:', pbSubErr));
-      } catch (pbErr) {
-        console.warn('PocketBase init notice:', pbErr);
-      }
-    }
 
     if (supabaseClient) {
       try {
@@ -754,9 +672,6 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       })();
     }
 
-    // Also update in PocketBase
-    updatePocketBaseApplicationStatus(appId, { status: newStatus }).catch(pbErr => console.warn('PocketBase status update notice:', pbErr));
-
     setActionSuccess(`Status updated to ${newStatus}`);
     setTimeout(() => setActionSuccess(null), 3000);
   };
@@ -933,7 +848,17 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     const service = (app.service || app.selectedService || app.eService || '').toLowerCase();
     const utr = (app.utrNumber || '').toLowerCase();
 
-    const matchesQuery = !q || name.includes(q) || phone.includes(q) || appId.includes(q) || service.includes(q) || utr.includes(q);
+    const qDigits = q.replace(/\D/g, '');
+    const appIdDigits = appId.replace(/\D/g, '');
+    const phoneDigits = phone.replace(/\D/g, '');
+
+    const matchesQuery = !q ||
+      name.includes(q) ||
+      phone.includes(q) ||
+      appId.includes(q) ||
+      service.includes(q) ||
+      utr.includes(q) ||
+      (qDigits.length >= 2 && (appIdDigits.includes(qDigits) || phoneDigits.includes(qDigits)));
 
     if (filterStatus === 'all') return matchesQuery;
 
@@ -1112,12 +1037,12 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           </button>
 
           <button
-            onClick={() => setShowPocketBaseModal(true)}
+            onClick={() => setShowGetformModal(true)}
             className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-md cursor-pointer border border-indigo-400/30"
-            title="PocketBase Migration & Backend Config"
+            title="Getform.io & Formspree Setup & HTML Code Generator"
           >
             <Database className="w-3.5 h-3.5 text-indigo-200" />
-            <span>PocketBase Backend</span>
+            <span>Getform.io / Formspree</span>
           </button>
 
           <button
@@ -1874,8 +1799,8 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         </div>
       )}
 
-      {/* POCKETBASE BACKEND & MIGRATION CONFIG MODAL */}
-      {showPocketBaseModal && (
+      {/* GETFORM.IO / FORMSPREE INTEGRATION SUITE MODAL */}
+      {showGetformModal && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fade-in overflow-y-auto">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl my-8">
             {/* Modal Header */}
@@ -1886,15 +1811,15 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                 </div>
                 <div>
                   <h3 className="text-sm font-extrabold text-white">
-                    PocketBase Migration &amp; Backend Suite
+                    Getform.io &amp; Formspree Integration Suite
                   </h3>
                   <p className="text-[11px] text-indigo-300 font-medium">
-                    Configure server URL, test live connection, and view step-by-step setup guides
+                    Configure form endpoints, manage attributes, and generate HTML &amp; JS code snippets
                   </p>
                 </div>
               </div>
               <button
-                onClick={() => setShowPocketBaseModal(false)}
+                onClick={() => setShowGetformModal(false)}
                 className="p-1.5 text-indigo-300 hover:text-white hover:bg-indigo-900/50 rounded-xl transition-all cursor-pointer"
               >
                 <X className="w-5 h-5" />
@@ -1903,247 +1828,421 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
             {/* Modal Scrollable Body */}
             <div className="p-6 overflow-y-auto space-y-6 text-slate-800 dark:text-slate-200 bg-slate-50/50 dark:bg-slate-950/50">
-              {/* SECTION 1: LIVE CONNECTION MANAGER */}
+              {/* SECTION 1: ENDPOINT MANAGER */}
               <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-3">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
                     <RefreshCw className="w-4 h-4" />
-                    <span>1. PocketBase Instance Connection</span>
+                    <span>1. Form Endpoint URL Configuration</span>
                   </h4>
                   <span className="text-[11px] px-2 py-0.5 rounded-full font-bold bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
-                    Client Integration Ready
+                    Getform.io / Formspree Endpoint
                   </span>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                   <input
                     type="url"
-                    value={pocketBaseUrlInput}
-                    onChange={(e) => setPocketBaseUrlInput(e.target.value)}
-                    placeholder="http://127.0.0.1:8090 or https://pb.cscdost.com"
+                    value={getformEndpointInput}
+                    onChange={(e) => setGetformEndpointInput(e.target.value)}
+                    placeholder="https://getform.io/f/YOUR_UNIQUE_ENDPOINT or https://formspree.io/f/xyza123"
                     className="flex-grow px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-mono font-medium focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
                   />
                   <button
-                    onClick={handleTestPocketBase}
-                    disabled={pocketBaseTestResult.status === 'testing'}
+                    onClick={handleTestGetformEndpoint}
+                    disabled={getformTestResult.status === 'testing'}
                     className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-black transition-all shadow-md shrink-0 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                   >
-                    {pocketBaseTestResult.status === 'testing' ? (
+                    {getformTestResult.status === 'testing' ? (
                       <>
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        <span>Connecting...</span>
+                        <span>Verifying...</span>
                       </>
                     ) : (
                       <>
                         <ShieldCheck className="w-3.5 h-3.5" />
-                        <span>Test &amp; Save Server URL</span>
+                        <span>Test &amp; Save Endpoint</span>
                       </>
                     )}
                   </button>
                 </div>
 
-                {pocketBaseTestResult.status === 'success' && (
+                {getformTestResult.status === 'success' && (
                   <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span>{pocketBaseTestResult.message}</span>
+                    <span>{getformTestResult.message}</span>
                   </div>
                 )}
 
-                {pocketBaseTestResult.status === 'error' && (
+                {getformTestResult.status === 'error' && (
                   <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-2">
                     <XCircle className="w-4 h-4 text-rose-500 shrink-0" />
-                    <span>{pocketBaseTestResult.message}</span>
+                    <span>{getformTestResult.message}</span>
                   </div>
                 )}
               </div>
 
-              {/* SECTION 2: POCKETBASE COLLECTION SCHEMA SETUP */}
+              {/* SECTION 2: FIELD ATTRIBUTES CHECKLIST */}
               <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-3">
                 <h4 className="text-xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
                   <Database className="w-4 h-4" />
-                  <span>2. PocketBase Collection Configuration ("applications")</span>
+                  <span>2. Form Field Name Attributes Mapping</span>
                 </h4>
                 <p className="text-xs text-slate-600 dark:text-slate-400">
-                  Open your PocketBase Admin UI (e.g. <code className="font-mono bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">http://127.0.0.1:8090/_/</code>), click <strong>New Collection</strong>, name it <code className="font-mono text-indigo-600 dark:text-indigo-400 font-bold">applications</code>, and add the following fields:
+                  Ensure all form controls have the exact <code className="font-mono text-indigo-600 dark:text-indigo-400 font-bold">name</code> attribute defined so Getform.io / Formspree captures each field correctly:
                 </p>
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-950/50">
-                        <th className="p-2 font-black">Field Name</th>
-                        <th className="p-2 font-black">Type</th>
-                        <th className="p-2 font-black">Options &amp; Notes</th>
+                        <th className="p-2 font-black">Field Label</th>
+                        <th className="p-2 font-black">Control Type</th>
+                        <th className="p-2 font-black">Required <code className="font-mono text-indigo-600 dark:text-indigo-400">name="..."</code></th>
+                        <th className="p-2 font-black">Purpose / Example</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50 font-mono text-[11px]">
                       <tr>
-                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">appId</td>
-                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Text</span></td>
-                        <td className="p-2 text-slate-500">Unique Application Token ID (e.g., CSC-2026-9872)</td>
+                        <td className="p-2 font-bold">Full Name</td>
+                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">&lt;input type="text"&gt;</span></td>
+                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">name="full_name"</td>
+                        <td className="p-2 text-slate-500">Applicant Name</td>
                       </tr>
                       <tr>
-                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">applicantName</td>
-                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Text</span></td>
-                        <td className="p-2 text-slate-500">Applicant Full Name</td>
+                        <td className="p-2 font-bold">WhatsApp Mobile Number</td>
+                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">&lt;input type="tel"&gt;</span></td>
+                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">name="whatsapp_number"</td>
+                        <td className="p-2 text-slate-500">10-digit mobile number</td>
                       </tr>
                       <tr>
-                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">phoneNumber</td>
-                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Text</span></td>
-                        <td className="p-2 text-slate-500">Phone / Mobile number</td>
+                        <td className="p-2 font-bold">Email Address</td>
+                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">&lt;input type="email"&gt;</span></td>
+                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">name="email_address"</td>
+                        <td className="p-2 text-slate-500">Applicant Email</td>
                       </tr>
                       <tr>
-                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">emailAddress</td>
-                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Email / Text</span></td>
-                        <td className="p-2 text-slate-500">Email Address</td>
+                        <td className="p-2 font-bold">Service Selection</td>
+                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">&lt;select&gt;</span></td>
+                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">name="service_selected"</td>
+                        <td className="p-2 text-slate-500">PAN, Ayushman, Aadhaar, etc.</td>
                       </tr>
                       <tr>
-                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">selectedService</td>
-                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Text</span></td>
-                        <td className="p-2 text-slate-500">CSC Service Name requested</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">userCategory</td>
-                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Text</span></td>
-                        <td className="p-2 text-slate-500">General, SC/ST, OBC, etc.</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">paymentMode</td>
-                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Text</span></td>
-                        <td className="p-2 text-slate-500">Payment mode (UPI, Cash, Online)</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">utrNumber</td>
-                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Text</span></td>
-                        <td className="p-2 text-slate-500">UPI UTR / Reference number</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">totalAmount</td>
-                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Number</span></td>
-                        <td className="p-2 text-slate-500">Amount charged in INR</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">status</td>
-                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Text / Select</span></td>
-                        <td className="p-2 text-slate-500">Pending, Paid, Approved, Rejected, In Progress</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">submittedAt</td>
-                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Date / Text</span></td>
-                        <td className="p-2 text-slate-500">Timestamp string or Date</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">documents</td>
-                        <td className="p-2"><span className="px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-950 text-indigo-600 font-bold rounded">File</span></td>
-                        <td className="p-2 text-indigo-600 dark:text-indigo-400 font-bold">Max Select = Multi (e.g., 10), Max Size = 10MB</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">payloadJson</td>
-                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Json / Text</span></td>
-                        <td className="p-2 text-slate-500">Full application metadata payload</td>
+                        <td className="p-2 font-bold">Document Attachments</td>
+                        <td className="p-2"><span className="px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-950 text-indigo-600 font-bold rounded">&lt;input type="file"&gt;</span></td>
+                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">name="aadhaar_upload" or name="documents"</td>
+                        <td className="p-2 text-indigo-600 dark:text-indigo-400 font-bold">Supports PDF, JPG, PNG attachments</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
               </div>
 
-              {/* SECTION 3: API RULES FOR GUEST SUBMISSION & ADMIN PRIVACY */}
+              {/* SECTION 3: READY-TO-USE HTML & AJAX / SUPABASE SCRIPTS */}
               <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>3. PocketBase API / Security Rules</span>
-                </h4>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
-                  In PocketBase Admin UI under collection settings for <strong>applications</strong>, set these exact API Rules so guests can submit applications without login, while only Admin/Staff can view and manage them:
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs">
-                  <div className="p-3 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl space-y-1">
-                    <div className="font-bold text-indigo-600 dark:text-indigo-400">List / Search Rule</div>
-                    <code className="text-emerald-600 dark:text-emerald-400 font-bold">@request.auth.id != ""</code>
-                    <p className="text-[10px] text-slate-500 font-sans">Only authenticated Admin/Staff can view all submissions</p>
-                  </div>
-
-                  <div className="p-3 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl space-y-1">
-                    <div className="font-bold text-indigo-600 dark:text-indigo-400">View Rule</div>
-                    <code className="text-emerald-600 dark:text-emerald-400 font-bold">@request.auth.id != ""</code>
-                    <p className="text-[10px] text-slate-500 font-sans">Only authenticated Admin/Staff can read individual submissions</p>
-                  </div>
-
-                  <div className="p-3 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl space-y-1">
-                    <div className="font-bold text-indigo-600 dark:text-indigo-400">Create Rule</div>
-                    <code className="text-amber-600 dark:text-amber-400 font-bold">""</code>
-                    <p className="text-[10px] text-slate-500 font-sans">Empty string allows guest public creation without login!</p>
-                  </div>
-
-                  <div className="p-3 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl space-y-1">
-                    <div className="font-bold text-indigo-600 dark:text-indigo-400">Update / Delete Rule</div>
-                    <code className="text-emerald-600 dark:text-emerald-400 font-bold">@request.auth.id != ""</code>
-                    <p className="text-[10px] text-slate-500 font-sans">Only authenticated Admin can update status or delete records</p>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    <span>3. Production HTML &amp; JavaScript Integration Snippets</span>
+                  </h4>
+                  <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <button
+                      onClick={() => setSnippetTab('getform')}
+                      className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+                        snippetTab === 'getform'
+                          ? 'bg-indigo-600 text-white shadow-xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      Getform.io / Formspree
+                    </button>
+                    <button
+                      onClick={() => setSnippetTab('supabase')}
+                      className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+                        snippetTab === 'supabase'
+                          ? 'bg-indigo-600 text-white shadow-xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      Supabase Storage &amp; DB
+                    </button>
+                    <button
+                      onClick={() => setSnippetTab('sql')}
+                      className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+                        snippetTab === 'sql'
+                          ? 'bg-indigo-600 text-white shadow-xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      Supabase SQL Editor Setup
+                    </button>
                   </div>
                 </div>
-              </div>
 
-              {/* SECTION 4: HTML & JAVASCRIPT INTEGRATION SNIPPET */}
-              <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
-                  <FileText className="w-4 h-4" />
-                  <span>4. HTML &amp; JS Code Integration Snippet</span>
-                </h4>
                 <p className="text-xs text-slate-600 dark:text-slate-400">
-                  Ready-to-use snippet for your website frontend (`cscdost.com`):
+                  {snippetTab === 'getform'
+                    ? 'Copy and paste this clean Getform.io / Formspree form code with multipart document support into your website frontend:'
+                    : snippetTab === 'supabase'
+                    ? 'Copy and paste this Supabase Storage & Database integration snippet into your website frontend:'
+                    : 'Run this complete SQL script in your Supabase Dashboard SQL Editor to instantly setup tables, RLS policies, and storage buckets:'}
                 </p>
 
                 <div className="relative group">
                   <pre className="p-4 bg-slate-950 text-slate-100 rounded-xl text-[11px] font-mono overflow-x-auto leading-relaxed border border-slate-800">
-{`<!-- 1. PocketBase JS SDK CDN -->
-<script src="https://unpkg.com/pocketbase/dist/pocketbase.umd.js"></script>
+{snippetTab === 'getform'
+  ? `<!-- CSC Portal Application Form with Getform.io / Formspree Integration -->
+<form
+  id="cscApplicationForm"
+  method="POST"
+  action="${getformEndpointInput || 'https://getform.io/f/YOUR_UNIQUE_ENDPOINT'}"
+  enctype="multipart/form-data"
+>
+  <div class="form-group">
+    <label>Full Name:</label>
+    <input type="text" name="full_name" placeholder="Enter Full Name" required />
+  </div>
 
-<!-- 2. Application Form -->
-<form id="cscApplicationForm">
-  <input type="text" name="applicantName" placeholder="Full Name" required />
-  <input type="tel" name="phoneNumber" placeholder="Phone Number" required />
-  <input type="email" name="emailAddress" placeholder="Email Address" />
-  <input type="text" name="selectedService" value="PAN Card Application" />
-  <input type="file" name="documents" id="documentInput" multiple required />
-  <button type="submit">Submit Application</button>
+  <div class="form-group">
+    <label>WhatsApp Number:</label>
+    <input type="tel" name="whatsapp_number" placeholder="Enter 10-digit WhatsApp Mobile" required />
+  </div>
+
+  <div class="form-group">
+    <label>Email Address:</label>
+    <input type="email" name="email_address" placeholder="Enter Email Address" />
+  </div>
+
+  <div class="form-group">
+    <label>Select CSC Service:</label>
+    <select name="service_selected" required>
+      <option value="">-- Choose Service --</option>
+      <option value="PAN Card Application">PAN Card Application</option>
+      <option value="Ayushman Bharat Card">Ayushman Bharat Card</option>
+      <option value="Aadhaar Address Update">Aadhaar Address Update</option>
+      <option value="Income Certificate">Income Certificate</option>
+      <option value="Caste Certificate">Caste Certificate</option>
+      <option value="Other Service">Other Service</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>Upload Documents (Aadhaar / Photo / Proof):</label>
+    <input type="file" name="aadhaar_upload" id="documentInput" multiple required />
+  </div>
+
+  <button type="submit" id="submitBtn">Submit Application</button>
 </form>
 
-<!-- 3. Form Submission Script -->
+<!-- Vanilla JavaScript AJAX Submission Script -->
 <script>
-  const pb = new PocketBase('${pocketBaseUrlInput || 'http://127.0.0.1:8090'}');
+  document.getElementById('cscApplicationForm').addEventListener('submit', async function(e) {
+    e.preventDefault(); // Prevent default browser page reload
 
-  document.getElementById('cscApplicationForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
     const form = e.target;
-    const formData = new FormData();
+    const submitBtn = document.getElementById('submitBtn') || form.querySelector('button[type="submit"]');
+    const originalBtnText = submitBtn ? submitBtn.innerText : 'Submit Application';
 
-    // Generate unique appId token
-    const token = 'CSC-' + new Date().getFullYear() + '-' + Math.floor(100000 + Math.random() * 900000);
-    formData.append('appId', token);
-    formData.append('applicantName', form.applicantName.value);
-    formData.append('phoneNumber', form.phoneNumber.value);
-    formData.append('emailAddress', form.emailAddress.value || 'N/A');
-    formData.append('selectedService', form.selectedService.value);
-    formData.append('status', 'Pending');
-    formData.append('submittedAt', new Date().toISOString());
-
-    // Attach uploaded files
-    const fileInput = document.getElementById('documentInput');
-    for (let file of fileInput.files) {
-      formData.append('documents', file);
+    // Show loading state
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Submitting...';
     }
+
+    // Construct FormData object containing all inputs and file uploads
+    const formData = new FormData(form);
 
     try {
-      const record = await pb.collection('applications').create(formData);
-      alert('Application submitted successfully! Your Token: ' + token);
-      form.reset();
-    } catch (err) {
-      console.error('Submission failed:', err);
-      alert('Error submitting application: ' + err.message);
+      const response = await fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        alert('✅ Application submitted successfully! Thank you for contacting CSC Portal.');
+        form.reset();
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        alert('⚠️ Submission failed: ' + (errorData.message || 'Please verify your endpoint or try again.'));
+      }
+    } catch (error) {
+      console.error('Submission error:', error);
+      alert('⚠️ Network error submitting application. Please check your internet connection.');
+    } finally {
+      // Restore button state
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerText = originalBtnText;
+      }
     }
   });
-</script>`}
+</script>`
+  : snippetTab === 'supabase'
+  ? `<!-- CSC Portal Application Form with Supabase Integration -->
+<form id="cscApplicationForm" enctype="multipart/form-data">
+  <div class="form-group">
+    <label for="full_name">Full Name:</label>
+    <input type="text" id="full_name" name="full_name" placeholder="Enter Full Name" required />
+  </div>
+
+  <div class="form-group">
+    <label for="whatsapp_number">WhatsApp Number:</label>
+    <input type="tel" id="whatsapp_number" name="whatsapp_number" placeholder="Enter 10-digit WhatsApp Mobile" required />
+  </div>
+
+  <div class="form-group">
+    <label for="email_address">Email Address:</label>
+    <input type="email" id="email_address" name="email_address" placeholder="Enter Email Address" />
+  </div>
+
+  <div class="form-group">
+    <label for="service_selected">Select CSC Service:</label>
+    <select id="service_selected" name="service_selected" required>
+      <option value="">-- Choose Service --</option>
+      <option value="PAN Card Application">PAN Card Application</option>
+      <option value="Ayushman Bharat Card">Ayushman Bharat Card</option>
+      <option value="Aadhaar Address Update">Aadhaar Address Update</option>
+      <option value="Income Certificate">Income Certificate</option>
+      <option value="Caste Certificate">Caste Certificate</option>
+      <option value="Other Service">Other Service</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="aadhaar_upload">Upload Documents (Photo / Proof):</label>
+    <input type="file" id="aadhaar_upload" name="aadhaar_upload" multiple required />
+  </div>
+
+  <button type="submit" id="submitBtn">Submit Application</button>
+</form>
+
+<!-- Supabase CDN and Submission Script -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // ⚠️ Replace these with your actual Supabase project keys
+  const supabaseUrl = 'YOUR_SUPABASE_URL';
+  const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
+  const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+  document.getElementById('cscApplicationForm').addEventListener('submit', async function(e) {
+    e.preventDefault(); 
+    
+    const form = e.target;
+    const submitBtn = document.getElementById('submitBtn');
+    const originalBtnText = submitBtn.innerText;
+
+    submitBtn.disabled = true;
+    submitBtn.innerText = 'Uploading files & Submitting...';
+
+    try {
+      const formData = new FormData(form);
+      const fileInput = document.getElementById('aadhaar_upload');
+      let uploadedFileUrls = [];
+
+      // 1. Upload files to Supabase Storage
+      if (fileInput.files.length > 0) {
+        for (const file of fileInput.files) {
+          // Create a unique file name so old files aren't overwritten
+          const fileExt = file.name.split('.').pop();
+          const uniqueFileName = \`\${Date.now()}-\${Math.random().toString(36).substring(2)}.\${fileExt}\`;
+          
+          const { data, error: uploadError } = await supabase.storage
+            .from('documents')
+            .upload(uniqueFileName, file);
+
+          if (uploadError) throw new Error('File upload failed: ' + uploadError.message);
+          
+          // Get the public URL for the file we just uploaded
+          const { data: publicUrlData } = supabase.storage
+            .from('documents')
+            .getPublicUrl(uniqueFileName);
+            
+          uploadedFileUrls.push(publicUrlData.publicUrl);
+        }
+      }
+
+      // 2. Insert text data and file URLs into Supabase Database
+      const { data: insertData, error: dbError } = await supabase
+        .from('applications')
+        .insert([
+          {
+            full_name: formData.get('full_name'),
+            whatsapp_number: formData.get('whatsapp_number'),
+            email_address: formData.get('email_address'),
+            service_selected: formData.get('service_selected'),
+            document_urls: JSON.stringify(uploadedFileUrls) // Stored as text array/JSON
+          }
+        ]);
+
+      if (dbError) throw new Error('Database insert failed: ' + dbError.message);
+
+      alert('✅ Application submitted successfully! We will contact you on WhatsApp.');
+      form.reset();
+
+    } catch (error) {
+      console.error('Submission error:', error);
+      alert('⚠️ ' + error.message);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerText = originalBtnText;
+    }
+  });
+</script>`
+  : `-- ==============================================================================
+-- SUPABASE BACKEND SETUP SCRIPT FOR CSC APPLICATION PORTAL
+-- Run this script in your Supabase SQL Editor (https://supabase.com/dashboard)
+-- ==============================================================================
+
+-- 1. Create the "applications" table for storing submissions
+CREATE TABLE IF NOT EXISTS public.applications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    full_name TEXT NOT NULL,
+    whatsapp_number TEXT NOT NULL,
+    email_address TEXT,
+    service_selected TEXT NOT NULL,
+    document_urls JSONB DEFAULT '[]'::jsonb
+);
+
+-- 2. Enable Row Level Security (RLS) on the applications table
+ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
+
+-- 3. Create RLS Policies for public insert & select on applications
+DROP POLICY IF EXISTS "Allow public insert to applications" ON public.applications;
+CREATE POLICY "Allow public insert to applications"
+ON public.applications
+FOR INSERT
+TO public
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow public select from applications" ON public.applications;
+CREATE POLICY "Allow public select from applications"
+ON public.applications
+FOR SELECT
+TO public
+USING (true);
+
+-- 4. Create public storage bucket named "documents" for document uploads
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('documents', 'documents', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- 5. RLS Policies for storage.objects (storage.objects already has RLS enabled by default in Supabase)
+DROP POLICY IF EXISTS "Allow public insert into documents bucket" ON storage.objects;
+CREATE POLICY "Allow public insert into documents bucket"
+ON storage.objects
+FOR INSERT
+TO public
+WITH CHECK (bucket_id = 'documents');
+
+DROP POLICY IF EXISTS "Allow public select from documents bucket" ON storage.objects;
+CREATE POLICY "Allow public select from documents bucket"
+ON storage.objects
+FOR SELECT
+TO public
+USING (bucket_id = 'documents');`}
                   </pre>
                 </div>
               </div>
@@ -2152,10 +2251,10 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
             {/* Modal Footer */}
             <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 flex justify-end shrink-0">
               <button
-                onClick={() => setShowPocketBaseModal(false)}
-                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black rounded-xl shadow-md transition-all cursor-pointer"
+                onClick={() => setShowGetformModal(false)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-extrabold cursor-pointer transition-all"
               >
-                Done
+                Close Integration Suite
               </button>
             </div>
           </div>

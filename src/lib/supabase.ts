@@ -7,8 +7,8 @@ let supabaseInstance: SupabaseClient | null = null;
 export function getSupabaseClient(): SupabaseClient | null {
   if (supabaseInstance) return supabaseInstance;
 
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://yvxqyczeavhfwxxjxwgl.supabase.co';
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_8ROBFY1Du5rZWcmKVIngJg_9GIIxdBp';
 
   if (supabaseUrl && supabaseAnonKey) {
     try {

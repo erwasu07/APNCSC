@@ -3,7 +3,7 @@ import TrackApplication from './TrackApplication';
 import { AdSenseSlot } from './AdSenseSlot';
 import { db } from '../lib/firebase';
 import { getSupabaseClient, uploadMultipleDocumentsToSupabase } from '../lib/supabase';
-import { saveApplicationToPocketBase } from '../lib/pocketbase';
+import { saveApplicationToFormEndpoint } from '../lib/getform';
 import { DynamicUpiGateway } from './DynamicUpiGateway';
 import { doc, setDoc } from 'firebase/firestore';
 import { 
@@ -1659,7 +1659,18 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     setUtrError(null);
     setDocumentError(null);
 
-    if (!formData.customerName || !formData.phoneNumber || !formData.selectedService) {
+    if (!formData.customerName || !formData.customerName.trim()) {
+      setDocumentError('⚠️ Please enter your Full Name before submitting.');
+      return;
+    }
+
+    if (!formData.phoneNumber || !formData.phoneNumber.trim() || formData.phoneNumber.replace(/\D/g, '').length < 10) {
+      setDocumentError('⚠️ Please enter a valid 10-digit Mobile Number.');
+      return;
+    }
+
+    if (!formData.selectedService) {
+      setDocumentError('⚠️ Please select a service or choose "Other Service" to specify your requirement.');
       return;
     }
 
@@ -1730,8 +1741,8 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
           setDoc(doc(db, 'appointments', officialAppId), initialPayload, { merge: true })
         ]).catch(err => console.error('Firestore initial setDoc error:', err));
 
-        // Save to PocketBase Backend (Guest Application Submission with Files)
-        saveApplicationToPocketBase(officialAppId, {
+        // Save to Getform.io / Formspree Endpoint (Guest Application Submission with Files)
+        saveApplicationToFormEndpoint(officialAppId, {
           ...initialPayload,
           applicantName: formData.customerName,
           phoneNumber: formData.phoneNumber,
@@ -1740,7 +1751,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
           userCategory: pendingReceipt.userCategory,
           totalAmount: pendingReceipt.totalAmount,
           documents: uploadedFiles
-        }).catch(pbErr => console.warn('PocketBase initial save notice:', pbErr));
+        }).catch(formErr => console.warn('Form endpoint save notice:', formErr));
 
         const supabase = getSupabaseClient();
         if (supabase) {
@@ -1876,8 +1887,8 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
           setDoc(doc(db, 'appointments', officialAppId), updatedPayload, { merge: true })
         ]).catch(err => console.error('Firestore paid setDoc error:', err));
 
-        // Save paid update to PocketBase
-        saveApplicationToPocketBase(officialAppId, {
+        // Save paid update to Getform.io / Formspree Endpoint
+        saveApplicationToFormEndpoint(officialAppId, {
           ...updatedPayload,
           applicantName: updatedReceipt.customerName,
           phoneNumber: updatedReceipt.phoneNumber,
@@ -1886,7 +1897,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
           userCategory: updatedReceipt.userCategory,
           totalAmount: updatedReceipt.totalAmount,
           documents: processedDocs
-        }).catch(pbErr => console.warn('PocketBase UPI save notice:', pbErr));
+        }).catch(formErr => console.warn('Form endpoint UPI save notice:', formErr));
 
         const supabase = getSupabaseClient();
         if (supabase) {
@@ -2035,8 +2046,8 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
           console.error('Firestore payment update error:', fsErr);
         });
 
-        // Save application to PocketBase
-        saveApplicationToPocketBase(targetAppId, {
+        // Save application to Getform.io / Formspree Endpoint
+        saveApplicationToFormEndpoint(targetAppId, {
           ...payload,
           applicantName: updatedReceipt.customerName,
           phoneNumber: updatedReceipt.phoneNumber,
@@ -2045,7 +2056,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
           userCategory: updatedReceipt.userCategory,
           totalAmount: updatedReceipt.totalAmount,
           documents: processedDocs
-        }).catch(pbErr => console.warn('PocketBase payment update save notice:', pbErr));
+        }).catch(formErr => console.warn('Form endpoint payment update save notice:', formErr));
 
         const supabase = getSupabaseClient();
         if (supabase) {
