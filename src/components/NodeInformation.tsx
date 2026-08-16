@@ -21,7 +21,7 @@ export default function NodeInformation() {
   const [showCertificateModal, setShowCertificateModal] = useState(false);
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs transition-colors duration-300 scroll-mt-24 w-full" id="node-info">
+    <div className="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs transition-colors duration-300 scroll-mt-24 w-full" id="node-info">
       <div className="w-full max-w-7xl mx-auto space-y-4">
         
         {/* Header Section */}

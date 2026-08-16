@@ -206,8 +206,12 @@ export default function App() {
 
             {/* In-depth Citizen Guides & Scheme Knowledge Hub for AdSense & Citizen Awareness */}
             <GuidesKnowledgeHub onSelectService={handleServiceSelect} />
+          </div>
+        )}
 
-            {/* Common Service Centre Node Information */}
+        {/* Common Service Centre Node Information & VLE Verification (relocated to clean bottom) */}
+        {!isAdminView && (
+          <div className="mt-8 px-2 sm:px-4 md:px-0">
             <NodeInformation />
           </div>
         )}

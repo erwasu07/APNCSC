@@ -88,16 +88,6 @@ export default function Navbar({
 
   return (
     <header className="w-full z-50 flex flex-col relative" id="hero">
-      {/* PROMINENT DISCLAIMER BANNER FOR GOOGLE SAFE BROWSING & SEARCH CONSOLE COMPLIANCE */}
-      <div className="bg-amber-500/15 border-b border-amber-500/30 text-slate-800 dark:text-amber-200 text-[11px] font-sans py-1.5 px-3 text-center leading-tight">
-        <div className="max-w-7xl mx-auto flex items-center justify-center gap-1.5 flex-wrap">
-          <span className="font-black bg-amber-800 text-white px-2 py-0.5 rounded text-[10px] uppercase tracking-wider">Disclaimer &amp; VLE Info</span>
-          <span>
-            <strong>CSC DOST (cscdost.online)</strong> is operated by <strong>Authorized CSC VLE Wasim Ahmad Khanday (CSC ID: 212515670018)</strong>. We provide digital form filling assistance &amp; printing services. Official government portals: <a href="https://csc.gov.in" target="_blank" rel="noopener noreferrer" className="underline font-bold hover:text-amber-500">csc.gov.in</a> | <a href="https://digitalseva.csc.gov.in" target="_blank" rel="noopener noreferrer" className="underline font-bold hover:text-amber-500">digitalseva.csc.gov.in</a>.
-          </span>
-        </div>
-      </div>
-
       {/* 1. TOP UTILITY BAR */}
       <div className="bg-[#0b1329] text-xs font-sans text-slate-200 py-1.5 px-2 sm:px-4 border-b border-slate-800 shadow-xs">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1.5 sm:gap-2">
