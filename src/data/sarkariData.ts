@@ -45,6 +45,141 @@ export const SARKARI_CATEGORIES = {
 };
 
 export const SARKARI_DATA: SarkariItem[] = [
+  // 🇮🇳 TODAY'S NEWLY EXTRACTED NOTIFICATIONS (AUGUST 2026)
+  {
+    id: 'army-amc-ssc-course-2026',
+    title: 'Army Medical Corps (AMC) Non-Technical & SSC Officer Course 2026-27',
+    category: 'army_jobs',
+    postDate: '16/08/2026',
+    startDate: '18/08/2026',
+    lastDate: '16/09/2026',
+    advertisementNo: 'AMC / SSC (NT) Course 2026-27',
+    shortInfo: 'Indian Army invites online applications from eligible candidates for grant of Short Service Commission in Army Medical Corps (Non-Technical & Technical Officers).',
+    ageLimit: '21 to 35 Years',
+    eligibility: 'Graduate / Post Graduate in relevant discipline from a recognized University',
+    totalPosts: '65 Posts',
+    officialLink: 'https://www.joinindianarmy.nic.in/officers-entry-apply-login.htm',
+    fees: {
+      genObc: '₹0 (No Application Fee for Army Commission)',
+      scSt: '₹0 (No Application Fee)'
+    },
+    isNew: true
+  },
+  {
+    id: 'rrb-paramedical-cen05-2026',
+    title: 'RRB Paramedical Categories (Staff Nurse, Lab Tech & Pharmacist) 2026',
+    category: 'rrb_jobs',
+    postDate: '16/08/2026',
+    startDate: '17/08/2026',
+    lastDate: '16/09/2026',
+    advertisementNo: 'CEN No. 05/2026 (Paramedical Categories)',
+    shortInfo: 'Railway Recruitment Boards (RRB) invite online applications for recruitment to various Paramedical Category posts (Nursing Superintendent, Lab Assistant, Pharmacist, Dialysis Tech) across Zonal Railways.',
+    ageLimit: '18 to 40 Years (Relaxation as per RRB rules)',
+    eligibility: 'B.Sc Nursing / GNM / D.Pharm / B.Pharm / DMLT according to post specifications',
+    totalPosts: '1,376 Posts across Zonal Railways',
+    officialLink: 'https://www.rrbapply.gov.in/#/auth/landing',
+    fees: {
+      genObc: '₹500 (₹400 refundable after appearing in CBT-1)',
+      scSt: '₹250 (₹250 refundable after appearing in CBT-1)'
+    },
+    isNew: true
+  },
+  {
+    id: 'ssc-jht-examination-2026',
+    title: 'SSC Junior Hindi Translator (JHT) & Senior Hindi Translator Exam 2026',
+    category: 'ssc_jobs',
+    postDate: '16/08/2026',
+    startDate: '16/08/2026',
+    lastDate: '14/09/2026',
+    advertisementNo: 'SSC/HQ/JHT-SHT/Exam-2026',
+    shortInfo: 'Staff Selection Commission (SSC) invites online applications for recruitment of Junior Hindi Translator, Junior Translation Officer, and Senior Hindi Translator in various Ministries, Departments, and Organizations of the Government of India.',
+    ageLimit: '18 to 30 Years (OBC +3, SC/ST +5, PwD +10 Years)',
+    eligibility: "Master's Degree in Hindi with English as a compulsory subject OR Master's Degree in English with Hindi + Recognized Diploma/Certificate course in Translation",
+    totalPosts: '312 Posts (Group B Non-Gazetted)',
+    officialLink: 'https://ssc.gov.in',
+    fees: {
+      genObc: '₹100 (Online via Net Banking/UPI/Cards)',
+      scSt: '₹0 (Exempted for SC/ST/PwD/Women candidates)'
+    },
+    isNew: true
+  },
+  {
+    id: 'cus-self-financed-admission-2026',
+    title: 'Online Admission Notice for UG / PG Self-Financed & Lateral Entry (Session 2026)',
+    category: 'cluster_univ',
+    postDate: '16/08/2026',
+    startDate: '16/08/2026',
+    lastDate: '28/08/2026',
+    advertisementNo: 'CUS/Adm/UG-PG-SF/2026/894',
+    shortInfo: 'Cluster University Srinagar invites online applications from eligible candidates for admission to vacant seats in Under-Graduate (Honors) and Post-Graduate Self-Financed / Lateral Entry academic programmes for Academic Session 2026.',
+    ageLimit: 'As per University Statutes',
+    eligibility: '10+2 / Bachelor Degree in relevant stream with minimum 45% aggregate (40% for reserved categories)',
+    totalPosts: 'Vacant Seats across Constituent Colleges (SP College, Amar Singh College, AAA Memorial Degree College, Govt College for Women)',
+    officialLink: 'https://www.cusrinagar.edu.in/',
+    fees: {
+      genObc: '₹500 (Online Admission Processing Fee)',
+      scSt: '₹500 (Online Admission Processing Fee)'
+    },
+    isNew: true
+  },
+  {
+    id: 'jkssb-draft-merit-hme-2026',
+    title: 'JKSSB Document Verification & Draft Merit List for Health & Medical Education Dept',
+    category: 'jkssb',
+    postDate: '16/08/2026',
+    startDate: '20/08/2026',
+    lastDate: '25/08/2026',
+    advertisementNo: 'JKSSB/COE/HME-DV/2026/114-129',
+    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) issues the document verification schedule and draft score-sheet for candidates shortlisted for various Technical & Paramedical positions in Health & Medical Education Department.',
+    ageLimit: 'As per initial notification',
+    eligibility: 'Candidates shortlisted based on Written CBT Examination merit',
+    totalPosts: 'Various Divisional & District Cadre Posts',
+    officialLink: 'https://jkssb.nic.in',
+    fees: {
+      genObc: '₹0 (Document Verification Round)',
+      scSt: '₹0 (Document Verification Round)'
+    },
+    isNew: true
+  },
+  {
+    id: 'ku-exam-form-bg-1st-2nd-sem-2026',
+    title: 'Submission of Online Examination Forms for BG 1st & 2nd Sem (Batch 2025-26 NEP-2020)',
+    category: 'exam_forms',
+    postDate: '16/08/2026',
+    startDate: '17/08/2026',
+    lastDate: '27/08/2026',
+    advertisementNo: 'KU/Exam/NEP-UG/1st-2nd/2026/512',
+    shortInfo: 'University of Kashmir opens the online portal for submission of examination forms and fee for eligible Regular / Fresh Private candidates of BG 1st & 2nd Semester (Batch 2025-2026 Under NEP-2020).',
+    ageLimit: 'Enrolled College Students',
+    eligibility: 'Bonafide students admitted to UG 1st & 2nd Semester in affiliated degree colleges',
+    feePerSubject: '₹250 per subject + ₹50 EMF + ₹100 Service Charges',
+    officialLink: 'https://egov.uok.edu.in/eexams/',
+    fees: {
+      genObc: 'Standard University Exam Fee Schedule',
+      scSt: 'Standard University Exam Fee Schedule'
+    },
+    isNew: true
+  },
+  {
+    id: 'ku-admission-cdoe-pg-diploma-2026',
+    title: 'Admission Notification No. 14 of 2026: PG Diploma & Certificate Programmes (CDOE)',
+    category: 'admissions',
+    postDate: '16/08/2026',
+    startDate: '16/08/2026',
+    lastDate: '30/08/2026',
+    advertisementNo: 'KU/CDOE/Adm-Notif-14/2026',
+    shortInfo: 'Centre for Distance and Online Education (CDOE), University of Kashmir, invites online applications for admission to 1-Year Post-Graduate Diploma and 6-Month Certificate courses in Cyber Law, Disaster Management, Tourism, and Web Designing.',
+    ageLimit: 'No upper age limit for distance education programmes',
+    eligibility: "Bachelor's Degree in any discipline from a recognized University / Class 12th for Certificate programmes",
+    totalPosts: 'Distance Learning Enrolment Open',
+    officialLink: 'https://kashmiruniversity.net/AdmissionNotices.aspx',
+    fees: {
+      genObc: '₹400 (Online Application & Prospectus Fee)',
+      scSt: '₹400 (Online Application & Prospectus Fee)'
+    },
+    isNew: true
+  },
+
   // 🇮🇳 JOIN INDIAN ARMY NOTIFICATIONS (https://www.joinindianarmy.nic.in/default.aspx)
   {
     id: 'army-ncc-125-2026',
