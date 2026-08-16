@@ -1121,7 +1121,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<SarkariItem | null>(null);
   const [clickedItemId, setClickedItemId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'all' | 'jkssb' | 'jobs' | 'admissions' | 'exam_forms' | 'cluster_univ' | 'nta' | 'ssc_jobs' | 'rrb_jobs' | 'army_jobs'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'jkssb' | 'jobs' | 'admissions' | 'exam_forms' | 'cluster_univ' | 'ssc_jobs' | 'rrb_jobs' | 'army_jobs'>('all');
   const [deskViewMode, setDeskViewMode] = useState<'boxes' | 'cards'>('boxes');
 
   // Interactive Digital Application Portal State
@@ -1200,16 +1200,6 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     setTimeout(() => setClusterUnivHtmlCopied(false), 3000);
   };
 
-  // NTA Entrance Exams HTML Snippet State
-  const [showNtaHtmlSource, setShowNtaHtmlSource] = useState(false);
-  const [ntaHtmlCopied, setNtaHtmlCopied] = useState(false);
-
-  const handleCopyNtaHtml = () => {
-    navigator.clipboard.writeText(NTA_EXAMS_HTML_SNIPPET);
-    setNtaHtmlCopied(true);
-    triggerToast('Copied NTA Entrance Exams (nta.ac.in) HTML Snippet to clipboard!');
-    setTimeout(() => setNtaHtmlCopied(false), 3000);
-  };
 
   // SSC HTML Snippet State
   const [showSscHtmlSource, setShowSscHtmlSource] = useState(false);
@@ -2624,20 +2614,6 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
               </span>
             </button>
 
-            <button
-              onClick={() => setActiveTab('nta')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-sm font-sans ${
-                activeTab === 'nta'
-                  ? 'bg-red-800 text-red-200 ring-2 ring-red-500 shadow-red-800/30'
-                  : 'bg-red-50 dark:bg-red-950/70 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800 hover:bg-red-100'
-              }`}
-            >
-              <GraduationCap className="w-3.5 h-3.5 text-red-500 dark:text-red-400" />
-              <span>NTA Exams</span>
-              <span className="px-1.5 py-0.2 bg-amber-400 text-slate-950 text-[9.5px] font-mono font-black rounded">
-                {SARKARI_DATA.filter(s => s.category === 'nta').length}
-              </span>
-            </button>
 
             <button
               onClick={() => setActiveTab('ssc_jobs')}
@@ -3051,116 +3027,6 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
           </div>
         )}
 
-        {/* FEATURED NTA BANNER & EMBED HTML SECTION WHEN NTA TAB IS ACTIVE */}
-        {activeTab === 'nta' && (
-          <div className="max-w-7xl mx-auto mb-6 space-y-4">
-            <div className="p-4 sm:p-5 bg-gradient-to-r from-purple-950 via-slate-900 to-fuchsia-950 rounded-2xl text-white border border-purple-700 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
-                    NATIONAL TESTING AGENCY (NTA) DESK
-                  </span>
-                  <span className="text-purple-200 text-xs font-mono font-bold flex items-center gap-1">
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                    Active Notifications Extracted from https://www.nta.ac.in/
-                  </span>
-                </div>
-                <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
-                  NTA National Entrance Exams &amp; Public Notices Desk (August 2026 Updates)
-                </h3>
-                <p className="text-xs text-purple-200 max-w-2xl font-medium">
-                  Extracted Active Entrance Exam Notifications (UGC NET Dec 2026 Schedule, JEE Main 2027 Session-1 Calendar, NEET UG 2026 Medical Counselling Verification, CSIR UGC NET Dec 2026 Registration, CUET 2027 Advisory) with Department Details, Official Portals, and Application Deadlines.
-                </p>
-              </div>
-              <a
-                href="https://www.nta.ac.in/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02] font-bold"
-              >
-                <span>Visit www.nta.ac.in</span>
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            </div>
-
-            {/* HTML Snippet Toolbar & Code Copy Box */}
-            <div className="p-4 bg-slate-900 dark:bg-slate-950 text-white rounded-2xl border border-purple-800/80 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <span className="p-2 bg-purple-500/20 text-purple-400 rounded-lg">
-                  <GraduationCap className="w-5 h-5" />
-                </span>
-                <div>
-                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                    CSC Dost - NTA Entrance Exams (nta.ac.in) HTML Embed Section
-                    <span className="bg-purple-500/30 text-purple-300 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border border-purple-500/40">
-                      Website Snippet
-                    </span>
-                  </h4>
-                  <p className="text-xs text-slate-300">
-                    Use the buttons to view or copy the HTML code directly to paste into your website section.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0 w-full md:w-auto">
-                <button
-                  onClick={() => setShowNtaHtmlSource(!showNtaHtmlSource)}
-                  className="flex-1 md:flex-none px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-purple-300 text-xs font-bold rounded-xl transition-all border border-slate-700 flex items-center justify-center gap-1.5"
-                >
-                  <Code className="w-4 h-4" />
-                  <span>{showNtaHtmlSource ? 'Hide HTML Code' : 'View HTML Code'}</span>
-                </button>
-                <button
-                  onClick={handleCopyNtaHtml}
-                  className="flex-1 md:flex-none px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5"
-                >
-                  {ntaHtmlCopied ? (
-                    <>
-                      <Check className="w-4 h-4 text-purple-200" />
-                      <span>Copied HTML!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4" />
-                      <span>Copy HTML Snippet</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Collapsible Source Code View */}
-            {showNtaHtmlSource && (
-              <div className="p-4 bg-slate-950 text-purple-300 rounded-2xl border border-slate-800 font-mono text-xs overflow-x-auto relative shadow-inner">
-                <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-800 text-slate-400 text-[11px]">
-                  <span>HTML Source Code Snippet (CSC Dost - NTA Entrance Exams)</span>
-                  <button
-                    onClick={handleCopyNtaHtml}
-                    className="px-2.5 py-1 bg-purple-950 hover:bg-purple-900 text-purple-300 border border-purple-700 rounded text-[11px] font-bold flex items-center gap-1"
-                  >
-                    <Copy className="w-3 h-3" /> Copy Code
-                  </button>
-                </div>
-                <pre className="whitespace-pre-wrap break-all text-purple-300/90 max-h-80 overflow-y-auto font-mono text-[11.5px] leading-relaxed select-all">
-                  {NTA_EXAMS_HTML_SNIPPET}
-                </pre>
-              </div>
-            )}
-
-            {/* Live Rendered HTML Snippet Container */}
-            <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-              <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center justify-between">
-                <span>Live Rendered HTML Section (CSC Dost - NTA Entrance Exams)</span>
-                <span className="text-[10px] text-purple-600 bg-purple-50 dark:bg-purple-950/60 font-mono font-bold px-2 py-0.5 rounded border border-purple-200 dark:border-purple-800">
-                  ● Embedded Preview
-                </span>
-              </div>
-              <div
-                className="csc-nta-html-live-wrapper"
-                dangerouslySetInnerHTML={{ __html: NTA_EXAMS_HTML_SNIPPET }}
-              />
-            </div>
-          </div>
-        )}
 
         {/* FEATURED SSC JOBS BANNER & EMBED HTML SECTION WHEN SSC_JOBS TAB IS ACTIVE */}
         {activeTab === 'ssc_jobs' && (
@@ -3501,7 +3367,6 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
               { id: 'army_jobs', title: 'Indian Army Jobs (joinindianarmy.nic.in)', icon: Shield, color: 'bg-red-950 text-red-200 border-red-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
               { id: 'rrb_jobs', title: 'RRB Jobs (rrbapply.gov.in)', icon: Train, color: 'bg-emerald-950 text-emerald-200 border-emerald-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
               { id: 'ssc_jobs', title: 'SSC Jobs (ssc.gov.in)', icon: Briefcase, color: 'bg-orange-950 text-orange-200 border-orange-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
-              { id: 'nta', title: 'NTA Entrance Exams (nta.ac.in)', icon: GraduationCap, color: 'bg-red-950 text-red-200 border-red-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
               { id: 'cluster_univ', title: 'Cluster University (CUS Srinagar)', icon: Building2, color: 'bg-cyan-950 text-cyan-200 border-cyan-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
               { id: 'jkssb', title: 'JKSSB Jobs (J&K)', icon: Briefcase, color: 'bg-indigo-950 text-amber-300 border-indigo-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
               { id: 'exam_forms', title: 'KU Exam Forms (Kashmir Univ)', icon: FileCheck, color: 'bg-amber-950 text-amber-300 border-amber-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
