@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import TrackApplication from './TrackApplication';
-import { AdSenseSlot } from './AdSenseSlot';
 import { db } from '../lib/firebase';
 import { getSupabaseClient, uploadMultipleDocumentsToSupabase } from '../lib/supabase';
 import { saveApplicationToFormEndpoint } from '../lib/getform';
@@ -56,6 +55,7 @@ import { UploadedDocument } from '../types';
 interface SarkariResultDeskProps {
   onApplyService: (serviceName: string) => void;
   selectedService?: string;
+  onOpenDedicatedPage?: (item: SarkariItem) => void;
 }
 
 export interface DocumentTypeConfig {
@@ -1117,7 +1117,7 @@ export const ARMY_JOBS_HTML_SNIPPET = `<!-- Start: CSC Dost - Indian Army Jobs S
 </div>
 <!-- End: CSC Dost - Indian Army Jobs Section -->`;
 
-export default function SarkariResultDesk({ onApplyService, selectedService }: SarkariResultDeskProps) {
+export default function SarkariResultDesk({ onApplyService, selectedService, onOpenDedicatedPage }: SarkariResultDeskProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<SarkariItem | null>(null);
   const [clickedItemId, setClickedItemId] = useState<string | null>(null);
@@ -1234,7 +1234,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     setTimeout(() => setArmyHtmlCopied(false), 3000);
   };
 
-  // Auto-open post modal if ?post=... is present in URL
+  // Auto-open post if ?post=... is present in URL
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -1242,11 +1242,15 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
       if (postId) {
         const match = SARKARI_DATA.find(i => i.id === postId);
         if (match) {
-          setSelectedItem(match);
+          if (onOpenDedicatedPage) {
+            onOpenDedicatedPage(match);
+          } else {
+            setSelectedItem(match);
+          }
         }
       }
     }
-  }, []);
+  }, [onOpenDedicatedPage]);
 
   const triggerToast = (msg: string) => {
     setShareToast(msg);
@@ -1255,10 +1259,10 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
 
   const handleShareSarkari = async (item: SarkariItem) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.cscdost.com';
-    const shareUrl = `${origin}/?post=${item.id}`;
+    const shareUrl = `${origin}/#post/${item.id}`;
     const orgName = getOrgName(item);
     const shareTitle = `📢 ${item.title}`;
-    const shareText = `📢 *${item.title}*\n🏢 *Board/Dept:* ${orgName}\n${item.advertisementNo ? `📄 *Advt No:* ${item.advertisementNo}\n` : ''}${item.lastDate ? `⏰ *Last Date:* ${item.lastDate}\n` : ''}${item.totalPosts ? `👥 *Vacancies/Seats:* ${item.totalPosts}\n` : ''}\n${item.shortInfo ? item.shortInfo + '\n\n' : ''}👉 View full details & Apply online via CSC DOST Portal:\n${shareUrl}`;
+    const shareText = `📢 *${item.title}*\n🏢 *Board/Dept:* ${orgName}\n${item.lastDate ? `⏰ *Last Date:* ${item.lastDate}\n` : ''}${item.totalPosts ? `👥 *Vacancies/Seats:* ${item.totalPosts}\n` : ''}\n${item.shortInfo ? item.shortInfo + '\n\n' : ''}👉 View full notification & Apply online via CSC DOST:\n${shareUrl}`;
 
     const dataPayload = { title: shareTitle, text: shareText, url: shareUrl, name: item.title };
     setActiveShareData(dataPayload);
@@ -2355,8 +2359,12 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     setClickedItemId(item.id);
     setTimeout(() => {
       setClickedItemId(null);
-      setSelectedItem(item);
-    }, 150);
+      if (onOpenDedicatedPage) {
+        onOpenDedicatedPage(item);
+      } else {
+        setSelectedItem(item);
+      }
+    }, 120);
   };
 
   const handleApplyNow = (item: SarkariItem) => {
@@ -2654,14 +2662,14 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                 </span>
               </div>
               <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
-                Jammu &amp; Kashmir Services Selection Board (JKSSB) Job Advertisements
+                Jammu &amp; Kashmir Services Selection Board (JKSSB) Notifications
               </h3>
               <p className="text-xs text-indigo-200 max-w-2xl font-medium">
                 Official Department-wise post breakdown, total vacancies, qualification criteria, age limit relaxation, and application closing dates parsed directly from official notifications. Apply online via CSC DOST Desk or link directly to the official portal.
               </p>
             </div>
             <a
-              href="https://jkssb.nic.in/Advertisement.html"
+              href="https://jkssb.nic.in/"
               target="_blank"
               rel="noopener noreferrer"
               className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02]"
@@ -3990,12 +3998,6 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                   <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${SARKARI_CATEGORIES[selectedItem.category].color}`}>
                     {SARKARI_CATEGORIES[selectedItem.category].label}
                   </span>
-                  {selectedItem.advertisementNo && (
-                    <>
-                      <span>/</span>
-                      <span className="text-yellow-300 font-bold">{selectedItem.advertisementNo}</span>
-                    </>
-                  )}
                 </div>
 
                 <div className="flex items-center gap-2 pt-0.5">
@@ -4058,9 +4060,6 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                 </div>
               </div>
 
-              {/* Google AdSense Banner Ad Slot */}
-              <AdSenseSlot className="my-2" />
-
               {/* Prominent Short Information / Short Description Card */}
               <div className="bg-white border border-blue-200 rounded-2xl p-5 space-y-3.5 shadow-xs">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
@@ -4088,17 +4087,10 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                       <span className="text-slate-600 text-[9px] uppercase font-bold">Category</span>
                       <span className="font-extrabold text-blue-700 uppercase">{selectedItem.category.replace('_', ' ')}</span>
                     </div>
-                    {selectedItem.advertisementNo ? (
-                      <div className="p-2 bg-slate-100 rounded-lg flex flex-col col-span-2 sm:col-span-1 border border-slate-200/60">
-                        <span className="text-slate-600 text-[9px] uppercase font-bold">Advt No.</span>
-                        <span className="font-extrabold text-amber-700 truncate">{selectedItem.advertisementNo}</span>
-                      </div>
-                    ) : (
-                      <div className="p-2 bg-slate-100 rounded-lg flex flex-col col-span-2 sm:col-span-1 border border-slate-200/60">
-                        <span className="text-slate-600 text-[9px] uppercase font-bold">Status</span>
-                        <span className="font-extrabold text-emerald-700">Active / Form Open</span>
-                      </div>
-                    )}
+                    <div className="p-2 bg-slate-100 rounded-lg flex flex-col col-span-2 sm:col-span-1 border border-slate-200/60">
+                      <span className="text-slate-600 text-[9px] uppercase font-bold">Status</span>
+                      <span className="font-extrabold text-emerald-700">Active / Form Open</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -4238,7 +4230,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
                           ? 'Official RRB Portal (rrbapply.gov.in)'
                           : selectedItem.category === 'army_jobs'
                           ? 'Official Army Portal (joinindianarmy.nic.in)'
-                          : 'Official Advertisement PDF'}
+                          : 'Official Notification Portal'}
                       </span>
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>

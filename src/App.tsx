@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import SarkariResultDesk from './components/SarkariResultDesk';
+import SarkariDedicatedPageView from './components/SarkariDedicatedPageView';
 import ExploreServicesDesk from './components/ExploreServicesDesk';
 import GuidesKnowledgeHub from './components/GuidesKnowledgeHub';
 import PushNotificationPrompt from './components/PushNotificationPrompt';
@@ -9,7 +10,8 @@ import AdminDashboard from './components/AdminDashboard';
 import Footer from './components/Footer';
 import PrivacyPolicyModal, { PolicyTab } from './components/PrivacyPolicyModal';
 import { WebsiteSettings, Announcement, GalleryItem } from './types';
-import { MessageSquare, ArrowLeft } from 'lucide-react';
+import { SARKARI_DATA, SarkariItem } from './data/sarkariData';
+import { MessageSquare, ArrowLeft, Share2, X, MessageCircle, Copy, Check } from 'lucide-react';
 
 const FALLBACK_SETTINGS: WebsiteSettings = {
   cafeName: "CSC DOST",
@@ -29,8 +31,14 @@ export default function App() {
   const [isAdminView, setIsAdminView] = useState<boolean>(false);
 
   const [selectedService, setSelectedService] = useState('');
+  const [activeJobPost, setActiveJobPost] = useState<SarkariItem | null>(null);
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
   const [legalModalTab, setLegalModalTab] = useState<PolicyTab>('privacy');
+
+  // Share modal state
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareData, setShareData] = useState<{ title: string; text: string; url: string; name: string } | null>(null);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   const openLegalModal = (tab: PolicyTab = 'privacy') => {
     setLegalModalTab(tab);
@@ -60,32 +68,98 @@ export default function App() {
     }
   };
 
-  // Track page views on mount and update document title
+  // Track page views on mount and update document title and URL hashes
   useEffect(() => {
     fetchPublicData();
     fetch('/api/tracker/view', { method: 'POST' }).catch(() => {});
 
-    const checkHash = () => {
-      if (window.location.hash === '#admin' || window.location.hash === '#staff') {
+    const parseRoute = () => {
+      const hash = window.location.hash;
+      const searchParams = new URLSearchParams(window.location.search);
+      const postParam = searchParams.get('post') || searchParams.get('job');
+
+      if (postParam) {
+        const match = SARKARI_DATA.find(i => i.id === postParam);
+        if (match) {
+          setActiveJobPost(match);
+          setIsAdminView(false);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
+      }
+
+      if (hash.startsWith('#post/') || hash.startsWith('#job/')) {
+        const postId = hash.replace(/^#(post|job)\//, '');
+        const match = SARKARI_DATA.find(i => i.id === postId);
+        if (match) {
+          setActiveJobPost(match);
+          setIsAdminView(false);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
+      } else {
+        setActiveJobPost(null);
+      }
+
+      if (hash === '#admin' || hash === '#staff') {
         setIsAdminView(true);
-      } else if (window.location.hash === '#privacy') {
+      } else if (hash === '#privacy') {
         openLegalModal('privacy');
-      } else if (window.location.hash === '#terms') {
+      } else if (hash === '#terms') {
         openLegalModal('terms');
-      } else if (window.location.hash === '#hyperlink') {
+      } else if (hash === '#hyperlink') {
         openLegalModal('hyperlink');
-      } else if (window.location.hash === '#copyright') {
+      } else if (hash === '#copyright') {
         openLegalModal('copyright');
-      } else if (window.location.hash === '#disclaimer') {
+      } else if (hash === '#disclaimer') {
         openLegalModal('disclaimer');
-      } else if (window.location.hash === '#help') {
+      } else if (hash === '#help') {
         openLegalModal('help');
       }
     };
-    checkHash();
-    window.addEventListener('hashchange', checkHash);
-    return () => window.removeEventListener('hashchange', checkHash);
+
+    parseRoute();
+    window.addEventListener('hashchange', parseRoute);
+    window.addEventListener('popstate', parseRoute);
+    return () => {
+      window.removeEventListener('hashchange', parseRoute);
+      window.removeEventListener('popstate', parseRoute);
+    };
   }, []);
+
+  const handleOpenJobPage = (item: SarkariItem) => {
+    setActiveJobPost(item);
+    window.location.hash = `#post/${item.id}`;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCloseJobPage = () => {
+    setActiveJobPost(null);
+    if (window.location.hash.startsWith('#post/') || window.location.hash.startsWith('#job/')) {
+      window.history.pushState(null, '', window.location.pathname);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleShareItem = async (item: SarkariItem) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.cscdost.com';
+    const shareUrl = `${origin}/#post/${item.id}`;
+    const shareTitle = `📢 ${item.title}`;
+    const shareText = `📢 *${item.title}*\n${item.lastDate ? `⏰ *Last Date:* ${item.lastDate}\n` : ''}${item.totalPosts ? `👥 *Vacancies/Seats:* ${item.totalPosts}\n` : ''}\n${item.shortInfo ? item.shortInfo + '\n\n' : ''}👉 Read full notification & apply at CSC DOST:\n${shareUrl}`;
+
+    const data = { title: shareTitle, text: shareText, url: shareUrl, name: item.title };
+    setShareData(data);
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
+        return;
+      } catch (e) {
+        // Fallback to modal
+      }
+    }
+    setShowShareModal(true);
+  };
 
   useEffect(() => {
     if (settings?.seoTitle) {
@@ -195,11 +269,28 @@ export default function App() {
               onClose={handleCloseStaffPortal}
             />
           </div>
+        ) : activeJobPost ? (
+          /* DEDICATED FULL-PAGE VIEW FOR JOBS / NOTIFICATIONS */
+          <div className="animate-fade-in w-full">
+            <SarkariDedicatedPageView
+              item={activeJobPost}
+              onBack={handleCloseJobPage}
+              onApplyService={(service) => {
+                handleCloseJobPage();
+                handleServiceSelect(service);
+              }}
+              onShare={handleShareItem}
+            />
+          </div>
         ) : (
           /* PUBLIC VISITOR INTERFACE */
           <div className="animate-fade-in space-y-4 md:space-y-6 w-full">
             {/* Sarkari Result Bulletin Board at top */}
-            <SarkariResultDesk onApplyService={handleServiceSelect} selectedService={selectedService} />
+            <SarkariResultDesk 
+              onApplyService={handleServiceSelect} 
+              selectedService={selectedService}
+              onOpenDedicatedPage={handleOpenJobPage}
+            />
 
             {/* Explore All Government & Digital Services Directory */}
             <ExploreServicesDesk onApplyService={handleServiceSelect} selectedService={selectedService} />
@@ -233,6 +324,75 @@ export default function App() {
 
       {/* Push Notification Permission Request Dialog */}
       <PushNotificationPrompt />
+
+      {/* Global Share Options Modal */}
+      {showShareModal && shareData && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 z-[70] animate-fade-in">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl relative text-slate-900">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div className="flex items-center gap-2">
+                <Share2 className="w-5 h-5 text-amber-500" />
+                <h3 className="font-extrabold text-base font-display">Share Notification</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowShareModal(false)}
+                className="p-1.5 hover:bg-slate-100 rounded-full text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 font-medium">
+              Share <strong className="text-slate-900">{shareData.name}</strong> with candidates or via social networks:
+            </p>
+
+            <div className="grid grid-cols-1 gap-2.5">
+              <a
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(shareData.text)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xs transition-all shadow-md group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <MessageCircle className="w-5 h-5" />
+                  <span>Share via WhatsApp</span>
+                </div>
+                <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-mono">Instant</span>
+              </a>
+
+              <a
+                href={`https://t.me/share/url?url=${encodeURIComponent(shareData.url)}&text=${encodeURIComponent(shareData.title)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-3.5 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl font-bold text-xs transition-all shadow-md cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <Share2 className="w-5 h-5" />
+                  <span>Share on Telegram</span>
+                </div>
+                <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-mono">Channel</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(shareData.url);
+                  setCopySuccess(true);
+                  setTimeout(() => setCopySuccess(false), 2500);
+                }}
+                className="flex items-center justify-between p-3.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-2xl font-bold text-xs transition-all border border-slate-300 cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  {copySuccess ? <Check className="w-5 h-5 text-emerald-600" /> : <Copy className="w-5 h-5 text-slate-600" />}
+                  <span>{copySuccess ? 'Link Copied to Clipboard!' : 'Copy Direct Page Link'}</span>
+                </div>
+                <span className="text-[10px] text-slate-600 font-mono">URL</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Floating WhatsApp Channel Button */}
       <button
