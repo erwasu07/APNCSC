@@ -2299,18 +2299,27 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
   };
 
   const getOrgName = (item: SarkariItem) => {
+    if (item.category === 'army_jobs') return 'Indian Army (joinindianarmy.nic.in)';
+    if (item.category === 'rrb_jobs') return 'Railway Recruitment Boards (RRB)';
+    if (item.category === 'ssc_jobs') return 'Staff Selection Commission (SSC)';
+    if (item.category === 'cluster_univ') return 'Cluster University Srinagar (CUS)';
+    if (item.category === 'jkssb') return 'J&K Services Selection Board (JKSSB)';
+    if (item.category === 'exam_forms') return 'University of Kashmir (Examinations)';
+    if (item.category === 'admissions') return 'University of Kashmir (Admissions)';
+
     const titleUpper = item.title.toUpperCase();
-    if (titleUpper.includes('SSC')) return 'STAFF SELECTION COMMISSION (SSC)';
-    if (titleUpper.includes('RRB') || titleUpper.includes('RAILWAY') || titleUpper.includes('RPF')) return 'RAILWAY RECRUITMENT BOARDS (RRB)';
-    if (titleUpper.includes('IBPS')) return 'INSTITUTE OF BANKING PERSONNEL SELECTION';
-    if (titleUpper.includes('JKSSB') || titleUpper.includes('J&K')) return 'J&K SERVICES SELECTION BOARD';
-    if (titleUpper.includes('UP POLICE') || titleUpper.includes('UPPRPB')) return 'UP POLICE RECRUITMENT BOARD';
-    if (titleUpper.includes('UPSC')) return 'UNION PUBLIC SERVICE COMMISSION (UPSC)';
-    if (titleUpper.includes('NEET') || titleUpper.includes('NTA') || titleUpper.includes('JEE') || titleUpper.includes('CUET')) return 'NATIONAL TESTING AGENCY (NTA)';
-    if (titleUpper.includes('CBSE') || titleUpper.includes('CTET')) return 'CENTRAL BOARD OF SECONDARY EDUCATION';
-    if (titleUpper.includes('DELHI UNIVERSITY') || titleUpper.includes('CSAS')) return 'DELHI UNIVERSITY ADMISSION BOARD';
-    if (titleUpper.includes('IGNOU')) return 'INDIRA GANDHI NATIONAL OPEN UNIVERSITY';
-    return item.advertisementNo || 'GOVERNMENT RECRUITMENT BOARD';
+    if (titleUpper.includes('ARMY') || titleUpper.includes('AGNIVEER')) return 'Indian Army';
+    if (titleUpper.includes('SSC')) return 'Staff Selection Commission (SSC)';
+    if (titleUpper.includes('RRB') || titleUpper.includes('RAILWAY') || titleUpper.includes('RPF')) return 'Railway Recruitment Boards (RRB)';
+    if (titleUpper.includes('IBPS')) return 'Institute of Banking Personnel Selection';
+    if (titleUpper.includes('JKSSB') || titleUpper.includes('J&K')) return 'J&K Services Selection Board';
+    if (titleUpper.includes('UP POLICE') || titleUpper.includes('UPPRPB')) return 'UP Police Recruitment Board';
+    if (titleUpper.includes('UPSC')) return 'Union Public Service Commission (UPSC)';
+    if (titleUpper.includes('NEET') || titleUpper.includes('NTA') || titleUpper.includes('JEE') || titleUpper.includes('CUET')) return 'National Testing Agency (NTA)';
+    if (titleUpper.includes('CBSE') || titleUpper.includes('CTET')) return 'Central Board of Secondary Education';
+    if (titleUpper.includes('DELHI UNIVERSITY') || titleUpper.includes('CSAS')) return 'Delhi University Admission Board';
+    if (titleUpper.includes('IGNOU')) return 'Indira Gandhi National Open University';
+    return item.advertisementNo || 'Government Recruitment Board';
   };
 
   const getPostsText = (item: SarkariItem) => {
@@ -4039,353 +4048,140 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
               </div>
             </div>
 
-            {/* Scrollable Post Content Body - Clean High-Contrast Light Theme */}
-            <div className="p-4 sm:p-7 overflow-y-auto space-y-5 text-sm scrollbar-thin bg-slate-50">
+            {/* Scrollable Post Content Body - Clean Document Flow (No nested boxes) */}
+            <div className="p-5 sm:p-8 overflow-y-auto space-y-6 text-sm scrollbar-thin bg-white">
               
-              {/* Important Alert Strip */}
-              <div className="p-4 bg-amber-50 border border-amber-300 rounded-2xl flex items-start gap-3 shadow-2xs">
-                <Bell className="w-5 h-5 text-amber-700 shrink-0 mt-0.5 animate-bounce" />
-                <div className="space-y-1">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-amber-900 font-mono">
+              {/* Important Alert Strip - Clean Left Callout */}
+              <div className="border-l-4 border-amber-500 bg-amber-50/70 p-4 rounded-r-lg space-y-1">
+                <div className="flex items-center gap-2">
+                  <Bell className="w-4 h-4 text-amber-700 shrink-0" />
+                  <h4 className="text-xs font-bold text-amber-950">
                     Candidate Verification Advisory
                   </h4>
-                  <p className="text-xs text-slate-800 leading-relaxed font-medium">
-                    Ensure all certificates (Aadhaar, Educational Marksheets, Category / Caste Certificates) match your full name and date of birth exactly before submitting. Applications processed through our CSC Desk undergo mandatory VLE verification.
-                  </p>
-                  {selectedItem.lastDate && (
-                    <p className="text-xs font-bold text-red-700 font-mono pt-1">
-                      ⏰ Application Closing Deadline: <span className="underline">{selectedItem.lastDate}</span>
-                    </p>
-                  )}
                 </div>
+                <p className="text-xs text-slate-700 leading-relaxed">
+                  Ensure all certificates (Aadhaar, Educational Marksheets, Category / Caste Certificates) match your full name and date of birth exactly before submitting. Applications processed through our CSC Desk undergo mandatory VLE verification.
+                </p>
+                {selectedItem.lastDate && (
+                  <p className="text-xs font-semibold text-red-700 pt-0.5">
+                    Application Closing Deadline: <span className="underline font-bold">{selectedItem.lastDate}</span>
+                  </p>
+                )}
               </div>
 
-              {/* Prominent Short Information / Short Description Card */}
-              <div className="bg-white border border-blue-200 rounded-2xl p-5 space-y-3.5 shadow-xs">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                  <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-blue-900 font-mono flex items-center gap-2">
-                    <FileText className="w-4.5 h-4.5 text-blue-700" />
-                    <span>Short Description / Notification Summary</span>
+              {/* Overview & Short Description */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                  <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-blue-700" />
+                    <span>Overview &amp; Notification Summary</span>
                   </h4>
-                  <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-mono font-bold rounded-full border border-blue-200">
-                    Official Notice
+                  <span className="text-xs text-slate-500 font-medium">
+                    Published: <strong className="text-slate-900 font-semibold">{selectedItem.postDate}</strong>
                   </span>
                 </div>
 
-                <div className="text-slate-800 text-xs sm:text-sm leading-relaxed space-y-2.5 font-normal">
-                  <p className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                    <strong className="font-extrabold text-blue-900">{getOrgName(selectedItem)}</strong> has officially published the official notification for <strong className="font-black text-slate-950">{selectedItem.title}</strong>. {selectedItem.shortInfo || 'Interested and eligible candidates can read the complete notification details, eligibility criteria, age limits, and fee structure below before submitting their online application form.'}
-                  </p>
-                  
-                  {/* Quick Post Metadata Chips */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 font-mono text-[11px]">
-                    <div className="p-2 bg-slate-100 rounded-lg flex flex-col border border-slate-200/60">
-                      <span className="text-slate-600 text-[9px] uppercase font-bold">Post Date</span>
-                      <span className="font-extrabold text-slate-900">{selectedItem.postDate}</span>
-                    </div>
-                    <div className="p-2 bg-slate-100 rounded-lg flex flex-col border border-slate-200/60">
-                      <span className="text-slate-600 text-[9px] uppercase font-bold">Category</span>
-                      <span className="font-extrabold text-blue-700 uppercase">{selectedItem.category.replace('_', ' ')}</span>
-                    </div>
-                    <div className="p-2 bg-slate-100 rounded-lg flex flex-col col-span-2 sm:col-span-1 border border-slate-200/60">
-                      <span className="text-slate-600 text-[9px] uppercase font-bold">Status</span>
-                      <span className="font-extrabold text-emerald-700">Active / Form Open</span>
-                    </div>
-                  </div>
-                </div>
+                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                  <strong className="font-semibold text-slate-900">{getOrgName(selectedItem)}</strong> has officially published the notification for <strong className="font-semibold text-slate-900">{selectedItem.title}</strong>. {selectedItem.shortInfo || 'Interested and eligible candidates can read the complete notification details, eligibility criteria, age limits, and fee structure below before submitting their online application form.'}
+                </p>
               </div>
 
-              {/* Important Dates & Application Fees Side-by-Side */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Important Dates & Application Fees Side-by-Side in Clean Document Lists */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-1">
                 
-                {/* Important Dates Box */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 shadow-xs">
-                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-rose-700 font-mono pb-2 border-b border-slate-100">
+                {/* Important Dates */}
+                <div className="space-y-2.5">
+                  <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-2">
                     <Calendar className="w-4 h-4 text-rose-600" />
-                    <span>Key Examination Schedule</span>
-                  </div>
-                  <div className="space-y-2 text-xs font-mono">
-                    <div className="flex justify-between items-center py-1 border-b border-slate-100">
-                      <span className="text-slate-600 font-medium">Notification Release:</span>
-                      <span className="font-bold text-slate-900">{selectedItem.postDate}</span>
+                    <span>Important Dates Schedule</span>
+                  </h4>
+                  <div className="divide-y divide-slate-100 text-xs sm:text-sm">
+                    <div className="py-2 flex justify-between gap-4">
+                      <span className="text-slate-600">Notification Released</span>
+                      <span className="font-semibold text-slate-900">{selectedItem.postDate}</span>
                     </div>
-                    <div className="flex justify-between items-center py-1 border-b border-slate-100">
-                      <span className="text-slate-600 font-medium">Date of Start (Form Open):</span>
-                      <span className="font-bold text-emerald-700">{selectedItem.startDate || selectedItem.postDate}</span>
+                    <div className="py-2 flex justify-between gap-4">
+                      <span className="text-slate-600">Application Start Date</span>
+                      <span className="font-semibold text-emerald-700">{selectedItem.startDate || selectedItem.postDate}</span>
                     </div>
-                    <div className="flex justify-between items-center py-1 border-b border-slate-100">
-                      <span className="text-slate-600 font-medium">Last Date to Apply:</span>
-                      <span className="font-extrabold text-red-600">{selectedItem.lastDate || 'As per notification'}</span>
+                    <div className="py-2 flex justify-between gap-4">
+                      <span className="text-slate-600">Last Date to Apply</span>
+                      <span className="font-bold text-red-600">{selectedItem.lastDate || 'As per notification'}</span>
                     </div>
-                    <div className="flex justify-between items-center py-1 border-b border-slate-100">
-                      <span className="text-slate-600 font-medium">Last Date Pay Fee:</span>
-                      <span className="font-bold text-slate-900">{selectedItem.lastDate || 'Same as last date'}</span>
+                    <div className="py-2 flex justify-between gap-4">
+                      <span className="text-slate-600">Last Date Pay Fee</span>
+                      <span className="font-semibold text-slate-900">{selectedItem.lastDate || 'Same as last date'}</span>
                     </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-slate-600 font-medium">Exam Date / Admit Card:</span>
-                      <span className="font-bold text-indigo-700">
-                        {selectedItem.category === 'army_jobs' ? 'To be notified on www.joinindianarmy.nic.in' : selectedItem.category === 'rrb_jobs' ? 'To be notified on www.rrbapply.gov.in' : selectedItem.category === 'ssc_jobs' ? 'To be notified on ssc.gov.in' : selectedItem.category === 'nta' ? 'To be notified on www.nta.ac.in' : selectedItem.category === 'cluster_univ' ? 'To be notified on cusrinagar.edu.in' : 'To be notified soon on official portal'}
+                    <div className="py-2 flex justify-between gap-4">
+                      <span className="text-slate-600">Exam Date / Admit Card</span>
+                      <span className="font-medium text-indigo-900">
+                        {selectedItem.category === 'army_jobs' ? 'Check joinindianarmy.nic.in' : selectedItem.category === 'rrb_jobs' ? 'Check rrbapply.gov.in' : selectedItem.category === 'ssc_jobs' ? 'Check ssc.gov.in' : selectedItem.category === 'cluster_univ' ? 'Check cusrinagar.edu.in' : 'To be notified on official portal'}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Fee Structure Box */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 shadow-xs">
-                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-emerald-700 font-mono pb-2 border-b border-slate-100">
+                {/* Fee Structure */}
+                <div className="space-y-2.5">
+                  <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-2">
                     <IndianRupee className="w-4 h-4 text-emerald-600" />
-                    <span>Exam Fee Structure &amp; Subject Charges</span>
-                  </div>
-                  <div className="space-y-2 text-xs font-mono">
+                    <span>Fee Structure &amp; Charges</span>
+                  </h4>
+                  <div className="divide-y divide-slate-100 text-xs sm:text-sm">
                     {selectedItem.feePerSubject && (
-                      <div className="p-2.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-xl mb-1">
-                        <span className="text-amber-800 dark:text-amber-300 text-[10px] uppercase font-bold block">Fee As Per Subject / Paper:</span>
-                        <span className="font-black text-amber-950 dark:text-amber-200 text-xs">{selectedItem.feePerSubject}</span>
+                      <div className="py-2 flex justify-between gap-4">
+                        <span className="text-slate-600">Fee Per Subject / Paper</span>
+                        <span className="font-bold text-amber-900">{selectedItem.feePerSubject}</span>
                       </div>
                     )}
-                    <div className="flex justify-between items-center py-1 border-b border-slate-100">
-                      <span className="text-slate-600 font-medium">General / Category Candidates:</span>
-                      <span className="font-extrabold text-slate-900">{selectedItem.fees?.genObc || 'As per subject paper'}</span>
+                    <div className="py-2 flex justify-between gap-4">
+                      <span className="text-slate-600">General / OBC Candidates</span>
+                      <span className="font-semibold text-slate-900">{selectedItem.fees?.genObc || 'As per subject paper'}</span>
                     </div>
-                    <div className="flex justify-between items-center py-1 border-b border-slate-100">
-                      <span className="text-slate-600 font-medium">SC / ST / Divyang:</span>
-                      <span className="font-extrabold text-emerald-700">{selectedItem.fees?.scSt || 'As per university rules'}</span>
+                    <div className="py-2 flex justify-between gap-4">
+                      <span className="text-slate-600">SC / ST / Reserved</span>
+                      <span className="font-semibold text-emerald-700">{selectedItem.fees?.scSt || 'As per rules'}</span>
                     </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-slate-600 font-medium">Online Mode:</span>
-                      <span className="font-bold text-amber-700">NetBanking / Credit / Debit Card</span>
+                    <div className="py-2 flex justify-between gap-4">
+                      <span className="text-slate-600">Payment Mode</span>
+                      <span className="font-medium text-slate-800">Online NetBanking / UPI / Debit Card</span>
                     </div>
+                    {selectedItem.totalPosts && (
+                      <div className="py-2 flex justify-between gap-4">
+                        <span className="text-slate-600">Total Posts / Seats</span>
+                        <span className="font-bold text-blue-900">{selectedItem.totalPosts}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
               </div>
 
-              {/* Total Number of Posts / Seats Banner */}
-              {selectedItem.totalPosts && (
-                <div className={`bg-gradient-to-r text-white border rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm ${
-                  selectedItem.category === 'admissions'
-                    ? 'from-teal-950 via-slate-900 to-teal-900 border-teal-700'
-                    : selectedItem.category === 'exam_forms'
-                    ? 'from-amber-950 via-slate-900 to-amber-900 border-amber-700'
-                    : selectedItem.category === 'cluster_univ'
-                    ? 'from-cyan-950 via-slate-900 to-cyan-900 border-cyan-700'
-                    : selectedItem.category === 'nta'
-                    ? 'from-red-950 via-slate-900 to-red-900 border-red-700'
-                    : selectedItem.category === 'ssc_jobs'
-                    ? 'from-orange-950 via-slate-900 to-orange-900 border-orange-700'
-                    : selectedItem.category === 'rrb_jobs'
-                    ? 'from-emerald-950 via-slate-900 to-emerald-900 border-emerald-700'
-                    : selectedItem.category === 'army_jobs'
-                    ? 'from-red-950 via-slate-900 to-red-900 border-red-700'
-                    : 'from-indigo-950 via-slate-900 to-indigo-900 border-indigo-700'
-                }`}>
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-amber-400 text-slate-950 rounded-xl font-black shrink-0">
-                      {selectedItem.category === 'admissions' || selectedItem.category === 'nta' ? (
-                        <GraduationCap className="w-5 h-5" />
-                      ) : selectedItem.category === 'exam_forms' ? (
-                        <FileCheck className="w-5 h-5" />
-                      ) : selectedItem.category === 'cluster_univ' ? (
-                        <Building2 className="w-5 h-5" />
-                      ) : selectedItem.category === 'rrb_jobs' ? (
-                        <Train className="w-5 h-5" />
-                      ) : selectedItem.category === 'army_jobs' ? (
-                        <Shield className="w-5 h-5" />
-                      ) : (
-                        <Briefcase className="w-5 h-5" />
-                      )}
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-mono font-bold text-amber-300 uppercase tracking-widest block">
-                        {selectedItem.category === 'admissions' || selectedItem.category === 'cluster_univ' || selectedItem.category === 'nta'
-                          ? 'TOTAL SEATS / INTAKE CAPACITY'
-                          : selectedItem.category === 'exam_forms'
-                          ? 'EXPECTED CANDIDATE ENROLMENT'
-                          : 'TOTAL NUMBER OF VACANCIES / POSTS'}
-                      </span>
-                      <h4 className="text-lg sm:text-xl font-black tracking-tight text-white font-mono">
-                        {selectedItem.totalPosts}
-                      </h4>
-                    </div>
-                  </div>
-                  {selectedItem.officialLink && (
-                    <a
-                      href={selectedItem.officialLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3.5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 shrink-0 font-bold"
-                    >
-                      <span>
-                        {selectedItem.category === 'admissions'
-                          ? 'Official Admission Portal'
-                          : selectedItem.category === 'exam_forms'
-                          ? 'Official KU Exam Portal'
-                          : selectedItem.category === 'cluster_univ'
-                          ? 'Official CUS Portal'
-                          : selectedItem.category === 'nta'
-                          ? 'Official NTA Portal'
-                          : selectedItem.category === 'ssc_jobs'
-                          ? 'Official SSC Portal (ssc.gov.in)'
-                          : selectedItem.category === 'rrb_jobs'
-                          ? 'Official RRB Portal (rrbapply.gov.in)'
-                          : selectedItem.category === 'army_jobs'
-                          ? 'Official Army Portal (joinindianarmy.nic.in)'
-                          : 'Official Notification Portal'}
-                      </span>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  )}
-                </div>
-              )}
-
-              {/* Department-wise Post / Course / Exam Form Breakdown Table */}
+              {/* Department Breakdown Clean Table */}
               {selectedItem.departmentBreakdown && selectedItem.departmentBreakdown.length > 0 && (
-                <div className={`bg-white border rounded-2xl p-5 space-y-3.5 shadow-xs ${
-                  selectedItem.category === 'admissions'
-                    ? 'border-teal-200'
-                    : selectedItem.category === 'exam_forms'
-                    ? 'border-amber-200'
-                    : selectedItem.category === 'cluster_univ'
-                    ? 'border-cyan-200'
-                    : selectedItem.category === 'nta'
-                    ? 'border-red-200'
-                    : selectedItem.category === 'ssc_jobs'
-                    ? 'border-orange-200'
-                    : selectedItem.category === 'rrb_jobs'
-                    ? 'border-emerald-200'
-                    : selectedItem.category === 'army_jobs'
-                    ? 'border-red-200'
-                    : 'border-indigo-200'
-                }`}>
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                    <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider font-mono flex items-center gap-2 text-slate-900">
-                      {selectedItem.category === 'admissions' || selectedItem.category === 'nta' ? (
-                        <GraduationCap className="w-4.5 h-4.5 text-teal-700" />
-                      ) : selectedItem.category === 'exam_forms' ? (
-                        <FileCheck className="w-4.5 h-4.5 text-amber-700" />
-                      ) : selectedItem.category === 'cluster_univ' ? (
-                        <Building2 className="w-4.5 h-4.5 text-cyan-700" />
-                      ) : selectedItem.category === 'rrb_jobs' ? (
-                        <Train className="w-4.5 h-4.5 text-emerald-700" />
-                      ) : selectedItem.category === 'army_jobs' ? (
-                        <Shield className="w-4.5 h-4.5 text-red-700" />
-                      ) : (
-                        <Briefcase className="w-4.5 h-4.5 text-orange-700" />
-                      )}
-                      <span>
-                        {selectedItem.category === 'admissions' || selectedItem.category === 'cluster_univ' || selectedItem.category === 'nta'
-                          ? 'Department / Stream / Exam Paper Breakdown'
-                          : selectedItem.category === 'exam_forms'
-                          ? 'Department / Course-Wise Exam Form Breakdown & Subject Fees'
-                          : selectedItem.category === 'ssc_jobs'
-                          ? 'Ministry / Department / Cadre-Wise Post Breakdown & Eligibility'
-                          : selectedItem.category === 'rrb_jobs'
-                          ? 'Railway Zone / Department / Cadre-Wise Post Breakdown & Eligibility'
-                          : selectedItem.category === 'army_jobs'
-                          ? 'Arm / Service / Regiment / Wing-Wise Breakdown & Qualification'
-                          : 'Department-wise Post Breakdown & Qualifications'}
-                      </span>
-                    </h4>
-                    <span className={`px-2.5 py-0.5 text-[10px] font-mono font-bold rounded-full border ${
-                      selectedItem.category === 'admissions'
-                        ? 'bg-teal-100 text-teal-900 border-teal-200'
-                        : selectedItem.category === 'exam_forms'
-                        ? 'bg-amber-100 text-amber-900 border-amber-200'
-                        : selectedItem.category === 'cluster_univ'
-                        ? 'bg-cyan-100 text-cyan-900 border-cyan-200'
-                        : selectedItem.category === 'nta'
-                        ? 'bg-red-100 text-red-900 border-red-200'
-                        : selectedItem.category === 'ssc_jobs'
-                        ? 'bg-orange-100 text-orange-900 border-orange-200'
-                        : selectedItem.category === 'rrb_jobs'
-                        ? 'bg-emerald-100 text-emerald-900 border-emerald-200'
-                        : selectedItem.category === 'army_jobs'
-                        ? 'bg-red-100 text-red-900 border-red-200'
-                        : 'bg-indigo-100 text-indigo-900 border-indigo-200'
-                    }`}>
-                      Official Distribution
-                    </span>
-                  </div>
+                <div className="space-y-3 pt-2">
+                  <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-2">
+                    <Briefcase className="w-4 h-4 text-blue-700" />
+                    <span>Department &amp; Cadre Breakdown</span>
+                  </h4>
 
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs divide-y divide-slate-200">
-                      <thead className={`font-extrabold uppercase text-[10px] tracking-wider font-mono ${
-                        selectedItem.category === 'admissions'
-                          ? 'bg-teal-50/80 text-teal-950'
-                          : selectedItem.category === 'exam_forms'
-                          ? 'bg-amber-50/80 text-amber-950'
-                          : selectedItem.category === 'cluster_univ'
-                          ? 'bg-cyan-50/80 text-cyan-950'
-                          : selectedItem.category === 'nta'
-                          ? 'bg-red-50/80 text-red-950'
-                          : selectedItem.category === 'ssc_jobs'
-                          ? 'bg-orange-50/80 text-orange-950'
-                          : selectedItem.category === 'rrb_jobs'
-                          ? 'bg-emerald-50/80 text-emerald-950'
-                          : selectedItem.category === 'army_jobs'
-                          ? 'bg-red-50/80 text-red-950'
-                          : 'bg-indigo-50/80 text-indigo-950'
-                      }`}>
-                        <tr>
-                          <th className="py-2.5 px-3">
-                            {selectedItem.category === 'admissions' || selectedItem.category === 'exam_forms' || selectedItem.category === 'cluster_univ' || selectedItem.category === 'nta'
-                              ? 'School / Department'
-                              : 'Department Name'}
-                          </th>
-                          <th className="py-2.5 px-3">
-                            {selectedItem.category === 'admissions' || selectedItem.category === 'exam_forms' || selectedItem.category === 'cluster_univ' || selectedItem.category === 'nta'
-                              ? 'Programme / Course Title'
-                              : 'Post Title'}
-                          </th>
-                          <th className="py-2.5 px-3 text-center">
-                            {selectedItem.category === 'admissions' || selectedItem.category === 'cluster_univ' || selectedItem.category === 'nta'
-                              ? 'Seats / Intake'
-                              : selectedItem.category === 'exam_forms'
-                              ? 'Fee as per Subject'
-                              : 'No. of Posts'}
-                          </th>
-                          <th className="py-2.5 px-3">
-                            {selectedItem.category === 'admissions' || selectedItem.category === 'exam_forms' || selectedItem.category === 'cluster_univ' || selectedItem.category === 'nta'
-                              ? 'Eligibility & Requirements'
-                              : 'Educational / Technical Qualification'}
-                          </th>
+                    <table className="w-full text-left text-xs sm:text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-200 text-slate-600 text-xs font-semibold">
+                          <th className="py-2.5 pr-4">Department / Wing</th>
+                          <th className="py-2.5 pr-4">Post Title</th>
+                          <th className="py-2.5 px-3 text-center">Seats / Posts</th>
+                          <th className="py-2.5 pl-4">Qualification</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
+                      <tbody className="divide-y divide-slate-100 text-slate-800">
                         {selectedItem.departmentBreakdown.map((dept, idx) => (
-                          <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                            <td className="py-3 px-3 font-bold text-slate-900">{dept.department}</td>
-                            <td className={`py-3 px-3 font-semibold ${
-                              selectedItem.category === 'admissions'
-                                ? 'text-teal-900'
-                                : selectedItem.category === 'exam_forms'
-                                ? 'text-amber-900'
-                                : selectedItem.category === 'cluster_univ'
-                                ? 'text-cyan-900'
-                                : selectedItem.category === 'nta'
-                                ? 'text-red-900'
-                                : selectedItem.category === 'ssc_jobs'
-                                ? 'text-orange-950 dark:text-orange-300'
-                                : 'text-indigo-900'
-                            }`}>{dept.postName}</td>
-                            <td className="py-3 px-3 text-center">
-                              <span className={`px-2 py-0.5 font-mono font-black rounded-md ${
-                                selectedItem.category === 'admissions'
-                                  ? 'bg-teal-100 text-teal-900'
-                                  : selectedItem.category === 'exam_forms'
-                                  ? 'bg-amber-100 text-amber-950 border border-amber-300'
-                                  : selectedItem.category === 'cluster_univ'
-                                  ? 'bg-cyan-100 text-cyan-950 border border-cyan-300'
-                                  : selectedItem.category === 'nta'
-                                  ? 'bg-red-100 text-red-950 border border-red-300'
-                                  : selectedItem.category === 'ssc_jobs'
-                                  ? 'bg-orange-100 text-orange-950 border border-orange-300'
-                                  : 'bg-indigo-100 text-indigo-900'
-                              }`}>
-                                {dept.posts}
-                              </span>
-                            </td>
-                            <td className="py-3 px-3 text-slate-600 text-[11px] leading-snug">{dept.qualification}</td>
+                          <tr key={idx} className="hover:bg-slate-50/80">
+                            <td className="py-2.5 pr-4 font-semibold text-slate-900">{dept.department}</td>
+                            <td className="py-2.5 pr-4 text-blue-900 font-medium">{dept.postName}</td>
+                            <td className="py-2.5 px-3 text-center font-bold text-slate-900">{dept.posts}</td>
+                            <td className="py-2.5 pl-4 text-slate-600 text-xs">{dept.qualification}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -4394,58 +4190,53 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                 </div>
               )}
 
-              {/* Age Specifications & Qualification Box */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-xs">
-                <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 font-mono flex items-center gap-2">
+              {/* Age Specifications & Qualification */}
+              <div className="space-y-2.5 pt-1">
+                <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-2">
                   <Shield className="w-4 h-4 text-blue-600" />
                   <span>Eligibility &amp; Qualification Criteria</span>
                 </h4>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <div className="space-y-2 text-xs sm:text-sm text-slate-700">
                   {selectedItem.ageLimit && (
-                    <div className="p-3.5 bg-amber-50/80 border border-amber-200 rounded-xl space-y-1">
-                      <span className="text-[10px] font-black uppercase text-amber-800 font-mono block">Age Limit Criteria</span>
-                      <p className="font-bold text-slate-900">
-                        {selectedItem.ageLimit}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="p-3.5 bg-blue-50/80 border border-blue-200 rounded-xl space-y-1">
-                    <span className="text-[10px] font-black uppercase text-blue-800 font-mono block">Educational Qualification</span>
-                    <p className="font-semibold text-slate-900">
-                      {selectedItem.eligibility || 'Graduate Degree / 10th / 12th Pass from recognized board in India.'}
+                    <p>
+                      <strong className="text-slate-900 font-semibold">Age Limit: </strong>
+                      <span>{selectedItem.ageLimit}</span>
                     </p>
-                  </div>
+                  )}
+                  <p>
+                    <strong className="text-slate-900 font-semibold">Educational Qualification: </strong>
+                    <span>{selectedItem.eligibility || 'Graduate Degree / 10th / 12th Pass from recognized board in India.'}</span>
+                  </p>
                 </div>
               </div>
 
-              {/* Required Documents Checklist for CSC Desk Application */}
+              {/* Required Documents Checklist */}
               {!['answer_keys', 'syllabus', 'results'].includes(selectedItem.category) && (
-                <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 shadow-xs">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 font-mono flex items-center gap-2">
+                <div className="space-y-2.5 pt-1">
+                  <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-2">
                     <FileCheck className="w-4 h-4 text-emerald-600" />
                     <span>Documents Required for CSC Desk Submission</span>
                   </h4>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200/80">
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-slate-700">
+                    <li className="flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span className="font-medium text-slate-800">Aadhaar Card / Govt Photo ID</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200/80">
+                      <span>Aadhaar Card / Govt Photo ID</span>
+                    </li>
+                    <li className="flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span className="font-medium text-slate-800">Educational Certificate / Marksheet</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200/80">
+                      <span>Educational Certificate / Marksheet</span>
+                    </li>
+                    <li className="flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span className="font-medium text-slate-800">Passport Photo &amp; Signature Scan</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200/80">
+                      <span>Passport Photo &amp; Signature Scan</span>
+                    </li>
+                    <li className="flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span className="font-medium text-slate-800">Caste / Domicile Certificate (if applicable)</span>
-                    </div>
-                  </div>
+                      <span>Caste / Domicile Certificate (if applicable)</span>
+                    </li>
+                  </ul>
                 </div>
               )}
 
