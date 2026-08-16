@@ -2265,6 +2265,24 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
     return matchesSearch && matchesTab;
   });
 
+  // Dynamically extract the latest notification from each of the primary categories for the top ticker marquee
+  const tickerSections: Array<{ category: SarkariItem['category']; tag: string; emoji: string }> = [
+    { category: 'army_jobs', tag: 'ARMY', emoji: '⚔️' },
+    { category: 'rrb_jobs', tag: 'RAILWAY', emoji: '🚆' },
+    { category: 'ssc_jobs', tag: 'SSC', emoji: '💼' },
+    { category: 'cluster_univ', tag: 'CUS', emoji: '🏛️' },
+    { category: 'jkssb', tag: 'JKSSB', emoji: '⚡' },
+    { category: 'exam_forms', tag: 'EXAM FORM', emoji: '📝' },
+    { category: 'admissions', tag: 'ADMISSION', emoji: '🎓' },
+  ];
+
+  const latestTickerItems = tickerSections
+    .map(sec => {
+      const latestItem = SARKARI_DATA.find(item => item.category === sec.category);
+      return latestItem ? { item: latestItem, ...sec } : null;
+    })
+    .filter((entry): entry is { item: SarkariItem; category: SarkariItem['category']; tag: string; emoji: string } => entry !== null);
+
   // Group items by category for the multi-box layout
   const getItemsByCategory = (cat: 'jkssb' | 'jobs' | 'admit_cards' | 'results' | 'answer_keys' | 'syllabus' | 'admissions') => {
     return SARKARI_DATA.filter(item => {
@@ -2392,98 +2410,58 @@ export default function SarkariResultDesk({ onApplyService, selectedService }: S
             </span>
             <div className="overflow-hidden whitespace-nowrap text-xs font-bold text-slate-950 flex-1 relative group">
               <div className="animate-marquee whitespace-nowrap group-hover:[animation-play-state:paused] active:[animation-play-state:paused] flex items-center">
-                {/* 8 News Items - Primary Copy */}
+                {/* Dynamic Latest Item from Each of the 7 Target Sections - Primary Copy */}
                 <div className="inline-flex items-center gap-4 sm:gap-6 pr-4 sm:pr-6 shrink-0">
-                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
-                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">JOB</span>
-                    🔥 <strong>SSC CGL 2026</strong> Official Notification Released — Apply at CSC Desk!
-                  </a>
-                  <span className="text-amber-800 font-black">•</span>
-                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
-                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">JOB</span>
-                    ⚡ <strong>UPPSC RO/ARO 2026</strong> Online Application Form Open
-                  </a>
-                  <span className="text-amber-800 font-black">•</span>
-
-                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
-                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">RESULT</span>
-                    🏆 <strong>NEET UG 2026</strong> Merit List &amp; Cutoff Scorecard Released
-                  </a>
-                  <span className="text-amber-800 font-black">•</span>
-                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
-                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">RESULT</span>
-                    🎯 <strong>IBPS PO Mains Result 2026</strong> Declared — Check Score
-                  </a>
-                  <span className="text-amber-800 font-black">•</span>
-
-                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
-                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ANSWER KEY</span>
-                    🔑 <strong>NTA JEE Main 2026</strong> Session 1 Final Answer Key Out
-                  </a>
-                  <span className="text-amber-800 font-black">•</span>
-                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
-                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ANSWER KEY</span>
-                    📝 <strong>SSC GD Constable 2026</strong> Official Answer Key Released
-                  </a>
-                  <span className="text-amber-800 font-black">•</span>
-
-                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
-                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ADMISSION</span>
-                    🎓 <strong>CUET UG 2026</strong> Online Registration Form Open
-                  </a>
-                  <span className="text-amber-800 font-black">•</span>
-                  <a href="#service-link" className="inline-flex items-center gap-1.5 hover:underline cursor-pointer">
-                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ADMISSION</span>
-                    🏫 <strong>Bihar B.Ed CET 2026</strong> Admission Online Form Active
-                  </a>
-                  <span className="text-amber-800 font-black">•</span>
+                  {latestTickerItems.map(({ item, tag, emoji }) => (
+                    <React.Fragment key={`ticker-item-1-${item.id}`}>
+                      <button
+                        type="button"
+                        onClick={() => handleItemClick(item)}
+                        className="inline-flex items-center gap-1.5 hover:underline cursor-pointer text-left group/ticker font-bold"
+                        title="Click to view full details"
+                      >
+                        <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase tracking-wider shadow-xs">
+                          {tag}
+                        </span>
+                        <span className="text-slate-950 font-bold group-hover/ticker:text-blue-900">
+                          {emoji} <strong>{item.title}</strong>
+                        </span>
+                        {item.isNew && (
+                          <span className="px-1.5 py-0.2 bg-red-600 text-white rounded text-[8.5px] font-black font-mono animate-pulse">
+                            NEW
+                          </span>
+                        )}
+                      </button>
+                      <span className="text-amber-800 font-black">•</span>
+                    </React.Fragment>
+                  ))}
                 </div>
 
-                {/* Duplicate Copy for Infinite Ticker */}
+                {/* Duplicate Copy for Seamless Infinite Scrolling */}
                 <div className="inline-flex items-center gap-4 sm:gap-6 pr-4 sm:pr-6 shrink-0" aria-hidden="true">
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">JOB</span>
-                    🔥 <strong>SSC CGL 2026</strong> Official Notification Released — Apply at CSC Desk!
-                  </span>
-                  <span className="text-amber-800 font-black">•</span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">JOB</span>
-                    ⚡ <strong>UPPSC RO/ARO 2026</strong> Online Application Form Open
-                  </span>
-                  <span className="text-amber-800 font-black">•</span>
-
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">RESULT</span>
-                    🏆 <strong>NEET UG 2026</strong> Merit List &amp; Cutoff Scorecard Released
-                  </span>
-                  <span className="text-amber-800 font-black">•</span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">RESULT</span>
-                    🎯 <strong>IBPS PO Mains Result 2026</strong> Declared — Check Score
-                  </span>
-                  <span className="text-amber-800 font-black">•</span>
-
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ANSWER KEY</span>
-                    🔑 <strong>NTA JEE Main 2026</strong> Session 1 Final Answer Key Out
-                  </span>
-                  <span className="text-amber-800 font-black">•</span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ANSWER KEY</span>
-                    📝 <strong>SSC GD Constable 2026</strong> Official Answer Key Released
-                  </span>
-                  <span className="text-amber-800 font-black">•</span>
-
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ADMISSION</span>
-                    🎓 <strong>CUET UG 2026</strong> Online Registration Form Open
-                  </span>
-                  <span className="text-amber-800 font-black">•</span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase">ADMISSION</span>
-                    🏫 <strong>Bihar B.Ed CET 2026</strong> Admission Online Form Active
-                  </span>
-                  <span className="text-amber-800 font-black">•</span>
+                  {latestTickerItems.map(({ item, tag, emoji }) => (
+                    <React.Fragment key={`ticker-item-2-${item.id}`}>
+                      <button
+                        type="button"
+                        onClick={() => handleItemClick(item)}
+                        tabIndex={-1}
+                        className="inline-flex items-center gap-1.5 hover:underline cursor-pointer text-left group/ticker font-bold"
+                      >
+                        <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase tracking-wider shadow-xs">
+                          {tag}
+                        </span>
+                        <span className="text-slate-950 font-bold group-hover/ticker:text-blue-900">
+                          {emoji} <strong>{item.title}</strong>
+                        </span>
+                        {item.isNew && (
+                          <span className="px-1.5 py-0.2 bg-red-600 text-white rounded text-[8.5px] font-black font-mono">
+                            NEW
+                          </span>
+                        )}
+                      </button>
+                      <span className="text-amber-800 font-black">•</span>
+                    </React.Fragment>
+                  ))}
                 </div>
               </div>
             </div>
