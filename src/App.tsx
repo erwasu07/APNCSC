@@ -3,6 +3,7 @@ import Navbar from './components/Navbar';
 import SarkariResultDesk from './components/SarkariResultDesk';
 import ExploreServicesDesk from './components/ExploreServicesDesk';
 import GuidesKnowledgeHub from './components/GuidesKnowledgeHub';
+import PushNotificationPrompt from './components/PushNotificationPrompt';
 import NodeInformation from './components/NodeInformation';
 import AdminDashboard from './components/AdminDashboard';
 import Footer from './components/Footer';
@@ -225,6 +226,9 @@ export default function App() {
         onClose={() => setIsPrivacyModalOpen(false)} 
         initialTab={legalModalTab}
       />
+
+      {/* Push Notification Permission Request Dialog */}
+      <PushNotificationPrompt />
 
       {/* Floating WhatsApp Channel Button */}
       <button

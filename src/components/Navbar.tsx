@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Calendar, PhoneCall, Cpu, Sparkles, Eye, Languages, Home, Briefcase, Flame, Info, Menu, X, Star, ShieldCheck, Lock, Key, Sun, Moon, BookOpen } from 'lucide-react';
+import { Shield, Calendar, PhoneCall, Cpu, Sparkles, Eye, Languages, Home, Briefcase, Flame, Info, Menu, X, Star, ShieldCheck, Lock, Key, Sun, Moon, BookOpen, Bell } from 'lucide-react';
 import { PolicyTab } from './PrivacyPolicyModal';
 
 interface NavbarProps {
@@ -247,8 +247,24 @@ export default function Navbar({
             })}
           </div>
 
-          {/* Right side: Staff Portal Link & Mobile Menu Trigger Button */}
+          {/* Right side: Notifications, Staff Portal Link & Mobile Menu Trigger Button */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0 pl-1 border-l border-slate-200 sm:border-0">
+            {/* Push Notifications Alert Trigger */}
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('open-push-notification-prompt'));
+                }
+              }}
+              className="relative flex items-center justify-center p-1.5 sm:p-2 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-700 dark:text-amber-300 rounded-lg transition-all cursor-pointer border border-amber-200 dark:border-amber-800 shadow-xs shrink-0"
+              title="Enable / Check Sarkari Job Notification Alerts"
+              id="navbar-notification-btn"
+            >
+              <Bell className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-600 dark:text-amber-400 shrink-0 animate-bounce" style={{ animationDuration: '3s' }} />
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-slate-900" />
+            </button>
+
             {onOpenAdmin && (
               <button
                 type="button"
