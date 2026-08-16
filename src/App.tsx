@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import SarkariResultDesk from './components/SarkariResultDesk';
 import ExploreServicesDesk from './components/ExploreServicesDesk';
+import GuidesKnowledgeHub from './components/GuidesKnowledgeHub';
 import NodeInformation from './components/NodeInformation';
 import AdminDashboard from './components/AdminDashboard';
 import Footer from './components/Footer';
@@ -23,12 +24,7 @@ const FALLBACK_SETTINGS: WebsiteSettings = {
 };
 
 export default function App() {
-  const [darkMode, setDarkMode] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('theme') === 'dark';
-    }
-    return false;
-  });
+  const [darkMode] = useState<boolean>(false);
   const [isAdminView, setIsAdminView] = useState<boolean>(false);
 
   const [selectedService, setSelectedService] = useState('');
@@ -96,16 +92,11 @@ export default function App() {
     }
   }, [settings]);
 
-  // Sync portal theme mode (dark vs light)
+  // Enforce portal light white theme mode always
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [darkMode]);
+    document.documentElement.classList.remove('dark');
+    localStorage.setItem('theme', 'light');
+  }, []);
 
   const handleOpenStaffPortal = () => {
     setIsAdminView(true);
@@ -175,12 +166,10 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-850 dark:text-slate-100 flex flex-col justify-between font-sans transition-colors duration-300 w-full max-w-full overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between font-sans transition-colors duration-300 w-full max-w-full overflow-x-hidden">
       
       {/* Top Navigation Panel */}
       <Navbar
-        darkMode={darkMode}
-        setDarkMode={setDarkMode}
         cafeName={settings.cafeName}
         onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
         onOpenAdmin={handleOpenStaffPortal}
@@ -213,6 +202,9 @@ export default function App() {
 
             {/* Explore All Government & Digital Services Directory */}
             <ExploreServicesDesk onApplyService={handleServiceSelect} selectedService={selectedService} />
+
+            {/* In-depth Citizen Guides & Scheme Knowledge Hub for AdSense & Citizen Awareness */}
+            <GuidesKnowledgeHub onSelectService={handleServiceSelect} />
 
             {/* Common Service Centre Node Information */}
             <NodeInformation />

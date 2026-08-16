@@ -297,8 +297,25 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         if (key) {
           const existing = map.get(key) || {};
 
+          let parsedDocUrls: any[] = [];
+          if (app.document_urls) {
+            try {
+              const raw = typeof app.document_urls === 'string' ? JSON.parse(app.document_urls) : app.document_urls;
+              if (Array.isArray(raw)) {
+                parsedDocUrls = raw.map((u: string, idx: number) => ({
+                  id: `supa-doc-${idx}`,
+                  name: `Uploaded Document ${idx + 1}`,
+                  url: u,
+                  dataUrl: u
+                }));
+              }
+            } catch (e) {}
+          }
+
           let mergedDocs = existing.documents || [];
-          if (Array.isArray(app.documents) && app.documents.length > 0) {
+          if (parsedDocUrls.length > 0 && mergedDocs.length === 0) {
+            mergedDocs = parsedDocUrls;
+          } else if (Array.isArray(app.documents) && app.documents.length > 0) {
             if (app.documents.some((d: any) => d.dataUrl || d.url) || mergedDocs.length === 0) {
               mergedDocs = app.documents;
             }
@@ -326,16 +343,16 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
             ...app,
             appId: app.appId || existing.appId || key,
             id: app.id || existing.id || key,
-            name: app.name || app.customerName || app.applicantName || existing.name || 'N/A',
-            phone: app.phone || app.phoneNumber || app.mobile || existing.phone || 'N/A',
-            email: app.email || app.emailAddress || existing.email || 'N/A',
-            service: app.service || app.selectedService || app.eService || existing.service || 'General Service',
+            name: app.name || app.customerName || app.applicantName || app.full_name || existing.name || 'N/A',
+            phone: app.phone || app.phoneNumber || app.whatsapp_number || app.mobile || existing.phone || 'N/A',
+            email: app.email || app.emailAddress || app.email_address || existing.email || 'N/A',
+            service: app.service || app.selectedService || app.service_selected || app.eService || existing.service || 'General Service',
             documents: mergedDocs,
             uploadedDocuments: (app.uploadedDocuments && app.uploadedDocuments.length > 0) ? app.uploadedDocuments : (existing.uploadedDocuments || []),
             paymentMode: app.paymentMode || existing.paymentMode || 'cash',
             utrNumber: app.utrNumber || existing.utrNumber || 'N/A',
             totalAmount: app.totalAmount || existing.totalAmount || 0,
-            submittedAt: app.createdAt || app.submittedAt || app.appointmentTime || app.date || existing.submittedAt || 'Recent',
+            submittedAt: app.createdAt || app.submittedAt || app.created_at || app.appointmentTime || app.date || existing.submittedAt || 'Recent',
             updatedAt: app.updatedAt || app.statusUpdatedAt || existing.updatedAt || null,
             finalReceiptUrl: app.finalReceiptUrl || existing.finalReceiptUrl || null,
             status: resolvedStatus
@@ -1003,7 +1020,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               </h2>
               <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[10px] font-mono font-bold flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>Live Database Sync</span>
+                <span>Supabase &amp; Live Sync</span>
               </span>
               <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded text-[10px] font-mono font-bold">
                 Staff Session: {firebaseUser ? (firebaseUser.email || `Mahi (Admin)`) : 'Mahi Staff'}
@@ -1019,18 +1036,16 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           <button
             onClick={() => {
               setLoading(true);
+              window.dispatchEvent(new Event('csc_appointment_updated'));
               fetch('/api/appointments')
                 .then(res => res.json())
-                .then(() => {
-                  window.dispatchEvent(new Event('csc_appointment_updated'));
-                })
                 .catch(console.error)
                 .finally(() => {
                   setTimeout(() => setLoading(false), 400);
                 });
             }}
             className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-white/10 cursor-pointer"
-            title="Refresh Data"
+            title="Refresh Data & Sync Supabase Database"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
@@ -1038,11 +1053,11 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
           <button
             onClick={() => setShowGetformModal(true)}
-            className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-md cursor-pointer border border-indigo-400/30"
-            title="Getform.io & Formspree Setup & HTML Code Generator"
+            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-md cursor-pointer border border-emerald-400/30"
+            title="Supabase Backend, Getform.io & Formspree Integration Suite & Code Generator"
           >
-            <Database className="w-3.5 h-3.5 text-indigo-200" />
-            <span>Getform.io / Formspree</span>
+            <Database className="w-3.5 h-3.5 text-emerald-200" />
+            <span>Supabase / Form Backend</span>
           </button>
 
           <button
