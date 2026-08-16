@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import SarkariResultDesk from './components/SarkariResultDesk';
 import SarkariDedicatedPageView from './components/SarkariDedicatedPageView';
+import ServiceDedicatedPageView from './components/ServiceDedicatedPageView';
 import ExploreServicesDesk from './components/ExploreServicesDesk';
 import GuidesKnowledgeHub from './components/GuidesKnowledgeHub';
 import PushNotificationPrompt from './components/PushNotificationPrompt';
@@ -11,6 +12,7 @@ import Footer from './components/Footer';
 import PrivacyPolicyModal, { PolicyTab } from './components/PrivacyPolicyModal';
 import { WebsiteSettings, Announcement, GalleryItem } from './types';
 import { SARKARI_DATA, SarkariItem } from './data/sarkariData';
+import { SERVICES_LIST, ServiceItem } from './servicesData';
 import { MessageSquare, ArrowLeft, Share2, X, MessageCircle, Copy, Check } from 'lucide-react';
 
 const FALLBACK_SETTINGS: WebsiteSettings = {
@@ -32,6 +34,7 @@ export default function App() {
 
   const [selectedService, setSelectedService] = useState('');
   const [activeJobPost, setActiveJobPost] = useState<SarkariItem | null>(null);
+  const [activeServicePost, setActiveServicePost] = useState<ServiceItem | null>(null);
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
   const [legalModalTab, setLegalModalTab] = useState<PolicyTab>('privacy');
 
@@ -77,11 +80,38 @@ export default function App() {
       const hash = window.location.hash;
       const searchParams = new URLSearchParams(window.location.search);
       const postParam = searchParams.get('post') || searchParams.get('job');
+      const serviceParam = searchParams.get('service');
+
+      if (serviceParam) {
+        const matchService = SERVICES_LIST.find(s => s.id === serviceParam);
+        if (matchService) {
+          setActiveServicePost(matchService);
+          setActiveJobPost(null);
+          setIsAdminView(false);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
+      }
+
+      if (hash.startsWith('#service/')) {
+        const serviceId = hash.replace(/^#service\//, '');
+        const matchService = SERVICES_LIST.find(s => s.id === serviceId);
+        if (matchService) {
+          setActiveServicePost(matchService);
+          setActiveJobPost(null);
+          setIsAdminView(false);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
+      } else {
+        setActiveServicePost(null);
+      }
 
       if (postParam) {
         const match = SARKARI_DATA.find(i => i.id === postParam);
         if (match) {
           setActiveJobPost(match);
+          setActiveServicePost(null);
           setIsAdminView(false);
           window.scrollTo({ top: 0, behavior: 'smooth' });
           return;
@@ -93,6 +123,7 @@ export default function App() {
         const match = SARKARI_DATA.find(i => i.id === postId);
         if (match) {
           setActiveJobPost(match);
+          setActiveServicePost(null);
           setIsAdminView(false);
           window.scrollTo({ top: 0, behavior: 'smooth' });
           return;
@@ -129,6 +160,7 @@ export default function App() {
 
   const handleOpenJobPage = (item: SarkariItem) => {
     setActiveJobPost(item);
+    setActiveServicePost(null);
     window.location.hash = `#post/${item.id}`;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -139,6 +171,41 @@ export default function App() {
       window.history.pushState(null, '', window.location.pathname);
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleOpenServicePage = (item: ServiceItem) => {
+    setActiveServicePost(item);
+    setActiveJobPost(null);
+    window.location.hash = `#service/${item.id}`;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCloseServicePage = () => {
+    setActiveServicePost(null);
+    if (window.location.hash.startsWith('#service/')) {
+      window.history.pushState(null, '', window.location.pathname);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleShareServiceItem = async (item: ServiceItem) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.cscdost.com';
+    const shareUrl = `${origin}/#service/${item.id}`;
+    const shareTitle = `📌 ${item.name} - CSC DOST`;
+    const shareText = `📌 *${item.name}*\n💰 Fee: ${item.price}\n⏱️ Turnaround: ${item.estimatedTime}\n\n${item.description}\n\n👉 Full details & apply online:\n${shareUrl}`;
+
+    const data = { title: shareTitle, text: shareText, url: shareUrl, name: item.name };
+    setShareData(data);
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
+        return;
+      } catch (e) {
+        // Fallback to modal
+      }
+    }
+    setShowShareModal(true);
   };
 
   const handleShareItem = async (item: SarkariItem) => {
@@ -228,6 +295,8 @@ export default function App() {
 
   const handleGoHome = () => {
     setIsAdminView(false);
+    setActiveJobPost(null);
+    setActiveServicePost(null);
     setSelectedService('');
     if (window.location.hash) {
       window.history.replaceState(null, '', window.location.pathname);
@@ -282,6 +351,19 @@ export default function App() {
               onShare={handleShareItem}
             />
           </div>
+        ) : activeServicePost ? (
+          /* DEDICATED FULL-PAGE VIEW FOR COMPREHENSIVE E-SERVICES CATALOGUE */
+          <div className="animate-fade-in w-full">
+            <ServiceDedicatedPageView
+              service={activeServicePost}
+              onBack={handleCloseServicePage}
+              onApplyService={(service) => {
+                handleCloseServicePage();
+                handleServiceSelect(service);
+              }}
+              onShare={handleShareServiceItem}
+            />
+          </div>
         ) : (
           /* PUBLIC VISITOR INTERFACE */
           <div className="animate-fade-in space-y-4 md:space-y-6 w-full">
@@ -293,7 +375,11 @@ export default function App() {
             />
 
             {/* Explore All Government & Digital Services Directory */}
-            <ExploreServicesDesk onApplyService={handleServiceSelect} selectedService={selectedService} />
+            <ExploreServicesDesk 
+              onApplyService={handleServiceSelect} 
+              selectedService={selectedService}
+              onOpenDedicatedServicePage={handleOpenServicePage}
+            />
 
             {/* In-depth Citizen Guides & Scheme Knowledge Hub for AdSense & Citizen Awareness */}
             <GuidesKnowledgeHub onSelectService={handleServiceSelect} />

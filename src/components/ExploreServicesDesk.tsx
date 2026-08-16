@@ -36,9 +36,10 @@ import { SERVICES_LIST, CATEGORY_LABELS, ServiceItem } from '../servicesData';
 interface ExploreServicesDeskProps {
   onApplyService: (serviceName: string) => void;
   selectedService?: string;
+  onOpenDedicatedServicePage?: (service: ServiceItem) => void;
 }
 
-export default function ExploreServicesDesk({ onApplyService, selectedService }: ExploreServicesDeskProps) {
+export default function ExploreServicesDesk({ onApplyService, selectedService, onOpenDedicatedServicePage }: ExploreServicesDeskProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'cards_adda' | 'revenue' | 'jk_state' | 'csc' | 'digital' | 'education' | 'business'>('all');
   const [selectedServiceItem, setSelectedServiceItem] = useState<ServiceItem | null>(null);
@@ -48,9 +49,17 @@ export default function ExploreServicesDesk({ onApplyService, selectedService }:
   const [showShareModal, setShowShareModal] = useState(false);
   const [activeShareData, setActiveShareData] = useState<{ title: string; text: string; url: string; name: string } | null>(null);
 
-  // Auto-open service modal if ?service=... is present in URL
+  const handleOpenService = (item: ServiceItem) => {
+    if (onOpenDedicatedServicePage) {
+      onOpenDedicatedServicePage(item);
+    } else {
+      setSelectedServiceItem(item);
+    }
+  };
+
+  // Auto-open service if ?service=... is present in URL without external routing
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !onOpenDedicatedServicePage) {
       const params = new URLSearchParams(window.location.search);
       const serviceId = params.get('service');
       if (serviceId) {
@@ -60,7 +69,7 @@ export default function ExploreServicesDesk({ onApplyService, selectedService }:
         }
       }
     }
-  }, []);
+  }, [onOpenDedicatedServicePage]);
 
   const triggerToast = (msg: string) => {
     setShareToast(msg);
@@ -477,7 +486,7 @@ export default function ExploreServicesDesk({ onApplyService, selectedService }:
                     boxItems.map(item => (
                       <div
                         key={item.id}
-                        onClick={() => setSelectedServiceItem(item)}
+                        onClick={() => handleOpenService(item)}
                         className="py-2 px-2 flex items-center justify-between gap-2 hover:bg-blue-50/70 dark:hover:bg-blue-950/40 rounded-lg transition-colors group cursor-pointer border-b border-slate-100 dark:border-slate-800/50 last:border-0"
                         id={`eservice-item-${item.id}`}
                       >
