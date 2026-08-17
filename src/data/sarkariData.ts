@@ -45,7 +45,141 @@ export const SARKARI_CATEGORIES = {
 };
 
 export const SARKARI_DATA: SarkariItem[] = [
-  // 🇮🇳 TODAY'S NEWLY EXTRACTED NOTIFICATIONS (AUGUST 2026)
+  // 🇮🇳 TODAY'S NEWLY EXTRACTED NOTIFICATIONS (17 AUGUST 2026)
+  {
+    id: 'army-tes-54-course-2026',
+    title: '10+2 Technical Entry Scheme (TES-54 Course - Jan 2027)',
+    category: 'army_jobs',
+    postDate: '17/08/2026',
+    startDate: '17/08/2026',
+    lastDate: '16/09/2026',
+    advertisementNo: 'TES-54 Course (Commencing Jan 2027)',
+    shortInfo: 'Indian Army invites online applications from unmarried male candidates who have passed 10+2 examination with Physics, Chemistry and Mathematics (PCM) and appeared in JEE (Mains) 2026 for the grant of Permanent Commission.',
+    ageLimit: '16½ to 19½ Years (Born between 02 July 2007 and 01 July 2010)',
+    eligibility: 'Passed 10+2 with minimum 60% aggregate marks in PCM + Appeared in JEE (Mains) 2026',
+    totalPosts: '90 Posts',
+    officialLink: 'https://www.joinindianarmy.nic.in/officers-entry-apply-login.htm',
+    fees: {
+      genObc: '₹0 (No Application Fee)',
+      scSt: '₹0 (No Application Fee)'
+    },
+    isNew: true
+  },
+  {
+    id: 'rrb-ministerial-isolated-2026',
+    title: 'RRB Ministerial & Isolated Categories Recruitment (CEN 06/2026)',
+    category: 'rrb_jobs',
+    postDate: '17/08/2026',
+    startDate: '18/08/2026',
+    lastDate: '17/09/2026',
+    advertisementNo: 'CEN No. 06/2026 (Ministerial & Isolated Categories)',
+    shortInfo: 'Railway Recruitment Boards (RRB) invite online applications for recruitment of Junior Stenographer (Hindi/English), Chief Law Assistant, Junior Translator, Staff & Welfare Inspector across various Railway Zones.',
+    ageLimit: '18 to 45 Years (as per specific post norms and category relaxations)',
+    eligibility: 'Graduate Degree / 10+2 with Shorthand Speed / LLB / Post Graduate in Hindi/English according to post requirements',
+    totalPosts: '1,038 Posts across all RRB Zones',
+    officialLink: 'https://www.rrbapply.gov.in/#/auth/landing',
+    fees: {
+      genObc: '₹500 (₹400 refundable after appearing in CBT)',
+      scSt: '₹250 (₹250 refundable after appearing in CBT)'
+    },
+    isNew: true
+  },
+  {
+    id: 'ssc-cpo-si-delhi-police-capf-2026',
+    title: 'SSC Sub-Inspector in Delhi Police & Central Armed Police Forces (CAPFs) Exam 2026',
+    category: 'ssc_jobs',
+    postDate: '17/08/2026',
+    startDate: '17/08/2026',
+    lastDate: '15/09/2026',
+    advertisementNo: 'SSC/HQ/CPO-CAPF/Exam-2026',
+    shortInfo: 'Staff Selection Commission (SSC) invites online applications for competitive examination for recruitment of Sub-Inspectors (GD) in BSF, CISF, CRPF, ITBP, SSB and Sub-Inspector (Executive) in Delhi Police.',
+    ageLimit: '20 to 25 Years (OBC +3 Years, SC/ST +5 Years)',
+    eligibility: "Bachelor's Degree in any discipline from a recognized University + Valid Driving License for LMV (for Delhi Police SI)",
+    totalPosts: '4,187 Posts (Group B Non-Gazetted & Group C)',
+    officialLink: 'https://ssc.gov.in',
+    fees: {
+      genObc: '₹100 (Online via Net Banking/UPI/Debit Card)',
+      scSt: '₹0 (Exempted for SC/ST/Ex-Servicemen/Women candidates)'
+    },
+    isNew: true
+  },
+  {
+    id: 'cus-ug-special-stray-round-2026',
+    title: 'Online Admission Notice for Special Stray Round for UG / Honours Programmes (Session 2026)',
+    category: 'cluster_univ',
+    postDate: '17/08/2026',
+    startDate: '17/08/2026',
+    lastDate: '24/08/2026',
+    advertisementNo: 'CUS/Adm/UG-Stray-Round/2026/912',
+    shortInfo: 'Cluster University Srinagar opens online registration and counseling for left-out eligible candidates for vacant seats in Under-Graduate, 4-Year Honours, and 5-Year Integrated academic programmes in Constituent Colleges.',
+    ageLimit: 'As per University Statutes',
+    eligibility: '10+2 passed with required subject combinations and minimum 45% marks (40% for reserved categories)',
+    totalPosts: 'Vacant Seats across Constituent Colleges',
+    officialLink: 'https://www.cusrinagar.edu.in/',
+    fees: {
+      genObc: '₹300 (Counseling & Processing Fee)',
+      scSt: '₹300 (Counseling & Processing Fee)'
+    },
+    isNew: true
+  },
+  {
+    id: 'jkssb-draftsman-civil-pwd-2026',
+    title: 'Direct Recruitment for Draftsman (Civil) & Works Supervisor in PW(R&B) Dept (357 Posts)',
+    category: 'jkssb',
+    postDate: '17/08/2026',
+    startDate: '17/08/2026',
+    lastDate: '30/08/2026',
+    advertisementNo: 'JKSSB/Advt/PW-R&B/2026/09',
+    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) invites online applications for direct recruitment to 357 Divisional Cadre posts of Draftsman (Civil) and Works Supervisor in Public Works (R&B) Department.',
+    ageLimit: '18 to 40 Years (Open Merit), 43 Years (RBA/SC/ST/EWS/ALC-IB), 48 Years (Ex-Servicemen)',
+    eligibility: '2-Year Draftsman Training Course Certificate / Diploma in Civil Engineering from a recognized Institute/Polytechnic',
+    totalPosts: '357 Posts (Divisional Cadre Kashmir & Jammu)',
+    officialLink: 'https://jkssb.nic.in',
+    fees: {
+      genObc: '₹500 (General / OM candidates)',
+      scSt: '₹400 (SC, ST, PwD & EWS candidates)'
+    },
+    isNew: true
+  },
+  {
+    id: 'ku-exam-date-sheet-pg-3rd-sem-2026',
+    title: 'Date Sheet for MA / M.Sc / M.Com 3rd Semester Regular / Fresh Private Candidates (Session 2026)',
+    category: 'exam_forms',
+    postDate: '17/08/2026',
+    startDate: '17/08/2026',
+    lastDate: '31/08/2026',
+    advertisementNo: 'KU/Exam/DS-PG-3rd/2026/748',
+    shortInfo: 'University of Kashmir issues the official date sheet and examination schedule for candidates of MA, M.Sc, M.Com, and MCA 3rd Semester (Batch 2024-25 enrolled students).',
+    ageLimit: 'Enrolled PG Students',
+    eligibility: 'Bonafide students registered in respective post-graduate university departments and affiliated PG colleges',
+    feePerSubject: '₹275 per paper + ₹100 EMF + ₹100 IT Charge',
+    officialLink: 'https://kashmiruniversity.net/Examination.aspx',
+    fees: {
+      genObc: 'Standard University PG Examination Fee',
+      scSt: 'Standard University PG Examination Fee'
+    },
+    isNew: true
+  },
+  {
+    id: 'ku-admission-bed-cdoe-2026',
+    title: 'Admission Notification for 2-Year B.Ed Programme (Distance Mode) Session 2026-28',
+    category: 'admissions',
+    postDate: '17/08/2026',
+    startDate: '17/08/2026',
+    lastDate: '05/09/2026',
+    advertisementNo: 'KU/CDOE/B.Ed-Adm/2026/15',
+    shortInfo: 'Centre for Distance and Online Education (CDOE), University of Kashmir, invites online applications for admission to 2-Year Bachelor of Education (B.Ed) Programme for Academic Session 2026-28.',
+    ageLimit: 'No Age Bar for In-service / Untrained Teachers & Fresh Graduates',
+    eligibility: "Bachelor's Degree in any discipline with at least 50% aggregate marks (45% for reserved category candidates) from recognized University",
+    totalPosts: 'Distance Enrolment Open across Kashmir & Jammu Study Centres',
+    officialLink: 'https://kashmiruniversity.net/AdmissionNotices.aspx',
+    fees: {
+      genObc: '₹500 (Online Application & Processing Fee)',
+      scSt: '₹500 (Online Application & Processing Fee)'
+    },
+    isNew: true
+  },
+  // 🇮🇳 PREVIOUS NOTIFICATIONS (AUGUST 2026)
   {
     id: 'army-amc-ssc-course-2026',
     title: 'Army Medical Corps (AMC) Non-Technical & SSC Officer Course 2026-27',
