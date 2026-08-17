@@ -189,8 +189,8 @@ export default function ExploreServicesDesk({ onApplyService, selectedService, o
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900/40 border-b border-slate-200/50 dark:border-slate-800/60 py-8 sm:py-12 transition-colors duration-300 scroll-mt-24 w-full" id="services">
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6">
+    <div className="bg-white dark:bg-slate-900/40 border-b border-slate-200/50 dark:border-slate-800/60 py-6 sm:py-10 transition-colors duration-300 scroll-mt-24 w-full" id="services">
+      <div className="w-full max-w-7xl mx-auto px-1.5 sm:px-4 md:px-6">
         
         {/* Section Header */}
         <div id="services-board" className="max-w-7xl mx-auto mb-5 scroll-mt-24">
@@ -479,38 +479,37 @@ export default function ExploreServicesDesk({ onApplyService, selectedService, o
                       <div
                         key={item.id}
                         onClick={() => handleOpenService(item)}
-                        className="p-2 sm:p-3 hover:bg-blue-50/70 dark:hover:bg-blue-950/40 transition-all cursor-pointer flex items-center justify-between gap-1.5 sm:gap-2 group"
+                        className="p-2 sm:p-3 hover:bg-blue-50/70 dark:hover:bg-slate-800/80 transition-all cursor-pointer flex items-start gap-1.5 sm:gap-2.5 group"
                         id={`eservice-item-${item.id}`}
                       >
-                        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 group-hover:scale-125 transition-transform ${
-                            item.category === 'revenue' ? 'bg-amber-500' : 'bg-blue-600'
-                          }`} />
-                          <span className="text-[11px] sm:text-[13px] font-bold text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate leading-snug font-sans">
+                        <span className={`${
+                          item.category === 'revenue' 
+                            ? 'text-amber-500 dark:text-amber-400' 
+                            : item.category === 'jk_state'
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : item.category === 'cards_adda'
+                            ? 'text-purple-600 dark:text-purple-400'
+                            : 'text-blue-600 dark:text-blue-400'
+                        } font-extrabold text-xs sm:text-base shrink-0 leading-none mt-0.5`}>•</span>
+                        <div className="space-y-0.5 sm:space-y-1 flex-1 min-w-0">
+                          <p className="text-[11px] sm:text-[13px] font-bold text-blue-900 dark:text-blue-300 group-hover:text-indigo-700 dark:group-hover:text-amber-400 group-hover:underline leading-snug transition-colors font-sans line-clamp-3 sm:line-clamp-none">
                             {item.name}
-                          </span>
-                          {item.popular && (
-                            <span className="px-1 py-0.1 bg-amber-600 text-slate-950 text-[8.5px] sm:text-[9.5px] font-black uppercase rounded shrink-0 font-mono">
-                              HOT
+                          </p>
+                          <div className="flex flex-wrap items-center gap-1 text-[9px] sm:text-[10px] font-mono text-slate-500">
+                            {item.popular && (
+                              <span className="px-1 py-0.1 bg-amber-600 text-slate-950 font-black text-[8.5px] sm:text-[9.5px] rounded">
+                                HOT
+                              </span>
+                            )}
+                            <span className="px-1 py-0.1 bg-blue-100 dark:bg-blue-950 text-blue-900 dark:text-blue-300 font-bold rounded">
+                              {item.price.split('+')[0].split('(')[0].trim()}
                             </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-                          <span className="text-[9px] sm:text-[10px] font-mono font-black text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 px-1 sm:px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-800 truncate max-w-[65px] sm:max-w-none">
-                            {item.price.split('+')[0].split('(')[0].trim()}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleApply(item);
-                            }}
-                            className="p-1 hover:bg-blue-600 hover:text-white text-slate-400 rounded transition-colors cursor-pointer"
-                            title="Apply via CSC Desk"
-                          >
-                            <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                          </button>
+                            {item.estimatedTime && (
+                              <span className="text-emerald-700 dark:text-emerald-400 font-semibold truncate max-w-[85px] sm:max-w-none">
+                                {item.estimatedTime}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))
