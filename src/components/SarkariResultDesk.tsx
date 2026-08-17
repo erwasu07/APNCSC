@@ -3,7 +3,6 @@ import TrackApplication from './TrackApplication';
 import { db } from '../lib/firebase';
 import { getSupabaseClient, uploadMultipleDocumentsToSupabase } from '../lib/supabase';
 import { saveApplicationToFormEndpoint } from '../lib/getform';
-import { DynamicUpiGateway } from './DynamicUpiGateway';
 import { doc, setDoc } from 'firebase/firestore';
 import { 
   Briefcase, 
@@ -46,7 +45,8 @@ import {
   Share2,
   Send,
   ArrowUpRight,
-  Code
+  Code,
+  HelpCircle
 } from 'lucide-react';
 import { SARKARI_DATA, SARKARI_CATEGORIES, SarkariItem } from '../data/sarkariData';
 import { SERVICES_LIST } from '../servicesData';
@@ -57,6 +57,84 @@ interface SarkariResultDeskProps {
   selectedService?: string;
   onOpenDedicatedPage?: (item: SarkariItem) => void;
 }
+
+export interface PostCompletionDoc {
+  name: string;
+  category: string;
+  description: string;
+}
+
+export const getPostCompletionRequiredDocs = (serviceVal?: string, customText?: string): PostCompletionDoc[] => {
+  const service = (serviceVal || customText || '').toLowerCase();
+
+  // If PAN card
+  if (service.includes('pan')) {
+    return [
+      { name: 'Recent Passport Size Color Photographs (2 Copies)', category: 'Photo Proof', description: '2 recent passport size photos with clear white background.' },
+      { name: 'Applicant Signature Specimen Scan', category: 'Signature', description: 'Clear signature in dark ink on clean white paper.' },
+      { name: 'Date of Birth Proof (Optional)', category: 'DOB Proof', description: '10th marksheet or Birth certificate if required for verification.' }
+    ];
+  }
+
+  // If State certificates (Domicile, Caste, Income)
+  if (service.includes('caste') || service.includes('income') || service.includes('domicile') || service.includes('certificate')) {
+    return [
+      { name: 'Parents PRC / Domicile Certificate Copy', category: 'State Domicile', description: 'Permanent Resident Certificate or Domicile of parents/guardian.' },
+      { name: 'Tehsildar / Revenue Income Verification Report', category: 'Income Proof', description: 'Mandatory for Income Certificate & EWS/OBC-NCL processing.' },
+      { name: 'Ration Card / Electricity Bill Copy', category: 'Address Proof', description: 'Current residence verification document.' },
+      { name: 'Passport Size Photographs (2 Copies)', category: 'Photo Proof', description: 'Recent color photographs of the applicant.' }
+    ];
+  }
+
+  // If Ayushman / Golden card
+  if (service.includes('ayushman') || service.includes('golden card')) {
+    return [
+      { name: 'Ration Card (NFSA / Ration Booklet Copy)', category: 'Family Record', description: 'Ration card displaying applicant and family members names.' },
+      { name: 'PM-JAY Family Letter / HHID Slip (if available)', category: 'Scheme ID', description: 'PM-JAY eligibility letter or registered mobile number.' }
+    ];
+  }
+
+  // If PM Kisan / Agriculture
+  if (service.includes('kisan') || service.includes('pm kisan')) {
+    return [
+      { name: 'Revenue Land Records (Khatauni / Jamabandi / B-1)', category: 'Land Record', description: 'Certified land holding revenue passbook copy.' },
+      { name: 'Bank Passbook Front Page Copy', category: 'Banking DBT', description: 'Clear copy displaying Account Number and IFSC Code.' }
+    ];
+  }
+
+  // If Jobs / Recruitment / Exams / Admissions / University
+  if (
+    service.includes('job') ||
+    service.includes('recruitment') ||
+    service.includes('rrb') ||
+    service.includes('ssc') ||
+    service.includes('army') ||
+    service.includes('jkssb') ||
+    service.includes('exam') ||
+    service.includes('admission') ||
+    service.includes('university') ||
+    service.includes('cluster')
+  ) {
+    return [
+      { name: '10th / Matriculation Marksheet & Passing Certificate', category: 'Educational Proof', description: 'Proof of Date of Birth and matriculation marks.' },
+      { name: '12th (Higher Secondary) Marksheet / Diploma Certificate', category: 'Educational Proof', description: 'Required for 10+2 level recruitment and undergraduate admissions.' },
+      { name: 'Graduation / Degree Semester Marksheets & Degree Certificate', category: 'Higher Qualification', description: 'Required for Graduate level notifications (CGL, RRB JE, NTPC, etc.).' },
+      { name: 'Passport Size Photograph (Recent, White Background)', category: 'Digital Photo', description: 'Digital photo file (20KB - 50KB) as per recruitment board dimensions.' },
+      { name: 'Applicant Signature Scan', category: 'Digital Signature', description: 'Scanned signature on plain white paper with black/blue pen.' },
+      { name: 'Category / Caste Certificate (SC/ST/OBC/EWS)', category: 'Reservation Proof', description: 'Valid certificate issued by competent revenue authority (if claiming quota).' },
+      { name: 'J&K Domicile / PRC Certificate', category: 'Domicile Quota', description: 'Mandatory for JKSSB and UT-level recruitment vacancies.' }
+    ];
+  }
+
+  // General / Default for all other services
+  return [
+    { name: 'Educational Marksheets / Certificates (10th/12th/Degree)', category: 'Academic Proof', description: 'Relevant qualification certificate if applying for exams or courses.' },
+    { name: 'Recent Passport Size Color Photographs', category: 'Photo Proof', description: 'Clean color photo with plain white background.' },
+    { name: 'Applicant Signature Specimen Scan', category: 'Signature', description: 'Signed in black/blue ink on clean white paper.' },
+    { name: 'Category / Domicile Certificate (if applicable)', category: 'State / Quota', description: 'Valid SC/ST/OBC/EWS/Domicile certificate for quota benefits.' },
+    { name: 'Bank Passbook / Secondary Supporting Slip', category: 'Financial / Reference', description: 'For direct benefit transfer or official fee refunds.' }
+  ];
+};
 
 export interface DocumentTypeConfig {
   id: string;
@@ -1398,7 +1476,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
     };
   };
 
-  const handleSingleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, docType: DocumentTypeConfig) => {
+  const handleMandatoryIdUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setDocumentError(null);
       const file = e.target.files[0];
@@ -1414,18 +1492,15 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
         const dataUrl = reader.result as string;
         const newDoc: UploadedDocument = {
           id: Math.random().toString(36).substring(2, 9),
-          docTypeId: docType.id,
-          docTypeName: docType.name,
+          docTypeId: 'aadhaar_school_id',
+          docTypeName: 'Aadhaar Card or School/College ID Card',
           name: file.name,
           size: file.size,
           type: file.type || 'application/octet-stream',
           dataUrl,
           rawFile: file
         };
-        setUploadedFiles(prev => [
-          ...prev.filter(f => f.docTypeId !== docType.id),
-          newDoc
-        ]);
+        setUploadedFiles([newDoc]);
         setIsProcessingFiles(false);
       };
       reader.onerror = () => {
@@ -1438,61 +1513,24 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
     }
   };
 
-  const handleRemoveDocByTypeId = (docTypeId: string) => {
-    setUploadedFiles(prev => prev.filter(f => f.docTypeId !== docTypeId));
+  const handleRemoveMandatoryDoc = () => {
+    setUploadedFiles([]);
+  };
+
+  const handleSingleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, _docType?: any) => {
+    handleMandatoryIdUpload(e);
+  };
+
+  const handleRemoveDocByTypeId = (_docTypeId?: string) => {
+    handleRemoveMandatoryDoc();
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setDocumentError(null);
-      const filesArray = Array.from(e.target.files as FileList);
-
-      // Check max size (10MB limit per file)
-      for (const file of filesArray) {
-        if (file.size > 10 * 1024 * 1024) {
-          setDocumentError(`File "${file.name}" exceeds the maximum size limit of 10MB.`);
-          return;
-        }
-      }
-
-      setIsProcessingFiles(true);
-      let loadedCount = 0;
-
-      filesArray.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const dataUrl = reader.result as string;
-          const newDoc: UploadedDocument = {
-            id: Math.random().toString(36).substring(2, 9),
-            name: file.name,
-            size: file.size,
-            type: file.type || 'application/octet-stream',
-            dataUrl,
-            rawFile: file
-          };
-          setUploadedFiles(prev => [...prev, newDoc]);
-          loadedCount++;
-          if (loadedCount === filesArray.length) {
-            setIsProcessingFiles(false);
-          }
-        };
-        reader.onerror = () => {
-          console.error('Error reading file:', file.name);
-          loadedCount++;
-          if (loadedCount === filesArray.length) {
-            setIsProcessingFiles(false);
-          }
-        };
-        reader.readAsDataURL(file);
-      });
-
-      // Reset target value so re-selecting same file works
-      e.target.value = '';
-    }
+    handleMandatoryIdUpload(e);
   };
 
-  const handleRemoveFile = (id: string) => {
-    setUploadedFiles(prev => prev.filter(f => f.id !== id));
+  const handleRemoveFile = (_id?: string) => {
+    handleRemoveMandatoryDoc();
   };
 
   const parseFeeString = (feeStr: string | undefined) => {
@@ -1659,18 +1697,17 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
     }
 
     if (!formData.phoneNumber || !formData.phoneNumber.trim() || formData.phoneNumber.replace(/\D/g, '').length < 10) {
-      setDocumentError('⚠️ Please enter a valid 10-digit Mobile Number.');
+      setDocumentError('⚠️ Please enter a valid 10-digit WhatsApp Mobile Number.');
       return;
     }
 
     if (!formData.selectedService) {
-      setDocumentError('⚠️ Please select a service or choose "Other Service" to specify your requirement.');
+      setDocumentError('⚠️ Please select a service or specify your custom request.');
       return;
     }
 
-    const docReq = getServiceDocRequirement(formData.selectedService, formData.customServiceText);
-    if (docReq.mandatory && uploadedFiles.length === 0) {
-      setDocumentError('Please upload at least 1 mandatory document (Aadhaar / Marksheet / Photo / PDF) required for this service.');
+    if (uploadedFiles.length === 0) {
+      setDocumentError('⚠️ Mandatory ID Document Missing: Please upload a clear photo or PDF of your Aadhaar Card or School / College ID Card.');
       return;
     }
 
@@ -1679,72 +1716,84 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
     // Assign official Reference Token ID immediately upon form submission!
     const officialAppId = await getNextCscTokenIdAsync();
 
-    const pendingReceipt = {
+    const verifiedReceipt = {
       appId: officialAppId,
       customerName: formData.customerName,
       phoneNumber: formData.phoneNumber,
       emailAddress: formData.emailAddress || 'N/A',
       dateOfBirth: formData.dateOfBirth || 'N/A',
-      selectedService: formData.selectedService === 'other' ? formData.customServiceText : formData.selectedService,
-      userCategory: formData.userCategory === 'genObc' ? 'General/OBC' : 'SC/ST',
-      paymentMode: 'pending',
-      utrNumber: 'N/A',
-      portalFee: formData.portalFee,
-      applicationFee: formData.applicationFee,
-      totalAmount: formData.portalFee + formData.applicationFee + Math.round(formData.portalFee * 0.18),
+      selectedService: formData.selectedService === 'other' || formData.selectedService === 'Custom Unlisted Request' ? formData.customServiceText : formData.selectedService,
+      userCategory: formData.userCategory === 'genObc' ? 'General/OBC' : formData.userCategory === 'scSt' ? 'SC/ST' : 'Female Candidate',
+      paymentMode: 'Pay at CSC Desk Upon Completion (No Advance Payment)',
+      utrNumber: 'N/A (No Advance Payment)',
+      paymentStatus: 'No Advance Online Payment Required',
+      portalFee: 0,
+      applicationFee: 0,
+      totalAmount: 0,
+      mandatoryDocName: uploadedFiles[0]?.name || 'Aadhaar Card / School ID Attached',
       uploadedDocuments: uploadedDocsList,
       additionalDetails: formData.additionalDetails || 'None',
       submittedAt: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('en-US')
     };
 
-    setSubmissionReceipt(pendingReceipt);
+    setSubmissionReceipt(verifiedReceipt);
     setIsFormSubmitted(true);
-    setPostSubmitPaymentMode('razorpay');
-    setIsPaymentConfirmed(false);
+    setIsPaymentConfirmed(true);
 
-    // Save initial application record immediately across storage & databases so it appears in Admin & Track Order
+    // Process and upload attached documents to Supabase Storage if configured
+    let processedDocs: UploadedDocument[] = uploadedFiles;
+    try {
+      processedDocs = await uploadMultipleDocumentsToSupabase(uploadedFiles, officialAppId);
+      setUploadedFiles(processedDocs);
+    } catch (upErr) {
+      console.warn('Supabase document upload notice:', upErr);
+    }
+
+    // Save application record immediately across storage & databases so it appears in Admin & Track Order
     const nowIso = new Date().toISOString();
-    const initialPayload = {
+    const payload = {
       appId: officialAppId,
       id: officialAppId,
       name: formData.customerName,
+      customerName: formData.customerName,
       email: formData.emailAddress || 'N/A',
       phone: formData.phoneNumber,
-      service: pendingReceipt.selectedService,
+      phoneNumber: formData.phoneNumber,
+      service: verifiedReceipt.selectedService,
+      selectedService: verifiedReceipt.selectedService,
       dateOfBirth: formData.dateOfBirth || 'N/A',
-      userCategory: pendingReceipt.userCategory,
-      paymentMode: 'Pending Payment',
+      userCategory: verifiedReceipt.userCategory,
+      paymentMode: 'Pay at CSC Desk Upon Completion',
       utrNumber: 'N/A',
-      totalAmount: pendingReceipt.totalAmount,
+      totalAmount: 0,
       message: formData.additionalDetails || 'None',
-      documents: uploadedFiles,
-      status: 'Pending',
+      documents: processedDocs,
+      status: 'Registered',
+      paymentStatus: 'No Advance Online Payment Required',
       submittedAt: nowIso,
       createdAt: nowIso,
       updatedAt: nowIso,
       statusUpdatedAt: nowIso
     };
 
-    // 1. Validate ID before submitting
-    if (!officialAppId) {
-      console.error('Submission failed: officialAppId is missing or undefined.');
-    } else {
+    // 1. Save to Cloud Firestore
+    if (officialAppId) {
       try {
         Promise.all([
-          setDoc(doc(db, 'applications', officialAppId), initialPayload, { merge: true }),
-          setDoc(doc(db, 'appointments', officialAppId), initialPayload, { merge: true })
-        ]).catch(err => console.error('Firestore initial setDoc error:', err));
+          setDoc(doc(db, 'applications', officialAppId), payload, { merge: true }),
+          setDoc(doc(db, 'appointments', officialAppId), payload, { merge: true })
+        ]).catch(err => console.error('Firestore setDoc error:', err));
 
-        // Save to Getform.io / Formspree Endpoint (Guest Application Submission with Files)
+        // Save to Getform.io / Formspree Endpoint
         saveApplicationToFormEndpoint(officialAppId, {
-          ...initialPayload,
+          ...payload,
           applicantName: formData.customerName,
           phoneNumber: formData.phoneNumber,
           emailAddress: formData.emailAddress,
-          selectedService: pendingReceipt.selectedService,
-          userCategory: pendingReceipt.userCategory,
-          totalAmount: pendingReceipt.totalAmount,
-          documents: uploadedFiles
+          selectedService: verifiedReceipt.selectedService,
+          userCategory: verifiedReceipt.userCategory,
+          totalAmount: 0,
+          documents: processedDocs
         }).catch(formErr => console.warn('Form endpoint save notice:', formErr));
 
         const supabase = getSupabaseClient();
@@ -1753,17 +1802,18 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
             appId: officialAppId,
             id: officialAppId,
             applicantName: formData.customerName,
+            customerName: formData.customerName,
             phoneNumber: formData.phoneNumber,
             emailAddress: formData.emailAddress || 'N/A',
-            selectedService: pendingReceipt.selectedService,
-            userCategory: pendingReceipt.userCategory,
-            paymentMode: 'Pending Payment',
+            selectedService: verifiedReceipt.selectedService,
+            userCategory: verifiedReceipt.userCategory,
+            paymentMode: 'Pay at CSC Desk Upon Completion',
             utrNumber: 'N/A',
-            totalAmount: pendingReceipt.totalAmount,
-            status: 'Pending',
+            totalAmount: 0,
+            status: 'Registered',
             submittedAt: nowIso,
-            documents: uploadedFiles,
-            payload: initialPayload
+            documents: processedDocs,
+            payload
           }], { onConflict: 'appId' }).then(null, console.error);
         }
       } catch (dbErr) {
@@ -1771,340 +1821,17 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
       }
     }
 
+    // 2. Save to localStorage
     try {
       const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-      localStorage.setItem('csc_local_applications', JSON.stringify([initialPayload, ...existing.filter((i: any) => i.appId !== officialAppId)]));
+      localStorage.setItem('csc_local_applications', JSON.stringify([payload, ...existing.filter((i: any) => i.appId !== officialAppId)]));
     } catch (e) {
       console.warn('localStorage save warning:', e);
     }
 
-    const apiDocs = uploadedFiles.map(f => ({
-      id: f.id,
-      name: f.name,
-      size: f.size,
-      type: f.type,
-      url: f.url,
-      dataUrl: f.dataUrl && f.dataUrl.length < 50000 ? f.dataUrl : undefined
-    }));
-    const lightInitialPayload = { ...initialPayload, documents: apiDocs };
-
-    fetch('/api/appointments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(lightInitialPayload),
-      keepalive: true
-    }).catch(console.error);
-
+    // 3. Send to server API
     try {
-      window.dispatchEvent(new CustomEvent('csc_appointment_created', { detail: initialPayload }));
-      window.dispatchEvent(new CustomEvent('csc_appointment_updated', { detail: initialPayload }));
-      window.dispatchEvent(new Event('storage'));
-      const bc = new BroadcastChannel('csc_portal_sync');
-      bc.postMessage({ type: 'NEW_APPOINTMENT', payload: initialPayload });
-      bc.close();
-    } catch (e) {
-      console.error(e);
-    }
-
-    // Keep payment desk cleanly scrolled into view and trigger automatic slip print
-    setTimeout(() => {
-      const element = document.getElementById('printable-receipt-area') || document.getElementById('printable-digital-slip');
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-      handlePrintSlip();
-    }, 400);
-  };
-
-  const handleDynamicUpiPaymentSuccess = async (utrNumber: string) => {
-    if (!submissionReceipt) return;
-
-    const finalUtr = utrNumber.trim() || `UPI${Date.now().toString().slice(-8)}${Math.floor(100 + Math.random() * 900)}`;
-    const officialAppId = submissionReceipt.appId || await getNextCscTokenIdAsync();
-
-    const updatedReceipt = {
-      ...submissionReceipt,
-      appId: officialAppId,
-      paymentMode: 'Dynamic UPI QR',
-      utrNumber: finalUtr,
-      paymentId: finalUtr,
-      paymentStatus: 'Paid via Dynamic UPI Gateway (7006833767-2@okbizaxis)',
-      isPaid: true
-    };
-
-    setSubmissionReceipt(updatedReceipt);
-    setFormData(prev => ({ ...prev, utrNumber: finalUtr, paymentMode: 'online' }));
-    setIsPaymentConfirmed(true);
-
-    // Upload attached documents to Supabase Storage with official token
-    let processedDocs: UploadedDocument[] = uploadedFiles;
-    try {
-      processedDocs = await uploadMultipleDocumentsToSupabase(uploadedFiles, officialAppId);
-      setUploadedFiles(processedDocs);
-    } catch (upErr) {
-      console.warn('Supabase payment document upload notice:', upErr);
-    }
-
-    // Save application in Cloud Firestore & central server database
-    const nowIso = new Date().toISOString();
-    const updatedPayload = {
-      appId: officialAppId,
-      id: officialAppId,
-      name: updatedReceipt.customerName,
-      email: updatedReceipt.emailAddress,
-      phone: updatedReceipt.phoneNumber,
-      service: updatedReceipt.selectedService,
-      dateOfBirth: updatedReceipt.dateOfBirth,
-      userCategory: updatedReceipt.userCategory,
-      paymentMode: 'Dynamic UPI Gateway (7006833767-2@okbizaxis)',
-      utrNumber: finalUtr,
-      upiVpa: '7006833767-2@okbizaxis',
-      merchantName: 'CSC DOST',
-      totalAmount: updatedReceipt.totalAmount,
-      message: formData.additionalDetails || 'None',
-      documents: processedDocs,
-      status: 'Paid',
-      paymentStatus: 'Paid via Dynamic UPI Gateway',
-      isPaid: true,
-      submittedAt: nowIso,
-      updatedAt: nowIso,
-      statusUpdatedAt: nowIso
-    };
-
-    // 1. Validate ID before submitting
-    if (!officialAppId) {
-      console.error('Submission failed: officialAppId is missing or undefined.');
-    } else {
-      try {
-        Promise.all([
-          setDoc(doc(db, 'applications', officialAppId), updatedPayload, { merge: true }),
-          setDoc(doc(db, 'appointments', officialAppId), updatedPayload, { merge: true })
-        ]).catch(err => console.error('Firestore paid setDoc error:', err));
-
-        // Save paid update to Getform.io / Formspree Endpoint
-        saveApplicationToFormEndpoint(officialAppId, {
-          ...updatedPayload,
-          applicantName: updatedReceipt.customerName,
-          phoneNumber: updatedReceipt.phoneNumber,
-          emailAddress: updatedReceipt.emailAddress,
-          selectedService: updatedReceipt.selectedService,
-          userCategory: updatedReceipt.userCategory,
-          totalAmount: updatedReceipt.totalAmount,
-          documents: processedDocs
-        }).catch(formErr => console.warn('Form endpoint UPI save notice:', formErr));
-
-        const supabase = getSupabaseClient();
-        if (supabase) {
-          supabase.from('applications').upsert([
-            {
-              appId: officialAppId,
-              id: officialAppId,
-              applicantName: updatedReceipt.customerName,
-              phoneNumber: updatedReceipt.phoneNumber,
-              emailAddress: updatedReceipt.emailAddress,
-              selectedService: updatedReceipt.selectedService,
-              userCategory: updatedReceipt.userCategory,
-              paymentMode: 'Dynamic UPI Gateway',
-              utrNumber: finalUtr,
-              totalAmount: updatedReceipt.totalAmount,
-              status: 'Paid',
-              submittedAt: nowIso,
-              documents: processedDocs,
-              payload: updatedPayload
-            }
-          ], { onConflict: 'appId' }).then(null, console.error);
-        }
-      } catch (dbErr) {
-        console.error('Database save error after UPI payment:', dbErr);
-      }
-    }
-
-    // Save paid application to localStorage for recent tokens tracking
-    try {
-      const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-      const cleanedExisting = existing.filter((i: any) => i.appId !== officialAppId);
-      localStorage.setItem('csc_local_applications', JSON.stringify([updatedPayload, ...cleanedExisting]));
-    } catch (e) {
-      console.warn('localStorage update warning:', e);
-    }
-
-    // Broadcast live synchronization events
-    try {
-      window.dispatchEvent(new CustomEvent('csc_appointment_updated', { detail: updatedPayload }));
-      window.dispatchEvent(new CustomEvent('csc_appointment_created', { detail: updatedPayload }));
-      window.dispatchEvent(new Event('storage'));
-      const bc = new BroadcastChannel('csc_portal_sync');
-      bc.postMessage({ type: 'NEW_APPOINTMENT', payload: updatedPayload });
-      bc.close();
-    } catch (e) {
-      console.error(e);
-    }
-
-    // Secondary POST to server API
-    const apiUpdatedDocs = processedDocs.map(f => ({
-      id: f.id,
-      name: f.name,
-      size: f.size,
-      type: f.type,
-      url: f.url,
-      dataUrl: f.dataUrl && f.dataUrl.length < 50000 ? f.dataUrl : undefined
-    }));
-    const lightUpdatedPayload = { ...updatedPayload, documents: apiUpdatedDocs };
-
-    fetch('/api/appointments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(lightUpdatedPayload),
-      keepalive: true
-    }).catch(console.error);
-
-    // Trigger official WhatsApp invoice notification dispatch with generated token
-    triggerWhatsAppInvoiceDispatch(updatedReceipt);
-
-    setTimeout(() => {
-      handlePrintSlip();
-    }, 500);
-  };
-
-  const handleConfirmPayment = async () => {
-    setUtrError(null);
-    if (postSubmitPaymentMode === 'none') {
-      return;
-    }
-
-    if (postSubmitPaymentMode === 'online') {
-      if (!formData.utrNumber || formData.utrNumber.trim().length < 4) {
-        setUtrError('Please enter the mandatory 12-digit UPI UTR / Transaction Reference ID.');
-        return;
-      }
-    }
-
-    const updatedReceipt = {
-      ...submissionReceipt,
-      paymentMode: postSubmitPaymentMode,
-      utrNumber: postSubmitPaymentMode === 'online' ? formData.utrNumber.trim() : 'N/A',
-      totalAmount: postSubmitPaymentMode === 'online' ? (formData.portalFee + formData.applicationFee) : formData.portalFee
-    };
-
-    setSubmissionReceipt(updatedReceipt);
-
-    // Trigger updated WhatsApp invoice notification with payment confirmation
-    triggerWhatsAppInvoiceDispatch(updatedReceipt);
-
-    const docsSummaryStr = updatedReceipt.uploadedDocuments && updatedReceipt.uploadedDocuments.length > 0 
-      ? updatedReceipt.uploadedDocuments.join(', ') 
-      : 'None Attached';
-
-    // Process and upload attached documents to Supabase Storage if configured
-    let processedDocs: UploadedDocument[] = uploadedFiles;
-    try {
-      processedDocs = await uploadMultipleDocumentsToSupabase(uploadedFiles, updatedReceipt.appId);
-      setUploadedFiles(processedDocs);
-    } catch (upErr) {
-      console.warn('Supabase payment document upload notice:', upErr);
-    }
-
-    // Save/update application in Cloud Firestore & central server database
-    const nowIso = new Date().toISOString();
-    const payload = {
-      appId: updatedReceipt.appId,
-      id: updatedReceipt.appId,
-      name: updatedReceipt.customerName,
-      email: updatedReceipt.emailAddress,
-      phone: updatedReceipt.phoneNumber,
-      service: updatedReceipt.selectedService,
-      dateOfBirth: updatedReceipt.dateOfBirth,
-      userCategory: updatedReceipt.userCategory,
-      paymentMode: updatedReceipt.paymentMode,
-      utrNumber: updatedReceipt.utrNumber,
-      totalAmount: updatedReceipt.totalAmount,
-      message: formData.additionalDetails || 'None',
-      documents: processedDocs,
-      status: 'Pending',
-      submittedAt: nowIso,
-      createdAt: nowIso,
-      updatedAt: nowIso,
-      statusUpdatedAt: nowIso
-    };
-
-    // Save directly to Cloud Firestore and Supabase with ID validation
-    const targetAppId = updatedReceipt?.appId;
-    if (!targetAppId) {
-      console.error('Submission failed: appId is missing or undefined.');
-    } else {
-      try {
-        Promise.all([
-          setDoc(doc(db, 'applications', targetAppId), payload, { merge: true }),
-          setDoc(doc(db, 'appointments', targetAppId), payload, { merge: true })
-        ]).catch(fsErr => {
-          console.error('Firestore payment update error:', fsErr);
-        });
-
-        // Save application to Getform.io / Formspree Endpoint
-        saveApplicationToFormEndpoint(targetAppId, {
-          ...payload,
-          applicantName: updatedReceipt.customerName,
-          phoneNumber: updatedReceipt.phoneNumber,
-          emailAddress: updatedReceipt.emailAddress,
-          selectedService: updatedReceipt.selectedService,
-          userCategory: updatedReceipt.userCategory,
-          totalAmount: updatedReceipt.totalAmount,
-          documents: processedDocs
-        }).catch(formErr => console.warn('Form endpoint payment update save notice:', formErr));
-
-        const supabase = getSupabaseClient();
-        if (supabase) {
-          (async () => {
-            try {
-              await supabase.from('applications').upsert([
-                {
-                  appId: targetAppId,
-                  id: targetAppId,
-                  applicantName: updatedReceipt.customerName,
-                  customerName: updatedReceipt.customerName,
-                  phoneNumber: updatedReceipt.phoneNumber,
-                  emailAddress: updatedReceipt.emailAddress,
-                  selectedService: updatedReceipt.selectedService,
-                  userCategory: updatedReceipt.userCategory,
-                  paymentMode: updatedReceipt.paymentMode,
-                  utrNumber: updatedReceipt.utrNumber,
-                  totalAmount: updatedReceipt.totalAmount,
-                  status: 'Pending',
-                  submittedAt: nowIso,
-                  updatedAt: nowIso,
-                  documents: processedDocs,
-                  payload: payload
-                }
-              ], { onConflict: 'appId' });
-            } catch (sbErr) {
-              console.error('Supabase "applications" payment update error:', sbErr);
-            }
-          })();
-        }
-      } catch (fsErr) {
-        console.error('Database payment update execution error:', fsErr);
-      }
-    }
-
-    // 1. Update local storage
-    try {
-      const lightDocs = uploadedFiles.map(f => ({
-        id: f.id,
-        name: f.name,
-        size: f.size,
-        type: f.type
-      }));
-      const lightPayload = { ...payload, documents: lightDocs };
-
-      const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-      localStorage.setItem('csc_local_applications', JSON.stringify([lightPayload, ...existing.filter((i: any) => i.appId !== updatedReceipt.appId)]));
-    } catch (e) {
-      console.warn('Failed to update local application cache safely:', e);
-    }
-
-    // 2. Perform server API update
-    try {
-      const apiConfirmDocs = processedDocs.map(f => ({
+      const apiDocs = processedDocs.map(f => ({
         id: f.id,
         name: f.name,
         size: f.size,
@@ -2112,71 +1839,73 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
         url: f.url,
         dataUrl: f.dataUrl && f.dataUrl.length < 50000 ? f.dataUrl : undefined
       }));
-      const lightConfirmPayload = { ...payload, documents: apiConfirmDocs };
+      const lightPayload = { ...payload, documents: apiDocs };
 
-      const res = await fetch('/api/appointments', {
+      fetch('/api/appointments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(lightConfirmPayload),
+        body: JSON.stringify(lightPayload),
         keepalive: true
-      });
-      const aptText = await res.text();
-      const data = aptText ? JSON.parse(aptText) : {};
-
-      const savedItem = data.data || {
-        id: `apt-local-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        ...payload,
-        appointmentDate: new Date().toISOString().split('T')[0],
-        appointmentTime: updatedReceipt.submittedAt,
-        status: 'pending',
-        date: new Date().toISOString()
-      };
-
-      window.dispatchEvent(new CustomEvent('csc_appointment_created', { detail: savedItem }));
-      window.dispatchEvent(new CustomEvent('csc_appointment_updated', { detail: savedItem }));
-      window.dispatchEvent(new Event('storage'));
-      const bc = new BroadcastChannel('csc_portal_sync');
-      bc.postMessage({ type: 'NEW_APPOINTMENT', payload: savedItem });
-      bc.close();
+      }).catch(console.error);
     } catch (err) {
-      console.error('API submission update error:', err);
+      console.error('API submission error:', err);
     }
 
-    // Send update to Web3Forms
+    // 4. Send to Web3Forms
     try {
       const web3Payload = {
         access_key: 'a6293a04-2711-4d7c-bb7c-e7c9ed3d888c',
-        subject: `Payment Confirmed [${updatedReceipt.appId}] - ${updatedReceipt.customerName} (${updatedReceipt.paymentMode.toUpperCase()})`,
+        subject: `New Application Registered [${officialAppId}] - ${formData.customerName}`,
         from_name: 'APNA CSC Digital Portal',
-        name: updatedReceipt.customerName,
-        email: updatedReceipt.emailAddress !== 'N/A' ? updatedReceipt.emailAddress : 'no-reply@apnacsc.in',
-        phone_number: updatedReceipt.phoneNumber,
-        service_requested: updatedReceipt.selectedService,
-        category: updatedReceipt.userCategory,
-        payment_mode: updatedReceipt.paymentMode,
-        utr_number: updatedReceipt.utrNumber,
-        amount: `₹${updatedReceipt.totalAmount}`,
-        message: `CONFIRMED APPLICATION & PAYMENT\nToken ID: ${updatedReceipt.appId}\nApplicant Name: ${updatedReceipt.customerName}\nMobile: ${updatedReceipt.phoneNumber}\nEmail: ${updatedReceipt.emailAddress}\nDOB: ${updatedReceipt.dateOfBirth}\nService: ${updatedReceipt.selectedService}\nCategory: ${updatedReceipt.userCategory}\nPayment Mode: ${updatedReceipt.paymentMode}\nUTR No: ${updatedReceipt.utrNumber}\nAttached Documents: ${docsSummaryStr}\nTotal Amount: ₹${updatedReceipt.totalAmount}\nNotes: ${updatedReceipt.additionalDetails}`
+        name: formData.customerName,
+        email: formData.emailAddress || 'no-reply@apnacsc.in',
+        phone_number: formData.phoneNumber,
+        service_requested: verifiedReceipt.selectedService,
+        category: verifiedReceipt.userCategory,
+        payment_mode: 'Pay at CSC Desk (No Advance Payment)',
+        utr_number: 'N/A',
+        amount: '₹0 (Pay Upon Completion)',
+        message: `APPLICATION REGISTERED AT CSC DESK\nToken ID: ${officialAppId}\nApplicant Name: ${formData.customerName}\nMobile: ${formData.phoneNumber}\nService: ${verifiedReceipt.selectedService}\nCategory: ${verifiedReceipt.userCategory}\nMandatory ID: ${uploadedFiles[0]?.name || 'Aadhaar Card / School ID Attached'}\nPayment: No Advance Online Payment Required\nNotes: ${formData.additionalDetails || 'None'}`
       };
 
       fetch('https://api.web3forms.com/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(web3Payload)
-      }).catch(err => console.error('Web3Forms payment update error:', err));
+      }).catch(err => console.error('Web3Forms registration error:', err));
     } catch (err) {
       console.error('Web3Forms dispatch error:', err);
     }
 
-    setIsPaymentConfirmed(true);
+    // 5. Broadcast live events
+    try {
+      window.dispatchEvent(new CustomEvent('csc_appointment_created', { detail: payload }));
+      window.dispatchEvent(new CustomEvent('csc_appointment_updated', { detail: payload }));
+      window.dispatchEvent(new Event('storage'));
+      const bc = new BroadcastChannel('csc_portal_sync');
+      bc.postMessage({ type: 'NEW_APPOINTMENT', payload });
+      bc.close();
+    } catch (e) {
+      console.error(e);
+    }
 
+    triggerWhatsAppInvoiceDispatch(verifiedReceipt);
+
+    // Scroll to the receipt slip
     setTimeout(() => {
-      const slipContainer = document.getElementById('printable-digital-slip') || document.getElementById('printable-receipt-area');
-      if (slipContainer) {
-        slipContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const element = document.getElementById('printable-receipt-area') || document.getElementById('printable-digital-slip');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-      handlePrintSlip();
-    }, 400);
+    }, 300);
+  };
+
+  const handleDynamicUpiPaymentSuccess = async (_utrNumber: string) => {
+    // No-op kept for backwards compatibility
+  };
+
+  const handleConfirmPayment = async () => {
+    // No-op kept for backwards compatibility
   };
 
   const handlePrintSlip = () => {
@@ -3620,102 +3349,97 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                       </div>
                     )}
 
-                    {/* DOCUMENT UPLOAD COMPONENT FOR SELECTED SERVICE */}
-                    {(() => {
-                      const { requiredDocTypes: reqDocs } = getServiceDocRequirement(formData.selectedService, formData.customServiceText);
-                      if (reqDocs.length === 0) {
-                        return (
-                          <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl text-xs text-amber-800 dark:text-amber-300 font-medium flex items-center gap-2">
-                            <Info className="w-4 h-4 shrink-0 text-amber-600" />
-                            <span><strong>Required Documents:</strong> No documents required for this service</span>
+                    {/* SINGLE MANDATORY DOCUMENT UPLOAD (AADHAAR OR SCHOOL ID CARD) */}
+                    <div className="bg-slate-50 dark:bg-slate-950/80 border-2 border-dashed border-indigo-300 dark:border-indigo-800 rounded-2xl p-4 sm:p-5 space-y-3 font-sans">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-black">
+                            <Paperclip className="w-4 h-4" />
                           </div>
-                        );
-                      }
-                      return (
-                        <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-3">
-                          <div className="flex items-center justify-between">
+                          <div>
                             <div className="flex items-center gap-2">
-                              <Paperclip className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                              <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white font-sans">
-                                Required Documents Upload ({reqDocs.length})
+                              <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                                Mandatory ID Verification Document
                               </h4>
+                              <span className="px-2 py-0.5 bg-red-600 text-white rounded text-[9px] font-black uppercase font-mono">
+                                MANDATORY
+                              </span>
                             </div>
-                            <span className="text-[10px] font-mono font-bold text-slate-500">
-                              {uploadedFiles.length} of {reqDocs.length} Attached
-                            </span>
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {reqDocs.map(docConfig => {
-                              const existingFile = uploadedFiles.find(f => f.docTypeId === docConfig.id);
-
-                              return (
-                                <div 
-                                  key={docConfig.id}
-                                  className={`p-3 rounded-xl border transition-all ${
-                                    existingFile 
-                                      ? 'bg-emerald-50/60 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800' 
-                                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'
-                                  }`}
-                                >
-                                  <div className="flex items-start justify-between gap-2 mb-1.5">
-                                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 font-sans line-clamp-1">
-                                      {docConfig.shortName}
-                                    </span>
-                                    {existingFile ? (
-                                      <span className="px-1.5 py-0.2 bg-emerald-600 text-white rounded text-[9px] font-black uppercase font-mono shrink-0">
-                                        ATTACHED
-                                      </span>
-                                    ) : (
-                                      <span className="px-1.5 py-0.2 bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded text-[9px] font-black uppercase font-mono shrink-0">
-                                        REQUIRED
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  <p className="text-[10px] text-slate-500 mb-2 font-medium line-clamp-1">
-                                    {docConfig.description}
-                                  </p>
-
-                                  {existingFile ? (
-                                    <div className="flex items-center justify-between bg-white dark:bg-slate-950 px-2.5 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-900 text-xs font-mono">
-                                      <span className="text-emerald-700 dark:text-emerald-400 font-bold truncate max-w-[140px]">
-                                        {existingFile.name}
-                                      </span>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleRemoveDocByTypeId(docConfig.id)}
-                                        className="text-red-500 hover:text-red-700 text-xs font-bold px-1 cursor-pointer"
-                                        title="Remove document"
-                                      >
-                                        ✕
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <label className="flex items-center justify-center gap-1.5 py-1.5 px-3 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-bold cursor-pointer transition-all border border-indigo-200 dark:border-indigo-800/80">
-                                      <UploadCloud className="w-3.5 h-3.5" />
-                                      <span>Choose File</span>
-                                      <input
-                                        type="file"
-                                        accept={docConfig.accept}
-                                        onChange={(e) => handleSingleFileUpload(e, docConfig)}
-                                        className="hidden"
-                                      />
-                                    </label>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-
-                          {documentError && (
-                            <p className="text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/60 p-2 rounded-lg border border-red-200 dark:border-red-900">
-                              ⚠️ {documentError}
+                            <p className="text-[11px] text-slate-500 font-medium">
+                              Upload <strong>Aadhaar Card</strong> or <strong>School / College ID Card</strong> (Photo or PDF, max 10MB)
                             </p>
-                          )}
+                          </div>
                         </div>
-                      );
-                    })()}
+
+                        {uploadedFiles.length > 0 && (
+                          <span className="px-2.5 py-1 bg-emerald-600 text-white rounded-lg text-xs font-mono font-bold flex items-center gap-1">
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            ID Attached
+                          </span>
+                        )}
+                      </div>
+
+                      {uploadedFiles.length > 0 ? (
+                        <div className="bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 rounded-xl p-3.5 flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3 overflow-hidden">
+                            <FileText className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                            <div className="truncate">
+                              <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                                {uploadedFiles[0].name}
+                              </p>
+                              <p className="text-[10px] text-slate-500 font-mono">
+                                {(uploadedFiles[0].size / 1024).toFixed(1)} KB • Aadhaar / School ID
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleRemoveMandatoryDoc}
+                            className="px-2.5 py-1 bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-950 dark:hover:bg-red-900 dark:text-red-300 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0"
+                          >
+                            Remove / Change
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center gap-2 p-5 bg-white dark:bg-slate-900 hover:bg-indigo-50/50 dark:hover:bg-slate-800/80 rounded-xl border border-indigo-200 dark:border-indigo-900 cursor-pointer transition-all group">
+                          <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-950 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform">
+                            <UploadCloud className="w-5 h-5" />
+                          </div>
+                          <div className="text-center">
+                            <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 underline">
+                              Click to select Aadhaar or School ID
+                            </span>
+                            <span className="text-xs text-slate-600 dark:text-slate-400"> or drag and drop here</span>
+                            <p className="text-[10px] text-slate-500 font-medium mt-0.5">
+                              Accepted formats: JPG, PNG, WebP, PDF (Up to 10MB)
+                            </p>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/*,application/pdf"
+                            onChange={handleMandatoryIdUpload}
+                            className="hidden"
+                          />
+                        </label>
+                      )}
+
+                      {/* Informational Callout About Post-Completion Documents */}
+                      <div className="p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 rounded-xl text-xs text-blue-900 dark:text-blue-200 space-y-1">
+                        <div className="flex items-center gap-1.5 font-bold">
+                          <Info className="w-4 h-4 text-blue-600 shrink-0" />
+                          <span>No other documents required right now!</span>
+                        </div>
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed pl-5">
+                          Only your Aadhaar or Student ID is needed to register your token. Remaining academic marksheet copies, photographs, and certificates will be collected by the CSC operator after your initial registration.
+                        </p>
+                      </div>
+
+                      {documentError && (
+                        <p className="text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/60 p-2.5 rounded-lg border border-red-200 dark:border-red-900">
+                          {documentError}
+                        </p>
+                      )}
+                    </div>
 
                     {/* SUBMIT BUTTON */}
                     <div className="pt-2">
@@ -3723,7 +3447,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                         type="button"
                         disabled={isProcessingFiles}
                         onClick={handleFormSubmit}
-                        className="w-full py-3.5 px-4 bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl transition-all shadow-md shadow-emerald-700/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                        className="w-full py-4 px-4 bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl transition-all shadow-md shadow-emerald-700/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                         id="submit-booking-form-btn"
                       >
                         {isProcessingFiles ? (
@@ -3733,13 +3457,13 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                           </>
                         ) : (
                           <>
-                            <span>SUBMIT APPLICATION &amp; PROCEED TO PAYMENT</span>
+                            <span>SUBMIT &amp; ISSUE OFFICIAL CSC APPLICATION TOKEN</span>
                             <ArrowRight className="w-4 h-4" />
                           </>
                         )}
                       </button>
                       <p className="text-[10.5px] text-center text-slate-500 font-medium mt-2 flex items-center justify-center gap-1">
-                        <span>🔒 Encrypted 256-bit SSL transaction verified by CSC e-Governance Ltd.</span>
+                        <span>🔒 Instant token generation • No advance payment required • Pay at CSC Center</span>
                       </p>
                     </div>
                   </div>
@@ -3748,29 +3472,27 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
 
               </div>
             ) : (
-              /* SUBMISSION STEP: PAYMENT OPTIONS & CONFIRMATION DESK */
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border-2 border-indigo-600 shadow-xl overflow-hidden animate-fade-in text-slate-900 dark:text-white font-sans" id="printable-receipt-area">
+              /* SUBMISSION STEP: OFFICIAL CSC REGISTRATION CONFIRMATION & POST-COMPLETION DOCUMENTS DESK */
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border-2 border-emerald-600 shadow-xl overflow-hidden animate-fade-in text-slate-900 dark:text-white font-sans" id="printable-receipt-area">
                 
                 {/* Header Banner */}
-                <div className="bg-gradient-to-r from-[#172554] via-[#1e3a8a] to-[#1e1b4b] text-white p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 border-b border-indigo-900">
+                <div className="bg-gradient-to-r from-[#064e3b] via-[#047857] to-[#0f766e] text-white p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 border-b border-emerald-800">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center shrink-0 font-black shadow-md">
-                      <CreditCard className="w-5 h-5" />
+                      <CheckCircle className="w-6 h-6 text-slate-950" />
                     </div>
                     <div>
-                      <span className="text-[10px] font-mono font-black uppercase tracking-widest text-amber-300">
-                        OFFICIAL CSC PAYMENT GATEWAY DESK
+                      <span className="text-[10px] font-mono font-black uppercase tracking-widest text-emerald-200">
+                        OFFICIAL CSC APPLICATION DESK
                       </span>
                       <h3 className="text-base sm:text-lg font-black uppercase tracking-wide">
-                        {!isPaymentConfirmed ? 'Complete Payment via Dynamic UPI Gateway' : 'Application & Payment Confirmed!'}
+                        Application Registered Successfully!
                       </h3>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`px-3 py-1 rounded-lg text-xs font-mono font-black shadow-xs uppercase ${
-                      isPaymentConfirmed ? 'bg-amber-400 text-slate-950' : 'bg-amber-400 text-slate-950 font-sans'
-                    }`}>
-                      {isPaymentConfirmed ? submissionReceipt?.appId : 'PAYMENT PENDING'}
+                    <span className="px-3 py-1 bg-amber-400 text-slate-950 rounded-lg text-xs font-mono font-black shadow-xs uppercase">
+                      TOKEN: {submissionReceipt?.appId}
                     </span>
                   </div>
                 </div>
@@ -3778,150 +3500,115 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                 <div className="p-4 sm:p-6 space-y-5 text-xs sm:text-sm">
                   
                   {/* Token Box Notice */}
-                  {isPaymentConfirmed ? (
-                    <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 rounded-xl flex items-center justify-between gap-2">
-                      <div>
-                        <p className="text-xs font-bold text-emerald-950 dark:text-emerald-200 font-sans">
-                          Your Official Application Token Ref ID is Generated & Saved in CSC Records
-                        </p>
-                        <p className="text-[11px] text-emerald-700 dark:text-emerald-300 font-mono font-medium">
-                          Token ID: <strong className="text-emerald-950 dark:text-amber-300 font-black">{submissionReceipt?.appId}</strong>
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (submissionReceipt?.appId) {
-                            navigator.clipboard.writeText(submissionReceipt.appId);
-                            alert(`Token ID ${submissionReceipt.appId} copied to clipboard!`);
-                          }
-                        }}
-                        className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-[10px] font-bold uppercase tracking-wider font-mono cursor-pointer shrink-0"
-                      >
-                        Copy Token
-                      </button>
+                  <div className="p-4 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 rounded-xl flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold text-emerald-950 dark:text-emerald-200 font-sans">
+                        Your Official Application Token Reference ID is Issued & Saved in Records
+                      </p>
+                      <p className="text-sm text-emerald-800 dark:text-emerald-300 font-mono font-black mt-0.5">
+                        Token Ref: <span className="text-emerald-950 dark:text-amber-300 font-extrabold text-base">{submissionReceipt?.appId}</span>
+                      </p>
                     </div>
-                  ) : (
-                    <div className="p-3.5 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center justify-between gap-2">
-                      <div>
-                        <p className="text-xs font-bold text-amber-950 dark:text-amber-200 font-sans flex items-center gap-1.5">
-                          <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                          <span>Application Form Details Saved — Complete Payment to Issue Official Reference Token ID</span>
-                        </p>
-                        <p className="text-[11px] text-amber-800 dark:text-amber-300 font-mono font-medium mt-0.5">
-                          Your official CSC Reference Token ID and downloadable receipt will be issued immediately upon payment.
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (submissionReceipt?.appId) {
+                          navigator.clipboard.writeText(submissionReceipt.appId);
+                          alert(`Token ID ${submissionReceipt.appId} copied to clipboard!`);
+                        }
+                      }}
+                      className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold uppercase tracking-wider font-mono cursor-pointer shrink-0 shadow-xs"
+                    >
+                      Copy Token ID
+                    </button>
+                  </div>
 
-                  {/* Summary & Payable Fee Card */}
+                  {/* Applicant & Service Summary Card */}
                   <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-3 font-sans">
                     <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
                       <span className="text-xs font-black uppercase text-slate-800 dark:text-slate-200">Applicant: {submissionReceipt?.customerName}</span>
                       <span className="text-xs font-mono text-slate-600 dark:text-slate-400">Mobile: {submissionReceipt?.phoneNumber}</span>
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
                       <div>
-                        <span className="text-[10px] text-slate-500 uppercase font-mono block">Selected Service / Exam</span>
+                        <span className="text-[10px] text-slate-500 uppercase font-mono block">Selected Service</span>
                         <p className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">{submissionReceipt?.selectedService}</p>
                       </div>
 
-                      <div className="text-right">
-                        <span className="text-[10px] text-slate-500 uppercase font-mono block">Total Payable Fee</span>
-                        <span className="text-xl font-mono font-black text-emerald-600 dark:text-emerald-400">₹{submissionReceipt?.totalAmount}</span>
+                      <div>
+                        <span className="text-[10px] text-slate-500 uppercase font-mono block">Mandatory Document</span>
+                        <p className="font-bold text-emerald-700 dark:text-emerald-400 text-xs truncate">
+                          {submissionReceipt?.mandatoryDocName || 'Aadhaar Card / School ID (Attached)'}
+                        </p>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-slate-500 uppercase font-mono block">Payment Terms</span>
+                        <p className="font-bold text-amber-700 dark:text-amber-400 text-xs">
+                          Pay at Center Upon Completion (No Advance Online Payment)
+                        </p>
                       </div>
                     </div>
                   </div>
 
-                  {!isPaymentConfirmed ? (
-                    /* DYNAMIC UPI QR PAYMENT GATEWAY DESK */
-                    <div className="space-y-4 pt-1">
-                      <DynamicUpiGateway
-                        amount={Number(submissionReceipt?.totalAmount) || 70}
-                        appId={submissionReceipt?.appId || 'CSC21251567001'}
-                        customerName={submissionReceipt?.customerName || 'Applicant'}
-                        phoneNumber={submissionReceipt?.phoneNumber || 'N/A'}
-                        selectedService={submissionReceipt?.selectedService || 'CSC Service'}
-                        onPaymentVerified={handleDynamicUpiPaymentSuccess}
-                      />
-                    </div>
-                  ) : (
-                    /* CONFIRMED VERIFIED APPLICATION RECEIPT VIEW */
-                    <div className="space-y-4 pt-1 animate-fade-in">
-                      <div className="p-3.5 bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-800 rounded-xl flex items-center gap-2.5">
-                        <CheckCircle className="w-5 h-5 text-emerald-700 dark:text-emerald-400 shrink-0" />
-                        <div>
-                          <p className="text-xs font-black text-emerald-950 dark:text-emerald-200 uppercase font-sans">
-                            Payment Confirmed &amp; Application Processed
-                          </p>
-                          <p className="text-[11px] text-emerald-800 dark:text-emerald-300 font-mono font-medium">
-                            Payment Mode: <strong className="uppercase">{submissionReceipt?.paymentMode}</strong> | Ref ID: <strong className="font-bold">{submissionReceipt?.utrNumber}</strong>
-                          </p>
+                  {/* POST-SUBMISSION REQUIRED DOCUMENTS PANEL */}
+                  {(() => {
+                    const postDocs = getPostCompletionRequiredDocs(submissionReceipt?.selectedService || '');
+                    return (
+                      <div className="bg-amber-50/70 dark:bg-amber-950/30 border-2 border-amber-300 dark:border-amber-800/80 rounded-xl p-4 sm:p-5 space-y-3 font-sans">
+                        <div className="flex items-center gap-2 border-b border-amber-200 dark:border-amber-900/60 pb-2">
+                          <FileCheck className="w-5 h-5 text-amber-700 dark:text-amber-400 shrink-0" />
+                          <div>
+                            <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-950 dark:text-amber-200">
+                              Documents You May Be Asked For After Application Completion
+                            </h4>
+                            <p className="text-[11px] text-amber-800 dark:text-amber-400 font-medium">
+                              Keep these original / scanned copies ready when our CSC operator contacts you for final submission:
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                          {postDocs.map((doc, idx) => (
+                            <div 
+                              key={idx}
+                              className="bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-900/60 rounded-lg p-2.5 flex items-start gap-2 shadow-2xs"
+                            >
+                              <span className="w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 flex items-center justify-center text-[10px] font-black shrink-0 font-mono mt-0.5">
+                                ✓
+                              </span>
+                              <div>
+                                <p className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                                  {doc.name}
+                                </p>
+                                <p className="text-[10.5px] text-slate-500 dark:text-slate-400 leading-tight">
+                                  {doc.description}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
+                    );
+                  })()}
 
-                      {/* Details Summary Table */}
-                      <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-2 font-sans">
-                        <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-1.5 flex items-center gap-1.5">
-                          <FileCheck className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
-                          <span>Official Receipt Details</span>
-                        </h4>
-
-                        <div className="grid grid-cols-2 gap-2 text-xs pt-1">
-                          <div>
-                            <span className="text-slate-500 font-medium">Applicant Name:</span>
-                            <p className="font-bold text-slate-900 dark:text-white">{submissionReceipt?.customerName}</p>
-                          </div>
-
-                          <div>
-                            <span className="text-slate-500 font-medium">Mobile Number:</span>
-                            <p className="font-bold text-slate-900 dark:text-white font-mono">{submissionReceipt?.phoneNumber}</p>
-                          </div>
-
-                          <div>
-                            <span className="text-slate-500 font-medium">Service Name:</span>
-                            <p className="font-bold text-slate-900 dark:text-white">{submissionReceipt?.selectedService}</p>
-                          </div>
-
-                          <div>
-                            <span className="text-slate-500 font-medium">Category:</span>
-                            <p className="font-bold text-slate-900 dark:text-white uppercase">{submissionReceipt?.userCategory}</p>
-                          </div>
-
-                          <div>
-                            <span className="text-slate-500 font-medium">Payment Mode:</span>
-                            <p className="font-bold text-emerald-700 dark:text-emerald-400 uppercase font-mono font-black">{submissionReceipt?.paymentMode}</p>
-                          </div>
-
-                          <div>
-                            <span className="text-slate-500 font-medium">Payment Ref / UTR:</span>
-                            <p className="font-bold text-slate-900 dark:text-white font-mono">{submissionReceipt?.utrNumber || 'N/A'}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Payment Breakdown */}
-                      <div className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs space-y-1 font-mono">
-                        <p className="font-bold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-800 pb-1 font-sans uppercase">
-                          Fee Breakdown
-                        </p>
-                        <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                          <span>Subtotal:</span>
-                          <span>₹{(submissionReceipt?.applicationFee || 0) + (submissionReceipt?.portalFee || 70)}</span>
-                        </div>
-                        <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                          <span>GST (18%):</span>
-                          <span>₹{Math.round((submissionReceipt?.portalFee || 70) * 0.18)}</span>
-                        </div>
-                        <div className="pt-1 border-t border-slate-300 dark:border-slate-700 flex justify-between font-sans text-sm font-black text-slate-900 dark:text-white">
-                          <span>Total Paid:</span>
-                          <span className="font-mono text-emerald-600 dark:text-emerald-400 font-extrabold text-base">₹{submissionReceipt?.totalAmount}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  {/* Submission Notice & Center Instructions */}
+                  <div className="p-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs space-y-1.5 font-sans">
+                    <p className="font-bold text-slate-900 dark:text-white uppercase flex items-center gap-1.5">
+                      <HelpCircle className="w-4 h-4 text-emerald-600" />
+                      <span>Next Steps &amp; Application Processing</span>
+                    </p>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                      1. Your application reference token is active in our central CSC registry.
+                    </p>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                      2. Our authorized VLE operator will review your application details, verify eligibility on the official portal, and coordinate with you on WhatsApp.
+                    </p>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                      3. You can also visit our physical CSC Digital Seva Kendra (Near J&amp;K Bank, Lar Ganderbal) with your Token Ref ID: <strong>{submissionReceipt?.appId}</strong>.
+                    </p>
+                  </div>
 
                 </div>
 
@@ -3931,30 +3618,28 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                     type="button"
                     onClick={() => {
                       if (!submissionReceipt) return;
-                      const msg = `*New Application Submitted on CSC DOST!*
+                      const msg = `*CSC DOST — Application Registration Confirmation*
 *Token ID:* ${submissionReceipt.appId}
-*Name:* ${submissionReceipt.customerName}
+*Applicant Name:* ${submissionReceipt.customerName}
 *Mobile:* ${submissionReceipt.phoneNumber}
 *Service Requested:* ${submissionReceipt.selectedService}
-*Category:* ${submissionReceipt.userCategory}
-*Payment Mode:* ${submissionReceipt.paymentMode}
-*Payment Ref:* ${submissionReceipt.utrNumber || 'N/A'}
-*Amount Paid:* ₹${submissionReceipt.totalAmount}`;
+*Mandatory Document:* ${submissionReceipt.mandatoryDocName || 'Aadhaar / School ID Attached'}
+*Payment Terms:* Pay at Center Upon Form Completion`;
                       window.open(`https://wa.me/917006833767?text=${encodeURIComponent(msg)}`, '_blank');
                     }}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-emerald-600/30"
+                    className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-emerald-600/30"
                   >
                     <MessageSquare className="w-3.5 h-3.5" />
-                    <span>Send to WhatsApp Admin</span>
+                    <span>Send to WhatsApp Desk</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={handlePrintSlip}
-                    className="px-4 py-2 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-800 dark:text-slate-200 font-black text-xs uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-700 font-sans shadow-xs"
+                    className="px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-800 dark:text-slate-200 font-black text-xs uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-700 font-sans shadow-xs"
                   >
                     <Printer className="w-3.5 h-3.5" />
-                    <span>Print Slip</span>
+                    <span>Print Registration Slip</span>
                   </button>
 
                   <button
@@ -3980,10 +3665,10 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                       });
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                    className="px-4 py-2 bg-gradient-to-r from-slate-900 to-slate-800 hover:from-black hover:to-slate-900 text-white font-black text-xs uppercase tracking-wider rounded-lg transition-all cursor-pointer shadow-sm flex items-center gap-1.5 font-sans"
+                    className="px-4 py-2.5 bg-gradient-to-r from-slate-900 to-slate-800 hover:from-black hover:to-slate-900 text-white font-black text-xs uppercase tracking-wider rounded-lg transition-all cursor-pointer shadow-sm flex items-center gap-1.5 font-sans"
                   >
                     <Home className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Return to Home</span>
+                    <span>Submit Another Request</span>
                   </button>
                 </div>
               </div>

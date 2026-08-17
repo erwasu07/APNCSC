@@ -2312,6 +2312,10 @@ USING (bucket_id = 'documents');`}
                 <img
                   src={selectedDocPreview.url}
                   alt={selectedDocPreview.name}
+                  width="600"
+                  height="450"
+                  loading="lazy"
+                  decoding="async"
                   className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-md"
                 />
               ) : selectedDocPreview.type === 'application/pdf' || selectedDocPreview.url.startsWith('data:application/pdf') ? (

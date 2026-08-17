@@ -100,8 +100,11 @@ export default function Gallery({ galleryItems }: GalleryProps) {
                 <img 
                   src={item.url} 
                   alt={item.title} 
+                  width="400"
+                  height="225"
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   loading="lazy"
+                  decoding="async"
                 />
                 
                 {/* Overlay on Hover */}
@@ -141,6 +144,10 @@ export default function Gallery({ galleryItems }: GalleryProps) {
               <img 
                 src={filteredItems[lightboxIndex].url} 
                 alt={filteredItems[lightboxIndex].title} 
+                width="800"
+                height="500"
+                loading="lazy"
+                decoding="async"
                 className="max-w-full max-h-[60vh] object-contain rounded-xl shadow-2xl"
               />
               <div className="text-center text-white px-4 max-w-lg">

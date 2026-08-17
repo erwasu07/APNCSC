@@ -185,6 +185,10 @@ export default function Navbar({
               <img 
                 src="/favicon.svg" 
                 alt="CSC DOST Logo" 
+                width="56"
+                height="56"
+                fetchPriority="high"
+                decoding="async"
                 className="w-10 h-10 sm:w-13 sm:h-13 md:w-14 md:h-14 object-contain drop-shadow-[0_0_12px_rgba(59,130,246,0.6)]" 
                 referrerPolicy="no-referrer" 
               />

@@ -39,11 +39,36 @@
   #root {
     width: 100%;
     max-width: 100%;
+    min-height: 100vh;
     overflow-x: hidden !important;
     scroll-behavior: smooth;
     font-family: var(--font-sans);
     position: relative;
     background-color: #f8fafc !important;
+  }
+
+  /* Anti-CLS (Cumulative Layout Shift) Dynamic Cards Baseline Heights */
+  .sarkari-table-card,
+  .service-card-item,
+  .bulletin-card-item {
+    min-height: 140px;
+    contain: content;
+  }
+
+  .sarkari-desk-container {
+    min-height: 480px;
+  }
+
+  .service-catalogue-container {
+    min-height: 420px;
+  }
+
+  .scheme-grid-item {
+    min-height: 160px;
+  }
+
+  .gallery-grid-item {
+    min-height: 220px;
   }
 }
 

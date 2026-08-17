@@ -16,6 +16,10 @@ export default function About() {
                 <img 
                   src="https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=600" 
                   alt="Modern Cyber Cafe Computing Area" 
+                  width="600"
+                  height="320"
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-80 object-cover hover:scale-105 transition-transform duration-500"
                 />
               </div>

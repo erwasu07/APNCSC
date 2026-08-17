@@ -179,6 +179,10 @@ export default function NodeInformation() {
                 <img 
                   src="/csc-vle-certificate.svg" 
                   alt="Official CSC VLE Certificate - Wasim Ahmad Khanday" 
+                  width="360"
+                  height="144"
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-36 object-contain rounded"
                   referrerPolicy="no-referrer"
                 />
@@ -254,6 +258,10 @@ export default function NodeInformation() {
                 <img 
                   src="/csc-vle-certificate.svg" 
                   alt="Official CSC VLE Certificate of Wasim Ahmad Khanday" 
+                  width="800"
+                  height="550"
+                  loading="lazy"
+                  decoding="async"
                   className="w-full max-h-[55vh] object-contain rounded shadow-lg bg-white"
                   referrerPolicy="no-referrer"
                 />

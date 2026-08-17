@@ -428,6 +428,10 @@ export default function Contact({ settings, selectedService, setSelectedService 
                   <img
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`upi://pay?pa=apexkiosk@upi&pn=${encodeURIComponent("A Digital Shop for Digital India")}&am=${payAmount}&cu=INR&tn=${encodeURIComponent(payRefName ? `Pay from ${payRefName} for ${payService}` : `Pay for ${payService}`)}`)}`}
                     alt="UPI QR Code Payment"
+                    width="144"
+                    height="144"
+                    loading="lazy"
+                    decoding="async"
                     className="w-36 h-36 relative z-10 block"
                     referrerPolicy="no-referrer"
                     id="upi-payment-qrcode-img"

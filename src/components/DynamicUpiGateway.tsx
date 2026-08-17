@@ -145,6 +145,9 @@ export const DynamicUpiGateway: React.FC<DynamicUpiGatewayProps> = ({
               <img 
                 src={qrCodeDataUrl} 
                 alt={`UPI QR Code for ₹${amount}`} 
+                width="144"
+                height="144"
+                decoding="async"
                 className="w-32 h-32 sm:w-36 sm:h-36 object-contain rounded-md"
               />
             ) : (
