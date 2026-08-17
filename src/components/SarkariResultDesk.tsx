@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import TrackApplication from './TrackApplication';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { db } from '../lib/firebase';
 import { getSupabaseClient, uploadMultipleDocumentsToSupabase } from '../lib/supabase';
 import { saveApplicationToFormEndpoint } from '../lib/getform';
 import { doc, setDoc } from 'firebase/firestore';
+
+const TrackApplication = lazy(() => import('./TrackApplication'));
 import { 
   Briefcase, 
   FileText, 
@@ -3188,7 +3189,9 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
             </div>
 
             {/* Top Right Track Order Pill */}
-            <TrackApplication />
+            <Suspense fallback={<div className="h-9 w-32 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse" />}>
+              <TrackApplication />
+            </Suspense>
           </div>
 
           {/* 🚀 HERO MAIN APPLICATION FORM */}

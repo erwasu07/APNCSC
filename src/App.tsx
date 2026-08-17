@@ -1,19 +1,76 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import Navbar from './components/Navbar';
-import SarkariResultDesk from './components/SarkariResultDesk';
-import SarkariDedicatedPageView from './components/SarkariDedicatedPageView';
-import ServiceDedicatedPageView from './components/ServiceDedicatedPageView';
-import ExploreServicesDesk from './components/ExploreServicesDesk';
-import GuidesKnowledgeHub from './components/GuidesKnowledgeHub';
-import PushNotificationPrompt from './components/PushNotificationPrompt';
-import NodeInformation from './components/NodeInformation';
-import AdminDashboard from './components/AdminDashboard';
-import Footer from './components/Footer';
-import PrivacyPolicyModal, { PolicyTab } from './components/PrivacyPolicyModal';
+import type { PolicyTab } from './components/PrivacyPolicyModal';
 import { WebsiteSettings, Announcement, GalleryItem } from './types';
 import { SARKARI_DATA, SarkariItem } from './data/sarkariData';
 import { SERVICES_LIST, ServiceItem } from './servicesData';
 import { MessageSquare, ArrowLeft, Share2, X, MessageCircle, Copy, Check } from 'lucide-react';
+
+// Route-Level & Component-Level Lazy Loading (Code Splitting)
+const SarkariResultDesk = lazy(() => import('./components/SarkariResultDesk'));
+const SarkariDedicatedPageView = lazy(() => import('./components/SarkariDedicatedPageView'));
+const ServiceDedicatedPageView = lazy(() => import('./components/ServiceDedicatedPageView'));
+const ExploreServicesDesk = lazy(() => import('./components/ExploreServicesDesk'));
+const GuidesKnowledgeHub = lazy(() => import('./components/GuidesKnowledgeHub'));
+const PushNotificationPrompt = lazy(() => import('./components/PushNotificationPrompt'));
+const NodeInformation = lazy(() => import('./components/NodeInformation'));
+const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
+const Footer = lazy(() => import('./components/Footer'));
+const PrivacyPolicyModal = lazy(() => import('./components/PrivacyPolicyModal'));
+
+// Lightweight Skeleton Fallback for Section Containers (Prevents Layout Shift)
+function SectionSkeleton({ height = 'min-h-[360px]', title = 'Loading Desk...' }: { height?: string; title?: string }) {
+  return (
+    <div className={`w-full ${height} bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col justify-between animate-pulse font-sans`}>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-slate-200 dark:bg-slate-800" />
+            <div className="h-4 w-36 sm:w-48 bg-slate-200 dark:bg-slate-800 rounded" />
+          </div>
+          <div className="h-3 w-16 bg-slate-200 dark:bg-slate-800 rounded hidden sm:block" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-2">
+          <div className="h-24 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
+          <div className="h-24 bg-slate-100 dark:bg-slate-800/60 rounded-xl hidden sm:block" />
+          <div className="h-24 bg-slate-100 dark:bg-slate-800/60 rounded-xl hidden md:block" />
+        </div>
+      </div>
+      <div className="flex items-center justify-center gap-2 text-slate-400 text-xs py-2">
+        <div className="w-3.5 h-3.5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+        <span className="text-[11px] font-mono font-medium">{title}</span>
+      </div>
+    </div>
+  );
+}
+
+// Lightweight Full Page Skeleton (For dedicated service/job routes)
+function PageRouteSkeleton({ message = 'Loading Official Notification...' }: { message?: string }) {
+  return (
+    <div className="w-full min-h-[500px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm animate-pulse space-y-6">
+      <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
+        <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800" />
+        <div className="space-y-2">
+          <div className="h-5 w-64 bg-slate-200 dark:bg-slate-800 rounded" />
+          <div className="h-3 w-40 bg-slate-100 dark:bg-slate-800 rounded" />
+        </div>
+      </div>
+      <div className="space-y-3">
+        <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-full" />
+        <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-5/6" />
+        <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-4/6" />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+        <div className="h-32 bg-slate-100 dark:bg-slate-800 rounded-xl" />
+        <div className="h-32 bg-slate-100 dark:bg-slate-800 rounded-xl" />
+      </div>
+      <div className="flex items-center justify-center gap-2 pt-4 text-slate-400 text-xs">
+        <div className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+        <span className="font-mono text-xs">{message}</span>
+      </div>
+    </div>
+  );
+}
 
 const FALLBACK_SETTINGS: WebsiteSettings = {
   cafeName: "CSC DOST",
@@ -333,83 +390,105 @@ export default function App() {
                 <span>Return to Public Services Portal</span>
               </button>
             </div>
-            <AdminDashboard
-              cafeName={settings.cafeName}
-              onClose={handleCloseStaffPortal}
-            />
+            <Suspense fallback={<PageRouteSkeleton message="Loading Admin & Staff Portal..." />}>
+              <AdminDashboard
+                cafeName={settings.cafeName}
+                onClose={handleCloseStaffPortal}
+              />
+            </Suspense>
           </div>
         ) : activeJobPost ? (
           /* DEDICATED FULL-PAGE VIEW FOR JOBS / NOTIFICATIONS */
           <div className="animate-fade-in w-full">
-            <SarkariDedicatedPageView
-              item={activeJobPost}
-              onBack={handleCloseJobPage}
-              onApplyService={(service) => {
-                handleCloseJobPage();
-                handleServiceSelect(service);
-              }}
-              onShare={handleShareItem}
-            />
+            <Suspense fallback={<PageRouteSkeleton message="Loading Official Sarkari Notification..." />}>
+              <SarkariDedicatedPageView
+                item={activeJobPost}
+                onBack={handleCloseJobPage}
+                onApplyService={(service) => {
+                  handleCloseJobPage();
+                  handleServiceSelect(service);
+                }}
+                onShare={handleShareItem}
+              />
+            </Suspense>
           </div>
         ) : activeServicePost ? (
           /* DEDICATED FULL-PAGE VIEW FOR COMPREHENSIVE E-SERVICES CATALOGUE */
           <div className="animate-fade-in w-full">
-            <ServiceDedicatedPageView
-              service={activeServicePost}
-              onBack={handleCloseServicePage}
-              onApplyService={(service) => {
-                handleCloseServicePage();
-                handleServiceSelect(service);
-              }}
-              onShare={handleShareServiceItem}
-            />
+            <Suspense fallback={<PageRouteSkeleton message="Loading CSC E-Service Catalogue..." />}>
+              <ServiceDedicatedPageView
+                service={activeServicePost}
+                onBack={handleCloseServicePage}
+                onApplyService={(service) => {
+                  handleCloseServicePage();
+                  handleServiceSelect(service);
+                }}
+                onShare={handleShareServiceItem}
+              />
+            </Suspense>
           </div>
         ) : (
           /* PUBLIC VISITOR INTERFACE */
           <div className="animate-fade-in space-y-4 md:space-y-6 w-full">
             {/* Sarkari Result Bulletin Board at top */}
-            <SarkariResultDesk 
-              onApplyService={handleServiceSelect} 
-              selectedService={selectedService}
-              onOpenDedicatedPage={handleOpenJobPage}
-            />
+            <Suspense fallback={<SectionSkeleton height="min-h-[480px]" title="Loading Sarkari Results & Booking Desk..." />}>
+              <SarkariResultDesk 
+                onApplyService={handleServiceSelect} 
+                selectedService={selectedService}
+                onOpenDedicatedPage={handleOpenJobPage}
+              />
+            </Suspense>
 
             {/* Explore All Government & Digital Services Directory */}
-            <ExploreServicesDesk 
-              onApplyService={handleServiceSelect} 
-              selectedService={selectedService}
-              onOpenDedicatedServicePage={handleOpenServicePage}
-            />
+            <Suspense fallback={<SectionSkeleton height="min-h-[380px]" title="Loading Government & Digital Services Catalogue..." />}>
+              <ExploreServicesDesk 
+                onApplyService={handleServiceSelect} 
+                selectedService={selectedService}
+                onOpenDedicatedServicePage={handleOpenServicePage}
+              />
+            </Suspense>
 
             {/* In-depth Citizen Guides & Scheme Knowledge Hub for AdSense & Citizen Awareness */}
-            <GuidesKnowledgeHub onSelectService={handleServiceSelect} />
+            <Suspense fallback={<SectionSkeleton height="min-h-[320px]" title="Loading Citizen Guides & Knowledge Hub..." />}>
+              <GuidesKnowledgeHub onSelectService={handleServiceSelect} />
+            </Suspense>
           </div>
         )}
 
         {/* Common Service Centre Node Information & VLE Verification (relocated to clean bottom) */}
         {!isAdminView && (
           <div className="mt-8 px-2 sm:px-4 md:px-0">
-            <NodeInformation />
+            <Suspense fallback={<SectionSkeleton height="min-h-[220px]" title="Loading CSC VLE Verification..." />}>
+              <NodeInformation />
+            </Suspense>
           </div>
         )}
       </main>
 
-      {/* Global Page Footer */}
-      <Footer 
-        cafeName={settings.cafeName} 
-        onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
-        onOpenAdmin={handleOpenStaffPortal}
-      />
+      {/* Global Page Footer (Below the Fold) */}
+      <Suspense fallback={<div className="h-28 bg-slate-900 border-t border-slate-800 animate-pulse" />}>
+        <Footer 
+          cafeName={settings.cafeName} 
+          onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
+          onOpenAdmin={handleOpenStaffPortal}
+        />
+      </Suspense>
 
       {/* Privacy Policy & Terms Interactive Modal */}
-      <PrivacyPolicyModal 
-        isOpen={isPrivacyModalOpen} 
-        onClose={() => setIsPrivacyModalOpen(false)} 
-        initialTab={legalModalTab}
-      />
+      {isPrivacyModalOpen && (
+        <Suspense fallback={null}>
+          <PrivacyPolicyModal 
+            isOpen={isPrivacyModalOpen} 
+            onClose={() => setIsPrivacyModalOpen(false)} 
+            initialTab={legalModalTab}
+          />
+        </Suspense>
+      )}
 
       {/* Push Notification Permission Request Dialog */}
-      <PushNotificationPrompt />
+      <Suspense fallback={null}>
+        <PushNotificationPrompt />
+      </Suspense>
 
       {/* Global Share Options Modal */}
       {showShareModal && shareData && (
