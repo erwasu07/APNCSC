@@ -1276,7 +1276,6 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                 id: 'jkssb',
                 label: 'JKSSB',
                 fullLabel: 'JKSSB Jobs',
-                count: SARKARI_DATA.filter(s => s.category === 'jkssb').length,
                 gradient: 'from-indigo-600 to-blue-700',
                 border: 'border-indigo-500/40',
                 icon: Briefcase,
@@ -1285,7 +1284,6 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                 id: 'army_jobs',
                 label: 'Army',
                 fullLabel: 'Indian Army',
-                count: SARKARI_DATA.filter(s => s.category === 'army_jobs').length,
                 gradient: 'from-red-700 to-rose-900',
                 border: 'border-red-600/40',
                 icon: Shield,
@@ -1294,7 +1292,6 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                 id: 'ssc_jobs',
                 label: 'SSC',
                 fullLabel: 'SSC Jobs',
-                count: SARKARI_DATA.filter(s => s.category === 'ssc_jobs').length,
                 gradient: 'from-purple-600 to-indigo-700',
                 border: 'border-purple-500/40',
                 icon: FileCheck,
@@ -1303,7 +1300,6 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                 id: 'rrb_jobs',
                 label: 'Railway',
                 fullLabel: 'RRB Railway',
-                count: SARKARI_DATA.filter(s => s.category === 'rrb_jobs').length,
                 gradient: 'from-emerald-600 to-teal-700',
                 border: 'border-emerald-500/40',
                 icon: Train,
@@ -1312,7 +1308,6 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                 id: 'admissions',
                 label: 'KU Adm',
                 fullLabel: 'KU Admissions',
-                count: SARKARI_DATA.filter(s => s.category === 'admissions').length,
                 gradient: 'from-teal-600 to-emerald-700',
                 border: 'border-teal-500/40',
                 icon: GraduationCap,
@@ -1321,7 +1316,6 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                 id: 'exam_forms',
                 label: 'KU Exams',
                 fullLabel: 'KU Exam Forms',
-                count: SARKARI_DATA.filter(s => s.category === 'exam_forms').length,
                 gradient: 'from-amber-500 to-orange-600',
                 border: 'border-amber-500/40',
                 icon: BookOpen,
@@ -1330,7 +1324,6 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                 id: 'cluster_univ',
                 label: 'Cluster',
                 fullLabel: 'Cluster Univ',
-                count: SARKARI_DATA.filter(s => s.category === 'cluster_univ').length,
                 gradient: 'from-cyan-600 to-blue-700',
                 border: 'border-cyan-500/40',
                 icon: Building2,
@@ -1339,7 +1332,6 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                 id: 'jobs',
                 label: 'Latest',
                 fullLabel: 'Latest Jobs',
-                count: SARKARI_DATA.filter(s => s.category === 'jobs').length,
                 gradient: 'from-blue-600 to-indigo-800',
                 border: 'border-blue-500/40',
                 icon: Briefcase,
@@ -1352,23 +1344,16 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                   key={cat.id}
                   id={`sarkari-cat-btn-${cat.id}`}
                   onClick={() => setActiveTab(cat.id)}
-                  className={`group relative py-2 sm:py-2.5 px-1 sm:px-3 rounded-lg sm:rounded-xl text-white transition-all duration-200 cursor-pointer flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-1 sm:gap-2 shadow-sm border ${cat.border} bg-gradient-to-r ${cat.gradient} hover:brightness-110 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] select-none ${
+                  className={`group relative h-10 sm:h-11 px-1.5 sm:px-3 rounded-lg sm:rounded-xl text-white transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 shadow-sm border ${cat.border} bg-gradient-to-r ${cat.gradient} hover:brightness-110 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] select-none text-center ${
                     isActive
                       ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900 shadow-md shadow-black/20 font-black brightness-105 scale-[1.02]'
                       : 'opacity-95 hover:opacity-100'
                   }`}
                 >
-                  <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 min-w-0 text-center sm:text-left">
-                    <IconComponent className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform duration-200 group-hover:scale-110 ${isActive ? 'text-amber-300' : 'text-white/90'}`} />
-                    <span className="text-[11px] sm:text-xs md:text-[13px] font-bold tracking-tight leading-tight truncate">
-                      <span className="sm:hidden">{cat.label}</span>
-                      <span className="hidden sm:inline">{cat.fullLabel}</span>
-                    </span>
-                  </div>
-                  <span className={`text-[9.5px] sm:text-[11px] font-mono font-bold px-1.5 py-0.2 sm:py-0.5 rounded-md shrink-0 transition-colors ${
-                    isActive ? 'bg-amber-400 text-slate-950 shadow-xs' : 'bg-black/25 text-white/95 border border-white/10'
-                  }`}>
-                    {cat.count}
+                  <IconComponent className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform duration-200 group-hover:scale-110 ${isActive ? 'text-amber-300' : 'text-white/90'}`} />
+                  <span className="text-[11px] sm:text-xs md:text-[13px] font-bold tracking-tight leading-tight truncate">
+                    <span className="sm:hidden">{cat.label}</span>
+                    <span className="hidden sm:inline">{cat.fullLabel}</span>
                   </span>
                 </button>
               );
