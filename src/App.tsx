@@ -10,6 +10,8 @@ import { MessageSquare, ArrowLeft, Share2, X, MessageCircle, Copy, Check } from 
 const SarkariResultDesk = lazy(() => import('./components/SarkariResultDesk'));
 const SarkariDedicatedPageView = lazy(() => import('./components/SarkariDedicatedPageView'));
 const ServiceDedicatedPageView = lazy(() => import('./components/ServiceDedicatedPageView'));
+const ApplyDedicatedPageView = lazy(() => import('./components/ApplyDedicatedPageView'));
+const TrackDedicatedPageView = lazy(() => import('./components/TrackDedicatedPageView'));
 const ExploreServicesDesk = lazy(() => import('./components/ExploreServicesDesk'));
 const GuidesKnowledgeHub = lazy(() => import('./components/GuidesKnowledgeHub'));
 const PushNotificationPrompt = lazy(() => import('./components/PushNotificationPrompt'));
@@ -92,6 +94,11 @@ export default function App() {
   const [selectedService, setSelectedService] = useState('');
   const [activeJobPost, setActiveJobPost] = useState<SarkariItem | null>(null);
   const [activeServicePost, setActiveServicePost] = useState<ServiceItem | null>(null);
+  const [isApplyView, setIsApplyView] = useState<boolean>(false);
+  const [applyInitialService, setApplyInitialService] = useState<string>('');
+  const [isTrackView, setIsTrackView] = useState<boolean>(false);
+  const [trackInitialToken, setTrackInitialToken] = useState<string>('');
+
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
   const [legalModalTab, setLegalModalTab] = useState<PolicyTab>('privacy');
 
@@ -138,13 +145,50 @@ export default function App() {
       const searchParams = new URLSearchParams(window.location.search);
       const postParam = searchParams.get('post') || searchParams.get('job');
       const serviceParam = searchParams.get('service');
+      const trackParam = searchParams.get('track') || searchParams.get('token') || searchParams.get('id');
 
-      if (serviceParam) {
+      // 1. Check Apply route
+      if (hash.startsWith('#apply')) {
+        const applyQuery = hash.includes('?') ? hash.split('?')[1] : '';
+        const applyParams = new URLSearchParams(applyQuery);
+        const svc = applyParams.get('service') || searchParams.get('service') || '';
+        setIsApplyView(true);
+        setApplyInitialService(svc);
+        setIsTrackView(false);
+        setActiveJobPost(null);
+        setActiveServicePost(null);
+        setIsAdminView(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      } else {
+        setIsApplyView(false);
+      }
+
+      // 2. Check Track route
+      if (hash.startsWith('#track')) {
+        const cleanHash = hash.replace(/^#track\/?/, '');
+        const trackToken = cleanHash.split('?')[0] || trackParam || '';
+        setIsTrackView(true);
+        setTrackInitialToken(trackToken);
+        setIsApplyView(false);
+        setActiveJobPost(null);
+        setActiveServicePost(null);
+        setIsAdminView(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      } else {
+        setIsTrackView(false);
+      }
+
+      // 3. Check Service route
+      if (serviceParam && !hash.startsWith('#post')) {
         const matchService = SERVICES_LIST.find(s => s.id === serviceParam);
         if (matchService) {
           setActiveServicePost(matchService);
           setActiveJobPost(null);
           setIsAdminView(false);
+          setIsApplyView(false);
+          setIsTrackView(false);
           window.scrollTo({ top: 0, behavior: 'smooth' });
           return;
         }
@@ -157,6 +201,8 @@ export default function App() {
           setActiveServicePost(matchService);
           setActiveJobPost(null);
           setIsAdminView(false);
+          setIsApplyView(false);
+          setIsTrackView(false);
           window.scrollTo({ top: 0, behavior: 'smooth' });
           return;
         }
@@ -164,12 +210,15 @@ export default function App() {
         setActiveServicePost(null);
       }
 
+      // 4. Check Job/Post route
       if (postParam) {
         const match = SARKARI_DATA.find(i => i.id === postParam);
         if (match) {
           setActiveJobPost(match);
           setActiveServicePost(null);
           setIsAdminView(false);
+          setIsApplyView(false);
+          setIsTrackView(false);
           window.scrollTo({ top: 0, behavior: 'smooth' });
           return;
         }
@@ -182,6 +231,8 @@ export default function App() {
           setActiveJobPost(match);
           setActiveServicePost(null);
           setIsAdminView(false);
+          setIsApplyView(false);
+          setIsTrackView(false);
           window.scrollTo({ top: 0, behavior: 'smooth' });
           return;
         }
@@ -189,6 +240,7 @@ export default function App() {
         setActiveJobPost(null);
       }
 
+      // 5. Check Admin / Staff or Legal Modals
       if (hash === '#admin' || hash === '#staff') {
         setIsAdminView(true);
       } else if (hash === '#privacy') {
@@ -218,6 +270,8 @@ export default function App() {
   const handleOpenJobPage = (item: SarkariItem) => {
     setActiveJobPost(item);
     setActiveServicePost(null);
+    setIsApplyView(false);
+    setIsTrackView(false);
     window.location.hash = `#post/${item.id}`;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -233,6 +287,8 @@ export default function App() {
   const handleOpenServicePage = (item: ServiceItem) => {
     setActiveServicePost(item);
     setActiveJobPost(null);
+    setIsApplyView(false);
+    setIsTrackView(false);
     window.location.hash = `#service/${item.id}`;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -243,6 +299,57 @@ export default function App() {
       window.history.pushState(null, '', window.location.pathname);
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleOpenApplyPage = (serviceName?: string) => {
+    setSelectedService(serviceName || '');
+    setApplyInitialService(serviceName || '');
+    setIsApplyView(true);
+    setIsTrackView(false);
+    setActiveJobPost(null);
+    setActiveServicePost(null);
+    setIsAdminView(false);
+    if (serviceName) {
+      window.location.hash = `#apply?service=${encodeURIComponent(serviceName)}`;
+    } else {
+      window.location.hash = '#apply';
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCloseApplyPage = () => {
+    setIsApplyView(false);
+    if (window.location.hash.startsWith('#apply')) {
+      window.history.pushState(null, '', window.location.pathname);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleOpenTrackPage = (tokenId?: string) => {
+    setTrackInitialToken(tokenId || '');
+    setIsTrackView(true);
+    setIsApplyView(false);
+    setActiveJobPost(null);
+    setActiveServicePost(null);
+    setIsAdminView(false);
+    if (tokenId) {
+      window.location.hash = `#track/${encodeURIComponent(tokenId)}`;
+    } else {
+      window.location.hash = '#track';
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCloseTrackPage = () => {
+    setIsTrackView(false);
+    if (window.location.hash.startsWith('#track')) {
+      window.history.pushState(null, '', window.location.pathname);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleServiceSelect = (serviceName: string) => {
+    handleOpenApplyPage(serviceName);
   };
 
   const handleShareServiceItem = async (item: ServiceItem) => {
@@ -308,52 +415,18 @@ export default function App() {
       window.history.replaceState(null, '', window.location.pathname);
     }
   };
-  const handleServiceSelect = (serviceName: string) => {
-    setSelectedService(serviceName);
-    setTimeout(() => {
-      const el = document.getElementById('booking-portal-form');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 50);
 
-    setTimeout(() => {
-      const nameInput = document.getElementById('applicant-name-input') as HTMLInputElement | null;
-      if (nameInput) {
-        try {
-          nameInput.focus({ preventScroll: true });
-        } catch {
-          nameInput.focus();
-        }
-      }
-    }, 350);
-  };
-
-  // Scrolls to Digital Application & Appointment Desk
+  // Scrolls to Digital Application & Appointment Desk or opens apply page
   const handleVisitClick = () => {
-    setTimeout(() => {
-      const el = document.getElementById('booking-portal-form');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 50);
-
-    setTimeout(() => {
-      const nameInput = document.getElementById('applicant-name-input') as HTMLInputElement | null;
-      if (nameInput) {
-        try {
-          nameInput.focus({ preventScroll: true });
-        } catch {
-          nameInput.focus();
-        }
-      }
-    }, 350);
+    handleOpenApplyPage();
   };
 
   const handleGoHome = () => {
     setIsAdminView(false);
     setActiveJobPost(null);
     setActiveServicePost(null);
+    setIsApplyView(false);
+    setIsTrackView(false);
     setSelectedService('');
     if (window.location.hash) {
       window.history.replaceState(null, '', window.location.pathname);
@@ -397,6 +470,34 @@ export default function App() {
               />
             </Suspense>
           </div>
+        ) : isApplyView ? (
+          /* DEDICATED FULL-PAGE VIEW FOR ONLINE APPLICATION DESK */
+          <div className="animate-fade-in w-full">
+            <Suspense fallback={<PageRouteSkeleton message="Loading CSC Application Desk..." />}>
+              <ApplyDedicatedPageView
+                initialService={applyInitialService || selectedService}
+                onBack={handleCloseApplyPage}
+                onTrackApplication={(token) => {
+                  handleCloseApplyPage();
+                  handleOpenTrackPage(token);
+                }}
+              />
+            </Suspense>
+          </div>
+        ) : isTrackView ? (
+          /* DEDICATED FULL-PAGE VIEW FOR APPLICATION TRACKING */
+          <div className="animate-fade-in w-full">
+            <Suspense fallback={<PageRouteSkeleton message="Loading Status Tracker..." />}>
+              <TrackDedicatedPageView
+                initialToken={trackInitialToken}
+                onBack={handleCloseTrackPage}
+                onApplyNew={() => {
+                  handleCloseTrackPage();
+                  handleOpenApplyPage();
+                }}
+              />
+            </Suspense>
+          </div>
         ) : activeJobPost ? (
           /* DEDICATED FULL-PAGE VIEW FOR JOBS / NOTIFICATIONS */
           <div className="animate-fade-in w-full">
@@ -406,7 +507,7 @@ export default function App() {
                 onBack={handleCloseJobPage}
                 onApplyService={(service) => {
                   handleCloseJobPage();
-                  handleServiceSelect(service);
+                  handleOpenApplyPage(service);
                 }}
                 onShare={handleShareItem}
               />
@@ -421,7 +522,7 @@ export default function App() {
                 onBack={handleCloseServicePage}
                 onApplyService={(service) => {
                   handleCloseServicePage();
-                  handleServiceSelect(service);
+                  handleOpenApplyPage(service);
                 }}
                 onShare={handleShareServiceItem}
               />
@@ -456,7 +557,7 @@ export default function App() {
         )}
 
         {/* Common Service Centre Node Information & VLE Verification (relocated to clean bottom) */}
-        {!isAdminView && (
+        {!isAdminView && !isApplyView && !isTrackView && (
           <div className="mt-8 px-2 sm:px-4 md:px-0">
             <Suspense fallback={<SectionSkeleton height="min-h-[220px]" title="Loading CSC VLE Verification..." />}>
               <NodeInformation />

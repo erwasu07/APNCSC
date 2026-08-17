@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Calendar, PhoneCall, Cpu, Sparkles, Eye, Languages, Home, Briefcase, Flame, Info, Menu, X, Star, ShieldCheck, Lock, Key, Sun, Moon, BookOpen, Bell } from 'lucide-react';
+import { Shield, Calendar, PhoneCall, Cpu, Sparkles, Eye, Languages, Home, Briefcase, Flame, Info, Menu, X, Star, ShieldCheck, Lock, Key, Sun, Moon, BookOpen, Bell, FileCheck, Search } from 'lucide-react';
 import { PolicyTab } from './PrivacyPolicyModal';
 
 interface NavbarProps {
@@ -74,6 +74,16 @@ export default function Navbar({
       if (onHomeClick) {
         onHomeClick();
       }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    if (id === 'apply') {
+      window.location.hash = '#apply';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    if (id === 'track') {
+      window.location.hash = '#track';
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -214,6 +224,8 @@ export default function Navbar({
           <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 text-xs sm:text-sm font-black uppercase tracking-wider h-full overflow-x-auto no-scrollbar whitespace-nowrap py-1 scroll-smooth">
             {[
               { id: 'hero', label: 'HOME', icon: Home },
+              { id: 'apply', label: 'APPLY ONLINE', icon: FileCheck },
+              { id: 'track', label: 'TRACK STATUS', icon: Search },
               { id: 'services', label: 'E-SERVICES', icon: Briefcase },
               { id: 'sarkari-board', label: 'SARKARI BULLETINS', icon: Flame },
               { id: 'knowledge-hub', label: 'GUIDES & SCHEMES', icon: BookOpen },
@@ -322,6 +334,8 @@ export default function Navbar({
             <div className="flex flex-col gap-1">
               {[
                 { id: 'hero', label: 'HOME', icon: Home },
+                { id: 'apply', label: 'APPLY ONLINE', icon: FileCheck },
+                { id: 'track', label: 'TRACK STATUS', icon: Search },
                 { id: 'services', label: 'E-SERVICES', icon: Briefcase },
                 { id: 'sarkari-board', label: 'SARKARI BULLETINS', icon: Flame },
                 { id: 'knowledge-hub', label: 'GUIDES & SCHEMES', icon: BookOpen },
