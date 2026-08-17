@@ -1268,136 +1268,102 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
           </div>
         </div>
 
-        {/* CATEGORY TABS & QUICK FILTER BAR */}
-        <div className="max-w-7xl mx-auto mb-4 overflow-x-auto pb-1 no-scrollbar">
-          <div className="flex items-center gap-2 min-w-max">
-            <button
-              onClick={() => setActiveTab('all')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer font-sans ${
-                activeTab === 'all'
-                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
-                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 border border-slate-200 dark:border-slate-800'
-              }`}
-            >
-              All Notices ({SARKARI_DATA.length})
-            </button>
-
-            <button
-              onClick={() => setActiveTab('jkssb')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-sm font-sans ${
-                activeTab === 'jkssb'
-                  ? 'bg-indigo-700 text-amber-300 ring-2 ring-indigo-500 shadow-indigo-700/30'
-                  : 'bg-indigo-50 dark:bg-indigo-950/70 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100'
-              }`}
-            >
-              <Briefcase className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-              <span>JKSSB Jobs</span>
-              <span className="px-1.5 py-0.2 bg-amber-400 text-slate-950 text-[9.5px] font-mono font-black rounded">
-                {SARKARI_DATA.filter(s => s.category === 'jkssb').length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('jobs')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer font-sans ${
-                activeTab === 'jobs'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 border border-slate-200 dark:border-slate-800'
-              }`}
-            >
-              Latest Jobs ({SARKARI_DATA.filter(s => s.category === 'jobs').length})
-            </button>
-
-            <button
-              onClick={() => setActiveTab('admissions')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-sm font-sans ${
-                activeTab === 'admissions'
-                  ? 'bg-teal-700 text-amber-300 ring-2 ring-teal-500 shadow-teal-700/30'
-                  : 'bg-teal-50 dark:bg-teal-950/70 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800 hover:bg-teal-100'
-              }`}
-            >
-              <GraduationCap className="w-3.5 h-3.5 text-amber-400" />
-              <span>KU Admissions</span>
-              <span className="px-1.5 py-0.2 bg-amber-400 text-slate-950 text-[9.5px] font-mono font-black rounded">
-                {SARKARI_DATA.filter(s => s.category === 'admissions').length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('exam_forms')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-sm font-sans ${
-                activeTab === 'exam_forms'
-                  ? 'bg-amber-700 text-amber-300 ring-2 ring-amber-500 shadow-amber-700/30'
-                  : 'bg-amber-50 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100'
-              }`}
-            >
-              <FileCheck className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-              <span>KU Exam Forms</span>
-              <span className="px-1.5 py-0.2 bg-amber-400 text-slate-950 text-[9.5px] font-mono font-black rounded">
-                {SARKARI_DATA.filter(s => s.category === 'exam_forms').length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('cluster_univ')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-sm font-sans ${
-                activeTab === 'cluster_univ'
-                  ? 'bg-cyan-800 text-cyan-200 ring-2 ring-cyan-500 shadow-cyan-800/30'
-                  : 'bg-cyan-50 dark:bg-cyan-950/70 text-cyan-800 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800 hover:bg-cyan-100'
-              }`}
-            >
-              <Building2 className="w-3.5 h-3.5 text-cyan-500 dark:text-cyan-400" />
-              <span>Cluster University</span>
-              <span className="px-1.5 py-0.2 bg-amber-400 text-slate-950 text-[9.5px] font-mono font-black rounded">
-                {SARKARI_DATA.filter(s => s.category === 'cluster_univ').length}
-              </span>
-            </button>
-
-
-            <button
-              onClick={() => setActiveTab('ssc_jobs')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-sm font-sans ${
-                activeTab === 'ssc_jobs'
-                  ? 'bg-orange-800 text-orange-200 ring-2 ring-orange-500 shadow-orange-800/30'
-                  : 'bg-orange-50 dark:bg-orange-950/70 text-orange-800 dark:text-orange-300 border border-orange-200 dark:border-orange-800 hover:bg-orange-100'
-              }`}
-            >
-              <Briefcase className="w-3.5 h-3.5 text-orange-500 dark:text-orange-400" />
-              <span>SSC JOBS</span>
-              <span className="px-1.5 py-0.2 bg-amber-400 text-slate-950 text-[9.5px] font-mono font-black rounded">
-                {SARKARI_DATA.filter(s => s.category === 'ssc_jobs').length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('rrb_jobs')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-sm font-sans ${
-                activeTab === 'rrb_jobs'
-                  ? 'bg-emerald-800 text-emerald-200 ring-2 ring-emerald-500 shadow-emerald-800/30'
-                  : 'bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100'
-              }`}
-            >
-              <Train className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
-              <span>RRB JOBS</span>
-              <span className="px-1.5 py-0.2 bg-amber-400 text-slate-950 text-[9.5px] font-mono font-black rounded">
-                {SARKARI_DATA.filter(s => s.category === 'rrb_jobs').length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('army_jobs')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-sm font-sans ${
-                activeTab === 'army_jobs'
-                  ? 'bg-red-900 text-red-100 ring-2 ring-red-500 shadow-red-900/30'
-                  : 'bg-red-50 dark:bg-red-950/70 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800 hover:bg-red-100'
-              }`}
-            >
-              <Shield className="w-3.5 h-3.5 text-red-500 dark:text-red-400" />
-              <span>INDIAN ARMY JOBS</span>
-              <span className="px-1.5 py-0.2 bg-amber-400 text-slate-950 text-[9.5px] font-mono font-black rounded">
-                {SARKARI_DATA.filter(s => s.category === 'army_jobs').length}
-              </span>
-            </button>
+        {/* MODERN SARKARI CATEGORY QUICK ACCESS GRID */}
+        <div className="max-w-7xl mx-auto mb-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-2 sm:gap-2.5">
+            {[
+              {
+                id: 'jkssb',
+                label: 'JKSSB Jobs',
+                count: SARKARI_DATA.filter(s => s.category === 'jkssb').length,
+                gradient: 'from-indigo-600 to-blue-700',
+                border: 'border-indigo-500/40',
+                icon: Briefcase,
+              },
+              {
+                id: 'army_jobs',
+                label: 'Indian Army',
+                count: SARKARI_DATA.filter(s => s.category === 'army_jobs').length,
+                gradient: 'from-red-700 to-rose-900',
+                border: 'border-red-600/40',
+                icon: Shield,
+              },
+              {
+                id: 'ssc_jobs',
+                label: 'SSC Jobs',
+                count: SARKARI_DATA.filter(s => s.category === 'ssc_jobs').length,
+                gradient: 'from-purple-600 to-indigo-700',
+                border: 'border-purple-500/40',
+                icon: FileCheck,
+              },
+              {
+                id: 'rrb_jobs',
+                label: 'RRB Railway',
+                count: SARKARI_DATA.filter(s => s.category === 'rrb_jobs').length,
+                gradient: 'from-emerald-600 to-teal-700',
+                border: 'border-emerald-500/40',
+                icon: Train,
+              },
+              {
+                id: 'admissions',
+                label: 'KU Admissions',
+                count: SARKARI_DATA.filter(s => s.category === 'admissions').length,
+                gradient: 'from-teal-600 to-emerald-700',
+                border: 'border-teal-500/40',
+                icon: GraduationCap,
+              },
+              {
+                id: 'exam_forms',
+                label: 'KU Exam Forms',
+                count: SARKARI_DATA.filter(s => s.category === 'exam_forms').length,
+                gradient: 'from-amber-500 to-orange-600',
+                border: 'border-amber-500/40',
+                icon: BookOpen,
+              },
+              {
+                id: 'cluster_univ',
+                label: 'Cluster Univ',
+                count: SARKARI_DATA.filter(s => s.category === 'cluster_univ').length,
+                gradient: 'from-cyan-600 to-blue-700',
+                border: 'border-cyan-500/40',
+                icon: Building2,
+              },
+              {
+                id: 'jobs',
+                label: 'Latest Jobs',
+                count: SARKARI_DATA.filter(s => s.category === 'jobs').length,
+                gradient: 'from-blue-600 to-indigo-800',
+                border: 'border-blue-500/40',
+                icon: Briefcase,
+              },
+            ].map((cat) => {
+              const isActive = activeTab === cat.id;
+              const IconComponent = cat.icon;
+              return (
+                <button
+                  key={cat.id}
+                  id={`sarkari-cat-btn-${cat.id}`}
+                  onClick={() => setActiveTab(cat.id)}
+                  className={`group relative h-11 sm:h-12 px-3 py-2 rounded-xl text-white transition-all duration-200 cursor-pointer flex items-center justify-between gap-1.5 shadow-sm border ${cat.border} bg-gradient-to-r ${cat.gradient} hover:brightness-110 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] select-none ${
+                    isActive
+                      ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900 shadow-md shadow-black/20 font-black brightness-105 scale-[1.02]'
+                      : 'opacity-95 hover:opacity-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 truncate">
+                    <IconComponent className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform duration-200 group-hover:scale-110 ${isActive ? 'text-amber-300' : 'text-white/90'}`} />
+                    <span className="text-xs sm:text-[13px] font-bold tracking-tight truncate">
+                      {cat.label}
+                    </span>
+                  </div>
+                  <span className={`text-[10px] sm:text-[11px] font-mono font-bold px-1.5 py-0.5 rounded-md shrink-0 transition-colors ${
+                    isActive ? 'bg-amber-400 text-slate-950 shadow-xs' : 'bg-black/25 text-white/95 border border-white/10'
+                  }`}>
+                    {cat.count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
