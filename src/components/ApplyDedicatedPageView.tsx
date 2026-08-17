@@ -520,34 +520,34 @@ export default function ApplyDedicatedPageView({
         </div>
 
         {/* MAIN APPLICATION CONTAINER */}
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-md overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
           
           {/* Header Banner */}
-          <div className="bg-gradient-to-r from-[#18204e] via-[#1f2b6c] to-[#18204e] text-white p-5 sm:p-7 border-b border-indigo-900">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="space-y-1">
+          <div className="bg-gradient-to-r from-[#18204e] via-[#1f2b6c] to-[#18204e] text-white p-3.5 sm:p-5 border-b border-indigo-900">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div className="space-y-0.5">
                 <div className="flex items-center gap-2">
-                  <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2.5 py-0.5 rounded font-mono uppercase tracking-wider">
+                  <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded font-mono uppercase tracking-wider">
                     APNA CSC DESK
                   </span>
                   <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono font-bold px-2 py-0.5 rounded flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>SSL Encrypted &amp; Verified</span>
+                    <span>SSL Encrypted</span>
                   </span>
                 </div>
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-white font-display">
+                <h1 className="text-lg sm:text-2xl font-black tracking-tight text-white font-display">
                   Digital Application Filing Desk
                 </h1>
-                <p className="text-xs sm:text-sm text-indigo-200 font-medium">
+                <p className="text-[11px] sm:text-xs text-indigo-200 font-medium">
                   Official Online Form Submission, Recruitment Application Filing &amp; Verification
                 </p>
               </div>
 
-              <div className="bg-indigo-950/80 border border-indigo-700/60 p-3 rounded-2xl shrink-0 text-center sm:text-right">
+              <div className="bg-indigo-950/80 border border-indigo-700/60 px-3 py-1.5 rounded-xl shrink-0 text-left sm:text-right flex sm:block items-center justify-between">
                 <span className="text-[10px] font-mono text-indigo-300 block uppercase tracking-wider">
-                  Payment Terms
+                  Payment Terms:
                 </span>
-                <span className="text-xs font-bold text-amber-300">
+                <span className="text-xs font-bold text-amber-300 ml-2 sm:ml-0">
                   Pay at Desk Upon Completion
                 </span>
               </div>
@@ -556,35 +556,35 @@ export default function ApplyDedicatedPageView({
 
           {/* APPLICATION FORM OR CONFIRMATION RECEIPT */}
           {!isFormSubmitted ? (
-            <form onSubmit={handleFormSubmit} className="p-5 sm:p-8 space-y-6">
+            <form onSubmit={handleFormSubmit} className="p-3.5 sm:p-5 space-y-3.5">
               
               {/* Form Guidance Note */}
-              <div className="p-4 bg-indigo-50/60 border border-indigo-100 rounded-2xl text-xs text-indigo-950 flex items-start gap-3">
-                <Info className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+              <div className="p-2.5 sm:p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl text-xs text-indigo-950 flex items-start gap-2.5">
+                <Info className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
                 <div className="space-y-0.5">
-                  <p className="font-bold">Important Applicant Instructions:</p>
-                  <p className="text-indigo-800">
-                    Enter details exactly matching your official government identity documents. Our CSC operator will file your application on the official recruitment / government portal and dispatch your official token number to your WhatsApp number.
+                  <p className="font-bold text-[11px] uppercase tracking-wide text-indigo-900">Applicant Instructions:</p>
+                  <p className="text-indigo-800 text-[11px] leading-relaxed">
+                    Enter details as per your official documents. Our CSC operator will file your form on the official portal and issue an official token tracking receipt immediately.
                   </p>
                 </div>
               </div>
 
               {/* DEDICATED NOTIFICATION & APPLICATION INFORMATION PANEL */}
               {currentSarkariItem && (
-                <div className="bg-gradient-to-br from-slate-50 to-indigo-50/40 border border-indigo-200/80 rounded-2xl p-4 sm:p-6 space-y-4 shadow-xs">
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-100 pb-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-0.5 bg-indigo-900 text-white rounded text-[10px] font-mono font-bold uppercase tracking-wider">
-                          Official Notification Details
+                <div className="bg-gradient-to-br from-slate-50 to-indigo-50/40 border border-indigo-200/80 rounded-xl p-3 sm:p-4 space-y-2.5 shadow-2xs">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-100 pb-2">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-2 py-0.5 bg-indigo-900 text-white rounded text-[10px] font-mono font-bold uppercase tracking-wider">
+                          Notification
                         </span>
                         {currentSarkariItem.advertisementNo && (
-                          <span className="text-[11px] font-mono text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded font-semibold">
+                          <span className="text-[10px] font-mono text-indigo-700 bg-indigo-100/80 px-1.5 py-0.5 rounded font-semibold">
                             Advt: {currentSarkariItem.advertisementNo}
                           </span>
                         )}
                       </div>
-                      <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
+                      <h3 className="text-xs sm:text-sm font-black text-slate-900 leading-snug">
                         {currentSarkariItem.title}
                       </h3>
                     </div>
@@ -594,69 +594,58 @@ export default function ApplyDedicatedPageView({
                         href={currentSarkariItem.officialLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 text-indigo-900 border border-indigo-200 text-xs font-bold rounded-lg shadow-2xs transition-all shrink-0"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-slate-100 text-indigo-900 border border-indigo-200 text-[11px] font-bold rounded-lg shadow-2xs transition-all shrink-0"
                       >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                        <span>Official Website / PDF</span>
+                        <ExternalLink className="w-3 h-3" />
+                        <span>Official PDF</span>
                       </a>
                     )}
                   </div>
 
                   {currentSarkariItem.shortInfo && (
-                    <p className="text-xs text-slate-700 leading-relaxed font-medium">
+                    <p className="text-[11px] text-slate-700 leading-relaxed">
                       {currentSarkariItem.shortInfo}
                     </p>
                   )}
 
                   {/* Highlights Grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
-                    <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
-                      <span className="text-[10px] font-mono text-slate-500 uppercase block font-semibold">
-                        Application Window
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5">
+                    <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-2xs">
+                      <span className="text-[9px] font-mono text-slate-500 uppercase block font-semibold">
+                        Deadline
                       </span>
-                      <span className="text-xs font-bold text-slate-900 block mt-0.5">
-                        {currentSarkariItem.startDate || 'Started'} — <strong className="text-red-600">{currentSarkariItem.lastDate || 'Active'}</strong>
+                      <span className="text-[11px] font-bold text-red-600 block truncate">
+                        {currentSarkariItem.lastDate || 'Active'}
                       </span>
                     </div>
 
-                    <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
-                      <span className="text-[10px] font-mono text-slate-500 uppercase block font-semibold">
-                        Total Vacancies
+                    <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-2xs">
+                      <span className="text-[9px] font-mono text-slate-500 uppercase block font-semibold">
+                        Vacancies
                       </span>
-                      <span className="text-xs font-bold text-indigo-900 block mt-0.5">
+                      <span className="text-[11px] font-bold text-indigo-900 block truncate">
                         {currentSarkariItem.totalPosts || 'As per Advt'}
                       </span>
                     </div>
 
-                    <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
-                      <span className="text-[10px] font-mono text-slate-500 uppercase block font-semibold">
-                        Age Limit Criteria
+                    <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-2xs">
+                      <span className="text-[9px] font-mono text-slate-500 uppercase block font-semibold">
+                        Age Limit
                       </span>
-                      <span className="text-xs font-bold text-slate-800 block mt-0.5">
-                        {currentSarkariItem.ageLimit || 'Refer to Notification'}
+                      <span className="text-[11px] font-bold text-slate-800 block truncate">
+                        {currentSarkariItem.ageLimit || 'Refer to Advt'}
                       </span>
                     </div>
 
-                    <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
-                      <span className="text-[10px] font-mono text-slate-500 uppercase block font-semibold">
-                        Official Govt Fee
+                    <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-2xs">
+                      <span className="text-[9px] font-mono text-slate-500 uppercase block font-semibold">
+                        Govt Fee
                       </span>
-                      <span className="text-xs font-bold text-emerald-800 block mt-0.5">
-                        {currentSarkariItem.fees?.genObc || 'Free'} (Gen/OBC) • {currentSarkariItem.fees?.scSt || 'Free'} (SC/ST)
+                      <span className="text-[11px] font-bold text-emerald-800 block truncate">
+                        {currentSarkariItem.fees?.genObc || 'Free'}
                       </span>
                     </div>
                   </div>
-
-                  {currentSarkariItem.eligibility && (
-                    <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs text-xs space-y-1">
-                      <span className="font-bold text-slate-900 uppercase text-[10.5px] tracking-wide block">
-                        Eligibility &amp; Qualification Requirement:
-                      </span>
-                      <p className="text-slate-700 text-xs leading-relaxed">
-                        {currentSarkariItem.eligibility}
-                      </p>
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -717,20 +706,20 @@ export default function ApplyDedicatedPageView({
               )}
 
               {/* Step 1: Personal Details */}
-              <div className="space-y-4">
-                <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 pb-2">
-                  <User className="w-4 h-4 text-indigo-600" />
-                  <span>1. Applicant Identification Details</span>
+              <div className="space-y-2.5">
+                <h2 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-200 pb-1.5">
+                  <User className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>1. Applicant Identification</span>
                 </h2>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {/* Full Name */}
-                  <div className="space-y-1.5">
-                    <label htmlFor="applicant-full-name" className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                  <div className="space-y-1">
+                    <label htmlFor="applicant-full-name" className="block text-[11px] font-bold text-slate-800 uppercase tracking-wide">
                       Applicant Full Name <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
-                      <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <User className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
                       <input
                         id="applicant-full-name"
                         type="text"
@@ -738,19 +727,18 @@ export default function ApplyDedicatedPageView({
                         placeholder="e.g. Wasim Ahmad"
                         value={formData.customerName}
                         onChange={(e) => setFormData(prev => ({ ...prev, customerName: e.target.value }))}
-                        className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all"
+                        className="w-full pl-8 pr-2.5 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all"
                       />
                     </div>
-                    <span className="text-[10px] text-slate-500 font-medium">As printed on 10th marksheet or Aadhaar</span>
                   </div>
 
                   {/* WhatsApp Mobile Number */}
-                  <div className="space-y-1.5">
-                    <label htmlFor="applicant-phone-number" className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                  <div className="space-y-1">
+                    <label htmlFor="applicant-phone-number" className="block text-[11px] font-bold text-slate-800 uppercase tracking-wide">
                       WhatsApp Mobile Number <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
-                      <Smartphone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <Smartphone className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
                       <input
                         id="applicant-phone-number"
                         type="tel"
@@ -759,67 +747,47 @@ export default function ApplyDedicatedPageView({
                         placeholder="e.g. 7006833767"
                         value={formData.phoneNumber}
                         onChange={(e) => setFormData(prev => ({ ...prev, phoneNumber: e.target.value.replace(/\D/g, '') }))}
-                        className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono font-bold text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all"
+                        className="w-full pl-8 pr-2.5 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono font-bold text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all"
                       />
                     </div>
-                    <span className="text-[10px] text-slate-500 font-medium">For token tracking alerts &amp; confirmation</span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Email Address */}
-                  <div className="space-y-1.5">
-                    <label htmlFor="applicant-email" className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
-                      Email Address (Optional)
-                    </label>
-                    <div className="relative">
-                      <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                      <input
-                        id="applicant-email"
-                        type="email"
-                        placeholder="e.g. applicant@gmail.com"
-                        value={formData.emailAddress}
-                        onChange={(e) => setFormData(prev => ({ ...prev, emailAddress: e.target.value }))}
-                        className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Date of Birth */}
-                  <div className="space-y-1.5">
-                    <label htmlFor="applicant-dob" className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
-                      Date of Birth (Optional)
-                    </label>
-                    <div className="relative">
-                      <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                      <input
-                        id="applicant-dob"
-                        type="date"
-                        value={formData.dateOfBirth}
-                        onChange={(e) => setFormData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
-                        className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all"
-                      />
-                    </div>
+                {/* Email Address (Optional) */}
+                <div className="space-y-1">
+                  <label htmlFor="applicant-email" className="block text-[11px] font-bold text-slate-800 uppercase tracking-wide">
+                    Email Address <span className="text-slate-400 text-[10px] font-normal lowercase">(optional)</span>
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      id="applicant-email"
+                      type="email"
+                      placeholder="e.g. applicant@gmail.com"
+                      value={formData.emailAddress}
+                      onChange={(e) => setFormData(prev => ({ ...prev, emailAddress: e.target.value }))}
+                      className="w-full pl-8 pr-2.5 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all"
+                    />
                   </div>
                 </div>
               </div>
 
-              {/* Step 2: Service & Category Selection */}
-              <div className="space-y-4 pt-2">
-                <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 pb-2">
-                  <Building2 className="w-4 h-4 text-indigo-600" />
-                  <span>2. Service &amp; Category Selection</span>
+              {/* Step 2: Service Selection */}
+              <div className="space-y-2.5">
+                <h2 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-200 pb-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>2. Service / Form Selection</span>
                 </h2>
 
-                <div className="space-y-1.5">
-                  <label htmlFor="apply-service-select" className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                <div className="space-y-1">
+                  <label htmlFor="apply-service-select" className="block text-[11px] font-bold text-slate-800 uppercase tracking-wide">
                     Service / Notification to Apply <span className="text-red-500">*</span>
                   </label>
                   <select
                     id="apply-service-select"
                     value={formData.selectedService}
                     onChange={(e) => handleServiceChange(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all cursor-pointer"
+                    className="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all cursor-pointer"
                   >
                     <option value="">-- Select Notification or CSC Service --</option>
                     <optgroup label="📢 Latest Sarkari Notifications & Exams">
@@ -841,8 +809,8 @@ export default function ApplyDedicatedPageView({
                 </div>
 
                 {formData.selectedService === 'other' && (
-                  <div className="space-y-1.5">
-                    <label htmlFor="custom-service-input" className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                  <div className="space-y-1 animate-fade-in">
+                    <label htmlFor="custom-service-input" className="block text-[11px] font-bold text-slate-800 uppercase tracking-wide">
                       Specify Service / Form Details <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -852,83 +820,37 @@ export default function ApplyDedicatedPageView({
                       placeholder="e.g. CUET UG 2026 Registration / Domicile Certificate"
                       value={formData.customServiceText}
                       onChange={(e) => setFormData(prev => ({ ...prev, customServiceText: e.target.value }))}
-                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all"
+                      className="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all"
                     />
                   </div>
                 )}
-
-                {/* Candidate Reservation Category */}
-                <div className="space-y-2 pt-1">
-                  <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
-                    Candidate Category
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <label
-                      className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
-                        formData.userCategory === 'genObc'
-                          ? 'border-indigo-600 bg-indigo-50/70 text-indigo-950 font-bold'
-                          : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="candidate-category"
-                          value="genObc"
-                          checked={formData.userCategory === 'genObc'}
-                          onChange={() => handleCategoryChange('genObc')}
-                          className="accent-indigo-600"
-                        />
-                        <span className="text-xs font-bold">General / OBC / EWS</span>
-                      </div>
-                    </label>
-
-                    <label
-                      className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
-                        formData.userCategory === 'scSt'
-                          ? 'border-indigo-600 bg-indigo-50/70 text-indigo-950 font-bold'
-                          : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="candidate-category"
-                          value="scSt"
-                          checked={formData.userCategory === 'scSt'}
-                          onChange={() => handleCategoryChange('scSt')}
-                          className="accent-indigo-600"
-                        />
-                        <span className="text-xs font-bold">SC / ST / Female Candidate</span>
-                      </div>
-                    </label>
-                  </div>
-                </div>
               </div>
 
-              {/* Step 3: Document Upload */}
-              <div className="space-y-4 pt-2">
-                <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 pb-2">
-                  <FileCheck className="w-4 h-4 text-emerald-600" />
+              {/* Step 3: Mandatory Document Upload (Compact Mobile-First Box) */}
+              <div className="space-y-2">
+                <h2 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-200 pb-1.5">
+                  <FileCheck className="w-3.5 h-3.5 text-emerald-600" />
                   <span>3. Mandatory Document Upload</span>
                 </h2>
 
-                <div className="border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-2xl p-5 text-center bg-slate-50/50 transition-colors">
+                <div className="border border-dashed border-indigo-300 bg-indigo-50/40 rounded-xl p-3 sm:p-3.5 transition-colors">
                   {uploadedFiles.length === 0 ? (
-                    <div className="space-y-3">
-                      <div className="w-12 h-12 bg-indigo-100 text-indigo-700 rounded-2xl flex items-center justify-center mx-auto">
-                        <UploadCloud className="w-6 h-6" />
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 text-center sm:text-left">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 bg-indigo-100 text-indigo-700 rounded-lg flex items-center justify-center shrink-0">
+                          <UploadCloud className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-900 leading-tight">
+                            Upload Aadhaar Card or Educational ID <span className="text-red-500">*</span>
+                          </p>
+                          <p className="text-[10px] text-slate-500 mt-0.5">
+                            JPG, PNG, or PDF (up to 10MB)
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs font-bold text-slate-900">
-                          Upload Aadhaar Card or Educational ID <span className="text-red-500">*</span>
-                        </p>
-                        <p className="text-[11px] text-slate-500 mt-0.5">
-                          Drag and drop or click to choose file (JPG, PNG, PDF up to 10MB)
-                        </p>
-                      </div>
-                      <label className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs">
-                        <span>Browse Document</span>
+                      <label className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-all cursor-pointer shadow-2xs shrink-0">
+                        <span>Attach Document</span>
                         <input
                           type="file"
                           accept=".jpg,.jpeg,.png,.webp,.pdf"
@@ -938,24 +860,24 @@ export default function ApplyDedicatedPageView({
                       </label>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-200 shadow-2xs">
-                      <div className="flex items-center gap-3 text-left">
-                        <div className="p-2 bg-emerald-100 text-emerald-700 rounded-lg">
-                          <CheckCircle className="w-5 h-5" />
+                    <div className="flex items-center justify-between p-2 bg-white rounded-lg border border-emerald-300 shadow-2xs">
+                      <div className="flex items-center gap-2 text-left min-w-0">
+                        <div className="p-1.5 bg-emerald-100 text-emerald-700 rounded-md shrink-0">
+                          <CheckCircle className="w-4 h-4" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs font-bold text-slate-900 truncate max-w-[200px] sm:max-w-xs">
+                          <p className="text-xs font-bold text-emerald-900 truncate">
                             {uploadedFiles[0].name}
                           </p>
                           <p className="text-[10px] text-slate-500 font-mono">
-                            {(uploadedFiles[0].size / 1024).toFixed(1)} KB • Ready for upload
+                            {(uploadedFiles[0].size / 1024).toFixed(1)} KB • Attached
                           </p>
                         </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => setUploadedFiles([])}
-                        className="p-1.5 hover:bg-red-50 text-red-600 rounded-lg transition-colors cursor-pointer"
+                        className="p-1 hover:bg-red-50 text-red-600 rounded-md transition-colors cursor-pointer shrink-0 ml-2"
                         title="Remove file"
                       >
                         <X className="w-4 h-4" />
@@ -965,36 +887,21 @@ export default function ApplyDedicatedPageView({
                 </div>
               </div>
 
-              {/* Step 4: Notes / Additional Instructions */}
-              <div className="space-y-1.5 pt-2">
-                <label htmlFor="additional-instructions" className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
-                  Additional Notes / Post Preferences (Optional)
-                </label>
-                <textarea
-                  id="additional-instructions"
-                  rows={2}
-                  placeholder="Specify particular examination center preference, qualification marks, or specific department..."
-                  value={formData.additionalDetails}
-                  onChange={(e) => setFormData(prev => ({ ...prev, additionalDetails: e.target.value }))}
-                  className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all resize-none"
-                />
-              </div>
-
-              {/* Submit Button */}
-              <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="text-xs text-slate-500 text-center sm:text-left">
-                  By clicking Submit, your application will be registered for operator processing.
-                </div>
+              {/* Submit Button Section */}
+              <div className="pt-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <p className="text-[11px] text-slate-500 text-center sm:text-left leading-tight">
+                  🔒 Pay ₹0 advance • Verified token issued immediately
+                </p>
 
                 <button
                   type="submit"
                   disabled={isSubmitting || isProcessingFiles}
-                  className="w-full sm:w-auto px-8 py-3.5 bg-[#172554] hover:bg-[#1e3a8a] disabled:opacity-50 text-white text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 hover:scale-[1.01]"
+                  className="w-full sm:w-auto px-6 py-2.5 bg-[#172554] hover:bg-[#1e3a8a] disabled:opacity-50 text-white text-xs sm:text-sm font-bold uppercase tracking-wide rounded-lg transition-all cursor-pointer shadow-sm flex items-center justify-center gap-2"
                   id="submit-application-btn"
                 >
                   {isSubmitting ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       <span>Registering Token...</span>
                     </>
                   ) : (
