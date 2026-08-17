@@ -192,76 +192,101 @@ export default function ExploreServicesDesk({ onApplyService, selectedService, o
     <div className="bg-white dark:bg-slate-900/40 border-b border-slate-200/50 dark:border-slate-800/60 py-8 sm:py-12 transition-colors duration-300 scroll-mt-24 w-full" id="services">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6">
         
-        {/* Section Header & Search Input */}
+        {/* Section Header */}
         <div id="services-board" className="max-w-7xl mx-auto mb-5 scroll-mt-24">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
-            {/* Title & Badge */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 rounded text-[10px] font-black uppercase tracking-wider font-mono">
-                ⚡ CSC E-SERVICES DIRECTORY
-              </span>
-              <h2 className="text-sm sm:text-base md:text-lg font-black text-slate-900 dark:text-white tracking-tight font-display">
-                Comprehensive E-Services Catalogue
-              </h2>
-            </div>
-
-            {/* Search Input Box */}
-            <div className="relative w-full sm:w-72 shrink-0">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search services (e.g. Fard, Mutation, Jamabandi, PAN)..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-8 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-600 font-medium shadow-xs"
-                id="services-search-input"
-              />
-              {searchQuery && (
-                <button 
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-extrabold text-slate-400 hover:text-slate-600"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
+          <div className="flex items-center justify-center border-b border-slate-200 dark:border-slate-800 pb-3">
+            <h2 className="text-base sm:text-lg md:text-xl font-black text-slate-900 dark:text-white tracking-wider font-display uppercase text-center">
+              CSC E-SERVICES
+            </h2>
           </div>
+        </div>
 
-          {/* CATEGORY TABS BAR */}
-          <div className="flex items-center gap-1.5 overflow-x-auto py-3 no-scrollbar border-b border-slate-200/60 dark:border-slate-800/60">
+        {/* MODERN CSC E-SERVICES QUICK ACCESS GRID - 4 IN A ROW ON MOBILE */}
+        <div className="max-w-7xl mx-auto mb-5">
+          <div className="grid grid-cols-4 gap-1.5 sm:gap-2.5">
             {[
-              { id: 'all', label: 'All Services', count: SERVICES_LIST.length },
-              { id: 'cards_adda', label: 'Instant & Smart Cards', highlight: true, count: SERVICES_LIST.filter(s => s.category === 'cards_adda').length },
-              { id: 'jk_state', label: 'J&K State e-Services', highlight: true, count: SERVICES_LIST.filter(s => s.category === 'jk_state').length },
-              { id: 'revenue', label: 'JK Revenue Services', highlight: true, count: SERVICES_LIST.filter(s => s.category === 'revenue').length },
-              { id: 'csc', label: 'CSC Govt Services', count: SERVICES_LIST.filter(s => s.category === 'csc').length },
-              { id: 'digital', label: 'Digital & Cyber', count: SERVICES_LIST.filter(s => s.category === 'digital').length },
-              { id: 'education', label: 'Education & Admissions', count: SERVICES_LIST.filter(s => s.category === 'education').length },
-              { id: 'business', label: 'Business & Registrations', count: SERVICES_LIST.filter(s => s.category === 'business').length },
-            ].map(tab => {
-              const isActive = selectedCategory === tab.id;
+              {
+                id: 'all',
+                label: 'All',
+                fullLabel: 'All Services',
+                gradient: 'from-blue-600 to-indigo-800',
+                border: 'border-blue-500/40',
+                icon: Layers,
+              },
+              {
+                id: 'cards_adda',
+                label: 'Cards',
+                fullLabel: 'Instant Cards',
+                gradient: 'from-amber-500 to-orange-600',
+                border: 'border-amber-500/40',
+                icon: CreditCard,
+              },
+              {
+                id: 'revenue',
+                label: 'Revenue',
+                fullLabel: 'JK Revenue',
+                gradient: 'from-emerald-600 to-teal-700',
+                border: 'border-emerald-500/40',
+                icon: Landmark,
+              },
+              {
+                id: 'jk_state',
+                label: 'JK State',
+                fullLabel: 'JK State e-Services',
+                gradient: 'from-indigo-600 to-blue-700',
+                border: 'border-indigo-500/40',
+                icon: ShieldCheck,
+              },
+              {
+                id: 'csc',
+                label: 'Govt CSC',
+                fullLabel: 'CSC Govt Portals',
+                gradient: 'from-purple-600 to-indigo-700',
+                border: 'border-purple-500/40',
+                icon: Building2,
+              },
+              {
+                id: 'digital',
+                label: 'Digital',
+                fullLabel: 'Cyber & Digital',
+                gradient: 'from-cyan-600 to-blue-700',
+                border: 'border-cyan-500/40',
+                icon: Laptop,
+              },
+              {
+                id: 'education',
+                label: 'Edu Desk',
+                fullLabel: 'Education Desk',
+                gradient: 'from-teal-600 to-emerald-700',
+                border: 'border-teal-500/40',
+                icon: GraduationCap,
+              },
+              {
+                id: 'business',
+                label: 'Business',
+                fullLabel: 'Business & Tax',
+                gradient: 'from-rose-600 to-red-700',
+                border: 'border-rose-500/40',
+                icon: Briefcase,
+              },
+            ].map((cat) => {
+              const isActive = selectedCategory === cat.id;
+              const IconComponent = cat.icon;
               return (
                 <button
-                  key={tab.id}
-                  onClick={() => setSelectedCategory(tab.id as any)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shrink-0 transition-all flex items-center gap-1.5 cursor-pointer font-mono ${
+                  key={cat.id}
+                  id={`services-cat-btn-${cat.id}`}
+                  onClick={() => setSelectedCategory(cat.id as any)}
+                  className={`group relative h-10 sm:h-11 px-1.5 sm:px-3 rounded-lg sm:rounded-xl text-white transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 shadow-sm border ${cat.border} bg-gradient-to-r ${cat.gradient} hover:brightness-110 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] select-none text-center ${
                     isActive
-                      ? tab.highlight 
-                        ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 ring-2 ring-amber-400' 
-                        : 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                      : tab.highlight
-                        ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 hover:bg-amber-500/20'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900 shadow-md shadow-black/20 font-black brightness-105 scale-[1.02]'
+                      : 'opacity-95 hover:opacity-100'
                   }`}
-                  id={`services-tab-${tab.id}`}
                 >
-                  <span>{tab.label}</span>
-                  <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold ${
-                    isActive
-                      ? 'bg-black/20 text-current'
-                      : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
-                  }`}>
-                    {tab.count}
+                  <IconComponent className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform duration-200 group-hover:scale-110 ${isActive ? 'text-amber-300' : 'text-white/90'}`} />
+                  <span className="text-[11px] sm:text-xs md:text-[13px] font-bold tracking-tight leading-tight truncate">
+                    <span className="sm:hidden">{cat.label}</span>
+                    <span className="hidden sm:inline">{cat.fullLabel}</span>
                   </span>
                 </button>
               );
@@ -269,13 +294,13 @@ export default function ExploreServicesDesk({ onApplyService, selectedService, o
           </div>
         </div>
 
-        {/* COMPACT E-SERVICES BOXES GRID (BLUE THEME) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 max-w-7xl mx-auto w-full">
+        {/* COMPACT E-SERVICES BOXES GRID (2 columns on mobile, 2 on tablet, 3 on desktop) */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 md:gap-5 max-w-7xl mx-auto w-full">
           {[
             {
               id: 'cards_adda_box',
               categoryKey: 'cards_adda',
-              title: 'Instant & Smart Card Services',
+              title: 'Instant & Smart Cards',
               subtitle: 'Instant e-PAN, DL, Vehicle RC, Ayushman, Voter & PVC Smart Card Services',
               icon: CreditCard,
               badge: 'INSTANT & SMART CARDS',
@@ -299,7 +324,7 @@ export default function ExploreServicesDesk({ onApplyService, selectedService, o
             {
               id: 'jk_state_box',
               categoryKey: 'jk_state',
-              title: 'J&K State e-Services (ServiceOnline / e-UNNAT)',
+              title: 'J&K State e-Services',
               subtitle: 'Official J&K Government Certificates & Welfare Applications',
               icon: Landmark,
               badge: 'J&K STATE PORTAL',
@@ -332,7 +357,7 @@ export default function ExploreServicesDesk({ onApplyService, selectedService, o
             {
               id: 'jk_revenue',
               categoryKey: 'revenue',
-              title: 'JK Revenue Services (Govt of J&K)',
+              title: 'JK Revenue Services',
               subtitle: 'Revenue Department Land Records & Certificates',
               icon: Building2,
               badge: 'OFFICIAL REVENUE PORTAL',
@@ -361,28 +386,28 @@ export default function ExploreServicesDesk({ onApplyService, selectedService, o
             {
               id: 'csc_identity',
               categoryKey: 'csc',
-              title: 'CSC Government & Identity Cards',
+              title: 'Govt & Identity Cards',
               icon: Landmark,
               itemIds: ['csc-pan', 'csc-aadhaar', 'csc-voter', 'csc-passport', 'csc-dl']
             },
             {
               id: 'welfare_health',
               categoryKey: 'csc',
-              title: 'Welfare Schemes & Health Cards',
+              title: 'Welfare & Health Cards',
               icon: ShieldCheck,
               itemIds: ['csc-ayushman', 'csc-pmkisan', 'csc-eshram', 'csc-ration']
             },
             {
               id: 'certificates_state',
               categoryKey: 'csc',
-              title: 'State Revenue & Certificates',
+              title: 'State Certificates',
               icon: FileText,
               itemIds: ['csc-certificates']
             },
             {
               id: 'digital_cyber',
               categoryKey: 'digital',
-              title: 'Digital & Cyber Services',
+              title: 'Digital & Cyber Desk',
               icon: Laptop,
               itemIds: ['csc-utility', 'dig-print', 'dig-photo', 'dig-form']
             },
@@ -414,22 +439,17 @@ export default function ExploreServicesDesk({ onApplyService, selectedService, o
               return isBoxMatch && isSearchMatch;
             });
 
-            const isFullWidthBox = (box.id === 'cards_adda_box' || box.id === 'jk_revenue' || box.id === 'jk_state_box') && (selectedCategory === box.categoryKey || boxItems.length > 10);
-            const isSpecialHighlight = box.id === 'cards_adda_box' || box.id === 'jk_revenue' || box.id === 'jk_state_box';
-
             return (
               <div
                 key={box.id}
-                className={`bg-white dark:bg-slate-900 border-2 ${
+                className={`bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border sm:border-2 overflow-hidden shadow-xs sm:shadow-md flex flex-col transition-all duration-300 ${
                   box.id === 'cards_adda_box'
-                    ? 'border-purple-600 dark:border-purple-500 shadow-md'
+                    ? 'border-purple-600 dark:border-purple-500'
                     : box.id === 'jk_state_box'
-                    ? 'border-emerald-600 dark:border-emerald-500 shadow-md'
+                    ? 'border-emerald-600 dark:border-emerald-500'
                     : box.id === 'jk_revenue'
-                    ? 'border-amber-500 dark:border-amber-600 shadow-md'
-                    : 'border-blue-600 dark:border-blue-700 shadow-sm'
-                } rounded-2xl hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between ${
-                  isFullWidthBox ? 'md:col-span-2 lg:col-span-3' : ''
+                    ? 'border-amber-500 dark:border-amber-600'
+                    : 'border-blue-600 dark:border-blue-700'
                 }`}
                 id={`eservices-box-${box.id}`}
               >
@@ -442,51 +462,42 @@ export default function ExploreServicesDesk({ onApplyService, selectedService, o
                     : box.id === 'jk_revenue'
                     ? 'bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800'
                     : 'bg-[#1d4ed8]'
-                } text-white px-4 py-2.5 flex items-center justify-between`}>
-                  <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wide font-display">
-                    <BoxIcon className="w-4 h-4 text-amber-300 shrink-0" />
-                    <span>{box.title}</span>
+                } text-white px-2 sm:px-4 py-2 sm:py-3 flex items-center justify-between font-black uppercase text-xs sm:text-base tracking-wider font-display shrink-0 shadow-xs`}>
+                  <div className="flex items-center gap-1 sm:gap-2 truncate">
+                    <BoxIcon className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 text-amber-300 shrink-0" />
+                    <span className="truncate">{box.title}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {box.badge && (
-                      <span className="hidden sm:inline-block px-2 py-0.5 rounded bg-black/30 text-amber-200 font-mono text-[9px] font-black uppercase">
-                        {box.badge}
-                      </span>
-                    )}
-                    <span className="px-2 py-0.5 rounded-full bg-black/25 text-white font-mono text-[10px] font-black">
-                      {boxItems.length}
-                    </span>
-                  </div>
+                  <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-mono font-bold shrink-0 ml-1 bg-black/30 text-white">
+                    {boxItems.length}
+                  </span>
                 </div>
 
                 {/* Items List Inside Box */}
-                <div className={`p-3 divide-y divide-slate-100 dark:divide-slate-800/60 flex-grow ${
-                  isFullWidthBox ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 divide-y-0' : ''
-                }`}>
+                <div className="divide-y divide-slate-100 dark:divide-slate-800/80 max-h-[360px] sm:max-h-[420px] overflow-y-auto scrollbar-thin">
                   {boxItems.length > 0 ? (
                     boxItems.map(item => (
                       <div
                         key={item.id}
                         onClick={() => handleOpenService(item)}
-                        className="py-2 px-2 flex items-center justify-between gap-2 hover:bg-blue-50/70 dark:hover:bg-blue-950/40 rounded-lg transition-colors group cursor-pointer border-b border-slate-100 dark:border-slate-800/50 last:border-0"
+                        className="p-2 sm:p-3 hover:bg-blue-50/70 dark:hover:bg-blue-950/40 transition-all cursor-pointer flex items-center justify-between gap-1.5 sm:gap-2 group"
                         id={`eservice-item-${item.id}`}
                       >
-                        <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
                           <span className={`w-1.5 h-1.5 rounded-full shrink-0 group-hover:scale-125 transition-transform ${
                             item.category === 'revenue' ? 'bg-amber-500' : 'bg-blue-600'
                           }`} />
-                          <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">
+                          <span className="text-[11px] sm:text-[13px] font-bold text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate leading-snug font-sans">
                             {item.name}
                           </span>
                           {item.popular && (
-                            <span className="px-1.5 py-0.2 bg-amber-600 text-slate-950 text-[9px] font-black uppercase rounded shrink-0 font-mono">
+                            <span className="px-1 py-0.1 bg-amber-600 text-slate-950 text-[8.5px] sm:text-[9.5px] font-black uppercase rounded shrink-0 font-mono">
                               HOT
                             </span>
                           )}
                         </div>
 
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="text-[10px] font-mono font-black text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-800">
+                        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                          <span className="text-[9px] sm:text-[10px] font-mono font-black text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 px-1 sm:px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-800 truncate max-w-[65px] sm:max-w-none">
                             {item.price.split('+')[0].split('(')[0].trim()}
                           </span>
                           <button
@@ -498,13 +509,13 @@ export default function ExploreServicesDesk({ onApplyService, selectedService, o
                             className="p-1 hover:bg-blue-600 hover:text-white text-slate-400 rounded transition-colors cursor-pointer"
                             title="Apply via CSC Desk"
                           >
-                            <ArrowRight className="w-3.5 h-3.5" />
+                            <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                           </button>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <div className="py-6 text-center text-xs text-slate-400 font-medium">
+                    <div className="p-4 sm:p-8 text-center text-xs text-slate-400 italic">
                       No matching services
                     </div>
                   )}
