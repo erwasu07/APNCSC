@@ -1707,80 +1707,90 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
           </div>
 
           {/* 🚀 HERO MAIN APPLICATION FORM */}
+          {/* 🚀 HERO MAIN APPLICATION FORM (MODERN COMPACT FORMAT) */}
           <div id="booking-portal-form" className="mb-8 scroll-mt-24 w-full">
             {!isFormSubmitted ? (
               <div className="w-full">
                 
-                {/* OFFICIAL APPLICATION FORM */}
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-md overflow-hidden">
+                {/* MODERN COMPACT APPLICATION CARD */}
+                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden transition-all">
                   
-                  {/* Dark Blue Header Banner */}
-                  <div className="bg-[#18204e] text-white px-5 py-3.5 flex items-center justify-between border-b border-indigo-900">
+                  {/* Modern Compact Header Banner */}
+                  <div className="bg-gradient-to-r from-[#18204e] via-[#1e2965] to-[#18204e] text-white px-4 py-2.5 flex items-center justify-between border-b border-indigo-900/80">
                     <div className="flex items-center gap-2">
-                      <Shield className="w-4 h-4 text-amber-400" />
-                      <h2 className="text-sm font-extrabold uppercase tracking-wide font-sans text-white">
-                        📑 Official Application Form
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                      <Shield className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wide text-white">
+                        📑 Quick Application Desk
                       </h2>
+                      <span className="hidden sm:inline-block px-2 py-0.5 bg-indigo-950/90 border border-indigo-700/60 text-amber-300 text-[10px] font-mono rounded">
+                        Govt Verified VLE
+                      </span>
                     </div>
-                    <span className="bg-indigo-950/80 text-amber-300 border border-indigo-700/60 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
-                      Form Ref: CSC21251567001
-                    </span>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono text-indigo-200 hidden md:inline-block">
+                        Ref: CSC21251567001
+                      </span>
+                      <a
+                        href="#apply"
+                        className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-white rounded text-[11px] font-semibold transition-colors flex items-center gap-1"
+                        title="Open full page application view"
+                      >
+                        <span>Full Desk</span>
+                        <ArrowUpRight className="w-3 h-3" />
+                      </a>
+                    </div>
                   </div>
 
-                  {/* Form Sub-Container */}
-                  <div className="p-4 sm:p-6 space-y-5">
-                    <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                      Please provide your correct details below. Our CSC team will process your application on the official government portal.
-                    </p>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Applicant Name Input */}
-                      <div className="space-y-1.5">
-                        <label htmlFor="applicant-name-input" className="block text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider font-sans">
-                          Applicant Full Name <span className="text-red-500">*</span>
+                  {/* Compact Form Body */}
+                  <div className="p-3.5 sm:p-4 space-y-3">
+                    
+                    {/* Row 1: Name, Phone, Service Selection */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                      {/* Applicant Name */}
+                      <div className="space-y-1">
+                        <label htmlFor="applicant-name-input" className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                          Applicant Name <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
-                          <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                          <User className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
                           <input
                             id="applicant-name-input"
                             type="text"
                             required
-                            placeholder="e.g. Wasim Ahmad"
+                            placeholder="Full name as on Aadhaar"
                             value={formData.customerName}
                             onChange={(e) => setFormData(prev => ({ ...prev, customerName: e.target.value }))}
-                            className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-sans"
+                            className="w-full pl-8 pr-2.5 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all"
                           />
                         </div>
-                        <p className="text-[10px] text-slate-500 font-medium">Must match Aadhaar records</p>
                       </div>
 
-                      {/* WhatsApp Mobile Number */}
-                      <div className="space-y-1.5">
-                        <label htmlFor="whatsapp-mobile-input" className="block text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider font-sans">
-                          WhatsApp Mobile Number <span className="text-red-500">*</span>
+                      {/* WhatsApp Mobile */}
+                      <div className="space-y-1">
+                        <label htmlFor="whatsapp-mobile-input" className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                          WhatsApp Number <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
-                          <Smartphone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                          <Smartphone className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
                           <input
                             id="whatsapp-mobile-input"
                             type="tel"
                             required
                             maxLength={10}
-                            placeholder="e.g. 7006833767"
+                            placeholder="10-digit WhatsApp number"
                             value={formData.phoneNumber}
                             onChange={(e) => setFormData(prev => ({ ...prev, phoneNumber: e.target.value.replace(/\D/g, '') }))}
-                            className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-mono font-bold text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all"
+                            className="w-full pl-8 pr-2.5 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-mono font-semibold text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all"
                           />
                         </div>
-                        <p className="text-[10px] text-slate-500 font-medium">For instant SMS/WhatsApp Token Receipts</p>
                       </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Service Selection Dropdown */}
-                      <div className="space-y-1.5">
-                        <label htmlFor="select-service-dropdown" className="block text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider font-sans">
-                          Select Service to Apply <span className="text-red-500">*</span>
+                      {/* Service Dropdown */}
+                      <div className="space-y-1 sm:col-span-2 lg:col-span-1">
+                        <label htmlFor="select-service-dropdown" className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                          Select Service / Exam <span className="text-red-500">*</span>
                         </label>
                         <select
                           id="select-service-dropdown"
@@ -1791,29 +1801,28 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                             setUploadedFiles([]);
                             setDocumentError(null);
                           }}
-                          className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-sans cursor-pointer"
+                          className="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-semibold text-slate-900 dark:text-white outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all cursor-pointer truncate"
                         >
-                          <option value="">-- Choose a Service / Exam --</option>
+                          <option value="">-- Choose Service or Exam --</option>
                           
-                          {/* Fallback option if selected service is active but not in standard list */}
                           {formData.selectedService && 
                            !SARKARI_DATA.some(s => s.title === formData.selectedService) && 
                            !SERVICES_LIST.some(serv => serv.name === formData.selectedService) && 
                            formData.selectedService !== 'Custom Unlisted Request' && (
                              <option value={formData.selectedService}>
-                               📌 Selected: {formData.selectedService}
+                               📌 {formData.selectedService}
                              </option>
                           )}
 
-                          <optgroup label="🔥 SARKARI EXAMS & RECRUITMENT NOTIFICATIONS">
+                          <optgroup label="🔥 SARKARI JOBS & NOTIFICATIONS">
                             {SARKARI_DATA.map(s => (
                               <option key={s.id} value={s.title}>
-                                {s.title} {s.lastDate ? `(Last Date: ${s.lastDate})` : ''}
+                                {s.title}
                               </option>
                             ))}
                           </optgroup>
 
-                          <optgroup label="⚡ COMPREHENSIVE CSC E-SERVICES & DIGITAL CATALOGUE">
+                          <optgroup label="⚡ CSC DIGITAL SERVICES">
                             {SERVICES_LIST.map(serv => (
                               <option key={serv.id} value={serv.name}>
                                 {serv.name} ({serv.price})
@@ -1821,14 +1830,35 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                             ))}
                           </optgroup>
 
-                          <option value="Custom Unlisted Request">Other Custom Request / Form Filing</option>
+                          <option value="Custom Unlisted Request">Other Custom Request / Form</option>
                         </select>
                       </div>
+                    </div>
 
-                      {/* Applicant Category */}
-                      <div className="space-y-1.5">
-                        <label htmlFor="applicant-category-select" className="block text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider font-sans">
-                          Applicant Category <span className="text-red-500">*</span>
+                    {/* Custom Service Input if selected */}
+                    {formData.selectedService === 'Custom Unlisted Request' && (
+                      <div className="space-y-1 animate-fade-in">
+                        <label htmlFor="custom-service-input" className="block text-[11px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wide">
+                          Specify Custom Service Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="custom-service-input"
+                          type="text"
+                          required
+                          placeholder="e.g. JK Revenue Land Passbook / University Re-evaluation"
+                          value={formData.customServiceText}
+                          onChange={(e) => setFormData(prev => ({ ...prev, customServiceText: e.target.value }))}
+                          className="w-full px-2.5 py-1.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-lg text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-amber-600 transition-all"
+                        />
+                      </div>
+                    )}
+
+                    {/* Row 2: Category, Compact ID Upload, & Submit Button */}
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end pt-0.5">
+                      {/* Category */}
+                      <div className="sm:col-span-4 space-y-1">
+                        <label htmlFor="applicant-category-select" className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                          Category <span className="text-red-500">*</span>
                         </label>
                         <select
                           id="applicant-category-select"
@@ -1837,150 +1867,88 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                             const cat = e.target.value as 'genObc' | 'scSt' | 'female';
                             setFormData(prev => ({ ...prev, userCategory: cat }));
                           }}
-                          className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-sans cursor-pointer"
+                          className="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-semibold text-slate-900 dark:text-white outline-none focus:border-indigo-600 transition-all cursor-pointer"
                         >
-                          <option value="genObc">General / OBC / Unreserved</option>
-                          <option value="scSt">SC / ST / PwD Candidates</option>
-                          <option value="female">Female Candidates (All Categories)</option>
+                          <option value="genObc">General / OBC</option>
+                          <option value="scSt">SC / ST / PwD</option>
+                          <option value="female">Female</option>
                         </select>
                       </div>
-                    </div>
 
-                    {/* CUSTOM SERVICE TEXT FIELD */}
-                    {formData.selectedService === 'Custom Unlisted Request' && (
-                      <div className="space-y-1.5 animate-fade-in">
-                        <label htmlFor="custom-service-input" className="block text-xs font-black text-amber-700 dark:text-amber-400 uppercase tracking-wider font-sans">
-                          Specify Your Custom Service / Unlisted Exam Name <span className="text-red-500">*</span>
+                      {/* Compact Document Upload */}
+                      <div className="sm:col-span-4 space-y-1">
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                          Aadhaar / ID Card <span className="text-red-500">*</span>
                         </label>
-                        <input
-                          id="custom-service-input"
-                          type="text"
-                          required
-                          placeholder="e.g. JK Revenue Land Passbook / University Re-evaluation Form"
-                          value={formData.customServiceText}
-                          onChange={(e) => setFormData(prev => ({ ...prev, customServiceText: e.target.value }))}
-                          className="w-full px-3 py-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-xl text-xs font-bold text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-amber-600 focus:ring-1 focus:ring-amber-600 transition-all font-sans"
-                        />
-                      </div>
-                    )}
-
-                    {/* SINGLE MANDATORY DOCUMENT UPLOAD (AADHAAR OR SCHOOL ID CARD) */}
-                    <div className="bg-slate-50 dark:bg-slate-950/80 border-2 border-dashed border-indigo-300 dark:border-indigo-800 rounded-2xl p-4 sm:p-5 space-y-3 font-sans">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-black">
-                            <Paperclip className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white">
-                                Mandatory ID Verification Document
-                              </h4>
-                              <span className="px-2 py-0.5 bg-red-600 text-white rounded text-[9px] font-black uppercase font-mono">
-                                MANDATORY
+                        {uploadedFiles.length > 0 ? (
+                          <div className="flex items-center justify-between gap-1.5 px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 rounded-lg">
+                            <div className="flex items-center gap-1.5 overflow-hidden">
+                              <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              <span className="text-xs font-semibold text-emerald-900 dark:text-emerald-200 truncate">
+                                {uploadedFiles[0].name}
                               </span>
                             </div>
-                            <p className="text-[11px] text-slate-500 font-medium">
-                              Upload <strong>Aadhaar Card</strong> or <strong>School / College ID Card</strong> (Photo or PDF, max 10MB)
-                            </p>
+                            <button
+                              type="button"
+                              onClick={handleRemoveMandatoryDoc}
+                              className="text-[10px] font-bold text-red-600 hover:text-red-800 shrink-0 cursor-pointer"
+                            >
+                              ✕
+                            </button>
                           </div>
-                        </div>
-
-                        {uploadedFiles.length > 0 && (
-                          <span className="px-2.5 py-1 bg-emerald-600 text-white rounded-lg text-xs font-mono font-bold flex items-center gap-1">
-                            <CheckCircle className="w-3.5 h-3.5" />
-                            ID Attached
-                          </span>
-                        )}
-                      </div>
-
-                      {uploadedFiles.length > 0 ? (
-                        <div className="bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 rounded-xl p-3.5 flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-3 overflow-hidden">
-                            <FileText className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                            <div className="truncate">
-                              <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                                {uploadedFiles[0].name}
-                              </p>
-                              <p className="text-[10px] text-slate-500 font-mono">
-                                {(uploadedFiles[0].size / 1024).toFixed(1)} KB • Aadhaar / School ID
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={handleRemoveMandatoryDoc}
-                            className="px-2.5 py-1 bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-950 dark:hover:bg-red-900 dark:text-red-300 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0"
-                          >
-                            Remove / Change
-                          </button>
-                        </div>
-                      ) : (
-                        <label className="flex flex-col items-center justify-center gap-2 p-5 bg-white dark:bg-slate-900 hover:bg-indigo-50/50 dark:hover:bg-slate-800/80 rounded-xl border border-indigo-200 dark:border-indigo-900 cursor-pointer transition-all group">
-                          <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-950 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform">
-                            <UploadCloud className="w-5 h-5" />
-                          </div>
-                          <div className="text-center">
-                            <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 underline">
-                              Click to select Aadhaar or School ID
-                            </span>
-                            <span className="text-xs text-slate-600 dark:text-slate-400"> or drag and drop here</span>
-                            <p className="text-[10px] text-slate-500 font-medium mt-0.5">
-                              Accepted formats: JPG, PNG, WebP, PDF (Up to 10MB)
-                            </p>
-                          </div>
-                          <input
-                            type="file"
-                            accept="image/*,application/pdf"
-                            onChange={handleMandatoryIdUpload}
-                            className="hidden"
-                          />
-                        </label>
-                      )}
-
-                      {/* Informational Callout About Post-Completion Documents */}
-                      <div className="p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 rounded-xl text-xs text-blue-900 dark:text-blue-200 space-y-1">
-                        <div className="flex items-center gap-1.5 font-bold">
-                          <Info className="w-4 h-4 text-blue-600 shrink-0" />
-                          <span>No other documents required right now!</span>
-                        </div>
-                        <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed pl-5">
-                          Only your Aadhaar or Student ID is needed to register your token. Remaining academic marksheet copies, photographs, and certificates will be collected by the CSC operator after your initial registration.
-                        </p>
-                      </div>
-
-                      {documentError && (
-                        <p className="text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/60 p-2.5 rounded-lg border border-red-200 dark:border-red-900">
-                          {documentError}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* SUBMIT BUTTON */}
-                    <div className="pt-2">
-                      <button
-                        type="button"
-                        disabled={isProcessingFiles}
-                        onClick={handleFormSubmit}
-                        className="w-full py-4 px-4 bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl transition-all shadow-md shadow-emerald-700/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                        id="submit-booking-form-btn"
-                      >
-                        {isProcessingFiles ? (
-                          <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            <span>Generating CSC Application Token...</span>
-                          </>
                         ) : (
-                          <>
-                            <span>SUBMIT &amp; ISSUE OFFICIAL CSC APPLICATION TOKEN</span>
-                            <ArrowRight className="w-4 h-4" />
-                          </>
+                          <label className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-950 hover:bg-indigo-50/50 dark:hover:bg-slate-800/80 border border-dashed border-indigo-300 dark:border-indigo-800 rounded-lg text-xs font-semibold text-indigo-700 dark:text-indigo-300 cursor-pointer transition-all">
+                            <UploadCloud className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">Attach Aadhaar / Student ID</span>
+                            <input
+                              type="file"
+                              accept="image/*,application/pdf"
+                              onChange={handleMandatoryIdUpload}
+                              className="hidden"
+                            />
+                          </label>
                         )}
-                      </button>
-                      <p className="text-[10.5px] text-center text-slate-500 font-medium mt-2 flex items-center justify-center gap-1">
-                        <span>🔒 Instant token generation • No advance payment required • Pay at CSC Center</span>
-                      </p>
+                      </div>
+
+                      {/* Compact Submit Button */}
+                      <div className="sm:col-span-4">
+                        <button
+                          type="button"
+                          disabled={isProcessingFiles}
+                          onClick={handleFormSubmit}
+                          className="w-full py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-xs uppercase tracking-wide rounded-lg transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 min-h-[34px]"
+                          id="submit-booking-form-btn"
+                        >
+                          {isProcessingFiles ? (
+                            <>
+                              <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              <span>Generating Token...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>Submit &amp; Get Token</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
+
+                    {documentError && (
+                      <p className="text-[11px] font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/60 px-2.5 py-1 rounded-md border border-red-200 dark:border-red-900">
+                        {documentError}
+                      </p>
+                    )}
+
+                    {/* Compact Security Strip */}
+                    <div className="pt-1 flex flex-wrap items-center justify-between text-[10.5px] text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800/80 gap-1.5">
+                      <span className="flex items-center gap-1">
+                        <Shield className="w-3 h-3 text-emerald-600" />
+                        <span>₹0 Advance Fee • Pay at Center Upon Form Completion</span>
+                      </span>
+                      <span>CSC Helpline: <strong className="font-mono text-slate-700 dark:text-slate-300">7006833767</strong></span>
+                    </div>
+
                   </div>
 
                 </div>
