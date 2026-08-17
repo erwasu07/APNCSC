@@ -1200,39 +1200,12 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
 
 
 
-        {/* Section Header & Search Input */}
+        {/* Section Header */}
         <div id="sarkari-board" className="max-w-7xl mx-auto mb-5 scroll-mt-24">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
-            {/* Title & Badge */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="px-2 py-0.5 bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 rounded text-[10px] font-black uppercase tracking-wider font-mono">
-                ⚡ SARKARI DESK
-              </span>
-              <h2 className="text-sm sm:text-base md:text-lg font-black text-slate-900 dark:text-white tracking-tight font-display">
-                Sarkari Exam, Recruitment &amp; Results Desk
-              </h2>
-            </div>
-
-            {/* Search Input Box */}
-            <div className="relative w-full sm:w-72 shrink-0">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search exams, recruitment..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-8 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-red-600 font-medium shadow-xs"
-                id="sarkari-search-input"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-extrabold text-slate-400 hover:text-slate-600"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
+          <div className="flex items-center justify-center border-b border-slate-200 dark:border-slate-800 pb-3">
+            <h2 className="text-base sm:text-lg md:text-xl font-black text-slate-900 dark:text-white tracking-wider font-display uppercase text-center">
+              Jobs &amp; Edu Alerts
+            </h2>
           </div>
         </div>
 

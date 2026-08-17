@@ -98,89 +98,7 @@ export default function Navbar({
 
   return (
     <header className="w-full z-50 flex flex-col relative" id="hero">
-      {/* 1. TOP UTILITY BAR */}
-      <div className="bg-[#0b1329] text-xs font-sans text-slate-200 py-1.5 px-2 sm:px-4 border-b border-slate-800 shadow-xs">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1.5 sm:gap-2">
-          {/* Left: Helpdesk & Operating hours */}
-          <div className="flex items-center justify-center sm:justify-start gap-2 text-[11px] font-sans">
-            <span>📞 Helpdesk: <strong className="text-white font-bold">+91 70068 33767</strong></span>
-            <span className="text-slate-400 hidden lg:inline">|</span>
-            <span className="text-amber-300 font-semibold hidden lg:inline">🕒 Hours: 09:00 AM to 08:30 PM</span>
-          </div>
-
-          {/* Right: Language, Text Size controllers & WhatsApp Support link */}
-          <div className="flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto">
-            {/* Language Switcher */}
-            <div className="flex items-center bg-[#1e293b] p-0.5 rounded text-[10px] font-bold border border-slate-700/60 shadow-xs shrink-0">
-              <button 
-                type="button"
-                onClick={() => handleLanguageChange('EN')} 
-                className={`px-2 py-0.5 rounded transition-all cursor-pointer font-extrabold flex items-center gap-1 ${
-                  lang === 'EN' 
-                    ? 'bg-blue-600 text-white shadow-xs' 
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800'
-                }`}
-                title="Switch portal language to English"
-              >
-                ENG
-              </button>
-              <button 
-                type="button"
-                onClick={() => handleLanguageChange('HI')} 
-                className={`px-2 py-0.5 rounded transition-all cursor-pointer font-extrabold flex items-center gap-1 ${
-                  lang === 'HI' 
-                    ? 'bg-amber-500 text-slate-950 font-black shadow-xs' 
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800'
-                }`}
-                title="पोर्टल की भाषा हिंदी में बदलें"
-              >
-                हिंदी
-              </button>
-            </div>
-
-            {/* Text Size Controls */}
-            <div className="hidden sm:flex items-center gap-1">
-              <button 
-                type="button"
-                onClick={() => handleFontSizeChange('normal')}
-                className={`px-1.5 py-0.5 text-[10px] font-extrabold rounded transition-colors cursor-pointer ${fontSize === 'normal' ? 'bg-blue-600 text-white' : 'bg-[#1e293b] text-slate-300 hover:bg-slate-700'}`}
-                title="Normal Text Size"
-              >
-                -A
-              </button>
-              <button 
-                type="button"
-                onClick={() => handleFontSizeChange('large')}
-                className={`px-1.5 py-0.5 text-[10px] font-extrabold rounded transition-colors cursor-pointer ${fontSize === 'large' ? 'bg-blue-600 text-white' : 'bg-[#1e293b] text-slate-300 hover:bg-slate-700'}`}
-                title="Large Text Size"
-              >
-                A
-              </button>
-              <button 
-                type="button"
-                onClick={() => handleFontSizeChange('larger')}
-                className={`px-1.5 py-0.5 text-[10px] font-extrabold rounded transition-colors cursor-pointer ${fontSize === 'larger' ? 'bg-blue-600 text-white' : 'bg-[#1e293b] text-slate-300 hover:bg-slate-700'}`}
-                title="Larger Text Size"
-              >
-                +A
-              </button>
-            </div>
-
-            <a
-              href="https://whatsapp.com/channel/0029VbDgSe75a248qEZAbL3g"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-2.5 py-0.5 sm:py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-[10.5px] sm:text-[11px] rounded-md flex items-center gap-1 shadow-sm transition-all cursor-pointer shrink-0"
-              title="Join our official WhatsApp Channel for instant job & result updates"
-            >
-              <span>💬</span>
-              <span className="whitespace-nowrap">Join WhatsApp Channel</span>
-            </a>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. MAIN PORTAL HEADER - CENTERED CSC DOST BRANDING */}
+      {/* MAIN PORTAL HEADER - CENTERED CSC DOST BRANDING */}
       <div className="bg-gradient-to-r from-[#18204e] via-[#1c2661] to-[#171e4a] py-3.5 sm:py-4 px-3 sm:px-4 border-b border-blue-900/60 shadow-md">
         <div className="max-w-7xl mx-auto flex items-center justify-center">
           
@@ -220,16 +138,13 @@ export default function Navbar({
       <nav className="bg-[#ffffff] text-slate-800 shadow-md sticky top-0 z-50 border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 flex items-center justify-between h-12 sm:h-13 gap-1">
           
-          {/* Navigation Links - Smooth horizontal scroll on mobile without truncation */}
-          <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 text-xs sm:text-sm font-black uppercase tracking-wider h-full overflow-x-auto no-scrollbar whitespace-nowrap py-1 scroll-smooth">
+          {/* Navigation Links - Mobile-optimized horizontal navigation */}
+          <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm font-black uppercase tracking-wider h-full overflow-x-auto no-scrollbar whitespace-nowrap py-1 scroll-smooth">
             {[
-              { id: 'hero', label: 'HOME', icon: Home },
-              { id: 'apply', label: 'APPLY ONLINE', icon: FileCheck },
-              { id: 'track', label: 'TRACK STATUS', icon: Search },
-              { id: 'services', label: 'E-SERVICES', icon: Briefcase },
-              { id: 'sarkari-board', label: 'SARKARI BULLETINS', icon: Flame },
-              { id: 'knowledge-hub', label: 'GUIDES & SCHEMES', icon: BookOpen },
-              { id: 'node-info', label: 'CSC CENTRE INFO', icon: Info }
+              { id: 'hero', label: 'HOME', shortLabel: 'HOME', icon: Home },
+              { id: 'apply', label: 'APPLY ONLINE', shortLabel: 'APPLY', icon: FileCheck },
+              { id: 'track', label: 'TRACK STATUS', shortLabel: 'TRACK', icon: Search },
+              { id: 'services', label: 'E-SERVICES', shortLabel: 'SERVICES', icon: Briefcase },
             ].map((item) => {
               const isActive = activeItem === item.id;
               const IconComp = item.icon;
@@ -240,14 +155,15 @@ export default function Navbar({
                   onClick={() => {
                     scrollInto(item.id);
                   }} 
-                  className={`px-2.5 py-1.5 sm:px-3.5 sm:py-1.5 rounded-lg transition-all duration-200 flex items-center gap-1 sm:gap-1.5 font-black text-[11px] sm:text-xs cursor-pointer shrink-0 ${
+                  className={`px-2 py-1.5 sm:px-3 sm:py-1.5 rounded-lg transition-all duration-200 flex items-center gap-1 sm:gap-1.5 font-black text-[11px] sm:text-xs cursor-pointer shrink-0 ${
                     isActive 
                       ? 'bg-[#28307d] text-white shadow-xs' 
                       : 'text-slate-700 hover:text-[#28307d] hover:bg-slate-100'
                   }`}
                 >
                   <IconComp className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-amber-300' : 'text-slate-500'}`} />
-                  <span className="whitespace-nowrap">{item.label}</span>
+                  <span className="hidden sm:inline whitespace-nowrap">{item.label}</span>
+                  <span className="inline sm:hidden whitespace-nowrap">{item.shortLabel}</span>
                 </button>
               );
             })}
