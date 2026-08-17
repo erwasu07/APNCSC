@@ -380,7 +380,7 @@ export default function SarkariDedicatedPageView({
               {!['answer_keys', 'syllabus', 'results'].includes(item.category) && (
                 <button
                   type="button"
-                  onClick={() => onApplyService(`Filing Application: ${item.title}`)}
+                  onClick={() => onApplyService(item.title)}
                   className="px-6 sm:px-8 py-2.5 bg-[#172554] hover:bg-[#1e3a8a] text-white text-xs sm:text-sm font-bold rounded-lg transition-all cursor-pointer shadow-sm flex items-center gap-2"
                 >
                   <span>Apply via CSC Desk</span>

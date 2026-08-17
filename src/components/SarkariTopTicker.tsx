@@ -59,14 +59,6 @@ export default function SarkariTopTicker({ onApplyService }: SarkariTopTickerPro
   const handleApplyNow = (item: SarkariItem) => {
     setSelectedItem(null);
     onApplyService(item.title);
-    
-    // Smooth scroll to Digital Application & Appointment Desk
-    setTimeout(() => {
-      const formEl = document.getElementById('booking-portal-form');
-      if (formEl) {
-        formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 100);
   };
 
   return (

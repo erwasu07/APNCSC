@@ -466,6 +466,14 @@ export default function ApplyDedicatedPageView({
     window.print();
   };
 
+  const currentSarkariItem = SARKARI_DATA.find(item => item.title.toLowerCase() === formData.selectedService.toLowerCase()) ||
+    SARKARI_DATA.find(item => item.title === formData.selectedService) ||
+    SARKARI_DATA.find(item => formData.selectedService && (formData.selectedService.toLowerCase().includes(item.title.toLowerCase()) || item.title.toLowerCase().includes(formData.selectedService.toLowerCase())));
+
+  const currentServiceItem = SERVICES_LIST.find(s => s.name.toLowerCase() === formData.selectedService.toLowerCase()) ||
+    SERVICES_LIST.find(s => s.name === formData.selectedService) ||
+    SERVICES_LIST.find(s => formData.selectedService && (formData.selectedService.toLowerCase().includes(s.name.toLowerCase()) || s.name.toLowerCase().includes(formData.selectedService.toLowerCase())));
+
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 pb-16 pt-3 sm:pt-6 font-sans">
       <div className="max-w-4xl mx-auto px-3 sm:px-6">
@@ -560,6 +568,145 @@ export default function ApplyDedicatedPageView({
                   </p>
                 </div>
               </div>
+
+              {/* DEDICATED NOTIFICATION & APPLICATION INFORMATION PANEL */}
+              {currentSarkariItem && (
+                <div className="bg-gradient-to-br from-slate-50 to-indigo-50/40 border border-indigo-200/80 rounded-2xl p-4 sm:p-6 space-y-4 shadow-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-100 pb-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-0.5 bg-indigo-900 text-white rounded text-[10px] font-mono font-bold uppercase tracking-wider">
+                          Official Notification Details
+                        </span>
+                        {currentSarkariItem.advertisementNo && (
+                          <span className="text-[11px] font-mono text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded font-semibold">
+                            Advt: {currentSarkariItem.advertisementNo}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
+                        {currentSarkariItem.title}
+                      </h3>
+                    </div>
+
+                    {currentSarkariItem.officialLink && (
+                      <a
+                        href={currentSarkariItem.officialLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 text-indigo-900 border border-indigo-200 text-xs font-bold rounded-lg shadow-2xs transition-all shrink-0"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Official Website / PDF</span>
+                      </a>
+                    )}
+                  </div>
+
+                  {currentSarkariItem.shortInfo && (
+                    <p className="text-xs text-slate-700 leading-relaxed font-medium">
+                      {currentSarkariItem.shortInfo}
+                    </p>
+                  )}
+
+                  {/* Highlights Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                    <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
+                      <span className="text-[10px] font-mono text-slate-500 uppercase block font-semibold">
+                        Application Window
+                      </span>
+                      <span className="text-xs font-bold text-slate-900 block mt-0.5">
+                        {currentSarkariItem.startDate || 'Started'} — <strong className="text-red-600">{currentSarkariItem.lastDate || 'Active'}</strong>
+                      </span>
+                    </div>
+
+                    <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
+                      <span className="text-[10px] font-mono text-slate-500 uppercase block font-semibold">
+                        Total Vacancies
+                      </span>
+                      <span className="text-xs font-bold text-indigo-900 block mt-0.5">
+                        {currentSarkariItem.totalPosts || 'As per Advt'}
+                      </span>
+                    </div>
+
+                    <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
+                      <span className="text-[10px] font-mono text-slate-500 uppercase block font-semibold">
+                        Age Limit Criteria
+                      </span>
+                      <span className="text-xs font-bold text-slate-800 block mt-0.5">
+                        {currentSarkariItem.ageLimit || 'Refer to Notification'}
+                      </span>
+                    </div>
+
+                    <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
+                      <span className="text-[10px] font-mono text-slate-500 uppercase block font-semibold">
+                        Official Govt Fee
+                      </span>
+                      <span className="text-xs font-bold text-emerald-800 block mt-0.5">
+                        {currentSarkariItem.fees?.genObc || 'Free'} (Gen/OBC) • {currentSarkariItem.fees?.scSt || 'Free'} (SC/ST)
+                      </span>
+                    </div>
+                  </div>
+
+                  {currentSarkariItem.eligibility && (
+                    <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs text-xs space-y-1">
+                      <span className="font-bold text-slate-900 uppercase text-[10.5px] tracking-wide block">
+                        Eligibility &amp; Qualification Requirement:
+                      </span>
+                      <p className="text-slate-700 text-xs leading-relaxed">
+                        {currentSarkariItem.eligibility}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {currentServiceItem && !currentSarkariItem && (
+                <div className="bg-gradient-to-br from-slate-50 to-indigo-50/40 border border-indigo-200/80 rounded-2xl p-4 sm:p-6 space-y-4 shadow-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-100 pb-3">
+                    <div className="space-y-1">
+                      <span className="px-2.5 py-0.5 bg-indigo-900 text-white rounded text-[10px] font-mono font-bold uppercase tracking-wider">
+                        CSC E-Service Specifications
+                      </span>
+                      <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
+                        {currentServiceItem.name}
+                      </h3>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="px-3 py-1 bg-emerald-100 text-emerald-900 font-mono font-bold text-xs rounded-lg border border-emerald-300">
+                        {currentServiceItem.price}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-700 leading-relaxed font-medium">
+                    {currentServiceItem.description}
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    {currentServiceItem.estimatedTime && (
+                      <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-indigo-600 shrink-0" />
+                        <div>
+                          <span className="text-[10px] font-mono text-slate-500 uppercase block font-semibold">Estimated Turnaround</span>
+                          <span className="text-xs font-bold text-slate-900">{currentServiceItem.estimatedTime}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {currentServiceItem.requirements && currentServiceItem.requirements.length > 0 && (
+                      <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
+                        <span className="text-[10px] font-mono text-slate-500 uppercase block font-semibold mb-1">Required Documents</span>
+                        <ul className="text-xs text-slate-700 list-disc list-inside space-y-0.5">
+                          {currentServiceItem.requirements.map((req, rIdx) => (
+                            <li key={rIdx}>{req}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Error Notice */}
               {documentError && (
