@@ -841,6 +841,19 @@ app.post('/api/admin/restore', authenticateAdmin, (req, res) => {
   res.json({ success: true, message: 'Database restored successfully from backup.' });
 });
 
+// Explicitly serve sitemap.xml and robots.txt with correct MIME headers
+app.get('/sitemap.xml', (req: Request, res: Response) => {
+  const sitemapPath = path.join(process.cwd(), 'public', 'sitemap.xml');
+  res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+  res.sendFile(sitemapPath);
+});
+
+app.get('/robots.txt', (req: Request, res: Response) => {
+  const robotsPath = path.join(process.cwd(), 'public', 'robots.txt');
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.sendFile(robotsPath);
+});
+
 // Explicitly serve static public assets like favicons
 app.use(express.static(path.join(process.cwd(), 'public')));
 
