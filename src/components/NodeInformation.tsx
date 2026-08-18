@@ -49,6 +49,7 @@ const INDIAN_STATES = [
 
 export default function NodeInformation() {
   const [showCertificateModal, setShowCertificateModal] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
     try {
       return localStorage.getItem('csc_vle_access_verified') === 'true';
@@ -164,6 +165,7 @@ export default function NodeInformation() {
     setTimeout(() => {
       setVerifiedVisitor(visitorObj);
       setIsUnlocked(true);
+      setShowVerificationModal(false);
       setIsSubmitting(false);
 
       // Scroll smoothly to the node info container
@@ -215,6 +217,21 @@ export default function NodeInformation() {
             <p className="text-slate-500 dark:text-slate-400 text-xs font-medium">
               Verified digital kiosk operated by authorized CSC Village Level Entrepreneur (VLE) Wasim Ahmad Khanday.
             </p>
+
+            {/* Small 'May I know your details?' button directly below title & description */}
+            {!isUnlocked && (
+              <div className="mt-2.5">
+                <button
+                  type="button"
+                  onClick={() => setShowVerificationModal(true)}
+                  className="px-3.5 py-1.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm hover:shadow-md flex items-center gap-2 cursor-pointer ring-2 ring-amber-400/30"
+                  id="may-i-know-your-details-header-btn"
+                >
+                  <Lock className="w-3.5 h-3.5 text-slate-950" />
+                  <span>May I know your details?</span>
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -225,190 +242,37 @@ export default function NodeInformation() {
           </div>
         </div>
 
-        {/* CONDITION 1: LOCKED CONFIDENTIAL GATE (Visitor Verification Form) */}
+        {/* CONDITION 1: LOCKED PREVIEW CARD WITH 'May I know your details?' CTA */}
         {!isUnlocked ? (
-          <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 text-white rounded-2xl border border-indigo-900/60 p-5 sm:p-7 shadow-lg relative overflow-hidden" id="vle-confidential-gate">
-            {/* Background Glow */}
-            <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
-            
-            <div className="relative z-10 space-y-5">
-              
-              {/* Gate Notice Banner */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-indigo-800/60">
-                <div className="flex items-start gap-3">
-                  <div className="p-2.5 bg-amber-400 text-slate-950 rounded-xl shrink-0 shadow-md">
-                    <Lock className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono font-black uppercase tracking-widest text-amber-300 bg-indigo-900/80 px-2 py-0.5 rounded border border-indigo-700/60">
-                        CONFIDENTIALITY &amp; SECURITY PROTOCOL
-                      </span>
-                    </div>
-                    <h3 className="text-base sm:text-lg font-black text-white tracking-tight mt-1 font-display">
-                      Visitor Identity Verification Required to View VLE Credentials
-                    </h3>
-                    <p className="text-slate-300 text-xs sm:text-[13px] leading-relaxed max-w-3xl mt-1">
-                      To safeguard official government credentials from unauthorized scraping, identity impersonation, and fraudulent reproduction, full registration IDs, direct contact points, and the verified CSC VLE Certificate are protected. 
-                      Please provide your basic details below to instantly unlock and view the complete credentials.
-                    </p>
-                  </div>
-                </div>
+          <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4 shadow-xs" id="vle-locked-summary">
+            <div className="flex items-start gap-3.5">
+              <div className="p-3 bg-amber-400/10 text-amber-600 dark:text-amber-400 border border-amber-400/20 rounded-2xl shrink-0">
+                <Lock className="w-6 h-6" />
               </div>
-
-              {/* Verification Input Form */}
-              <form onSubmit={handleUnlockSubmit} className="space-y-4 pt-1" id="vle-verification-form">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                  
-                  {/* Full Name */}
-                  <div className="space-y-1">
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 font-mono">
-                      Your Full Name <span className="text-red-400">*</span>
-                    </label>
-                    <div className="relative">
-                      <User className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                      <input
-                        type="text"
-                        required
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="e.g. Shahid Ahmad"
-                        className="w-full bg-slate-950/80 border border-indigo-800/80 focus:border-amber-400 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors"
-                        id="visitor-name-input"
-                      />
-                    </div>
-                    {formErrors.name && (
-                      <p className="text-[10px] text-red-400 flex items-center gap-1 mt-0.5">
-                        <AlertCircle className="w-3 h-3" /> {formErrors.name}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Mobile Phone Number */}
-                  <div className="space-y-1">
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 font-mono">
-                      Mobile Number <span className="text-red-400">*</span>
-                    </label>
-                    <div className="relative">
-                      <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                      <input
-                        type="tel"
-                        required
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        placeholder="10-digit mobile number"
-                        maxLength={13}
-                        className="w-full bg-slate-950/80 border border-indigo-800/80 focus:border-amber-400 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors font-mono"
-                        id="visitor-phone-input"
-                      />
-                    </div>
-                    {formErrors.phone && (
-                      <p className="text-[10px] text-red-400 flex items-center gap-1 mt-0.5">
-                        <AlertCircle className="w-3 h-3" /> {formErrors.phone}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Email Address */}
-                  <div className="space-y-1">
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 font-mono">
-                      Email Address <span className="text-red-400">*</span>
-                    </label>
-                    <div className="relative">
-                      <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                      <input
-                        type="email"
-                        required
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        placeholder="name@example.com"
-                        className="w-full bg-slate-950/80 border border-indigo-800/80 focus:border-amber-400 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors"
-                        id="visitor-email-input"
-                      />
-                    </div>
-                    {formErrors.email && (
-                      <p className="text-[10px] text-red-400 flex items-center gap-1 mt-0.5">
-                        <AlertCircle className="w-3 h-3" /> {formErrors.email}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* State / UT */}
-                  <div className="space-y-1">
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 font-mono">
-                      State / UT <span className="text-red-400">*</span>
-                    </label>
-                    <div className="relative">
-                      <select
-                        value={formData.state}
-                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                        className="w-full bg-slate-950/80 border border-indigo-800/80 focus:border-amber-400 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none transition-colors"
-                        id="visitor-state-select"
-                      >
-                        {INDIAN_STATES.map((st) => (
-                          <option key={st} value={st} className="bg-slate-900 text-white">
-                            {st}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Full Address / District */}
-                  <div className="space-y-1 sm:col-span-2">
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 font-mono">
-                      Address / City / District <span className="text-red-400">*</span>
-                    </label>
-                    <div className="relative">
-                      <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                      <input
-                        type="text"
-                        required
-                        value={formData.address}
-                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                        placeholder="e.g. Qazigund, Anantnag"
-                        className="w-full bg-slate-950/80 border border-indigo-800/80 focus:border-amber-400 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors"
-                        id="visitor-address-input"
-                      />
-                    </div>
-                    {formErrors.address && (
-                      <p className="text-[10px] text-red-400 flex items-center gap-1 mt-0.5">
-                        <AlertCircle className="w-3 h-3" /> {formErrors.address}
-                      </p>
-                    )}
-                  </div>
-
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                    CSC NODE: 212515670018 • SANGRAN QAZIGUND
+                  </span>
                 </div>
-
-                {/* Submit Action Button */}
-                <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-indigo-900/60">
-                  <div className="flex items-center gap-2 text-[11px] text-slate-400 font-mono">
-                    <Shield className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>Your details are recorded securely for genuine citizen inquiry tracking.</span>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full sm:w-auto px-6 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg hover:shadow-amber-400/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                    id="submit-unlock-vle-btn"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                        <span>Verifying Details...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Unlock className="w-4 h-4 text-slate-950" />
-                        <span>Verify &amp; Unlock VLE Credentials</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
-
+                <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
+                  Government VLE Registration &amp; Official Certificate are Protected
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed">
+                  To safeguard official CSC credentials from unauthorized scraping and identity reproduction, registration records, direct contact numbers, and high-resolution certificates require identity verification.
+                </p>
+              </div>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setShowVerificationModal(true)}
+              className="px-5 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer shrink-0"
+              id="may-i-know-your-details-cta-btn"
+            >
+              <Unlock className="w-4 h-4 text-slate-950" />
+              <span>May I know your details?</span>
+            </button>
           </div>
         ) : (
           /* CONDITION 2: UNLOCKED CONFIDENTIAL VLE CREDENTIALS */
@@ -609,6 +473,213 @@ export default function NodeInformation() {
         )}
 
       </div>
+
+      {/* VISITOR IDENTITY VERIFICATION MODAL ("May I know your details?") */}
+      {showVerificationModal && !isUnlocked && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 text-white border border-indigo-800/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            
+            {/* Background Glow */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+
+            {/* Modal Header */}
+            <div className="p-4 sm:p-6 pb-3 border-b border-indigo-800/60 relative z-10 flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2.5 bg-amber-400 text-slate-950 rounded-xl shrink-0 shadow-md">
+                  <Lock className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono font-black uppercase tracking-widest text-amber-300 bg-indigo-900/80 px-2 py-0.5 rounded border border-indigo-700/60">
+                      CONFIDENTIALITY &amp; SECURITY PROTOCOL
+                    </span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-black text-white tracking-tight mt-1 font-display">
+                    Visitor Identity Verification Required to View VLE Credentials
+                  </h3>
+                  <p className="text-slate-300 text-xs sm:text-[13px] leading-relaxed max-w-2xl mt-1">
+                    To safeguard official government credentials from unauthorized scraping, identity impersonation, and fraudulent reproduction, full registration IDs, direct contact points, and the verified CSC VLE Certificate are protected. Please provide your basic details below to instantly unlock and view the complete credentials.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowVerificationModal(false)}
+                className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800/80 rounded-lg transition-colors cursor-pointer shrink-0"
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body / Verification Form */}
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-4 relative z-10">
+              <form onSubmit={handleUnlockSubmit} className="space-y-4" id="vle-verification-form">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                  
+                  {/* Full Name */}
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 font-mono">
+                      YOUR FULL NAME <span className="text-red-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <User className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                      <input
+                        type="text"
+                        required
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="e.g. Shahid Ahmad"
+                        className="w-full bg-slate-950/80 border border-indigo-800/80 focus:border-amber-400 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors"
+                        id="visitor-name-input"
+                      />
+                    </div>
+                    {formErrors.name && (
+                      <p className="text-[10px] text-red-400 flex items-center gap-1 mt-0.5">
+                        <AlertCircle className="w-3 h-3" /> {formErrors.name}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Mobile Phone Number */}
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 font-mono">
+                      MOBILE NUMBER <span className="text-red-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                      <input
+                        type="tel"
+                        required
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        placeholder="10-digit mobile number"
+                        maxLength={13}
+                        className="w-full bg-slate-950/80 border border-indigo-800/80 focus:border-amber-400 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors font-mono"
+                        id="visitor-phone-input"
+                      />
+                    </div>
+                    {formErrors.phone && (
+                      <p className="text-[10px] text-red-400 flex items-center gap-1 mt-0.5">
+                        <AlertCircle className="w-3 h-3" /> {formErrors.phone}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Email Address */}
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 font-mono">
+                      EMAIL ADDRESS <span className="text-red-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                      <input
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="name@example.com"
+                        className="w-full bg-slate-950/80 border border-indigo-800/80 focus:border-amber-400 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors"
+                        id="visitor-email-input"
+                      />
+                    </div>
+                    {formErrors.email && (
+                      <p className="text-[10px] text-red-400 flex items-center gap-1 mt-0.5">
+                        <AlertCircle className="w-3 h-3" /> {formErrors.email}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* State / UT */}
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 font-mono">
+                      STATE / UT <span className="text-red-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={formData.state}
+                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                        className="w-full bg-slate-950/80 border border-indigo-800/80 focus:border-amber-400 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none transition-colors"
+                        id="visitor-state-select"
+                      >
+                        {INDIAN_STATES.map((st) => (
+                          <option key={st} value={st} className="bg-slate-900 text-white">
+                            {st}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Full Address / District */}
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 font-mono">
+                      ADDRESS / CITY / DISTRICT <span className="text-red-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                      <input
+                        type="text"
+                        required
+                        value={formData.address}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        placeholder="e.g. Qazigund, Anantnag"
+                        className="w-full bg-slate-950/80 border border-indigo-800/80 focus:border-amber-400 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors"
+                        id="visitor-address-input"
+                      />
+                    </div>
+                    {formErrors.address && (
+                      <p className="text-[10px] text-red-400 flex items-center gap-1 mt-0.5">
+                        <AlertCircle className="w-3 h-3" /> {formErrors.address}
+                      </p>
+                    )}
+                  </div>
+
+                </div>
+
+                {/* Submit Action Button Row */}
+                <div className="pt-3 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-indigo-900/60">
+                  <div className="flex items-center gap-2 text-[11px] text-slate-400 font-mono">
+                    <Shield className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>Your details are recorded securely for genuine citizen inquiry tracking.</span>
+                  </div>
+
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <button
+                      type="button"
+                      onClick={() => setShowVerificationModal(false)}
+                      className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex-1 sm:flex-initial px-6 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg hover:shadow-amber-400/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      id="submit-unlock-vle-btn"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                          <span>Verifying Details...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Unlock className="w-4 h-4 text-slate-950" />
+                          <span>VERIFY &amp; UNLOCK VLE CREDENTIALS</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* FULL CERTIFICATE MODAL */}
       {showCertificateModal && isUnlocked && (
