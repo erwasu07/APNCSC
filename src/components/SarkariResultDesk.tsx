@@ -1538,20 +1538,24 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
           </div>
         )}
 
-        {/* COMPACT SARKARI BOXES GRID (2 columns on mobile, 2 on tablet, 3 on desktop) */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 md:gap-5 max-w-7xl mx-auto w-full">
-            {[
-              { id: 'army_jobs', title: 'Indian Army Jobs', icon: Shield, color: 'bg-red-950 text-red-200 border-red-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
-              { id: 'rrb_jobs', title: 'RRB Jobs', icon: Train, color: 'bg-emerald-950 text-emerald-200 border-emerald-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
-              { id: 'ssc_jobs', title: 'SSC Jobs', icon: Briefcase, color: 'bg-orange-950 text-orange-200 border-orange-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
-              { id: 'cluster_univ', title: 'Cluster University', icon: Building2, color: 'bg-cyan-950 text-cyan-200 border-cyan-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
-              { id: 'jkssb', title: 'JKSSB Jobs', icon: Briefcase, color: 'bg-indigo-950 text-amber-300 border-indigo-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
-              { id: 'exam_forms', title: 'KU Exam Forms', icon: FileCheck, color: 'bg-amber-950 text-amber-300 border-amber-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
-              { id: 'admissions', title: 'KU Admissions', icon: GraduationCap, color: 'bg-teal-950 text-amber-300 border-teal-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
-              { id: 'jobs', title: 'Latest Jobs', icon: Briefcase, color: 'bg-[#ab0000] text-white border-[#ab0000]' },
-            ]
-              .filter(box => activeTab === 'all' || activeTab === box.id)
-              .map(box => {
+        {/* COMPACT SARKARI BOXES GRID (2 columns on mobile when all is selected, full edge-to-edge when filtered) */}
+        {(() => {
+          const displayedBoxes = [
+            { id: 'army_jobs', title: 'Indian Army Jobs', icon: Shield, color: 'bg-red-950 text-red-200 border-red-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
+            { id: 'rrb_jobs', title: 'RRB Jobs', icon: Train, color: 'bg-emerald-950 text-emerald-200 border-emerald-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
+            { id: 'ssc_jobs', title: 'SSC Jobs', icon: Briefcase, color: 'bg-orange-950 text-orange-200 border-orange-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
+            { id: 'cluster_univ', title: 'Cluster University', icon: Building2, color: 'bg-cyan-950 text-cyan-200 border-cyan-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
+            { id: 'jkssb', title: 'JKSSB Jobs', icon: Briefcase, color: 'bg-indigo-950 text-amber-300 border-indigo-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
+            { id: 'exam_forms', title: 'KU Exam Forms', icon: FileCheck, color: 'bg-amber-950 text-amber-300 border-amber-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
+            { id: 'admissions', title: 'KU Admissions', icon: GraduationCap, color: 'bg-teal-950 text-amber-300 border-teal-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
+            { id: 'jobs', title: 'Latest Jobs', icon: Briefcase, color: 'bg-[#ab0000] text-white border-[#ab0000]' },
+          ].filter(box => activeTab === 'all' || activeTab === box.id);
+
+          const isSingle = displayedBoxes.length === 1;
+
+          return (
+            <div className={`grid gap-2 sm:gap-4 md:gap-5 max-w-7xl mx-auto w-full ${isSingle ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-3'}`}>
+              {displayedBoxes.map(box => {
                 const boxItems = getItemsByCategory(box.id as any);
                 const IconComp = box.icon;
                 return (
@@ -1563,8 +1567,8 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                     id={`sarkari-box-${box.id}`}
                   >
                     {/* Header Bar */}
-                    <div className={`${box.color || 'bg-[#ab0000] text-white'} px-2 sm:px-4 py-2 sm:py-3 flex items-center justify-between font-black uppercase text-xs sm:text-base tracking-wider font-display shrink-0 shadow-xs`}>
-                      <div className="flex items-center gap-1 sm:gap-2 truncate">
+                    <div className={`${box.color || 'bg-[#ab0000] text-white'} px-2.5 sm:px-4 py-2 sm:py-3 flex items-center justify-between font-black uppercase text-xs sm:text-base tracking-wider font-display shrink-0 shadow-xs`}>
+                      <div className="flex items-center gap-1.5 sm:gap-2 truncate">
                         <IconComp className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 text-amber-300 shrink-0" />
                         <span className="truncate">{box.title}</span>
                       </div>
@@ -1574,38 +1578,52 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                     </div>
 
                     {/* Compact Scrollable List Box */}
-                    <div className="divide-y divide-slate-100 dark:divide-slate-800/80 max-h-[360px] sm:max-h-[420px] overflow-y-auto scrollbar-thin">
+                    <div className={`divide-y divide-slate-100 dark:divide-slate-800/80 overflow-y-auto scrollbar-thin ${isSingle ? 'max-h-[520px] sm:max-h-[640px]' : 'max-h-[360px] sm:max-h-[420px]'}`}>
                       {boxItems.length > 0 ? (
                         boxItems.map(item => (
                           <div
                             key={item.id}
                             onClick={() => handleItemClick(item)}
-                            className="p-2 sm:p-3.5 hover:bg-amber-500/10 dark:hover:bg-slate-800/80 transition-all cursor-pointer flex items-start gap-1.5 sm:gap-2.5 group"
+                            className="p-2.5 sm:p-3.5 hover:bg-amber-500/10 dark:hover:bg-slate-800/80 transition-all cursor-pointer flex items-start justify-between gap-2 group"
                             id={`sarkari-box-item-${item.id}`}
                           >
-                            <span className={`${box.id === 'jkssb' ? 'text-indigo-600 dark:text-amber-400' : 'text-[#ab0000] dark:text-amber-400'} font-extrabold text-xs sm:text-base shrink-0 leading-none mt-0.5`}>•</span>
-                            <div className="space-y-0.5 sm:space-y-1 flex-1 min-w-0">
-                              <p className="text-[11px] sm:text-[13px] font-bold text-blue-900 dark:text-blue-300 group-hover:text-indigo-700 dark:group-hover:text-amber-400 group-hover:underline leading-snug transition-colors font-sans line-clamp-3 sm:line-clamp-none">
-                                {item.title}
-                              </p>
-                              <div className="flex flex-wrap items-center gap-1 text-[9px] sm:text-[10px] font-mono text-slate-500">
-                                {item.isNew && (
-                                  <span className="px-1 py-0.1 bg-red-700 text-white font-black text-[8.5px] sm:text-[9.5px] rounded animate-pulse">
-                                    NEW
-                                  </span>
-                                )}
-                                {item.totalPosts && (
-                                  <span className="px-1 py-0.1 bg-indigo-100 dark:bg-indigo-950 text-indigo-900 dark:text-indigo-300 font-bold rounded truncate max-w-[90px] sm:max-w-none">
-                                    {item.totalPosts}
-                                  </span>
-                                )}
-                                {item.lastDate && (
-                                  <span className="text-red-600 dark:text-red-400 font-bold">
-                                    Last: {item.lastDate}
-                                  </span>
-                                )}
+                            <div className="flex items-start gap-1.5 sm:gap-2.5 flex-1 min-w-0">
+                              <span className={`${box.id === 'jkssb' ? 'text-indigo-600 dark:text-amber-400' : 'text-[#ab0000] dark:text-amber-400'} font-extrabold text-xs sm:text-base shrink-0 leading-none mt-0.5`}>•</span>
+                              <div className="space-y-0.5 sm:space-y-1 flex-1 min-w-0">
+                                <p className="text-[11px] sm:text-[13px] font-bold text-blue-900 dark:text-blue-300 group-hover:text-indigo-700 dark:group-hover:text-amber-400 group-hover:underline leading-snug transition-colors font-sans line-clamp-3 sm:line-clamp-none">
+                                  {item.title}
+                                </p>
+                                <div className="flex flex-wrap items-center gap-1.5 text-[9px] sm:text-[10px] font-mono text-slate-500">
+                                  {item.isNew && (
+                                    <span className="px-1 py-0.1 bg-red-700 text-white font-black text-[8.5px] sm:text-[9.5px] rounded animate-pulse">
+                                      NEW
+                                    </span>
+                                  )}
+                                  {item.totalPosts && (
+                                    <span className="px-1 py-0.1 bg-indigo-100 dark:bg-indigo-950 text-indigo-900 dark:text-indigo-300 font-bold rounded truncate max-w-[90px] sm:max-w-none">
+                                      {item.totalPosts}
+                                    </span>
+                                  )}
+                                  {item.lastDate && (
+                                    <span className="text-red-600 dark:text-red-400 font-bold">
+                                      Last: {item.lastDate}
+                                    </span>
+                                  )}
+                                  {item.advertisementNo && (
+                                    <span className="text-slate-400 dark:text-slate-500 hidden sm:inline">
+                                      | {item.advertisementNo}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
+                            {isSingle && (
+                              <div className="hidden sm:flex items-center gap-1 shrink-0 self-center">
+                                <span className="px-2 py-1 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-[11px] rounded-lg flex items-center gap-1 transition-transform group-hover:scale-105 shadow-xs">
+                                  View Details <ArrowRight className="w-3 h-3" />
+                                </span>
+                              </div>
+                            )}
                           </div>
                         ))
                       ) : (
@@ -1617,7 +1635,9 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                   </div>
                 );
               })}
-          </div>
+            </div>
+          );
+        })()}
         </div>
 
       {/* DETAILED SARKARI DEDICATED POST PAGE VIEW */}

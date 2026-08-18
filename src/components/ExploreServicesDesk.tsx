@@ -294,9 +294,9 @@ export default function ExploreServicesDesk({ onApplyService, selectedService, o
           </div>
         </div>
 
-        {/* COMPACT E-SERVICES BOXES GRID (2 columns on mobile, 2 on tablet, 3 on desktop) */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 md:gap-5 max-w-7xl mx-auto w-full">
-          {[
+        {/* COMPACT E-SERVICES BOXES GRID (2 columns on mobile when all is selected, full edge-to-edge when filtered) */}
+        {(() => {
+          const displayedBoxes = [
             {
               id: 'cards_adda_box',
               categoryKey: 'cards_adda',
@@ -426,103 +426,127 @@ export default function ExploreServicesDesk({ onApplyService, selectedService, o
               itemIds: ['biz-gst', 'biz-udyam', 'biz-dsc']
             }
           ]
-          .filter(box => selectedCategory === 'all' || box.categoryKey === selectedCategory)
-          .map(box => {
-            const BoxIcon = box.icon;
-            const boxItems = SERVICES_LIST.filter(s => {
-              const isBoxMatch = box.itemIds.includes(s.id);
-              const searchLower = searchQuery.toLowerCase();
-              const isSearchMatch = !searchQuery || 
-                s.name.toLowerCase().includes(searchLower) ||
-                s.description.toLowerCase().includes(searchLower) ||
-                s.requirements.some(req => req.toLowerCase().includes(searchLower));
-              return isBoxMatch && isSearchMatch;
-            });
+          .filter(box => selectedCategory === 'all' || box.categoryKey === selectedCategory);
 
-            return (
-              <div
-                key={box.id}
-                className={`bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border sm:border-2 overflow-hidden shadow-xs sm:shadow-md flex flex-col transition-all duration-300 ${
-                  box.id === 'cards_adda_box'
-                    ? 'border-purple-600 dark:border-purple-500'
-                    : box.id === 'jk_state_box'
-                    ? 'border-emerald-600 dark:border-emerald-500'
-                    : box.id === 'jk_revenue'
-                    ? 'border-amber-500 dark:border-amber-600'
-                    : 'border-blue-600 dark:border-blue-700'
-                }`}
-                id={`eservices-box-${box.id}`}
-              >
-                {/* Box Header Bar */}
-                <div className={`${
-                  box.id === 'cards_adda_box'
-                    ? 'bg-gradient-to-r from-purple-700 via-indigo-800 to-purple-900'
-                    : box.id === 'jk_state_box'
-                    ? 'bg-gradient-to-r from-emerald-700 via-teal-800 to-emerald-900'
-                    : box.id === 'jk_revenue'
-                    ? 'bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800'
-                    : 'bg-[#1d4ed8]'
-                } text-white px-2 sm:px-4 py-2 sm:py-3 flex items-center justify-between font-black uppercase text-xs sm:text-base tracking-wider font-display shrink-0 shadow-xs`}>
-                  <div className="flex items-center gap-1 sm:gap-2 truncate">
-                    <BoxIcon className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 text-amber-300 shrink-0" />
-                    <span className="truncate">{box.title}</span>
-                  </div>
-                  <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-mono font-bold shrink-0 ml-1 bg-black/30 text-white">
-                    {boxItems.length}
-                  </span>
-                </div>
+          const isSingle = displayedBoxes.length === 1;
 
-                {/* Items List Inside Box */}
-                <div className="divide-y divide-slate-100 dark:divide-slate-800/80 max-h-[360px] sm:max-h-[420px] overflow-y-auto scrollbar-thin">
-                  {boxItems.length > 0 ? (
-                    boxItems.map(item => (
-                      <div
-                        key={item.id}
-                        onClick={() => handleOpenService(item)}
-                        className="p-2 sm:p-3 hover:bg-blue-50/70 dark:hover:bg-slate-800/80 transition-all cursor-pointer flex items-start gap-1.5 sm:gap-2.5 group"
-                        id={`eservice-item-${item.id}`}
-                      >
-                        <span className={`${
-                          item.category === 'revenue' 
-                            ? 'text-amber-500 dark:text-amber-400' 
-                            : item.category === 'jk_state'
-                            ? 'text-emerald-600 dark:text-emerald-400'
-                            : item.category === 'cards_adda'
-                            ? 'text-purple-600 dark:text-purple-400'
-                            : 'text-blue-600 dark:text-blue-400'
-                        } font-extrabold text-xs sm:text-base shrink-0 leading-none mt-0.5`}>•</span>
-                        <div className="space-y-0.5 sm:space-y-1 flex-1 min-w-0">
-                          <p className="text-[11px] sm:text-[13px] font-bold text-blue-900 dark:text-blue-300 group-hover:text-indigo-700 dark:group-hover:text-amber-400 group-hover:underline leading-snug transition-colors font-sans line-clamp-3 sm:line-clamp-none">
-                            {item.name}
-                          </p>
-                          <div className="flex flex-wrap items-center gap-1 text-[9px] sm:text-[10px] font-mono text-slate-500">
-                            {item.popular && (
-                              <span className="px-1 py-0.1 bg-amber-600 text-slate-950 font-black text-[8.5px] sm:text-[9.5px] rounded">
-                                HOT
-                              </span>
-                            )}
-                            <span className="px-1 py-0.1 bg-blue-100 dark:bg-blue-950 text-blue-900 dark:text-blue-300 font-bold rounded">
-                              {item.price.split('+')[0].split('(')[0].trim()}
-                            </span>
-                            {item.estimatedTime && (
-                              <span className="text-emerald-700 dark:text-emerald-400 font-semibold truncate max-w-[85px] sm:max-w-none">
-                                {item.estimatedTime}
-                              </span>
+          return (
+            <div className={`grid gap-2 sm:gap-4 md:gap-5 max-w-7xl mx-auto w-full ${isSingle ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-3'}`}>
+              {displayedBoxes.map(box => {
+                const BoxIcon = box.icon;
+                const boxItems = SERVICES_LIST.filter(s => {
+                  const isBoxMatch = box.itemIds.includes(s.id);
+                  const searchLower = searchQuery.toLowerCase();
+                  const isSearchMatch = !searchQuery || 
+                    s.name.toLowerCase().includes(searchLower) ||
+                    s.description.toLowerCase().includes(searchLower) ||
+                    s.requirements.some(req => req.toLowerCase().includes(searchLower));
+                  return isBoxMatch && isSearchMatch;
+                });
+
+                return (
+                  <div
+                    key={box.id}
+                    className={`bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border sm:border-2 overflow-hidden shadow-xs sm:shadow-md flex flex-col transition-all duration-300 ${
+                      box.id === 'cards_adda_box'
+                        ? 'border-purple-600 dark:border-purple-500'
+                        : box.id === 'jk_state_box'
+                        ? 'border-emerald-600 dark:border-emerald-500'
+                        : box.id === 'jk_revenue'
+                        ? 'border-amber-500 dark:border-amber-600'
+                        : 'border-blue-600 dark:border-blue-700'
+                    }`}
+                    id={`eservices-box-${box.id}`}
+                  >
+                    {/* Box Header Bar */}
+                    <div className={`${
+                      box.id === 'cards_adda_box'
+                        ? 'bg-gradient-to-r from-purple-700 via-indigo-800 to-purple-900'
+                        : box.id === 'jk_state_box'
+                        ? 'bg-gradient-to-r from-emerald-700 via-teal-800 to-emerald-900'
+                        : box.id === 'jk_revenue'
+                        ? 'bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800'
+                        : 'bg-[#1d4ed8]'
+                    } text-white px-2.5 sm:px-4 py-2 sm:py-3 flex items-center justify-between font-black uppercase text-xs sm:text-base tracking-wider font-display shrink-0 shadow-xs`}>
+                      <div className="flex items-center gap-1.5 sm:gap-2 truncate">
+                        <BoxIcon className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 text-amber-300 shrink-0" />
+                        <span className="truncate">{box.title}</span>
+                      </div>
+                      <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-mono font-bold shrink-0 ml-1 bg-black/30 text-white">
+                        {boxItems.length}
+                      </span>
+                    </div>
+
+                    {/* Items List Inside Box */}
+                    <div className={`divide-y divide-slate-100 dark:divide-slate-800/80 overflow-y-auto scrollbar-thin ${isSingle ? 'max-h-[520px] sm:max-h-[640px]' : 'max-h-[360px] sm:max-h-[420px]'}`}>
+                      {boxItems.length > 0 ? (
+                        boxItems.map(item => (
+                          <div
+                            key={item.id}
+                            onClick={() => handleOpenService(item)}
+                            className="p-2.5 sm:p-3.5 hover:bg-blue-50/70 dark:hover:bg-slate-800/80 transition-all cursor-pointer flex items-start justify-between gap-2 group"
+                            id={`eservice-item-${item.id}`}
+                          >
+                            <div className="flex items-start gap-1.5 sm:gap-2.5 flex-1 min-w-0">
+                              <span className={`${
+                                item.category === 'revenue' 
+                                  ? 'text-amber-500 dark:text-amber-400' 
+                                  : item.category === 'jk_state'
+                                  ? 'text-emerald-600 dark:text-emerald-400'
+                                  : item.category === 'cards_adda'
+                                  ? 'text-purple-600 dark:text-purple-400'
+                                  : 'text-blue-600 dark:text-blue-400'
+                              } font-extrabold text-xs sm:text-base shrink-0 leading-none mt-0.5`}>•</span>
+                              <div className="space-y-0.5 sm:space-y-1 flex-1 min-w-0">
+                                <p className="text-[11px] sm:text-[13px] font-bold text-blue-900 dark:text-blue-300 group-hover:text-indigo-700 dark:group-hover:text-amber-400 group-hover:underline leading-snug transition-colors font-sans line-clamp-3 sm:line-clamp-none">
+                                  {item.name}
+                                </p>
+                                <div className="flex flex-wrap items-center gap-1.5 text-[9px] sm:text-[10px] font-mono text-slate-500">
+                                  {item.popular && (
+                                    <span className="px-1 py-0.1 bg-amber-600 text-slate-950 font-black text-[8.5px] sm:text-[9.5px] rounded">
+                                      HOT
+                                    </span>
+                                  )}
+                                  <span className="px-1.5 py-0.2 bg-blue-100 dark:bg-blue-950 text-blue-900 dark:text-blue-300 font-bold rounded">
+                                    {item.price.split('+')[0].split('(')[0].trim()}
+                                  </span>
+                                  {item.estimatedTime && (
+                                    <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
+                                      {item.estimatedTime}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            {isSingle && (
+                              <div className="hidden sm:flex items-center gap-1 shrink-0 self-center">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleApply(item);
+                                  }}
+                                  className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-xs transition-transform group-hover:scale-105 cursor-pointer"
+                                >
+                                  <span>Apply</span>
+                                  <ArrowRight className="w-3 h-3" />
+                                </button>
+                              </div>
                             )}
                           </div>
+                        ))
+                      ) : (
+                        <div className="p-4 sm:p-8 text-center text-xs text-slate-400 italic">
+                          No matching services
                         </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-4 sm:p-8 text-center text-xs text-slate-400 italic">
-                      No matching services
+                      )}
                     </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
 
       </div>
 
