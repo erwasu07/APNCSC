@@ -685,7 +685,8 @@ app.post('/api/whatsapp/broadcast', async (req: Request, res: Response) => {
       postUrl, 
       targetGroup, 
       targetChannel, 
-      webhookUrl 
+      webhookUrl,
+      gatewayProvider
     } = req.body || {};
 
     if (!messageText) {
@@ -696,34 +697,84 @@ app.post('/api/whatsapp/broadcast', async (req: Request, res: Response) => {
     const effectiveGroup = (targetGroup || process.env.WHATSAPP_TARGET_GROUP_ID || '').trim();
 
     let webhookStatus = 'skipped';
-    let webhookResponse = null;
+    let webhookResponse: any = null;
+    let dispatchedVia = 'server-simulated';
 
-    // If a webhook / gateway endpoint is provided (e.g. UltraMsg, GreenAPI, Baileys Bot)
+    // If a webhook / gateway endpoint is provided (e.g. UltraMsg, GreenAPI, Baileys Bot, Evolution API, Make/Zapier)
     if (effectiveWebhook) {
       try {
-        const fetchRes = await fetch(effectiveWebhook, {
+        let fetchUrl = effectiveWebhook;
+        let fetchOptions: any = {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+          headers: { 'Content-Type': 'application/json' }
+        };
+
+        const isUltraMsg = effectiveWebhook.includes('ultramsg.com') || gatewayProvider === 'ultramsg';
+        const isGreenApi = effectiveWebhook.includes('green-api.com') || effectiveWebhook.includes('greenapi.com') || gatewayProvider === 'greenapi';
+        const isEvolution = effectiveWebhook.includes('evolution') || gatewayProvider === 'evolution';
+
+        if (isUltraMsg) {
+          dispatchedVia = 'UltraMsg Gateway';
+          // If URL doesn't have /messages/chat, append it
+          if (!fetchUrl.endsWith('/messages/chat')) {
+            fetchUrl = fetchUrl.replace(/\/+$/, '') + '/messages/chat';
+          }
+          fetchOptions.body = JSON.stringify({
+            to: effectiveGroup,
+            body: messageText
+          });
+        } else if (isGreenApi) {
+          dispatchedVia = 'Green API Gateway';
+          fetchOptions.body = JSON.stringify({
+            chatId: effectiveGroup.includes('@') ? effectiveGroup : `${effectiveGroup}@g.us`,
+            message: messageText
+          });
+        } else if (isEvolution) {
+          dispatchedVia = 'Evolution API Gateway';
+          fetchOptions.body = JSON.stringify({
+            number: effectiveGroup,
+            text: messageText
+          });
+        } else {
+          dispatchedVia = 'Direct HTTP Webhook Gateway';
+          // Comprehensive payload supporting standard automation tools (Make, Zapier, Baileys, n8n, Custom Node)
+          fetchOptions.body = JSON.stringify({
             title,
             category,
             message: messageText,
+            messageText,
+            body: messageText,
             targetGroup: effectiveGroup,
-            targetChannel,
+            targetChannel: targetChannel || 'CSC DOST Channel',
+            to: effectiveGroup,
+            chatId: effectiveGroup,
             postUrl,
             timestamp: new Date().toISOString()
-          })
-        });
-        webhookResponse = await fetchRes.text();
-        webhookStatus = fetchRes.ok ? 'success' : 'failed';
-        console.log(`📡 WhatsApp Webhook Broadcast dispatched to ${effectiveWebhook} [Status: ${fetchRes.status}]`);
+          });
+        }
+
+        console.log(`📡 Dispatching automated WhatsApp broadcast to ${fetchUrl} via ${dispatchedVia}...`);
+
+        const fetchRes = await fetch(fetchUrl, fetchOptions);
+        const resText = await fetchRes.text();
+        
+        try {
+          webhookResponse = JSON.parse(resText);
+        } catch {
+          webhookResponse = resText;
+        }
+
+        webhookStatus = fetchRes.ok ? 'success' : `failed (HTTP ${fetchRes.status})`;
+        console.log(`✅ WhatsApp Webhook Dispatch result: ${webhookStatus}`);
       } catch (webhookErr: any) {
-        console.error('WhatsApp Webhook Dispatch Error:', webhookErr);
+        console.error('❌ WhatsApp Webhook Dispatch Error:', webhookErr);
         webhookStatus = 'error: ' + (webhookErr?.message || String(webhookErr));
       }
+    } else {
+      console.log('ℹ️ No external webhook configured. Logging broadcast to server queue and memory.');
     }
 
-    // Direct WhatsApp Sharing URLs
+    // Direct WhatsApp Sharing URLs (for manual fallback)
     const encodedText = encodeURIComponent(messageText);
     const directShareUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
     const webShareUrl = `https://web.whatsapp.com/send?text=${encodedText}`;
@@ -738,15 +789,18 @@ app.post('/api/whatsapp/broadcast', async (req: Request, res: Response) => {
       targetGroup: effectiveGroup || 'Community Group',
       targetChannel: targetChannel || 'CSC DOST Channel',
       webhookStatus,
+      dispatchedVia,
+      webhookUrl: effectiveWebhook ? effectiveWebhook.slice(0, 30) + '...' : 'Not configured',
       dispatchedAt: new Date().toISOString()
     };
     broadcastLogs.unshift(logItem);
     if (broadcastLogs.length > 50) broadcastLogs.pop();
 
     console.log('\n========================================');
-    console.log(`📢 WHATSAPP BROADCAST PREPARED FOR CHANNEL & GROUP`);
+    console.log(`📢 AUTOMATED WHATSAPP BROADCAST DISPATCHED`);
     console.log(`🏷️ TITLE: ${title || 'Notice'}`);
-    console.log(`🔗 TARGET: ${effectiveGroup || 'WhatsApp Group & Channel'}`);
+    console.log(`🎯 TARGET GROUP: ${effectiveGroup || 'Configured Community Group'}`);
+    console.log(`📡 WEBHOOK STATUS: ${webhookStatus}`);
     console.log('----------------------------------------');
     console.log(messageText);
     console.log('========================================\n');
@@ -758,7 +812,10 @@ app.post('/api/whatsapp/broadcast', async (req: Request, res: Response) => {
       webShareUrl,
       webhookStatus,
       webhookResponse,
-      message: 'WhatsApp Broadcast prepared successfully.'
+      dispatchedVia,
+      message: effectiveWebhook 
+        ? `Automated broadcast sent to ${dispatchedVia}! Status: ${webhookStatus}`
+        : 'Broadcast saved and logged to server. (To send automatically without opening WhatsApp, enter your Webhook Gateway URL in Setup).'
     });
   } catch (err: any) {
     console.error('Broadcast endpoint error:', err);
@@ -769,6 +826,83 @@ app.post('/api/whatsapp/broadcast', async (req: Request, res: Response) => {
 // Retrieve recent broadcast logs
 app.get('/api/whatsapp/broadcast-logs', (req: Request, res: Response) => {
   return res.json({ success: true, logs: broadcastLogs });
+});
+
+// Test Webhook Gateway Connection
+app.post('/api/whatsapp/test-webhook', async (req: Request, res: Response) => {
+  try {
+    const { webhookUrl, targetGroup, gatewayProvider } = req.body || {};
+    const testWebhook = (webhookUrl || process.env.WHATSAPP_BROADCAST_WEBHOOK_URL || '').trim();
+    const testGroup = (targetGroup || process.env.WHATSAPP_TARGET_GROUP_ID || '').trim();
+
+    if (!testWebhook) {
+      return res.status(400).json({ success: false, error: 'Please provide a Webhook URL to test.' });
+    }
+
+    let fetchUrl = testWebhook;
+    let fetchOptions: any = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    };
+
+    const isUltraMsg = testWebhook.includes('ultramsg.com') || gatewayProvider === 'ultramsg';
+    const isGreenApi = testWebhook.includes('green-api.com') || testWebhook.includes('greenapi.com') || gatewayProvider === 'greenapi';
+    const isEvolution = testWebhook.includes('evolution') || gatewayProvider === 'evolution';
+
+    const testMsg = `🔔 *CSC DOST Webhook Connection Test*\n✅ Time: ${new Date().toLocaleString()}\n👉 Target Group: ${testGroup || 'Default'}\n🚀 WhatsApp Broadcast Engine is Connected and Ready!`;
+
+    if (isUltraMsg) {
+      if (!fetchUrl.endsWith('/messages/chat')) {
+        fetchUrl = fetchUrl.replace(/\/+$/, '') + '/messages/chat';
+      }
+      fetchOptions.body = JSON.stringify({
+        to: testGroup || '120363000000000000@g.us',
+        body: testMsg
+      });
+    } else if (isGreenApi) {
+      fetchOptions.body = JSON.stringify({
+        chatId: testGroup ? (testGroup.includes('@') ? testGroup : `${testGroup}@g.us`) : '120363000000000000@g.us',
+        message: testMsg
+      });
+    } else if (isEvolution) {
+      fetchOptions.body = JSON.stringify({
+        number: testGroup || '120363000000000000@g.us',
+        text: testMsg
+      });
+    } else {
+      fetchOptions.body = JSON.stringify({
+        type: 'test_connection',
+        message: testMsg,
+        targetGroup: testGroup,
+        to: testGroup,
+        chatId: testGroup,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const start = Date.now();
+    const fetchRes = await fetch(fetchUrl, fetchOptions);
+    const duration = Date.now() - start;
+    const resText = await fetchRes.text();
+
+    let parsedResponse: any = null;
+    try {
+      parsedResponse = JSON.parse(resText);
+    } catch {
+      parsedResponse = resText;
+    }
+
+    return res.json({
+      success: fetchRes.ok,
+      status: fetchRes.status,
+      statusText: fetchRes.statusText,
+      durationMs: duration,
+      response: parsedResponse,
+      message: fetchRes.ok ? `Gateway responded with HTTP ${fetchRes.status} in ${duration}ms!` : `Gateway returned HTTP ${fetchRes.status}: ${resText.slice(0, 150)}`
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message || String(err) });
+  }
 });
 
 // Admin Authentication: Login
