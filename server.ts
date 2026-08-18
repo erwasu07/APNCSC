@@ -1,6 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
-import { createServer as createViteServer } from 'vite';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import { 
@@ -27,6 +26,11 @@ dotenv.config();
 
 const app = express();
 const PORT = 3000;
+
+// Health check endpoints for deployment probes & container health checks
+app.get(['/api/health', '/health', '/_health'], (req: Request, res: Response) => {
+  res.status(200).json({ status: 'ok', time: new Date().toISOString() });
+});
 
 // Initialize Razorpay instance with configured keys
 const RAZORPAY_KEY_ID = (process.env.RAZORPAY_KEY_ID || 'rzp_live_TKzCEWX1HvPA4c').trim();
@@ -668,6 +672,105 @@ _Thank you for choosing ${storeName}! If you have any questions, reply directly 
   }
 });
 
+// Broadcast notification storage in memory
+const broadcastLogs: any[] = [];
+
+// WhatsApp Channel & Group Automated Broadcast Endpoint
+app.post('/api/whatsapp/broadcast', async (req: Request, res: Response) => {
+  try {
+    const { 
+      title, 
+      category, 
+      messageText, 
+      postUrl, 
+      targetGroup, 
+      targetChannel, 
+      webhookUrl 
+    } = req.body || {};
+
+    if (!messageText) {
+      return res.status(400).json({ success: false, error: 'messageText is required for broadcasting.' });
+    }
+
+    const effectiveWebhook = (webhookUrl || process.env.WHATSAPP_BROADCAST_WEBHOOK_URL || '').trim();
+    const effectiveGroup = (targetGroup || process.env.WHATSAPP_TARGET_GROUP_ID || '').trim();
+
+    let webhookStatus = 'skipped';
+    let webhookResponse = null;
+
+    // If a webhook / gateway endpoint is provided (e.g. UltraMsg, GreenAPI, Baileys Bot)
+    if (effectiveWebhook) {
+      try {
+        const fetchRes = await fetch(effectiveWebhook, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title,
+            category,
+            message: messageText,
+            targetGroup: effectiveGroup,
+            targetChannel,
+            postUrl,
+            timestamp: new Date().toISOString()
+          })
+        });
+        webhookResponse = await fetchRes.text();
+        webhookStatus = fetchRes.ok ? 'success' : 'failed';
+        console.log(`📡 WhatsApp Webhook Broadcast dispatched to ${effectiveWebhook} [Status: ${fetchRes.status}]`);
+      } catch (webhookErr: any) {
+        console.error('WhatsApp Webhook Dispatch Error:', webhookErr);
+        webhookStatus = 'error: ' + (webhookErr?.message || String(webhookErr));
+      }
+    }
+
+    // Direct WhatsApp Sharing URLs
+    const encodedText = encodeURIComponent(messageText);
+    const directShareUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
+    const webShareUrl = `https://web.whatsapp.com/send?text=${encodedText}`;
+
+    // Record in broadcast history
+    const logItem = {
+      id: `bc-${Date.now()}`,
+      title: title || 'Job / Edu Alert',
+      category: category || 'general',
+      messageText,
+      postUrl: postUrl || '',
+      targetGroup: effectiveGroup || 'Community Group',
+      targetChannel: targetChannel || 'CSC DOST Channel',
+      webhookStatus,
+      dispatchedAt: new Date().toISOString()
+    };
+    broadcastLogs.unshift(logItem);
+    if (broadcastLogs.length > 50) broadcastLogs.pop();
+
+    console.log('\n========================================');
+    console.log(`📢 WHATSAPP BROADCAST PREPARED FOR CHANNEL & GROUP`);
+    console.log(`🏷️ TITLE: ${title || 'Notice'}`);
+    console.log(`🔗 TARGET: ${effectiveGroup || 'WhatsApp Group & Channel'}`);
+    console.log('----------------------------------------');
+    console.log(messageText);
+    console.log('========================================\n');
+
+    return res.json({
+      success: true,
+      log: logItem,
+      directShareUrl,
+      webShareUrl,
+      webhookStatus,
+      webhookResponse,
+      message: 'WhatsApp Broadcast prepared successfully.'
+    });
+  } catch (err: any) {
+    console.error('Broadcast endpoint error:', err);
+    return res.status(500).json({ success: false, error: err?.message || 'Failed to process broadcast.' });
+  }
+});
+
+// Retrieve recent broadcast logs
+app.get('/api/whatsapp/broadcast-logs', (req: Request, res: Response) => {
+  return res.json({ success: true, logs: broadcastLogs });
+});
+
 // Admin Authentication: Login
 app.post('/api/admin/login', (req, res) => {
   const { username, password } = req.body;
@@ -860,6 +963,7 @@ app.use(express.static(path.join(process.cwd(), 'public')));
 // Setup Vite Dev Server / Static Hosting Middleware
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
@@ -874,7 +978,7 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Cyber Cafe Server successfully started on http://0.0.0.0:${PORT}`);
+    console.log(`🚀 CSC DOST Server successfully started on http://0.0.0.0:${PORT}`);
   });
 }
 

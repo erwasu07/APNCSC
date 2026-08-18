@@ -13,73 +13,89 @@ interface DatabaseSchema {
   views: number;
 }
 
-// Ensure the directory and file exist
+const DEFAULT_DB: DatabaseSchema = {
+  settings: {
+    cafeName: "CSC DOST",
+    phone: "+91 70068 33767, +91 96821 32895",
+    whatsapp: "+91 70068 33767",
+    email: "www.khanday09@gmail.com",
+    address: "Sangran Qazigund, Sangran Qazigund, Anantnag, Jammu and Kashmir 192221",
+    officeHours: "Mon - Sat: 08:30 AM - 08:00 PM, Sun: 10:00 AM - 04:00 PM",
+    googleMapsEmbed: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3501.996452296068!2d77.21833441508272!3d28.630041982417724!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cfd3637e19e75%3A0x6b7a544f84c4f9a7!2sConnaught%20Place%2C%20New%20Delhi%2C%20Delhi%20110001!5e0!3m2!1sen!2sin!4v1680000000000!5m2!1sen!2sin",
+    seoTitle: "CSC DOST",
+    seoDescription: "CSC DOST (www.cscdost.com / www.cscdost.online) - Authorized CSC E-Governance and Digital Services Portal. Apply for PAN, Aadhaar updates, Ayushman Bharat card, Voter ID, and digital services.",
+    seoKeywords: "cscdost, CSC DOST, cscdost.com, www.cscdost.com, cscdost.online, www.cscdost.online, cyber cafe, CSC center, PAN card application, Aadhaar update, online form filling, printing"
+  },
+  announcements: [
+    {
+      "id": "ann-1",
+      "title": "New PM Kisan Samman Nidhi 17th Installment KYC Open",
+      "content": "All farmers registered under PM Kisan are requested to complete their e-KYC at our center before the end of this month to receive their installment seamlessly. Please bring your Aadhaar and linked mobile phone.",
+      "type": "warning",
+      "date": "2026-07-10T10:00:00.000Z",
+      "active": true
+    }
+  ],
+  gallery: [],
+  contactRequests: [],
+  appointments: [],
+  views: 0
+};
+
+let memoryDb: DatabaseSchema | null = null;
+
+// Ensure the directory and file exist safely
 function initDb() {
-  const dir = path.dirname(DB_PATH);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-  if (!fs.existsSync(DB_PATH)) {
-    const defaultDb: DatabaseSchema = {
-      settings: {
-        cafeName: "CSC DOST",
-        phone: "+91 70068 33767, +91 96821 32895",
-        whatsapp: "+91 70068 33767",
-        email: "www.khanday09@gmail.com",
-        address: "Sangran Qazigund, Sangran Qazigund, Anantnag, Jammu and Kashmir 192221",
-        officeHours: "Mon - Sat: 08:30 AM - 08:00 PM, Sun: 10:00 AM - 04:00 PM",
-        googleMapsEmbed: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3501.996452296068!2d77.21833441508272!3d28.630041982417724!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cfd3637e19e75%3A0x6b7a544f84c4f9a7!2sConnaught%20Place%2C%20New%20Delhi%2C%20Delhi%20110001!5e0!3m2!1sen!2sin!4v1680000000000!5m2!1sen!2sin",
-        seoTitle: "CSC DOST",
-        seoDescription: "CSC DOST (www.cscdost.com / www.cscdost.online) - Authorized CSC E-Governance and Digital Services Portal. Apply for PAN, Aadhaar updates, Ayushman Bharat card, Voter ID, and digital services.",
-        seoKeywords: "cscdost, CSC DOST, cscdost.com, www.cscdost.com, cscdost.online, www.cscdost.online, cyber cafe, CSC center, PAN card application, Aadhaar update, online form filling, printing"
-      },
-      announcements: [
-        {
-          "id": "ann-1",
-          "title": "New PM Kisan Samman Nidhi 17th Installment KYC Open",
-          "content": "All farmers registered under PM Kisan are requested to complete their e-KYC at our center before the end of this month to receive their installment seamlessly. Please bring your Aadhaar and linked mobile phone.",
-          "type": "warning",
-          "date": "2026-07-10T10:00:00.000Z",
-          "active": true
-        }
-      ],
-      gallery: [],
-      contactRequests: [],
-      appointments: [],
-      views: 0
-    };
-    fs.writeFileSync(DB_PATH, JSON.stringify(defaultDb, null, 2), 'utf-8');
+  if (memoryDb) return;
+  try {
+    const dir = path.dirname(DB_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    if (!fs.existsSync(DB_PATH)) {
+      fs.writeFileSync(DB_PATH, JSON.stringify(DEFAULT_DB, null, 2), 'utf-8');
+      memoryDb = JSON.parse(JSON.stringify(DEFAULT_DB));
+    }
+  } catch (err) {
+    console.warn('initDb filesystem warning (falling back to memory):', err);
+    if (!memoryDb) {
+      memoryDb = JSON.parse(JSON.stringify(DEFAULT_DB));
+    }
   }
 }
 
 export function getDb(): DatabaseSchema {
   initDb();
   try {
-    const content = fs.readFileSync(DB_PATH, 'utf-8');
-    const parsed = JSON.parse(content);
-    if (!parsed.appointments) parsed.appointments = [];
-    if (!parsed.contactRequests) parsed.contactRequests = [];
-    if (!parsed.announcements) parsed.announcements = [];
-    if (!parsed.gallery) parsed.gallery = [];
-    return parsed;
-  } catch (error) {
-    console.error('Error reading database file, recreating it...', error);
-    // If corrupt, reinitialize
     if (fs.existsSync(DB_PATH)) {
-      fs.unlinkSync(DB_PATH);
+      const content = fs.readFileSync(DB_PATH, 'utf-8');
+      const parsed = JSON.parse(content);
+      if (!parsed.appointments) parsed.appointments = [];
+      if (!parsed.contactRequests) parsed.contactRequests = [];
+      if (!parsed.announcements) parsed.announcements = [];
+      if (!parsed.gallery) parsed.gallery = [];
+      memoryDb = parsed;
+      return parsed;
     }
-    initDb();
-    const content = fs.readFileSync(DB_PATH, 'utf-8');
-    return JSON.parse(content);
+  } catch (error) {
+    console.warn('Error reading database file from disk, using memory fallback:', error);
   }
+  if (!memoryDb) {
+    memoryDb = JSON.parse(JSON.stringify(DEFAULT_DB));
+  }
+  return memoryDb;
 }
 
 export function saveDb(data: DatabaseSchema): void {
-  initDb();
-  // Atomic write
-  const tempPath = `${DB_PATH}.tmp`;
-  fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), 'utf-8');
-  fs.renameSync(tempPath, DB_PATH);
+  memoryDb = data;
+  try {
+    initDb();
+    const tempPath = `${DB_PATH}.tmp`;
+    fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), 'utf-8');
+    fs.renameSync(tempPath, DB_PATH);
+  } catch (err) {
+    console.warn('Disk save warning (state safely saved in memory):', err);
+  }
 }
 
 export function addContactRequest(req: Omit<ContactRequest, 'id' | 'status' | 'date'>): ContactRequest {
