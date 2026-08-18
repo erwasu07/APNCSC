@@ -434,7 +434,7 @@ export default function ExploreServicesDesk({ onApplyService, selectedService, o
             <div className={`grid gap-2 sm:gap-4 md:gap-5 max-w-7xl mx-auto w-full ${isSingle ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-3'}`}>
               {displayedBoxes.map(box => {
                 const BoxIcon = box.icon;
-                const boxItems = SERVICES_LIST.filter(s => {
+                const allBoxItems = SERVICES_LIST.filter(s => {
                   const isBoxMatch = box.itemIds.includes(s.id);
                   const searchLower = searchQuery.toLowerCase();
                   const isSearchMatch = !searchQuery || 
@@ -443,6 +443,9 @@ export default function ExploreServicesDesk({ onApplyService, selectedService, o
                     s.requirements.some(req => req.toLowerCase().includes(searchLower));
                   return isBoxMatch && isSearchMatch;
                 });
+
+                // Show top 7 items in overview mode, all items when filtered to that tab
+                const boxItems = isSingle ? allBoxItems : allBoxItems.slice(0, 7);
 
                 return (
                   <div
@@ -467,27 +470,27 @@ export default function ExploreServicesDesk({ onApplyService, selectedService, o
                         : box.id === 'jk_revenue'
                         ? 'bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800'
                         : 'bg-[#1d4ed8]'
-                    } text-white px-2.5 sm:px-4 py-2 sm:py-3 flex items-center justify-between font-black uppercase text-xs sm:text-base tracking-wider font-display shrink-0 shadow-xs`}>
+                    } text-white px-2.5 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between font-black uppercase text-xs sm:text-base tracking-wider font-display shrink-0 shadow-xs`}>
                       <div className="flex items-center gap-1.5 sm:gap-2 truncate">
                         <BoxIcon className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 text-amber-300 shrink-0" />
                         <span className="truncate">{box.title}</span>
                       </div>
                       <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-mono font-bold shrink-0 ml-1 bg-black/30 text-white">
-                        {boxItems.length}
+                        {allBoxItems.length}
                       </span>
                     </div>
 
-                    {/* Items List Inside Box */}
-                    <div className={`divide-y divide-slate-100 dark:divide-slate-800/80 overflow-y-auto scrollbar-thin ${isSingle ? 'max-h-[520px] sm:max-h-[640px]' : 'max-h-[360px] sm:max-h-[420px]'}`}>
+                    {/* Compact Minimized Items List Inside Box */}
+                    <div className={`divide-y divide-slate-100 dark:divide-slate-800/80 overflow-y-auto scrollbar-thin ${isSingle ? 'max-h-[540px] sm:max-h-[660px]' : 'max-h-[340px] sm:max-h-[380px]'}`}>
                       {boxItems.length > 0 ? (
                         boxItems.map(item => (
                           <div
                             key={item.id}
                             onClick={() => handleOpenService(item)}
-                            className="p-2.5 sm:p-3.5 hover:bg-blue-50/70 dark:hover:bg-slate-800/80 transition-all cursor-pointer flex items-start justify-between gap-2 group"
+                            className="py-1.5 px-2 sm:py-2 sm:px-3 hover:bg-blue-50/70 dark:hover:bg-slate-800/80 transition-all cursor-pointer flex items-center justify-between gap-1.5 group"
                             id={`eservice-item-${item.id}`}
                           >
-                            <div className="flex items-start gap-1.5 sm:gap-2.5 flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0">
                               <span className={`${
                                 item.category === 'revenue' 
                                   ? 'text-amber-500 dark:text-amber-400' 
@@ -496,51 +499,66 @@ export default function ExploreServicesDesk({ onApplyService, selectedService, o
                                   : item.category === 'cards_adda'
                                   ? 'text-purple-600 dark:text-purple-400'
                                   : 'text-blue-600 dark:text-blue-400'
-                              } font-extrabold text-xs sm:text-base shrink-0 leading-none mt-0.5`}>•</span>
-                              <div className="space-y-0.5 sm:space-y-1 flex-1 min-w-0">
-                                <p className="text-[11px] sm:text-[13px] font-bold text-blue-900 dark:text-blue-300 group-hover:text-indigo-700 dark:group-hover:text-amber-400 group-hover:underline leading-snug transition-colors font-sans line-clamp-3 sm:line-clamp-none">
-                                  {item.name}
-                                </p>
-                                <div className="flex flex-wrap items-center gap-1.5 text-[9px] sm:text-[10px] font-mono text-slate-500">
-                                  {item.popular && (
-                                    <span className="px-1 py-0.1 bg-amber-600 text-slate-950 font-black text-[8.5px] sm:text-[9.5px] rounded">
-                                      HOT
-                                    </span>
-                                  )}
-                                  <span className="px-1.5 py-0.2 bg-blue-100 dark:bg-blue-950 text-blue-900 dark:text-blue-300 font-bold rounded">
-                                    {item.price.split('+')[0].split('(')[0].trim()}
-                                  </span>
-                                  {item.estimatedTime && (
-                                    <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
-                                      {item.estimatedTime}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
+                              } font-extrabold text-xs sm:text-sm shrink-0 leading-none`}>•</span>
+                              <p className="text-[11px] sm:text-[12.5px] font-bold text-blue-900 dark:text-blue-300 group-hover:text-indigo-700 dark:group-hover:text-amber-400 group-hover:underline leading-snug transition-colors font-sans line-clamp-2 sm:line-clamp-1">
+                                {item.name}
+                              </p>
+                              {item.popular && (
+                                <span className="px-1 py-0.2 bg-amber-500 text-slate-950 font-black text-[8px] sm:text-[9px] rounded shrink-0">
+                                  HOT
+                                </span>
+                              )}
                             </div>
                             {isSingle && (
-                              <div className="hidden sm:flex items-center gap-1 shrink-0 self-center">
+                              <div className="hidden sm:flex items-center shrink-0">
                                 <button
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleApply(item);
                                   }}
-                                  className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-xs transition-transform group-hover:scale-105 cursor-pointer"
+                                  className="px-2 py-0.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-[10px] font-bold flex items-center gap-1 shadow-xs transition-transform group-hover:scale-105 cursor-pointer"
                                 >
                                   <span>Apply</span>
-                                  <ArrowRight className="w-3 h-3" />
+                                  <ArrowRight className="w-2.5 h-2.5" />
                                 </button>
                               </div>
                             )}
                           </div>
                         ))
                       ) : (
-                        <div className="p-4 sm:p-8 text-center text-xs text-slate-400 italic">
+                        <div className="p-3 text-center text-xs text-slate-400 italic">
                           No matching services
                         </div>
                       )}
                     </div>
+
+                    {/* Footer: View All Services Option */}
+                    {!isSingle ? (
+                      <div className="p-2 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-100 dark:border-slate-800 text-center shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCategory(box.categoryKey)}
+                          className="text-[11px] sm:text-xs font-bold text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 flex items-center justify-center gap-1.5 w-full py-0.5 hover:underline transition-colors group cursor-pointer"
+                          id={`eservice-view-all-${box.id}`}
+                        >
+                          <span>View all {allBoxItems.length} {box.title}</span>
+                          <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="p-2 sm:p-2.5 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 font-mono px-3 shrink-0">
+                        <span className="font-bold text-slate-700 dark:text-slate-300">Showing all {allBoxItems.length} services</span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCategory('all')}
+                          className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
+                          id="eservice-back-to-all-boxes"
+                        >
+                          <span>← Back to All Services</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
               })}

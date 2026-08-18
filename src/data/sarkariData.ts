@@ -45,6 +45,140 @@ export const SARKARI_CATEGORIES = {
 };
 
 export const SARKARI_DATA: SarkariItem[] = [
+  // 🇮🇳 TODAY'S NEWLY EXTRACTED NOTIFICATIONS (18 AUGUST 2026 - LATEST DISPATCH)
+  {
+    id: 'army-tgc-143-course-jul-2027',
+    title: 'Indian Army 143rd Technical Graduate Course (TGC-143 - Commencing Jul 2027)',
+    category: 'army_jobs',
+    postDate: '18/08/2026',
+    startDate: '18/08/2026',
+    lastDate: '19/09/2026',
+    advertisementNo: 'TGC-143 Course (July 2027 Batch)',
+    shortInfo: 'Indian Army invites online applications from eligible unmarried male Engineering Graduates for grant of Permanent Commission in the Indian Army for 143rd Technical Graduate Course (TGC-143) commencing at Indian Military Academy (IMA), Dehradun.',
+    ageLimit: '20 to 27 Years (Born between 02 Jul 1999 and 01 Jul 2006)',
+    eligibility: 'Passed the requisite Engineering Degree course or in the final year of Engineering Degree in relevant stream (Civil, Mech, Electrical, CS/IT, Electronics)',
+    totalPosts: '30 Posts (Permanent Commission in Army)',
+    officialLink: 'https://www.joinindianarmy.nic.in/officers-entry-apply-login.htm',
+    fees: {
+      genObc: '₹0 (No Application Fee)',
+      scSt: '₹0 (No Application Fee)'
+    },
+    isNew: true
+  },
+  {
+    id: 'rrb-ministerial-isolated-cen08-2026',
+    title: 'RRB Ministerial & Isolated Categories Recruitment 2026 (CEN 08/2026 - 1,280 Posts)',
+    category: 'rrb_jobs',
+    postDate: '18/08/2026',
+    startDate: '19/08/2026',
+    lastDate: '20/09/2026',
+    advertisementNo: 'CEN No. 08/2026 (Ministerial & Isolated)',
+    shortInfo: 'Railway Recruitment Boards (RRB) invite online applications for recruitment of Staff & Welfare Inspector, Chief Law Assistant, Junior Translator (Hindi), Stenographer, and other Ministerial & Isolated categories across all Indian Railway Zones.',
+    ageLimit: '18 to 45 Years depending on specific post (Relaxation as per RRB rules)',
+    eligibility: 'Graduation / Post Graduation in relevant discipline / Law Degree / Diploma in Labor Laws or Stenography qualifications as per post',
+    totalPosts: '1,280 Posts across RRB Zones',
+    officialLink: 'https://www.rrbapply.gov.in/#/auth/landing',
+    fees: {
+      genObc: '₹500 (₹400 refundable after appearing in CBT-1)',
+      scSt: '₹250 (₹250 refundable after appearing in CBT-1)'
+    },
+    isNew: true
+  },
+  {
+    id: 'ssc-junior-hindi-translator-jht-exam-2026',
+    title: 'SSC Combined Hindi Translators Examination (JHT, JT & SHT) 2026',
+    category: 'ssc_jobs',
+    postDate: '18/08/2026',
+    startDate: '18/08/2026',
+    lastDate: '18/09/2026',
+    advertisementNo: 'SSC/HQ/JHT-Exam-2026',
+    shortInfo: 'Staff Selection Commission (SSC) notifies competitive computer-based examination for recruitment of Junior Hindi Translator, Junior Translation Officer, Senior Hindi Translator, and Senior Translation Officer in various Central Government Ministries and Departments.',
+    ageLimit: '18 to 30 Years (Age relaxation applicable as per Govt of India rules)',
+    eligibility: "Master's Degree in Hindi with English as a compulsory/elective subject OR Master's Degree in English with Hindi + Recognized Diploma/Certificate in Translation from Hindi to English & vice-versa",
+    totalPosts: '412 Posts across Central Ministries',
+    officialLink: 'https://ssc.gov.in',
+    fees: {
+      genObc: '₹100 (Online Payment via UPI/NetBanking)',
+      scSt: '₹0 (Exempted for SC/ST/PwD/Women candidates)'
+    },
+    isNew: true
+  },
+  {
+    id: 'cus-integrated-pg-honors-sem2-sem4-exam-2026',
+    title: 'Online Examination Forms Notice for Integrated PG & Honors 2nd & 4th Semester (Session 2026)',
+    category: 'cluster_univ',
+    postDate: '18/08/2026',
+    startDate: '18/08/2026',
+    lastDate: '31/08/2026',
+    advertisementNo: 'CUS/Exam/IPG-Honors-2nd-4th/2026/1180',
+    shortInfo: 'Cluster University Srinagar notifies all regular and backlog students of 5-Year Integrated PG, Honors, and Professional Programmes of 2nd & 4th Semester (Batches 2022, 2023, 2024) to submit their online examination forms through the university ERP portal.',
+    ageLimit: 'Enrolled IPG & Honors Students',
+    eligibility: 'Enrolled students in Constituent Colleges having cleared internal continuous assessments and requisite attendance',
+    totalPosts: 'IPG Examination Desk',
+    officialLink: 'https://www.cusrinagar.edu.in/',
+    fees: {
+      genObc: '₹425 per subject + ₹200 University Exam Infra Fee',
+      scSt: '₹425 per subject + ₹200 University Exam Infra Fee'
+    },
+    isNew: true
+  },
+  {
+    id: 'jkssb-fsl-scientific-officer-lab-asst-2026',
+    title: 'Direct Recruitment for Scientific Officers & Laboratory Assistants in Home Department (FSL - 48 Posts)',
+    category: 'jkssb',
+    postDate: '18/08/2026',
+    startDate: '18/08/2026',
+    lastDate: '05/09/2026',
+    advertisementNo: 'JKSSB/Advt/Home-FSL/2026/11',
+    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) invites online applications from eligible Domiciles of UT of J&K for direct recruitment to 48 posts of Assistant Scientific Officer (Ballistics, Biology/Serology, Chemistry/Toxicology) and Laboratory Assistants in Forensic Science Laboratory (FSL), Home Department.',
+    ageLimit: '18 to 40 Years (OM), 43 Years (SC/ST/RBA/ALC-IB/EWS), 48 Years (Ex-Servicemen)',
+    eligibility: "Master's Degree in Forensic Science / Chemistry / Physics / Zoology / Botany / Biochemistry or B.Sc with relevant subjects for Lab Assistant",
+    totalPosts: '48 Posts (UT Cadre)',
+    officialLink: 'https://jkssb.nic.in',
+    fees: {
+      genObc: '₹500 (Open Merit / OM candidates)',
+      scSt: '₹400 (SC, ST, PwD & EWS candidates)'
+    },
+    isNew: true
+  },
+  {
+    id: 'ku-exam-form-bed-1st-2nd-sem-distance-2026',
+    title: 'Online Examination Forms Notice for B.Ed 1st & 2nd Semester Regular & Distance Education (Batch 2025-26)',
+    category: 'exam_forms',
+    postDate: '18/08/2026',
+    startDate: '18/08/2026',
+    lastDate: '03/09/2026',
+    advertisementNo: 'KU/Exam/BEd-1st-2nd-Sem/2026/894',
+    shortInfo: 'University of Kashmir announces opening of online examination forms for B.Ed 1st and 2nd Semester candidates of Directorate of Distance Education and affiliated private B.Ed Colleges for Session 2025-26.',
+    ageLimit: 'Enrolled B.Ed Students',
+    eligibility: 'Bonafide enrolled B.Ed students of Distance Education and Affiliated Colleges',
+    totalPosts: 'B.Ed Examination Desk',
+    officialLink: 'https://kashmiruniversity.net/Examination.aspx',
+    fees: {
+      genObc: '₹1,475 per Semester (Online Payment)',
+      scSt: '₹1,475 per Semester (Online Payment)'
+    },
+    isNew: true
+  },
+  {
+    id: 'ku-admission-foreign-language-diploma-2026',
+    title: 'Admission Notification for Diploma & Certificate Courses in Foreign Languages (Session 2026)',
+    category: 'admissions',
+    postDate: '18/08/2026',
+    startDate: '18/08/2026',
+    lastDate: '28/08/2026',
+    advertisementNo: 'KU/Adm/Foreign-Lang-Cert/2026/28',
+    shortInfo: 'Department of Foreign Languages, University of Kashmir, invites online applications for admission to 1-Year Diploma and 6-Month Certificate Courses in French, German, Russian, Arabic, and Persian languages for Academic Session 2026.',
+    ageLimit: 'No upper age bar',
+    eligibility: 'Passed 10+2 / Higher Secondary Part-II examination with at least 45% marks from any recognized Board/University',
+    totalPosts: '30 Seats per Language Stream',
+    officialLink: 'https://kashmiruniversity.net/AdmissionNotices.aspx',
+    fees: {
+      genObc: '₹250 (Application Fee) + Course Fee upon selection',
+      scSt: '₹250 (Application Fee) + Course Fee upon selection'
+    },
+    isNew: true
+  },
   // 🇮🇳 TODAY'S NEWLY EXTRACTED NOTIFICATIONS (18 AUGUST 2026)
   {
     id: 'army-ssc-tech-65-men-36-women-2026',

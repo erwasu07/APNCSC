@@ -50,7 +50,14 @@ import {
   Send,
   TrendingUp,
   Edit3,
-  Share2
+  Share2,
+  Users,
+  PhoneCall,
+  MessageCircle,
+  MapPin,
+  Unlock,
+  ShieldAlert,
+  Globe
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -70,6 +77,15 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   const [authLoading, setAuthLoading] = useState(false);
 
   const usernameInputRef = useRef<HTMLInputElement>(null);
+
+  // Tab state: 'applications' or 'vle_inquiries'
+  const [activeMainTab, setActiveMainTab] = useState<'applications' | 'vle_inquiries'>('applications');
+
+  // VLE Inquiries state
+  const [vleInquiries, setVleInquiries] = useState<any[]>([]);
+  const [vleSearchQuery, setVleSearchQuery] = useState<string>('');
+  const [vleFilterState, setVleFilterState] = useState<string>('all');
+  const [selectedVleIds, setSelectedVleIds] = useState<string[]>([]);
 
   // Automatically focus Username input field upon redirection to Staff Login
   useEffect(() => {
@@ -602,6 +618,40 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           setLoading(false);
         }
       );
+
+      // 3. Listen to "vle_inquiries"
+      const unsubVle = onSnapshot(
+        collection(db, 'vle_inquiries'),
+        (snapshot) => {
+          const remoteInquiries = snapshot.docs.map((docSnap) => ({
+            id: docSnap.id,
+            ...docSnap.data(),
+          }));
+          
+          let localInquiries: any[] = [];
+          try {
+            localInquiries = JSON.parse(localStorage.getItem('csc_vle_inquiries_log') || '[]');
+          } catch {}
+
+          const mergedMap = new Map<string, any>();
+          remoteInquiries.forEach((item: any) => mergedMap.set(item.id || item.inquiryId, item));
+          localInquiries.forEach((item: any) => {
+            const key = item.id || item.inquiryId;
+            if (key && !mergedMap.has(key)) {
+              mergedMap.set(key, item);
+            }
+          });
+
+          setVleInquiries(Array.from(mergedMap.values()));
+        },
+        (err) => {
+          console.warn('Firestore "vle_inquiries" notice:', err);
+          try {
+            const localInquiries = JSON.parse(localStorage.getItem('csc_vle_inquiries_log') || '[]');
+            setVleInquiries(localInquiries);
+          } catch {}
+        }
+      );
     } catch (fsErr) {
       console.error('Firestore connection exception:', fsErr);
       setLoading(false);
@@ -856,6 +906,123 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     document.body.removeChild(link);
   };
 
+  // Export VLE Visitor Inquiries to CSV
+  const handleExportVLEInquiriesCSV = () => {
+    if (vleInquiries.length === 0) return;
+    const headers = ['Inquiry ID', 'Visitor Name', 'Mobile Number', 'Email Address', 'State / UT', 'Address / District', 'Timestamp', 'Status'];
+    const rows = vleInquiries.map(inq => [
+      inq.id || inq.inquiryId || '',
+      `"${inq.name || ''}"`,
+      inq.phone || '',
+      inq.email || '',
+      `"${inq.state || ''}"`,
+      `"${inq.address || ''}"`,
+      `"${inq.timestamp || inq.createdAt || ''}"`,
+      `"${inq.status || 'Verified'}"`
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `VLE_Visitor_Access_Logs_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Delete Single VLE Inquiry
+  const handleDeleteVleInquiry = async (inquiryId: string) => {
+    if (!inquiryId) return;
+    if (window.confirm(`Permanently remove visitor log for ID ${inquiryId}?`)) {
+      try {
+        await deleteDoc(doc(db, 'vle_inquiries', inquiryId));
+      } catch (err) {
+        console.warn('Firestore delete inquiry notice:', err);
+      }
+
+      try {
+        const local = JSON.parse(localStorage.getItem('csc_vle_inquiries_log') || '[]');
+        const updated = local.filter((item: any) => item.id !== inquiryId && item.inquiryId !== inquiryId);
+        localStorage.setItem('csc_vle_inquiries_log', JSON.stringify(updated));
+      } catch {}
+
+      setVleInquiries(prev => prev.filter(item => item.id !== inquiryId && item.inquiryId !== inquiryId));
+      setActionSuccess(`Visitor inquiry record ${inquiryId} removed.`);
+      setTimeout(() => setActionSuccess(null), 3000);
+    }
+  };
+
+  // Clear All VLE Inquiries
+  const handleClearAllVleInquiries = async () => {
+    if (vleInquiries.length === 0) return;
+    if (window.confirm(`Are you sure you want to PURGE ALL ${vleInquiries.length} visitor access logs? This cannot be undone.`)) {
+      for (const inq of vleInquiries) {
+        const id = inq.id || inq.inquiryId;
+        if (id) {
+          try {
+            await deleteDoc(doc(db, 'vle_inquiries', id));
+          } catch {}
+        }
+      }
+      try {
+        localStorage.removeItem('csc_vle_inquiries_log');
+      } catch {}
+
+      setVleInquiries([]);
+      setSelectedVleIds([]);
+      setActionSuccess('All VLE Visitor Access logs cleared.');
+      setTimeout(() => setActionSuccess(null), 3000);
+    }
+  };
+
+  // Bulk Delete Selected VLE Inquiries
+  const handleBulkDeleteVle = async () => {
+    if (selectedVleIds.length === 0) return;
+    if (window.confirm(`Permanently delete ${selectedVleIds.length} selected visitor log(s)?`)) {
+      for (const id of selectedVleIds) {
+        try {
+          await deleteDoc(doc(db, 'vle_inquiries', id));
+        } catch {}
+      }
+      try {
+        const local = JSON.parse(localStorage.getItem('csc_vle_inquiries_log') || '[]');
+        const updated = local.filter((item: any) => !selectedVleIds.includes(item.id) && !selectedVleIds.includes(item.inquiryId));
+        localStorage.setItem('csc_vle_inquiries_log', JSON.stringify(updated));
+      } catch {}
+
+      setVleInquiries(prev => prev.filter(item => !selectedVleIds.includes(item.id) && !selectedVleIds.includes(item.inquiryId)));
+      setActionSuccess(`Removed ${selectedVleIds.length} visitor log(s).`);
+      setSelectedVleIds([]);
+      setTimeout(() => setActionSuccess(null), 3000);
+    }
+  };
+
+  // Filter VLE Inquiries
+  const filteredVleInquiries = vleInquiries.filter(inq => {
+    const q = vleSearchQuery.toLowerCase().trim();
+    const name = (inq.name || '').toLowerCase();
+    const phone = (inq.phone || '').toLowerCase();
+    const email = (inq.email || '').toLowerCase();
+    const state = (inq.state || '').toLowerCase();
+    const address = (inq.address || '').toLowerCase();
+    const id = (inq.id || inq.inquiryId || '').toLowerCase();
+
+    const matchesQuery = !q ||
+      name.includes(q) ||
+      phone.includes(q) ||
+      email.includes(q) ||
+      state.includes(q) ||
+      address.includes(q) ||
+      id.includes(q);
+
+    if (vleFilterState === 'all') return matchesQuery;
+    if (vleFilterState === 'jk') return matchesQuery && (state.includes('jammu') || state.includes('kashmir') || state.includes('ladakh'));
+    if (vleFilterState === 'other') return matchesQuery && !state.includes('jammu') && !state.includes('kashmir') && !state.includes('ladakh');
+
+    return matchesQuery;
+  });
+
   // Filter logic
   const filteredApplications = applications.filter(app => {
     const q = searchQuery.toLowerCase().trim();
@@ -1087,53 +1254,428 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         </div>
       )}
 
-      {/* Metrics Row */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
-            Total Submissions
-          </span>
-          <span className="text-2xl font-black text-slate-900 dark:text-white font-mono mt-1 block">
-            {applications.length}
-          </span>
+      {/* Main Admin Section Tabs */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setActiveMainTab('applications')}
+            className={`px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer ${
+              activeMainTab === 'applications'
+                ? 'bg-amber-500 text-slate-950 shadow-md ring-2 ring-amber-400/30'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+            }`}
+          >
+            <FileText className="w-4 h-4" />
+            <span>Customer Applications &amp; Orders</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+              activeMainTab === 'applications' ? 'bg-slate-950 text-amber-400' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+            }`}>
+              {applications.length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveMainTab('vle_inquiries')}
+            className={`px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer ${
+              activeMainTab === 'vle_inquiries'
+                ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-400/30'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+            }`}
+          >
+            <ShieldAlert className="w-4 h-4 text-amber-400" />
+            <span>VLE Visitor Access Logs</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+              activeMainTab === 'vle_inquiries' ? 'bg-white text-blue-900' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+            }`}>
+              {vleInquiries.length}
+            </span>
+          </button>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block flex items-center gap-1">
-            <IndianRupee className="w-3 h-3" /> Total Revenue
-          </span>
-          <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono mt-1 block">
-            ₹{applications.reduce((acc, a) => acc + (Number(a.totalAmount) || 0), 0)}
-          </span>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-500 block">
-            UPI Paid (Online)
-          </span>
-          <span className="text-2xl font-black text-amber-600 dark:text-amber-400 font-mono mt-1 block">
-            {applications.filter(a => a.paymentMode === 'online').length}
-          </span>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-500 block">
-            Cash Counter
-          </span>
-          <span className="text-2xl font-black text-blue-600 dark:text-blue-400 font-mono mt-1 block">
-            {applications.filter(a => a.paymentMode === 'cash').length}
-          </span>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs col-span-2 md:col-span-1">
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-500 block">
-            Uploaded Docs Total
-          </span>
-          <span className="text-2xl font-black text-purple-600 dark:text-purple-400 font-mono mt-1 block">
-            {applications.reduce((acc, app) => acc + (app.documents?.length || app.uploadedDocuments?.length || 0), 0)}
-          </span>
-        </div>
+        {activeMainTab === 'vle_inquiries' && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleExportVLEInquiriesCSV}
+              disabled={vleInquiries.length === 0}
+              className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+              title="Download VLE Visitors CSV"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Export Visitors CSV</span>
+            </button>
+            <button
+              onClick={handleClearAllVleInquiries}
+              disabled={vleInquiries.length === 0}
+              className="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/20 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer disabled:opacity-40"
+              title="Clear all logs"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Purge Logs</span>
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* VLE VISITOR INQUIRIES TAB CONTENT */}
+      {activeMainTab === 'vle_inquiries' && (
+        <div className="space-y-6 animate-fade-in">
+          {/* VLE Inquiries Metrics */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block flex items-center gap-1">
+                <Users className="w-3 h-3 text-blue-500" /> Total Verified Visitors
+              </span>
+              <span className="text-2xl font-black text-slate-900 dark:text-white font-mono mt-1 block">
+                {vleInquiries.length}
+              </span>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-emerald-500" /> J&amp;K Residents
+              </span>
+              <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono mt-1 block">
+                {vleInquiries.filter(i => (i.state || '').toLowerCase().includes('jammu') || (i.state || '').toLowerCase().includes('kashmir')).length}
+              </span>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-500 block flex items-center gap-1">
+                <Globe className="w-3 h-3 text-amber-500" /> Other States / UTs
+              </span>
+              <span className="text-2xl font-black text-amber-600 dark:text-amber-400 font-mono mt-1 block">
+                {vleInquiries.filter(i => !(i.state || '').toLowerCase().includes('jammu') && !(i.state || '').toLowerCase().includes('kashmir') && !(i.state || '').toLowerCase().includes('ladakh')).length}
+              </span>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-500 block flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-purple-500" /> Security Access Unlocked
+              </span>
+              <span className="text-2xl font-black text-purple-600 dark:text-purple-400 font-mono mt-1 block">
+                100% Verified
+              </span>
+            </div>
+          </div>
+
+          {/* Bulk Action Toolbar for VLE Inquiries */}
+          {selectedVleIds.length > 0 && (
+            <div className="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl shadow-lg flex flex-wrap items-center justify-between gap-3 animate-fade-in border border-blue-400">
+              <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider">
+                <CheckSquare className="w-5 h-5 text-amber-300" />
+                <span>{selectedVleIds.length} Visitor Log(s) Selected</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleBulkDeleteVle}
+                  className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete Selected ({selectedVleIds.length})</span>
+                </button>
+                <button
+                  onClick={() => setSelectedVleIds([])}
+                  className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
+                >
+                  Deselect All
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Search & State Filter for VLE Inquiries */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
+            <div className="relative w-full md:w-96">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <input
+                type="text"
+                placeholder="Search by Visitor Name, Mobile, Email, State, District..."
+                value={vleSearchQuery}
+                onChange={(e) => setVleSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-slate-900 dark:text-white"
+              />
+              {vleSearchQuery && (
+                <button
+                  onClick={() => setVleSearchQuery('')}
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+              <button
+                onClick={() => {
+                  const allIds = filteredVleInquiries.map(i => i.id || i.inquiryId).filter(Boolean);
+                  if (selectedVleIds.length >= allIds.length && allIds.length > 0) {
+                    setSelectedVleIds([]);
+                  } else {
+                    setSelectedVleIds(allIds);
+                  }
+                }}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-700 flex items-center gap-1"
+              >
+                {selectedVleIds.length >= filteredVleInquiries.length && filteredVleInquiries.length > 0 ? (
+                  <CheckSquare className="w-3.5 h-3.5 text-blue-500" />
+                ) : (
+                  <Square className="w-3.5 h-3.5 text-slate-400" />
+                )}
+                <span>Select All</span>
+              </button>
+
+              <button
+                onClick={() => setVleFilterState('all')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 ${
+                  vleFilterState === 'all'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                }`}
+              >
+                All Visitors ({vleInquiries.length})
+              </button>
+
+              <button
+                onClick={() => setVleFilterState('jk')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 ${
+                  vleFilterState === 'jk'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                }`}
+              >
+                J&amp;K / Ladakh ({vleInquiries.filter(i => (i.state || '').toLowerCase().includes('jammu') || (i.state || '').toLowerCase().includes('kashmir') || (i.state || '').toLowerCase().includes('ladakh')).length})
+              </button>
+
+              <button
+                onClick={() => setVleFilterState('other')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 ${
+                  vleFilterState === 'other'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                }`}
+              >
+                Other States
+              </button>
+            </div>
+          </div>
+
+          {/* VLE Inquiries Records List */}
+          {filteredVleInquiries.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center text-slate-400 space-y-2">
+              <ShieldAlert className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-700" />
+              <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">No Visitor Access Logs Found</h4>
+              <p className="text-xs">
+                When visitors verify their identity on the CSC Station / VLE Credentials card, their complete details will appear here in real time.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredVleInquiries.map((inq, idx) => {
+                const inqId = inq.id || inq.inquiryId || `VLE-${idx}`;
+                const rawPhone = inq.phone || '';
+                const cleanPhone = rawPhone.replace(/\D/g, '');
+                const phoneWithCode = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+                const isSelected = selectedVleIds.includes(inqId);
+
+                return (
+                  <div
+                    key={inqId}
+                    className={`bg-white dark:bg-slate-900 border rounded-2xl p-4 shadow-sm transition-all relative overflow-hidden flex flex-col justify-between ${
+                      isSelected
+                        ? 'border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/20 dark:bg-blue-950/20'
+                        : 'border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-900'
+                    }`}
+                  >
+                    <div>
+                      {/* Top Row: Checkbox, Name, Status Badge, Timestamp */}
+                      <div className="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-slate-800/80 pb-3 mb-3">
+                        <div className="flex items-center gap-2.5">
+                          <button
+                            onClick={() => {
+                              setSelectedVleIds(prev =>
+                                prev.includes(inqId) ? prev.filter(id => id !== inqId) : [...prev, inqId]
+                              );
+                            }}
+                            className="text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
+                          >
+                            {isSelected ? (
+                              <CheckSquare className="w-5 h-5 text-blue-600" />
+                            ) : (
+                              <Square className="w-5 h-5 text-slate-300 dark:text-slate-600" />
+                            )}
+                          </button>
+
+                          <div>
+                            <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-1.5">
+                              <span>{inq.name || 'Verified Visitor'}</span>
+                              <span className="px-1.5 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded text-[9px] font-bold">
+                                ✓ Verified
+                              </span>
+                            </h4>
+                            <span className="text-[10px] font-mono text-slate-400 block">
+                              ID: {inqId}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1 justify-end">
+                            <Clock className="w-3 h-3 text-slate-400" />
+                            {inq.timestamp || inq.createdAt ? new Date(inq.createdAt || inq.timestamp).toLocaleString() : 'Recent'}
+                          </span>
+                          <span className="text-[9px] text-blue-600 dark:text-blue-400 font-extrabold uppercase">
+                            VLE Credentials Unlocked
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Middle Details Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs mb-4">
+                        <div className="space-y-1.5 bg-slate-50 dark:bg-slate-950/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                          <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-bold">
+                            <Phone className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                            <span className="font-mono">{inq.phone || 'N/A'}</span>
+                          </div>
+                          {inq.email && (
+                            <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 truncate">
+                              <Mail className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                              <span className="truncate">{inq.email}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-1 bg-slate-50 dark:bg-slate-950/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                          <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-bold">
+                            <MapPin className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                            <span className="font-semibold text-slate-900 dark:text-white">{inq.state || 'N/A'}</span>
+                          </div>
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">
+                            {inq.address || 'Address provided upon verification'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Bar */}
+                    <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                      <div className="flex items-center gap-1.5">
+                        {cleanPhone && (
+                          <>
+                            <a
+                              href={`tel:${cleanPhone}`}
+                              className="px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-all"
+                              title="Call Visitor"
+                            >
+                              <PhoneCall className="w-3 h-3" />
+                              <span>Call</span>
+                            </a>
+
+                            <a
+                              href={`https://wa.me/${phoneWithCode}?text=${encodeURIComponent(`Hello ${inq.name || ''}, thank you for verifying on our CSC Digital Portal. How may we assist you today?`)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold flex items-center gap-1 transition-all shadow-xs"
+                              title="WhatsApp Visitor"
+                            >
+                              <MessageCircle className="w-3 h-3" />
+                              <span>WhatsApp</span>
+                            </a>
+                          </>
+                        )}
+
+                        {inq.email && (
+                          <a
+                            href={`mailto:${inq.email}?subject=${encodeURIComponent('CSC Digital Seva - Following up on your inquiry')}`}
+                            className="px-2.5 py-1.5 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-all"
+                            title="Email Visitor"
+                          >
+                            <Mail className="w-3 h-3" />
+                            <span>Email</span>
+                          </a>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => {
+                            const details = `VLE Visitor Inquiry ID: ${inqId}\nName: ${inq.name}\nPhone: ${inq.phone}\nEmail: ${inq.email}\nState: ${inq.state}\nAddress: ${inq.address}\nDate: ${inq.timestamp || inq.createdAt}`;
+                            navigator.clipboard.writeText(details);
+                            setActionSuccess(`Copied visitor details for ${inq.name}`);
+                            setTimeout(() => setActionSuccess(null), 2500);
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                          title="Copy details"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+
+                        <button
+                          onClick={() => handleDeleteVleInquiry(inqId)}
+                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
+                          title="Delete visitor log"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* CUSTOMER APPLICATIONS TAB CONTENT */}
+      {activeMainTab === 'applications' && (
+        <div className="space-y-6 animate-fade-in">
+          {/* Metrics Row */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                Total Submissions
+              </span>
+              <span className="text-2xl font-black text-slate-900 dark:text-white font-mono mt-1 block">
+                {applications.length}
+              </span>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block flex items-center gap-1">
+                <IndianRupee className="w-3 h-3" /> Total Revenue
+              </span>
+              <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono mt-1 block">
+                ₹{applications.reduce((acc, a) => acc + (Number(a.totalAmount) || 0), 0)}
+              </span>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-500 block">
+                UPI Paid (Online)
+              </span>
+              <span className="text-2xl font-black text-amber-600 dark:text-amber-400 font-mono mt-1 block">
+                {applications.filter(a => a.paymentMode === 'online').length}
+              </span>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-500 block">
+                Cash Counter
+              </span>
+              <span className="text-2xl font-black text-blue-600 dark:text-blue-400 font-mono mt-1 block">
+                {applications.filter(a => a.paymentMode === 'cash').length}
+              </span>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs col-span-2 md:col-span-1">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-500 block">
+                Uploaded Docs Total
+              </span>
+              <span className="text-2xl font-black text-purple-600 dark:text-purple-400 font-mono mt-1 block">
+                {applications.reduce((acc, app) => acc + (app.documents?.length || app.uploadedDocuments?.length || 0), 0)}
+              </span>
+            </div>
+          </div>
 
       {/* Bulk Action Toolbar Banner (Appears when items are selected) */}
       {selectedAppIds.length > 0 && (
@@ -1588,6 +2130,8 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
             );
           })}
         </div>
+      )}
+      </div>
       )}
 
       {/* MARK COMPLETED FILE UPLOAD MODAL */}
