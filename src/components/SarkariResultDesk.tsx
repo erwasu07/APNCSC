@@ -1129,7 +1129,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
     <section id="sarkari-portal-section" className="pt-0 pb-12 md:pb-16 bg-slate-50 dark:bg-slate-950 transition-colors duration-300 w-full">
       
       {/* 1. 📢 YELLOW TOP NEWS TICKER STRIP */}
-      <div className="bg-[#f59e0b] border-b border-amber-500 py-2 px-2.5 sm:py-2.5 sm:px-4 shadow-sm w-full mb-6 text-slate-950">
+      <div className="bg-[#f59e0b] border-b border-amber-500 py-1.5 px-2.5 sm:py-2 sm:px-4 shadow-sm w-full mb-2 sm:mb-3 text-slate-950">
         {/* Running Horizontal Ticker Marquee for Mobile & Desktop */}
         <div className="flex max-w-7xl mx-auto items-center justify-between gap-2 sm:gap-3 text-xs font-sans relative">
           <div className="flex items-center gap-1.5 sm:gap-2.5 flex-1 min-w-0 overflow-hidden">
@@ -1198,11 +1198,10 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
         </div>
       </div>
 
-
-
+      <div className="w-full max-w-7xl mx-auto px-1.5 sm:px-4 md:px-6">
         {/* Section Header */}
-        <div id="sarkari-board" className="max-w-7xl mx-auto mb-5 scroll-mt-24">
-          <div className="flex items-center justify-center border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div id="sarkari-board" className="max-w-7xl mx-auto mb-2 sm:mb-3 scroll-mt-24">
+          <div className="flex items-center justify-center border-b border-slate-200 dark:border-slate-800 pb-1.5 sm:pb-2">
             <h2 className="text-base sm:text-lg md:text-xl font-black text-slate-900 dark:text-white tracking-wider font-display uppercase text-center">
               Jobs &amp; Edu Alerts
             </h2>
@@ -1210,7 +1209,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
         </div>
 
         {/* MODERN SARKARI CATEGORY QUICK ACCESS GRID - 4 IN A ROW ON MOBILE */}
-        <div className="max-w-7xl mx-auto mb-5">
+        <div className="max-w-7xl mx-auto mb-3 sm:mb-4">
           <div className="grid grid-cols-4 gap-1.5 sm:gap-2.5">
             {[
               {
@@ -1618,41 +1617,6 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                   </div>
                 );
               })}
-          </div>
-
-        {/* 2. 🏛️ CSC DOST QUICK APPLICATION DESK ACTION BAR */}
-        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 mt-8 mb-6">
-          <div className="bg-gradient-to-r from-[#18204e] via-[#1e2965] to-[#18204e] text-white p-4 sm:p-6 rounded-2xl border border-indigo-900/80 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center font-bold shrink-0 shadow-sm">
-                <FileCheck className="w-6 h-6" />
-              </div>
-              <div className="space-y-0.5 text-left">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm sm:text-base font-black uppercase tracking-wide text-white font-display">
-                    Quick Application Desk
-                  </h3>
-                  <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded text-[10px] font-mono font-bold">
-                    Govt Verified VLE
-                  </span>
-                </div>
-                <p className="text-xs text-indigo-200">
-                  Filing Sarkari recruitment forms, university admissions, and CSC digital certificates with verified token receipts.
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
-              <button
-                type="button"
-                onClick={() => onApplyService('')}
-                className="w-full sm:w-auto px-5 py-2.5 bg-amber-400 hover:bg-amber-300 active:scale-[0.98] text-slate-950 font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                id="quick-apply-desk-cta-btn"
-              >
-                <span>Open Application Desk</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
           </div>
         </div>
 

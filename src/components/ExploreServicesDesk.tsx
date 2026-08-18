@@ -193,8 +193,8 @@ export default function ExploreServicesDesk({ onApplyService, selectedService, o
       <div className="w-full max-w-7xl mx-auto px-1.5 sm:px-4 md:px-6">
         
         {/* Section Header */}
-        <div id="services-board" className="max-w-7xl mx-auto mb-5 scroll-mt-24">
-          <div className="flex items-center justify-center border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div id="services-board" className="max-w-7xl mx-auto mb-2 sm:mb-3 scroll-mt-24">
+          <div className="flex items-center justify-center border-b border-slate-200 dark:border-slate-800 pb-1.5 sm:pb-2">
             <h2 className="text-base sm:text-lg md:text-xl font-black text-slate-900 dark:text-white tracking-wider font-display uppercase text-center">
               CSC E-SERVICES
             </h2>
@@ -202,7 +202,7 @@ export default function ExploreServicesDesk({ onApplyService, selectedService, o
         </div>
 
         {/* MODERN CSC E-SERVICES QUICK ACCESS GRID - 4 IN A ROW ON MOBILE */}
-        <div className="max-w-7xl mx-auto mb-5">
+        <div className="max-w-7xl mx-auto mb-3 sm:mb-4">
           <div className="grid grid-cols-4 gap-1.5 sm:gap-2.5">
             {[
               {

@@ -45,7 +45,142 @@ export const SARKARI_CATEGORIES = {
 };
 
 export const SARKARI_DATA: SarkariItem[] = [
-  // 🇮🇳 TODAY'S NEWLY EXTRACTED NOTIFICATIONS (17 AUGUST 2026)
+  // 🇮🇳 TODAY'S NEWLY EXTRACTED NOTIFICATIONS (18 AUGUST 2026)
+  {
+    id: 'army-ssc-tech-65-men-36-women-2026',
+    title: 'Indian Army SSC (Tech)-65 Men & SSCW (Tech)-36 Women Course (Apr 2027)',
+    category: 'army_jobs',
+    postDate: '18/08/2026',
+    startDate: '18/08/2026',
+    lastDate: '17/09/2026',
+    advertisementNo: 'SSC(Tech)-65 & SSCW(Tech)-36 Course',
+    shortInfo: 'Indian Army invites online applications from eligible unmarried male and unmarried female Engineering Graduates and Widows of Defence Personnel for grant of Short Service Commission (SSC) in the Indian Army.',
+    ageLimit: '20 to 27 Years (SSC Tech) / Up to 35 Years for Widows of Defence Personnel',
+    eligibility: 'Passed Engineering Degree course or in the final year of Engineering Degree in relevant engineering discipline',
+    totalPosts: '379 Posts (Men: 350, Women: 29)',
+    officialLink: 'https://www.joinindianarmy.nic.in/officers-entry-apply-login.htm',
+    fees: {
+      genObc: '₹0 (No Application Fee)',
+      scSt: '₹0 (No Application Fee)'
+    },
+    isNew: true
+  },
+  {
+    id: 'rrb-senior-section-engineer-cen07-2026',
+    title: 'RRB Senior Section Engineer (SSE) & Chief Depot Material Superintendent (CEN 07/2026)',
+    category: 'rrb_jobs',
+    postDate: '18/08/2026',
+    startDate: '19/08/2026',
+    lastDate: '18/09/2026',
+    advertisementNo: 'CEN No. 07/2026 (SSE & CDMS Categories)',
+    shortInfo: 'Railway Recruitment Boards (RRB) invite online applications for recruitment of Senior Section Engineer (Civil, Mechanical, Electrical, S&T) and Chief Depot Material Superintendent across Zonal Railways.',
+    ageLimit: '20 to 36 Years (Relaxation as per RRB rules)',
+    eligibility: 'Four-year Bachelor Degree in Engineering (B.E. / B.Tech) in relevant discipline or M.Sc in relevant field from recognized University',
+    totalPosts: '2,845 Posts across all RRB Zones',
+    officialLink: 'https://www.rrbapply.gov.in/#/auth/landing',
+    fees: {
+      genObc: '₹500 (₹400 refundable after appearing in CBT-1)',
+      scSt: '₹250 (₹250 refundable after appearing in CBT-1)'
+    },
+    isNew: true
+  },
+  {
+    id: 'ssc-stenographer-grade-cd-exam-2026',
+    title: 'SSC Stenographer Grade "C" & "D" Examination 2026 (Official Notification)',
+    category: 'ssc_jobs',
+    postDate: '18/08/2026',
+    startDate: '18/08/2026',
+    lastDate: '17/09/2026',
+    advertisementNo: 'SSC/HQ/Steno-CD/Exam-2026',
+    shortInfo: 'Staff Selection Commission (SSC) invites online applications for competitive computer-based examination for recruitment of Stenographer Grade "C" and Grade "D" in various Central Ministries, Departments, and Subordinate Offices.',
+    ageLimit: 'Steno Grade C: 18 to 30 Years | Steno Grade D: 18 to 27 Years',
+    eligibility: '10+2 / Intermediate passed from a recognized Board + Shorthand skill test (100 wpm for Grade C, 80 wpm for Grade D)',
+    totalPosts: '2,006 Posts across Central Ministries',
+    officialLink: 'https://ssc.gov.in',
+    fees: {
+      genObc: '₹100 (Online Payment via UPI/NetBanking)',
+      scSt: '₹0 (Exempted for SC/ST/PwD/Women candidates)'
+    },
+    isNew: true
+  },
+  {
+    id: 'cus-ug-sem4-sem6-exam-form-2026',
+    title: 'Online Examination Form Notice for UG 4th & 6th Semester (NEP & Batch 2021-23)',
+    category: 'cluster_univ',
+    postDate: '18/08/2026',
+    startDate: '18/08/2026',
+    lastDate: '29/08/2026',
+    advertisementNo: 'CUS/Exam/UG-4th-6th/2026/1042',
+    shortInfo: 'Cluster University Srinagar notifies all eligible students of UG 4th & 6th Semester (Batch 2022-23 NEP 2020 and backlog candidates) to submit online examination forms through the student portal.',
+    ageLimit: 'Enrolled UG Students',
+    eligibility: 'Bonafide students of Constituent Colleges (AS College, SP College, AAA Memorial Degree College Bemina, GCW MA Road, Govt College of Education)',
+    feePerSubject: '₹375 per paper + ₹150 Examination Maintenance Fee',
+    totalPosts: 'UG Examination Desk',
+    officialLink: 'https://www.cusrinagar.edu.in/',
+    fees: {
+      genObc: 'As per subject selection on student portal',
+      scSt: 'As per subject selection on student portal'
+    },
+    isNew: true
+  },
+  {
+    id: 'jkssb-junior-engineer-mech-jal-shakti-2026',
+    title: 'Direct Recruitment for Junior Engineer (Mechanical) in Jal Shakti Department (190 Posts)',
+    category: 'jkssb',
+    postDate: '18/08/2026',
+    startDate: '18/08/2026',
+    lastDate: '02/09/2026',
+    advertisementNo: 'JKSSB/Advt/Jal-Shakti/2026/10',
+    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) invites online applications from Domiciles of UT of J&K for direct recruitment to 190 posts of Junior Engineer (Mechanical) in Jal Shakti Department.',
+    ageLimit: '18 to 40 Years (OM), 43 Years (SC/ST/RBA/ALC-IB/EWS), 48 Years (Ex-Servicemen)',
+    eligibility: '3-Year Diploma in Mechanical Engineering from recognized institute / Indian University OR Degree in Mechanical Engineering / AMIE',
+    totalPosts: '190 Posts (UT & Divisional Cadres)',
+    officialLink: 'https://jkssb.nic.in',
+    fees: {
+      genObc: '₹500 (Open Merit / OM candidates)',
+      scSt: '₹400 (SC, ST, PwD & EWS candidates)'
+    },
+    isNew: true
+  },
+  {
+    id: 'ku-exam-form-ug-bg-2nd-sem-nep-2026',
+    title: 'Online Examination Forms Notice for UG (BG) 2nd Semester Regular & Fresh Private (NEP Batch 2025)',
+    category: 'exam_forms',
+    postDate: '18/08/2026',
+    startDate: '18/08/2026',
+    lastDate: '01/09/2026',
+    advertisementNo: 'KU/Exam/UG-2nd-Sem-NEP/2026/812',
+    shortInfo: 'University of Kashmir invites online examination forms for BG 2nd Semester Regular, Fresh Private, and Backlog candidates enrolled under National Education Policy (NEP-2020) across all affiliated Degree Colleges.',
+    ageLimit: 'Enrolled UG 2nd Semester Students',
+    eligibility: 'Regular enrolled students of affiliated degree colleges and registered private candidates',
+    feePerSubject: '₹250 per subject + ₹100 EMF + ₹100 IT Charge',
+    officialLink: 'https://kashmiruniversity.net/Examination.aspx',
+    fees: {
+      genObc: 'Standard UG NEP Examination Fee (Online Gateway)',
+      scSt: 'Standard UG NEP Examination Fee (Online Gateway)'
+    },
+    isNew: true
+  },
+  {
+    id: 'ku-admission-pg-counseling-list2-2026',
+    title: '2nd Counseling & Selection List for Admission to Post Graduate Programmes (Session 2026)',
+    category: 'admissions',
+    postDate: '18/08/2026',
+    startDate: '18/08/2026',
+    lastDate: '26/08/2026',
+    advertisementNo: 'KU/Adm/PG-2nd-Counseling/2026/22',
+    shortInfo: 'Directorate of Admissions & Competitive Examinations, University of Kashmir, notifies 2nd Counseling Schedule & Selection List for vacant seats in various MA, M.Sc, M.Com, M.Ed, and LL.M programmes for Academic Session 2026.',
+    ageLimit: 'As per University Admission Guidelines 2026',
+    eligibility: 'Appeared in Kashmir University Entrance Test (KUET-2026) in relevant subject and having qualified Bachelor degree with minimum required percentage',
+    totalPosts: 'Vacant Seats in Main Campus, North Campus, South Campus & PG Colleges',
+    officialLink: 'https://kashmiruniversity.net/AdmissionNotices.aspx',
+    fees: {
+      genObc: 'Admission Fee as per allotted Department/Course',
+      scSt: 'Admission Fee as per allotted Department/Course'
+    },
+    isNew: true
+  },
+  // 🇮🇳 PREVIOUS NOTIFICATIONS (17 AUGUST 2026)
   {
     id: 'army-tes-54-course-2026',
     title: '10+2 Technical Entry Scheme (TES-54 Course - Jan 2027)',
