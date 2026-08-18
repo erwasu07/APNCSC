@@ -165,11 +165,18 @@ export default function WhatsAppBroadcaster({ cafeName }: WhatsAppBroadcasterPro
         })
       });
 
-      const data = await res.json();
+      const resText = await res.text();
+      let data: any = {};
+      try {
+        data = JSON.parse(resText);
+      } catch {
+        data = { success: res.ok, message: resText || 'Test completed.' };
+      }
+
       if (data.success) {
         setTestResult({
           success: true,
-          message: data.message || `Webhook responded successfully (${data.durationMs}ms)!`,
+          message: data.message || `Webhook responded successfully!`,
           details: data.response
         });
       } else {
@@ -253,12 +260,22 @@ ${postUrl}`;
         })
       });
 
-      const data = await res.json();
+      const resText = await res.text();
+      let data: any = {};
+      try {
+        data = JSON.parse(resText);
+      } catch {
+        data = { 
+          success: res.ok, 
+          message: res.ok ? 'Broadcast sent to server queue.' : (resText || 'Failed to dispatch broadcast.') 
+        };
+      }
+
       if (data.success) {
         setBroadcastStatus({
           type: 'success',
           message: activeWebhook 
-            ? `🚀 Message successfully auto-posted via ${data.dispatchedVia || 'Webhook Gateway'}! Status: ${data.webhookStatus}`
+            ? `🚀 Message successfully auto-posted via ${data.dispatchedVia || 'Webhook Gateway'}! Status: ${data.webhookStatus || 'Dispatched'}`
             : '✅ Broadcast message formatted and queued on server! (To send automatically without opening WhatsApp, configure your Webhook Gateway in Setup above).',
           dispatchedVia: data.dispatchedVia,
           details: data.webhookResponse
@@ -267,7 +284,7 @@ ${postUrl}`;
       } else {
         setBroadcastStatus({
           type: 'error',
-          message: data.error || 'Failed to dispatch automated broadcast.'
+          message: data.error || data.message || 'Failed to dispatch automated broadcast.'
         });
       }
     } catch (err: any) {
