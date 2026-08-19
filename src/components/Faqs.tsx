@@ -7,7 +7,7 @@ export default function Faqs() {
   const faqItems = [
     {
       q: 'What is CSC DOST and what can you help me apply for?',
-      a: 'CSC DOST (cscdost.online) is an independent digital assistance service center. We assist citizens in filling online application forms for PAN Cards, Voter IDs, e-Shram Cards, Passport applications, Ayushman Bharat health cards, Driving Licenses, and state-level certificates (Caste, Income, Domicile, and Marriage Certificates) on official government portals.'
+      a: 'CSC DOST (cscdost.com) is an independent digital assistance service center. We assist citizens in filling online application forms for PAN Cards, Voter IDs, e-Shram Cards, Passport applications, Ayushman Bharat health cards, Driving Licenses, and state-level certificates (Caste, Income, Domicile, and Marriage Certificates) on official government portals.'
     },
     {
       q: 'What original documents do I need to bring for Aadhaar updates?',

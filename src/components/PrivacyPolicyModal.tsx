@@ -85,10 +85,10 @@ export default function PrivacyPolicyModal({
 
   const privacyText = `CSC Dost - Privacy Policy
 Effective Date: July 29, 2026
-Website: https://www.cscdost.online/
+Website: https://www.cscdost.com/
 Business Name: CSC Dost ("we," "our," or "us")
 
-Welcome to CSC Dost. We are committed to protecting your privacy and ensuring that your personal information is handled in a safe and responsible manner. This Privacy Policy outlines how we collect, use, disclose, and safeguard your information when you visit our website https://www.cscdost.online/ or utilize our digital services, online form filling, printing, and allied assistance.
+Welcome to CSC Dost. We are committed to protecting your privacy and ensuring that your personal information is handled in a safe and responsible manner. This Privacy Policy outlines how we collect, use, disclose, and safeguard your information when you visit our website https://www.cscdost.com/ or utilize our digital services, online form filling, printing, and allied assistance.
 
 1. INFORMATION WE COLLECT
 - Personal Identification Information: Name, phone number, email address, postal address, and date of birth.
@@ -111,7 +111,7 @@ Welcome to CSC Dost. We are committed to protecting your privacy and ensuring th
 Technical, physical, and administrative safeguards to protect your personal data and sensitive documents.
 
 5. GOOGLE ADSENSE & THIRD-PARTY ADVERTISING COOKIES
-- We use Google AdSense to display relevant advertisements on https://www.cscdost.online/.
+- We use Google AdSense to display relevant advertisements on https://www.cscdost.com/.
 - Google, as a third-party vendor, uses cookies (including the DoubleClick cookie) to serve ads based on users' visits to our site and other websites across the internet.
 - Google's use of advertising cookies enables it and its partners to serve ads to our users based on their visit to our site and/or other sites on the Internet.
 - Users may opt out of personalized advertising by visiting Google Ads Settings (https://adssettings.google.com/) or by visiting www.aboutads.info.
@@ -126,16 +126,16 @@ Intended for general audience. No intentional collection from minors under 18 wi
 Updates will be posted with an updated Effective Date.
 
 9. CONTACT US
-Website: https://www.cscdost.online/
+Website: https://www.cscdost.com/
 Email: cscdost.support@gmail.com
 Phone: 7006833767`;
 
   const termsText = `CSC Dost - Terms of Use
 Effective Date: July 29, 2026
-Website: https://www.cscdost.online/
+Website: https://www.cscdost.com/
 Business Name: CSC Dost ("we," "our," or "us")
 
-Welcome to CSC Dost. By accessing or using our website (https://www.cscdost.online/) and our digital services, you agree to be bound by these Terms of Use. If you do not agree with any part of these terms, please do not use our website or services.
+Welcome to CSC Dost. By accessing or using our website (https://www.cscdost.com/) and our digital services, you agree to be bound by these Terms of Use. If you do not agree with any part of these terms, please do not use our website or services.
 
 1. DESCRIPTION OF SERVICES
 CSC Dost provides digital assistance, including but not limited to online form filling, government and citizen service applications, documentation assistance, printing, and other allied digital services.
@@ -173,23 +173,23 @@ We reserve the right to update or replace any part of these Terms of Use by post
 Governed by the laws of India. Subject to the exclusive jurisdiction of the courts located in Jammu & Kashmir, India.
 
 11. CONTACT INFORMATION
-Website: https://www.cscdost.online/
+Website: https://www.cscdost.com/
 Email / Support: cscdost.support@gmail.com
 Phone: 7006833767`;
 
   const hyperlinkText = `CSC Dost - Hyperlink Policy
 Effective Date: July 29, 2026
-Website: https://www.cscdost.online/
+Website: https://www.cscdost.com/
 Business Name: CSC Dost ("we," "our," or "us")
 
-Welcome to CSC Dost. This Hyperlink Policy outlines the terms and conditions regarding the use of hyperlinks on our website, as well as the guidelines for external websites wishing to link to https://www.cscdost.online/.
+Welcome to CSC Dost. This Hyperlink Policy outlines the terms and conditions regarding the use of hyperlinks on our website, as well as the guidelines for external websites wishing to link to https://www.cscdost.com/.
 
 1. LINKS TO EXTERNAL WEBSITES (OUTBOUND LINKS)
 As a digital service provider, our website frequently contains hyperlinks to external, third-party websites. These may include official government portals, educational boards, payment gateways, and other citizen service websites necessary to complete your applications.
 - For Convenience Only: These links are provided solely for your convenience and to facilitate the services you have requested.
 - No Endorsement: The inclusion of a link does not imply endorsement, approval, or recommendation of the external website, its content, or its operators by CSC Dost.
 - Disclaimer of Liability: CSC Dost does not control these external websites. We are not responsible for their content, accuracy, reliability, availability, or any changes and updates made to them.
-- Separate Policies: Once you click a link and leave https://www.cscdost.online/, you are subject to the Privacy Policy and Terms of Use of the destination website. We strongly encourage you to review their policies before sharing any personal information or making payments on those platforms.
+- Separate Policies: Once you click a link and leave https://www.cscdost.com/, you are subject to the Privacy Policy and Terms of Use of the destination website. We strongly encourage you to review their policies before sharing any personal information or making payments on those platforms.
 
 2. LINKS TO OUR WEBSITE (INBOUND LINKS)
 We welcome links to our website from other legitimate and relevant websites, provided you adhere to the following guidelines:
@@ -206,16 +206,16 @@ We welcome links to our website from other legitimate and relevant websites, pro
 We reserve the right to amend this Hyperlink Policy at any time without prior notice. Any changes will be posted on this page with an updated "Effective Date."
 
 5. CONTACT US
-Website: https://www.cscdost.online/
+Website: https://www.cscdost.com/
 Email / Support: cscdost.support@gmail.com
 Phone: 7006833767`;
 
   const copyrightText = `CSC Dost - Copyright Policy
 Effective Date: July 29, 2026
-Website: https://www.cscdost.online/
+Website: https://www.cscdost.com/
 Business Name: CSC Dost ("we," "our," or "us")
 
-Welcome to CSC Dost. This Copyright Policy outlines the ownership, permitted uses, and restrictions regarding the digital content, materials, and intellectual property found on our website, https://www.cscdost.online/.
+Welcome to CSC Dost. This Copyright Policy outlines the ownership, permitted uses, and restrictions regarding the digital content, materials, and intellectual property found on our website, https://www.cscdost.com/.
 
 1. OWNERSHIP OF CONTENT
 All content presented on this website—including but not limited to text, graphics, logos, images, digital downloads, data compilations, user interfaces, website design, and software—is the exclusive property of CSC Dost or its content suppliers. This material is protected by Indian copyright laws, international copyright treaties, and other intellectual property laws.
@@ -250,16 +250,16 @@ We take the protection of our copyright very seriously. If we discover that you 
 We reserve the right to modify this Copyright Policy at any time. Changes will take effect immediately upon their posting on the website. Your continued use of the website following the posting of changes constitutes your acceptance of such changes.
 
 8. CONTACT INFORMATION
-Website: https://www.cscdost.online/
+Website: https://www.cscdost.com/
 Email / Support: cscdost.support@gmail.com
 Phone: 7006833767`;
 
   const disclaimerText = `CSC Dost - Disclaimer
 Effective Date: July 29, 2026
-Website: https://www.cscdost.online/
+Website: https://www.cscdost.com/
 Business Name: CSC Dost ("we," "our," or "us")
 
-The information and services provided by CSC Dost on https://www.cscdost.online/ (the "Site") are for general informational and facilitation purposes only. By using our website and services, you accept and agree to this disclaimer in full.
+The information and services provided by CSC Dost on https://www.cscdost.com/ (the "Site") are for general informational and facilitation purposes only. By using our website and services, you accept and agree to this disclaimer in full.
 
 1. NON-GOVERNMENT ENTITY
 CSC Dost is an independent digital service facilitator. While we assist citizens in accessing, filling out, and submitting online forms for various government and non-government services, we are not a government department, nor do we claim to be the official portal for any state or central government entity. Any official logos, department names, or government schemes mentioned on our website are used purely for identification and informational purposes to help users find the right services.
@@ -286,7 +286,7 @@ The fees collected by CSC Dost include government department fees (where applica
 
 7. CONTACT US
 If you require any more information or have any questions about our site's disclaimer, please feel free to contact us:
-Website: https://www.cscdost.online/
+Website: https://www.cscdost.com/
 Email / Support: cscdost.support@gmail.com
 Phone: 7006833767`;
 
@@ -323,14 +323,14 @@ Payments & Refunds:
 - Authenticity: Never submit forged, expired, or altered documents.
 
 4. STILL NEED HELP? CONTACT US
-Website: https://www.cscdost.online/
+Website: https://www.cscdost.com/
 Email Support: cscdost.support@gmail.com
 Phone / WhatsApp: 7006833767
 Working Hours: Monday to Saturday, 09:00 AM – 08:30 PM`;
 
   const refundText = `CSC Dost - Refund and Cancellation Policy
 Effective Date: August 2, 2026
-Website: https://www.cscdost.online/
+Website: https://www.cscdost.com/
 Business Name: CSC Dost ("we," "our," or "us")
 
 Thank you for choosing CSC Dost. We strive to provide excellent service and timely delivery for all our products and online services. Please read our Refund Policy carefully to understand your rights and the conditions under which a refund may be granted.
@@ -684,8 +684,8 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   <div className="bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
                     <span className="text-slate-400 text-[10px] uppercase font-extrabold block">Official Website</span>
-                    <a href="https://www.cscdost.online/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1 mt-0.5">
-                      <span>https://www.cscdost.online/</span>
+                    <a href="https://www.cscdost.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1 mt-0.5">
+                      <span>https://www.cscdost.com/</span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
@@ -695,7 +695,7 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                   </div>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 pt-1 leading-relaxed">
-                  Welcome to <strong>CSC Dost</strong>. We are committed to protecting your privacy and ensuring that your personal information is handled in a safe and responsible manner. This Privacy Policy outlines how we collect, use, disclose, and safeguard your information when you visit our website <a href="https://www.cscdost.online/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 underline font-semibold">https://www.cscdost.online/</a> or utilize our digital services, online form filling, printing, and allied assistance.
+                  Welcome to <strong>CSC Dost</strong>. We are committed to protecting your privacy and ensuring that your personal information is handled in a safe and responsible manner. This Privacy Policy outlines how we collect, use, disclose, and safeguard your information when you visit our website <a href="https://www.cscdost.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 underline font-semibold">https://www.cscdost.com/</a> or utilize our digital services, online form filling, printing, and allied assistance.
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 italic font-medium">
                   Please read this Privacy Policy carefully. By accessing or using our website and services, you agree to the collection and use of information in accordance with this policy.
@@ -953,8 +953,8 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                     <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
                       <Globe className="w-3.5 h-3.5 text-blue-400" /> Website
                     </span>
-                    <a href="https://www.cscdost.online/" target="_blank" rel="noopener noreferrer" className="font-bold text-blue-300 hover:underline block truncate">
-                      https://www.cscdost.online/
+                    <a href="https://www.cscdost.com/" target="_blank" rel="noopener noreferrer" className="font-bold text-blue-300 hover:underline block truncate">
+                      https://www.cscdost.com/
                     </a>
                   </div>
 
@@ -994,8 +994,8 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   <div className="bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
                     <span className="text-slate-400 text-[10px] uppercase font-extrabold block">Official Website</span>
-                    <a href="https://www.cscdost.online/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1 mt-0.5">
-                      <span>https://www.cscdost.online/</span>
+                    <a href="https://www.cscdost.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1 mt-0.5">
+                      <span>https://www.cscdost.com/</span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
@@ -1005,7 +1005,7 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                   </div>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 pt-1 leading-relaxed">
-                  Welcome to <strong>CSC Dost</strong>. By accessing or using our website (<a href="https://www.cscdost.online/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 underline font-semibold">https://www.cscdost.online/</a>) and our digital services, you agree to be bound by these Terms of Use. If you do not agree with any part of these terms, please do not use our website or services.
+                  Welcome to <strong>CSC Dost</strong>. By accessing or using our website (<a href="https://www.cscdost.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 underline font-semibold">https://www.cscdost.com/</a>) and our digital services, you agree to be bound by these Terms of Use. If you do not agree with any part of these terms, please do not use our website or services.
                 </p>
               </div>
 
@@ -1248,8 +1248,8 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                     <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
                       <Globe className="w-3.5 h-3.5 text-blue-400" /> Website
                     </span>
-                    <a href="https://www.cscdost.online/" target="_blank" rel="noopener noreferrer" className="font-bold text-blue-300 hover:underline block truncate">
-                      https://www.cscdost.online/
+                    <a href="https://www.cscdost.com/" target="_blank" rel="noopener noreferrer" className="font-bold text-blue-300 hover:underline block truncate">
+                      https://www.cscdost.com/
                     </a>
                   </div>
 
@@ -1289,8 +1289,8 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   <div className="bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
                     <span className="text-slate-400 text-[10px] uppercase font-extrabold block">Official Website</span>
-                    <a href="https://www.cscdost.online/" target="_blank" rel="noopener noreferrer" className="text-purple-600 dark:text-purple-400 font-bold hover:underline flex items-center gap-1 mt-0.5">
-                      <span>https://www.cscdost.online/</span>
+                    <a href="https://www.cscdost.com/" target="_blank" rel="noopener noreferrer" className="text-purple-600 dark:text-purple-400 font-bold hover:underline flex items-center gap-1 mt-0.5">
+                      <span>https://www.cscdost.com/</span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
@@ -1300,7 +1300,7 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                   </div>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 pt-1 leading-relaxed">
-                  Welcome to <strong>CSC Dost</strong>. This Hyperlink Policy outlines the terms and conditions regarding the use of hyperlinks on our website, as well as the guidelines for external websites wishing to link to <a href="https://www.cscdost.online/" target="_blank" rel="noopener noreferrer" className="text-purple-600 dark:text-purple-400 underline font-semibold">https://www.cscdost.online/</a>.
+                  Welcome to <strong>CSC Dost</strong>. This Hyperlink Policy outlines the terms and conditions regarding the use of hyperlinks on our website, as well as the guidelines for external websites wishing to link to <a href="https://www.cscdost.com/" target="_blank" rel="noopener noreferrer" className="text-purple-600 dark:text-purple-400 underline font-semibold">https://www.cscdost.com/</a>.
                 </p>
               </div>
 
@@ -1362,7 +1362,7 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                       <span>Separate Policies</span>
                     </div>
                     <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                      Once you click a link and leave <a href="https://www.cscdost.online/" target="_blank" rel="noopener noreferrer" className="underline font-semibold">cscdost.online</a>, you are subject to the Privacy Policy and Terms of Use of the destination website. Review their policies carefully.
+                      Once you click a link and leave <a href="https://www.cscdost.com/" target="_blank" rel="noopener noreferrer" className="underline font-semibold">cscdost.com</a>, you are subject to the Privacy Policy and Terms of Use of the destination website. Review their policies carefully.
                     </p>
                   </div>
 
@@ -1492,8 +1492,8 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                     <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
                       <Globe className="w-3.5 h-3.5 text-blue-400" /> Website
                     </span>
-                    <a href="https://www.cscdost.online/" target="_blank" rel="noopener noreferrer" className="font-bold text-blue-300 hover:underline block truncate">
-                      https://www.cscdost.online/
+                    <a href="https://www.cscdost.com/" target="_blank" rel="noopener noreferrer" className="font-bold text-blue-300 hover:underline block truncate">
+                      https://www.cscdost.com/
                     </a>
                   </div>
 
@@ -1534,8 +1534,8 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   <div className="bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
                     <span className="text-slate-400 text-[10px] uppercase font-extrabold block">Official Website</span>
-                    <a href="https://www.cscdost.online/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1 mt-0.5">
-                      <span>https://www.cscdost.online/</span>
+                    <a href="https://www.cscdost.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1 mt-0.5">
+                      <span>https://www.cscdost.com/</span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
@@ -1545,7 +1545,7 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                   </div>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 pt-1 leading-relaxed">
-                  Welcome to <strong>CSC Dost</strong>. This Copyright Policy outlines the ownership, permitted uses, and restrictions regarding the digital content, materials, and intellectual property found on our website, <a href="https://www.cscdost.online/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 underline font-semibold">https://www.cscdost.online/</a>.
+                  Welcome to <strong>CSC Dost</strong>. This Copyright Policy outlines the ownership, permitted uses, and restrictions regarding the digital content, materials, and intellectual property found on our website, <a href="https://www.cscdost.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 underline font-semibold">https://www.cscdost.com/</a>.
                 </p>
               </div>
 
@@ -1754,8 +1754,8 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                     <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
                       <Globe className="w-3.5 h-3.5 text-blue-400" /> Website
                     </span>
-                    <a href="https://www.cscdost.online/" target="_blank" rel="noopener noreferrer" className="font-bold text-blue-300 hover:underline block truncate">
-                      https://www.cscdost.online/
+                    <a href="https://www.cscdost.com/" target="_blank" rel="noopener noreferrer" className="font-bold text-blue-300 hover:underline block truncate">
+                      https://www.cscdost.com/
                     </a>
                   </div>
 
@@ -1795,8 +1795,8 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   <div className="bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
                     <span className="text-slate-400 text-[10px] uppercase font-extrabold block">Official Website</span>
-                    <a href="https://www.cscdost.online/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1 mt-0.5">
-                      <span>https://www.cscdost.online/</span>
+                    <a href="https://www.cscdost.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1 mt-0.5">
+                      <span>https://www.cscdost.com/</span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
@@ -1806,7 +1806,7 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                   </div>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 pt-1 leading-relaxed">
-                  The information and services provided by <strong>CSC Dost</strong> on <a href="https://www.cscdost.online/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 underline font-semibold">https://www.cscdost.online/</a> (the "Site") are for general informational and facilitation purposes only. By using our website and services, you accept and agree to this disclaimer in full.
+                  The information and services provided by <strong>CSC Dost</strong> on <a href="https://www.cscdost.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 underline font-semibold">https://www.cscdost.com/</a> (the "Site") are for general informational and facilitation purposes only. By using our website and services, you accept and agree to this disclaimer in full.
                 </p>
               </div>
 
@@ -1970,8 +1970,8 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                     <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
                       <Globe className="w-3.5 h-3.5 text-blue-400" /> Website
                     </span>
-                    <a href="https://www.cscdost.online/" target="_blank" rel="noopener noreferrer" className="font-bold text-blue-300 hover:underline block truncate">
-                      https://www.cscdost.online/
+                    <a href="https://www.cscdost.com/" target="_blank" rel="noopener noreferrer" className="font-bold text-blue-300 hover:underline block truncate">
+                      https://www.cscdost.com/
                     </a>
                   </div>
 
@@ -2322,8 +2322,8 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                     <span className="text-teal-400 text-[10px] uppercase font-extrabold flex items-center gap-1">
                       <Globe className="w-3.5 h-3.5" /> Official Website
                     </span>
-                    <a href="https://www.cscdost.online/" target="_blank" rel="noopener noreferrer" className="font-bold text-white hover:text-teal-300 hover:underline block truncate">
-                      cscdost.online
+                    <a href="https://www.cscdost.com/" target="_blank" rel="noopener noreferrer" className="font-bold text-white hover:text-teal-300 hover:underline block truncate">
+                      cscdost.com
                     </a>
                   </div>
 
@@ -2372,8 +2372,8 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   <div className="bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
                     <span className="text-slate-400 text-[10px] uppercase font-extrabold block">Official Website</span>
-                    <a href="https://www.cscdost.online/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline flex items-center gap-1 mt-0.5">
-                      <span>https://www.cscdost.online/</span>
+                    <a href="https://www.cscdost.com/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline flex items-center gap-1 mt-0.5">
+                      <span>https://www.cscdost.com/</span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>

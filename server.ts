@@ -507,6 +507,32 @@ app.post('/api/appointments', (req, res) => {
     Log in to the Admin Dashboard to view/download attached documents.`
   );
 
+  // Automated Webhook Trigger to Make.com for automated Email & WhatsApp dispatch
+  const makeWebhook = process.env.WHATSAPP_BROADCAST_WEBHOOK_URL || 'https://hook.eu1.make.com/64f9lm3a5sgm4pt9qbc832xgx0nw6bpl';
+  if (makeWebhook && makeWebhook.startsWith('http')) {
+    fetch(makeWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event: 'new_booking_application',
+        category: 'booking',
+        title: `Application Registered: ${finalService}`,
+        body: `Hello ${finalName}, your application for ${finalService} has been registered. Token ID: ${appointment.appId}. Track your status at https://www.cscdost.com/#track`,
+        token_id: appointment.appId,
+        customer_name: finalName,
+        customer_phone: finalPhone,
+        customer_email: finalEmail,
+        service: finalService,
+        appointment_date: appointmentDate || currentDate,
+        appointment_time: appointmentTime || currentTime,
+        url: 'https://www.cscdost.com/#track',
+        published_at: new Date().toISOString()
+      })
+    }).catch(err => {
+      console.warn('[Webhook Auto-Dispatch] Notification ping error:', err.message);
+    });
+  }
+
   res.json({ success: true, data: appointment, message: 'Application submitted successfully with documents attached.' });
 });
 
@@ -748,7 +774,7 @@ app.post('/api/whatsapp/broadcast', async (req: Request, res: Response) => {
               category: category || 'job',
               title: title || 'New Notification',
               body: messageText,
-              url: postUrl || 'https://www.cscdost.online',
+              url: postUrl || 'https://www.cscdost.com',
               published_at: new Date().toISOString(),
               message: messageText,
               messageText,
@@ -756,7 +782,7 @@ app.post('/api/whatsapp/broadcast', async (req: Request, res: Response) => {
               targetChannel: targetChannel || 'CSC DOST Channel',
               to: effectiveGroup,
               chatId: effectiveGroup,
-              postUrl: postUrl || 'https://www.cscdost.online',
+              postUrl: postUrl || 'https://www.cscdost.com',
               timestamp: new Date().toISOString(),
               notices: [
                 {
@@ -764,7 +790,7 @@ app.post('/api/whatsapp/broadcast', async (req: Request, res: Response) => {
                   title: title || 'Notification',
                   description: messageText,
                   date: new Date().toISOString().slice(0, 10),
-                  url: postUrl || 'https://www.cscdost.online'
+                  url: postUrl || 'https://www.cscdost.com'
                 }
               ]
             });
@@ -906,7 +932,7 @@ app.post('/api/whatsapp/test-webhook', async (req: Request, res: Response) => {
         category: 'job',
         title: 'CSC DOST Webhook Connection Test',
         body: testMsg,
-        url: 'https://www.cscdost.online',
+        url: 'https://www.cscdost.com',
         published_at: new Date().toISOString(),
         message: testMsg,
         targetGroup: testGroup,

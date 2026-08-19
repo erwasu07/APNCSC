@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Calendar, PhoneCall, Cpu, Sparkles, Eye, Languages, Home, Briefcase, Flame, Info, Menu, X, Star, ShieldCheck, Lock, Key, Sun, Moon, BookOpen, Bell, FileCheck, Search } from 'lucide-react';
+import { Shield, Calendar, PhoneCall, Cpu, Sparkles, Eye, Languages, Home, Briefcase, Flame, Info, Menu, X, Star, ShieldCheck, Lock, Key, Sun, Moon, BookOpen, Bell, FileCheck, Search, MessageSquare } from 'lucide-react';
 import { PolicyTab } from './PrivacyPolicyModal';
 
 interface NavbarProps {
@@ -169,8 +169,21 @@ export default function Navbar({
             })}
           </div>
 
-          {/* Right side: Notifications, Staff Portal Link & Mobile Menu Trigger Button */}
+          {/* Right side: WhatsApp Group, Notifications, Staff Portal Link & Mobile Menu Trigger Button */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0 pl-1 border-l border-slate-200 sm:border-0">
+            {/* WhatsApp Community Group Link */}
+            <a
+              href="https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] sm:text-xs font-black transition-all shadow-xs shrink-0 cursor-pointer"
+              title="Join Official WhatsApp Group for Instant Alerts"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-emerald-100" />
+              <span className="hidden sm:inline">WhatsApp Group</span>
+              <span className="inline sm:hidden">Group</span>
+            </a>
+
             {/* Push Notifications Alert Trigger */}
             <button
               type="button"

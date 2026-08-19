@@ -83,8 +83,8 @@ const FALLBACK_SETTINGS: WebsiteSettings = {
   officeHours: "Mon - Sat: 08:30 AM - 08:00 PM, Sun: 10:00 AM - 04:00 PM",
   googleMapsEmbed: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3501.996452296068!2d77.21833441508272!3d28.630041982417724!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cfd3637e19e75%3A0x6b7a544f84c4f9a7!2sConnaught%20Place%2C%20New%20Delhi%2C%20Delhi%20110001!5e0!3m2!1sen!2sin!4v1680000000000!5m2!1sen!2sin",
   seoTitle: "CSC DOST",
-  seoDescription: "CSC DOST (www.cscdost.com / www.cscdost.online) - Authorized CSC E-Governance and Digital Services Portal. Apply for PAN, Aadhaar updates, Ayushman Bharat card, Voter ID, and digital services.",
-  seoKeywords: "cscdost, CSC DOST, cscdost.com, www.cscdost.com, cscdost.online, www.cscdost.online, cyber cafe, CSC center, PAN card application, Aadhaar update, online form filling, printing"
+  seoDescription: "CSC DOST (www.cscdost.com) - Authorized CSC E-Governance and Digital Services Portal. Apply for PAN, Aadhaar updates, Ayushman Bharat card, Voter ID, and digital services.",
+  seoKeywords: "cscdost, CSC DOST, cscdost.com, www.cscdost.com, cyber cafe, CSC center, PAN card application, Aadhaar update, online form filling, printing"
 };
 
 export default function App() {
@@ -434,9 +434,9 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // WhatsApp Channel click trigger
+  // WhatsApp Group / Community click trigger
   const handleWhatsAppFloating = () => {
-    window.open('https://whatsapp.com/channel/0029VbDgSe75a248qEZAbL3g', '_blank');
+    window.open('https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI', '_blank');
   };
 
   return (
@@ -660,17 +660,17 @@ export default function App() {
         </div>
       )}
 
-      {/* Floating WhatsApp Channel Button */}
+      {/* Floating WhatsApp Community Group Button */}
       <button
         onClick={handleWhatsAppFloating}
-        className="fixed bottom-24 right-6 p-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-2xl hover:scale-105 transition-all z-40 flex items-center justify-center animate-bounce group cursor-pointer"
-        title="Join Our CSC DOST WhatsApp Channel"
+        className="fixed bottom-24 right-6 p-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-2xl hover:scale-105 transition-all z-40 flex items-center justify-center animate-bounce group cursor-pointer border-2 border-emerald-400"
+        title="Join Our CSC DOST WhatsApp Group"
         id="whatsapp-floating-badge"
         style={{ animationDuration: '4s' }}
       >
         <MessageSquare className="w-6 h-6" />
         <span className="max-w-0 overflow-hidden group-hover:max-w-xs group-hover:ml-2 text-xs font-bold transition-all duration-300 whitespace-nowrap">
-          Join WhatsApp Channel
+          Join WhatsApp Group
         </span>
       </button>
 

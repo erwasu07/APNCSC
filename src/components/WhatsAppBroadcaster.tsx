@@ -43,7 +43,7 @@ export default function WhatsAppBroadcaster({ cafeName }: WhatsAppBroadcasterPro
 
   // Group & Webhook Configuration
   const [targetGroupLink, setTargetGroupLink] = useState<string>(() => {
-    return localStorage.getItem('csc_whatsapp_target_group') || '';
+    return localStorage.getItem('csc_whatsapp_target_group') || 'https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI';
   });
   const [webhookUrl, setWebhookUrl] = useState<string>(() => {
     return localStorage.getItem('csc_whatsapp_webhook_url') || 'https://hook.eu1.make.com/64f9lm3a5sgm4pt9qbc832xgx0nw6bpl';
@@ -100,7 +100,7 @@ export default function WhatsAppBroadcaster({ cafeName }: WhatsAppBroadcasterPro
     setCustomSeats(seatsFormatted);
 
     setCustomSummary(item.shortInfo);
-    setCustomLink(`https://www.cscdost.online/#post/${item.id}`);
+    setCustomLink(`https://www.cscdost.com/#post/${item.id}`);
   };
 
   // Initialize on mount with first notification
@@ -198,10 +198,10 @@ export default function WhatsAppBroadcaster({ cafeName }: WhatsAppBroadcasterPro
 
   // Build the Exact WhatsApp Formatted Message (matching verified template)
   const generateFormattedMessage = (): string => {
-    const postUrl = customLink.trim() || 'https://www.cscdost.online';
+    const postUrl = customLink.trim() || 'https://www.cscdost.com';
     
     const bannerPart = includeBannerHeader 
-      ? `*CSC DOST - Independent Digital Service Portal*\nCSC DOST (cscdost.com / cscdost.online) is an independent private digital assistance portal for online form filling, exam results, and scheme updates.\nwww.cscdost.online\n\n`
+      ? `*CSC DOST - Independent Digital Service Portal*\nCSC DOST (cscdost.com) is an independent private digital assistance portal for online form filling, exam results, and scheme updates.\nwww.cscdost.com\n\n`
       : '';
 
     const message = 
@@ -818,10 +818,10 @@ ${postUrl}`;
                     <span>CSC DOST - Independent Digital Service Portal</span>
                   </div>
                   <p className="text-[10.5px] text-slate-600 dark:text-slate-300 leading-tight">
-                    CSC DOST (cscdost.com / cscdost.online) is an independent private digital assistance portal for online form filling, exam results, and scheme updates.
+                    CSC DOST (cscdost.com) is an independent private digital assistance portal for online form filling, exam results, and scheme updates.
                   </p>
                   <p className="text-[10px] text-blue-600 dark:text-blue-400 underline font-mono">
-                    www.cscdost.online
+                    www.cscdost.com
                   </p>
                 </div>
               )}
