@@ -45,7 +45,141 @@ export const SARKARI_CATEGORIES = {
 };
 
 export const SARKARI_DATA: SarkariItem[] = [
-  // 🇮🇳 TODAY'S NEWLY EXTRACTED NOTIFICATIONS (18 AUGUST 2026 - LATEST DISPATCH)
+  // 🇮🇳 TODAY'S NEWLY EXTRACTED NOTIFICATIONS (19 AUGUST 2026 - LATEST DISPATCH)
+  {
+    id: 'army-tes-54-course-jan-2027',
+    title: 'Indian Army 10+2 Technical Entry Scheme (TES-54 Course - Commencing Jan 2027)',
+    category: 'army_jobs',
+    postDate: '19/08/2026',
+    startDate: '19/08/2026',
+    lastDate: '22/09/2026',
+    advertisementNo: 'TES-54 (January 2027 Course)',
+    shortInfo: 'Indian Army invites online applications from unmarried male candidates who have passed 10+2 Examination with Physics, Chemistry, and Mathematics (PCM) and appeared in JEE (Mains) 2026 for grant of Permanent Commission in the Army for 10+2 TES-54 Course.',
+    ageLimit: '16½ to 19½ Years (Born between 02 Jul 2007 and 01 Jul 2010)',
+    eligibility: 'Passed 10+2 with minimum 60% aggregate in PCM + Appeared in JEE (Mains) 2026',
+    totalPosts: '90 Posts (Permanent Commission in Army)',
+    officialLink: 'https://www.joinindianarmy.nic.in/officers-entry-apply-login.htm',
+    fees: {
+      genObc: '₹0 (No Application Fee)',
+      scSt: '₹0 (No Application Fee)'
+    },
+    isNew: true
+  },
+  {
+    id: 'rrb-cma-metallurgical-cen09-2026',
+    title: 'RRB Chemical & Metallurgical Assistant (CMA) & Supervisor Recruitment 2026 (CEN 09/2026)',
+    category: 'rrb_jobs',
+    postDate: '19/08/2026',
+    startDate: '20/08/2026',
+    lastDate: '21/09/2026',
+    advertisementNo: 'CEN No. 09/2026 (CMA & Metallurgical Supervisor)',
+    shortInfo: 'Railway Recruitment Boards (RRB) announce centralized recruitment for Chemical & Metallurgical Assistant (CMA), Metallurgical Supervisor, and Research Assistant categories across Indian Railways and Production Units.',
+    ageLimit: '18 to 36 Years (Relaxation as per RRB rules)',
+    eligibility: 'Degree in Science (B.Sc) with Physics and Chemistry (minimum 45% marks) or B.E./B.Tech in Metallurgical / Chemical Engineering',
+    totalPosts: '650 Posts across all RRB Zones',
+    officialLink: 'https://www.rrbapply.gov.in/#/auth/landing',
+    fees: {
+      genObc: '₹500 (₹400 refundable after appearing in CBT-1)',
+      scSt: '₹250 (₹250 refundable after appearing in CBT-1)'
+    },
+    isNew: true
+  },
+  {
+    id: 'ssc-junior-engineer-je-exam-2026',
+    title: 'SSC Junior Engineer (Civil, Mechanical & Electrical) Examination 2026 (JE Paper-I)',
+    category: 'ssc_jobs',
+    postDate: '19/08/2026',
+    startDate: '19/08/2026',
+    lastDate: '24/09/2026',
+    advertisementNo: 'SSC/HQ/JE-Exam-2026/08',
+    shortInfo: 'Staff Selection Commission (SSC) notifies competitive computer-based examination for recruitment of Junior Engineers (Civil, Electrical, Mechanical, and Quantity Surveying & Contracts) for CPWD, MES, BRO, and Central Water Commission.',
+    ageLimit: '18 to 30/32 Years (Depending on department; age relaxation applicable)',
+    eligibility: 'Degree or 3-Year Diploma in Civil / Electrical / Mechanical Engineering from a recognized University / Institute',
+    totalPosts: '1,765 Posts in Central Govt Departments',
+    officialLink: 'https://ssc.gov.in',
+    fees: {
+      genObc: '₹100 (Online Payment via UPI/NetBanking)',
+      scSt: '₹0 (Exempted for SC/ST/PwD/Women candidates)'
+    },
+    isNew: true
+  },
+  {
+    id: 'cus-btech-engg-sem3-sem5-exam-2026',
+    title: 'Online Examination Forms Notice for B.Tech & Engineering 3rd & 5th Semester (Session 2026)',
+    category: 'cluster_univ',
+    postDate: '19/08/2026',
+    startDate: '19/08/2026',
+    lastDate: '04/09/2026',
+    advertisementNo: 'CUS/Exam/BTech-Engg-3rd-5th/2026/1204',
+    shortInfo: 'Cluster University Srinagar notifies all regular and backlog engineering students of B.Tech (Civil, Electrical, Mechanical, Computer Science, and Electronics & Communication) 3rd and 5th Semester to submit their online examination forms.',
+    ageLimit: 'Enrolled B.Tech Students',
+    eligibility: 'Enrolled engineering students with required attendance and internal sessionals verified by college dean',
+    totalPosts: 'B.Tech Engineering Exam Cell',
+    officialLink: 'https://www.cusrinagar.edu.in/',
+    fees: {
+      genObc: '₹550 per subject + ₹200 Exam Infra Fee',
+      scSt: '₹550 per subject + ₹200 Exam Infra Fee'
+    },
+    isNew: true
+  },
+  {
+    id: 'jkssb-forest-env-engineer-field-asst-2026',
+    title: 'Direct Recruitment for Junior Environmental Engineer & Field Assistants in Forest Department (76 Posts)',
+    category: 'jkssb',
+    postDate: '19/08/2026',
+    startDate: '19/08/2026',
+    lastDate: '08/09/2026',
+    advertisementNo: 'JKSSB/Advt/Forest-Env/2026/12',
+    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) invites online applications from eligible Domiciles of UT of J&K for direct recruitment to 76 posts of Junior Environmental Engineer, Pollution Inspector, and Field Assistants in J&K Pollution Control Committee / Forest, Ecology & Environment Department.',
+    ageLimit: '18 to 40 Years (OM), 43 Years (SC/ST/RBA/ALC-IB/EWS), 48 Years (Ex-Servicemen)',
+    eligibility: 'B.E./B.Tech in Environmental / Chemical / Civil Engineering or B.Sc with Environmental Science / Chemistry for Field Assistant',
+    totalPosts: '76 Posts (Divisional & District Cadres)',
+    officialLink: 'https://jkssb.nic.in',
+    fees: {
+      genObc: '₹500 (Open Merit / OM candidates)',
+      scSt: '₹400 (SC, ST, PwD & EWS candidates)'
+    },
+    isNew: true
+  },
+  {
+    id: 'ku-exam-form-llb-ballb-even-sem-2026',
+    title: 'Online Examination Forms Notice for LL.B 3-Year & BA-LL.B 5-Year 2nd, 4th & 6th Semesters (Session 2026)',
+    category: 'exam_forms',
+    postDate: '19/08/2026',
+    startDate: '19/08/2026',
+    lastDate: '06/09/2026',
+    advertisementNo: 'KU/Exam/Law-LLB-BALLB-EvenSem/2026/912',
+    shortInfo: 'University of Kashmir notifies opening of online examination forms for regular and backlog candidates of LL.B (3-Year) and BA-LL.B (5-Year) 2nd, 4th, and 6th Semesters enrolled at School of Law and affiliated private Law Colleges.',
+    ageLimit: 'Enrolled Law Students',
+    eligibility: 'Bonafide students of Department of Law, KU and affiliated Law Colleges with approved internal sessional marks',
+    totalPosts: 'Law Examination Desk',
+    officialLink: 'https://kashmiruniversity.net/Examination.aspx',
+    fees: {
+      genObc: '₹1,650 per Semester (Online Payment)',
+      scSt: '₹1,650 per Semester (Online Payment)'
+    },
+    isNew: true
+  },
+  {
+    id: 'ku-admission-mttm-tourism-hospitality-2026',
+    title: 'Admission Notification for Master of Tourism & Travel Management (MTTM) & Hospitality Courses (Session 2026)',
+    category: 'admissions',
+    postDate: '19/08/2026',
+    startDate: '19/08/2026',
+    lastDate: '31/08/2026',
+    advertisementNo: 'KU/Adm/MTTM-Tourism/2026/31',
+    shortInfo: 'Department of Management Studies, University of Kashmir, invites online applications from eligible candidates for admission to 2-Year Master of Tourism & Travel Management (MTTM) and Post Graduate Diploma in Hospitality Management for Academic Session 2026.',
+    ageLimit: 'No upper age limit',
+    eligibility: "Bachelor's Degree in any discipline from a recognized University with at least 50% marks in aggregate (45% for Reserved categories)",
+    totalPosts: '40 Seats (Merit & Entrance Based)',
+    officialLink: 'https://kashmiruniversity.net/AdmissionNotices.aspx',
+    fees: {
+      genObc: '₹500 (Online Entrance & Application Fee)',
+      scSt: '₹500 (Online Entrance & Application Fee)'
+    },
+    isNew: true
+  },
+  // 🇮🇳 PREVIOUS NOTIFICATIONS (18 AUGUST 2026)
   {
     id: 'army-tgc-143-course-jul-2027',
     title: 'Indian Army 143rd Technical Graduate Course (TGC-143 - Commencing Jul 2027)',

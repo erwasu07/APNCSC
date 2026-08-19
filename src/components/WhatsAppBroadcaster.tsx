@@ -46,7 +46,7 @@ export default function WhatsAppBroadcaster({ cafeName }: WhatsAppBroadcasterPro
     return localStorage.getItem('csc_whatsapp_target_group') || '';
   });
   const [webhookUrl, setWebhookUrl] = useState<string>(() => {
-    return localStorage.getItem('csc_whatsapp_webhook_url') || '';
+    return localStorage.getItem('csc_whatsapp_webhook_url') || 'https://hook.eu1.make.com/64f9lm3a5sgm4pt9qbc832xgx0nw6bpl';
   });
   const [gatewayProvider, setGatewayProvider] = useState<string>(() => {
     return localStorage.getItem('csc_whatsapp_gateway_provider') || 'generic';
@@ -577,23 +577,44 @@ ${postUrl}`;
 
       {/* Broadcast Status Alert */}
       {broadcastStatus && (
-        <div className={`p-4 rounded-2xl text-xs font-bold flex items-start gap-3 animate-fade-in shadow-md ${
+        <div className={`p-4 rounded-2xl text-xs font-bold flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fade-in shadow-md ${
           broadcastStatus.type === 'success'
             ? 'bg-emerald-50 dark:bg-emerald-950 border border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200'
             : 'bg-red-50 dark:bg-red-950 border border-red-300 dark:border-red-700 text-red-900 dark:text-red-200'
         }`}>
-          {broadcastStatus.type === 'success' ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-          ) : (
-            <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-          )}
-          <div className="space-y-1">
-            <p className="font-extrabold text-sm">{broadcastStatus.message}</p>
-            {broadcastStatus.dispatchedVia && (
-              <p className="text-[11px] font-mono opacity-80">
-                Routed via: {broadcastStatus.dispatchedVia} • No manual browser clicks needed!
-              </p>
+          <div className="flex items-start gap-3">
+            {broadcastStatus.type === 'success' ? (
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+            ) : (
+              <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
             )}
+            <div className="space-y-1">
+              <p className="font-extrabold text-sm leading-snug">{broadcastStatus.message}</p>
+              {broadcastStatus.dispatchedVia && (
+                <p className="text-[11px] font-mono opacity-80">
+                  Routed via: {broadcastStatus.dispatchedVia}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-end sm:self-center shrink-0 pt-2 sm:pt-0">
+            <button
+              type="button"
+              onClick={() => handleManualOpenWhatsApp('group')}
+              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>Send in WhatsApp</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowConfig(true)}
+              className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer hover:bg-emerald-100 dark:hover:bg-slate-700 transition-all"
+            >
+              <Settings className="w-3.5 h-3.5" />
+              <span>Configure API Gateway</span>
+            </button>
           </div>
         </div>
       )}

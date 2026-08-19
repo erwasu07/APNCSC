@@ -743,19 +743,30 @@ app.post('/api/whatsapp/broadcast', async (req: Request, res: Response) => {
               text: messageText
             });
           } else {
-            dispatchedVia = 'Direct Webhook Gateway';
+            dispatchedVia = fetchUrl.includes('make.com') ? 'Make.com Webhook Gateway' : 'Direct Webhook Gateway';
             fetchOptions.body = JSON.stringify({
-              title,
-              category,
+              category: category || 'job',
+              title: title || 'New Notification',
+              body: messageText,
+              url: postUrl || 'https://www.cscdost.online',
+              published_at: new Date().toISOString(),
               message: messageText,
               messageText,
-              body: messageText,
               targetGroup: effectiveGroup,
               targetChannel: targetChannel || 'CSC DOST Channel',
               to: effectiveGroup,
               chatId: effectiveGroup,
-              postUrl,
-              timestamp: new Date().toISOString()
+              postUrl: postUrl || 'https://www.cscdost.online',
+              timestamp: new Date().toISOString(),
+              notices: [
+                {
+                  type: category || 'job',
+                  title: title || 'Notification',
+                  description: messageText,
+                  date: new Date().toISOString().slice(0, 10),
+                  url: postUrl || 'https://www.cscdost.online'
+                }
+              ]
             });
           }
 
@@ -892,6 +903,11 @@ app.post('/api/whatsapp/test-webhook', async (req: Request, res: Response) => {
     } else {
       fetchOptions.body = JSON.stringify({
         type: 'test_connection',
+        category: 'job',
+        title: 'CSC DOST Webhook Connection Test',
+        body: testMsg,
+        url: 'https://www.cscdost.online',
+        published_at: new Date().toISOString(),
         message: testMsg,
         targetGroup: testGroup,
         to: testGroup,
