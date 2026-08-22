@@ -45,7 +45,122 @@ export const SARKARI_CATEGORIES = {
 };
 
 export const SARKARI_DATA: SarkariItem[] = [
-  // 🇮🇳 TODAY'S NEWLY EXTRACTED NOTIFICATIONS (19 AUGUST 2026 - LATEST DISPATCH)
+  // 🇮🇳 TODAY'S NEWLY EXTRACTED NOTIFICATIONS (22 AUGUST 2026 - LATEST DISPATCH)
+  {
+    id: 'army-ssc-tech-66-men-37-women-oct-2026',
+    title: 'Indian Army Short Service Commission (Tech) 66th Men & 37th Women Entry Scheme (Commencing Oct 2026)',
+    category: 'army_jobs',
+    postDate: '22/08/2026',
+    startDate: '22/08/2026',
+    lastDate: '25/09/2026',
+    advertisementNo: 'SSC(Tech)-66 (Men) & SSCW(Tech)-37 (Women)',
+    shortInfo: 'Applications are invited from eligible unmarried male and female Engineering Graduates and also from Widows of Defence Personnel for grant of Short Service Commission (SSC) in the Indian Army for Course commencing in October 2026.',
+    ageLimit: '20 to 27 Years (Born between 02 Oct 1999 and 01 Oct 2006)',
+    eligibility: 'BE/B.Tech Degree in relevant Engineering stream (Final year students eligible)',
+    totalPosts: '380 Posts (Men: 350, Women: 30)',
+    officialLink: 'https://www.joinindianarmy.nic.in',
+    fees: {
+      genObc: '₹0 (No Application Fee)',
+      scSt: '₹0 (No Application Fee)'
+    },
+    isNew: true
+  },
+  {
+    id: 'rrb-staff-nurse-paramedical-cen10-2026',
+    title: 'RRB Paramedical Categories & Nursing Superintendent Recruitment 2026 (CEN 10/2026)',
+    category: 'rrb_jobs',
+    postDate: '22/08/2026',
+    startDate: '23/08/2026',
+    lastDate: '26/09/2026',
+    advertisementNo: 'CEN No. 10/2026 (Paramedical Categories)',
+    shortInfo: 'Railway Recruitment Boards (RRB) announce Centralized Employment Notice for recruitment of Nursing Superintendent, Pharmacist, Health & Malaria Inspector, Lab Assistant, and Radiographer across all Railway zones.',
+    ageLimit: '20 to 40 Years (Relaxation as per RRB rules)',
+    eligibility: 'B.Sc Nursing / GNM Diploma / B.Pharm / D.Pharm / DMLT with State Council Registration',
+    totalPosts: '1,376 Vacancies across all RRB Zones',
+    officialLink: 'https://www.rrbapply.gov.in',
+    fees: {
+      genObc: '₹500 (₹400 refundable upon attending CBT)',
+      scSt: '₹250 (₹250 refundable upon attending CBT)'
+    },
+    isNew: true
+  },
+  {
+    id: 'ssc-stenographer-grade-c-d-exam-2026',
+    title: 'SSC Stenographer Grade ‘C’ and ‘D’ Examination 2026 (CBT & Skill Test)',
+    category: 'ssc_jobs',
+    postDate: '22/08/2026',
+    startDate: '22/08/2026',
+    lastDate: '22/09/2026',
+    advertisementNo: 'F.No. SSC/HQ/Steno-2026/08',
+    shortInfo: 'Staff Selection Commission invites online applications from eligible candidates for Computer Based Examination for recruitment of Stenographers Grade ‘C’ (Group B Non-Gazetted) and Grade ‘D’ (Group C) for various Central Government Ministries and Departments.',
+    ageLimit: '18 to 30 Years for Grade C, 18 to 27 Years for Grade D (Age relaxation applicable)',
+    eligibility: '12th Standard or equivalent qualification + Shorthand/Typing Speed in Hindi or English',
+    totalPosts: '2,140 Vacancies (Tentative)',
+    officialLink: 'https://ssc.gov.in',
+    fees: {
+      genObc: '₹100 (Online Payment via UPI/NetBanking)',
+      scSt: '₹0 (Exempted for SC/ST/PwD/Women)'
+    },
+    isNew: true
+  },
+  {
+    id: 'cus-ug-honours-nep-sem2-exam-form-2026',
+    title: 'Online Examination Forms Notice for UG FYUGP (NEP-2020) 2nd Semester Batch 2025-26',
+    category: 'cluster_univ',
+    postDate: '22/08/2026',
+    startDate: '22/08/2026',
+    lastDate: '07/09/2026',
+    advertisementNo: 'CUS/Exam/UG-FYUGP-Sem-2/2026/1380',
+    shortInfo: 'Cluster University Srinagar notifies all eligible undergraduate students enrolled in 4-Year Undergraduate Programmes (FYUGP under NEP-2020) 2nd Semester to submit their online examination forms and download fee challans through student login.',
+    ageLimit: 'Enrolled UG Regular Students',
+    eligibility: 'Bonafide students of constituent colleges of CUS with requisite attendance and internal continuous assessments completed',
+    totalPosts: 'Undergraduate Examination Wing',
+    officialLink: 'https://www.cusrinagar.edu.in',
+    fees: {
+      genObc: '₹675 (Standard Form & Exam Fee)',
+      scSt: '₹675 (Standard Form & Exam Fee)'
+    },
+    isNew: true
+  },
+  {
+    id: 'ku-exam-form-bed-1st-2nd-sem-session-2026',
+    title: 'Online Examination Forms Notice for B.Ed 1st & 2nd Semester (Regular & Backlog Candidates, Session 2026)',
+    category: 'exam_forms',
+    postDate: '22/08/2026',
+    startDate: '22/08/2026',
+    lastDate: '08/09/2026',
+    advertisementNo: 'F(Exam-Form-BEd-1st-2nd-Sem)/KU/2026/89',
+    shortInfo: 'University of Kashmir Examination Wing issues notice for submission of online examination forms for B.Ed 1st and 2nd Semester eligible candidates of affiliated private and government colleges of education.',
+    ageLimit: 'Enrolled B.Ed Teacher Trainees',
+    eligibility: 'Eligible B.Ed students with verified internal microteaching and sessionals records',
+    totalPosts: 'B.Ed Examination Cell',
+    officialLink: 'https://www.kashmiruniversity.net',
+    fees: {
+      genObc: '₹1,050 (Exam Fee) + ₹250 (EMF / Services)',
+      scSt: '₹1,050 (Exam Fee) + ₹250 (EMF / Services)'
+    },
+    isNew: true
+  },
+  {
+    id: 'ku-admissions-postgraduate-diploma-cyber-security-2026',
+    title: 'Admission Notification for PG Diploma in Cyber Security, AI & Data Science (Session 2026-27)',
+    category: 'admissions',
+    postDate: '22/08/2026',
+    startDate: '22/08/2026',
+    lastDate: '12/09/2026',
+    advertisementNo: 'F(Admissions-PGD-Cyber-AI)/KU/2026/04',
+    shortInfo: 'Directorate of Admissions and Competitive Examinations, University of Kashmir invites online applications from eligible candidates for admission into 1-Year Full-Time Post Graduate Diploma in Cyber Security, Artificial Intelligence & Applied Data Analytics.',
+    ageLimit: 'No upper age bar for professional diploma admissions',
+    eligibility: 'Graduation in any discipline with Mathematics/Statistics/Computer Science at 10+2/Graduation level with at least 50% marks (45% for reserved categories)',
+    totalPosts: '45 Seats (Main Campus)',
+    officialLink: 'https://www.kashmiruniversity.net',
+    fees: {
+      genObc: '₹750 (Entrance & Processing Fee)',
+      scSt: '₹750 (Entrance & Processing Fee)'
+    },
+    isNew: true
+  },
+  // 🇮🇳 PREVIOUS NOTIFICATIONS (19 AUGUST 2026 - DISPATCH)
   {
     id: 'army-tes-54-course-jan-2027',
     title: 'Indian Army 10+2 Technical Entry Scheme (TES-54 Course - Commencing Jan 2027)',
@@ -119,25 +234,6 @@ export const SARKARI_DATA: SarkariItem[] = [
     fees: {
       genObc: '₹550 per subject + ₹200 Exam Infra Fee',
       scSt: '₹550 per subject + ₹200 Exam Infra Fee'
-    },
-    isNew: true
-  },
-  {
-    id: 'jkssb-forest-env-engineer-field-asst-2026',
-    title: 'Direct Recruitment for Junior Environmental Engineer & Field Assistants in Forest Department (76 Posts)',
-    category: 'jkssb',
-    postDate: '19/08/2026',
-    startDate: '19/08/2026',
-    lastDate: '08/09/2026',
-    advertisementNo: 'JKSSB/Advt/Forest-Env/2026/12',
-    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) invites online applications from eligible Domiciles of UT of J&K for direct recruitment to 76 posts of Junior Environmental Engineer, Pollution Inspector, and Field Assistants in J&K Pollution Control Committee / Forest, Ecology & Environment Department.',
-    ageLimit: '18 to 40 Years (OM), 43 Years (SC/ST/RBA/ALC-IB/EWS), 48 Years (Ex-Servicemen)',
-    eligibility: 'B.E./B.Tech in Environmental / Chemical / Civil Engineering or B.Sc with Environmental Science / Chemistry for Field Assistant',
-    totalPosts: '76 Posts (Divisional & District Cadres)',
-    officialLink: 'https://jkssb.nic.in',
-    fees: {
-      genObc: '₹500 (Open Merit / OM candidates)',
-      scSt: '₹400 (SC, ST, PwD & EWS candidates)'
     },
     isNew: true
   },
@@ -253,25 +349,6 @@ export const SARKARI_DATA: SarkariItem[] = [
     fees: {
       genObc: '₹425 per subject + ₹200 University Exam Infra Fee',
       scSt: '₹425 per subject + ₹200 University Exam Infra Fee'
-    },
-    isNew: true
-  },
-  {
-    id: 'jkssb-fsl-scientific-officer-lab-asst-2026',
-    title: 'Direct Recruitment for Scientific Officers & Laboratory Assistants in Home Department (FSL - 48 Posts)',
-    category: 'jkssb',
-    postDate: '18/08/2026',
-    startDate: '18/08/2026',
-    lastDate: '05/09/2026',
-    advertisementNo: 'JKSSB/Advt/Home-FSL/2026/11',
-    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) invites online applications from eligible Domiciles of UT of J&K for direct recruitment to 48 posts of Assistant Scientific Officer (Ballistics, Biology/Serology, Chemistry/Toxicology) and Laboratory Assistants in Forensic Science Laboratory (FSL), Home Department.',
-    ageLimit: '18 to 40 Years (OM), 43 Years (SC/ST/RBA/ALC-IB/EWS), 48 Years (Ex-Servicemen)',
-    eligibility: "Master's Degree in Forensic Science / Chemistry / Physics / Zoology / Botany / Biochemistry or B.Sc with relevant subjects for Lab Assistant",
-    totalPosts: '48 Posts (UT Cadre)',
-    officialLink: 'https://jkssb.nic.in',
-    fees: {
-      genObc: '₹500 (Open Merit / OM candidates)',
-      scSt: '₹400 (SC, ST, PwD & EWS candidates)'
     },
     isNew: true
   },
@@ -392,25 +469,6 @@ export const SARKARI_DATA: SarkariItem[] = [
     isNew: true
   },
   {
-    id: 'jkssb-junior-engineer-mech-jal-shakti-2026',
-    title: 'Direct Recruitment for Junior Engineer (Mechanical) in Jal Shakti Department (190 Posts)',
-    category: 'jkssb',
-    postDate: '18/08/2026',
-    startDate: '18/08/2026',
-    lastDate: '02/09/2026',
-    advertisementNo: 'JKSSB/Advt/Jal-Shakti/2026/10',
-    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) invites online applications from Domiciles of UT of J&K for direct recruitment to 190 posts of Junior Engineer (Mechanical) in Jal Shakti Department.',
-    ageLimit: '18 to 40 Years (OM), 43 Years (SC/ST/RBA/ALC-IB/EWS), 48 Years (Ex-Servicemen)',
-    eligibility: '3-Year Diploma in Mechanical Engineering from recognized institute / Indian University OR Degree in Mechanical Engineering / AMIE',
-    totalPosts: '190 Posts (UT & Divisional Cadres)',
-    officialLink: 'https://jkssb.nic.in',
-    fees: {
-      genObc: '₹500 (Open Merit / OM candidates)',
-      scSt: '₹400 (SC, ST, PwD & EWS candidates)'
-    },
-    isNew: true
-  },
-  {
     id: 'ku-exam-form-ug-bg-2nd-sem-nep-2026',
     title: 'Online Examination Forms Notice for UG (BG) 2nd Semester Regular & Fresh Private (NEP Batch 2025)',
     category: 'exam_forms',
@@ -522,25 +580,6 @@ export const SARKARI_DATA: SarkariItem[] = [
     fees: {
       genObc: '₹300 (Counseling & Processing Fee)',
       scSt: '₹300 (Counseling & Processing Fee)'
-    },
-    isNew: true
-  },
-  {
-    id: 'jkssb-draftsman-civil-pwd-2026',
-    title: 'Direct Recruitment for Draftsman (Civil) & Works Supervisor in PW(R&B) Dept (357 Posts)',
-    category: 'jkssb',
-    postDate: '17/08/2026',
-    startDate: '17/08/2026',
-    lastDate: '30/08/2026',
-    advertisementNo: 'JKSSB/Advt/PW-R&B/2026/09',
-    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) invites online applications for direct recruitment to 357 Divisional Cadre posts of Draftsman (Civil) and Works Supervisor in Public Works (R&B) Department.',
-    ageLimit: '18 to 40 Years (Open Merit), 43 Years (RBA/SC/ST/EWS/ALC-IB), 48 Years (Ex-Servicemen)',
-    eligibility: '2-Year Draftsman Training Course Certificate / Diploma in Civil Engineering from a recognized Institute/Polytechnic',
-    totalPosts: '357 Posts (Divisional Cadre Kashmir & Jammu)',
-    officialLink: 'https://jkssb.nic.in',
-    fees: {
-      genObc: '₹500 (General / OM candidates)',
-      scSt: '₹400 (SC, ST, PwD & EWS candidates)'
     },
     isNew: true
   },
