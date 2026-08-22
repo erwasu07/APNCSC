@@ -352,7 +352,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
 
   const handleShareSarkari = async (item: SarkariItem) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.cscdost.com';
-    const shareUrl = `${origin}/#post/${item.id}`;
+    const shareUrl = `${origin}/post/${item.id}`;
     const orgName = getOrgName(item);
     const shareTitle = `📢 ${item.title}`;
     const shareText = `📢 *${item.title}*\n🏢 *Board/Dept:* ${orgName}\n${item.lastDate ? `⏰ *Last Date:* ${item.lastDate}\n` : ''}${item.totalPosts ? `👥 *Vacancies/Seats:* ${item.totalPosts}\n` : ''}\n${item.shortInfo ? item.shortInfo + '\n\n' : ''}👉 View full notification & Apply online via CSC DOST:\n${shareUrl}`;

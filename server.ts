@@ -1,7 +1,16 @@
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
+import fs from 'fs';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
+import { SARKARI_DATA } from './src/data/sarkariData';
+import { SERVICES_LIST } from './src/servicesData';
+import { 
+  generateOgPng, 
+  generateOgSvg, 
+  generateServiceOgPng, 
+  generateServiceOgSvg 
+} from './src/ogImageGenerator';
 import { 
   getDb, 
   saveDb, 
@@ -1143,6 +1152,118 @@ app.post('/api/admin/restore', authenticateAdmin, (req, res) => {
   res.json({ success: true, message: 'Database restored successfully from backup.' });
 });
 
+// Dynamic Open Graph Image Generator Endpoint for WhatsApp / Facebook / Social Share Previews
+app.get(['/api/og-image/:id.png', '/api/og-image/:id.svg', '/api/og-image/:id', '/api/og-image'], async (req: Request, res: Response) => {
+  try {
+    let id = (req.params.id || (req.query.id as string) || '').replace(/\.(png|svg)$/i, '');
+    const format = req.path.endsWith('.svg') || req.query.format === 'svg' ? 'svg' : 'png';
+
+    // 1. Search in Sarkari notifications
+    const sarkariItem = SARKARI_DATA.find(i => i.id === id);
+    if (sarkariItem) {
+      if (format === 'svg') {
+        const svg = generateOgSvg(sarkariItem);
+        res.setHeader('Content-Type', 'image/svg+xml');
+        res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+        return res.send(svg);
+      }
+      const png = await generateOgPng(sarkariItem);
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+      return res.send(png);
+    }
+
+    // 2. Search in Services list
+    const serviceItem = SERVICES_LIST.find(s => s.id === id);
+    if (serviceItem) {
+      if (format === 'svg') {
+        const svg = generateServiceOgSvg(serviceItem);
+        res.setHeader('Content-Type', 'image/svg+xml');
+        res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+        return res.send(svg);
+      }
+      const png = await generateServiceOgPng(serviceItem);
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+      return res.send(png);
+    }
+
+    // 3. Fallback: Default CSC DOST Open Graph Banner
+    if (format === 'svg') {
+      const svg = generateOgSvg(null);
+      res.setHeader('Content-Type', 'image/svg+xml');
+      res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+      return res.send(svg);
+    }
+    const png = await generateOgPng(null);
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+    return res.send(png);
+  } catch (err) {
+    console.error('OG Image Generation Error:', err);
+    res.status(500).sendFile(path.join(process.cwd(), 'public', 'og-banner.png'));
+  }
+});
+
+// Explicitly serve static og banners with caching
+app.get(['/og-banner.png', '/og-image.png'], (req: Request, res: Response) => {
+  const bannerPath = path.join(process.cwd(), 'public', 'og-banner.png');
+  res.setHeader('Content-Type', 'image/png');
+  res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+  res.sendFile(bannerPath);
+});
+
+app.get(['/og-banner.svg', '/og-image.svg'], (req: Request, res: Response) => {
+  const bannerPath = path.join(process.cwd(), 'public', 'og-banner.svg');
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+  res.sendFile(bannerPath);
+});
+
+// Helper to inject rich Open Graph tags for WhatsApp / Facebook / Twitter scrapers and users
+function renderDynamicMetaHtml(rawHtml: string, req: Request): string {
+  const urlPath = req.path;
+  const matchPost = urlPath.match(/^\/(?:post|job|sarkari)\/([^/?#]+)/i);
+  const matchService = urlPath.match(/^\/service\/([^/?#]+)/i);
+
+  let title = 'CSC DOST - Sarkari Jobs, Exam Forms & Citizen E-Services';
+  let description = 'Official Notifications for Indian Army, RRB, SSC, JKSSB, Kashmir University Admissions & Online Forms. Fast, reliable application assistance at cscdost.com.';
+  let ogImage = 'https://www.cscdost.com/og-banner.png';
+  let canonicalUrl = `https://www.cscdost.com${urlPath}`;
+
+  if (matchPost) {
+    const postId = matchPost[1];
+    const item = SARKARI_DATA.find(i => i.id === postId);
+    if (item) {
+      title = `${item.title} - CSC DOST`;
+      description = item.shortInfo || `Apply online for ${item.title}. Last Date: ${item.lastDate || 'Check Notification'}. Vacancies: ${item.totalPosts || 'Open'}. Official updates at cscdost.com.`;
+      ogImage = `https://www.cscdost.com/api/og-image/${item.id}.png`;
+    }
+  } else if (matchService) {
+    const serviceId = matchService[1];
+    const service = SERVICES_LIST.find(s => s.id === serviceId);
+    if (service) {
+      title = `${service.name} Online Application - CSC DOST`;
+      description = `${service.description} Fast turnaround time: ${service.estimatedTime}. Apply securely at cscdost.com.`;
+      ogImage = `https://www.cscdost.com/api/og-image/${service.id}.png`;
+    }
+  }
+
+  // Escape HTML entities
+  const safeTitle = title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const safeDesc = description.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  return rawHtml
+    .replace(/<title>.*?<\/title>/i, `<title>${safeTitle}</title>`)
+    .replace(/<meta property="og:title" content=".*?" \/>/i, `<meta property="og:title" content="${safeTitle}" />`)
+    .replace(/<meta property="og:description" content=".*?" \/>/i, `<meta property="og:description" content="${safeDesc}" />`)
+    .replace(/<meta property="og:image" content=".*?" \/>/i, `<meta property="og:image" content="${ogImage}" />\n    <meta property="og:image:secure_url" content="${ogImage}" />`)
+    .replace(/<meta property="og:url" content=".*?" \/>/i, `<meta property="og:url" content="${canonicalUrl}" />`)
+    .replace(/<meta name="twitter:title" content=".*?" \/>/i, `<meta name="twitter:title" content="${safeTitle}" />`)
+    .replace(/<meta name="twitter:description" content=".*?" \/>/i, `<meta name="twitter:description" content="${safeDesc}" />`)
+    .replace(/<meta name="twitter:image" content=".*?" \/>/i, `<meta name="twitter:image" content="${ogImage}" />`);
+}
+
 // Explicitly serve sitemap.xml and robots.txt with correct MIME headers
 app.get('/sitemap.xml', (req: Request, res: Response) => {
   const sitemapPath = path.join(process.cwd(), 'public', 'sitemap.xml');
@@ -1167,12 +1288,43 @@ async function startServer() {
       server: { middlewareMode: true },
       appType: 'spa',
     });
-    app.use(vite.middlewares);
+
+    // Custom middleware to inject dynamic Open Graph tags in development
+    app.use(async (req, res, next) => {
+      const url = req.originalUrl || req.url;
+      const isPostOrService = /^\/(?:post|job|sarkari|service)\//i.test(req.path);
+      
+      if (isPostOrService && req.method === 'GET' && !req.path.includes('.')) {
+        try {
+          const indexHtml = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf-8');
+          const transformedHtml = await vite.transformIndexHtml(url, indexHtml);
+          const finalHtml = renderDynamicMetaHtml(transformedHtml, req);
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          return res.send(finalHtml);
+        } catch (e) {
+          return next(e);
+        }
+      }
+      return vite.middlewares(req, res, next);
+    });
   } else {
     const distPath = path.join(process.cwd(), 'dist');
+    const indexHtmlPath = path.join(distPath, 'index.html');
+    
     app.use(express.static(distPath));
+
     app.get('*', (req: Request, res: Response) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      try {
+        if (fs.existsSync(indexHtmlPath)) {
+          const indexHtml = fs.readFileSync(indexHtmlPath, 'utf-8');
+          const dynamicHtml = renderDynamicMetaHtml(indexHtml, req);
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          return res.send(dynamicHtml);
+        }
+      } catch (err) {
+        console.error('Error serving index.html:', err);
+      }
+      res.sendFile(indexHtmlPath);
     });
   }
 

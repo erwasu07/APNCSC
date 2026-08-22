@@ -142,13 +142,20 @@ export default function App() {
 
     const parseRoute = () => {
       const hash = window.location.hash;
+      const pathname = window.location.pathname;
       const searchParams = new URLSearchParams(window.location.search);
       const postParam = searchParams.get('post') || searchParams.get('job');
       const serviceParam = searchParams.get('service');
       const trackParam = searchParams.get('track') || searchParams.get('token') || searchParams.get('id');
 
+      // Check direct pathname matches (e.g. /post/xyz, /job/xyz, /service/xyz)
+      const pathPostMatch = pathname.match(/^\/(?:post|job|sarkari)\/([^/?#]+)/i);
+      const pathServiceMatch = pathname.match(/^\/service\/([^/?#]+)/i);
+      const pathTrackMatch = pathname.match(/^\/track\/([^/?#]+)/i);
+      const pathApplyMatch = pathname.startsWith('/apply');
+
       // 1. Check Apply route
-      if (hash.startsWith('#apply')) {
+      if (hash.startsWith('#apply') || pathApplyMatch) {
         const applyQuery = hash.includes('?') ? hash.split('?')[1] : '';
         const applyParams = new URLSearchParams(applyQuery);
         const svc = applyParams.get('service') || searchParams.get('service') || '';
@@ -165,9 +172,9 @@ export default function App() {
       }
 
       // 2. Check Track route
-      if (hash.startsWith('#track')) {
+      if (hash.startsWith('#track') || pathTrackMatch) {
         const cleanHash = hash.replace(/^#track\/?/, '');
-        const trackToken = cleanHash.split('?')[0] || trackParam || '';
+        const trackToken = (pathTrackMatch ? pathTrackMatch[1] : null) || cleanHash.split('?')[0] || trackParam || '';
         setIsTrackView(true);
         setTrackInitialToken(trackToken);
         setIsApplyView(false);
@@ -181,6 +188,19 @@ export default function App() {
       }
 
       // 3. Check Service route
+      if (pathServiceMatch) {
+        const matchService = SERVICES_LIST.find(s => s.id === pathServiceMatch[1]);
+        if (matchService) {
+          setActiveServicePost(matchService);
+          setActiveJobPost(null);
+          setIsAdminView(false);
+          setIsApplyView(false);
+          setIsTrackView(false);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
+      }
+
       if (serviceParam && !hash.startsWith('#post')) {
         const matchService = SERVICES_LIST.find(s => s.id === serviceParam);
         if (matchService) {
@@ -211,6 +231,19 @@ export default function App() {
       }
 
       // 4. Check Job/Post route
+      if (pathPostMatch) {
+        const match = SARKARI_DATA.find(i => i.id === pathPostMatch[1]);
+        if (match) {
+          setActiveJobPost(match);
+          setActiveServicePost(null);
+          setIsAdminView(false);
+          setIsApplyView(false);
+          setIsTrackView(false);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
+      }
+
       if (postParam) {
         const match = SARKARI_DATA.find(i => i.id === postParam);
         if (match) {
@@ -354,7 +387,7 @@ export default function App() {
 
   const handleShareServiceItem = async (item: ServiceItem) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.cscdost.com';
-    const shareUrl = `${origin}/#service/${item.id}`;
+    const shareUrl = `${origin}/service/${item.id}`;
     const shareTitle = `📌 ${item.name} - CSC DOST`;
     const shareText = `📌 *${item.name}*\n💰 Fee: ${item.price}\n⏱️ Turnaround: ${item.estimatedTime}\n\n${item.description}\n\n👉 Full details & apply online:\n${shareUrl}`;
 
@@ -374,7 +407,7 @@ export default function App() {
 
   const handleShareItem = async (item: SarkariItem) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.cscdost.com';
-    const shareUrl = `${origin}/#post/${item.id}`;
+    const shareUrl = `${origin}/post/${item.id}`;
     const shareTitle = `📢 ${item.title}`;
     const shareText = `📢 *${item.title}*\n${item.lastDate ? `⏰ *Last Date:* ${item.lastDate}\n` : ''}${item.totalPosts ? `👥 *Vacancies/Seats:* ${item.totalPosts}\n` : ''}\n${item.shortInfo ? item.shortInfo + '\n\n' : ''}👉 Read full notification & apply at CSC DOST:\n${shareUrl}`;
 

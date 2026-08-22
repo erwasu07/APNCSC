@@ -78,7 +78,7 @@ export default function ExploreServicesDesk({ onApplyService, selectedService, o
 
   const handleShareService = async (item: ServiceItem) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.cscdost.com';
-    const shareUrl = `${origin}/?service=${item.id}`;
+    const shareUrl = `${origin}/service/${item.id}`;
     const shareTitle = `📌 ${item.name} - CSC DOST Service`;
     const shareText = `📌 *${item.name}*\n💰 Price: ${item.price}\n⏱️ Time: ${item.estimatedTime}\n\n${item.description}\n\n👉 Apply online via CSC DOST Portal:\n${shareUrl}`;
 

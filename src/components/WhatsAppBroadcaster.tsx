@@ -100,7 +100,7 @@ export default function WhatsAppBroadcaster({ cafeName }: WhatsAppBroadcasterPro
     setCustomSeats(seatsFormatted);
 
     setCustomSummary(item.shortInfo);
-    setCustomLink(`https://www.cscdost.com/#post/${item.id}`);
+    setCustomLink(`https://www.cscdost.com/post/${item.id}`);
   };
 
   // Initialize on mount with first notification
