@@ -18,6 +18,7 @@ import {
   Printer
 } from 'lucide-react';
 import { SarkariItem, SARKARI_CATEGORIES } from '../data/sarkariData';
+import SarkariNotificationBanner from './SarkariNotificationBanner';
 
 interface SarkariDedicatedPageViewProps {
   item: SarkariItem;
@@ -172,6 +173,11 @@ export default function SarkariDedicatedPageView({
           {/* Document Content Flow */}
           <div className="p-5 sm:p-8 space-y-8 text-slate-800">
             
+            {/* Official Visual Notification Thumbnail Poster */}
+            <section aria-label="Official Notification Poster">
+              <SarkariNotificationBanner item={item} />
+            </section>
+
             {/* Candidate Advisory - Clean Left Border Callout */}
             <aside aria-label="Advisory" className="border-l-4 border-amber-500 bg-amber-50/60 p-4 rounded-r-lg space-y-1">
               <div className="flex items-center gap-2">

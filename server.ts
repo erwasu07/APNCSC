@@ -1225,27 +1225,37 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): string {
   const urlPath = req.path;
   const matchPost = urlPath.match(/^\/(?:post|job|sarkari)\/([^/?#]+)/i);
   const matchService = urlPath.match(/^\/service\/([^/?#]+)/i);
+  const postParam = (req.query.post as string) || (req.query.job as string);
+  const serviceParam = req.query.service as string;
+
+  // Determine host and protocol dynamically
+  const host = req.get('x-forwarded-host') || req.get('host') || 'www.cscdost.com';
+  const protocol = req.get('x-forwarded-proto') || (req.secure ? 'https' : 'https');
+  const baseOrigin = host.includes('localhost') ? `http://${host}` : `https://${host}`;
 
   let title = 'CSC DOST - Sarkari Jobs, Exam Forms & Citizen E-Services';
   let description = 'Official Notifications for Indian Army, RRB, SSC, JKSSB, Kashmir University Admissions & Online Forms. Fast, reliable application assistance at cscdost.com.';
-  let ogImage = 'https://www.cscdost.com/og-banner.png';
-  let canonicalUrl = `https://www.cscdost.com${urlPath}`;
+  let ogImage = `${baseOrigin}/og-banner.png`;
+  let canonicalUrl = `${baseOrigin}${urlPath}`;
 
-  if (matchPost) {
-    const postId = matchPost[1];
-    const item = SARKARI_DATA.find(i => i.id === postId);
+  const targetPostId = matchPost ? matchPost[1] : postParam;
+  const targetServiceId = matchService ? matchService[1] : serviceParam;
+
+  if (targetPostId) {
+    const item = SARKARI_DATA.find(i => i.id === targetPostId);
     if (item) {
       title = `${item.title} - CSC DOST`;
       description = item.shortInfo || `Apply online for ${item.title}. Last Date: ${item.lastDate || 'Check Notification'}. Vacancies: ${item.totalPosts || 'Open'}. Official updates at cscdost.com.`;
-      ogImage = `https://www.cscdost.com/api/og-image/${item.id}.png`;
+      ogImage = `${baseOrigin}/api/og-image/${item.id}.png`;
+      canonicalUrl = `${baseOrigin}/post/${item.id}`;
     }
-  } else if (matchService) {
-    const serviceId = matchService[1];
-    const service = SERVICES_LIST.find(s => s.id === serviceId);
+  } else if (targetServiceId) {
+    const service = SERVICES_LIST.find(s => s.id === targetServiceId);
     if (service) {
       title = `${service.name} Online Application - CSC DOST`;
       description = `${service.description} Fast turnaround time: ${service.estimatedTime}. Apply securely at cscdost.com.`;
-      ogImage = `https://www.cscdost.com/api/og-image/${service.id}.png`;
+      ogImage = `${baseOrigin}/api/og-image/${service.id}.png`;
+      canonicalUrl = `${baseOrigin}/service/${service.id}`;
     }
   }
 
@@ -1257,7 +1267,7 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): string {
     .replace(/<title>.*?<\/title>/i, `<title>${safeTitle}</title>`)
     .replace(/<meta property="og:title" content=".*?" \/>/i, `<meta property="og:title" content="${safeTitle}" />`)
     .replace(/<meta property="og:description" content=".*?" \/>/i, `<meta property="og:description" content="${safeDesc}" />`)
-    .replace(/<meta property="og:image" content=".*?" \/>/i, `<meta property="og:image" content="${ogImage}" />\n    <meta property="og:image:secure_url" content="${ogImage}" />`)
+    .replace(/<meta property="og:image" content=".*?" \/>/i, `<meta property="og:image" content="${ogImage}" />\n    <meta property="og:image:secure_url" content="${ogImage}" />\n    <meta property="og:image:type" content="image/png" />\n    <meta property="og:image:width" content="1200" />\n    <meta property="og:image:height" content="630" />`)
     .replace(/<meta property="og:url" content=".*?" \/>/i, `<meta property="og:url" content="${canonicalUrl}" />`)
     .replace(/<meta name="twitter:title" content=".*?" \/>/i, `<meta name="twitter:title" content="${safeTitle}" />`)
     .replace(/<meta name="twitter:description" content=".*?" \/>/i, `<meta name="twitter:description" content="${safeDesc}" />`)

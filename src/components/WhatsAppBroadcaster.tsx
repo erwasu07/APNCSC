@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SARKARI_DATA, SarkariItem } from '../data/sarkariData';
+import SarkariNotificationBanner from './SarkariNotificationBanner';
 import {
   MessageCircle,
   Send,
@@ -17,7 +18,9 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
-  Activity
+  Activity,
+  Download,
+  Image as ImageIcon
 } from 'lucide-react';
 
 interface WhatsAppBroadcasterProps {
@@ -806,6 +809,17 @@ ${postUrl}`;
                 Exact Verified Format
               </span>
             </div>
+
+            {/* Visual Thumbnail Card Preview */}
+            {(() => {
+              const activeItem = SARKARI_DATA.find(i => i.id === selectedNotificationId) || SARKARI_DATA[0];
+              if (!activeItem) return null;
+              return (
+                <div className="pt-1">
+                  <SarkariNotificationBanner item={activeItem} className="scale-[0.98] origin-top" />
+                </div>
+              );
+            })()}
 
             {/* Simulated WhatsApp Chat Bubble matching verified screenshot */}
             <div className="p-3.5 sm:p-4 rounded-2xl bg-[#E8F8F0] dark:bg-[#005c4b]/30 text-slate-900 dark:text-slate-100 text-xs sm:text-[13px] border border-emerald-300/40 dark:border-emerald-500/20 shadow-xs relative space-y-3 font-sans leading-relaxed">
