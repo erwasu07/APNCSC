@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Shield, Calendar, PhoneCall, Cpu, Sparkles, Eye, Languages, Home, Briefcase, Flame, Info, Menu, X, Star, ShieldCheck, Lock, Key, Sun, Moon, BookOpen, Bell, FileCheck, Search, MessageSquare } from 'lucide-react';
 import { PolicyTab } from './PrivacyPolicyModal';
+import { useTheme } from '../context/ThemeContext';
 
 interface NavbarProps {
   darkMode?: boolean;
@@ -19,6 +20,7 @@ export default function Navbar({
   onOpenAdmin,
   onHomeClick
 }: NavbarProps) {
+  const { activeThemeConfig } = useTheme();
   const [lang, setLang] = useState<'EN' | 'HI'>(() => {
     if (typeof window !== 'undefined') {
       const cookies = document.cookie;
@@ -98,15 +100,15 @@ export default function Navbar({
 
   return (
     <header className="w-full z-50 flex flex-col relative" id="hero">
-      {/* MAIN PORTAL HEADER - CENTERED CSC DOST BRANDING */}
-      <div className="bg-gradient-to-r from-[#18204e] via-[#1c2661] to-[#171e4a] py-3.5 sm:py-4 px-3 sm:px-4 border-b border-blue-900/60 shadow-md">
-        <div className="max-w-7xl mx-auto flex items-center justify-center">
+      {/* MAIN PORTAL HEADER - CENTERED CSC DOST BRANDING WITH NATIONAL TRICOLOR GRADIENT */}
+      <div className={`bg-gradient-to-r ${activeThemeConfig.headerGradient} py-3.5 sm:py-4 px-3 sm:px-4 border-b border-blue-900/60 shadow-md transition-all duration-300`}>
+        <div className="max-w-7xl mx-auto flex items-center justify-center relative">
           
           {/* Centered CSC DOST Logo & Tagline */}
           <button 
             type="button"
             onClick={() => scrollInto('hero')}
-            className="flex items-center justify-center gap-2.5 sm:gap-3 text-center cursor-pointer hover:opacity-95 transition-opacity bg-transparent border-0 p-0"
+            className="flex items-center justify-center gap-2.5 sm:gap-3 text-center cursor-pointer hover:opacity-95 transition-opacity bg-transparent border-0 p-0 mx-auto"
             title="Go to Homepage"
           >
             <div className="relative shrink-0">
@@ -135,7 +137,7 @@ export default function Navbar({
       </div>
 
       {/* 3. NAVIGATION MENU BAR */}
-      <nav className="bg-[#ffffff] text-slate-800 shadow-md sticky top-0 z-50 border-b border-slate-200">
+      <nav className="bg-[#ffffff] dark:bg-slate-900 text-slate-800 dark:text-slate-100 shadow-md sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800 transition-colors">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 flex items-center justify-between h-12 sm:h-13 gap-1">
           
           {/* Navigation Links - Mobile-optimized horizontal navigation */}
@@ -157,11 +159,11 @@ export default function Navbar({
                   }} 
                   className={`px-2 py-1.5 sm:px-3 sm:py-1.5 rounded-lg transition-all duration-200 flex items-center gap-1 sm:gap-1.5 font-black text-[11px] sm:text-xs cursor-pointer shrink-0 ${
                     isActive 
-                      ? 'bg-[#28307d] text-white shadow-xs' 
-                      : 'text-slate-700 hover:text-[#28307d] hover:bg-slate-100'
+                      ? 'bg-[#1e293b] dark:bg-blue-600 text-white shadow-xs' 
+                      : 'text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                   }`}
                 >
-                  <IconComp className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-amber-300' : 'text-slate-500'}`} />
+                  <IconComp className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-amber-300' : 'text-slate-500 dark:text-slate-400'}`} />
                   <span className="hidden sm:inline whitespace-nowrap">{item.label}</span>
                   <span className="inline sm:hidden whitespace-nowrap">{item.shortLabel}</span>
                 </button>
@@ -170,7 +172,7 @@ export default function Navbar({
           </div>
 
           {/* Right side: WhatsApp Group, Notifications, Staff Portal Link & Mobile Menu Trigger Button */}
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0 pl-1 border-l border-slate-200 sm:border-0">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0 pl-1 border-l border-slate-200 dark:border-slate-800 sm:border-0">
             {/* WhatsApp Community Group Link */}
             <a
               href="https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI"

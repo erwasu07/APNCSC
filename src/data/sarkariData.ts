@@ -45,7 +45,226 @@ export const SARKARI_CATEGORIES = {
 };
 
 export const SARKARI_DATA: SarkariItem[] = [
-  // 🇮🇳 TODAY'S NEWLY EXTRACTED NOTIFICATIONS (22 AUGUST 2026 - LATEST DISPATCH)
+  // 🇮🇳 MEGA RECRUITMENT NOTIFICATION (01 SEPTEMBER 2026 - JKSSB ADVT 09 OF 2026)
+  {
+    id: 'jkssb-advt-09-of-2026-class-iv-mts-recruitment',
+    title: 'JKSSB Advt 09 of 2026: Mega Recruitment for 2,863 Class-IV (MTS) & Sanitation Worker Posts (UT, Divisional & District Cadres)',
+    category: 'jkssb',
+    postDate: '01/09/2026',
+    startDate: '05/10/2026',
+    lastDate: '03/11/2026',
+    advertisementNo: 'Advertisement Notification No. 09 of 2026 (Dated: 01.09.2026)',
+    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) notifies a mega direct recruitment drive for 2,863 Class-IV (MTS) and Sanitation Worker vacancies in Pay Level SL1 (₹14,800 - ₹47,100) under General Administration Department across UT Cadre (105 Posts), Divisional Cadre Jammu (1093 Posts), Divisional Cadre Kashmir (897 Posts), and 20 District Cadres (768 Posts). Major departments include PW(R&B) (1420 Posts), Floriculture (199 Posts), Estates (158 Posts), Animal/Sheep Husbandry, Higher Education, Transport, Culture, and Agriculture/Horticulture. Special weightage allocated for Home District/Division domicile, families with no Govt job, widows/divorced/orphan candidates, and 5+ years casual workers as per S.O. 184 of 2020.',
+    ageLimit: 'Open Merit (OM): 40 Years (Not born before 01.01.1986 / after 01.01.2008) | SC / ST-1 / ST-2 / RBA / ALC-IB / EWS / OBC: 43 Years | PwBD: 42 Years | Ex-Servicemen: 48 Years | Casual Workers: 5 Years Upper Age Relaxation',
+    eligibility: 'Class-IV (MTS): Minimum Matric (10th) & Maximum 10+2 (Higher Secondary) as per S.O. 184 of 2020 & SRO 99 of 2008. Sanitation Worker: Minimum 8th Pass & Maximum 10+2 as per S.O. 132 of 2022. (Important: Higher qualifications above 10+2 are not eligible as per extant recruitment rules). Valid J&K Domicile Certificate required on or before 03.11.2026.',
+    totalPosts: '2,863 Vacancies (UT: 105 | Div Jammu: 1093 | Div Kashmir: 897 | District Cadres: 768)',
+    officialLink: 'https://www.jkssb.nic.in',
+    fees: {
+      genObc: '₹600/- (For OM, RBA, ALC/IB, OBC Candidates via Net Banking / Cards)',
+      scSt: '₹500/- (For SC, ST-1, ST-2, EWS & PwBD Candidates)'
+    },
+    departmentBreakdown: [
+      {
+        department: 'Public Works (R&B) Department (Divisional Cadre Jammu & Kashmir)',
+        postName: 'Class-IV (MTS) - Division Jammu (939) & Division Kashmir (481)',
+        posts: '1,420 Posts',
+        qualification: 'Minimum Matric (10th) and Maximum 10+2',
+        fee: 'Pay Level SL1 (₹14,800 - ₹47,100)'
+      },
+      {
+        department: 'Department of Floriculture, Gardens & Parks (Divisional Cadre Kashmir)',
+        postName: 'Class-IV (MTS) [OM: 79, SC: 16, ST1: 20, ST2: 20, OBC: 16, ALC: 8, RBA: 20, EWS: 20]',
+        posts: '199 Posts',
+        qualification: 'Minimum Matric (10th) and Maximum 10+2',
+        fee: 'Pay Level SL1 (₹14,800 - ₹47,100)'
+      },
+      {
+        department: 'Estates Department (UT Cadre, Div Jammu & Div Kashmir)',
+        postName: 'Sanitation Worker (UT: 73, Div Jammu: 48, Div Kashmir: 37)',
+        posts: '158 Posts',
+        qualification: 'Minimum 8th Pass and Maximum 10+2',
+        fee: 'Pay Level SL1 (₹14,800 - ₹47,100)'
+      },
+      {
+        department: 'Animal & Sheep Husbandry Department (Divisional & District Cadres)',
+        postName: 'Class-IV (MTS) & Sanitation Worker (Div Jammu: 11, Div Kashmir: 72, All 20 Districts: 500+)',
+        posts: '650+ Posts',
+        qualification: 'Minimum Matric / 8th Pass and Maximum 10+2',
+        fee: 'Pay Level SL1 (₹14,800 - ₹47,100)'
+      },
+      {
+        department: 'ARI & Trainings Department (UT & Divisional Cadres)',
+        postName: 'Class-IV (MTS) & Sanitation Worker (Div Jammu: 50, Div Kashmir: 50)',
+        posts: '100 Posts',
+        qualification: 'Minimum Matric / 8th Pass and Maximum 10+2',
+        fee: 'Pay Level SL1 (₹14,800 - ₹47,100)'
+      },
+      {
+        department: 'Higher Education Department (Divisional Cadre Jammu & Kashmir)',
+        postName: 'Class-IV (MTS) [Div Jammu: 27, Div Kashmir: 16]',
+        posts: '43 Posts',
+        qualification: 'Minimum Matric (10th) and Maximum 10+2',
+        fee: 'Pay Level SL1 (₹14,800 - ₹47,100)'
+      },
+      {
+        department: 'Transport Department (UT Cadre)',
+        postName: 'Class-IV (MTS: 28, Sanitation Worker: 2)',
+        posts: '30 Posts',
+        qualification: 'Minimum Matric / 8th Pass and Maximum 10+2',
+        fee: 'Pay Level SL1 (₹14,800 - ₹47,100)'
+      },
+      {
+        department: 'Culture Department (Archives, Archaeology, Museum & Libraries)',
+        postName: 'Class-IV (MTS) [Div Jammu: 13, Div Kashmir: 14]',
+        posts: '27 Posts',
+        qualification: 'Minimum Matric (10th) and Maximum 10+2',
+        fee: 'Pay Level SL1 (₹14,800 - ₹47,100)'
+      },
+      {
+        department: 'District Cadres across all 20 Districts of J&K',
+        postName: 'Class-IV (MTS) [Baramulla: 75, Jammu: 65, Anantnag: 59, Srinagar: 53, Kathua: 50, Poonch: 49, Budgam: 47, Doda: 46, Ganderbal: 46, Udhampur: 46, Pulwama: 45, Reasi: 34, Rajouri: 28, Kishtwar: 25, Kupwara: 24, Kulgam: 23, Bandipora: 20, Samba: 14, Shopian: 10, Ramban: 9]',
+        posts: '768 Posts',
+        qualification: 'Minimum Matric (10th) and Maximum 10+2',
+        fee: 'Pay Level SL1 (₹14,800 - ₹47,100)'
+      }
+    ],
+    isNew: true
+  },
+  // 🇮🇳 PREVIOUS NOTIFICATIONS (30 AUGUST 2026 - DISPATCH)
+  {
+    id: 'army-tes-55-course-july-2027',
+    title: 'Indian Army 10+2 Technical Entry Scheme (TES-55 Course Commencing July 2027)',
+    category: 'army_jobs',
+    postDate: '30/08/2026',
+    startDate: '30/08/2026',
+    lastDate: '30/09/2026',
+    advertisementNo: 'TES-55 (July 2027 Course)',
+    shortInfo: 'Applications are invited from unmarried male Candidates who have passed 10+2 examination with Physics, Chemistry and Mathematics (PCM) subjects and appeared in JEE (Mains) 2026 for grant of Permanent Commission in the Indian Army.',
+    ageLimit: '16½ to 19½ Years (Born between 02 Jan 2008 and 01 Jan 2011)',
+    eligibility: 'Passed 10+2 with minimum 60% aggregate marks in PCM + Appeared in JEE Mains 2026',
+    totalPosts: '90 Posts (Cadet Training Scheme)',
+    officialLink: 'https://www.joinindianarmy.nic.in',
+    fees: {
+      genObc: '₹0 (No Application Fee)',
+      scSt: '₹0 (No Application Fee)'
+    },
+    isNew: true
+  },
+  {
+    id: 'rrb-ntpc-graduate-undergraduate-cen11-2026',
+    title: 'RRB Non-Technical Popular Categories (NTPC Graduate & Undergraduate) Recruitment 2026 (CEN 11/2026)',
+    category: 'rrb_jobs',
+    postDate: '30/08/2026',
+    startDate: '30/08/2026',
+    lastDate: '02/10/2026',
+    advertisementNo: 'CEN No. 11/2026 (NTPC Posts)',
+    shortInfo: 'Railway Recruitment Boards (RRB) release Centralized Employment Notice for recruitment of Goods Train Manager, Station Master, Senior Clerk cum Typist, Junior Account Assistant, and Commercial cum Ticket Clerk across all Indian Railway zones.',
+    ageLimit: '18 to 36 Years (Undergraduate) / 18 to 39 Years (Graduate) with category relaxation',
+    eligibility: '12th (+2 Stage) or Bachelor’s Degree in any discipline from a recognized University',
+    totalPosts: '11,558 Vacancies across all RRB Zones',
+    officialLink: 'https://www.rrbapply.gov.in',
+    fees: {
+      genObc: '₹500 (₹400 refundable on appearing in 1st Stage CBT)',
+      scSt: '₹250 (₹250 refundable on appearing in 1st Stage CBT)'
+    },
+    isNew: true
+  },
+  {
+    id: 'ssc-mts-havaldar-recruitment-2026-fresh',
+    title: 'SSC Multi-Tasking (Non-Technical) Staff and Havaldar (CBIC & CBN) Examination 2026',
+    category: 'ssc_jobs',
+    postDate: '30/08/2026',
+    startDate: '30/08/2026',
+    lastDate: '30/09/2026',
+    advertisementNo: 'F.No. HQ-PPI03/12/2026-PP_1',
+    shortInfo: 'Staff Selection Commission invites online applications from eligible 10th pass candidates for Computer Based Examination for recruitment of Multi-Tasking Staff (MTS in Pay Level-1) and Havaldar in CBIC & CBN.',
+    ageLimit: '18 to 25 Years (MTS) & 18 to 27 Years (Havaldar & select MTS posts)',
+    eligibility: 'Must have passed Matriculation (10th Class) Examination or equivalent from a recognized Board',
+    totalPosts: '9,583 Vacancies (MTS: 6,144, Havaldar: 3,439)',
+    officialLink: 'https://ssc.gov.in',
+    fees: {
+      genObc: '₹100 (Online via BHIM UPI, Net Banking, Cards)',
+      scSt: '₹0 (Exempted for SC/ST/PwBD/Ex-Servicemen/Women)'
+    },
+    isNew: true
+  },
+  {
+    id: 'cus-ug-phase2-spot-round-admissions-2026',
+    title: 'Phase-II Spot Round Admissions Notice for 4-Year UG Honours (FYUGP NEP-2020) Session 2026-27',
+    category: 'cluster_univ',
+    postDate: '30/08/2026',
+    startDate: '30/08/2026',
+    lastDate: '10/09/2026',
+    advertisementNo: 'CUS/Adm/UG-Spot-Phase2/2026/1422',
+    shortInfo: 'Cluster University Srinagar notifies online registration for Phase-II Spot Round Admissions against vacant seats in various 4-Year Undergraduate Honours Programmes (FYUGP under NEP-2020) across all constituent colleges.',
+    ageLimit: '10+2 Passed Candidates',
+    eligibility: 'Higher Secondary Part-II (Class 12th) or equivalent passed from JKBOSE / CBSE or any recognized Board with relevant subject combination',
+    totalPosts: 'Vacant Seats across Constituent Colleges',
+    officialLink: 'https://www.cusrinagar.edu.in',
+    fees: {
+      genObc: '₹500 (Spot Registration & Counseling Fee)',
+      scSt: '₹500 (Spot Registration & Counseling Fee)'
+    },
+    isNew: true
+  },
+  {
+    id: 'jkssb-dv-notice-advt06-2026-works-supervisor',
+    title: 'JKSSB Document Verification Notice for Draftsman (Civil) & Works Supervisor Posts under Advt 06/2026',
+    category: 'jkssb',
+    postDate: '30/08/2026',
+    startDate: '30/08/2026',
+    lastDate: '24/09/2026',
+    advertisementNo: 'JKSSB-COE0EXAM/2026/06-DV',
+    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) issues schedule and guidelines for online application scrutiny and Document Verification of shortlisted candidates for 357 Divisional Cadre posts of Draftsman (Civil) and Works Supervisor in PW(R&B) Department.',
+    ageLimit: '18 to 40 Years (Open Merit) as of cutoff',
+    eligibility: '2-Year Draftsman Training Course / Diploma in Civil Engineering from a Govt recognized Institute',
+    totalPosts: '357 Posts (Divisional Cadre Jammu & Kashmir)',
+    officialLink: 'https://www.jkssb.nic.in',
+    fees: {
+      genObc: '₹500 (Application & Processing Fee)',
+      scSt: '₹400 (For SC/ST/EWS/PwD Candidates)'
+    },
+    isNew: true
+  },
+  {
+    id: 'ku-date-sheet-bg-5th-6th-sem-backlog-2026',
+    title: 'Date Sheet for BG 5th & 6th Semester Backlog / Supplementary Examination (CBCS Session 2026)',
+    category: 'exam_forms',
+    postDate: '30/08/2026',
+    startDate: '30/08/2026',
+    lastDate: '15/09/2026',
+    advertisementNo: 'F(DateSheet-BG-5th-6th-Backlog)/KU/2026/112',
+    shortInfo: 'University of Kashmir Examination Wing announces the official date sheet for conduct of BG (Undergraduate) 5th and 6th Semester Backlog and Supplementary Examinations (CBCS Scheme) for registered candidates of affiliated degree colleges.',
+    ageLimit: 'Enrolled UG Backlog Candidates',
+    eligibility: 'Bonafide candidates having backlogs in 5th or 6th Semester with submitted examination forms and fee challans',
+    totalPosts: 'Undergraduate Examination Wing',
+    officialLink: 'https://www.kashmiruniversity.net',
+    fees: {
+      genObc: '₹750 (Exam Fee per semester backlog)',
+      scSt: '₹750 (Exam Fee per semester backlog)'
+    },
+    isNew: true
+  },
+  {
+    id: 'ku-admissions-ug-phase2-walkin-nep-2026',
+    title: 'Phase-II Walk-in & Merit-Based UG Admission Notice for Class 12th Pass-Outs (Session 2026-27)',
+    category: 'admissions',
+    postDate: '30/08/2026',
+    startDate: '30/08/2026',
+    lastDate: '10/09/2026',
+    advertisementNo: 'F(UG-Admissions-Phase-II)/KU/2026/09',
+    shortInfo: 'Directorate of Admissions and Competitive Examinations, University of Kashmir invites online applications from eligible 10+2 passed candidates for Phase-II merit-based and walk-in admissions into 4-Year UG (FYUGP under NEP-2020) programmes.',
+    ageLimit: 'Class 12th Pass Candidates',
+    eligibility: 'Higher Secondary Part-II (10+2) or equivalent examination from JKBOSE/CBSE with minimum 45% aggregate (40% for reserved categories)',
+    totalPosts: 'Open Seats across Affiliated Degree Colleges',
+    officialLink: 'https://www.kashmiruniversity.net',
+    fees: {
+      genObc: '₹500 (Online Application & Processing Fee)',
+      scSt: '₹500 (Online Application & Processing Fee)'
+    },
+    isNew: true
+  },
+  // 🇮🇳 PREVIOUS NOTIFICATIONS (22 AUGUST 2026 - DISPATCH)
   {
     id: 'army-ssc-tech-66-men-37-women-oct-2026',
     title: 'Indian Army Short Service Commission (Tech) 66th Men & 37th Women Entry Scheme (Commencing Oct 2026)',

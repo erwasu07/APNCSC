@@ -20,10 +20,16 @@
     position: relative;
     touch-action: manipulation;
     overscroll-behavior-x: none;
-    color-scheme: light !important;
-    background-color: #f8fafc !important;
-    color: #0f172a !important;
+    background-color: #f8fafc;
+    color: #0f172a;
   }
+  
+  html.dark {
+    background-color: #020617 !important;
+    color: #f8fafc !important;
+    color-scheme: dark !important;
+  }
+
   body {
     width: 100%;
     max-width: 100%;
@@ -33,9 +39,10 @@
     padding: 0;
     touch-action: manipulation;
     overscroll-behavior-x: none;
-    background-color: #f8fafc !important;
-    color: #0f172a !important;
+    background-color: inherit;
+    color: inherit;
   }
+
   #root {
     width: 100%;
     max-width: 100%;
@@ -44,7 +51,7 @@
     scroll-behavior: smooth;
     font-family: var(--font-sans);
     position: relative;
-    background-color: #f8fafc !important;
+    background-color: inherit;
   }
 
   /* Anti-CLS (Cumulative Layout Shift) Dynamic Cards Baseline Heights */
