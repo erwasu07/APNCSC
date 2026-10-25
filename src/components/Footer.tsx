@@ -41,11 +41,11 @@ export default function Footer({
   };
 
   return (
-    <footer className="bg-[#102A43] text-slate-300 border-t border-slate-800 mt-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 space-y-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8">
+    <footer className="bg-[#102A43] text-slate-300 border-t border-slate-800 mt-0 md:mt-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-12 space-y-6 md:space-y-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 md:gap-8">
           {/* Column 1: Brand & Description (4 cols) */}
-          <div className="lg:col-span-4 space-y-4">
+          <div className="lg:col-span-4 space-y-3">
             <div className="flex items-center gap-3">
               <img
                 src="/favicon.svg"

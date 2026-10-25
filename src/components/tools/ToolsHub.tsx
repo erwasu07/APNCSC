@@ -154,7 +154,7 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
       {/* ================================================================ */}
       {/* 1. HERO & SEARCH */}
       {/* ================================================================ */}
-      <section className="text-center max-w-4xl mx-auto px-4 py-6 md:p-0 bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 space-y-4">
+      <section className="text-center max-w-4xl mx-auto px-4 py-4 md:p-0 bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 space-y-3">
         
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#EAF4FF] border border-[#BFDBFE] rounded-full text-xs font-bold text-[#0759E8]">
           <Zap className="w-3.5 h-3.5 text-[#0759E8]" />
@@ -165,12 +165,12 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
           Free Online Tools — Fast, Simple &amp; Secure
         </h1>
 
-        <p className="text-sm sm:text-base text-[#64748B] max-w-2xl mx-auto leading-relaxed">
+        <p className="text-xs sm:text-base text-[#64748B] max-w-2xl mx-auto leading-relaxed">
           Compress images, create PDFs, resize photos, remove backgrounds and manage documents — all in one place.
         </p>
 
         {/* Universal Tool Search Input */}
-        <div className="pt-2 max-w-xl mx-auto">
+        <div className="pt-1 max-w-xl mx-auto">
           <div className="relative">
             <Search className="w-5 h-5 text-[#64748B] absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
@@ -178,7 +178,7 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search tools (e.g. compress 20kb, merge pdf, passport photo, resize signature)..."
-              className="w-full pl-12 pr-20 py-3.5 bg-[#F8FAFC] md:bg-white border border-[#E2E8F0] focus:border-[#0759E8] rounded-xl md:rounded-2xl text-xs sm:text-sm text-[#14213D] placeholder-[#64748B] shadow-2xs focus:ring-4 focus:ring-[#EAF4FF] focus:outline-none transition-all"
+              className="w-full min-h-[44px] pl-12 pr-20 py-2.5 bg-[#F8FAFC] md:bg-white border border-[#E2E8F0] focus:border-[#0759E8] rounded-xl md:rounded-2xl text-xs sm:text-sm text-[#14213D] placeholder-[#64748B] shadow-2xs focus:ring-4 focus:ring-[#EAF4FF] focus:outline-none transition-all"
             />
             {searchQuery && (
               <button
@@ -197,16 +197,16 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
       {/* ================================================================ */}
       {/* 2. ZERO-UPLOAD PRIVACY GUARANTEE BANNER */}
       {/* ================================================================ */}
-      <section className="bg-emerald-50/80 border-b md:border border-emerald-200/90 rounded-none md:rounded-2xl px-4 py-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+      <section className="bg-emerald-50/80 border-b md:border border-emerald-200/90 rounded-none md:rounded-2xl px-4 py-3.5 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 sm:gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
             <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
             <h3 className="text-xs sm:text-sm font-bold text-emerald-950">
               Files are processed 100% locally on your device
             </h3>
-            <p className="text-[11px] sm:text-xs text-emerald-800 leading-relaxed">
+            <p className="text-[11px] sm:text-xs text-emerald-800 leading-relaxed mt-1">
               Your confidential marksheets, biometric photos, and candidate signatures are never uploaded to any remote server or stored anywhere.
             </p>
           </div>
@@ -221,13 +221,13 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
       {/* 3. CATEGORY FILTER TABS & TOOLS LIST */}
       {/* ================================================================ */}
       <section className="bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 space-y-0 md:space-y-4">
-        <div className="flex items-center gap-2 overflow-x-auto px-4 py-3 md:p-0 md:pb-1 border-b border-[#E2E8F0] md:border-0 no-scrollbar text-xs font-bold">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-x-1.5 gap-y-2 overflow-x-auto px-4 py-2.5 md:p-0 md:pb-1 border-b border-[#E2E8F0] md:border-0 no-scrollbar text-xs font-bold">
           {TOOLS_CATEGORIES.map((cat) => (
             <button
               key={cat.id}
               type="button"
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-4 py-2 rounded-xl whitespace-nowrap transition-all cursor-pointer border ${
+              className={`min-h-[38px] px-3.5 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer border ${
                 selectedCategory === cat.id
                   ? 'bg-[#0759E8] text-white border-[#0759E8] shadow-xs'
                   : 'bg-white text-[#14213D] border-[#E2E8F0] hover:bg-[#F8FAFC]'
@@ -246,11 +246,11 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
               <div
                 key={tool.id}
                 onClick={() => selectTool(tool.id)}
-                className="bg-white border-0 md:border border-[#E2E8F0] hover:border-[#0759E8] rounded-none md:rounded-2xl px-4 py-4.5 md:p-6 flex flex-col justify-between transition-all hover:bg-[#F8FAFC] md:hover:bg-white md:hover:shadow-xs group cursor-pointer"
+                className="bg-white border-0 md:border border-[#E2E8F0] hover:border-[#0759E8] rounded-none md:rounded-2xl px-4 py-3.5 md:p-6 flex flex-col justify-between transition-all hover:bg-[#F8FAFC] md:hover:bg-white md:hover:shadow-xs group cursor-pointer"
               >
-                <div className="space-y-3">
+                <div className="space-y-2 md:space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="w-11 h-11 rounded-xl bg-[#EAF4FF] text-[#0759E8] flex items-center justify-center group-hover:bg-[#0759E8] group-hover:text-white transition-colors">
+                    <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-[#EAF4FF] text-[#0759E8] flex items-center justify-center group-hover:bg-[#0759E8] group-hover:text-white transition-colors">
                       <IconComponent className="w-5 h-5" />
                     </div>
 
@@ -265,7 +265,7 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
                     <span className="text-[10px] font-semibold text-[#64748B] uppercase tracking-wider block mb-0.5">
                       {tool.categoryLabel}
                     </span>
-                    <h3 className="text-base font-bold text-[#14213D] group-hover:text-[#0759E8] transition-colors leading-snug">
+                    <h3 className="text-sm sm:text-base font-bold text-[#14213D] group-hover:text-[#0759E8] transition-colors leading-snug">
                       {tool.name}
                     </h3>
                   </div>
@@ -275,7 +275,7 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
                   </p>
                 </div>
 
-                <div className="pt-4 mt-4 border-t border-[#E2E8F0] flex items-center justify-between text-xs font-bold text-[#0759E8]">
+                <div className="pt-2.5 mt-2.5 md:pt-4 md:mt-4 border-t border-[#E2E8F0] flex items-center justify-between text-xs font-bold text-[#0759E8]">
                   <span>Launch Free Tool</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </div>
@@ -285,7 +285,7 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
         </div>
 
         {filteredTools.length === 0 && (
-          <div className="text-center py-12 bg-white border border-[#E2E8F0] rounded-2xl p-6 space-y-2">
+          <div className="text-center py-10 bg-white border border-[#E2E8F0] rounded-2xl p-6 space-y-2">
             <p className="text-sm font-bold text-[#102A56]">No tools found matching "{searchQuery}"</p>
             <p className="text-xs text-[#64748B]">Try searching for "compress", "pdf", "signature", or "photo".</p>
             <button
@@ -305,40 +305,40 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
       {/* ================================================================ */}
       {/* 4. FREQUENTLY ASKED QUESTIONS */}
       {/* ================================================================ */}
-      <section className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl px-4 py-6 sm:p-8 space-y-6 shadow-none md:shadow-xs">
+      <section className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl px-4 py-4 sm:p-8 space-y-4 md:space-y-6 shadow-none md:shadow-xs">
         <div>
-          <h2 className="text-lg sm:text-xl font-bold text-[#0B1F49] flex items-center gap-2">
+          <h2 className="text-base sm:text-xl font-bold text-[#0B1F49] flex items-center gap-2">
             <HelpCircle className="w-5 h-5 text-[#0759E8]" />
             <span>Frequently Asked Questions About CSC DOST Tools</span>
           </h2>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+          <p className="text-xs sm:text-sm text-[#64748B] mt-1.5">
             Clear facts on security, portal compatibility, and file limits.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs text-[#64748B] leading-relaxed">
-          <div className="space-y-1.5 p-4 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 md:gap-5 text-xs text-[#64748B] leading-relaxed">
+          <div className="space-y-1.5 p-3.5 sm:p-4 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
             <h4 className="font-bold text-[#14213D] text-sm">Are these tools completely free to use?</h4>
             <p>
               Yes. All image compressors, PDF converters, and signature resizers on this portal are 100% free of charge with zero watermarks and no registration required.
             </p>
           </div>
 
-          <div className="space-y-1.5 p-4 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
+          <div className="space-y-1.5 p-3.5 sm:p-4 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
             <h4 className="font-bold text-[#14213D] text-sm">Are my documents uploaded to any remote server?</h4>
             <p>
               No. All operations (compressing images, merging PDFs, generating passport photos) execute in your browser's local sandbox memory using HTML5 Canvas and native JavaScript libraries.
             </p>
           </div>
 
-          <div className="space-y-1.5 p-4 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
+          <div className="space-y-1.5 p-3.5 sm:p-4 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
             <h4 className="font-bold text-[#0F172A] text-sm">Will these resized files work for JKSSB, SSC, and UPSC?</h4>
             <p>
               Yes. Every tool includes pre-configured dimension and KB presets specifically tuned to the exact verification requirements of major Indian recruitment portals.
             </p>
           </div>
 
-          <div className="space-y-1.5 p-4 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
+          <div className="space-y-1.5 p-3.5 sm:p-4 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
             <h4 className="font-bold text-[#0F172A] text-sm">Can I use these tools on my mobile phone?</h4>
             <p>
               Absolutely. The entire tools hub is fully responsive and supports touch drag-and-drop, photo uploads directly from your smartphone camera or gallery, and instant downloads.

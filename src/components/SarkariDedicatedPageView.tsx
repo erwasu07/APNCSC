@@ -116,7 +116,7 @@ export default function SarkariDedicatedPageView({
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#14213D] pb-16 pt-3 sm:pt-6 font-sans">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#14213D] pb-4 md:pb-16 pt-0 sm:pt-6 font-sans">
       
       {/* Schema.org Article Structured Data for Google Rich Snippets */}
       <script
@@ -151,14 +151,14 @@ export default function SarkariDedicatedPageView({
         }}
       />
 
-      <div className="w-full max-w-5xl mx-auto px-0 md:px-6 space-y-0 md:space-y-6 pb-24 sm:pb-8">
+      <div className="w-full max-w-5xl mx-auto px-0 md:px-6 space-y-0 md:space-y-6 pb-20 sm:pb-8">
         
         {/* Navigation & Action Top Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 bg-white px-4 py-3 sm:p-4 rounded-none md:rounded-xl border-b md:border border-[#E2E8F0] shadow-none md:shadow-2xs w-full">
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 bg-white px-4 py-3 sm:p-4 rounded-none md:rounded-xl border-b md:border border-[#E2E8F0] shadow-none md:shadow-2xs w-full">
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-2 px-3 sm:px-3.5 py-2 bg-[#0B1F49] hover:bg-[#122e6b] text-white text-xs sm:text-sm font-semibold rounded-lg transition-colors cursor-pointer"
+            className="min-h-[40px] inline-flex items-center gap-2 px-3 sm:px-3.5 py-2 bg-[#0B1F49] hover:bg-[#122e6b] text-white text-xs sm:text-sm font-semibold rounded-lg transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to All Notifications</span>
@@ -168,7 +168,7 @@ export default function SarkariDedicatedPageView({
             <button
               type="button"
               onClick={handlePrint}
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 bg-white hover:bg-slate-50 text-[#14213D] text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-[#E2E8F0]"
+              className="min-h-[40px] inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 bg-white hover:bg-slate-50 text-[#14213D] text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-[#E2E8F0]"
               title="Print Notification"
             >
               <Printer className="w-3.5 h-3.5 text-[#64748B]" />
@@ -178,7 +178,7 @@ export default function SarkariDedicatedPageView({
             <button
               type="button"
               onClick={() => onShare(item)}
-              className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-[#F8FAFC] hover:bg-slate-100 text-[#14213D] text-xs font-bold rounded-lg transition-colors cursor-pointer border border-[#E2E8F0]"
+              className="min-h-[40px] inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-[#F8FAFC] hover:bg-slate-100 text-[#14213D] text-xs font-bold rounded-lg transition-colors cursor-pointer border border-[#E2E8F0]"
             >
               <Share2 className="w-3.5 h-3.5 text-[#64748B]" />
               <span>Share</span>
@@ -188,7 +188,7 @@ export default function SarkariDedicatedPageView({
               <button
                 type="button"
                 onClick={() => onApplyService(`Filing Application: ${item.title}`)}
-                className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-[#0759E8] hover:bg-[#0646b8] text-white text-xs sm:text-sm font-bold rounded-lg transition-colors cursor-pointer shadow-xs"
+                className="min-h-[40px] inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-[#0759E8] hover:bg-[#0646b8] text-white text-xs sm:text-sm font-bold rounded-lg transition-colors cursor-pointer shadow-xs"
               >
                 <span>Apply via CSC Desk</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -201,13 +201,13 @@ export default function SarkariDedicatedPageView({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 md:gap-6 items-start w-full">
           
           {/* Main Content Column */}
-          <article className="lg:col-span-8 bg-white rounded-none md:rounded-2xl border-b md:border border-[#E2E8F0] px-4 py-5 sm:p-8 space-y-6 sm:space-y-8 shadow-none md:shadow-xs w-full max-w-full overflow-hidden">
+          <article className="lg:col-span-8 bg-white rounded-none md:rounded-2xl border-b md:border border-[#E2E8F0] px-4 py-4 sm:p-8 space-y-4 sm:space-y-8 shadow-none md:shadow-xs w-full max-w-full overflow-hidden">
             
             {/* Header / Meta Block */}
-            <header className="space-y-4 border-b border-[#E2E8F0] pb-6">
+            <header className="space-y-3 border-b border-[#E2E8F0] pb-4 sm:pb-6">
               
               {/* Breadcrumb */}
-              <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-xs text-[#64748B]">
+              <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-xs text-[#64748B]">
                 <button type="button" onClick={onBack} className="hover:text-[#0759E8] font-medium cursor-pointer">
                   Home
                 </button>

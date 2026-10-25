@@ -273,15 +273,15 @@ export default function TrackDedicatedPageView({
   };
 
   return (
-    <main className="min-h-screen bg-white md:bg-slate-50 text-slate-900 pb-16 pt-0 md:pt-6 font-sans">
+    <main className="min-h-screen bg-white md:bg-slate-50 text-slate-900 pb-6 md:pb-16 pt-0 md:pt-6 font-sans">
       <div className="max-w-4xl mx-auto px-0 md:px-6">
         
         {/* Navigation & Action Top Bar */}
-        <div className="mb-0 md:mb-6 flex flex-wrap items-center justify-between gap-3 bg-white px-4 py-3.5 sm:p-4 rounded-none md:rounded-2xl border-b md:border border-slate-200 shadow-none md:shadow-xs">
+        <div className="mb-0 md:mb-6 flex flex-wrap items-center justify-between gap-2.5 bg-white px-4 py-3 sm:p-4 rounded-none md:rounded-2xl border-b md:border border-slate-200 shadow-none md:shadow-xs">
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-900 hover:bg-black text-white text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer shadow-2xs"
+            className="inline-flex items-center gap-2 min-h-[40px] px-3.5 py-2 bg-slate-900 hover:bg-black text-white text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer shadow-2xs"
             id="track-back-btn"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -298,7 +298,7 @@ export default function TrackDedicatedPageView({
                   window.location.hash = '#apply';
                 }
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#172554] hover:bg-[#1e3a8a] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-2xs"
+              className="inline-flex items-center gap-1.5 min-h-[40px] px-3.5 py-2 bg-[#172554] hover:bg-[#1e3a8a] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-2xs"
               id="track-apply-nav-btn"
             >
               <span>Apply for New Service</span>
@@ -309,7 +309,7 @@ export default function TrackDedicatedPageView({
               href="https://whatsapp.com/channel/0029VbDgSe75a248qEZAbL3g"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-2xs"
+              className="inline-flex items-center gap-1.5 min-h-[40px] px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-2xs"
             >
               <MessageCircle className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">WhatsApp Help</span>
@@ -318,12 +318,12 @@ export default function TrackDedicatedPageView({
         </div>
 
         {/* MAIN TRACKING CONTAINER */}
-        <div className="bg-white rounded-none md:rounded-3xl border-0 md:border md:border-slate-200/90 shadow-none md:shadow-md overflow-hidden space-y-6">
+        <div className="bg-white rounded-none md:rounded-3xl border-0 md:border md:border-slate-200/90 shadow-none md:shadow-md overflow-hidden space-y-4 md:space-y-6">
           
           {/* Header Banner */}
-          <div className="bg-gradient-to-r from-[#18204e] via-[#1f2b6c] to-[#18204e] text-white px-4 py-5 sm:p-7 border-b border-indigo-900">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
+          <div className="bg-gradient-to-r from-[#18204e] via-[#1f2b6c] to-[#18204e] text-white px-4 py-4 sm:p-7 border-b border-indigo-900">
+            <div>
+              <div className="flex items-center gap-2 mb-1.5">
                 <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2.5 py-0.5 rounded font-mono uppercase tracking-wider">
                   CSC LIVE TRACKER
                 </span>
@@ -335,14 +335,14 @@ export default function TrackDedicatedPageView({
               <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-white font-display">
                 Track Application &amp; Order Status
               </h1>
-              <p className="text-xs sm:text-sm text-indigo-200 font-medium">
+              <p className="text-xs sm:text-sm text-indigo-200 font-medium mt-1.5">
                 Enter your CSC Token ID (e.g. CSC21251567001) or WhatsApp Mobile Number to check real-time progress.
               </p>
             </div>
           </div>
 
           {/* Search Box Form */}
-          <div className="px-4 sm:px-8 pt-2">
+          <div className="px-4 sm:px-8 pt-0 sm:pt-2">
             <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-2.5">
               <div className="relative flex-1">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -351,12 +351,12 @@ export default function TrackDedicatedPageView({
                   placeholder="Enter CSC Token ID (e.g. CSC21251567001) or Mobile..."
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-mono"
+                  className="w-full min-h-[44px] pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-mono"
                 />
               </div>
               <button
                 type="submit"
-                className="px-6 py-3 bg-[#172554] hover:bg-[#1e3a8a] text-white text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm shrink-0 flex items-center justify-center gap-2"
+                className="min-h-[44px] px-6 py-2.5 bg-[#172554] hover:bg-[#1e3a8a] text-white text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm shrink-0 flex items-center justify-center gap-2"
               >
                 <Search className="w-4 h-4" />
                 <span>Track Status</span>
@@ -365,7 +365,7 @@ export default function TrackDedicatedPageView({
 
             {/* Recent Tokens Quick Select */}
             {recentTokens.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2 mt-3 text-xs">
+              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 mt-2.5 text-xs">
                 <span className="text-slate-500 font-bold">Recent Tokens:</span>
                 {recentTokens.map((tok) => (
                   <button
@@ -375,7 +375,7 @@ export default function TrackDedicatedPageView({
                       setSearchInput(tok);
                       setActiveToken(tok);
                     }}
-                    className={`px-2.5 py-1 rounded-lg font-mono font-bold text-xs transition-all cursor-pointer ${
+                    className={`min-h-[34px] px-2.5 py-1 rounded-lg font-mono font-bold text-xs transition-all cursor-pointer ${
                       activeToken === tok
                         ? 'bg-indigo-600 text-white'
                         : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
@@ -389,14 +389,14 @@ export default function TrackDedicatedPageView({
           </div>
 
           {/* LIVE TRACKING RESULT OR EMPTY STATE */}
-          <div className="px-4 sm:px-8 pb-8">
+          <div className="px-4 sm:px-8 pb-5 sm:pb-8">
             {loading ? (
-              <div className="py-16 text-center space-y-3">
+              <div className="py-12 text-center space-y-3">
                 <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
                 <p className="text-xs font-mono text-slate-500">Querying CSC Live Database &amp; VLE Queue...</p>
               </div>
             ) : notFound ? (
-              <div className="p-8 bg-amber-50 border border-amber-200 rounded-2xl text-center space-y-3">
+              <div className="p-6 sm:p-8 bg-amber-50 border border-amber-200 rounded-2xl text-center space-y-3">
                 <AlertCircle className="w-8 h-8 text-amber-600 mx-auto" />
                 <div className="space-y-1">
                   <h3 className="text-sm font-bold text-amber-950">No Application Found for "{activeToken}"</h3>
@@ -410,14 +410,14 @@ export default function TrackDedicatedPageView({
                     if (onNavigateApply) onNavigateApply();
                     else window.location.hash = '#apply';
                   }}
-                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5"
+                  className="min-h-[40px] px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5"
                 >
                   <span>Submit New Application</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             ) : liveData ? (
-              <div className="space-y-6">
+              <div className="space-y-4 md:space-y-6">
                 
                 {/* Application Snapshot Card */}
                 <div className="p-5 bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-2xl shadow-sm space-y-4">

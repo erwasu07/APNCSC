@@ -130,7 +130,7 @@ export default function ServiceDedicatedPageView({
   const officialPortal = getOfficialPortal();
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#14213D] pb-16 pt-3 sm:pt-6 font-sans">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#14213D] pb-4 md:pb-16 pt-0 sm:pt-6 font-sans">
       
       {/* Schema.org Structured Data */}
       <script
@@ -156,14 +156,14 @@ export default function ServiceDedicatedPageView({
         }}
       />
 
-      <div className="w-full max-w-4xl mx-auto px-0 md:px-6 space-y-0 md:space-y-6 pb-24 sm:pb-8">
+      <div className="w-full max-w-4xl mx-auto px-0 md:px-6 space-y-0 md:space-y-6 pb-20 sm:pb-8">
         
         {/* Navigation & Action Top Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 bg-white px-4 py-3 sm:p-4 rounded-none md:rounded-xl border-b md:border border-[#E2E8F0] shadow-none md:shadow-2xs w-full">
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 bg-white px-4 py-3 sm:p-4 rounded-none md:rounded-xl border-b md:border border-[#E2E8F0] shadow-none md:shadow-2xs w-full">
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-2 px-3 sm:px-3.5 py-2 bg-[#0B1F49] hover:bg-[#122e6b] text-white text-xs sm:text-sm font-semibold rounded-lg transition-colors cursor-pointer"
+            className="min-h-[40px] inline-flex items-center gap-2 px-3 sm:px-3.5 py-2 bg-[#0B1F49] hover:bg-[#122e6b] text-white text-xs sm:text-sm font-semibold rounded-lg transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to All Services</span>
@@ -173,7 +173,7 @@ export default function ServiceDedicatedPageView({
             <button
               type="button"
               onClick={handlePrint}
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 bg-white hover:bg-slate-50 text-[#14213D] text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-[#E2E8F0]"
+              className="min-h-[40px] inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 bg-white hover:bg-slate-50 text-[#14213D] text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-[#E2E8F0]"
             >
               <Printer className="w-3.5 h-3.5 text-[#64748B]" />
               <span className="hidden sm:inline">Print</span>
@@ -182,7 +182,7 @@ export default function ServiceDedicatedPageView({
             <button
               type="button"
               onClick={() => onShare(service)}
-              className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-[#F8FAFC] hover:bg-slate-100 text-[#14213D] text-xs font-bold rounded-lg transition-colors cursor-pointer border border-[#E2E8F0]"
+              className="min-h-[40px] inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-[#F8FAFC] hover:bg-slate-100 text-[#14213D] text-xs font-bold rounded-lg transition-colors cursor-pointer border border-[#E2E8F0]"
             >
               <Share2 className="w-3.5 h-3.5 text-[#64748B]" />
               <span>Share</span>
@@ -191,7 +191,7 @@ export default function ServiceDedicatedPageView({
             <button
               type="button"
               onClick={() => onApplyService(service.name)}
-              className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-[#0759E8] hover:bg-[#0646b8] text-white text-xs sm:text-sm font-bold rounded-lg transition-colors cursor-pointer shadow-xs"
+              className="min-h-[40px] inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-[#0759E8] hover:bg-[#0646b8] text-white text-xs sm:text-sm font-bold rounded-lg transition-colors cursor-pointer shadow-xs"
             >
               <span>Apply via CSC Desk</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -200,10 +200,10 @@ export default function ServiceDedicatedPageView({
         </div>
 
         {/* Main Document Article */}
-        <article className="bg-white rounded-none md:rounded-2xl border-b md:border border-[#E2E8F0] px-4 py-5 sm:p-8 space-y-6 sm:space-y-8 shadow-none md:shadow-xs w-full max-w-full overflow-hidden">
+        <article className="bg-white rounded-none md:rounded-2xl border-b md:border border-[#E2E8F0] px-4 py-4 sm:p-8 space-y-4 sm:space-y-8 shadow-none md:shadow-xs w-full max-w-full overflow-hidden">
           
           {/* Header Section */}
-          <header className="space-y-4 border-b border-[#E2E8F0] pb-6">
+          <header className="space-y-3 border-b border-[#E2E8F0] pb-4 sm:pb-6">
             
             {/* Breadcrumb */}
             <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-xs text-[#64748B]">

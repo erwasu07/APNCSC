@@ -2937,23 +2937,23 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               )}
 
               {/* Search and Filter Toolbar */}
-              <div className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl p-4 shadow-none md:shadow-2xs space-y-3">
-                <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+              <div className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl px-4 py-3.5 md:p-4 shadow-none md:shadow-2xs space-y-2.5 md:space-y-3">
+                <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5 md:gap-3">
                   {/* Debounced Search Input */}
                   <div className="relative flex-1 max-w-xl">
-                    <Search className="w-4 h-4 text-[#64748B] absolute left-3.5 top-2.5 pointer-events-none" />
+                    <Search className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
                       type="text"
                       placeholder="Search by applicant name, mobile, email, token ID, service, or UTR..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-9 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827] placeholder-[#64748B] focus:outline-none focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 transition-all"
+                      className="w-full min-h-[42px] pl-10 pr-9 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827] placeholder-[#64748B] focus:outline-none focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 transition-all"
                     />
                     {searchQuery && (
                       <button
                         type="button"
                         onClick={() => setSearchQuery('')}
-                        className="absolute right-3 top-2.5 text-[#64748B] hover:text-[#111827]"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#111827]"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -3045,11 +3045,11 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   </div>
 
                   {/* Mobile Filter Drawer Trigger */}
-                  <div className="flex md:hidden items-center justify-between gap-2">
+                  <div className="flex md:hidden items-center gap-2">
                     <button
                       type="button"
                       onClick={() => setMobileFilterDrawerOpen(prev => !prev)}
-                      className="flex-1 py-2 px-3 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-semibold text-[#111827] flex items-center justify-center gap-1.5"
+                      className="flex-1 min-h-[40px] py-2 px-3 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-semibold text-[#111827] flex items-center justify-center gap-1.5"
                     >
                       <SlidersHorizontal className="w-3.5 h-3.5 text-[#2563EB]" />
                       <span>Filters &amp; Sort</span>
@@ -3058,7 +3058,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                       <button
                         type="button"
                         onClick={clearAllFilters}
-                        className="py-2 px-3 bg-red-50 text-[#DC2626] rounded-xl text-xs font-semibold"
+                        className="min-h-[40px] py-2 px-3 bg-red-50 text-[#DC2626] rounded-xl text-xs font-semibold"
                       >
                         Reset
                       </button>
@@ -3066,7 +3066,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                     <button
                       type="button"
                       onClick={() => handleExportCSV(filteredApplications)}
-                      className="py-2 px-3 bg-[#111C3D] text-white rounded-xl text-xs font-semibold flex items-center gap-1"
+                      className="min-h-[40px] py-2 px-3 bg-[#111C3D] text-white rounded-xl text-xs font-semibold flex items-center gap-1"
                     >
                       <Download className="w-3.5 h-3.5" />
                       <span>CSV</span>
@@ -3076,11 +3076,11 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
                 {/* Collapsible Mobile Filter Panel */}
                 {mobileFilterDrawerOpen && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-3 border-t border-[#E2E8F0] md:hidden">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2.5 border-t border-[#E2E8F0] md:hidden">
                     <select
                       value={filterStatus}
                       onChange={(e) => setFilterStatus(e.target.value)}
-                      className="px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827]"
+                      className="min-h-[40px] px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827]"
                     >
                       <option value="all">Status: All</option>
                       <option value="pending">Pending</option>
@@ -3091,7 +3091,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                     <select
                       value={paymentFilter}
                       onChange={(e) => setPaymentFilter(e.target.value)}
-                      className="px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827]"
+                      className="min-h-[40px] px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827]"
                     >
                       <option value="all">Payment: All Methods</option>
                       <option value="online">UPI Online</option>
@@ -3100,7 +3100,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                     <select
                       value={dateRangeFilter}
                       onChange={(e) => setDateRangeFilter(e.target.value as any)}
-                      className="px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827]"
+                      className="min-h-[40px] px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827]"
                     >
                       <option value="all">Date: All Time</option>
                       <option value="today">Today</option>
@@ -3110,7 +3110,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as any)}
-                      className="px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827]"
+                      className="min-h-[40px] px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827]"
                     >
                       <option value="newest">Sort: Newest First</option>
                       <option value="oldest">Sort: Oldest First</option>
@@ -3126,14 +3126,14 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               {/* ============================================================== */}
               <div className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl shadow-none md:shadow-2xs overflow-hidden">
                 {loading && applications.length === 0 ? (
-                  <div className="p-12 text-center space-y-3">
+                  <div className="p-10 text-center space-y-3">
                     <RefreshCw className="w-7 h-7 animate-spin mx-auto text-[#2563EB]" />
                     <p className="text-xs font-semibold text-[#64748B]">
                       Synchronizing applications from Supabase...
                     </p>
                   </div>
                 ) : filteredApplications.length === 0 ? (
-                  <div className="p-12 text-center space-y-3">
+                  <div className="p-10 text-center space-y-3">
                     <div className="w-12 h-12 rounded-2xl bg-[#F6F8FC] border border-[#E2E8F0] flex items-center justify-center mx-auto text-[#64748B]">
                       <FileText className="w-6 h-6" />
                     </div>
@@ -3430,7 +3430,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                       </table>
                     </div>
 
-                    {/* RESPONSIVE MOBILE APPLICATION CARDS (< md) */}
+                    {/* RESPONSIVE MOBILE APPLICATION ROWS (< md) */}
                     <div className="md:hidden divide-y divide-[#E2E8F0]">
                       {paginatedApplications.map((app, idx) => {
                         const appId = app.appId || app.id || `CSC-${idx + 1}`;
@@ -3444,7 +3444,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                           <div
                             key={appId}
                             onClick={() => handleOpenDrawer(app)}
-                            className="p-4 hover:bg-[#F6F8FC] transition-colors space-y-3 cursor-pointer"
+                            className="px-4 py-3.5 hover:bg-[#F6F8FC] transition-colors space-y-2 cursor-pointer"
                           >
                             <div className="flex items-center justify-between gap-2">
                               <div className="flex items-center gap-1.5">

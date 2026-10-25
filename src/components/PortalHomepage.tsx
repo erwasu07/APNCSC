@@ -488,22 +488,24 @@ export default function PortalHomepage({
       <section
         id="hero-heading-section"
         aria-labelledby="hero-heading"
-        className="w-full bg-white border-b border-[#E2E8F0] md:border md:rounded-2xl px-4 py-6 sm:p-8 md:p-10 shadow-none md:shadow-2xs mt-0 md:mt-4"
+        className="w-full bg-white border-b border-[#E2E8F0] md:border md:rounded-2xl px-4 py-4 sm:p-8 md:p-10 shadow-none md:shadow-2xs mt-0 md:mt-4"
       >
-        <div className="max-w-3xl mx-auto text-center space-y-5">
-          <h1
-            id="hero-heading"
-            className="text-2xl sm:text-4xl font-extrabold text-[#102A43] tracking-tight leading-tight"
-          >
-            Online Services, Job Updates &amp; Application Assistance
-          </h1>
+        <div className="max-w-3xl mx-auto text-center space-y-3.5 md:space-y-5">
+          <div>
+            <h1
+              id="hero-heading"
+              className="text-2xl sm:text-4xl font-extrabold text-[#102A43] tracking-tight leading-tight"
+            >
+              Online Services, Job Updates &amp; Application Assistance
+            </h1>
 
-          <p className="text-sm sm:text-base text-[#64748B] max-w-2xl mx-auto leading-relaxed">
-            Find citizen services, explore recruitment updates and get help with online applications—all in one place.
-          </p>
+            <p className="text-sm sm:text-base text-[#64748B] max-w-2xl mx-auto leading-relaxed mt-1.5 sm:mt-2">
+              Find citizen services, explore recruitment updates and get help with online applications—all in one place.
+            </p>
+          </div>
 
           {/* Prominent Search Field */}
-          <div className="max-w-2xl mx-auto pt-1">
+          <div className="max-w-2xl mx-auto">
             <label htmlFor="portal-universal-search" className="sr-only">
               Search services, jobs, schemes or guides
             </label>
@@ -518,13 +520,13 @@ export default function PortalHomepage({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search services, jobs, schemes or guides…"
-                className="w-full pl-12 pr-24 py-3.5 bg-[#F6F8FC] focus:bg-white border border-[#E2E8F0] focus:border-[#2563EB] rounded-xl text-sm text-[#102A43] placeholder-[#64748B] focus:outline-none focus:ring-3 focus:ring-[#2563EB]/15 transition-all"
+                className="w-full min-h-[44px] pl-11 pr-20 py-2.5 sm:py-3.5 bg-[#F6F8FC] focus:bg-white border border-[#E2E8F0] focus:border-[#2563EB] rounded-xl text-sm text-[#102A43] placeholder-[#64748B] focus:outline-none focus:ring-3 focus:ring-[#2563EB]/15 transition-all"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#64748B] hover:text-[#102A43] px-2.5 py-1 bg-white border border-[#E2E8F0] rounded-lg transition-colors cursor-pointer"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#64748B] hover:text-[#102A43] px-2.5 py-1.5 bg-white border border-[#E2E8F0] rounded-lg transition-colors cursor-pointer"
                 >
                   Clear
                 </button>
@@ -532,15 +534,15 @@ export default function PortalHomepage({
             </div>
 
             {/* 5 Quick Shortcuts Below Search */}
-            <div className="flex flex-wrap items-center justify-center gap-2 pt-3 text-xs">
-              <span className="text-[#64748B] font-medium">Quick shortcuts:</span>
+            <div className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-2 pt-2.5 text-xs">
+              <span className="text-[#64748B] font-medium mr-0.5">Quick shortcuts:</span>
               <button
                 type="button"
                 onClick={() => {
                   setJobOrgFilter('jkssb');
                   scrollToSection('recruitment-section');
                 }}
-                className="px-2.5 py-1 bg-[#F6F8FC] hover:bg-blue-50 text-[#102A43] hover:text-[#2563EB] border border-[#E2E8F0] rounded-lg font-medium transition-colors cursor-pointer"
+                className="min-h-[36px] px-2.5 py-1.5 bg-[#F6F8FC] hover:bg-blue-50 text-[#102A43] hover:text-[#2563EB] border border-[#E2E8F0] rounded-lg font-medium transition-colors cursor-pointer"
               >
                 JKSSB
               </button>
@@ -550,7 +552,7 @@ export default function PortalHomepage({
                   const panSvc = SERVICES_LIST.find((s) => s.id === 'csc-pan');
                   if (panSvc) onOpenService(panSvc);
                 }}
-                className="px-2.5 py-1 bg-[#F6F8FC] hover:bg-blue-50 text-[#102A43] hover:text-[#2563EB] border border-[#E2E8F0] rounded-lg font-medium transition-colors cursor-pointer"
+                className="min-h-[36px] px-2.5 py-1.5 bg-[#F6F8FC] hover:bg-blue-50 text-[#102A43] hover:text-[#2563EB] border border-[#E2E8F0] rounded-lg font-medium transition-colors cursor-pointer"
               >
                 PAN Card
               </button>
@@ -560,7 +562,7 @@ export default function PortalHomepage({
                   const domSvc = SERVICES_LIST.find((s) => s.id === 'jk-domicile-cert');
                   if (domSvc) onOpenService(domSvc);
                 }}
-                className="px-2.5 py-1 bg-[#F6F8FC] hover:bg-blue-50 text-[#102A43] hover:text-[#2563EB] border border-[#E2E8F0] rounded-lg font-medium transition-colors cursor-pointer"
+                className="min-h-[36px] px-2.5 py-1.5 bg-[#F6F8FC] hover:bg-blue-50 text-[#102A43] hover:text-[#2563EB] border border-[#E2E8F0] rounded-lg font-medium transition-colors cursor-pointer"
               >
                 Domicile
               </button>
@@ -570,7 +572,7 @@ export default function PortalHomepage({
                   const schSvc = SERVICES_LIST.find((s) => s.id === 'edu-scholarship');
                   if (schSvc) onOpenService(schSvc);
                 }}
-                className="px-2.5 py-1 bg-[#F6F8FC] hover:bg-blue-50 text-[#102A43] hover:text-[#2563EB] border border-[#E2E8F0] rounded-lg font-medium transition-colors cursor-pointer"
+                className="min-h-[36px] px-2.5 py-1.5 bg-[#F6F8FC] hover:bg-blue-50 text-[#102A43] hover:text-[#2563EB] border border-[#E2E8F0] rounded-lg font-medium transition-colors cursor-pointer"
               >
                 Scholarships
               </button>
@@ -579,7 +581,7 @@ export default function PortalHomepage({
                 onClick={() => {
                   window.location.hash = '#tools';
                 }}
-                className="px-2.5 py-1 bg-[#F6F8FC] hover:bg-blue-50 text-[#102A43] hover:text-[#2563EB] border border-[#E2E8F0] rounded-lg font-medium transition-colors cursor-pointer"
+                className="min-h-[36px] px-2.5 py-1.5 bg-[#F6F8FC] hover:bg-blue-50 text-[#102A43] hover:text-[#2563EB] border border-[#E2E8F0] rounded-lg font-medium transition-colors cursor-pointer"
               >
                 Image Tools
               </button>
@@ -587,11 +589,11 @@ export default function PortalHomepage({
           </div>
 
           {/* Two Main Hero Actions: Explore Services (Primary) & Track Application (Secondary) */}
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
             <button
               type="button"
               onClick={() => scrollToSection('popular-services')}
-              className="px-5 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-semibold rounded-xl shadow-2xs transition-colors cursor-pointer inline-flex items-center gap-2"
+              className="min-h-[44px] px-5 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-semibold rounded-xl shadow-2xs transition-colors cursor-pointer inline-flex items-center gap-2"
             >
               <span>Explore Services</span>
               <ArrowRight className="w-4 h-4" aria-hidden="true" />
@@ -603,7 +605,7 @@ export default function PortalHomepage({
                 if (onOpenTrack) onOpenTrack();
                 else window.location.hash = '#track';
               }}
-              className="px-5 py-2.5 bg-white hover:bg-[#F6F8FC] text-[#102A43] border border-[#E2E8F0] text-sm font-semibold rounded-xl transition-colors cursor-pointer inline-flex items-center gap-2"
+              className="min-h-[44px] px-5 py-2.5 bg-white hover:bg-[#F6F8FC] text-[#102A43] border border-[#E2E8F0] text-sm font-semibold rounded-xl transition-colors cursor-pointer inline-flex items-center gap-2"
             >
               <FileSearch className="w-4 h-4 text-[#2563EB]" aria-hidden="true" />
               <span>Track Application</span>
@@ -773,10 +775,12 @@ export default function PortalHomepage({
       <section
         id="recruitment-section"
         aria-labelledby="recruitment-heading"
-        className="w-full bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 py-6 md:p-0 space-y-5 scroll-mt-20"
+        className="w-full bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 py-3 md:p-0 space-y-3.5 md:space-y-5 scroll-mt-20"
       >
-        <div id="sarkari-board" className="scroll-mt-20" />
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-[#E2E8F0] pb-3">
+        <div
+          id="sarkari-board"
+          className="flex flex-col sm:flex-row sm:items-end justify-between gap-2.5 border-b border-[#E2E8F0] pb-3 scroll-mt-20"
+        >
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2563EB] uppercase tracking-wider mb-1">
               <Briefcase className="w-3.5 h-3.5" aria-hidden="true" />
@@ -788,7 +792,7 @@ export default function PortalHomepage({
             >
               Latest Recruitment &amp; Exam Notices
             </h2>
-            <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+            <p className="text-xs sm:text-sm text-[#64748B] mt-1.5">
               Verified recruitment updates from JKSSB, Indian Army, SSC, Railway RRB, and state universities.
             </p>
           </div>
@@ -810,11 +814,11 @@ export default function PortalHomepage({
         </div>
 
         {/* Filter Controls: Organisation + Status Filter (Open vs All/Closed) */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
           <div
             role="tablist"
             aria-label="Filter jobs by organisation"
-            className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs font-medium"
+            className="flex flex-wrap sm:flex-nowrap items-center gap-x-1.5 gap-y-2 sm:overflow-x-auto text-xs font-medium"
           >
             {[
               { id: 'all', label: 'All Organisations' },
@@ -833,7 +837,7 @@ export default function PortalHomepage({
                   setJobOrgFilter(tab.id);
                   setShowAllJobs(false);
                 }}
-                className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors cursor-pointer border ${
+                className={`min-h-[38px] px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors cursor-pointer border ${
                   jobOrgFilter === tab.id
                     ? 'bg-[#2563EB] text-white border-[#2563EB] font-semibold'
                     : 'bg-white text-[#102A43] border-[#E2E8F0] hover:bg-[#F6F8FC]'
@@ -844,8 +848,8 @@ export default function PortalHomepage({
             ))}
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs">
-            <span className="text-[#64748B] font-medium mr-1">Status:</span>
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 text-xs">
+            <span className="text-[#64748B] font-medium mr-0.5">Status:</span>
             {[
               { id: 'active', label: 'Open & Active' },
               { id: 'all', label: 'All Notices' },
@@ -858,7 +862,7 @@ export default function PortalHomepage({
                   setJobStatusFilter(st.id as 'active' | 'all' | 'closed');
                   setShowAllJobs(false);
                 }}
-                className={`px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
+                className={`min-h-[36px] px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer ${
                   jobStatusFilter === st.id
                     ? 'bg-[#102A43] text-white border-[#102A43] font-semibold'
                     : 'bg-white text-[#64748B] border-[#E2E8F0] hover:text-[#102A43]'
@@ -940,11 +944,11 @@ export default function PortalHomepage({
         </div>
 
         {/* Mobile Open Full-Width List Rows */}
-        <div className="md:hidden -mx-4 divide-y divide-[#E2E8F0] border-y border-[#E2E8F0] bg-white">
+        <div className="md:hidden -mx-4 divide-y divide-[#E2E8F0] border-t border-[#E2E8F0] bg-white">
           {displayedJobs.map(({ item, status, organisation, qualification }) => (
             <article
               key={item.id}
-              className="px-4 py-4 space-y-2.5 hover:bg-[#F6F8FC] transition-colors"
+              className="px-4 py-3.5 space-y-2 hover:bg-[#F6F8FC] transition-colors"
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-semibold text-[#2563EB]">{organisation}</span>
@@ -968,7 +972,7 @@ export default function PortalHomepage({
                 </p>
               )}
 
-              <div className="flex items-center justify-between text-xs text-[#64748B] pt-1">
+              <div className="flex items-center justify-between text-xs text-[#64748B] pt-0.5">
                 <span>
                   Closing Date:{' '}
                   <strong className="text-[#102A43]">{item.lastDate || 'See Notice'}</strong>
@@ -1004,7 +1008,7 @@ export default function PortalHomepage({
             <button
               type="button"
               onClick={() => setShowAllJobs((prev) => !prev)}
-              className="px-5 py-2.5 bg-white hover:bg-[#F6F8FC] text-[#102A43] border border-[#E2E8F0] rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer inline-flex items-center gap-2"
+              className="min-h-[44px] px-5 py-2.5 bg-white hover:bg-[#F6F8FC] text-[#102A43] border border-[#E2E8F0] rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer inline-flex items-center gap-2"
             >
               <span>
                 {showAllJobs
@@ -1023,9 +1027,9 @@ export default function PortalHomepage({
       <section
         id="tools-preview"
         aria-labelledby="tools-preview-heading"
-        className="w-full bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 py-6 md:p-0 space-y-4 scroll-mt-20"
+        className="w-full bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 pt-3 pb-0 md:p-0 space-y-3.5 md:space-y-4 scroll-mt-20"
       >
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E2E8F0] pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-1 md:border-b md:border-[#E2E8F0] md:pb-3">
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2563EB] uppercase tracking-wider mb-1">
               <Wrench className="w-3.5 h-3.5" aria-hidden="true" />
@@ -1037,7 +1041,7 @@ export default function PortalHomepage({
             >
               Fast, Simple &amp; Secure Document Tools
             </h2>
-            <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+            <p className="text-xs sm:text-sm text-[#64748B] mt-1.5">
               Resize photos, compress images to 20KB–50KB, and format PDFs directly in your browser.
             </p>
           </div>
@@ -1053,7 +1057,7 @@ export default function PortalHomepage({
           </button>
         </div>
 
-        <div className="-mx-4 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-y md:border-0 border-[#E2E8F0] bg-white md:bg-transparent grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0 md:gap-4">
+        <div className="-mx-4 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-t md:border-0 border-[#E2E8F0] bg-white md:bg-transparent grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0 md:gap-4">
           {previewTools.map((tool) => {
             const ToolIcon = getToolIcon(tool.iconName);
             return (
@@ -1063,10 +1067,10 @@ export default function PortalHomepage({
                 onClick={() => {
                   window.location.hash = `#tools/${tool.id}`;
                 }}
-                className="text-left bg-white md:border md:border-[#E2E8F0] md:hover:border-[#2563EB] md:rounded-2xl px-4 py-4 md:p-5 flex flex-col justify-between transition-colors md:shadow-2xs group cursor-pointer"
+                className="text-left bg-white md:border md:border-[#E2E8F0] md:hover:border-[#2563EB] md:rounded-2xl px-4 py-3.5 md:p-5 flex flex-col justify-between transition-colors md:shadow-2xs group cursor-pointer"
               >
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3 md:block md:space-y-2.5">
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2.5 md:block md:space-y-2.5">
                     <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center shrink-0">
                       <ToolIcon className="w-4 h-4" aria-hidden="true" />
                     </div>
@@ -1078,7 +1082,7 @@ export default function PortalHomepage({
                     {tool.shortDescription}
                   </p>
                 </div>
-                <div className="pt-2.5 mt-2.5 md:pt-3 md:mt-3 md:border-t border-[#E2E8F0] flex items-center justify-between text-xs font-semibold text-[#2563EB]">
+                <div className="pt-2 mt-1.5 md:pt-3 md:mt-3 md:border-t border-[#E2E8F0] flex items-center justify-between text-xs font-semibold text-[#2563EB]">
                   <span>Open Tool</span>
                   <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                 </div>
@@ -1094,9 +1098,9 @@ export default function PortalHomepage({
       <section
         id="education-resources"
         aria-labelledby="education-heading"
-        className="w-full bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 py-6 md:p-0 space-y-4 scroll-mt-20"
+        className="w-full bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 pt-3 pb-0 md:p-0 space-y-3.5 md:space-y-4 scroll-mt-20"
       >
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E2E8F0] pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-1 md:border-b md:border-[#E2E8F0] md:pb-3">
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2563EB] uppercase tracking-wider mb-1">
               <GraduationCap className="w-3.5 h-3.5" aria-hidden="true" />
@@ -1108,7 +1112,7 @@ export default function PortalHomepage({
             >
               Education &amp; Learning Resources
             </h2>
-            <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+            <p className="text-xs sm:text-sm text-[#64748B] mt-1.5">
               Admission notices, examination forms, and academic updates from Kashmir University and Cluster University.
             </p>
           </div>
@@ -1122,13 +1126,13 @@ export default function PortalHomepage({
           </button>
         </div>
 
-        <div className="-mx-4 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-y md:border-0 border-[#E2E8F0] bg-white md:bg-transparent grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-4">
+        <div className="-mx-4 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-t md:border-0 border-[#E2E8F0] bg-white md:bg-transparent grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-4">
           {educationUpdates.map(({ item, status, organisation }) => (
             <article
               key={item.id}
-              className="bg-white md:border md:border-[#E2E8F0] md:hover:border-[#2563EB] md:rounded-2xl px-4 py-4 md:p-5 flex flex-col justify-between transition-colors md:shadow-2xs"
+              className="bg-white md:border md:border-[#E2E8F0] md:hover:border-[#2563EB] md:rounded-2xl px-4 py-3.5 md:p-5 flex flex-col justify-between transition-colors md:shadow-2xs"
             >
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-semibold text-[#2563EB]">{organisation}</span>
                   {renderStatusBadge(status)}
@@ -1147,7 +1151,7 @@ export default function PortalHomepage({
                 </p>
               </div>
 
-              <div className="pt-2.5 mt-2.5 md:pt-3 md:mt-4 md:border-t border-[#E2E8F0] flex items-center justify-between text-xs">
+              <div className="pt-2 mt-1.5 md:pt-3 md:mt-4 md:border-t border-[#E2E8F0] flex items-center justify-between text-xs">
                 <span className="text-[#64748B]">
                   Closing: <strong className="text-[#102A43]">{item.lastDate || 'See Notice'}</strong>
                 </span>
@@ -1170,9 +1174,9 @@ export default function PortalHomepage({
       <section
         id="popular-services"
         aria-labelledby="popular-services-heading"
-        className="w-full bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 py-6 md:p-0 space-y-5 scroll-mt-20"
+        className="w-full bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 pt-3 pb-0 md:p-0 space-y-3.5 md:space-y-5 scroll-mt-20"
       >
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E2E8F0] pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-1 md:border-b md:border-[#E2E8F0] md:pb-3">
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2563EB] uppercase tracking-wider mb-1">
               <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
@@ -1184,7 +1188,7 @@ export default function PortalHomepage({
             >
               Essential Citizen E-Services
             </h2>
-            <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+            <p className="text-xs sm:text-sm text-[#64748B] mt-1.5">
               Frequently requested identity, certificate, and application assistance services.
             </p>
           </div>
@@ -1198,20 +1202,20 @@ export default function PortalHomepage({
           </button>
         </div>
 
-        <div className="-mx-4 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-y md:border-0 border-[#E2E8F0] bg-white md:bg-transparent grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 md:gap-4">
+        <div className="-mx-4 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-t md:border-0 border-[#E2E8F0] bg-white md:bg-transparent grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 md:gap-4">
           {popularServices.map((item) => {
             const Icon = item.icon;
             return (
               <article
                 key={item.title}
-                className="bg-white md:border md:border-[#E2E8F0] md:hover:border-[#2563EB] md:rounded-2xl px-4 py-4 md:p-5 flex flex-col justify-between transition-colors md:shadow-2xs"
+                className="bg-white md:border md:border-[#E2E8F0] md:hover:border-[#2563EB] md:rounded-2xl px-4 py-3.5 md:p-5 flex flex-col justify-between transition-colors md:shadow-2xs"
               >
-                <div className="space-y-2 md:space-y-3">
-                  <div className="flex items-center gap-3 md:block md:space-y-3">
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center shrink-0">
-                      <Icon className="w-5 h-5" aria-hidden="true" />
+                <div className="space-y-1.5 md:space-y-3">
+                  <div className="flex items-center gap-2.5 md:block md:space-y-3">
+                    <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center shrink-0">
+                      <Icon className="w-4 h-4 md:w-5 md:h-5" aria-hidden="true" />
                     </div>
-                    <h3 className="text-base font-bold text-[#102A43] leading-snug">
+                    <h3 className="text-sm sm:text-base font-bold text-[#102A43] leading-snug">
                       {item.title}
                     </h3>
                   </div>
@@ -1220,7 +1224,7 @@ export default function PortalHomepage({
                   </p>
                 </div>
 
-                <div className="pt-2.5 mt-2.5 md:pt-4 md:mt-4 md:border-t border-[#E2E8F0] flex items-center justify-between">
+                <div className="pt-2 mt-1.5 md:pt-4 md:mt-4 md:border-t border-[#E2E8F0] flex items-center justify-between">
                   <button
                     type="button"
                     onClick={() => {
@@ -1247,9 +1251,9 @@ export default function PortalHomepage({
       <section
         id="service-directory-preview"
         aria-labelledby="directory-preview-heading"
-        className="w-full bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 py-6 md:p-0 space-y-5 scroll-mt-20"
+        className="w-full bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 pt-3 pb-0 md:p-0 space-y-3.5 md:space-y-5 scroll-mt-20"
       >
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E2E8F0] pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-1 md:border-b md:border-[#E2E8F0] md:pb-3">
           <div>
             <h2
               id="directory-preview-heading"
@@ -1257,7 +1261,7 @@ export default function PortalHomepage({
             >
               Browse Services by Category
             </h2>
-            <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+            <p className="text-xs sm:text-sm text-[#64748B] mt-1.5">
               Explore our complete directory of {SERVICES_LIST.length} citizen services organised into clear categories.
             </p>
           </div>
@@ -1271,7 +1275,7 @@ export default function PortalHomepage({
           </button>
         </div>
 
-        <div className="-mx-4 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-y md:border-0 border-[#E2E8F0] bg-white md:bg-transparent grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0 md:gap-4">
+        <div className="-mx-4 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-t md:border-0 border-[#E2E8F0] bg-white md:bg-transparent grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0 md:gap-4">
           {directoryCategories.map((cat) => {
             const Icon = cat.icon;
             return (
@@ -1279,9 +1283,9 @@ export default function PortalHomepage({
                 key={cat.id}
                 type="button"
                 onClick={() => selectServiceDirectoryCategory(cat.id)}
-                className="text-left bg-white md:border md:border-[#E2E8F0] md:hover:border-[#2563EB] md:rounded-2xl px-4 py-4 md:p-5 flex flex-col justify-between transition-colors md:shadow-2xs group cursor-pointer"
+                className="text-left bg-white md:border md:border-[#E2E8F0] md:hover:border-[#2563EB] md:rounded-2xl px-4 py-3.5 md:p-5 flex flex-col justify-between transition-colors md:shadow-2xs group cursor-pointer"
               >
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center">
                       <Icon className="w-4 h-4" aria-hidden="true" />
@@ -1296,7 +1300,7 @@ export default function PortalHomepage({
                   <p className="text-xs text-[#64748B] leading-relaxed">{cat.description}</p>
                 </div>
 
-                <div className="pt-2.5 mt-2.5 md:pt-3 md:mt-3 md:border-t border-[#E2E8F0] flex items-center justify-between text-xs font-semibold text-[#2563EB]">
+                <div className="pt-2 mt-1.5 md:pt-3 md:mt-3 md:border-t border-[#E2E8F0] flex items-center justify-between text-xs font-semibold text-[#2563EB]">
                   <span>Browse Category</span>
                   <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                 </div>
@@ -1310,9 +1314,9 @@ export default function PortalHomepage({
       <section
         id="schemes-section"
         aria-labelledby="schemes-heading"
-        className="w-full bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 py-6 md:p-0 space-y-4 scroll-mt-20"
+        className="w-full bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 pt-3 pb-0 md:p-0 space-y-3.5 md:space-y-4 scroll-mt-20"
       >
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E2E8F0] pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-1 md:border-b md:border-[#E2E8F0] md:pb-3">
           <div>
             <h2
               id="schemes-heading"
@@ -1320,7 +1324,7 @@ export default function PortalHomepage({
             >
               Government Schemes &amp; Citizen Benefits
             </h2>
-            <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+            <p className="text-xs sm:text-sm text-[#64748B] mt-1.5">
               Key welfare schemes, eligibility guides, and direct official portal links.
             </p>
           </div>
@@ -1334,9 +1338,9 @@ export default function PortalHomepage({
           </button>
         </div>
 
-        <div className="-mx-4 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-y md:border-0 border-[#E2E8F0] bg-white md:bg-transparent grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-4">
-          <article className="bg-white md:border md:border-[#E2E8F0] md:rounded-2xl px-4 py-4 md:p-5 flex flex-col justify-between md:shadow-2xs">
-            <div className="space-y-2.5">
+        <div className="-mx-4 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-t md:border-0 border-[#E2E8F0] bg-white md:bg-transparent grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-4">
+          <article className="bg-white md:border md:border-[#E2E8F0] md:rounded-2xl px-4 py-3.5 md:p-5 flex flex-col justify-between md:shadow-2xs">
+            <div className="space-y-2">
               <span className="inline-block text-xs font-semibold text-[#16A34A] bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
                 Farmer Income Support
               </span>
@@ -1347,7 +1351,7 @@ export default function PortalHomepage({
                 Direct Benefit Transfer of ₹2,000 every four months for eligible landholding किसान families. Requires active e-KYC and Aadhaar-seeded bank account.
               </p>
             </div>
-            <div className="pt-3 mt-3 md:pt-4 md:mt-4 md:border-t border-[#E2E8F0] flex items-center justify-between gap-2 text-xs">
+            <div className="pt-2.5 mt-2 md:pt-4 md:mt-4 md:border-t border-[#E2E8F0] flex items-center justify-between gap-2 text-xs">
               <button
                 type="button"
                 onClick={() => {
@@ -1370,8 +1374,8 @@ export default function PortalHomepage({
             </div>
           </article>
 
-          <article className="bg-white md:border md:border-[#E2E8F0] md:rounded-2xl px-4 py-4 md:p-5 flex flex-col justify-between md:shadow-2xs">
-            <div className="space-y-2.5">
+          <article className="bg-white md:border md:border-[#E2E8F0] md:rounded-2xl px-4 py-3.5 md:p-5 flex flex-col justify-between md:shadow-2xs">
+            <div className="space-y-2">
               <span className="inline-block text-xs font-semibold text-[#2563EB] bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">
                 Healthcare Assurance
               </span>
@@ -1382,7 +1386,7 @@ export default function PortalHomepage({
                 Cashless hospitalisation coverage up to ₹5,00,000 per family per year across empaneled hospitals, including universal coverage for J&amp;K residents.
               </p>
             </div>
-            <div className="pt-3 mt-3 md:pt-4 md:mt-4 md:border-t border-[#E2E8F0] flex items-center justify-between gap-2 text-xs">
+            <div className="pt-2.5 mt-2 md:pt-4 md:mt-4 md:border-t border-[#E2E8F0] flex items-center justify-between gap-2 text-xs">
               <button
                 type="button"
                 onClick={() => {
@@ -1405,8 +1409,8 @@ export default function PortalHomepage({
             </div>
           </article>
 
-          <article className="bg-white md:border md:border-[#E2E8F0] md:rounded-2xl px-4 py-4 md:p-5 flex flex-col justify-between md:shadow-2xs">
-            <div className="space-y-2.5">
+          <article className="bg-white md:border md:border-[#E2E8F0] md:rounded-2xl px-4 py-3.5 md:p-5 flex flex-col justify-between md:shadow-2xs">
+            <div className="space-y-2">
               <span className="inline-block text-xs font-semibold text-[#102A43] bg-[#F6F8FC] border border-[#E2E8F0] px-2.5 py-0.5 rounded-full">
                 Social Security &amp; Labour
               </span>
@@ -1417,7 +1421,7 @@ export default function PortalHomepage({
                 Registration for unorganised sector workers, old-age/widow/disability pension schemes (ISSS), and marriage assistance in Jammu &amp; Kashmir.
               </p>
             </div>
-            <div className="pt-3 mt-3 md:pt-4 md:mt-4 md:border-t border-[#E2E8F0] flex items-center justify-between gap-2 text-xs">
+            <div className="pt-2.5 mt-2 md:pt-4 md:mt-4 md:border-t border-[#E2E8F0] flex items-center justify-between gap-2 text-xs">
               <button
                 type="button"
                 onClick={() => {
@@ -1446,7 +1450,7 @@ export default function PortalHomepage({
       <section
         id="how-it-works"
         aria-labelledby="how-it-works-heading"
-        className="w-full bg-white border-b border-[#E2E8F0] md:border md:rounded-2xl px-4 py-6 sm:p-8 space-y-6 shadow-none md:shadow-2xs"
+        className="w-full bg-white border-b border-[#E2E8F0] md:border md:rounded-2xl px-4 py-4 sm:p-8 space-y-3.5 md:space-y-6 shadow-none md:shadow-2xs"
       >
         <div className="max-w-2xl">
           <h2
@@ -1455,13 +1459,13 @@ export default function PortalHomepage({
           >
             How Online Service Assistance Works
           </h2>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-1">
+          <p className="text-xs sm:text-sm text-[#64748B] mt-1.5">
             Requesting help with an application or certificate through CSC DOST takes three simple steps.
           </p>
         </div>
 
         <div className="-mx-4 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-y md:border-0 border-[#E2E8F0] grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-5">
-          <div className="px-4 py-4 md:p-5 md:rounded-xl bg-white md:bg-[#F6F8FC] md:border md:border-[#E2E8F0] space-y-2">
+          <div className="px-4 py-3.5 md:p-5 md:rounded-xl bg-white md:bg-[#F6F8FC] md:border md:border-[#E2E8F0] space-y-1.5">
             <div className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-[#2563EB] text-white text-xs font-bold">
               1
             </div>
@@ -1471,7 +1475,7 @@ export default function PortalHomepage({
             </p>
           </div>
 
-          <div className="px-4 py-4 md:p-5 md:rounded-xl bg-white md:bg-[#F6F8FC] md:border md:border-[#E2E8F0] space-y-2">
+          <div className="px-4 py-3.5 md:p-5 md:rounded-xl bg-white md:bg-[#F6F8FC] md:border md:border-[#E2E8F0] space-y-1.5">
             <div className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-[#2563EB] text-white text-xs font-bold">
               2
             </div>
@@ -1483,7 +1487,7 @@ export default function PortalHomepage({
             </p>
           </div>
 
-          <div className="px-4 py-4 md:p-5 md:rounded-xl bg-white md:bg-[#F6F8FC] md:border md:border-[#E2E8F0] space-y-2">
+          <div className="px-4 py-3.5 md:p-5 md:rounded-xl bg-white md:bg-[#F6F8FC] md:border md:border-[#E2E8F0] space-y-1.5">
             <div className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-[#2563EB] text-white text-xs font-bold">
               3
             </div>

@@ -203,12 +203,13 @@ export default function ExploreServicesDesk({
     <section
       id="services"
       aria-labelledby="services-board-heading"
-      className="w-full max-w-7xl mx-auto bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 sm:px-6 py-6 md:py-2 space-y-5 scroll-mt-20"
+      className="w-full max-w-7xl mx-auto bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 sm:px-6 pt-3 pb-3 md:py-2 space-y-3.5 md:space-y-5 scroll-mt-20"
     >
-      <div id="services-board" className="scroll-mt-20" />
-
       {/* Section Header + Search Input */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#E2E8F0] pb-4">
+      <div
+        id="services-board"
+        className="flex flex-col md:flex-row md:items-end justify-between gap-3 border-b border-[#E2E8F0] pb-3 scroll-mt-20"
+      >
         <div>
           <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2563EB] uppercase tracking-wider mb-1">
             <FileCheck className="w-3.5 h-3.5" aria-hidden="true" />
@@ -220,7 +221,7 @@ export default function ExploreServicesDesk({
           >
             CSC E-SERVICES
           </h2>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+          <p className="text-xs sm:text-sm text-[#64748B] mt-1.5">
             Search and browse all {SERVICES_LIST.length} citizen services, required documents, and fee details.
           </p>
         </div>
@@ -239,7 +240,7 @@ export default function ExploreServicesDesk({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Filter services by name or document…"
-            className="w-full pl-9 pr-8 py-2 bg-white border border-[#E2E8F0] focus:border-[#2563EB] rounded-xl text-xs sm:text-sm text-[#102A43] placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15"
+            className="w-full min-h-[44px] pl-9 pr-8 py-2 bg-white border border-[#E2E8F0] focus:border-[#2563EB] rounded-xl text-xs sm:text-sm text-[#102A43] placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15"
           />
           {searchQuery && (
             <button
@@ -258,7 +259,7 @@ export default function ExploreServicesDesk({
       <div
         role="tablist"
         aria-label="Service categories"
-        className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs font-medium"
+        className="flex flex-wrap sm:flex-nowrap items-center gap-x-1.5 gap-y-2 sm:overflow-x-auto text-xs font-medium"
       >
         {DIRECTORY_TABS.map((tab) => (
           <button
@@ -271,7 +272,7 @@ export default function ExploreServicesDesk({
               setSelectedCategory(tab.id);
               setShowAllServices(false);
             }}
-            className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors cursor-pointer border ${
+            className={`min-h-[38px] px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors cursor-pointer border ${
               selectedCategory === tab.id
                 ? 'bg-[#2563EB] text-white border-[#2563EB] font-semibold'
                 : 'bg-white text-[#102A43] border-[#E2E8F0] hover:bg-[#F6F8FC]'
@@ -284,7 +285,7 @@ export default function ExploreServicesDesk({
 
       {/* Services List Rows (Mobile) / Cards Grid (Desktop) */}
       {displayedServices.length === 0 ? (
-        <div className="bg-white md:border md:border-[#E2E8F0] md:rounded-2xl py-8 px-4 text-center space-y-2">
+        <div className="bg-white md:border md:border-[#E2E8F0] md:rounded-2xl py-6 px-4 text-center space-y-2">
           <p className="text-sm font-bold text-[#102A43]">No matching services found</p>
           <p className="text-xs text-[#64748B]">
             Try clearing your search filter or switching to &ldquo;All Services&rdquo;.
@@ -295,20 +296,20 @@ export default function ExploreServicesDesk({
               setSearchQuery('');
               setSelectedCategory('all');
             }}
-            className="mt-2 px-4 py-2 bg-[#2563EB] text-white text-xs font-semibold rounded-xl cursor-pointer"
+            className="min-h-[40px] mt-2 px-4 py-2 bg-[#2563EB] text-white text-xs font-semibold rounded-xl cursor-pointer"
           >
             Reset Filters
           </button>
         </div>
       ) : (
-        <div className="-mx-4 sm:-mx-6 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-y md:border-0 border-[#E2E8F0] bg-white md:bg-transparent grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 md:gap-4">
+        <div className="-mx-4 sm:-mx-6 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-t md:border-0 border-[#E2E8F0] bg-white md:bg-transparent grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 md:gap-4">
           {displayedServices.map((item) => (
             <article
               key={item.id}
               id={`eservice-item-${item.id}`}
-              className="bg-white md:border md:border-[#E2E8F0] md:hover:border-[#2563EB] md:rounded-2xl px-4 sm:px-6 py-4 md:p-5 flex flex-col justify-between transition-colors md:shadow-2xs"
+              className="bg-white md:border md:border-[#E2E8F0] md:hover:border-[#2563EB] md:rounded-2xl px-4 sm:px-6 py-3.5 md:p-5 flex flex-col justify-between transition-colors md:shadow-2xs"
             >
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs text-[#64748B]">
                   <span className="font-semibold text-[#2563EB]">
                     {CATEGORY_LABELS[item.category]}
@@ -340,7 +341,7 @@ export default function ExploreServicesDesk({
                 )}
               </div>
 
-              <div className="pt-3 mt-3 md:pt-4 md:mt-4 md:border-t border-[#E2E8F0] flex items-center justify-between gap-2">
+              <div className="pt-2.5 mt-2 md:pt-4 md:mt-4 md:border-t border-[#E2E8F0] flex items-center justify-between gap-2">
                 <button
                   type="button"
                   onClick={() => handleOpenService(item)}
@@ -352,7 +353,7 @@ export default function ExploreServicesDesk({
                 <button
                   type="button"
                   onClick={() => handleApply(item)}
-                  className="px-3 py-1.5 bg-[#F6F8FC] hover:bg-[#2563EB] text-[#102A43] hover:text-white border border-[#E2E8F0] hover:border-[#2563EB] text-xs font-semibold rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1"
+                  className="min-h-[38px] px-3 py-1.5 bg-[#F6F8FC] hover:bg-[#2563EB] text-[#102A43] hover:text-white border border-[#E2E8F0] hover:border-[#2563EB] text-xs font-semibold rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1"
                 >
                   <span>Request Assistance</span>
                   <ArrowRight className="w-3 h-3" aria-hidden="true" />
@@ -365,11 +366,11 @@ export default function ExploreServicesDesk({
 
       {/* Show All / Show Fewer Toggle */}
       {filteredServices.length > 9 && !searchQuery.trim() && (
-        <div className="pt-2 flex justify-center">
+        <div className="pt-1 flex justify-center">
           <button
             type="button"
             onClick={() => setShowAllServices((prev) => !prev)}
-            className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-white text-[#102A43] border border-[#E2E8F0] hover:border-[#2563EB] hover:text-[#2563EB] transition-colors cursor-pointer inline-flex items-center gap-2"
+            className="min-h-[44px] px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-white text-[#102A43] border border-[#E2E8F0] hover:border-[#2563EB] hover:text-[#2563EB] transition-colors cursor-pointer inline-flex items-center gap-2"
           >
             <span>
               {showAllServices

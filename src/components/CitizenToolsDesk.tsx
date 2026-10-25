@@ -231,10 +231,10 @@ export default function CitizenToolsDesk({ onApplyService }: CitizenToolsDeskPro
   const activeFeeData = SERVICE_FEE_CATALOGUE.find(s => s.id === selectedFeeService) || SERVICE_FEE_CATALOGUE[0];
 
   return (
-    <section id="citizen-tools" aria-labelledby="tools-heading" className="w-full bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 py-6 md:p-0 space-y-5 scroll-mt-20">
+    <section id="citizen-tools" aria-labelledby="tools-heading" className="w-full bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 py-4 md:p-0 space-y-3.5 md:space-y-5 scroll-mt-20">
       
       {/* Section Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-[#E2E8F0] pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-[#E2E8F0] pb-3">
         <div>
           <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2563EB] uppercase tracking-wider mb-1">
             <Sparkles className="w-3.5 h-3.5" />
@@ -243,17 +243,17 @@ export default function CitizenToolsDesk({ onApplyService }: CitizenToolsDeskPro
           <h2 id="tools-heading" className="text-xl sm:text-2xl font-extrabold text-[#102A56] tracking-tight">
             Digital Tools &amp; Citizen Calculators
           </h2>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+          <p className="text-xs sm:text-sm text-[#64748B] mt-1.5">
             Instant calculators to verify age eligibility, file upload compliance, and regulated CSC service fees.
           </p>
         </div>
 
         {/* Tab Switcher */}
-        <div className="inline-flex p-1 bg-[#EFF6FF] border border-[#BFDBFE] rounded-xl self-start sm:self-auto">
+        <div className="flex flex-wrap sm:inline-flex items-center gap-x-1.5 gap-y-2 p-1 bg-[#EFF6FF] border border-[#BFDBFE] rounded-xl self-start sm:self-auto">
           <button
             type="button"
             onClick={() => setActiveTab('age')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`min-h-[38px] flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'age'
                 ? 'bg-[#2563EB] text-white shadow-xs'
                 : 'text-[#102A56] hover:text-[#2563EB]'
@@ -266,7 +266,7 @@ export default function CitizenToolsDesk({ onApplyService }: CitizenToolsDeskPro
           <button
             type="button"
             onClick={() => setActiveTab('photo')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`min-h-[38px] flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'photo'
                 ? 'bg-[#2563EB] text-white shadow-xs'
                 : 'text-[#102A56] hover:text-[#2563EB]'
@@ -279,7 +279,7 @@ export default function CitizenToolsDesk({ onApplyService }: CitizenToolsDeskPro
           <button
             type="button"
             onClick={() => setActiveTab('fee')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`min-h-[38px] flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'fee'
                 ? 'bg-[#2563EB] text-white shadow-xs'
                 : 'text-[#102A56] hover:text-[#2563EB]'
@@ -296,54 +296,56 @@ export default function CitizenToolsDesk({ onApplyService }: CitizenToolsDeskPro
       {/* ============================================================== */}
       {activeTab === 'age' && (
         <div className="bg-white md:border md:border-[#E2E8F0] md:rounded-2xl p-0 md:p-7 md:shadow-xs">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-start">
             
             {/* Input Form Column */}
-            <div className="lg:col-span-7 space-y-4">
-              <h3 className="text-base font-bold text-[#102A56] flex items-center gap-2">
-                <Calculator className="w-4 h-4 text-[#2563EB]" />
-                <span>Recruitment Age Eligibility Calculator</span>
-              </h3>
-              <p className="text-xs text-[#64748B]">
-                Verify your exact age against official examination cutoff dates (e.g. JKSSB Advt 09/2026, Indian Army, SSC, RRB).
-              </p>
+            <div className="lg:col-span-7 space-y-3.5">
+              <div>
+                <h3 className="text-base font-bold text-[#102A56] flex items-center gap-2">
+                  <Calculator className="w-4 h-4 text-[#2563EB]" />
+                  <span>Recruitment Age Eligibility Calculator</span>
+                </h3>
+                <p className="text-xs text-[#64748B] mt-1.5">
+                  Verify your exact age against official examination cutoff dates (e.g. JKSSB Advt 09/2026, Indian Army, SSC, RRB).
+                </p>
+              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block text-xs font-semibold text-[#0F172A] mb-1">
+                  <label className="block text-xs font-semibold text-[#0F172A] mb-1.5">
                     Your Date of Birth (DOB)
                   </label>
                   <input
                     type="date"
                     value={dob}
                     onChange={(e) => setDob(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent"
+                    className="w-full min-h-[44px] px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#0F172A] mb-1">
+                  <label className="block text-xs font-semibold text-[#0F172A] mb-1.5">
                     Official Cutoff Date
                   </label>
                   <input
                     type="date"
                     value={cutoffDate}
                     onChange={(e) => setCutoffDate(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent"
+                    className="w-full min-h-[44px] px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent"
                   />
-                  <span className="text-[10px] text-[#64748B] block mt-0.5">Usually 01/01 of the advertisement year</span>
+                  <span className="text-[10px] text-[#64748B] block mt-1">Usually 01/01 of the advertisement year</span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block text-xs font-semibold text-[#0F172A] mb-1">
+                  <label className="block text-xs font-semibold text-[#0F172A] mb-1.5">
                     Reservation Category
                   </label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent"
+                    className="w-full min-h-[44px] px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent"
                   >
                     <option value="om">Open Merit (OM) / General (40 Yrs)</option>
                     <option value="rba_obc">RBA / OBC / EWS / ALC (+3 Yrs / 43 Yrs)</option>
@@ -354,13 +356,13 @@ export default function CitizenToolsDesk({ onApplyService }: CitizenToolsDeskPro
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#0F172A] mb-1">
+                  <label className="block text-xs font-semibold text-[#0F172A] mb-1.5">
                     Base Maximum Age Limit
                   </label>
                   <select
                     value={maxAgeLimit}
                     onChange={(e) => setMaxAgeLimit(Number(e.target.value))}
-                    className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent"
+                    className="w-full min-h-[44px] px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent"
                   >
                     <option value={40}>40 Years (JKSSB Standard)</option>
                     <option value={30}>30 Years (SSC CGL / Railway)</option>
@@ -373,7 +375,7 @@ export default function CitizenToolsDesk({ onApplyService }: CitizenToolsDeskPro
             </div>
 
             {/* Result Column */}
-            <div className="lg:col-span-5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-5 space-y-4">
+            <div className="lg:col-span-5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-4 sm:p-5 space-y-3.5">
               <span className="text-xs font-bold text-[#64748B] uppercase tracking-wider block">
                 Calculated Age on Cutoff Date
               </span>
@@ -444,28 +446,28 @@ export default function CitizenToolsDesk({ onApplyService }: CitizenToolsDeskPro
       {/* ============================================================== */}
       {activeTab === 'photo' && (
         <div className="bg-white md:border md:border-[#E2E8F0] md:rounded-2xl p-0 md:p-7 md:shadow-xs">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-start">
             
             {/* Left Portal Spec Column */}
-            <div className="lg:col-span-7 space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="lg:col-span-7 space-y-3.5">
+              <div>
                 <h3 className="text-base font-bold text-[#102A56] flex items-center gap-2">
                   <ImageIcon className="w-4 h-4 text-[#2563EB]" />
                   <span>Government Portal Upload Specifications</span>
                 </h3>
+                <p className="text-xs text-[#64748B] mt-1.5">
+                  Upload requirements for photographs and digital signatures across major recruitment portals to avoid application rejection.
+                </p>
               </div>
-              <p className="text-xs text-[#64748B]">
-                Upload requirements for photographs and digital signatures across major recruitment portals to avoid application rejection.
-              </p>
 
               {/* Portal Selector Chips */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 text-xs">
                 {PORTAL_PRESETS.map((p) => (
                   <button
                     key={p.id}
                     type="button"
                     onClick={() => setSelectedPortal(p.id)}
-                    className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer border ${
+                    className={`min-h-[38px] px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer border ${
                       selectedPortal === p.id
                         ? 'bg-[#2563EB] text-white border-[#2563EB] font-bold'
                         : 'bg-[#F8FAFC] text-[#0F172A] border-[#E2E8F0] hover:bg-slate-100'

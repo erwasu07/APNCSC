@@ -67,9 +67,9 @@ export default function FrequentlyAskedQuestions() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 
-      <div className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl px-4 py-6 sm:p-8 shadow-none md:shadow-2xs">
+      <div className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl px-4 py-4 sm:p-8 shadow-none md:shadow-2xs">
         {/* Section Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-[#E2E8F0]">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 pb-3 md:pb-5 border-b border-[#E2E8F0]">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <HelpCircle className="w-4 h-4 text-[#2563EB]" aria-hidden="true" />
@@ -83,28 +83,28 @@ export default function FrequentlyAskedQuestions() {
             >
               Frequently Asked Questions
             </h2>
-            <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+            <p className="text-xs sm:text-sm text-[#64748B] mt-1.5">
               Clear answers about requesting service assistance, tracking applications, required documents, and fees.
             </p>
           </div>
         </div>
 
         {/* FAQ Accordion List */}
-        <div className="divide-y divide-[#E2E8F0] mt-2">
+        <div className="divide-y divide-[#E2E8F0]">
           {FAQS.map((faq, idx) => {
             const isOpen = openFaqIndex === idx;
             const faqId = `faq-item-${idx}`;
             const answerId = `faq-answer-${idx}`;
 
             return (
-              <div key={idx} className="py-4 first:pt-4 last:pb-0">
+              <div key={idx} className="py-3.5 last:pb-0">
                 <button
                   type="button"
                   id={faqId}
                   aria-expanded={isOpen}
                   aria-controls={answerId}
                   onClick={() => toggleFaq(idx)}
-                  className="w-full text-left flex items-start justify-between gap-4 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] rounded-lg p-1 -m-1 transition-colors hover:text-[#2563EB]"
+                  className="w-full min-h-[40px] text-left flex items-start justify-between gap-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] rounded-lg p-1 -m-1 transition-colors hover:text-[#2563EB]"
                 >
                   <span
                     className={`text-sm sm:text-base font-bold leading-snug transition-colors ${
@@ -133,7 +133,7 @@ export default function FrequentlyAskedQuestions() {
                     id={answerId}
                     role="region"
                     aria-labelledby={faqId}
-                    className="mt-2.5 text-xs sm:text-sm text-[#64748B] leading-relaxed pr-6 pl-1"
+                    className="mt-2 text-xs sm:text-sm text-[#64748B] leading-relaxed pr-6 pl-1"
                   >
                     <p>{faq.a}</p>
                   </div>
