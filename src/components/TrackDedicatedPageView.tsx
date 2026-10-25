@@ -273,11 +273,11 @@ export default function TrackDedicatedPageView({
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 pb-16 pt-3 sm:pt-6 font-sans">
-      <div className="max-w-4xl mx-auto px-3 sm:px-6">
+    <main className="min-h-screen bg-white md:bg-slate-50 text-slate-900 pb-16 pt-0 md:pt-6 font-sans">
+      <div className="max-w-4xl mx-auto px-0 md:px-6">
         
         {/* Navigation & Action Top Bar */}
-        <div className="mb-4 sm:mb-6 flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+        <div className="mb-0 md:mb-6 flex flex-wrap items-center justify-between gap-3 bg-white px-4 py-3.5 sm:p-4 rounded-none md:rounded-2xl border-b md:border border-slate-200 shadow-none md:shadow-xs">
           <button
             type="button"
             onClick={onBack}
@@ -318,10 +318,10 @@ export default function TrackDedicatedPageView({
         </div>
 
         {/* MAIN TRACKING CONTAINER */}
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-md overflow-hidden space-y-6">
+        <div className="bg-white rounded-none md:rounded-3xl border-0 md:border md:border-slate-200/90 shadow-none md:shadow-md overflow-hidden space-y-6">
           
           {/* Header Banner */}
-          <div className="bg-gradient-to-r from-[#18204e] via-[#1f2b6c] to-[#18204e] text-white p-5 sm:p-7 border-b border-indigo-900">
+          <div className="bg-gradient-to-r from-[#18204e] via-[#1f2b6c] to-[#18204e] text-white px-4 py-5 sm:p-7 border-b border-indigo-900">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2.5 py-0.5 rounded font-mono uppercase tracking-wider">
@@ -342,7 +342,7 @@ export default function TrackDedicatedPageView({
           </div>
 
           {/* Search Box Form */}
-          <div className="px-5 sm:px-8 pt-2">
+          <div className="px-4 sm:px-8 pt-2">
             <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-2.5">
               <div className="relative flex-1">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -389,7 +389,7 @@ export default function TrackDedicatedPageView({
           </div>
 
           {/* LIVE TRACKING RESULT OR EMPTY STATE */}
-          <div className="px-5 sm:px-8 pb-8">
+          <div className="px-4 sm:px-8 pb-8">
             {loading ? (
               <div className="py-16 text-center space-y-3">
                 <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />

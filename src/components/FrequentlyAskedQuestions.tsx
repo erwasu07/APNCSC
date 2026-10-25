@@ -60,14 +60,14 @@ export default function FrequentlyAskedQuestions() {
     <section
       id="faq-section"
       aria-labelledby="faq-heading"
-      className="w-full max-w-7xl mx-auto px-4 sm:px-6 scroll-mt-20 py-2"
+      className="w-full max-w-7xl mx-auto px-0 md:px-6 scroll-mt-20 py-0 md:py-2"
     >
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 
-      <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-8 shadow-2xs">
+      <div className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl px-4 py-6 sm:p-8 shadow-none md:shadow-2xs">
         {/* Section Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-[#E2E8F0]">
           <div>

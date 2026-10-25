@@ -109,9 +109,9 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
   if (activeToolId) {
     const currentTool = TOOLS_LIST.find(t => t.id === activeToolId);
     return (
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-8 animate-fade-in">
+      <div className="w-full max-w-7xl mx-auto px-0 md:px-6 py-0 md:py-10 space-y-0 md:space-y-8 animate-fade-in">
         {/* Navigation Breadcrumb / Back button */}
-        <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4">
+        <div className="flex items-center justify-between bg-white px-4 py-3.5 md:px-0 md:py-0 border-b border-[#E2E8F0] md:pb-4">
           <button
             type="button"
             onClick={() => selectTool(null)}
@@ -149,19 +149,19 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-12 animate-fade-in">
+    <div className="w-full max-w-7xl mx-auto px-0 md:px-6 py-0 md:py-10 space-y-0 md:space-y-12 animate-fade-in">
       
       {/* ================================================================ */}
       {/* 1. HERO & SEARCH */}
       {/* ================================================================ */}
-      <section className="text-center max-w-4xl mx-auto space-y-4">
+      <section className="text-center max-w-4xl mx-auto px-4 py-6 md:p-0 bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 space-y-4">
         
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#EAF4FF] border border-[#BFDBFE] rounded-full text-xs font-bold text-[#0759E8]">
           <Zap className="w-3.5 h-3.5 text-[#0759E8]" />
           <span>100% Client-Side Processing • No Sign-Up Needed</span>
         </div>
 
-        <h1 className="text-3xl sm:text-5xl font-black text-[#0B1F49] tracking-tight leading-tight">
+        <h1 className="text-2xl sm:text-5xl font-black text-[#0B1F49] tracking-tight leading-tight">
           Free Online Tools — Fast, Simple &amp; Secure
         </h1>
 
@@ -170,7 +170,7 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
         </p>
 
         {/* Universal Tool Search Input */}
-        <div className="pt-3 max-w-xl mx-auto">
+        <div className="pt-2 max-w-xl mx-auto">
           <div className="relative">
             <Search className="w-5 h-5 text-[#64748B] absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
@@ -178,7 +178,7 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search tools (e.g. compress 20kb, merge pdf, passport photo, resize signature)..."
-              className="w-full pl-12 pr-24 py-3.5 bg-white border border-[#E2E8F0] focus:border-[#0759E8] rounded-2xl text-xs sm:text-sm text-[#14213D] placeholder-[#64748B] shadow-xs focus:ring-4 focus:ring-[#EAF4FF] focus:outline-none transition-all"
+              className="w-full pl-12 pr-20 py-3.5 bg-[#F8FAFC] md:bg-white border border-[#E2E8F0] focus:border-[#0759E8] rounded-xl md:rounded-2xl text-xs sm:text-sm text-[#14213D] placeholder-[#64748B] shadow-2xs focus:ring-4 focus:ring-[#EAF4FF] focus:outline-none transition-all"
             />
             {searchQuery && (
               <button
@@ -197,7 +197,7 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
       {/* ================================================================ */}
       {/* 2. ZERO-UPLOAD PRIVACY GUARANTEE BANNER */}
       {/* ================================================================ */}
-      <section className="bg-emerald-50/80 border border-emerald-200/90 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <section className="bg-emerald-50/80 border-b md:border border-emerald-200/90 rounded-none md:rounded-2xl px-4 py-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
             <ShieldCheck className="w-5 h-5" />
@@ -218,10 +218,10 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
       </section>
 
       {/* ================================================================ */}
-      {/* 3. CATEGORY FILTER TABS */}
+      {/* 3. CATEGORY FILTER TABS & TOOLS LIST */}
       {/* ================================================================ */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar text-xs font-bold">
+      <section className="bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 space-y-0 md:space-y-4">
+        <div className="flex items-center gap-2 overflow-x-auto px-4 py-3 md:p-0 md:pb-1 border-b border-[#E2E8F0] md:border-0 no-scrollbar text-xs font-bold">
           {TOOLS_CATEGORIES.map((cat) => (
             <button
               key={cat.id}
@@ -238,15 +238,15 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
           ))}
         </div>
 
-        {/* Tools Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {/* Tools List (Open Full-Width Rows on Mobile, Cards on md:) */}
+        <div className="divide-y divide-[#E2E8F0] md:divide-y-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 md:gap-5">
           {filteredTools.map((tool) => {
             const IconComponent = getToolIcon(tool.iconName);
             return (
               <div
                 key={tool.id}
                 onClick={() => selectTool(tool.id)}
-                className="bg-white border border-[#E2E8F0] hover:border-[#0759E8] rounded-2xl p-6 flex flex-col justify-between transition-all hover:shadow-xs group cursor-pointer"
+                className="bg-white border-0 md:border border-[#E2E8F0] hover:border-[#0759E8] rounded-none md:rounded-2xl px-4 py-4.5 md:p-6 flex flex-col justify-between transition-all hover:bg-[#F8FAFC] md:hover:bg-white md:hover:shadow-xs group cursor-pointer"
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -305,7 +305,7 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
       {/* ================================================================ */}
       {/* 4. FREQUENTLY ASKED QUESTIONS */}
       {/* ================================================================ */}
-      <section className="bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-8 space-y-6 shadow-xs">
+      <section className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl px-4 py-6 sm:p-8 space-y-6 shadow-none md:shadow-xs">
         <div>
           <h2 className="text-lg sm:text-xl font-bold text-[#0B1F49] flex items-center gap-2">
             <HelpCircle className="w-5 h-5 text-[#0759E8]" />

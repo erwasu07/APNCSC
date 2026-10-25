@@ -297,8 +297,14 @@ body {
   }
 }
 
-/* Mobile Responsiveness & Overflow Protection */
-@media (max-width: 768px) {
+/* Mobile Responsiveness & Edge-to-Edge Overflow Protection */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+@media (max-width: 767px) {
   table {
     word-break: break-word;
     overflow-wrap: break-word;
@@ -312,7 +318,8 @@ body {
 
 /* Universal safe word breaking for long titles, URLs, and pipe separators */
 .break-words-safe {
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
   word-break: break-word;
 }
+
 

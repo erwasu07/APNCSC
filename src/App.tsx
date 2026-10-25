@@ -25,7 +25,7 @@ const ToolsHub = lazy(() => import('./components/tools/ToolsHub'));
 // Lightweight Skeleton Fallback for Section Containers (Prevents Layout Shift)
 function SectionSkeleton({ height = 'min-h-[360px]', title = 'Loading Desk...' }: { height?: string; title?: string }) {
   return (
-    <div className={`w-full ${height} bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col justify-between animate-pulse font-sans`}>
+    <div className={`w-full ${height} bg-white dark:bg-slate-900 border-b md:border border-slate-200 dark:border-slate-800 rounded-none md:rounded-2xl px-4 py-6 sm:p-6 shadow-none md:shadow-xs flex flex-col justify-between animate-pulse font-sans`}>
       <div className="space-y-3">
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
           <div className="flex items-center gap-2.5">
@@ -51,12 +51,12 @@ function SectionSkeleton({ height = 'min-h-[360px]', title = 'Loading Desk...' }
 // Lightweight Full Page Skeleton (For dedicated service/job routes)
 function PageRouteSkeleton({ message = 'Loading Official Notification...' }: { message?: string }) {
   return (
-    <div className="w-full min-h-[500px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm animate-pulse space-y-6">
+    <div className="w-full min-h-[500px] bg-white dark:bg-slate-900 border-b md:border border-slate-200 dark:border-slate-800 rounded-none md:rounded-2xl px-4 py-6 sm:p-6 shadow-none md:shadow-sm animate-pulse space-y-6">
       <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
         <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800" />
         <div className="space-y-2">
-          <div className="h-5 w-64 bg-slate-200 dark:bg-slate-800 rounded" />
-          <div className="h-3 w-40 bg-slate-100 dark:bg-slate-800 rounded" />
+          <div className="h-5 w-48 sm:w-64 bg-slate-200 dark:bg-slate-800 rounded" />
+          <div className="h-3 w-36 sm:w-40 bg-slate-100 dark:bg-slate-800 rounded" />
         </div>
       </div>
       <div className="space-y-3">
@@ -514,7 +514,7 @@ export default function App() {
       )}
 
       {/* Main Container */}
-      <main className={isAdminView ? 'flex-grow w-full min-h-screen bg-[#F6F8FC] overflow-x-hidden' : 'flex-grow w-full max-w-7xl mx-auto px-0 md:px-6 py-2 md:py-6 overflow-x-hidden'}>
+      <main className={isAdminView ? 'flex-grow w-full min-h-screen bg-[#F6F8FC] overflow-x-hidden' : 'flex-grow w-full max-w-7xl mx-auto px-0 md:px-6 py-0 md:py-6 overflow-x-hidden'}>
         {isAdminView ? (
           <Suspense fallback={<PageRouteSkeleton message="Loading CSC Staff Management Console..." />}>
             <AdminDashboard
@@ -594,7 +594,7 @@ export default function App() {
           </div>
         ) : (
           /* PUBLIC VISITOR INTERFACE */
-          <div className="animate-fade-in space-y-10 md:space-y-12 w-full">
+          <div className="animate-fade-in space-y-0 md:space-y-12 w-full">
             
             {/* Dedicated Modern Citizen Homepage Layout */}
             <Suspense fallback={<SectionSkeleton height="min-h-[520px]" title="Loading CSC DOST Citizen Portal..." />}>
@@ -743,17 +743,20 @@ export default function App() {
         </div>
       )}
 
-      {/* Floating WhatsApp Group Button */}
+      {/* Floating WhatsApp Group Button - Compact on mobile so it does not cover buttons or form actions */}
       {!isAdminView && (
         <button
           onClick={handleWhatsAppFloating}
-          className="fixed bottom-4 right-3 sm:bottom-6 sm:right-6 px-3.5 py-2.5 bg-[#16A34A] hover:bg-emerald-700 text-white rounded-full shadow-lg transition-colors z-40 flex items-center gap-2 cursor-pointer border border-emerald-500"
+          className="fixed bottom-3 right-3 sm:bottom-6 sm:right-6 px-3 py-2 sm:px-3.5 sm:py-2.5 bg-[#16A34A] hover:bg-emerald-700 text-white rounded-full shadow-lg transition-colors z-40 flex items-center gap-1.5 sm:gap-2 cursor-pointer border border-emerald-500"
           title="Join CSC DOST WhatsApp Group"
           id="whatsapp-floating-badge"
           aria-label="Join WhatsApp Group"
         >
           <MessageSquare className="w-4 h-4 shrink-0" />
-          <span className="text-xs font-semibold whitespace-nowrap">
+          <span className="text-[11px] sm:text-xs font-semibold whitespace-nowrap sm:hidden">
+            WhatsApp
+          </span>
+          <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">
             Join WhatsApp Group
           </span>
         </button>

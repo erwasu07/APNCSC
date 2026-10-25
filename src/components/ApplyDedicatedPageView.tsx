@@ -509,11 +509,11 @@ export default function ApplyDedicatedPageView({
     SERVICES_LIST.find(s => formData.selectedService && (formData.selectedService.toLowerCase().includes(s.name.toLowerCase()) || s.name.toLowerCase().includes(formData.selectedService.toLowerCase())));
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 pb-16 pt-3 sm:pt-6 font-sans">
-      <div className="max-w-4xl mx-auto px-3 sm:px-6">
+    <main className="min-h-screen bg-white md:bg-slate-50 text-slate-900 pb-16 pt-0 md:pt-6 font-sans">
+      <div className="max-w-4xl mx-auto px-0 md:px-6">
         
         {/* Navigation & Action Top Bar */}
-        <div className="mb-4 sm:mb-6 flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+        <div className="mb-0 md:mb-6 flex flex-wrap items-center justify-between gap-3 bg-white px-4 py-3.5 sm:p-4 rounded-none md:rounded-2xl border-b md:border border-slate-200 shadow-none md:shadow-xs">
           <button
             type="button"
             onClick={onBack}
@@ -554,10 +554,10 @@ export default function ApplyDedicatedPageView({
         </div>
 
         {/* MAIN APPLICATION CONTAINER */}
-        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-none md:rounded-2xl border-0 md:border md:border-slate-200/90 shadow-none md:shadow-sm overflow-hidden">
           
           {/* Header Banner */}
-          <div className="bg-gradient-to-r from-[#18204e] via-[#1f2b6c] to-[#18204e] text-white p-3.5 sm:p-5 border-b border-indigo-900">
+          <div className="bg-gradient-to-r from-[#18204e] via-[#1f2b6c] to-[#18204e] text-white px-4 py-4 sm:p-5 border-b border-indigo-900">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2">
@@ -590,7 +590,7 @@ export default function ApplyDedicatedPageView({
 
           {/* APPLICATION FORM OR CONFIRMATION RECEIPT */}
           {!isFormSubmitted ? (
-            <form onSubmit={handleFormSubmit} className="p-3.5 sm:p-5 space-y-3.5">
+            <form onSubmit={handleFormSubmit} className="px-4 py-4 sm:p-5 space-y-4">
               
               {/* Form Guidance Note */}
               <div className="p-2.5 sm:p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl text-xs text-indigo-950 flex items-start gap-2.5">

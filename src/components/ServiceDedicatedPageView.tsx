@@ -156,10 +156,10 @@ export default function ServiceDedicatedPageView({
         }}
       />
 
-      <div className="w-full max-w-4xl mx-auto px-0 sm:px-6 space-y-3 sm:space-y-6 pb-24 sm:pb-8">
+      <div className="w-full max-w-4xl mx-auto px-0 md:px-6 space-y-0 md:space-y-6 pb-24 sm:pb-8">
         
         {/* Navigation & Action Top Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 bg-white p-3 sm:p-4 rounded-none sm:rounded-xl border-y sm:border border-[#E2E8F0] shadow-2xs w-full">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 bg-white px-4 py-3 sm:p-4 rounded-none md:rounded-xl border-b md:border border-[#E2E8F0] shadow-none md:shadow-2xs w-full">
           <button
             type="button"
             onClick={onBack}
@@ -200,7 +200,7 @@ export default function ServiceDedicatedPageView({
         </div>
 
         {/* Main Document Article */}
-        <article className="bg-white rounded-none sm:rounded-2xl border-y sm:border border-[#E2E8F0] p-3.5 sm:p-8 space-y-6 sm:space-y-8 shadow-none sm:shadow-xs w-full max-w-full overflow-hidden">
+        <article className="bg-white rounded-none md:rounded-2xl border-b md:border border-[#E2E8F0] px-4 py-5 sm:p-8 space-y-6 sm:space-y-8 shadow-none md:shadow-xs w-full max-w-full overflow-hidden">
           
           {/* Header Section */}
           <header className="space-y-4 border-b border-[#E2E8F0] pb-6">

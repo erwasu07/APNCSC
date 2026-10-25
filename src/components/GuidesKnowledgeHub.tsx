@@ -555,7 +555,7 @@ export default function GuidesKnowledgeHub({ onSelectService }: { onSelectServic
   };
 
   return (
-    <section id="knowledge-hub" className="py-6 sm:py-8 bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-xs overflow-hidden font-sans">
+    <section id="knowledge-hub" className="w-full py-6 sm:py-8 bg-white border-b md:border border-slate-200 rounded-none md:rounded-3xl shadow-none md:shadow-xs overflow-hidden font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Article Reader View */}
@@ -617,7 +617,7 @@ export default function GuidesKnowledgeHub({ onSelectService }: { onSelectServic
                 {selectedArticle.hindiTitle}
               </p>
 
-              {/* Author & Verification Card */}
+              {/* Author & Verification Strip */}
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between flex-wrap gap-2 text-xs">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-black">
@@ -641,7 +641,7 @@ export default function GuidesKnowledgeHub({ onSelectService }: { onSelectServic
             </div>
 
             {/* Table of Contents */}
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl md:rounded-2xl space-y-2">
               <span className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
                 <BookOpen className="w-4 h-4 text-blue-600" />
                 Table of Contents
@@ -659,9 +659,9 @@ export default function GuidesKnowledgeHub({ onSelectService }: { onSelectServic
             </div>
 
             {/* In-depth Article Sections */}
-            <div className="space-y-6 text-slate-800 leading-relaxed text-sm">
+            <div className="-mx-4 sm:-mx-6 md:mx-0 divide-y divide-slate-200 md:divide-y-0 md:space-y-6 text-slate-800 leading-relaxed text-sm border-y md:border-0 border-slate-200">
               {selectedArticle.sections.map((sec, idx) => (
-                <div key={idx} className="space-y-3 p-4 sm:p-5 bg-white border border-slate-200 rounded-2xl shadow-xs">
+                <div key={idx} className="space-y-3 px-4 sm:px-6 py-5 md:p-5 bg-white md:border md:border-slate-200 md:rounded-2xl md:shadow-xs">
                   <h2 className="text-base sm:text-lg font-black text-slate-900">
                     {sec.heading}
                   </h2>
@@ -688,9 +688,9 @@ export default function GuidesKnowledgeHub({ onSelectService }: { onSelectServic
               ))}
 
               {/* Eligibility & Documents Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 divide-slate-200 md:gap-4">
                 {/* Eligibility Box */}
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2.5">
+                <div className="px-4 sm:px-6 py-5 md:p-4 bg-slate-50 md:border md:border-slate-200 md:rounded-2xl space-y-2.5">
                   <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
                     <UserCheck className="w-4 h-4 text-blue-600" />
                     Eligibility Criteria
@@ -706,7 +706,7 @@ export default function GuidesKnowledgeHub({ onSelectService }: { onSelectServic
                 </div>
 
                 {/* Documents Checklist */}
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2.5">
+                <div className="px-4 sm:px-6 py-5 md:p-4 bg-slate-50 md:border md:border-slate-200 md:rounded-2xl space-y-2.5">
                   <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
                     <FileText className="w-4 h-4 text-emerald-600" />
                     Required Documents Checklist
@@ -723,7 +723,7 @@ export default function GuidesKnowledgeHub({ onSelectService }: { onSelectServic
               </div>
 
               {/* Step-by-Step Procedure */}
-              <div className="p-4 sm:p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+              <div className="px-4 sm:px-6 py-5 md:p-5 bg-slate-50 md:border md:border-slate-200 md:rounded-2xl space-y-3">
                 <h3 className="text-sm sm:text-base font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-amber-500" />
                   Step-by-Step Citizen Execution Workflow
@@ -741,14 +741,14 @@ export default function GuidesKnowledgeHub({ onSelectService }: { onSelectServic
               </div>
 
               {/* Frequently Asked Questions */}
-              <div className="p-4 sm:p-5 bg-white border border-slate-200 rounded-2xl space-y-4">
+              <div className="px-4 sm:px-6 py-5 md:p-5 bg-white md:border md:border-slate-200 md:rounded-2xl space-y-4">
                 <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
                   <HelpCircle className="w-5 h-5 text-indigo-600" />
                   Frequently Asked Questions (FAQs)
                 </h3>
-                <div className="space-y-3">
+                <div className="divide-y divide-slate-200 md:divide-y-0 md:space-y-3">
                   {selectedArticle.faqs.map((faq, i) => (
-                    <div key={i} className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
+                    <div key={i} className="py-3 md:p-3.5 bg-white md:bg-slate-50 md:border md:border-slate-200 md:rounded-xl space-y-1.5">
                       <h4 className="text-xs sm:text-sm font-bold text-slate-900">
                         Q{i + 1}: {faq.question}
                       </h4>
@@ -761,7 +761,7 @@ export default function GuidesKnowledgeHub({ onSelectService }: { onSelectServic
               </div>
 
               {/* Official Source & Portal Link Card */}
-              <div className="p-4 sm:p-5 bg-white border border-[#E3E8EF] rounded-2xl shadow-xs space-y-3">
+              <div className="px-4 sm:px-6 py-5 md:p-5 bg-white md:border md:border-[#E3E8EF] md:rounded-2xl md:shadow-xs space-y-3">
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#188038]" aria-hidden="true" />
                   <h4 className="text-sm font-bold text-[#172033] uppercase tracking-wider">Official Authority &amp; Portal</h4>
@@ -784,7 +784,7 @@ export default function GuidesKnowledgeHub({ onSelectService }: { onSelectServic
               </div>
 
               {/* Citizen Assistance CTA */}
-              <div className="p-5 bg-[#12304A] text-white rounded-2xl shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="px-4 sm:px-6 py-5 md:p-5 bg-[#12304A] text-white md:rounded-2xl md:shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="space-y-1 text-center sm:text-left">
                   <h4 className="text-sm sm:text-base font-bold">Need digital assistance with your application?</h4>
                   <p className="text-xs text-slate-300">
@@ -809,8 +809,8 @@ export default function GuidesKnowledgeHub({ onSelectService }: { onSelectServic
             </div>
           </div>
         ) : (
-          /* Knowledge Hub Overview Grid */
-          <div className="space-y-6">
+          /* Knowledge Hub Overview List (Mobile) / Grid (Desktop) */
+          <div className="space-y-5">
             
             {/* Hub Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-slate-200">
@@ -861,15 +861,15 @@ export default function GuidesKnowledgeHub({ onSelectService }: { onSelectServic
               ))}
             </div>
 
-            {/* Articles Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            {/* Articles Open Rows (Mobile) / Grid (Desktop) */}
+            <div className="-mx-4 sm:-mx-6 md:mx-0 divide-y divide-slate-200 md:divide-y-0 border-y md:border-0 border-slate-200 bg-white md:bg-transparent grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 md:gap-5">
               {filteredArticles.map((article) => (
                 <article
                   key={article.id}
                   onClick={() => setSelectedArticle(article)}
-                  className="p-5 bg-slate-50 hover:bg-white border border-slate-200 hover:border-blue-400 rounded-2xl shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between space-y-4 group"
+                  className="px-4 sm:px-6 py-4 md:p-5 bg-white md:bg-slate-50 hover:bg-slate-50 md:hover:bg-white md:border md:border-slate-200 md:hover:border-blue-400 md:rounded-2xl md:shadow-xs md:hover:shadow-md transition-all cursor-pointer flex flex-col justify-between space-y-3 md:space-y-4 group"
                 >
-                  <div className="space-y-2.5">
+                  <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2 text-[11px]">
                       <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md font-bold">
                         {article.category}
@@ -892,7 +892,7 @@ export default function GuidesKnowledgeHub({ onSelectService }: { onSelectServic
                     </p>
                   </div>
 
-                  <div className="pt-3 border-t border-slate-200/80 flex items-center justify-between text-xs">
+                  <div className="pt-2.5 md:pt-3 md:border-t border-slate-200/80 flex items-center justify-between text-xs">
                     <span className="text-[10px] text-slate-500 font-mono">
                       Portal: {article.officialPortal.split(' ')[0]}
                     </span>
@@ -906,7 +906,7 @@ export default function GuidesKnowledgeHub({ onSelectService }: { onSelectServic
             </div>
 
             {/* Bottom Educational Assurance Note */}
-            <div className="p-4 bg-slate-100 border border-slate-200 rounded-2xl flex items-start gap-3 text-xs text-slate-700">
+            <div className="p-4 bg-slate-100 border border-slate-200 rounded-xl md:rounded-2xl flex items-start gap-3 text-xs text-slate-700">
               <ShieldCheck className="w-5 h-5 text-blue-700 shrink-0 mt-0.5" />
               <div className="space-y-1">
                 <strong className="font-black text-slate-900 block">Editorial Transparency &amp; Public Information Standard:</strong>

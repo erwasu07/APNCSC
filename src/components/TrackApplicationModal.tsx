@@ -375,12 +375,12 @@ export default function TrackApplicationModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in overflow-y-auto"
       onClick={onClose}
     >
-      {/* Modal Card Box */}
+      {/* Modal Card Box (Full-Width Mobile Sheet on <= 767px) */}
       <div
-        className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-2xl overflow-hidden my-auto flex flex-col max-h-[92vh]"
+        className="bg-white dark:bg-slate-900 rounded-none md:rounded-2xl shadow-2xl border-0 md:border border-slate-200 dark:border-slate-800 w-full max-w-2xl overflow-hidden my-0 md:my-auto flex flex-col h-full md:h-auto max-h-screen md:max-h-[92vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 1. TOP HEADER SECTION */}

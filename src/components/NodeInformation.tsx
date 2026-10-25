@@ -82,9 +82,9 @@ export default function NodeInformation() {
     <section
       id="centre-info"
       aria-labelledby="centre-info-heading"
-      className="w-full max-w-7xl mx-auto px-4 sm:px-6 scroll-mt-20 py-2"
+      className="w-full max-w-7xl mx-auto px-0 md:px-6 scroll-mt-20 py-0 md:py-2"
     >
-      <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-8 shadow-2xs space-y-6">
+      <div className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl px-4 py-6 sm:p-8 shadow-none md:shadow-2xs space-y-6">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#E2E8F0] pb-5">
           <div>
@@ -125,10 +125,10 @@ export default function NodeInformation() {
           </div>
         </div>
 
-        {/* 3 Customer-Friendly Information Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {/* 3 Customer-Friendly Information Blocks (Open Rows on Mobile, Cards on Desktop) */}
+        <div className="divide-y divide-[#E2E8F0] md:divide-y-0 grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-5">
           {/* Card 1: Our CSC Centre */}
-          <div className="p-5 rounded-xl bg-[#F6F8FC] border border-[#E2E8F0] flex flex-col justify-between space-y-4">
+          <div className="py-5 md:p-5 rounded-none md:rounded-xl bg-white md:bg-[#F6F8FC] border-0 md:border md:border-[#E2E8F0] flex flex-col justify-between space-y-4">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center">
@@ -178,7 +178,7 @@ export default function NodeInformation() {
           </div>
 
           {/* Card 2: Meet Your Operator */}
-          <div className="p-5 rounded-xl bg-[#F6F8FC] border border-[#E2E8F0] flex flex-col justify-between space-y-4">
+          <div className="py-5 md:p-5 rounded-none md:rounded-xl bg-white md:bg-[#F6F8FC] border-0 md:border md:border-[#E2E8F0] flex flex-col justify-between space-y-4">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center">
@@ -230,7 +230,7 @@ export default function NodeInformation() {
           {/* Card 3: Contact & Opening Hours */}
           <div
             id="centre-contact"
-            className="p-5 rounded-xl bg-[#F6F8FC] border border-[#E2E8F0] flex flex-col justify-between space-y-4 scroll-mt-24"
+            className="py-5 md:p-5 rounded-none md:rounded-xl bg-white md:bg-[#F6F8FC] border-0 md:border md:border-[#E2E8F0] flex flex-col justify-between space-y-4 scroll-mt-24"
           >
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -426,11 +426,11 @@ export default function NodeInformation() {
       {/* OFFICIAL CERTIFICATE VIEWER MODAL */}
       {selectedCertificate && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/75"
+          className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/75"
           onClick={() => setSelectedCertificate(null)}
         >
           <div
-            className="relative max-w-4xl w-full bg-white rounded-2xl border border-[#E2E8F0] shadow-2xl overflow-hidden"
+            className="relative max-w-4xl w-full h-full md:h-auto bg-white rounded-none md:rounded-2xl border-0 md:border md:border-[#E2E8F0] shadow-2xl overflow-hidden flex flex-col justify-between"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-6 py-4 bg-[#102A43] text-white">

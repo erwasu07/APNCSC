@@ -203,7 +203,7 @@ export default function ExploreServicesDesk({
     <section
       id="services"
       aria-labelledby="services-board-heading"
-      className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-2 space-y-5 scroll-mt-20"
+      className="w-full max-w-7xl mx-auto bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 sm:px-6 py-6 md:py-2 space-y-5 scroll-mt-20"
     >
       <div id="services-board" className="scroll-mt-20" />
 
@@ -282,9 +282,9 @@ export default function ExploreServicesDesk({
         ))}
       </div>
 
-      {/* Services Cards Grid */}
+      {/* Services List Rows (Mobile) / Cards Grid (Desktop) */}
       {displayedServices.length === 0 ? (
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-8 text-center space-y-2">
+        <div className="bg-white md:border md:border-[#E2E8F0] md:rounded-2xl py-8 px-4 text-center space-y-2">
           <p className="text-sm font-bold text-[#102A43]">No matching services found</p>
           <p className="text-xs text-[#64748B]">
             Try clearing your search filter or switching to &ldquo;All Services&rdquo;.
@@ -301,14 +301,14 @@ export default function ExploreServicesDesk({
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="-mx-4 sm:-mx-6 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-y md:border-0 border-[#E2E8F0] bg-white md:bg-transparent grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 md:gap-4">
           {displayedServices.map((item) => (
             <article
               key={item.id}
               id={`eservice-item-${item.id}`}
-              className="bg-white border border-[#E2E8F0] hover:border-[#2563EB] rounded-2xl p-5 flex flex-col justify-between transition-colors shadow-2xs"
+              className="bg-white md:border md:border-[#E2E8F0] md:hover:border-[#2563EB] md:rounded-2xl px-4 sm:px-6 py-4 md:p-5 flex flex-col justify-between transition-colors md:shadow-2xs"
             >
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs text-[#64748B]">
                   <span className="font-semibold text-[#2563EB]">
                     {CATEGORY_LABELS[item.category]}
@@ -340,7 +340,7 @@ export default function ExploreServicesDesk({
                 )}
               </div>
 
-              <div className="pt-4 mt-4 border-t border-[#E2E8F0] flex items-center justify-between gap-2">
+              <div className="pt-3 mt-3 md:pt-4 md:mt-4 md:border-t border-[#E2E8F0] flex items-center justify-between gap-2">
                 <button
                   type="button"
                   onClick={() => handleOpenService(item)}
@@ -384,15 +384,15 @@ export default function ExploreServicesDesk({
         </div>
       )}
 
-      {/* SERVICE DETAILS MODAL (Fallback if dedicated page handler is not provided) */}
+      {/* SERVICE DETAILS MODAL (Full-width mobile sheet on <= 767px) */}
       {selectedServiceItem && (
-        <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-slate-900/60 flex items-end md:items-center justify-center p-0 md:p-4 z-50">
           <div
-            className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-xl border border-[#E2E8F0]"
+            className="bg-white rounded-none md:rounded-2xl w-full max-w-2xl h-full md:h-auto max-h-screen md:max-h-[90vh] overflow-hidden flex flex-col shadow-xl border-0 md:border border-[#E2E8F0]"
             id={`explore-modal-${selectedServiceItem.id}`}
           >
-            <div className="px-6 py-5 border-b border-[#E2E8F0] bg-[#102A43] text-white flex items-start justify-between gap-4">
-              <div className="space-y-1">
+            <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-[#E2E8F0] bg-[#102A43] text-white flex items-start justify-between gap-4 shrink-0">
+              <div className="space-y-1 min-w-0">
                 <span className="text-xs font-semibold text-blue-200">
                   {CATEGORY_LABELS[selectedServiceItem.category]}
                 </span>
@@ -423,8 +423,8 @@ export default function ExploreServicesDesk({
               </div>
             </div>
 
-            <div className="p-6 overflow-y-auto space-y-5 text-sm bg-[#F6F8FC]">
-              <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 space-y-1.5">
+            <div className="p-0 md:p-6 overflow-y-auto flex-1 divide-y divide-[#E2E8F0] md:divide-y-0 md:space-y-5 text-sm bg-white md:bg-[#F6F8FC]">
+              <div className="bg-white md:border md:border-[#E2E8F0] md:rounded-xl px-4 py-4 md:p-4 space-y-1.5">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
                   Service Overview
                 </h4>
@@ -433,8 +433,8 @@ export default function ExploreServicesDesk({
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="p-4 bg-white border border-[#E2E8F0] rounded-xl flex items-center justify-between gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x md:divide-x-0 divide-[#E2E8F0] md:gap-3">
+                <div className="px-4 py-3.5 md:p-4 bg-white md:border md:border-[#E2E8F0] md:rounded-xl flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B]">
                     <Tag className="w-4 h-4 text-[#2563EB]" />
                     <span>Fee Details</span>
@@ -444,7 +444,7 @@ export default function ExploreServicesDesk({
                   </span>
                 </div>
 
-                <div className="p-4 bg-white border border-[#E2E8F0] rounded-xl flex items-center justify-between gap-2">
+                <div className="px-4 py-3.5 md:p-4 bg-white md:border md:border-[#E2E8F0] md:rounded-xl flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B]">
                     <Clock className="w-4 h-4 text-[#2563EB]" />
                     <span>Estimated Time</span>
@@ -455,7 +455,7 @@ export default function ExploreServicesDesk({
                 </div>
               </div>
 
-              <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 space-y-3">
+              <div className="bg-white md:border md:border-[#E2E8F0] md:rounded-xl px-4 py-4 md:p-4 space-y-3">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-[#102A43] flex items-center gap-2">
                   <FileCheck className="w-4 h-4 text-[#16A34A]" />
                   <span>Required Documents</span>
@@ -474,7 +474,7 @@ export default function ExploreServicesDesk({
               </div>
             </div>
 
-            <div className="p-4 sm:px-6 border-t border-[#E2E8F0] flex items-center justify-between gap-3 bg-white">
+            <div className="p-4 sm:px-6 border-t border-[#E2E8F0] flex items-center justify-between gap-3 bg-white shrink-0">
               <button
                 type="button"
                 onClick={() => setSelectedServiceItem(null)}

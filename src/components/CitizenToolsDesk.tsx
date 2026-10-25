@@ -231,7 +231,7 @@ export default function CitizenToolsDesk({ onApplyService }: CitizenToolsDeskPro
   const activeFeeData = SERVICE_FEE_CATALOGUE.find(s => s.id === selectedFeeService) || SERVICE_FEE_CATALOGUE[0];
 
   return (
-    <section id="citizen-tools" aria-labelledby="tools-heading" className="space-y-6 scroll-mt-20">
+    <section id="citizen-tools" aria-labelledby="tools-heading" className="w-full bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 py-6 md:p-0 space-y-5 scroll-mt-20">
       
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-[#E2E8F0] pb-4">
@@ -295,7 +295,7 @@ export default function CitizenToolsDesk({ onApplyService }: CitizenToolsDeskPro
       {/* TAB 1: AGE CALCULATOR */}
       {/* ============================================================== */}
       {activeTab === 'age' && (
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 sm:p-7 shadow-xs">
+        <div className="bg-white md:border md:border-[#E2E8F0] md:rounded-2xl p-0 md:p-7 md:shadow-xs">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             
             {/* Input Form Column */}
@@ -443,7 +443,7 @@ export default function CitizenToolsDesk({ onApplyService }: CitizenToolsDeskPro
       {/* TAB 2: PHOTO / SIGNATURE COMPLIANCE INSPECTOR */}
       {/* ============================================================== */}
       {activeTab === 'photo' && (
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 sm:p-7 shadow-xs">
+        <div className="bg-white md:border md:border-[#E2E8F0] md:rounded-2xl p-0 md:p-7 md:shadow-xs">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             
             {/* Left Portal Spec Column */}
@@ -587,7 +587,7 @@ export default function CitizenToolsDesk({ onApplyService }: CitizenToolsDeskPro
       {/* TAB 3: CSC REGULATED FEE ESTIMATOR */}
       {/* ============================================================== */}
       {activeTab === 'fee' && (
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 sm:p-7 shadow-xs">
+        <div className="bg-white md:border md:border-[#E2E8F0] md:rounded-2xl p-0 md:p-7 md:shadow-xs">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             
             {/* Service Select Column */}

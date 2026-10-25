@@ -2088,8 +2088,8 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   // ============================================================================
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#F6F8FC] flex flex-col justify-center items-center px-4 py-12">
-        <div className="w-full max-w-md bg-white border border-[#E2E8F0] rounded-2xl shadow-lg p-8 space-y-6">
+      <div className="min-h-screen bg-white md:bg-[#F6F8FC] flex flex-col justify-center items-center px-0 py-0 md:px-4 md:py-12">
+        <div className="w-full max-w-md bg-white border-0 md:border md:border-[#E2E8F0] rounded-none md:rounded-2xl shadow-none md:shadow-lg px-4 py-8 sm:p-8 space-y-6">
           {/* Brand Header */}
           <div className="text-center space-y-2">
             <div className="w-12 h-12 bg-[#101B35] text-white rounded-xl flex items-center justify-center mx-auto shadow-sm">
@@ -2733,10 +2733,10 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         {/* ================================================================== */}
         {/* WORKSPACE BODY */}
         {/* ================================================================== */}
-        <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] w-full mx-auto space-y-6">
+        <div className="flex-1 p-0 md:p-6 lg:p-8 max-w-[1600px] w-full mx-auto space-y-0 md:space-y-6">
           {/* Status Toast / Sync Error Banners */}
           {actionSuccess && (
-            <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-[#16A34A] text-xs font-semibold flex items-center justify-between gap-2 shadow-2xs">
+            <div className="p-3.5 bg-emerald-50 border-b md:border border-emerald-200 rounded-none md:rounded-xl text-[#16A34A] text-xs font-semibold flex items-center justify-between gap-2 shadow-none md:shadow-2xs">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
                 <span>{actionSuccess}</span>
@@ -2752,7 +2752,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           )}
 
           {supabaseSyncError && (
-            <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-[#DC2626] text-xs font-semibold flex items-center justify-between gap-2">
+            <div className="p-3.5 bg-red-50 border-b md:border border-red-200 rounded-none md:rounded-xl text-[#DC2626] text-xs font-semibold flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span className="truncate">{supabaseSyncError}</span>
@@ -2771,7 +2771,10 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           {/* 3. DASHBOARD OVERVIEW & 8 KPI CARDS */}
           {/* ================================================================ */}
           {activeNav === 'overview' && (
-            <section aria-label="Key Performance Indicators" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <section
+              aria-label="Key Performance Indicators"
+              className="bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 divide-y divide-[#E2E8F0] md:divide-y-0 grid grid-cols-2 lg:grid-cols-4 gap-0 md:gap-4"
+            >
               {[
                 {
                   id: 'kpi-total',
@@ -2857,7 +2860,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   <div
                     key={card.id}
                     onClick={card.onClick}
-                    className="bg-white border border-[#E2E8F0] hover:border-[#2563EB]/50 rounded-2xl p-5 shadow-2xs hover:shadow-sm transition-all duration-150 cursor-pointer flex flex-col justify-between min-h-[124px]"
+                    className="bg-white border-0 odd:border-r odd:border-[#E2E8F0] md:odd:border-r md:border md:border-[#E2E8F0] hover:border-[#2563EB]/50 rounded-none md:rounded-2xl p-4 md:p-5 shadow-none md:shadow-2xs hover:shadow-sm transition-all duration-150 cursor-pointer flex flex-col justify-between min-h-[112px] md:min-h-[124px]"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <span className="text-xs font-semibold text-[#64748B]">
@@ -2889,10 +2892,10 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           {/* 4. CUSTOMER APPLICATIONS TABLE & TOOLBAR */}
           {/* ================================================================ */}
           {isApplicationsView && (
-            <section aria-label="Customer Applications Management" className="space-y-4">
+            <section aria-label="Customer Applications Management" className="space-y-0 md:space-y-4">
               {/* Bulk Selection Bar */}
               {selectedAppIds.length > 0 && (
-                <div className="p-3.5 bg-[#111C3D] text-white rounded-xl shadow-md flex flex-wrap items-center justify-between gap-3">
+                <div className="p-3.5 bg-[#111C3D] text-white rounded-none md:rounded-xl shadow-md flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2 text-xs font-semibold">
                     <CheckSquare className="w-4 h-4 text-[#2563EB]" />
                     <span>{selectedAppIds.length} application(s) selected</span>
@@ -2934,7 +2937,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               )}
 
               {/* Search and Filter Toolbar */}
-              <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-2xs space-y-3">
+              <div className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl p-4 shadow-none md:shadow-2xs space-y-3">
                 <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
                   {/* Debounced Search Input */}
                   <div className="relative flex-1 max-w-xl">
@@ -3119,9 +3122,9 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               </div>
 
               {/* ============================================================== */}
-              {/* PROFESSIONAL APPLICATIONS DATA TABLE (DESKTOP) & CARDS (MOBILE) */}
+              {/* PROFESSIONAL APPLICATIONS DATA TABLE (DESKTOP) & ROWS (MOBILE) */}
               {/* ============================================================== */}
-              <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-2xs overflow-hidden">
+              <div className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl shadow-none md:shadow-2xs overflow-hidden">
                 {loading && applications.length === 0 ? (
                   <div className="p-12 text-center space-y-3">
                     <RefreshCw className="w-7 h-7 animate-spin mx-auto text-[#2563EB]" />
@@ -3550,9 +3553,9 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           {/* 5. DEDICATED DOCUMENT MANAGEMENT INTERFACE */}
           {/* ================================================================ */}
           {activeNav === 'documents' && (
-            <section aria-label="Uploaded Documents Repository" className="space-y-4">
+            <section aria-label="Uploaded Documents Repository" className="space-y-0 md:space-y-4">
               {/* Document Search & Filter Bar */}
-              <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-2xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl p-4 shadow-none md:shadow-2xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                 <div className="relative flex-1 max-w-md">
                   <Search className="w-4 h-4 text-[#64748B] absolute left-3.5 top-2.5" />
                   <input
@@ -3588,7 +3591,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               </div>
 
               {allDocumentsCatalog.length === 0 ? (
-                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-12 text-center space-y-2">
+                <div className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl p-12 text-center space-y-2">
                   <FolderOpen className="w-10 h-10 text-[#64748B] mx-auto" />
                   <h3 className="text-sm font-bold text-[#111827]">No uploaded documents found</h3>
                   <p className="text-xs text-[#64748B]">
@@ -3596,7 +3599,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   </p>
                 </div>
               ) : (
-                <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-2xs overflow-hidden">
+                <div className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl shadow-none md:shadow-2xs overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
@@ -3706,12 +3709,12 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           {/* 6. PAYMENT OVERVIEW & LEDGER */}
           {/* ================================================================ */}
           {activeNav === 'payments' && (
-            <section aria-label="Payment Records Overview" className="space-y-5">
+            <section aria-label="Payment Records Overview" className="space-y-0 md:space-y-5">
               {/* Payment KPI Summary Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+              <div className="bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 divide-y divide-[#E2E8F0] md:divide-y-0 grid grid-cols-2 lg:grid-cols-4 gap-0 md:gap-4">
+                <div className="bg-white border-0 border-r border-[#E2E8F0] md:border rounded-none md:rounded-2xl p-4 md:p-5 shadow-none md:shadow-2xs">
                   <span className="text-xs font-semibold text-[#64748B] block">Verified Collected Revenue</span>
-                  <span className="text-2xl font-bold text-[#16A34A] font-mono mt-2 block">
+                  <span className="text-xl md:text-2xl font-bold text-[#16A34A] font-mono mt-2 block">
                     ₹{kpiStats.verifiedRevenue.toLocaleString('en-IN')}
                   </span>
                   <span className="text-[11px] text-[#64748B] mt-1 block">
@@ -3719,9 +3722,9 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   </span>
                 </div>
 
-                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+                <div className="bg-white border-0 md:border border-[#E2E8F0] rounded-none md:rounded-2xl p-4 md:p-5 shadow-none md:shadow-2xs">
                   <span className="text-xs font-semibold text-[#64748B] block">UPI Online Transactions</span>
-                  <span className="text-2xl font-bold text-[#8B5CF6] font-mono mt-2 block">
+                  <span className="text-xl md:text-2xl font-bold text-[#8B5CF6] font-mono mt-2 block">
                     {kpiStats.upiCount}
                   </span>
                   <span className="text-[11px] text-[#64748B] mt-1 block">
@@ -3729,9 +3732,9 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   </span>
                 </div>
 
-                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+                <div className="bg-white border-0 border-r border-[#E2E8F0] md:border rounded-none md:rounded-2xl p-4 md:p-5 shadow-none md:shadow-2xs">
                   <span className="text-xs font-semibold text-[#64748B] block">Cash Counter Applications</span>
-                  <span className="text-2xl font-bold text-[#111C3D] font-mono mt-2 block">
+                  <span className="text-xl md:text-2xl font-bold text-[#111C3D] font-mono mt-2 block">
                     {kpiStats.cashCount}
                   </span>
                   <span className="text-[11px] text-[#64748B] mt-1 block">
@@ -3739,9 +3742,9 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   </span>
                 </div>
 
-                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+                <div className="bg-white border-0 md:border border-[#E2E8F0] rounded-none md:rounded-2xl p-4 md:p-5 shadow-none md:shadow-2xs">
                   <span className="text-xs font-semibold text-[#64748B] block">Total Pipeline Value</span>
-                  <span className="text-2xl font-bold text-[#2563EB] font-mono mt-2 block">
+                  <span className="text-xl md:text-2xl font-bold text-[#2563EB] font-mono mt-2 block">
                     ₹{kpiStats.totalPipelineAmount.toLocaleString('en-IN')}
                   </span>
                   <span className="text-[11px] text-[#64748B] mt-1 block">
@@ -3751,7 +3754,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               </div>
 
               {/* Payment Filter Bar */}
-              <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+              <div className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl p-4 shadow-none md:shadow-2xs flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2 flex-wrap">
                   {[
                     { id: 'all', label: 'All Payment Records' },
@@ -3786,7 +3789,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               </div>
 
               {/* Payment Ledger Table */}
-              <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-2xs overflow-hidden">
+              <div className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl shadow-none md:shadow-2xs overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
@@ -3872,30 +3875,30 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           {/* 7. VLE VISITOR ACCESS LOGS */}
           {/* ================================================================ */}
           {activeNav === 'vle_logs' && (
-            <section aria-label="VLE Visitor Access Logs" className="space-y-5">
+            <section aria-label="VLE Visitor Access Logs" className="space-y-0 md:space-y-5">
               {/* VLE Metrics */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+              <div className="bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 divide-y divide-[#E2E8F0] md:divide-y-0 grid grid-cols-2 lg:grid-cols-4 gap-0 md:gap-4">
+                <div className="bg-white border-0 border-r border-[#E2E8F0] md:border rounded-none md:rounded-2xl p-4 md:p-5 shadow-none md:shadow-2xs">
                   <span className="text-xs font-semibold text-[#64748B] block">Total Verified Visitors</span>
-                  <span className="text-2xl font-bold text-[#111827] font-mono mt-2 block">
+                  <span className="text-xl md:text-2xl font-bold text-[#111827] font-mono mt-2 block">
                     {vleInquiries.length}
                   </span>
                 </div>
-                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+                <div className="bg-white border-0 md:border border-[#E2E8F0] rounded-none md:rounded-2xl p-4 md:p-5 shadow-none md:shadow-2xs">
                   <span className="text-xs font-semibold text-[#64748B] block">J&amp;K / Ladakh Residents</span>
-                  <span className="text-2xl font-bold text-[#16A34A] font-mono mt-2 block">
+                  <span className="text-xl md:text-2xl font-bold text-[#16A34A] font-mono mt-2 block">
                     {vleInquiries.filter(i => (i.state || '').toLowerCase().includes('jammu') || (i.state || '').toLowerCase().includes('kashmir') || (i.state || '').toLowerCase().includes('ladakh')).length}
                   </span>
                 </div>
-                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+                <div className="bg-white border-0 border-r border-[#E2E8F0] md:border rounded-none md:rounded-2xl p-4 md:p-5 shadow-none md:shadow-2xs">
                   <span className="text-xs font-semibold text-[#64748B] block">Other States / UTs</span>
-                  <span className="text-2xl font-bold text-[#2563EB] font-mono mt-2 block">
+                  <span className="text-xl md:text-2xl font-bold text-[#2563EB] font-mono mt-2 block">
                     {vleInquiries.filter(i => !(i.state || '').toLowerCase().includes('jammu') && !(i.state || '').toLowerCase().includes('kashmir') && !(i.state || '').toLowerCase().includes('ladakh')).length}
                   </span>
                 </div>
-                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+                <div className="bg-white border-0 md:border border-[#E2E8F0] rounded-none md:rounded-2xl p-4 md:p-5 shadow-none md:shadow-2xs">
                   <span className="text-xs font-semibold text-[#64748B] block">Verification Status</span>
-                  <span className="text-2xl font-bold text-[#8B5CF6] font-mono mt-2 block">
+                  <span className="text-xl md:text-2xl font-bold text-[#8B5CF6] font-mono mt-2 block">
                     100% Logged
                   </span>
                 </div>
@@ -3903,7 +3906,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
               {/* Bulk Selection Bar for VLE */}
               {selectedVleIds.length > 0 && (
-                <div className="p-3.5 bg-[#111C3D] text-white rounded-xl flex flex-wrap items-center justify-between gap-3">
+                <div className="p-3.5 bg-[#111C3D] text-white rounded-none md:rounded-xl flex flex-wrap items-center justify-between gap-3">
                   <span className="text-xs font-semibold">{selectedVleIds.length} visitor log(s) selected</span>
                   <div className="flex items-center gap-2">
                     <button
@@ -3925,7 +3928,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               )}
 
               {/* VLE Toolbar */}
-              <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-2xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+              <div className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl p-4 shadow-none md:shadow-2xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
                 <div className="relative flex-1 max-w-md">
                   <Search className="w-4 h-4 text-[#64748B] absolute left-3.5 top-2.5" />
                   <input
@@ -3981,7 +3984,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
               {/* VLE Table */}
               {filteredVleInquiries.length === 0 ? (
-                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-12 text-center space-y-2">
+                <div className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl p-12 text-center space-y-2">
                   <ShieldAlert className="w-10 h-10 text-[#64748B] mx-auto" />
                   <h3 className="text-sm font-bold text-[#111827]">No Visitor Access Logs Found</h3>
                   <p className="text-xs text-[#64748B]">
@@ -3989,7 +3992,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   </p>
                 </div>
               ) : (
-                <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-2xs overflow-hidden">
+                <div className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl shadow-none md:shadow-2xs overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
@@ -4110,9 +4113,9 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           {/* 8. WHATSAPP CHANNEL & GROUP SYNC */}
           {/* ================================================================ */}
           {activeNav === 'whatsapp_sync' && (
-            <section aria-label="WhatsApp Channel and Group Synchronization" className="space-y-4">
+            <section aria-label="WhatsApp Channel and Group Synchronization" className="space-y-0 md:space-y-4">
               {/* Status Strip */}
-              <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl p-4 md:p-5 shadow-none md:shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#16A34A] flex items-center justify-center shrink-0">
                     <Radio className="w-5 h-5" />
@@ -4141,9 +4144,9 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           {/* 9. REPORTS & CSV EXPORT + SUPABASE DIAGNOSTICS */}
           {/* ================================================================ */}
           {activeNav === 'reports' && (
-            <section aria-label="Reports and Data Export" className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-2xs flex flex-col justify-between space-y-4">
+            <section aria-label="Reports and Data Export" className="space-y-0 md:space-y-6">
+              <div className="bg-white md:bg-transparent divide-y divide-[#E2E8F0] md:divide-y-0 border-b border-[#E2E8F0] md:border-0 grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-4">
+                <div className="bg-white border-0 md:border md:border-[#E2E8F0] rounded-none md:rounded-2xl px-4 py-6 md:p-6 shadow-none md:shadow-2xs flex flex-col justify-between space-y-4">
                   <div className="space-y-2">
                     <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center">
                       <FileSpreadsheet className="w-5 h-5" />
@@ -4164,7 +4167,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   </button>
                 </div>
 
-                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-2xs flex flex-col justify-between space-y-4">
+                <div className="bg-white border-0 md:border md:border-[#E2E8F0] rounded-none md:rounded-2xl px-4 py-6 md:p-6 shadow-none md:shadow-2xs flex flex-col justify-between space-y-4">
                   <div className="space-y-2">
                     <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#16A34A] flex items-center justify-center">
                       <Users className="w-5 h-5" />
@@ -4185,7 +4188,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   </button>
                 </div>
 
-                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-2xs flex flex-col justify-between space-y-4">
+                <div className="bg-white border-0 md:border md:border-[#E2E8F0] rounded-none md:rounded-2xl px-4 py-6 md:p-6 shadow-none md:shadow-2xs flex flex-col justify-between space-y-4">
                   <div className="space-y-2">
                     <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#8B5CF6] flex items-center justify-center">
                       <Database className="w-5 h-5" />
@@ -4271,9 +4274,9 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               </div>
 
               {/* DRAWER SCROLLABLE BODY */}
-              <div className="p-6 overflow-y-auto space-y-6 flex-1 bg-[#F6F8FC]">
+              <div className="p-0 md:p-6 overflow-y-auto divide-y divide-[#E2E8F0] md:divide-y-0 md:space-y-6 flex-1 bg-white md:bg-[#F6F8FC]">
                 {/* SECTION A — APPLICANT INFORMATION */}
-                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 space-y-4 shadow-2xs">
+                <div className="bg-white border-0 md:border md:border-[#E2E8F0] rounded-none md:rounded-2xl px-4 py-5 md:p-5 space-y-4 shadow-none md:shadow-2xs">
                   <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2.5">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-[#111C3D] flex items-center gap-1.5">
                       <User className="w-3.5 h-3.5 text-[#2563EB]" />
@@ -4353,7 +4356,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                 </div>
 
                 {/* SECTION B — APPLICATION STATUS & WORKFLOW */}
-                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 space-y-4 shadow-2xs">
+                <div className="bg-white border-0 md:border md:border-[#E2E8F0] rounded-none md:rounded-2xl px-4 py-5 md:p-5 space-y-4 shadow-none md:shadow-2xs">
                   <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2.5">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-[#111C3D] flex items-center gap-1.5">
                       <RefreshCw className="w-3.5 h-3.5 text-[#2563EB]" />
@@ -4421,7 +4424,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                 </div>
 
                 {/* SECTION C — PAYMENT DETAILS */}
-                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 space-y-3.5 shadow-2xs">
+                <div className="bg-white border-0 md:border md:border-[#E2E8F0] rounded-none md:rounded-2xl px-4 py-5 md:p-5 space-y-3.5 shadow-none md:shadow-2xs">
                   <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2.5">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-[#111C3D] flex items-center gap-1.5">
                       <CreditCard className="w-3.5 h-3.5 text-[#2563EB]" />
@@ -4459,7 +4462,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                 </div>
 
                 {/* SECTION D — UPLOADED DOCUMENTS */}
-                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 space-y-3.5 shadow-2xs">
+                <div className="bg-white border-0 md:border md:border-[#E2E8F0] rounded-none md:rounded-2xl px-4 py-5 md:p-5 space-y-3.5 shadow-none md:shadow-2xs">
                   <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2.5">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-[#111C3D] flex items-center gap-1.5">
                       <FolderOpen className="w-3.5 h-3.5 text-[#2563EB]" />
@@ -4597,7 +4600,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                 </div>
 
                 {/* SECTION E — STAFF INTERNAL REMARKS */}
-                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 space-y-3 shadow-2xs">
+                <div className="bg-white border-0 md:border md:border-[#E2E8F0] rounded-none md:rounded-2xl px-4 py-5 md:p-5 space-y-3 shadow-none md:shadow-2xs">
                   <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2.5">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-[#111C3D] flex items-center gap-1.5">
                       <Edit3 className="w-3.5 h-3.5 text-[#2563EB]" />

@@ -481,13 +481,14 @@ export default function PortalHomepage({
   };
 
   return (
-    <div className="space-y-12 sm:space-y-16 pb-8 w-full max-w-7xl mx-auto px-4 sm:px-6">
+    <div className="space-y-0 md:space-y-14 pb-0 md:pb-8 w-full max-w-7xl mx-auto px-0 md:px-6">
       {/* ==================================================================== */}
       {/* 1. SHORTENED, ACTION-FOCUSED HERO SECTION */}
       {/* ==================================================================== */}
       <section
+        id="hero-heading-section"
         aria-labelledby="hero-heading"
-        className="bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-10 shadow-2xs mt-2 sm:mt-4"
+        className="w-full bg-white border-b border-[#E2E8F0] md:border md:rounded-2xl px-4 py-6 sm:p-8 md:p-10 shadow-none md:shadow-2xs mt-0 md:mt-4"
       >
         <div className="max-w-3xl mx-auto text-center space-y-5">
           <h1
@@ -772,7 +773,7 @@ export default function PortalHomepage({
       <section
         id="recruitment-section"
         aria-labelledby="recruitment-heading"
-        className="space-y-5 scroll-mt-20"
+        className="w-full bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 py-6 md:p-0 space-y-5 scroll-mt-20"
       >
         <div id="sarkari-board" className="scroll-mt-20" />
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-[#E2E8F0] pb-3">
@@ -938,12 +939,12 @@ export default function PortalHomepage({
           </table>
         </div>
 
-        {/* Mobile Stacked Cards View */}
-        <div className="md:hidden space-y-3">
+        {/* Mobile Open Full-Width List Rows */}
+        <div className="md:hidden -mx-4 divide-y divide-[#E2E8F0] border-y border-[#E2E8F0] bg-white">
           {displayedJobs.map(({ item, status, organisation, qualification }) => (
             <article
               key={item.id}
-              className="bg-white border border-[#E2E8F0] rounded-2xl p-4 space-y-3 shadow-2xs"
+              className="px-4 py-4 space-y-2.5 hover:bg-[#F6F8FC] transition-colors"
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-semibold text-[#2563EB]">{organisation}</span>
@@ -967,7 +968,7 @@ export default function PortalHomepage({
                 </p>
               )}
 
-              <div className="flex items-center justify-between text-xs text-[#64748B] pt-2 border-t border-[#E2E8F0]">
+              <div className="flex items-center justify-between text-xs text-[#64748B] pt-1">
                 <span>
                   Closing Date:{' '}
                   <strong className="text-[#102A43]">{item.lastDate || 'See Notice'}</strong>
@@ -1022,7 +1023,7 @@ export default function PortalHomepage({
       <section
         id="tools-preview"
         aria-labelledby="tools-preview-heading"
-        className="space-y-4 scroll-mt-20"
+        className="w-full bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 py-6 md:p-0 space-y-4 scroll-mt-20"
       >
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E2E8F0] pb-3">
           <div>
@@ -1052,7 +1053,7 @@ export default function PortalHomepage({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="-mx-4 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-y md:border-0 border-[#E2E8F0] bg-white md:bg-transparent grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0 md:gap-4">
           {previewTools.map((tool) => {
             const ToolIcon = getToolIcon(tool.iconName);
             return (
@@ -1062,20 +1063,22 @@ export default function PortalHomepage({
                 onClick={() => {
                   window.location.hash = `#tools/${tool.id}`;
                 }}
-                className="text-left bg-white border border-[#E2E8F0] hover:border-[#2563EB] rounded-2xl p-5 flex flex-col justify-between transition-colors shadow-2xs group cursor-pointer"
+                className="text-left bg-white md:border md:border-[#E2E8F0] md:hover:border-[#2563EB] md:rounded-2xl px-4 py-4 md:p-5 flex flex-col justify-between transition-colors md:shadow-2xs group cursor-pointer"
               >
-                <div className="space-y-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center">
-                    <ToolIcon className="w-4 h-4" aria-hidden="true" />
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 md:block md:space-y-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center shrink-0">
+                      <ToolIcon className="w-4 h-4" aria-hidden="true" />
+                    </div>
+                    <h3 className="text-sm font-bold text-[#102A43] group-hover:text-[#2563EB] transition-colors">
+                      {tool.name}
+                    </h3>
                   </div>
-                  <h3 className="text-sm font-bold text-[#102A43] group-hover:text-[#2563EB] transition-colors">
-                    {tool.name}
-                  </h3>
                   <p className="text-xs text-[#64748B] line-clamp-2 leading-relaxed">
                     {tool.shortDescription}
                   </p>
                 </div>
-                <div className="pt-3 mt-3 border-t border-[#E2E8F0] flex items-center justify-between text-xs font-semibold text-[#2563EB]">
+                <div className="pt-2.5 mt-2.5 md:pt-3 md:mt-3 md:border-t border-[#E2E8F0] flex items-center justify-between text-xs font-semibold text-[#2563EB]">
                   <span>Open Tool</span>
                   <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                 </div>
@@ -1091,7 +1094,7 @@ export default function PortalHomepage({
       <section
         id="education-resources"
         aria-labelledby="education-heading"
-        className="space-y-4 scroll-mt-20"
+        className="w-full bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 py-6 md:p-0 space-y-4 scroll-mt-20"
       >
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E2E8F0] pb-3">
           <div>
@@ -1119,13 +1122,13 @@ export default function PortalHomepage({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="-mx-4 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-y md:border-0 border-[#E2E8F0] bg-white md:bg-transparent grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-4">
           {educationUpdates.map(({ item, status, organisation }) => (
             <article
               key={item.id}
-              className="bg-white border border-[#E2E8F0] hover:border-[#2563EB] rounded-2xl p-5 flex flex-col justify-between transition-colors shadow-2xs"
+              className="bg-white md:border md:border-[#E2E8F0] md:hover:border-[#2563EB] md:rounded-2xl px-4 py-4 md:p-5 flex flex-col justify-between transition-colors md:shadow-2xs"
             >
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-semibold text-[#2563EB]">{organisation}</span>
                   {renderStatusBadge(status)}
@@ -1144,7 +1147,7 @@ export default function PortalHomepage({
                 </p>
               </div>
 
-              <div className="pt-3 mt-4 border-t border-[#E2E8F0] flex items-center justify-between text-xs">
+              <div className="pt-2.5 mt-2.5 md:pt-3 md:mt-4 md:border-t border-[#E2E8F0] flex items-center justify-between text-xs">
                 <span className="text-[#64748B]">
                   Closing: <strong className="text-[#102A43]">{item.lastDate || 'See Notice'}</strong>
                 </span>
@@ -1167,7 +1170,7 @@ export default function PortalHomepage({
       <section
         id="popular-services"
         aria-labelledby="popular-services-heading"
-        className="space-y-5 scroll-mt-20"
+        className="w-full bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 py-6 md:p-0 space-y-5 scroll-mt-20"
       >
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E2E8F0] pb-3">
           <div>
@@ -1195,27 +1198,29 @@ export default function PortalHomepage({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="-mx-4 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-y md:border-0 border-[#E2E8F0] bg-white md:bg-transparent grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 md:gap-4">
           {popularServices.map((item) => {
             const Icon = item.icon;
             return (
               <article
                 key={item.title}
-                className="bg-white border border-[#E2E8F0] hover:border-[#2563EB] rounded-2xl p-5 flex flex-col justify-between transition-colors shadow-2xs"
+                className="bg-white md:border md:border-[#E2E8F0] md:hover:border-[#2563EB] md:rounded-2xl px-4 py-4 md:p-5 flex flex-col justify-between transition-colors md:shadow-2xs"
               >
-                <div className="space-y-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center">
-                    <Icon className="w-5 h-5" aria-hidden="true" />
+                <div className="space-y-2 md:space-y-3">
+                  <div className="flex items-center gap-3 md:block md:space-y-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center shrink-0">
+                      <Icon className="w-5 h-5" aria-hidden="true" />
+                    </div>
+                    <h3 className="text-base font-bold text-[#102A43] leading-snug">
+                      {item.title}
+                    </h3>
                   </div>
-                  <h3 className="text-base font-bold text-[#102A43] leading-snug">
-                    {item.title}
-                  </h3>
                   <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">
                     {item.shortDescription}
                   </p>
                 </div>
 
-                <div className="pt-4 mt-4 border-t border-[#E2E8F0] flex items-center justify-between">
+                <div className="pt-2.5 mt-2.5 md:pt-4 md:mt-4 md:border-t border-[#E2E8F0] flex items-center justify-between">
                   <button
                     type="button"
                     onClick={() => {
@@ -1233,11 +1238,16 @@ export default function PortalHomepage({
         </div>
       </section>
 
+      {/* ==================================================================== */}
+      {/* 5. DIGITAL TOOLS & CITIZEN CALCULATORS */}
+      {/* ==================================================================== */}
+      <CitizenToolsDesk onApplyService={onApplyService} />
+
       {/* Organised Service Directory Category Previews */}
       <section
         id="service-directory-preview"
         aria-labelledby="directory-preview-heading"
-        className="space-y-5 scroll-mt-20"
+        className="w-full bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 py-6 md:p-0 space-y-5 scroll-mt-20"
       >
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E2E8F0] pb-3">
           <div>
@@ -1261,7 +1271,7 @@ export default function PortalHomepage({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="-mx-4 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-y md:border-0 border-[#E2E8F0] bg-white md:bg-transparent grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0 md:gap-4">
           {directoryCategories.map((cat) => {
             const Icon = cat.icon;
             return (
@@ -1269,9 +1279,9 @@ export default function PortalHomepage({
                 key={cat.id}
                 type="button"
                 onClick={() => selectServiceDirectoryCategory(cat.id)}
-                className="text-left bg-white border border-[#E2E8F0] hover:border-[#2563EB] rounded-2xl p-5 flex flex-col justify-between transition-colors shadow-2xs group cursor-pointer"
+                className="text-left bg-white md:border md:border-[#E2E8F0] md:hover:border-[#2563EB] md:rounded-2xl px-4 py-4 md:p-5 flex flex-col justify-between transition-colors md:shadow-2xs group cursor-pointer"
               >
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center">
                       <Icon className="w-4 h-4" aria-hidden="true" />
@@ -1286,7 +1296,7 @@ export default function PortalHomepage({
                   <p className="text-xs text-[#64748B] leading-relaxed">{cat.description}</p>
                 </div>
 
-                <div className="pt-3 mt-3 border-t border-[#E2E8F0] flex items-center justify-between text-xs font-semibold text-[#2563EB]">
+                <div className="pt-2.5 mt-2.5 md:pt-3 md:mt-3 md:border-t border-[#E2E8F0] flex items-center justify-between text-xs font-semibold text-[#2563EB]">
                   <span>Browse Category</span>
                   <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                 </div>
@@ -1300,7 +1310,7 @@ export default function PortalHomepage({
       <section
         id="schemes-section"
         aria-labelledby="schemes-heading"
-        className="space-y-4 scroll-mt-20"
+        className="w-full bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 py-6 md:p-0 space-y-4 scroll-mt-20"
       >
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E2E8F0] pb-3">
           <div>
@@ -1324,8 +1334,8 @@ export default function PortalHomepage({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <article className="bg-white border border-[#E2E8F0] rounded-2xl p-5 flex flex-col justify-between shadow-2xs">
+        <div className="-mx-4 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-y md:border-0 border-[#E2E8F0] bg-white md:bg-transparent grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-4">
+          <article className="bg-white md:border md:border-[#E2E8F0] md:rounded-2xl px-4 py-4 md:p-5 flex flex-col justify-between md:shadow-2xs">
             <div className="space-y-2.5">
               <span className="inline-block text-xs font-semibold text-[#16A34A] bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
                 Farmer Income Support
@@ -1337,7 +1347,7 @@ export default function PortalHomepage({
                 Direct Benefit Transfer of ₹2,000 every four months for eligible landholding किसान families. Requires active e-KYC and Aadhaar-seeded bank account.
               </p>
             </div>
-            <div className="pt-4 mt-4 border-t border-[#E2E8F0] flex items-center justify-between gap-2 text-xs">
+            <div className="pt-3 mt-3 md:pt-4 md:mt-4 md:border-t border-[#E2E8F0] flex items-center justify-between gap-2 text-xs">
               <button
                 type="button"
                 onClick={() => {
@@ -1360,7 +1370,7 @@ export default function PortalHomepage({
             </div>
           </article>
 
-          <article className="bg-white border border-[#E2E8F0] rounded-2xl p-5 flex flex-col justify-between shadow-2xs">
+          <article className="bg-white md:border md:border-[#E2E8F0] md:rounded-2xl px-4 py-4 md:p-5 flex flex-col justify-between md:shadow-2xs">
             <div className="space-y-2.5">
               <span className="inline-block text-xs font-semibold text-[#2563EB] bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">
                 Healthcare Assurance
@@ -1372,7 +1382,7 @@ export default function PortalHomepage({
                 Cashless hospitalisation coverage up to ₹5,00,000 per family per year across empaneled hospitals, including universal coverage for J&amp;K residents.
               </p>
             </div>
-            <div className="pt-4 mt-4 border-t border-[#E2E8F0] flex items-center justify-between gap-2 text-xs">
+            <div className="pt-3 mt-3 md:pt-4 md:mt-4 md:border-t border-[#E2E8F0] flex items-center justify-between gap-2 text-xs">
               <button
                 type="button"
                 onClick={() => {
@@ -1395,7 +1405,7 @@ export default function PortalHomepage({
             </div>
           </article>
 
-          <article className="bg-white border border-[#E2E8F0] rounded-2xl p-5 flex flex-col justify-between shadow-2xs">
+          <article className="bg-white md:border md:border-[#E2E8F0] md:rounded-2xl px-4 py-4 md:p-5 flex flex-col justify-between md:shadow-2xs">
             <div className="space-y-2.5">
               <span className="inline-block text-xs font-semibold text-[#102A43] bg-[#F6F8FC] border border-[#E2E8F0] px-2.5 py-0.5 rounded-full">
                 Social Security &amp; Labour
@@ -1407,7 +1417,7 @@ export default function PortalHomepage({
                 Registration for unorganised sector workers, old-age/widow/disability pension schemes (ISSS), and marriage assistance in Jammu &amp; Kashmir.
               </p>
             </div>
-            <div className="pt-4 mt-4 border-t border-[#E2E8F0] flex items-center justify-between gap-2 text-xs">
+            <div className="pt-3 mt-3 md:pt-4 md:mt-4 md:border-t border-[#E2E8F0] flex items-center justify-between gap-2 text-xs">
               <button
                 type="button"
                 onClick={() => {
@@ -1436,7 +1446,7 @@ export default function PortalHomepage({
       <section
         id="how-it-works"
         aria-labelledby="how-it-works-heading"
-        className="bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xs"
+        className="w-full bg-white border-b border-[#E2E8F0] md:border md:rounded-2xl px-4 py-6 sm:p-8 space-y-6 shadow-none md:shadow-2xs"
       >
         <div className="max-w-2xl">
           <h2
@@ -1450,8 +1460,8 @@ export default function PortalHomepage({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <div className="p-5 rounded-xl bg-[#F6F8FC] border border-[#E2E8F0] space-y-2">
+        <div className="-mx-4 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-y md:border-0 border-[#E2E8F0] grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-5">
+          <div className="px-4 py-4 md:p-5 md:rounded-xl bg-white md:bg-[#F6F8FC] md:border md:border-[#E2E8F0] space-y-2">
             <div className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-[#2563EB] text-white text-xs font-bold">
               1
             </div>
@@ -1461,7 +1471,7 @@ export default function PortalHomepage({
             </p>
           </div>
 
-          <div className="p-5 rounded-xl bg-[#F6F8FC] border border-[#E2E8F0] space-y-2">
+          <div className="px-4 py-4 md:p-5 md:rounded-xl bg-white md:bg-[#F6F8FC] md:border md:border-[#E2E8F0] space-y-2">
             <div className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-[#2563EB] text-white text-xs font-bold">
               2
             </div>
@@ -1473,7 +1483,7 @@ export default function PortalHomepage({
             </p>
           </div>
 
-          <div className="p-5 rounded-xl bg-[#F6F8FC] border border-[#E2E8F0] space-y-2">
+          <div className="px-4 py-4 md:p-5 md:rounded-xl bg-white md:bg-[#F6F8FC] md:border md:border-[#E2E8F0] space-y-2">
             <div className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-[#2563EB] text-white text-xs font-bold">
               3
             </div>
@@ -1493,11 +1503,6 @@ export default function PortalHomepage({
           </p>
         </div>
       </section>
-
-      {/* ==================================================================== */}
-      {/* 5. DIGITAL TOOLS & CITIZEN CALCULATORS */}
-      {/* ==================================================================== */}
-      <CitizenToolsDesk onApplyService={onApplyService} />
     </div>
   );
 }

@@ -451,16 +451,16 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
   ];
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto bg-slate-950/80 backdrop-blur-md animate-fade-in">
+    <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-6 overflow-y-auto bg-slate-950/80 backdrop-blur-md animate-fade-in">
       <div 
-        className="relative w-full max-w-4xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] text-slate-900 dark:text-slate-100 my-auto"
+        className="relative w-full max-w-4xl bg-white dark:bg-slate-900 border-0 md:border border-slate-200 dark:border-slate-800 rounded-none md:rounded-3xl shadow-2xl overflow-hidden flex flex-col h-full md:h-auto max-h-screen md:max-h-[92vh] text-slate-900 dark:text-slate-100 my-0 md:my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* TRICOLOR HEADER ACCENT */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-[#FF9933] via-white to-[#128807]"></div>
+        <div className="h-1.5 w-full bg-gradient-to-r from-[#FF9933] via-white to-[#128807] shrink-0"></div>
 
         {/* MODAL NAVBAR / HEADER */}
-        <div className="sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 sm:px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0">
           
           <div className="flex items-center gap-3">
             <div className={`p-2.5 rounded-2xl border transition-all ${
