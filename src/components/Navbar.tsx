@@ -1,314 +1,432 @@
-import React, { useState } from 'react';
-import { Shield, Calendar, PhoneCall, Cpu, Sparkles, Eye, Languages, Home, Briefcase, Flame, Info, Menu, X, Star, ShieldCheck, Lock, Key, Sun, Moon, BookOpen, Bell, FileCheck, Search, MessageSquare } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { 
+  Search, 
+  Menu, 
+  X, 
+  ChevronDown, 
+  Lock, 
+  FileText, 
+  CreditCard, 
+  Fingerprint, 
+  BookOpen, 
+  Briefcase, 
+  Award, 
+  Info, 
+  Phone, 
+  ShieldCheck, 
+  ExternalLink,
+  MessageSquare
+} from 'lucide-react';
 import { PolicyTab } from './PrivacyPolicyModal';
-import { useTheme } from '../context/ThemeContext';
 
 interface NavbarProps {
-  darkMode?: boolean;
-  setDarkMode?: (val: boolean) => void;
   cafeName: string;
   onOpenPrivacyPolicy?: (tab?: PolicyTab) => void;
   onOpenAdmin?: () => void;
   onHomeClick?: () => void;
+  onOpenService?: (serviceId: string) => void;
 }
 
 export default function Navbar({
-  darkMode,
-  setDarkMode,
   cafeName,
   onOpenPrivacyPolicy,
   onOpenAdmin,
-  onHomeClick
+  onHomeClick,
+  onOpenService
 }: NavbarProps) {
-  const { activeThemeConfig } = useTheme();
-  const [lang, setLang] = useState<'EN' | 'HI'>(() => {
-    if (typeof window !== 'undefined') {
-      const cookies = document.cookie;
-      if (cookies.includes('googtrans=/en/hi') || cookies.includes('googtrans=/auto/hi') || localStorage.getItem('site_lang') === 'HI') {
-        return 'HI';
-      }
-    }
-    return 'EN';
-  });
-
-  const [fontSize, setFontSize] = useState<'normal' | 'large' | 'larger'>('normal');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeItem, setActiveItem] = useState('hero');
+  const [activeItem, setActiveItem] = useState('home');
+  const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
-  const handleLanguageChange = (newLang: 'EN' | 'HI') => {
-    setLang(newLang);
-    if (typeof window === 'undefined') return;
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
-    localStorage.setItem('site_lang', newLang);
-    const code = newLang === 'HI' ? 'hi' : 'en';
-
-    // Set cookie for Google Translate widget
-    const domain = window.location.hostname;
-    document.cookie = `googtrans=/en/${code}; path=/;`;
-    document.cookie = `googtrans=/en/${code}; domain=${domain}; path=/;`;
-    document.cookie = `googtrans=/en/${code}; domain=.${domain}; path=/;`;
-
-    // Attempt to select language inside Google Translate dropdown
-    const selectElem = document.querySelector('.goog-te-combo') as HTMLSelectElement | null;
-    if (selectElem) {
-      selectElem.value = code;
-      selectElem.dispatchEvent(new Event('change'));
-    } else {
-      // Reload page to apply google translate cookie
-      window.location.reload();
-    }
-  };
-
-  const handleFontSizeChange = (size: 'normal' | 'large' | 'larger') => {
-    setFontSize(size);
-    if (typeof window !== 'undefined') {
-      const root = document.documentElement;
-      if (size === 'normal') root.style.fontSize = '100%';
-      else if (size === 'large') root.style.fontSize = '108%';
-      else if (size === 'larger') root.style.fontSize = '116%';
-    }
-  };
-
-  const scrollInto = (id: string) => {
-    setActiveItem(id);
+  const triggerSearchFocus = () => {
     setMobileMenuOpen(false);
-    if (id === 'hero' || id === 'home') {
-      if (onHomeClick) {
-        onHomeClick();
-      }
+    window.dispatchEvent(new CustomEvent('focus-csc-search'));
+    const searchInput = document.getElementById('portal-universal-search') as HTMLInputElement | null;
+    if (searchInput) {
+      searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => searchInput.focus(), 300);
+    }
+  };
+
+  const navigateTo = (target: string) => {
+    setActiveItem(target);
+    setMobileMenuOpen(false);
+    setServicesDropdownOpen(false);
+
+    if (target === 'home') {
+      if (onHomeClick) onHomeClick();
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    if (id === 'apply') {
+
+    if (target === 'jobs') {
+      const el = document.getElementById('recruitment-section') || document.getElementById('sarkari-board');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    if (target === 'schemes') {
+      const el = document.getElementById('schemes-section') || document.getElementById('knowledge-hub');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    if (target === 'aadhaar') {
+      window.location.hash = '#service/aadhaar-card-services';
+      return;
+    }
+
+    if (target === 'pan') {
+      window.location.hash = '#service/pan-card-new-correction';
+      return;
+    }
+
+    if (target === 'guides') {
+      const el = document.getElementById('knowledge-hub') || document.getElementById('popular-guides-section');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    if (target === 'about') {
+      const el = document.getElementById('about-section') || document.getElementById('node-info');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    if (target === 'contact') {
+      const el = document.getElementById('node-info') || document.getElementById('footer');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    if (target === 'apply') {
       window.location.hash = '#apply';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    if (id === 'track') {
+
+    if (target === 'track') {
       window.location.hash = '#track';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    setTimeout(() => {
-      const targetId = (id === 'csc-info' || id === 'node-info') ? 'node-info' : id;
-      const element = document.getElementById(targetId);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 50);
   };
 
   return (
-    <header className="w-full z-50 flex flex-col relative" id="hero">
-      {/* MAIN PORTAL HEADER - CENTERED CSC DOST BRANDING WITH NATIONAL TRICOLOR GRADIENT */}
-      <div className={`bg-gradient-to-r ${activeThemeConfig.headerGradient} py-3.5 sm:py-4 px-3 sm:px-4 border-b border-blue-900/60 shadow-md transition-all duration-300`}>
-        <div className="max-w-7xl mx-auto flex items-center justify-center relative">
-          
-          {/* Centered CSC DOST Logo & Tagline */}
-          <button 
-            type="button"
-            onClick={() => scrollInto('hero')}
-            className="flex items-center justify-center gap-2.5 sm:gap-3 text-center cursor-pointer hover:opacity-95 transition-opacity bg-transparent border-0 p-0 mx-auto"
-            title="Go to Homepage"
-          >
-            <div className="relative shrink-0">
-              <img 
-                src="/favicon.svg" 
-                alt="CSC DOST Logo" 
-                width="56"
-                height="56"
-                fetchPriority="high"
-                decoding="async"
-                className="w-10 h-10 sm:w-13 sm:h-13 md:w-14 md:h-14 object-contain drop-shadow-[0_0_12px_rgba(59,130,246,0.6)]" 
-                referrerPolicy="no-referrer" 
-              />
-            </div>
-            <div className="text-center sm:text-left space-y-0.5 sm:space-y-1">
-              <h1 className="text-xl sm:text-3xl md:text-4xl font-black text-white font-sans tracking-tight leading-none drop-shadow-sm">
-                CSC DOST
-              </h1>
-              <p className="text-[11px] sm:text-sm text-yellow-300 font-bold tracking-tight">
-                "A Digital Shop for Digital India"
-              </p>
-            </div>
-          </button>
-
+    <header className="w-full sticky top-0 z-50 bg-white border-b border-[#E3E8EF] transition-shadow duration-200" style={{ boxShadow: isScrolled ? '0 2px 8px rgba(18, 48, 74, 0.08)' : 'none' }}>
+      
+      {/* Top Quiet Citizen Advisory Ribbon */}
+      <div className="bg-[#12304A] text-white text-[11px] sm:text-xs py-1.5 px-3 sm:px-6">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2 truncate">
+            <span className="font-semibold text-emerald-400">Independent Portal</span>
+            <span className="text-slate-400 hidden sm:inline">|</span>
+            <span className="text-slate-300 truncate">Digital Assistance, Recruitment Updates & Citizen Scheme Guides</span>
+          </div>
+          <div className="flex items-center gap-3 shrink-0 text-slate-300">
+            <button
+              onClick={() => navigateTo('track')}
+              className="hover:text-white transition-colors cursor-pointer font-medium"
+            >
+              Track Application
+            </button>
+            <span className="text-slate-500">·</span>
+            {onOpenAdmin && (
+              <button
+                onClick={onOpenAdmin}
+                className="hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1 font-medium text-amber-400"
+                title="Staff Operator Dashboard"
+              >
+                <Lock className="w-3 h-3" />
+                <span className="hidden sm:inline">Staff Login</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* 3. NAVIGATION MENU BAR */}
-      <nav className="bg-[#ffffff] dark:bg-slate-900 text-slate-800 dark:text-slate-100 shadow-md sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800 transition-colors">
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 flex items-center justify-between h-12 sm:h-13 gap-1">
-          
-          {/* Navigation Links - Mobile-optimized horizontal navigation */}
-          <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm font-black uppercase tracking-wider h-full overflow-x-auto no-scrollbar whitespace-nowrap py-1 scroll-smooth">
-            {[
-              { id: 'hero', label: 'HOME', shortLabel: 'HOME', icon: Home },
-              { id: 'apply', label: 'APPLY ONLINE', shortLabel: 'APPLY', icon: FileCheck },
-              { id: 'track', label: 'TRACK STATUS', shortLabel: 'TRACK', icon: Search },
-              { id: 'services', label: 'E-SERVICES', shortLabel: 'SERVICES', icon: Briefcase },
-            ].map((item) => {
-              const isActive = activeItem === item.id;
-              const IconComp = item.icon;
-              return (
-                <button 
-                  key={item.id}
-                  type="button"
-                  onClick={() => {
-                    scrollInto(item.id);
-                  }} 
-                  className={`px-2 py-1.5 sm:px-3 sm:py-1.5 rounded-lg transition-all duration-200 flex items-center gap-1 sm:gap-1.5 font-black text-[11px] sm:text-xs cursor-pointer shrink-0 ${
-                    isActive 
-                      ? 'bg-[#1e293b] dark:bg-blue-600 text-white shadow-xs' 
-                      : 'text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  <IconComp className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-amber-300' : 'text-slate-500 dark:text-slate-400'}`} />
-                  <span className="hidden sm:inline whitespace-nowrap">{item.label}</span>
-                  <span className="inline sm:hidden whitespace-nowrap">{item.shortLabel}</span>
-                </button>
-              );
-            })}
+      {/* Main Navigation Bar */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+        
+        {/* Brand Logo & Title */}
+        <button
+          type="button"
+          onClick={() => navigateTo('home')}
+          className="flex items-center gap-3 text-left cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0B57D0] rounded-lg p-1 -ml-1"
+          title="CSC DOST - Home"
+        >
+          <img
+            src="/favicon.svg"
+            alt="CSC DOST"
+            width="40"
+            height="40"
+            className="w-9 h-9 sm:w-10 sm:h-10 object-contain shrink-0"
+          />
+          <div className="leading-tight">
+            <span className="text-lg sm:text-xl font-extrabold text-[#172033] tracking-tight block">
+              CSC DOST
+            </span>
+            <span className="text-[10px] sm:text-[11px] font-medium text-[#5F6B7A] block">
+              Citizen Information Portal
+            </span>
           </div>
+        </button>
 
-          {/* Right side: WhatsApp Group, Notifications, Staff Portal Link & Mobile Menu Trigger Button */}
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0 pl-1 border-l border-slate-200 dark:border-slate-800 sm:border-0">
-            {/* WhatsApp Community Group Link */}
-            <a
-              href="https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] sm:text-xs font-black transition-all shadow-xs shrink-0 cursor-pointer"
-              title="Join Official WhatsApp Group for Instant Alerts"
-            >
-              <MessageSquare className="w-3.5 h-3.5 text-emerald-100" />
-              <span className="hidden sm:inline">WhatsApp Group</span>
-              <span className="inline sm:hidden">Group</span>
-            </a>
+        {/* Desktop Navigation Links */}
+        <nav aria-label="Main Navigation" className="hidden lg:flex items-center gap-1 xl:gap-2">
+          <button
+            type="button"
+            onClick={() => navigateTo('home')}
+            className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer ${
+              activeItem === 'home'
+                ? 'text-[#0B57D0] bg-blue-50/80 font-bold'
+                : 'text-[#172033] hover:text-[#0B57D0] hover:bg-slate-50'
+            }`}
+          >
+            Home
+          </button>
 
-            {/* Push Notifications Alert Trigger */}
+          <button
+            type="button"
+            onClick={() => navigateTo('jobs')}
+            className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer ${
+              activeItem === 'jobs'
+                ? 'text-[#0B57D0] bg-blue-50/80 font-bold'
+                : 'text-[#172033] hover:text-[#0B57D0] hover:bg-slate-50'
+            }`}
+          >
+            Jobs
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigateTo('schemes')}
+            className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer ${
+              activeItem === 'schemes'
+                ? 'text-[#0B57D0] bg-blue-50/80 font-bold'
+                : 'text-[#172033] hover:text-[#0B57D0] hover:bg-slate-50'
+            }`}
+          >
+            Schemes
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigateTo('aadhaar')}
+            className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer ${
+              activeItem === 'aadhaar'
+                ? 'text-[#0B57D0] bg-blue-50/80 font-bold'
+                : 'text-[#172033] hover:text-[#0B57D0] hover:bg-slate-50'
+            }`}
+          >
+            Aadhaar
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigateTo('pan')}
+            className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer ${
+              activeItem === 'pan'
+                ? 'text-[#0B57D0] bg-blue-50/80 font-bold'
+                : 'text-[#172033] hover:text-[#0B57D0] hover:bg-slate-50'
+            }`}
+          >
+            PAN
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigateTo('guides')}
+            className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer ${
+              activeItem === 'guides'
+                ? 'text-[#0B57D0] bg-blue-50/80 font-bold'
+                : 'text-[#172033] hover:text-[#0B57D0] hover:bg-slate-50'
+            }`}
+          >
+            Guides
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigateTo('about')}
+            className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer ${
+              activeItem === 'about'
+                ? 'text-[#0B57D0] bg-blue-50/80 font-bold'
+                : 'text-[#172033] hover:text-[#0B57D0] hover:bg-slate-50'
+            }`}
+          >
+            About
+          </button>
+        </nav>
+
+        {/* Right Action: Search Trigger + Primary CTA */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            onClick={triggerSearchFocus}
+            className="flex items-center gap-2 px-3 py-2 text-xs sm:text-sm text-[#5F6B7A] bg-[#F7F9FC] hover:bg-slate-100 border border-[#E3E8EF] rounded-lg transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0B57D0]"
+            title="Search jobs, schemes, guides and services"
+            aria-label="Search CSC DOST"
+          >
+            <Search className="w-4 h-4 text-[#5F6B7A]" />
+            <span className="hidden md:inline font-medium">Search CSC DOST...</span>
+            <kbd className="hidden md:inline text-[10px] bg-white border border-[#E3E8EF] px-1.5 py-0.5 rounded text-slate-400">
+              /
+            </kbd>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigateTo('apply')}
+            className="hidden sm:inline-flex items-center justify-center px-4 py-2 bg-[#0B57D0] hover:bg-[#0842a0] text-white text-xs sm:text-sm font-bold rounded-lg transition-all shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0B57D0]"
+          >
+            Apply Online
+          </button>
+
+          {/* Mobile Menu Trigger */}
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 text-[#172033] hover:bg-[#F7F9FC] rounded-lg cursor-pointer lg:hidden border border-transparent hover:border-[#E3E8EF]"
+            aria-label={mobileMenuOpen ? 'Close Menu' : 'Open Menu'}
+            aria-expanded={mobileMenuOpen}
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
+
+      </div>
+
+      {/* Mobile Navigation Drawer */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden border-t border-[#E3E8EF] bg-white px-4 py-4 space-y-3 shadow-lg animate-fade-in max-h-[calc(100vh-5rem)] overflow-y-auto">
+          
+          {/* Quick Search inside Mobile Menu */}
+          <button
+            type="button"
+            onClick={triggerSearchFocus}
+            className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-[#5F6B7A] bg-[#F7F9FC] border border-[#E3E8EF] rounded-lg text-left"
+          >
+            <Search className="w-4 h-4 text-[#5F6B7A]" />
+            <span>Search CSC DOST...</span>
+          </button>
+
+          <div className="grid grid-cols-1 gap-1 text-sm font-medium text-[#172033]">
             <button
               type="button"
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  window.dispatchEvent(new CustomEvent('open-push-notification-prompt'));
-                }
-              }}
-              className="relative flex items-center justify-center p-1.5 sm:p-2 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-700 dark:text-amber-300 rounded-lg transition-all cursor-pointer border border-amber-200 dark:border-amber-800 shadow-xs shrink-0"
-              title="Enable / Check Sarkari Job Notification Alerts"
-              id="navbar-notification-btn"
+              onClick={() => navigateTo('home')}
+              className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-[#F7F9FC] transition-colors flex items-center justify-between"
             >
-              <Bell className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-600 dark:text-amber-400 shrink-0 animate-bounce" style={{ animationDuration: '3s' }} />
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-slate-900" />
+              <span>Home</span>
+              <span className="text-xs text-[#5F6B7A]">Main Portal</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigateTo('jobs')}
+              className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-[#F7F9FC] transition-colors flex items-center justify-between"
+            >
+              <span>Jobs &amp; Recruitment</span>
+              <span className="text-xs text-[#5F6B7A]">JKSSB, Army, SSC, RRB</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigateTo('schemes')}
+              className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-[#F7F9FC] transition-colors flex items-center justify-between"
+            >
+              <span>Government Schemes</span>
+              <span className="text-xs text-[#5F6B7A]">PM-KISAN, Ayushman</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigateTo('aadhaar')}
+              className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-[#F7F9FC] transition-colors flex items-center justify-between"
+            >
+              <span>Aadhaar</span>
+              <span className="text-xs text-[#5F6B7A]">Update &amp; Revalidation</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigateTo('pan')}
+              className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-[#F7F9FC] transition-colors flex items-center justify-between"
+            >
+              <span>PAN Card</span>
+              <span className="text-xs text-[#5F6B7A]">New Application &amp; Correction</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigateTo('guides')}
+              className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-[#F7F9FC] transition-colors flex items-center justify-between"
+            >
+              <span>Guides &amp; Knowledge Hub</span>
+              <span className="text-xs text-[#5F6B7A]">Step-by-step Procedures</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigateTo('about')}
+              className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-[#F7F9FC] transition-colors flex items-center justify-between"
+            >
+              <span>About CSC DOST</span>
+              <span className="text-xs text-[#5F6B7A]">VLE Operator &amp; Mission</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigateTo('contact')}
+              className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-[#F7F9FC] transition-colors flex items-center justify-between"
+            >
+              <span>Contact &amp; Location</span>
+              <span className="text-xs text-[#5F6B7A]">Sangran Qazigund Center</span>
+            </button>
+          </div>
+
+          <div className="pt-2 border-t border-[#E3E8EF] flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => navigateTo('apply')}
+              className="w-full py-2.5 bg-[#0B57D0] hover:bg-[#0842a0] text-white font-bold text-center rounded-lg text-sm"
+            >
+              Apply Online via CSC Desk
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigateTo('track')}
+              className="w-full py-2.5 bg-[#F7F9FC] hover:bg-slate-100 text-[#172033] font-semibold text-center rounded-lg text-sm border border-[#E3E8EF]"
+            >
+              Track Existing Application
             </button>
 
             {onOpenAdmin && (
               <button
                 type="button"
-                onClick={onOpenAdmin}
-                className="flex items-center gap-1 p-1.5 sm:p-2 bg-[#0a0f1d] hover:bg-slate-800 text-amber-500 hover:text-amber-400 rounded-lg transition-all cursor-pointer border border-slate-800 shadow-xs shrink-0"
-                title="Open Staff Portal Login Page"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenAdmin();
+                }}
+                className="w-full py-2 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg border border-amber-200 flex items-center justify-center gap-1.5"
               >
-                <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 shrink-0" />
-                <Key className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 shrink-0 hidden sm:inline" />
+                <Lock className="w-3.5 h-3.5" />
+                <span>Staff Operator Login</span>
               </button>
             )}
-
-            {/* Responsive Mobile Menu Trigger Button */}
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-1.5 sm:p-2 text-slate-700 hover:text-blue-900 hover:bg-slate-100 rounded-lg cursor-pointer shrink-0"
-              aria-label="Open Menu"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
           </div>
 
         </div>
+      )}
 
-        {/* MOBILE MENU DRAWER */}
-        {mobileMenuOpen && (
-          <div className="bg-slate-900 text-white p-4 space-y-3 border-t border-slate-800 shadow-2xl animate-fade-in z-50">
-            {/* Mobile Language Switcher */}
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <span className="text-xs text-slate-400 font-bold flex items-center gap-1.5">
-                <Languages className="w-4 h-4 text-amber-400" />
-                Language / भाषा:
-              </span>
-              <div className="flex items-center bg-slate-800 p-0.5 rounded text-[11px] font-bold border border-slate-700">
-                <button 
-                  type="button"
-                  onClick={() => handleLanguageChange('EN')} 
-                  className={`px-3 py-1 rounded transition-all cursor-pointer font-extrabold ${
-                    lang === 'EN' 
-                      ? 'bg-blue-600 text-white shadow-xs' 
-                      : 'text-slate-300 hover:text-white'
-                  }`}
-                >
-                  ENG
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => handleLanguageChange('HI')} 
-                  className={`px-3 py-1 rounded transition-all cursor-pointer font-extrabold ${
-                    lang === 'HI' 
-                      ? 'bg-amber-500 text-slate-950 font-black shadow-xs' 
-                      : 'text-slate-300 hover:text-white'
-                  }`}
-                >
-                  हिंदी
-                </button>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              {[
-                { id: 'hero', label: 'HOME', icon: Home },
-                { id: 'apply', label: 'APPLY ONLINE', icon: FileCheck },
-                { id: 'track', label: 'TRACK STATUS', icon: Search },
-                { id: 'services', label: 'E-SERVICES', icon: Briefcase },
-                { id: 'sarkari-board', label: 'SARKARI BULLETINS', icon: Flame },
-                { id: 'knowledge-hub', label: 'GUIDES & SCHEMES', icon: BookOpen },
-                { id: 'node-info', label: 'CSC CENTRE INFO', icon: Info }
-              ].map((item) => {
-                const IconComp = item.icon;
-                const isActive = activeItem === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      scrollInto(item.id);
-                    }}
-                    className={`w-full text-left px-3.5 py-2.5 text-xs font-bold rounded-lg flex items-center gap-2.5 transition-colors ${
-                      isActive ? 'bg-blue-600 text-white font-black' : 'text-slate-200 hover:bg-slate-800'
-                    }`}
-                  >
-                    <IconComp className={`w-4 h-4 ${isActive ? 'text-amber-300' : 'text-slate-400'}`} />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
-
-              {onOpenAdmin && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    onOpenAdmin();
-                  }}
-                  className="w-full text-left px-3.5 py-2.5 mt-1 text-xs font-black text-amber-300 bg-amber-500/15 hover:bg-amber-500/25 rounded-lg flex items-center gap-2 border border-amber-500/30 cursor-pointer"
-                >
-                  <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span>🔑 Staff Portal Login</span>
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-      </nav>
     </header>
   );
 }

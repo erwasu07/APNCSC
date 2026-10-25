@@ -1,6 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { db } from '../lib/firebase';
-import { getSupabaseClient, uploadMultipleDocumentsToSupabase } from '../lib/supabase';
+import { getSupabaseClient, uploadMultipleDocumentsToSupabase, submitApplicationToSupabase } from '../lib/supabase';
 import { saveApplicationToFormEndpoint } from '../lib/getform';
 import { doc, setDoc } from 'firebase/firestore';
 
@@ -811,26 +811,31 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
           documents: processedDocs
         }).catch(formErr => console.warn('Form endpoint save notice:', formErr));
 
-        const supabase = getSupabaseClient();
-        if (supabase) {
-          supabase.from('applications').upsert([{
-            appId: officialAppId,
-            id: officialAppId,
-            applicantName: formData.customerName,
-            customerName: formData.customerName,
-            phoneNumber: formData.phoneNumber,
-            emailAddress: formData.emailAddress || 'N/A',
-            selectedService: verifiedReceipt.selectedService,
-            userCategory: verifiedReceipt.userCategory,
-            paymentMode: 'Pay at CSC Desk Upon Completion',
-            utrNumber: 'N/A',
-            totalAmount: 0,
-            status: 'Registered',
-            submittedAt: nowIso,
-            documents: processedDocs,
-            payload
-          }], { onConflict: 'appId' }).then(null, console.error);
-        }
+        // Live Supabase Direct Submission
+        submitApplicationToSupabase({
+          appId: officialAppId,
+          customerName: formData.customerName,
+          phoneNumber: formData.phoneNumber,
+          emailAddress: formData.emailAddress,
+          selectedService: verifiedReceipt.selectedService,
+          userCategory: verifiedReceipt.userCategory,
+          paymentMode: verifiedReceipt.paymentMode,
+          utrNumber: 'N/A',
+          totalAmount: 0,
+          status: 'Pending',
+          dateOfBirth: formData.dateOfBirth,
+          message: formData.additionalDetails,
+          mandatoryDocName: verifiedReceipt.mandatoryDocName,
+          submittedAt: nowIso
+        }, uploadedFiles).then(res => {
+          if (!res.success) {
+            console.warn('Supabase quick-apply submit notice:', res.error);
+          } else {
+            console.log('✅ Application synced to Supabase successfully:', res.insertedSchema);
+          }
+        }).catch(err => {
+          console.warn('Supabase quick-apply submission exception:', err);
+        });
       } catch (dbErr) {
         console.error('Database initial save notice:', dbErr);
       }

@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db, auth, storage } from '../lib/firebase';
-import { uploadReceiptFileToSupabase, getSupabaseClient } from '../lib/supabase';
+import {
+  uploadReceiptFileToSupabase,
+  getSupabaseClient,
+  fetchSupabaseApplications,
+  testSupabaseLiveConnection,
+  updateSupabaseApplicationStatus
+} from '../lib/supabase';
 import { getFormEndpoint, setFormEndpoint } from '../lib/getform';
 import { collection, onSnapshot, doc, updateDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -58,7 +64,8 @@ import {
   Unlock,
   ShieldAlert,
   Globe,
-  Radio
+  Radio,
+  AlertCircle
 } from 'lucide-react';
 import WhatsAppBroadcaster from './WhatsAppBroadcaster';
 
@@ -131,6 +138,26 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   const [getformEndpointInput, setGetformEndpointInput] = useState<string>(() => getFormEndpoint());
   const [getformTestResult, setGetformTestResult] = useState<{ status: 'idle' | 'testing' | 'success' | 'error'; message?: string }>({ status: 'idle' });
 
+  // Supabase Live Sync & Diagnostics States
+  const [supabaseSyncStatus, setSupabaseSyncStatus] = useState<{
+    loading: boolean;
+    lastSyncedAt?: string;
+    error?: string;
+    count?: number;
+  } | null>(null);
+  const [supabaseSyncError, setSupabaseSyncError] = useState<string | null>(null);
+  const [supabaseDiagnostic, setSupabaseDiagnostic] = useState<{
+    running: boolean;
+    result?: any;
+    testedAt?: string;
+  } | null>(null);
+
+  // References to keep data maps in sync across all providers
+  const serverApiMapRef = useRef<Map<string, any>>(new Map());
+  const firestoreAppsMapRef = useRef<Map<string, any>>(new Map());
+  const firestoreAptsMapRef = useRef<Map<string, any>>(new Map());
+  const supabaseMapRef = useRef<Map<string, any>>(new Map());
+
   const handleTestGetformEndpoint = async () => {
     setGetformTestResult({ status: 'testing' });
     const cleanUrl = getformEndpointInput.trim();
@@ -166,6 +193,31 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       setGetformTestResult({
         status: 'error',
         message: `Network error or CORS notice testing endpoint: ${err?.message || String(err)}. URL saved successfully.`
+      });
+    }
+  };
+
+  const runSupabaseDiagnosticTest = async () => {
+    setSupabaseDiagnostic({ running: true });
+    try {
+      const res = await testSupabaseLiveConnection();
+      setSupabaseDiagnostic({
+        running: false,
+        result: res,
+        testedAt: new Date().toLocaleTimeString()
+      });
+    } catch (e: any) {
+      setSupabaseDiagnostic({
+        running: false,
+        result: {
+          overallStatus: 'error',
+          supabaseUrl: 'https://yvxqyczeavhfwxxjxwgl.supabase.co',
+          tableAccess: { success: false, message: e?.message || String(e) },
+          columnsStatus: { fullSchema: false, message: 'Diagnostic test failed' },
+          storageAccess: { success: false, message: 'Diagnostic test failed' },
+          rawErrors: [e?.message || String(e)]
+        },
+        testedAt: new Date().toLocaleTimeString()
       });
     }
   };
@@ -286,11 +338,6 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     let unsubApps: (() => void) | null = null;
     let unsubApts: (() => void) | null = null;
 
-    const serverApiMap = new Map<string, any>();
-    const firestoreAppsMap = new Map<string, any>();
-    const firestoreAptsMap = new Map<string, any>();
-    const supabaseMap = new Map<string, any>();
-
     const updateCombinedApplications = () => {
       let localApps: any[] = [];
       let web3Apps: any[] = [];
@@ -305,13 +352,21 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       [
         ...web3Apps,
         ...localApps,
-        ...Array.from(serverApiMap.values()),
-        ...Array.from(firestoreAppsMap.values()),
-        ...Array.from(firestoreAptsMap.values()),
-        ...Array.from(supabaseMap.values())
+        ...Array.from(serverApiMapRef.current.values()),
+        ...Array.from(firestoreAppsMapRef.current.values()),
+        ...Array.from(firestoreAptsMapRef.current.values()),
+        ...Array.from(supabaseMapRef.current.values())
       ].forEach((app) => {
         if (!app) return;
-        const key = app.appId || app.id || app.token || app.tokenNo;
+        const key =
+          app.token_id ||
+          app.appId ||
+          app.id ||
+          app.token ||
+          app.tokenNo ||
+          app.payload?.appId ||
+          app.payload?.token;
+
         if (key) {
           const existing = map.get(key) || {};
 
@@ -320,12 +375,24 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
             try {
               const raw = typeof app.document_urls === 'string' ? JSON.parse(app.document_urls) : app.document_urls;
               if (Array.isArray(raw)) {
-                parsedDocUrls = raw.map((u: string, idx: number) => ({
-                  id: `supa-doc-${idx}`,
-                  name: `Uploaded Document ${idx + 1}`,
-                  url: u,
-                  dataUrl: u
-                }));
+                parsedDocUrls = raw.map((u: any, idx: number) => {
+                  if (typeof u === 'string') {
+                    return {
+                      id: `supa-doc-${idx}`,
+                      name: `Uploaded Document ${idx + 1}`,
+                      url: u,
+                      dataUrl: u
+                    };
+                  }
+                  return {
+                    id: u.id || `supa-doc-${idx}`,
+                    name: u.name || `Uploaded Document ${idx + 1}`,
+                    url: u.url || u.dataUrl || '',
+                    dataUrl: u.url || u.dataUrl || '',
+                    size: u.size || 0,
+                    type: u.type || 'application/octet-stream'
+                  };
+                });
               }
             } catch (e) {}
           }
@@ -337,6 +404,8 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
             if (app.documents.some((d: any) => d.dataUrl || d.url) || mergedDocs.length === 0) {
               mergedDocs = app.documents;
             }
+          } else if (Array.isArray(app.payload?.documents) && app.payload.documents.length > 0) {
+            mergedDocs = app.payload.documents;
           }
 
           const getPriority = (st?: string) => {
@@ -344,35 +413,112 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
             const l = st.toLowerCase();
             if (l.includes('completed')) return 3;
             if (l.includes('approved') || l.includes('process') || l.includes('reject')) return 2;
-            if (l.includes('pending')) return 1;
+            if (l.includes('pending') || l.includes('registered')) return 1;
             return 1;
           };
 
           const existingPriority = getPriority(existing.status);
-          const newPriority = getPriority(app.status);
+          const newPriority = getPriority(app.status || app.payload?.status);
 
           let resolvedStatus = existing.status || 'Pending';
-          if (newPriority >= existingPriority && app.status) {
-            resolvedStatus = app.status;
+          if (newPriority >= existingPriority && (app.status || app.payload?.status)) {
+            resolvedStatus = app.status || app.payload?.status;
           }
+          if (resolvedStatus.toLowerCase() === 'registered') {
+            resolvedStatus = 'Pending';
+          }
+
+          const resolvedTokenId =
+            app.token_id ||
+            app.appId ||
+            app.payload?.appId ||
+            app.payload?.token ||
+            existing.appId ||
+            (app.id && String(app.id).length < 25 ? app.id : `CSC-${String(app.id).slice(0, 8)}`);
 
           map.set(key, {
             ...existing,
             ...app,
-            appId: app.appId || existing.appId || key,
+            appId: resolvedTokenId,
             id: app.id || existing.id || key,
-            name: app.name || app.customerName || app.applicantName || app.full_name || existing.name || 'N/A',
-            phone: app.phone || app.phoneNumber || app.whatsapp_number || app.mobile || existing.phone || 'N/A',
-            email: app.email || app.emailAddress || app.email_address || existing.email || 'N/A',
-            service: app.service || app.selectedService || app.service_selected || app.eService || existing.service || 'General Service',
+            supabaseId: (app.id && String(app.id).includes('-')) ? app.id : existing.supabaseId,
+            name:
+              app.full_name ||
+              app.name ||
+              app.customerName ||
+              app.applicantName ||
+              app.payload?.customerName ||
+              app.payload?.applicantName ||
+              existing.name ||
+              'N/A',
+            phone:
+              app.whatsapp_number ||
+              app.phone ||
+              app.phoneNumber ||
+              app.mobile ||
+              app.payload?.phoneNumber ||
+              existing.phone ||
+              'N/A',
+            email:
+              app.email_address ||
+              app.email ||
+              app.emailAddress ||
+              app.payload?.emailAddress ||
+              existing.email ||
+              'N/A',
+            service:
+              app.service_selected ||
+              app.service ||
+              app.selectedService ||
+              app.eService ||
+              app.payload?.selectedService ||
+              existing.service ||
+              'General Service',
             documents: mergedDocs,
-            uploadedDocuments: (app.uploadedDocuments && app.uploadedDocuments.length > 0) ? app.uploadedDocuments : (existing.uploadedDocuments || []),
-            paymentMode: app.paymentMode || existing.paymentMode || 'cash',
-            utrNumber: app.utrNumber || existing.utrNumber || 'N/A',
-            totalAmount: app.totalAmount || existing.totalAmount || 0,
-            submittedAt: app.createdAt || app.submittedAt || app.created_at || app.appointmentTime || app.date || existing.submittedAt || 'Recent',
-            updatedAt: app.updatedAt || app.statusUpdatedAt || existing.updatedAt || null,
-            finalReceiptUrl: app.finalReceiptUrl || existing.finalReceiptUrl || null,
+            uploadedDocuments:
+              (app.uploadedDocuments && app.uploadedDocuments.length > 0)
+                ? app.uploadedDocuments
+                : (existing.uploadedDocuments || []),
+            paymentMode:
+              app.payment_mode ||
+              app.paymentMode ||
+              app.payload?.paymentMode ||
+              existing.paymentMode ||
+              'cash',
+            utrNumber:
+              app.utr_number ||
+              app.utrNumber ||
+              app.payload?.utrNumber ||
+              existing.utrNumber ||
+              'N/A',
+            totalAmount:
+              Number(app.total_amount) ||
+              Number(app.totalAmount) ||
+              Number(app.payload?.totalAmount) ||
+              existing.totalAmount ||
+              0,
+            userCategory:
+              app.user_category ||
+              app.userCategory ||
+              app.payload?.userCategory ||
+              existing.userCategory ||
+              'General/OBC',
+            submittedAt:
+              app.created_at ||
+              app.createdAt ||
+              app.submittedAt ||
+              app.payload?.submittedAt ||
+              existing.submittedAt ||
+              'Recent',
+            updatedAt:
+              app.updatedAt ||
+              app.statusUpdatedAt ||
+              existing.updatedAt ||
+              null,
+            finalReceiptUrl:
+              app.finalReceiptUrl ||
+              existing.finalReceiptUrl ||
+              null,
             status: resolvedStatus
           });
         }
@@ -403,7 +549,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
             list.forEach((item: any) => {
               const key = item.appId || item.id || item.token;
               if (key) {
-                serverApiMap.set(key, item);
+                serverApiMapRef.current.set(key, item);
                 serverKeys.add(key);
               }
             });
@@ -451,7 +597,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                     body: JSON.stringify(syncPayload)
                   }).then(() => {
                     serverKeys.add(key);
-                    serverApiMap.set(key, syncPayload);
+                    serverApiMapRef.current.set(key, syncPayload);
                     updateCombinedApplications();
                   }).catch(() => {});
                 }
@@ -464,8 +610,70 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         .catch(err => console.warn('Server API fetch warning:', err));
     };
 
+    // Dedicated Supabase Data Fetcher (ORDER BY created_at DESC)
+    const fetchSupabaseData = async (showToast = false) => {
+      setSupabaseSyncStatus(prev => ({ ...(prev || {}), loading: true }));
+      try {
+        const res = await fetchSupabaseApplications();
+        if (res.error) {
+          console.warn('Supabase fetch notice:', res.error);
+          setSupabaseSyncStatus({
+            loading: false,
+            error: res.error,
+            lastSyncedAt: new Date().toLocaleTimeString()
+          });
+          if (showToast) {
+            setSupabaseSyncError(`Supabase Sync Notice: ${res.error}`);
+            setTimeout(() => setSupabaseSyncError(null), 7000);
+          }
+        } else {
+          setSupabaseSyncError(null);
+          supabaseMapRef.current.clear();
+          (res.data || []).forEach((row: any) => {
+            const key =
+              row.token_id ||
+              row.appId ||
+              row.payload?.appId ||
+              row.payload?.token ||
+              row.id;
+            if (key) {
+              supabaseMapRef.current.set(key, row);
+            }
+          });
+          updateCombinedApplications();
+          setSupabaseSyncStatus({
+            loading: false,
+            count: res.data?.length || 0,
+            lastSyncedAt: new Date().toLocaleTimeString()
+          });
+          if (showToast) {
+            setActionSuccess(`Synced latest ${res.data?.length || 0} application(s) from Supabase!`);
+            setTimeout(() => setActionSuccess(null), 3500);
+          }
+        }
+      } catch (err: any) {
+        const msg = err?.message || String(err);
+        setSupabaseSyncStatus({
+          loading: false,
+          error: msg,
+          lastSyncedAt: new Date().toLocaleTimeString()
+        });
+        if (showToast) {
+          setSupabaseSyncError(`Supabase connection error: ${msg}`);
+          setTimeout(() => setSupabaseSyncError(null), 7000);
+        }
+      }
+    };
+
+    // Store fetch helpers in ref for external button triggers (e.g. Refresh button)
+    (window as any).__csc_refresh_supabase = fetchSupabaseData;
+    (window as any).__csc_refresh_server = fetchServerAppointments;
+
     // Initial fetch from Server API
     fetchServerAppointments();
+
+    // Initial fetch from Supabase
+    fetchSupabaseData(false);
 
     // SSE Real-Time Stream Connection for 0ms multi-device live sync
     let sseSource: EventSource | null = null;
@@ -476,6 +684,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           const msg = JSON.parse(evt.data);
           if (msg && msg.type) {
             fetchServerAppointments();
+            fetchSupabaseData(false);
           }
         } catch (e) {}
       };
@@ -483,25 +692,16 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       console.warn('SSE stream init notice:', e);
     }
 
-    // Poll Server API every 3 seconds as a background fallback
-    const pollInterval = setInterval(fetchServerAppointments, 3000);
+    // Poll Server API & Supabase in background fallback
+    const pollInterval = setInterval(() => {
+      fetchServerAppointments();
+    }, 6000);
 
     let supabaseChannel: any = null;
     const supabaseClient = getSupabaseClient();
 
     if (supabaseClient) {
       try {
-        // Initial fetch from Supabase
-        supabaseClient.from('applications').select('*').then(({ data, error }) => {
-          if (data && !error) {
-            data.forEach((app: any) => {
-              const key = app.appId || app.id || app.token;
-              if (key) supabaseMap.set(key, app);
-            });
-            updateCombinedApplications();
-          }
-        });
-
         // Realtime postgres_changes listener for Supabase
         supabaseChannel = supabaseClient
           .channel('realtime-staff-portal-apps')
@@ -511,16 +711,24 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
             (payload) => {
               if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
                 const newApp = payload.new;
-                const key = newApp.appId || newApp.id || newApp.token;
+                const key =
+                  newApp.token_id ||
+                  newApp.appId ||
+                  newApp.id ||
+                  newApp.token;
                 if (key) {
-                  supabaseMap.set(key, newApp);
+                  supabaseMapRef.current.set(key, newApp);
                   updateCombinedApplications();
                 }
               } else if (payload.eventType === 'DELETE') {
                 const oldApp = payload.old;
-                const key = oldApp.appId || oldApp.id || oldApp.token;
+                const key =
+                  oldApp.token_id ||
+                  oldApp.appId ||
+                  oldApp.id ||
+                  oldApp.token;
                 if (key) {
-                  supabaseMap.delete(key);
+                  supabaseMapRef.current.delete(key);
                   updateCombinedApplications();
                 }
               }
@@ -550,7 +758,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           const app = event.data.payload;
           const key = app.appId || app.id || app.token;
           if (key) {
-            serverApiMap.set(key, app);
+            serverApiMapRef.current.set(key, app);
           }
         }
         updateCombinedApplications();
@@ -564,23 +772,23 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       let aptsCache: any[] = [];
 
       const publishCombinedData = () => {
-        firestoreAppsMap.clear();
-        firestoreAptsMap.clear();
+        firestoreAppsMapRef.current.clear();
+        firestoreAptsMapRef.current.clear();
 
         // Add applications to map
         appsCache.forEach((app) => {
           const key = app.appId || app.id || app.token;
-          if (key) firestoreAppsMap.set(key, app);
+          if (key) firestoreAppsMapRef.current.set(key, app);
         });
 
         // Merge appointments (combining fields if same ID exists)
         aptsCache.forEach((apt) => {
           const key = apt.appId || apt.id || apt.token;
           if (key) {
-            if (firestoreAppsMap.has(key)) {
-              firestoreAppsMap.set(key, { ...firestoreAppsMap.get(key), ...apt });
+            if (firestoreAppsMapRef.current.has(key)) {
+              firestoreAppsMapRef.current.set(key, { ...firestoreAppsMapRef.current.get(key), ...apt });
             } else {
-              firestoreAptsMap.set(key, apt);
+              firestoreAptsMapRef.current.set(key, apt);
             }
           }
         });
@@ -730,15 +938,10 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       body: JSON.stringify({ status: newStatus })
     }).catch(err => console.warn('Server status update warning:', err));
 
-    const sb = getSupabaseClient();
-    if (sb) {
-      (async () => {
-        try {
-          await sb.from('applications').update(updatePayload).or(`appId.eq.${appId},id.eq.${appId}`);
-        } catch (err) {
-          console.warn('Supabase status update warning:', err);
-        }
-      })();
+    try {
+      await updateSupabaseApplicationStatus(appId, newStatus);
+    } catch (err) {
+      console.warn('Supabase status update error:', err);
     }
 
     setActionSuccess(`Status updated to ${newStatus}`);
@@ -781,6 +984,14 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
       // Fallback API delete
       fetch(`/api/appointments/${appId}`, { method: 'DELETE' }).catch(() => {});
+
+      // Supabase table delete
+      try {
+        const sb = getSupabaseClient();
+        if (sb) {
+          sb.from('applications').delete().or(`token_id.eq.${appId},id.eq.${appId}`).then(null, () => {});
+        }
+      } catch {}
 
       setActionSuccess(`Application ${appId} permanently removed.`);
       setTimeout(() => setActionSuccess(null), 3000);
@@ -1049,25 +1260,26 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     if (filterStatus === 'all') return matchesQuery;
 
     const statusStr = (app.status || 'Pending').toLowerCase();
-    const modeStr = (app.paymentMode || '').toLowerCase();
+    const modeStr = (app.paymentMode || app.payment_mode || '').toLowerCase();
+    const utrStr = (app.utrNumber || app.utr_number || '').trim();
 
     if (filterStatus === 'online') {
-      return matchesQuery && (modeStr === 'online' || modeStr === 'upi' || statusStr.includes('online') || statusStr.includes('upi'));
+      return matchesQuery && (modeStr === 'online' || modeStr === 'upi' || statusStr.includes('online') || statusStr.includes('upi') || (utrStr !== '' && utrStr !== 'N/A' && utrStr !== 'none'));
     }
     if (filterStatus === 'cash') {
-      return matchesQuery && (modeStr === 'cash' || statusStr.includes('cash'));
+      return matchesQuery && (modeStr === 'cash' || modeStr.includes('counter') || modeStr.includes('desk') || modeStr.includes('pay at csc') || statusStr.includes('cash'));
     }
     if (filterStatus === 'pending') {
-      return matchesQuery && (statusStr.includes('pending') || !app.status);
+      return matchesQuery && (statusStr.includes('pending') || statusStr.includes('registered') || !app.status);
     }
     if (filterStatus === 'approved') {
-      return matchesQuery && (statusStr.includes('approved') || statusStr.includes('process') || statusStr.includes('under'));
+      return matchesQuery && (statusStr.includes('approved') || statusStr.includes('process') || statusStr.includes('under') || statusStr.includes('verif'));
     }
     if (filterStatus === 'completed') {
       return matchesQuery && (statusStr.includes('completed') || statusStr.includes('done') || statusStr.includes('paid'));
     }
     if (filterStatus === 'rejected') {
-      return matchesQuery && statusStr.includes('reject');
+      return matchesQuery && (statusStr.includes('reject') || statusStr.includes('cancel'));
     }
 
     return matchesQuery;
@@ -1203,27 +1415,32 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
         <div className="flex items-center gap-2 shrink-0">
           <button
-            onClick={() => {
+            onClick={async () => {
               setLoading(true);
               window.dispatchEvent(new Event('csc_appointment_updated'));
-              fetch('/api/appointments')
-                .then(res => res.json())
-                .catch(console.error)
-                .finally(() => {
-                  setTimeout(() => setLoading(false), 400);
-                });
+              if ((window as any).__csc_refresh_server) {
+                (window as any).__csc_refresh_server();
+              }
+              if ((window as any).__csc_refresh_supabase) {
+                await (window as any).__csc_refresh_supabase(true);
+              }
+              setTimeout(() => setLoading(false), 300);
             }}
             className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-white/10 cursor-pointer"
-            title="Refresh Data & Sync Supabase Database"
+            title="Refresh Data & Sync Directly from Supabase (ORDER BY created_at DESC)"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading || supabaseSyncStatus?.loading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </button>
 
           <button
-            onClick={() => setShowGetformModal(true)}
+            onClick={() => {
+              setShowGetformModal(true);
+              setSnippetTab('supabase');
+              runSupabaseDiagnosticTest();
+            }}
             className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-md cursor-pointer border border-emerald-400/30"
-            title="Supabase Backend, Getform.io & Formspree Integration Suite & Code Generator"
+            title="Supabase Backend, Live Diagnostics & SQL Setup"
           >
             <Database className="w-3.5 h-3.5 text-emerald-200" />
             <span>Supabase / Form Backend</span>
@@ -1253,6 +1470,21 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         <div className="p-3 bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800 rounded-xl text-emerald-700 dark:text-emerald-300 text-xs font-bold flex items-center gap-2 animate-fade-in">
           <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600" />
           <span>{actionSuccess}</span>
+        </div>
+      )}
+
+      {supabaseSyncError && (
+        <div className="p-3 bg-rose-50 dark:bg-rose-950/80 border border-rose-300 dark:border-rose-800 rounded-xl text-rose-700 dark:text-rose-300 text-xs font-bold flex items-center justify-between gap-2 animate-fade-in">
+          <div className="flex items-center gap-2 min-w-0">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+            <span className="truncate">{supabaseSyncError}</span>
+          </div>
+          <button
+            onClick={() => setSupabaseSyncError(null)}
+            className="p-1 hover:bg-rose-200 dark:hover:bg-rose-900 rounded-lg text-rose-600 dark:text-rose-400 cursor-pointer shrink-0"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 
@@ -1669,7 +1901,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                 <IndianRupee className="w-3 h-3" /> Total Revenue
               </span>
               <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono mt-1 block">
-                ₹{applications.reduce((acc, a) => acc + (Number(a.totalAmount) || 0), 0)}
+                ₹{applications.reduce((acc, a) => acc + (Number(a.totalAmount) || Number(a.total_amount) || Number(a.payload?.totalAmount) || 0), 0)}
               </span>
             </div>
 
@@ -1678,7 +1910,12 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                 UPI Paid (Online)
               </span>
               <span className="text-2xl font-black text-amber-600 dark:text-amber-400 font-mono mt-1 block">
-                {applications.filter(a => a.paymentMode === 'online').length}
+                {applications.filter(a => {
+                  const mode = (a.paymentMode || a.payment_mode || '').toLowerCase();
+                  const st = (a.status || '').toLowerCase();
+                  const utr = (a.utrNumber || a.utr_number || '').trim();
+                  return mode === 'online' || mode === 'upi' || st.includes('online') || st.includes('upi') || (utr !== '' && utr !== 'N/A' && utr !== 'none');
+                }).length}
               </span>
             </div>
 
@@ -1687,7 +1924,11 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                 Cash Counter
               </span>
               <span className="text-2xl font-black text-blue-600 dark:text-blue-400 font-mono mt-1 block">
-                {applications.filter(a => a.paymentMode === 'cash').length}
+                {applications.filter(a => {
+                  const mode = (a.paymentMode || a.payment_mode || '').toLowerCase();
+                  const st = (a.status || '').toLowerCase();
+                  return mode === 'cash' || mode.includes('counter') || mode.includes('desk') || mode.includes('pay at csc') || st.includes('cash');
+                }).length}
               </span>
             </div>
 
@@ -1696,7 +1937,13 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                 Uploaded Docs Total
               </span>
               <span className="text-2xl font-black text-purple-600 dark:text-purple-400 font-mono mt-1 block">
-                {applications.reduce((acc, app) => acc + (app.documents?.length || app.uploadedDocuments?.length || 0), 0)}
+                {applications.reduce((acc, app) => {
+                  const docLen = Array.isArray(app.documents) ? app.documents.length : 0;
+                  const upDocLen = Array.isArray(app.uploadedDocuments) ? app.uploadedDocuments.length : 0;
+                  let urlDocLen = 0;
+                  if (Array.isArray(app.document_urls)) urlDocLen = app.document_urls.length;
+                  return acc + Math.max(docLen, upDocLen, urlDocLen, (app.mandatoryDocName ? 1 : 0));
+                }, 0)}
               </span>
             </div>
           </div>
@@ -2562,6 +2809,111 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   </div>
                 </div>
 
+                {snippetTab === 'supabase' && (
+                  <div className="p-4 bg-slate-900 border border-indigo-500/30 rounded-2xl text-white space-y-3 shadow-md">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-xl">
+                          <Database className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h5 className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+                            <span>Live Supabase Diagnostics</span>
+                            {supabaseDiagnostic?.result?.overallStatus === 'connected' ? (
+                              <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded-full text-[9px] font-mono">
+                                ● Connected &amp; Ready
+                              </span>
+                            ) : supabaseDiagnostic?.result?.overallStatus === 'partially_configured' ? (
+                              <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 rounded-full text-[9px] font-mono">
+                                ⚠ Action Recommended
+                              </span>
+                            ) : supabaseDiagnostic?.result?.overallStatus === 'error' ? (
+                              <span className="px-2 py-0.5 bg-rose-500/20 text-rose-300 border border-rose-500/40 rounded-full text-[9px] font-mono">
+                                ✕ Error Detected
+                              </span>
+                            ) : null}
+                          </h5>
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            Endpoint: https://yvxqyczeavhfwxxjxwgl.supabase.co
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={runSupabaseDiagnosticTest}
+                        disabled={supabaseDiagnostic?.running}
+                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${supabaseDiagnostic?.running ? 'animate-spin' : ''}`} />
+                        <span>{supabaseDiagnostic?.running ? 'Testing Supabase...' : 'Run Live Diagnostic Test'}</span>
+                      </button>
+                    </div>
+
+                    {supabaseDiagnostic?.result && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        <div className="p-2.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-400 font-bold text-[11px]">Database Table (public.applications):</span>
+                            {supabaseDiagnostic.result.tableAccess.success ? (
+                              <span className="text-emerald-400 font-bold text-[10px] flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Readable ({supabaseDiagnostic.result.tableAccess.rowsCount || 0} rows)
+                              </span>
+                            ) : (
+                              <span className="text-rose-400 font-bold text-[10px] flex items-center gap-1">
+                                <XCircle className="w-3.5 h-3.5" /> Blocked / Error
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-slate-300">
+                            {supabaseDiagnostic.result.tableAccess.message}
+                          </p>
+                        </div>
+
+                        <div className="p-2.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-400 font-bold text-[11px]">Storage Bucket ('documents'):</span>
+                            {supabaseDiagnostic.result.storageAccess.success ? (
+                              <span className="text-emerald-400 font-bold text-[10px] flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Live &amp; Writable
+                              </span>
+                            ) : (
+                              <span className="text-rose-400 font-bold text-[10px] flex items-center gap-1">
+                                <XCircle className="w-3.5 h-3.5" /> Bucket Missing
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-slate-300">
+                            {supabaseDiagnostic.result.storageAccess.message}
+                          </p>
+                        </div>
+
+                        <div className="p-2.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-1 sm:col-span-2">
+                          <span className="text-slate-400 font-bold text-[11px] block">Table Columns Schema Status:</span>
+                          <p className="text-[11px] text-slate-300">
+                            {supabaseDiagnostic.result.columnsStatus.message}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {supabaseDiagnostic?.result?.rawErrors && supabaseDiagnostic.result.rawErrors.length > 0 && (
+                      <div className="p-3 bg-rose-950/60 border border-rose-800 rounded-xl space-y-1 text-xs">
+                        <span className="font-bold text-rose-300 block flex items-center gap-1">
+                          <AlertCircle className="w-4 h-4 text-rose-400" />
+                          <span>Exact Supabase Error Details:</span>
+                        </span>
+                        {supabaseDiagnostic.result.rawErrors.map((err: string, i: number) => (
+                          <p key={i} className="text-rose-200 font-mono text-[11px]">{err}</p>
+                        ))}
+                        <p className="text-amber-300 text-[11px] pt-1 font-bold">
+                          👉 Fix: Switch to the "Supabase SQL Editor Setup" tab above and run the SQL script in your Supabase dashboard to allow all permissions and add missing columns!
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <p className="text-xs text-slate-600 dark:text-slate-400">
                   {snippetTab === 'getform'
                     ? 'Copy and paste this clean Getform.io / Formspree form code with multipart document support into your website frontend:'
@@ -2774,11 +3126,11 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   });
 </script>`
   : `-- ==============================================================================
--- SUPABASE BACKEND SETUP SCRIPT FOR CSC APPLICATION PORTAL
--- Run this script in your Supabase SQL Editor (https://supabase.com/dashboard)
+-- SUPABASE BACKEND SETUP SCRIPT FOR CSC APPLICATION PORTAL (cscdost.com)
+-- Run this in your Supabase SQL Editor: https://supabase.com/dashboard/project/_/sql
 -- ==============================================================================
 
--- 1. Create the "applications" table for storing submissions
+-- 1. Create or Upgrade the "applications" table
 CREATE TABLE IF NOT EXISTS public.applications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -2789,10 +3141,23 @@ CREATE TABLE IF NOT EXISTS public.applications (
     document_urls JSONB DEFAULT '[]'::jsonb
 );
 
--- 2. Enable Row Level Security (RLS) on the applications table
+-- 2. Add rich workflow columns if they don't exist yet (idempotent migration)
+ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS token_id TEXT;
+ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'Pending';
+ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS payment_mode TEXT DEFAULT 'cash';
+ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS utr_number TEXT DEFAULT 'N/A';
+ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS total_amount NUMERIC DEFAULT 0;
+ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS user_category TEXT DEFAULT 'General/OBC';
+ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS payload JSONB DEFAULT '{}'::jsonb;
+
+-- Optional index for faster token lookup and date sorting
+CREATE INDEX IF NOT EXISTS idx_applications_created_at ON public.applications (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_applications_token_id ON public.applications (token_id);
+
+-- 3. Enable Row Level Security (RLS)
 ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
 
--- 3. Create RLS Policies for public insert & select on applications
+-- 4. RLS Policies: Allow public anonymous submissions, staff dashboard selects & status updates
 DROP POLICY IF EXISTS "Allow public insert to applications" ON public.applications;
 CREATE POLICY "Allow public insert to applications"
 ON public.applications
@@ -2807,12 +3172,37 @@ FOR SELECT
 TO public
 USING (true);
 
--- 4. Create public storage bucket named "documents" for document uploads
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('documents', 'documents', true)
-ON CONFLICT (id) DO NOTHING;
+DROP POLICY IF EXISTS "Allow public update applications" ON public.applications;
+CREATE POLICY "Allow public update applications"
+ON public.applications
+FOR UPDATE
+TO public
+USING (true)
+WITH CHECK (true);
 
--- 5. RLS Policies for storage.objects (storage.objects already has RLS enabled by default in Supabase)
+-- 5. Realtime replication setup (allows live updates without manual refresh)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' 
+      AND schemaname = 'public' 
+      AND tablename = 'applications'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.applications;
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN
+    -- In case supabase_realtime publication is managed by supabase dashboard
+    NULL;
+END $$;
+
+-- 6. Storage Bucket setup for uploaded documents
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('documents', 'documents', true, 52428800, NULL)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- 7. Storage RLS Policies (Allow document upload and reading)
 DROP POLICY IF EXISTS "Allow public insert into documents bucket" ON storage.objects;
 CREATE POLICY "Allow public insert into documents bucket"
 ON storage.objects
@@ -2824,6 +3214,13 @@ DROP POLICY IF EXISTS "Allow public select from documents bucket" ON storage.obj
 CREATE POLICY "Allow public select from documents bucket"
 ON storage.objects
 FOR SELECT
+TO public
+USING (bucket_id = 'documents');
+
+DROP POLICY IF EXISTS "Allow public update in documents bucket" ON storage.objects;
+CREATE POLICY "Allow public update in documents bucket"
+ON storage.objects
+FOR UPDATE
 TO public
 USING (bucket_id = 'documents');`}
                   </pre>

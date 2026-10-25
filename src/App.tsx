@@ -7,6 +7,7 @@ import { SERVICES_LIST, ServiceItem } from './servicesData';
 import { MessageSquare, ArrowLeft, Share2, X, MessageCircle, Copy, Check } from 'lucide-react';
 
 // Route-Level & Component-Level Lazy Loading (Code Splitting)
+const PortalHomepage = lazy(() => import('./components/PortalHomepage'));
 const SarkariResultDesk = lazy(() => import('./components/SarkariResultDesk'));
 const SarkariDedicatedPageView = lazy(() => import('./components/SarkariDedicatedPageView'));
 const ServiceDedicatedPageView = lazy(() => import('./components/ServiceDedicatedPageView'));
@@ -473,7 +474,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between font-sans transition-colors duration-300 w-full max-w-full overflow-x-hidden">
+    <div className="min-h-screen bg-[#F7F9FC] text-[#172033] flex flex-col justify-between font-sans transition-colors duration-300 w-full max-w-full overflow-x-hidden">
       
       {/* Top Navigation Panel */}
       <Navbar
@@ -563,29 +564,52 @@ export default function App() {
           </div>
         ) : (
           /* PUBLIC VISITOR INTERFACE */
-          <div className="animate-fade-in space-y-4 md:space-y-6 w-full">
-            {/* Sarkari Result Bulletin Board at top */}
-            <Suspense fallback={<SectionSkeleton height="min-h-[480px]" title="Loading Sarkari Results & Booking Desk..." />}>
-              <SarkariResultDesk 
-                onApplyService={handleServiceSelect} 
-                selectedService={selectedService}
-                onOpenDedicatedPage={handleOpenJobPage}
+          <div className="animate-fade-in space-y-10 md:space-y-14 w-full">
+            
+            {/* Dedicated Modern Citizen Homepage Layout (Hero, Categories, Updates, Schemes, Recruitment, FAQs) */}
+            <Suspense fallback={<SectionSkeleton height="min-h-[520px]" title="Loading CSC DOST Citizen Portal..." />}>
+              <PortalHomepage
+                onOpenJob={handleOpenJobPage}
+                onOpenService={handleOpenServicePage}
+                onApplyService={handleServiceSelect}
+                onOpenGuide={(guideId) => {
+                  const el = document.getElementById('knowledge-hub');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                onOpenTrack={() => handleOpenTrackPage()}
+                onOpenLegal={openLegalModal}
               />
             </Suspense>
+
+            {/* Sarkari Result Deep Multi-Box Desk & Form Application Hub */}
+            <div id="sarkari-board" className="scroll-mt-20">
+              <Suspense fallback={<SectionSkeleton height="min-h-[480px]" title="Loading Sarkari Results & Booking Desk..." />}>
+                <SarkariResultDesk 
+                  onApplyService={handleServiceSelect} 
+                  selectedService={selectedService}
+                  onOpenDedicatedPage={handleOpenJobPage}
+                />
+              </Suspense>
+            </div>
 
             {/* Explore All Government & Digital Services Directory */}
-            <Suspense fallback={<SectionSkeleton height="min-h-[380px]" title="Loading Government & Digital Services Catalogue..." />}>
-              <ExploreServicesDesk 
-                onApplyService={handleServiceSelect} 
-                selectedService={selectedService}
-                onOpenDedicatedServicePage={handleOpenServicePage}
-              />
-            </Suspense>
+            <div id="services-catalogue" className="scroll-mt-20">
+              <Suspense fallback={<SectionSkeleton height="min-h-[380px]" title="Loading Government & Digital Services Catalogue..." />}>
+                <ExploreServicesDesk 
+                  onApplyService={handleServiceSelect} 
+                  selectedService={selectedService}
+                  onOpenDedicatedServicePage={handleOpenServicePage}
+                />
+              </Suspense>
+            </div>
 
-            {/* In-depth Citizen Guides & Scheme Knowledge Hub for AdSense & Citizen Awareness */}
-            <Suspense fallback={<SectionSkeleton height="min-h-[320px]" title="Loading Citizen Guides & Knowledge Hub..." />}>
-              <GuidesKnowledgeHub onSelectService={handleServiceSelect} />
-            </Suspense>
+            {/* In-depth Citizen Guides & Scheme Knowledge Hub */}
+            <div id="knowledge-hub" className="scroll-mt-20">
+              <Suspense fallback={<SectionSkeleton height="min-h-[320px]" title="Loading Citizen Guides & Knowledge Hub..." />}>
+                <GuidesKnowledgeHub onSelectService={handleServiceSelect} />
+              </Suspense>
+            </div>
+
           </div>
         )}
 

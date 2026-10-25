@@ -28,7 +28,7 @@ import { SARKARI_DATA, SarkariItem } from '../data/sarkariData';
 import { SERVICES_LIST, ServiceItem } from '../servicesData';
 import { UploadedDocument } from '../types';
 import { db } from '../lib/firebase';
-import { getSupabaseClient, uploadMultipleDocumentsToSupabase } from '../lib/supabase';
+import { getSupabaseClient, uploadMultipleDocumentsToSupabase, submitApplicationToSupabase } from '../lib/supabase';
 import { saveApplicationToFormEndpoint } from '../lib/getform';
 import { doc, setDoc } from 'firebase/firestore';
 
@@ -72,6 +72,12 @@ export default function ApplyDedicatedPageView({
     message?: string;
     directWhatsAppUrl?: string;
     error?: string;
+  } | null>(null);
+
+  // Supabase Live Sync Status & Diagnostics State
+  const [supabaseNotice, setSupabaseNotice] = useState<{
+    type: 'success' | 'warning' | 'error';
+    message: string;
   } | null>(null);
 
   const parseFeeString = (feeStr: string | undefined) => {
@@ -407,29 +413,51 @@ export default function ApplyDedicatedPageView({
         }).catch(() => {});
       } catch {}
 
-      // 3. Supabase Table
+      // 3. Supabase Direct Insertion & Storage Sync
       try {
-        const supabase = getSupabaseClient();
-        if (supabase) {
-          supabase.from('applications').upsert([{
-            appId: officialAppId,
-            id: officialAppId,
-            applicantName: formData.customerName,
-            customerName: formData.customerName,
-            phoneNumber: formData.phoneNumber,
-            emailAddress: formData.emailAddress || 'N/A',
-            selectedService: verifiedReceipt.selectedService,
-            userCategory: verifiedReceipt.userCategory,
-            paymentMode: 'Pay at CSC Desk Upon Completion',
-            utrNumber: 'N/A',
-            totalAmount: 0,
-            status: 'Registered',
-            submittedAt: nowIso,
-            documents: processedDocs,
-            payload
-          }], { onConflict: 'appId' }).then(null, () => {});
+        const supaRes = await submitApplicationToSupabase({
+          appId: officialAppId,
+          customerName: formData.customerName,
+          phoneNumber: formData.phoneNumber,
+          emailAddress: formData.emailAddress,
+          selectedService: verifiedReceipt.selectedService,
+          userCategory: verifiedReceipt.userCategory,
+          paymentMode: verifiedReceipt.paymentMode,
+          utrNumber: 'N/A',
+          totalAmount: 0,
+          status: 'Pending',
+          dateOfBirth: formData.dateOfBirth,
+          message: formData.additionalDetails,
+          mandatoryDocName: verifiedReceipt.mandatoryDocName,
+          submittedAt: nowIso
+        }, uploadedFiles);
+
+        if (supaRes.success) {
+          if (supaRes.warning) {
+            setSupabaseNotice({
+              type: 'warning',
+              message: supaRes.warning
+            });
+          } else {
+            setSupabaseNotice({
+              type: 'success',
+              message: 'Saved directly to live Supabase database & storage bucket!'
+            });
+          }
+        } else {
+          console.warn('Supabase submission notice:', supaRes.error);
+          setSupabaseNotice({
+            type: 'error',
+            message: `Supabase Error: ${supaRes.error || 'Connection notice'}`
+          });
         }
-      } catch {}
+      } catch (sbErr: any) {
+        console.warn('Supabase direct submission exception:', sbErr);
+        setSupabaseNotice({
+          type: 'error',
+          message: `Supabase Exception: ${sbErr?.message || String(sbErr)}`
+        });
+      }
 
       // 4. LocalStorage
       try {
@@ -976,6 +1004,27 @@ export default function ApplyDedicatedPageView({
                     <span className="text-emerald-700 font-bold">Pay Upon Completion at Desk</span>
                   </div>
                 </div>
+
+                {/* Supabase Real-Time Backend Status */}
+                {supabaseNotice && (
+                  <div className={`mt-3 p-3 rounded-xl border text-xs flex items-center gap-2 ${
+                    supabaseNotice.type === 'success'
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                      : supabaseNotice.type === 'warning'
+                      ? 'bg-amber-50 border-amber-200 text-amber-800'
+                      : 'bg-rose-50 border-rose-200 text-rose-800'
+                  }`}>
+                    {supabaseNotice.type === 'success' ? (
+                      <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <span className="font-bold block">Supabase Cloud Sync:</span>
+                      <span className="font-mono text-[11px]">{supabaseNotice.message}</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* WhatsApp Invoice Dispatch Notice */}
