@@ -1,33 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Search, 
-  Menu, 
-  X, 
-  ChevronDown, 
-  Lock, 
-  FileText, 
-  CreditCard, 
-  Fingerprint, 
-  BookOpen, 
-  Briefcase, 
-  Award, 
-  Info, 
-  Phone, 
-  ShieldCheck, 
-  ExternalLink,
-  GraduationCap,
-  Sparkles,
-  ArrowRight,
-  Wrench
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Menu,
+  X,
+  ChevronDown,
+  Search,
+  Lock,
+  ShieldCheck,
+  BookOpen,
+  Building2,
+  Phone,
+  FileSearch
 } from 'lucide-react';
-import { PolicyTab } from './PrivacyPolicyModal';
+import { LegalTab } from './PrivacyPolicyModal';
 
 interface NavbarProps {
   cafeName: string;
-  onOpenPrivacyPolicy?: (tab?: PolicyTab) => void;
+  onOpenPrivacyPolicy?: (tab?: LegalTab) => void;
   onOpenAdmin?: () => void;
   onHomeClick?: () => void;
-  onOpenService?: (serviceId: string) => void;
 }
 
 export default function Navbar({
@@ -35,271 +25,379 @@ export default function Navbar({
   onOpenPrivacyPolicy,
   onOpenAdmin,
   onHomeClick,
-  onOpenService
 }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeItem, setActiveItem] = useState('home');
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
 
+  // Close dropdown on click outside or Escape key
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setMoreDropdownOpen(false);
+      }
     };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMoreDropdownOpen(false);
+        if (mobileMenuOpen) {
+          setMobileMenuOpen(false);
+          mobileMenuButtonRef.current?.focus();
+        }
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [mobileMenuOpen]);
 
-  const triggerSearchFocus = () => {
+  const navigateToSection = (sectionId: string) => {
     setMobileMenuOpen(false);
-    window.dispatchEvent(new CustomEvent('focus-csc-search'));
-    const searchInput = document.getElementById('portal-universal-search') as HTMLInputElement | null;
-    if (searchInput) {
-      searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setTimeout(() => searchInput.focus(), 300);
-    }
-  };
+    setMoreDropdownOpen(false);
 
-  const navigateTo = (target: string) => {
-    setActiveItem(target);
-    setMobileMenuOpen(false);
-
-    if (target === 'home') {
+    if (
+      window.location.hash === '#tools' ||
+      window.location.hash.startsWith('#tools/') ||
+      window.location.hash.startsWith('#apply') ||
+      window.location.hash.startsWith('#track') ||
+      window.location.pathname !== '/'
+    ) {
       if (onHomeClick) onHomeClick();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
+      window.location.hash = '';
+      setTimeout(() => {
+        const el = document.getElementById(sectionId);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
+    } else {
+      const el = document.getElementById(sectionId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
-
-    if (target === 'tools') {
-      window.location.hash = '#tools';
-      return;
-    }
-
-    // Return to home view first if currently in another subview
-    if (onHomeClick) onHomeClick();
-
-    setTimeout(() => {
-      if (target === 'services') {
-        const el = document.getElementById('services-bento') || document.getElementById('services-catalogue');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-        return;
-      }
-
-      if (target === 'schemes') {
-        const el = document.getElementById('schemes-section');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-        return;
-      }
-
-      if (target === 'jobs') {
-        const el = document.getElementById('recruitment-section') || document.getElementById('sarkari-board');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-        return;
-      }
-
-      if (target === 'education') {
-        const el = document.getElementById('education-resources');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-        return;
-      }
-
-      if (target === 'contact') {
-        const el = document.getElementById('node-info') || document.getElementById('footer');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-        return;
-      }
-
-      if (target === 'apply') {
-        window.location.hash = '#apply';
-        return;
-      }
-
-      if (target === 'track') {
-        window.location.hash = '#track';
-        return;
-      }
-    }, 50);
   };
 
-  const navLinks = [
-    { id: 'home', label: 'Home' },
-    { id: 'services', label: 'Services' },
-    { id: 'tools', label: 'Online Tools' },
-    { id: 'schemes', label: 'Government Schemes' },
-    { id: 'jobs', label: 'Latest Jobs' },
-    { id: 'education', label: 'Education' },
-    { id: 'contact', label: 'Contact' },
-  ];
+  const handleOpenTools = () => {
+    setMobileMenuOpen(false);
+    setMoreDropdownOpen(false);
+    window.location.hash = '#tools';
+  };
+
+  const handleTrackApplication = () => {
+    setMobileMenuOpen(false);
+    setMoreDropdownOpen(false);
+    window.location.hash = '#track';
+  };
+
+  const handleLogoClick = () => {
+    setMobileMenuOpen(false);
+    setMoreDropdownOpen(false);
+    if (onHomeClick) {
+      onHomeClick();
+    } else {
+      window.location.hash = '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   return (
-    <header className="w-full sticky top-0 z-50 bg-white border-b border-[#E2E8F0] transition-shadow duration-200" style={{ boxShadow: isScrolled ? '0 4px 16px rgba(11, 31, 73, 0.08)' : 'none' }}>
-      
-      {/* Top Quiet Citizen Advisory Ribbon */}
-      <div className="bg-[#0B1F49] text-white text-[11px] sm:text-xs py-1.5 px-3 sm:px-6">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2 truncate">
-            <span className="font-bold text-[#F59E0B]">Independent Citizen Portal</span>
-            <span className="text-slate-400 hidden sm:inline">|</span>
-            <span className="text-slate-200 truncate">Digital Assistance, Official Recruitment Updates, Education &amp; Free Online Tools</span>
+    <header className="sticky top-0 z-50 w-full bg-white border-b border-[#E2E8F0] shadow-2xs">
+      {/* Compact Utility Strip */}
+      <div className="bg-[#102A43] text-slate-200 text-[11px] py-1.5 px-4 sm:px-6 border-b border-slate-800/80">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#60A5FA] shrink-0" aria-hidden="true" />
+            <span className="font-medium tracking-wide text-slate-100">
+              Independent Citizen Portal
+            </span>
+            <span className="hidden md:inline text-slate-400">
+              — Digital Service Assistance, Recruitment Notices &amp; Citizen Tools
+            </span>
           </div>
-          <div className="flex items-center gap-3 shrink-0 text-slate-300">
+
+          <div className="flex items-center gap-4">
             <button
-              onClick={() => navigateTo('track')}
-              className="hover:text-white transition-colors cursor-pointer font-medium"
+              type="button"
+              onClick={() => navigateToSection('centre-info')}
+              className="hidden sm:inline-flex items-center gap-1 text-slate-300 hover:text-white transition-colors cursor-pointer"
             >
-              Track Application
+              <span>Sangran Qazigund, Anantnag (J&amp;K)</span>
             </button>
-            <span className="text-slate-500">·</span>
             {onOpenAdmin && (
               <button
+                type="button"
                 onClick={onOpenAdmin}
-                className="hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1 font-medium text-[#F59E0B]"
-                title="Staff Operator Dashboard"
+                className="inline-flex items-center gap-1 text-slate-300 hover:text-white transition-colors cursor-pointer font-medium"
+                title="Authorized CSC Staff Login"
               >
-                <Lock className="w-3 h-3" />
-                <span className="hidden sm:inline">Staff Login</span>
+                <Lock className="w-3 h-3 text-slate-400" aria-hidden="true" />
+                <span>Staff Login</span>
               </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* Main Navigation Bar */}
+      {/* Main Compact Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
-        
-        {/* Brand Logo & Title */}
+        {/* Brand Logo linking to Home */}
         <button
           type="button"
-          onClick={() => navigateTo('home')}
-          className="flex items-center gap-3 text-left cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0759E8] rounded-lg p-1 -ml-1 shrink-0"
-          title="CSC DOST - Home"
+          onClick={handleLogoClick}
+          className="flex items-center gap-2.5 text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] rounded-xl p-1 -ml-1 cursor-pointer shrink-0"
+          aria-label={`${cafeName || 'CSC DOST'} - Go to Home`}
         >
           <img
             src="/favicon.svg"
-            alt="CSC DOST"
-            width="38"
-            height="38"
-            className="w-9 h-9 sm:w-10 sm:h-10 object-contain shrink-0"
+            alt="CSC DOST Logo"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl shrink-0 object-contain"
           />
-          <div className="leading-tight">
-            <span className="text-lg sm:text-xl font-black text-[#0B1F49] tracking-tight block">
-              CSC DOST
+          <div>
+            <span className="text-base sm:text-lg font-extrabold tracking-tight text-[#102A43] block leading-none">
+              CSC <span className="text-[#2563EB]">DOST</span>
             </span>
-            <span className="text-[10px] font-semibold text-[#64748B] block">
-              Digital Services &amp; Citizen Desk
+            <span className="text-[11px] text-[#64748B] font-medium block mt-0.5">
+              Citizen Service Portal
             </span>
           </div>
         </button>
 
-        {/* Desktop Navigation Links */}
-        <nav aria-label="Main Navigation" className="hidden lg:flex items-center gap-1 xl:gap-2">
-          {navLinks.map((link) => (
+        {/* Desktop Primary Navigation */}
+        <nav
+          aria-label="Main Navigation"
+          className="hidden lg:flex items-center gap-1 text-sm font-semibold text-[#102A43]"
+        >
+          <button
+            type="button"
+            onClick={() => navigateToSection('services')}
+            className="px-3 py-2 rounded-lg hover:bg-[#F6F8FC] hover:text-[#2563EB] transition-colors cursor-pointer"
+          >
+            Services
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigateToSection('recruitment-section')}
+            className="px-3 py-2 rounded-lg hover:bg-[#F6F8FC] hover:text-[#2563EB] transition-colors cursor-pointer"
+          >
+            Jobs
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigateToSection('schemes-section')}
+            className="px-3 py-2 rounded-lg hover:bg-[#F6F8FC] hover:text-[#2563EB] transition-colors cursor-pointer"
+          >
+            Schemes
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigateToSection('education-resources')}
+            className="px-3 py-2 rounded-lg hover:bg-[#F6F8FC] hover:text-[#2563EB] transition-colors cursor-pointer"
+          >
+            Education
+          </button>
+
+          <button
+            type="button"
+            onClick={handleOpenTools}
+            className="px-3 py-2 rounded-lg hover:bg-[#F6F8FC] hover:text-[#2563EB] transition-colors cursor-pointer"
+          >
+            Tools
+          </button>
+
+          {/* More Dropdown (Guides/Blog, About, Contact) */}
+          <div className="relative" ref={dropdownRef}>
             <button
-              key={link.id}
               type="button"
-              onClick={() => navigateTo(link.id)}
-              className={`px-3 py-1.5 text-[13px] font-bold rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
-                activeItem === link.id
-                  ? 'text-[#0759E8] bg-[#EAF4FF]'
-                  : 'text-[#14213D] hover:text-[#0759E8] hover:bg-[#F8FAFC]'
+              onClick={() => setMoreDropdownOpen((prev) => !prev)}
+              aria-expanded={moreDropdownOpen}
+              aria-haspopup="true"
+              className={`px-3 py-2 rounded-lg inline-flex items-center gap-1.5 transition-colors cursor-pointer ${
+                moreDropdownOpen
+                  ? 'bg-[#F6F8FC] text-[#2563EB]'
+                  : 'hover:bg-[#F6F8FC] hover:text-[#2563EB]'
               }`}
             >
-              {link.label}
+              <span>More</span>
+              <ChevronDown
+                className={`w-4 h-4 transition-transform duration-150 ${
+                  moreDropdownOpen ? 'rotate-180 text-[#2563EB]' : 'text-[#64748B]'
+                }`}
+              />
             </button>
-          ))}
+
+            {moreDropdownOpen && (
+              <div
+                role="menu"
+                aria-label="More pages"
+                className="absolute right-0 mt-1.5 w-52 bg-white border border-[#E2E8F0] rounded-xl shadow-lg py-1.5 z-50"
+              >
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => navigateToSection('knowledge-hub')}
+                  className="w-full px-4 py-2.5 text-left text-xs font-semibold text-[#102A43] hover:bg-[#F6F8FC] hover:text-[#2563EB] flex items-center gap-2.5 transition-colors cursor-pointer"
+                >
+                  <BookOpen className="w-4 h-4 text-[#2563EB]" />
+                  <div>
+                    <span className="block">Guides &amp; Blog</span>
+                    <span className="text-[11px] font-normal text-[#64748B]">Step-by-step scheme guides</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => navigateToSection('centre-info')}
+                  className="w-full px-4 py-2.5 text-left text-xs font-semibold text-[#102A43] hover:bg-[#F6F8FC] hover:text-[#2563EB] flex items-center gap-2.5 transition-colors cursor-pointer"
+                >
+                  <Building2 className="w-4 h-4 text-[#2563EB]" />
+                  <div>
+                    <span className="block">About Our Centre</span>
+                    <span className="text-[11px] font-normal text-[#64748B]">Operator &amp; centre details</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => navigateToSection('centre-contact')}
+                  className="w-full px-4 py-2.5 text-left text-xs font-semibold text-[#102A43] hover:bg-[#F6F8FC] hover:text-[#2563EB] flex items-center gap-2.5 transition-colors cursor-pointer"
+                >
+                  <Phone className="w-4 h-4 text-[#2563EB]" />
+                  <div>
+                    <span className="block">Contact &amp; Hours</span>
+                    <span className="text-[11px] font-normal text-[#64748B]">Helpdesk &amp; location</span>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
         </nav>
 
-        {/* Right Actions: Functional Search Trigger + Explore Services CTA + Mobile Toggle */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          
-          {/* Functional Search Control */}
+        {/* Right Actions: Prominent Track Application + Mobile Menu Toggle */}
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={triggerSearchFocus}
-            className="flex items-center gap-2 px-3 py-2 text-xs text-[#64748B] bg-[#F8FAFC] hover:bg-[#EAF4FF] hover:text-[#0759E8] border border-[#E2E8F0] rounded-xl transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0759E8]"
-            title="Search jobs, schemes, guides and tools (Press / or Ctrl+K)"
-            aria-label="Search CSC DOST"
+            onClick={handleTrackApplication}
+            className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-2xs transition-colors cursor-pointer"
           >
-            <Search className="w-3.5 h-3.5 text-[#64748B]" />
-            <span className="hidden md:inline font-semibold">Search...</span>
-            <kbd className="hidden lg:inline text-[10px] bg-white border border-[#E2E8F0] px-1.5 py-0.5 rounded text-slate-400 font-mono">
-              /
-            </kbd>
+            <FileSearch className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span>Track Application</span>
           </button>
 
-          {/* Explore Services CTA Button */}
           <button
+            ref={mobileMenuButtonRef}
             type="button"
-            onClick={() => navigateTo('services')}
-            className="hidden sm:inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#0759E8] hover:bg-[#0646b8] text-white text-xs sm:text-sm font-bold rounded-xl transition-all shadow-xs hover:shadow-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0759E8]"
-          >
-            <span>Explore Services</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Mobile Menu Trigger */}
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 text-[#14213D] hover:bg-[#F8FAFC] rounded-lg border border-[#E2E8F0] cursor-pointer"
-            aria-label="Toggle navigation menu"
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
             aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-navigation-drawer"
+            aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            className="lg:hidden p-2 rounded-xl text-[#102A43] hover:bg-[#F6F8FC] border border-[#E2E8F0] transition-colors cursor-pointer"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
-
       </div>
 
-      {/* Mobile Drawer Menu */}
+      {/* Accessible Mobile Navigation Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-white border-b border-[#E2E8F0] px-4 py-4 space-y-3 shadow-lg animate-fade-in max-h-[80vh] overflow-y-auto">
-          <div className="grid grid-cols-2 gap-2 pb-2 border-b border-[#E2E8F0]">
-            {navLinks.map((link) => (
+        <nav
+          id="mobile-navigation-drawer"
+          aria-label="Mobile Navigation"
+          className="lg:hidden bg-white border-b border-[#E2E8F0] px-4 pt-2 pb-5 space-y-1 shadow-md"
+        >
+          <button
+            type="button"
+            onClick={() => navigateToSection('services')}
+            className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold text-[#102A43] hover:bg-[#F6F8FC] hover:text-[#2563EB] transition-colors cursor-pointer block"
+          >
+            Services
+          </button>
+          <button
+            type="button"
+            onClick={() => navigateToSection('recruitment-section')}
+            className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold text-[#102A43] hover:bg-[#F6F8FC] hover:text-[#2563EB] transition-colors cursor-pointer block"
+          >
+            Jobs &amp; Recruitment Notices
+          </button>
+          <button
+            type="button"
+            onClick={() => navigateToSection('schemes-section')}
+            className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold text-[#102A43] hover:bg-[#F6F8FC] hover:text-[#2563EB] transition-colors cursor-pointer block"
+          >
+            Government Schemes
+          </button>
+          <button
+            type="button"
+            onClick={() => navigateToSection('education-resources')}
+            className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold text-[#102A43] hover:bg-[#F6F8FC] hover:text-[#2563EB] transition-colors cursor-pointer block"
+          >
+            Education Updates
+          </button>
+          <button
+            type="button"
+            onClick={handleOpenTools}
+            className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold text-[#102A43] hover:bg-[#F6F8FC] hover:text-[#2563EB] transition-colors cursor-pointer block"
+          >
+            Online Document Tools
+          </button>
+
+          <div className="pt-2 mt-2 border-t border-[#E2E8F0] space-y-1">
+            <span className="px-3 text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">
+              More Resources
+            </span>
+            <button
+              type="button"
+              onClick={() => navigateToSection('knowledge-hub')}
+              className="w-full text-left px-3 py-2 rounded-xl text-sm font-medium text-[#102A43] hover:bg-[#F6F8FC] transition-colors cursor-pointer block"
+            >
+              Guides &amp; Blog
+            </button>
+            <button
+              type="button"
+              onClick={() => navigateToSection('centre-info')}
+              className="w-full text-left px-3 py-2 rounded-xl text-sm font-medium text-[#102A43] hover:bg-[#F6F8FC] transition-colors cursor-pointer block"
+            >
+              About Our CSC Centre
+            </button>
+            <button
+              type="button"
+              onClick={() => navigateToSection('centre-contact')}
+              className="w-full text-left px-3 py-2 rounded-xl text-sm font-medium text-[#102A43] hover:bg-[#F6F8FC] transition-colors cursor-pointer block"
+            >
+              Contact &amp; Opening Hours
+            </button>
+          </div>
+
+          <div className="pt-3 mt-2 border-t border-[#E2E8F0] flex flex-col sm:flex-row gap-2">
+            <button
+              type="button"
+              onClick={handleTrackApplication}
+              className="w-full py-2.5 px-4 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold rounded-xl text-center shadow-2xs transition-colors cursor-pointer"
+            >
+              Track Application Status
+            </button>
+            {onOpenAdmin && (
               <button
-                key={link.id}
                 type="button"
-                onClick={() => navigateTo(link.id)}
-                className={`text-left px-3 py-2 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
-                  activeItem === link.id
-                    ? 'text-[#0759E8] bg-[#EAF4FF]'
-                    : 'text-[#14213D] hover:bg-slate-50'
-                }`}
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenAdmin();
+                }}
+                className="w-full py-2.5 px-4 bg-[#F6F8FC] hover:bg-slate-200/70 text-[#102A43] border border-[#E2E8F0] text-xs font-semibold rounded-xl text-center transition-colors cursor-pointer"
               >
-                {link.label}
+                Staff Login
               </button>
-            ))}
+            )}
           </div>
-
-          <div className="flex flex-col gap-2 pt-1">
-            <button
-              type="button"
-              onClick={() => navigateTo('services')}
-              className="w-full py-2.5 bg-[#0759E8] hover:bg-[#0646b8] text-white text-xs font-bold rounded-xl text-center shadow-xs cursor-pointer flex items-center justify-center gap-2"
-            >
-              <span>Explore Services</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => navigateTo('tools')}
-              className="w-full py-2 bg-[#EAF4FF] hover:bg-blue-100 text-[#0759E8] border border-[#BFDBFE] text-xs font-bold rounded-xl text-center cursor-pointer flex items-center justify-center gap-2"
-            >
-              <Wrench className="w-3.5 h-3.5" />
-              <span>Free Online Tools</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => navigateTo('track')}
-              className="w-full py-2 bg-[#F8FAFC] hover:bg-slate-100 text-[#14213D] border border-[#E2E8F0] text-xs font-bold rounded-xl text-center cursor-pointer"
-            >
-              Track Existing Application
-            </button>
-          </div>
-        </div>
+        </nav>
       )}
-
     </header>
   );
 }

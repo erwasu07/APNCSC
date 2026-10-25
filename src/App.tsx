@@ -501,7 +501,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC] text-[#172033] flex flex-col justify-between font-sans transition-colors duration-300 w-full max-w-full overflow-x-hidden">
+    <div className="min-h-screen bg-[#F6F8FC] text-[#102A43] flex flex-col justify-between font-sans transition-colors duration-200 w-full max-w-full overflow-x-hidden">
       
       {/* Top Navigation Panel (hidden in full-screen Staff Management Console) */}
       {!isAdminView && (
@@ -594,9 +594,9 @@ export default function App() {
           </div>
         ) : (
           /* PUBLIC VISITOR INTERFACE */
-          <div className="animate-fade-in space-y-10 md:space-y-14 w-full">
+          <div className="animate-fade-in space-y-10 md:space-y-12 w-full">
             
-            {/* Dedicated Modern Citizen Homepage Layout (Hero, Categories, Updates, Schemes, Recruitment, FAQs) */}
+            {/* Dedicated Modern Citizen Homepage Layout */}
             <Suspense fallback={<SectionSkeleton height="min-h-[520px]" title="Loading CSC DOST Citizen Portal..." />}>
               <PortalHomepage
                 onOpenJob={handleOpenJobPage}
@@ -611,10 +611,9 @@ export default function App() {
               />
             </Suspense>
 
-
-            {/* Explore All Government & Digital Services Directory */}
+            {/* Complete Organised Service Directory */}
             <div id="services-catalogue" className="scroll-mt-20">
-              <Suspense fallback={<SectionSkeleton height="min-h-[380px]" title="Loading Government & Digital Services Catalogue..." />}>
+              <Suspense fallback={<SectionSkeleton height="min-h-[380px]" title="Loading Complete Service Directory..." />}>
                 <ExploreServicesDesk 
                   onApplyService={handleServiceSelect} 
                   selectedService={selectedService}
@@ -630,7 +629,14 @@ export default function App() {
               </Suspense>
             </div>
 
-            {/* Frequently Asked Questions */}
+            {/* Your Local CSC Assistance Centre (Centre Information & Trust) */}
+            <div className="scroll-mt-20">
+              <Suspense fallback={<SectionSkeleton height="min-h-[220px]" title="Loading Local CSC Centre Information..." />}>
+                <NodeInformation />
+              </Suspense>
+            </div>
+
+            {/* Streamlined Frequently Asked Questions */}
             <div id="faq" className="scroll-mt-20">
               <Suspense fallback={<SectionSkeleton height="min-h-[260px]" title="Loading Frequently Asked Questions..." />}>
                 <FrequentlyAskedQuestions />
@@ -639,20 +645,11 @@ export default function App() {
 
           </div>
         )}
-
-        {/* Common Service Centre Node Information & VLE Verification (relocated to clean bottom) */}
-        {!isAdminView && !isApplyView && !isTrackView && (
-          <div className="mt-8 px-2 sm:px-4 md:px-0">
-            <Suspense fallback={<SectionSkeleton height="min-h-[220px]" title="Loading CSC VLE Verification..." />}>
-              <NodeInformation />
-            </Suspense>
-          </div>
-        )}
       </main>
 
       {/* Global Page Footer (Below the Fold) */}
       {!isAdminView && (
-        <Suspense fallback={<div className="h-28 bg-slate-900 border-t border-slate-800 animate-pulse" />}>
+        <Suspense fallback={<div className="h-28 bg-[#102A43] border-t border-slate-800" />}>
           <Footer 
             cafeName={settings.cafeName} 
             onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
@@ -679,24 +676,24 @@ export default function App() {
 
       {/* Global Share Options Modal */}
       {showShareModal && shareData && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 z-[70] animate-fade-in">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl relative text-slate-900">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+        <div className="fixed inset-0 bg-slate-950/70 flex items-center justify-center p-4 z-[70]">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl max-w-md w-full p-6 space-y-5 shadow-xl relative text-[#102A43]">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
               <div className="flex items-center gap-2">
-                <Share2 className="w-5 h-5 text-amber-500" />
-                <h3 className="font-extrabold text-base font-display">Share Notification</h3>
+                <Share2 className="w-5 h-5 text-[#2563EB]" />
+                <h3 className="font-bold text-base">Share Notification</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setShowShareModal(false)}
-                className="p-1.5 hover:bg-slate-100 rounded-full text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+                className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-600 font-medium">
-              Share <strong className="text-slate-900">{shareData.name}</strong> with candidates or via social networks:
+            <p className="text-xs text-[#64748B] font-medium">
+              Share <strong className="text-[#102A43]">{shareData.name}</strong> with candidates or via social networks:
             </p>
 
             <div className="grid grid-cols-1 gap-2.5">
@@ -704,26 +701,26 @@ export default function App() {
                 href={`https://api.whatsapp.com/send?text=${encodeURIComponent(shareData.text)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between p-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xs transition-all shadow-md group cursor-pointer"
+                className="flex items-center justify-between p-3.5 bg-[#16A34A] hover:bg-emerald-700 text-white rounded-xl font-semibold text-xs transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <MessageCircle className="w-5 h-5" />
+                  <MessageCircle className="w-4 h-4" />
                   <span>Share via WhatsApp</span>
                 </div>
-                <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-mono">Instant</span>
+                <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Instant</span>
               </a>
 
               <a
                 href={`https://t.me/share/url?url=${encodeURIComponent(shareData.url)}&text=${encodeURIComponent(shareData.title)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between p-3.5 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl font-bold text-xs transition-all shadow-md cursor-pointer"
+                className="flex items-center justify-between p-3.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl font-semibold text-xs transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <Share2 className="w-5 h-5" />
+                  <Share2 className="w-4 h-4" />
                   <span>Share on Telegram</span>
                 </div>
-                <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-mono">Channel</span>
+                <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Channel</span>
               </a>
 
               <button
@@ -733,33 +730,34 @@ export default function App() {
                   setCopySuccess(true);
                   setTimeout(() => setCopySuccess(false), 2500);
                 }}
-                className="flex items-center justify-between p-3.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-2xl font-bold text-xs transition-all border border-slate-300 cursor-pointer"
+                className="flex items-center justify-between p-3.5 bg-[#F6F8FC] hover:bg-slate-200/70 text-[#102A43] rounded-xl font-semibold text-xs transition-colors border border-[#E2E8F0] cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  {copySuccess ? <Check className="w-5 h-5 text-emerald-600" /> : <Copy className="w-5 h-5 text-slate-600" />}
+                  {copySuccess ? <Check className="w-4 h-4 text-[#16A34A]" /> : <Copy className="w-4 h-4 text-[#64748B]" />}
                   <span>{copySuccess ? 'Link Copied to Clipboard!' : 'Copy Direct Page Link'}</span>
                 </div>
-                <span className="text-[10px] text-slate-600 font-mono">URL</span>
+                <span className="text-[10px] text-[#64748B]">URL</span>
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Floating WhatsApp Community Group Button */}
-      <button
-        onClick={handleWhatsAppFloating}
-        className="fixed bottom-4 right-3 sm:bottom-6 sm:right-6 w-12 h-12 sm:w-auto sm:h-auto p-0 sm:p-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-2xl hover:scale-105 transition-all z-40 flex items-center justify-center animate-bounce group cursor-pointer border-2 border-emerald-400"
-        title="Join Our CSC DOST WhatsApp Group"
-        id="whatsapp-floating-badge"
-        style={{ animationDuration: '4s' }}
-        aria-label="Join CSC DOST WhatsApp Group"
-      >
-        <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6" />
-        <span className="hidden sm:inline max-w-0 overflow-hidden group-hover:max-w-xs group-hover:ml-2 text-xs font-bold transition-all duration-300 whitespace-nowrap">
-          Join WhatsApp Group
-        </span>
-      </button>
+      {/* Floating WhatsApp Group Button */}
+      {!isAdminView && (
+        <button
+          onClick={handleWhatsAppFloating}
+          className="fixed bottom-4 right-3 sm:bottom-6 sm:right-6 px-3.5 py-2.5 bg-[#16A34A] hover:bg-emerald-700 text-white rounded-full shadow-lg transition-colors z-40 flex items-center gap-2 cursor-pointer border border-emerald-500"
+          title="Join CSC DOST WhatsApp Group"
+          id="whatsapp-floating-badge"
+          aria-label="Join WhatsApp Group"
+        >
+          <MessageSquare className="w-4 h-4 shrink-0" />
+          <span className="text-xs font-semibold whitespace-nowrap">
+            Join WhatsApp Group
+          </span>
+        </button>
+      )}
 
     </div>
   );
