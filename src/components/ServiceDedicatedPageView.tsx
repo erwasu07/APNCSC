@@ -1,25 +1,21 @@
-import React, { useEffect } from 'react';
-import { 
-  ArrowLeft, 
-  Share2, 
-  Printer, 
-  CheckCircle, 
-  Clock, 
-  FileText, 
-  IndianRupee, 
-  ShieldCheck, 
-  Bell, 
-  ArrowRight, 
-  ExternalLink,
-  CreditCard,
-  Building2,
-  Landmark,
-  Laptop,
-  GraduationCap,
-  Briefcase,
-  FileCheck
-} from 'lucide-react';
-import { ServiceItem, CATEGORY_LABELS } from '../servicesData';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ServiceItem, CATEGORY_LABELS, SERVICES_LIST } from '../servicesData';
+import {
+  ContentPageLayout,
+  ContentArticleHeader,
+  KeyInfoStrip,
+  PrimaryActionBar,
+  MobileSectionNav,
+  ContentSection,
+  KeyValueRows,
+  ContentChecklist,
+  StepByStepList,
+  OfficialSourcesAndAssistance,
+  extractConciseIntro,
+  KeyInfoFact,
+  SectionNavItem,
+  RelatedContentItem,
+} from './shared/ContentDesignSystem';
 
 interface ServiceDedicatedPageViewProps {
   service: ServiceItem;
@@ -32,10 +28,10 @@ export default function ServiceDedicatedPageView({
   service,
   onBack,
   onApplyService,
-  onShare
+  onShare,
 }: ServiceDedicatedPageViewProps) {
-  
-  // Set document title dynamically
+  const [activeSectionId, setActiveSectionId] = useState<string>('service-overview');
+
   useEffect(() => {
     const orig = document.title;
     document.title = `${service.name} – Process, Documents & Fees | CSC DOST`;
@@ -44,372 +40,454 @@ export default function ServiceDedicatedPageView({
     };
   }, [service]);
 
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'cards_adda': return CreditCard;
-      case 'jk_state': return Landmark;
-      case 'revenue': return Building2;
-      case 'digital': return Laptop;
-      case 'education': return GraduationCap;
-      case 'business': return Briefcase;
-      default: return ShieldCheck;
-    }
-  };
-
-  const CategoryIcon = getCategoryIcon(service.category);
-
-  // Official portal link mapping based on service ID / name
-  const getOfficialPortal = () => {
+  const officialPortal = useMemo(() => {
     const sId = service.id.toLowerCase();
     const sName = service.name.toLowerCase();
 
     if (sId.includes('pan') || sName.includes('pan')) {
       return {
         name: 'NSDL Protean / Income Tax Portal',
-        url: 'https://www.onlineservices.nsdl.com/paam/endUserRegisterContact.html'
+        url: 'https://www.onlineservices.nsdl.com/paam/endUserRegisterContact.html',
       };
     }
     if (sId.includes('aadhaar') || sName.includes('aadhaar')) {
       return {
         name: 'Unique Identification Authority of India (UIDAI)',
-        url: 'https://myaadhaar.uidai.gov.in'
+        url: 'https://myaadhaar.uidai.gov.in',
       };
     }
     if (sId.includes('ayushman') || sName.includes('ayushman') || sName.includes('golden')) {
       return {
         name: 'National Health Authority (NHA Beneficiary Portal)',
-        url: 'https://beneficiary.nha.gov.in'
+        url: 'https://beneficiary.nha.gov.in',
       };
     }
     if (sId.includes('voter') || sName.includes('voter')) {
       return {
         name: 'Election Commission of India (ECI Voters Portal)',
-        url: 'https://voters.eci.gov.in'
+        url: 'https://voters.eci.gov.in',
       };
     }
     if (sId.includes('pmkisan') || sName.includes('kisan')) {
       return {
         name: 'PM-KISAN Official Portal (Ministry of Agriculture)',
-        url: 'https://pmkisan.gov.in'
+        url: 'https://pmkisan.gov.in',
       };
     }
     if (sId.includes('passport') || sName.includes('passport')) {
       return {
         name: 'Passport Seva Online (Ministry of External Affairs)',
-        url: 'https://www.passportindia.gov.in'
+        url: 'https://www.passportindia.gov.in',
       };
     }
-    if (sId.includes('parivahan') || sId.includes('driving') || sName.includes('license') || sName.includes('rc')) {
+    if (
+      sId.includes('parivahan') ||
+      sId.includes('dl') ||
+      sId.includes('driving') ||
+      sName.includes('license') ||
+      sName.includes('rc')
+    ) {
       return {
         name: 'Parivahan Sewa (Ministry of Road Transport & Highways)',
-        url: 'https://parivahan.gov.in'
+        url: 'https://parivahan.gov.in',
       };
     }
     if (sId.includes('shram') || sName.includes('shram')) {
       return {
         name: 'Ministry of Labour & Employment (e-Shram Portal)',
-        url: 'https://eshram.gov.in'
+        url: 'https://eshram.gov.in',
       };
     }
-    if (sId.includes('domicile') || sId.includes('unnat') || sName.includes('domicile') || sName.includes('revenue')) {
+    if (
+      sId.includes('domicile') ||
+      sId.includes('unnat') ||
+      sName.includes('domicile') ||
+      sName.includes('revenue') ||
+      service.category === 'jk_state' ||
+      service.category === 'revenue'
+    ) {
       return {
-        name: 'e-UNNAT J&K Citizen Services Portal',
-        url: 'https://eunnat.jk.gov.in'
+        name: 'e-UNNAT & Jan Sugam J&K Citizen Services Portal',
+        url: 'https://eunnat.jk.gov.in',
       };
     }
     return {
       name: 'National Government Services Portal (India.gov.in)',
-      url: 'https://services.india.gov.in'
+      url: 'https://services.india.gov.in',
     };
+  }, [service]);
+
+  const categoryTitle = CATEGORY_LABELS[service.category] || 'CSC E-Services';
+  const requiredDocsList = useMemo(() => {
+    if (service.requirements && service.requirements.length > 0) {
+      return service.requirements;
+    }
+    return [
+      'Aadhaar Card / Valid Government Photo Identity',
+      'Active Mobile Number for OTP Verification',
+      'Recent Passport-Size Colour Photograph',
+      'Supporting Address or Date of Birth Proof (if applicable)',
+    ];
+  }, [service.requirements]);
+
+  const { intro, remainder } = useMemo(() => {
+    return extractConciseIntro(service.description, 220);
+  }, [service.description]);
+
+  // Useful summary fields for CSC E-Services
+  const keyFacts: KeyInfoFact[] = useMemo(() => {
+    return [
+      {
+        label: 'Service Category',
+        value: categoryTitle,
+        tone: 'default',
+      },
+      {
+        label: 'Service Channel',
+        value: 'Online / CSC Desk',
+        tone: 'blue',
+      },
+      {
+        label: 'Required Documents',
+        value: `${requiredDocsList.length} Key Items`,
+        tone: 'default',
+      },
+      {
+        label: 'Fee Information',
+        value: service.price,
+        tone: 'emerald',
+      },
+      {
+        label: 'Processing Estimate',
+        value: service.estimatedTime,
+        tone: 'default',
+      },
+    ];
+  }, [categoryTitle, requiredDocsList.length, service.price, service.estimatedTime]);
+
+  const sections: SectionNavItem[] = useMemo(
+    () => [
+      { id: 'service-overview', title: 'Service Overview' },
+      { id: 'who-can-request', title: 'Who Can Request This Service' },
+      { id: 'documents-required', title: 'Documents Required' },
+      { id: 'assistance-process', title: 'Application / Assistance Process' },
+      { id: 'fees-charges', title: 'Fees & Charges' },
+      { id: 'important-conditions', title: 'Important Conditions' },
+      { id: 'tracking-help', title: 'Tracking & Help Information' },
+      { id: 'official-sources', title: 'Official Sources' },
+    ],
+    []
+  );
+
+  const scrollToSection = (id: string) => {
+    setActiveSectionId(id);
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
-  const officialPortal = getOfficialPortal();
+  const relatedServices: RelatedContentItem[] = useMemo(() => {
+    return SERVICES_LIST.filter((s) => s.id !== service.id && s.category === service.category)
+      .slice(0, 4)
+      .map((rel) => ({
+        id: rel.id,
+        title: rel.name,
+        categoryLabel: CATEGORY_LABELS[rel.category] || 'Citizen Service',
+        metaText: `Fee: ${rel.price} · Estimate: ${rel.estimatedTime}`,
+        onClick: () => {
+          window.location.hash = `#service/${rel.id}`;
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
+      }));
+  }, [service]);
+
+  const handleRequestAssistance = () => {
+    onApplyService(service.name);
+  };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#14213D] pb-4 md:pb-16 pt-0 sm:pt-6 font-sans">
-      
-      {/* Schema.org Structured Data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'Service',
-            'name': service.name,
-            'description': service.description,
-            'provider': {
-              '@type': 'Organization',
-              'name': 'CSC DOST',
-              'url': 'https://www.cscdost.com'
-            },
-            'serviceType': CATEGORY_LABELS[service.category] || 'Citizen E-Governance Assistance',
-            'offers': {
-              '@type': 'Offer',
-              'price': service.price,
-              'priceCurrency': 'INR'
-            }
-          })
-        }}
+    <ContentPageLayout
+      breadcrumbs={[
+        { label: 'Home', onClick: onBack },
+        { label: 'CSC E-Services', onClick: onBack },
+        { label: service.name },
+      ]}
+      onBack={onBack}
+      backLabel="Back to All Services"
+      onPrint={() => window.print()}
+      onShare={() => onShare(service)}
+      sections={sections}
+      activeSectionId={activeSectionId}
+      onSelectSection={scrollToSection}
+      relatedTitle="Related Citizen Services"
+      relatedItems={relatedServices}
+      sidebarCta={{
+        badge: 'CSC Digital Seva Desk',
+        title: 'Request Assisted Service Filing',
+        description:
+          'Submit your details and required document scans online. Our VLE operator will verify your paperwork and assist with official submission.',
+        buttonLabel: 'Request Assistance',
+        onAction: handleRequestAssistance,
+      }}
+      mobileStickyAction={{
+        primaryLabel: 'Request Assistance',
+        onPrimaryClick: handleRequestAssistance,
+        secondaryLabel: 'Official Portal',
+        secondaryHref: officialPortal.url,
+      }}
+      schemaJson={{
+        '@context': 'https://schema.org',
+        '@type': 'Service',
+        name: service.name,
+        description: service.description,
+        provider: {
+          '@type': 'Organization',
+          name: 'CSC DOST',
+          url: 'https://www.cscdost.com',
+        },
+        serviceType: categoryTitle,
+        offers: {
+          '@type': 'Offer',
+          price: service.price,
+          priceCurrency: 'INR',
+        },
+      }}
+    >
+      {/* A–E: Category Label, Single H1, Concise Intro, Metadata */}
+      <ContentArticleHeader
+        categoryLabel={categoryTitle}
+        secondaryBadge="Online & CSC Desk"
+        title={service.name}
+        intro={intro}
+        metadata={[
+          { label: 'Service Channel', value: 'Online / CSC Desk' },
+          ...(service.estimatedTime
+            ? [{ label: 'Indicative Estimate', value: service.estimatedTime }]
+            : []),
+          ...(service.price
+            ? [{ label: 'Indicative Fee', value: service.price, emphasize: true }]
+            : []),
+          { label: 'Authority Portal', value: officialPortal.name },
+        ]}
       />
 
-      <div className="w-full max-w-4xl mx-auto px-0 md:px-6 space-y-0 md:space-y-6 pb-20 sm:pb-8">
-        
-        {/* Navigation & Action Top Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 bg-white px-4 py-3 sm:p-4 rounded-none md:rounded-xl border-b md:border border-[#E2E8F0] shadow-none md:shadow-2xs w-full">
+      {/* F: Key Information Strip */}
+      <KeyInfoStrip facts={keyFacts} />
+
+      {/* G: Clear Primary Actions */}
+      <PrimaryActionBar
+        primaryAction={{
+          label: 'Request Assistance',
+          onClick: handleRequestAssistance,
+        }}
+        officialLinks={[
+          {
+            label: 'Official Government Portal',
+            href: officialPortal.url,
+          },
+        ]}
+        onTrackApplication={() => {
+          window.location.hash = '#track';
+        }}
+        assistanceDisclaimer="CSC DOST provides document preparation and assisted online filing. You may also apply independently on the official government portal linked above."
+      />
+
+      {/* H: Compact Navigation to Page Sections (Sticky on Mobile) */}
+      <MobileSectionNav
+        sections={sections}
+        activeSectionId={activeSectionId}
+        onSelectSection={scrollToSection}
+      />
+
+      {/* I: Main Content Sections */}
+
+      {/* 1. SERVICE OVERVIEW */}
+      <ContentSection
+        id="service-overview"
+        title="Service Overview"
+        subtitle="What this citizen service covers and how it is processed."
+      >
+        <p className="text-xs sm:text-sm text-[#102A43] leading-relaxed">{service.description}</p>
+        {remainder && (
+          <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">{remainder}</p>
+        )}
+        <KeyValueRows
+          rows={[
+            {
+              label: 'Service Name',
+              value: service.name,
+              boldValue: true,
+            },
+            {
+              label: 'Service Category',
+              value: categoryTitle,
+            },
+            {
+              label: 'Delivery Channel',
+              value: 'Online Assistance Desk & Physical CSC Centre (Qazigund, J&K)',
+            },
+            {
+              label: 'Indicative Turnaround Time',
+              value: service.estimatedTime,
+              tone: 'emerald',
+              boldValue: true,
+            },
+          ]}
+        />
+      </ContentSection>
+
+      {/* 2. WHO CAN REQUEST THIS SERVICE */}
+      <ContentSection
+        id="who-can-request"
+        title="Who Can Request This Service"
+        subtitle="Eligibility and general requirements for applicants."
+      >
+        <ContentChecklist
+          columns={1}
+          items={
+            service.category === 'jk_state' || service.category === 'revenue'
+              ? [
+                  'Bonafide residents and domiciles of the Union Territory of Jammu & Kashmir applying for revenue, domicile, or social welfare certificates.',
+                  'Applicants holding valid identity and parentage proof along with supporting revenue/local verification records.',
+                  'Citizens seeking new certificate issuance, digital re-verification, or corrections in existing records.',
+                ]
+              : [
+                  'Any eligible Indian citizen holding valid identity and address proof documents.',
+                  'Applicants seeking a fresh registration, card re-issuance, demographic correction, or e-KYC update.',
+                  'Guardians or parents applying on behalf of minor applicants with valid birth/relationship proof.',
+                ]
+          }
+        />
+      </ContentSection>
+
+      {/* 3. DOCUMENTS REQUIRED */}
+      <ContentSection
+        id="documents-required"
+        title="Documents Required"
+        subtitle="Keep clear original scans or photographs of the following documents ready."
+      >
+        <ContentChecklist items={requiredDocsList} />
+      </ContentSection>
+
+      {/* 4. APPLICATION OR ASSISTANCE PROCESS */}
+      <ContentSection
+        id="assistance-process"
+        title="Application & Assistance Process"
+        subtitle="Step-by-step workflow when requesting assistance through CSC DOST or applying online."
+      >
+        <StepByStepList
+          steps={[
+            {
+              title: 'Select Service & Submit Applicant Details',
+              description: `Click "Request Assistance" for ${service.name} and enter your name, mobile number, and required particulars.`,
+            },
+            {
+              title: 'Upload Supporting Documents',
+              description:
+                'Attach clear scans or photos of the required proofs. Our operator checks document clarity and required pixel/PDF sizes.',
+            },
+            {
+              title: 'Operator Verification & Portal Submission',
+              description: `A certified CSC VLE prepares your form on ${officialPortal.name} and coordinates OTP verification if required.`,
+            },
+            {
+              title: 'Receive Reference Token & Official Acknowledgment',
+              description:
+                'Save your CSC DOST tracking token and receive the official department acknowledgment receipt once filed.',
+            },
+          ]}
+        />
+      </ContentSection>
+
+      {/* 5. FEES AND CHARGES */}
+      <ContentSection
+        id="fees-charges"
+        title="Fees & Charges"
+        subtitle="Clear breakdown distinguishing statutory government charges from CSC assistance fees."
+      >
+        <KeyValueRows
+          rows={[
+            {
+              label: 'Indicative Total Service Charge',
+              value: service.price || 'As per applicable tariff',
+              tone: 'blue',
+              boldValue: true,
+            },
+            {
+              label: 'Official Government / Portal Fee',
+              value:
+                'Included as per statutory department tariff (payable directly to the issuing authority gateway where applicable).',
+            },
+            {
+              label: 'CSC Assistance & Document Formatting',
+              value:
+                'Covers document scanning, photo/PDF resizing, form preparation, and operator verification.',
+            },
+            {
+              label: 'Direct Self-Application Option',
+              value: `Citizens applying directly on ${officialPortal.name} only pay the statutory government portal fee.`,
+            },
+          ]}
+        />
+      </ContentSection>
+
+      {/* 6. IMPORTANT CONDITIONS */}
+      <ContentSection
+        id="important-conditions"
+        title="Important Conditions"
+        subtitle="Key guidelines to prevent application rejection or processing delays."
+      >
+        <ContentChecklist
+          columns={1}
+          items={[
+            'Ensure your full name, date of birth, and parentage match across your Aadhaar Card and supporting certificates.',
+            'Keep your Aadhaar-linked mobile number active to receive verification OTPs during online submission.',
+            'Processing timelines are indicative estimates; final approval and certificate issuance depend on the concerned government authority.',
+          ]}
+        />
+      </ContentSection>
+
+      {/* 7. TRACKING AND HELP INFORMATION */}
+      <ContentSection
+        id="tracking-help"
+        title="Tracking & Help Information"
+        subtitle="How to monitor your application status after submitting a request."
+      >
+        <p className="text-xs sm:text-sm text-[#102A43] leading-relaxed">
+          Every assistance request submitted on CSC DOST generates a unique tracking reference token
+          (for example, <span className="font-mono font-semibold">CSC-2026-XXXX</span>). You can
+          check real-time operator verification progress, remarks, and final acknowledgment updates
+          at any time using the online tracker.
+        </p>
+        <div className="pt-1">
           <button
             type="button"
-            onClick={onBack}
-            className="min-h-[40px] inline-flex items-center gap-2 px-3 sm:px-3.5 py-2 bg-[#0B1F49] hover:bg-[#122e6b] text-white text-xs sm:text-sm font-semibold rounded-lg transition-colors cursor-pointer"
+            onClick={() => {
+              window.location.hash = '#track';
+            }}
+            className="min-h-[40px] px-4 py-2 bg-[#F6F8FC] hover:bg-blue-50 text-[#102A43] hover:text-[#2563EB] border border-[#E2E8F0] rounded-xl text-xs font-semibold transition-colors cursor-pointer"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to All Services</span>
+            Open Application Status Tracker →
           </button>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="min-h-[40px] inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 bg-white hover:bg-slate-50 text-[#14213D] text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-[#E2E8F0]"
-            >
-              <Printer className="w-3.5 h-3.5 text-[#64748B]" />
-              <span className="hidden sm:inline">Print</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onShare(service)}
-              className="min-h-[40px] inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-[#F8FAFC] hover:bg-slate-100 text-[#14213D] text-xs font-bold rounded-lg transition-colors cursor-pointer border border-[#E2E8F0]"
-            >
-              <Share2 className="w-3.5 h-3.5 text-[#64748B]" />
-              <span>Share</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onApplyService(service.name)}
-              className="min-h-[40px] inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-[#0759E8] hover:bg-[#0646b8] text-white text-xs sm:text-sm font-bold rounded-lg transition-colors cursor-pointer shadow-xs"
-            >
-              <span>Apply via CSC Desk</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
         </div>
+      </ContentSection>
 
-        {/* Main Document Article */}
-        <article className="bg-white rounded-none md:rounded-2xl border-b md:border border-[#E2E8F0] px-4 py-4 sm:p-8 space-y-4 sm:space-y-8 shadow-none md:shadow-xs w-full max-w-full overflow-hidden">
-          
-          {/* Header Section */}
-          <header className="space-y-3 border-b border-[#E2E8F0] pb-4 sm:pb-6">
-            
-            {/* Breadcrumb */}
-            <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-xs text-[#64748B]">
-              <button type="button" onClick={onBack} className="hover:text-[#0759E8] font-medium cursor-pointer">
-                Home
-              </button>
-              <span aria-hidden="true">/</span>
-              <button type="button" onClick={onBack} className="hover:text-[#0759E8] font-medium cursor-pointer">
-                Digital Services
-              </button>
-              <span aria-hidden="true">/</span>
-              <span className="text-[#14213D] font-semibold">
-                {CATEGORY_LABELS[service.category] || service.category}
-              </span>
-            </nav>
-
-            <div className="space-y-1">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#0759E8]">
-                {CATEGORY_LABELS[service.category] || 'Government Citizen Service'}
-              </span>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#14213D] tracking-tight leading-snug break-words">
-                {service.name}
-              </h1>
-            </div>
-
-            <p className="text-sm text-[#64748B] leading-relaxed break-words">
-              {service.description}
-            </p>
-
-            {/* Quick Metadata Bar */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#64748B] pt-2 border-t border-[#E2E8F0]">
-              <div>
-                <span>Processing Time: </span>
-                <strong className="text-[#16A34A] font-semibold">{service.estimatedTime}</strong>
-              </div>
-              <span aria-hidden="true">·</span>
-              <div>
-                <span>Service Fee: </span>
-                <strong className="text-[#0759E8] font-bold">{service.price}</strong>
-              </div>
-              <span aria-hidden="true">·</span>
-              <div>
-                <span>Service Channel: </span>
-                <strong className="text-[#14213D] font-semibold">Online &amp; VLE Desk</strong>
-              </div>
-            </div>
-
-          </header>
-
-          {/* Citizen Advisory Box */}
-          <aside aria-label="Advisory" className="border-l-4 border-amber-500 bg-amber-50/70 p-4 rounded-r-lg space-y-1">
-            <div className="flex items-center gap-2">
-              <Bell className="w-4 h-4 text-amber-800" />
-              <h3 className="text-xs sm:text-sm font-bold text-amber-950">
-                Service Application Advisory
-              </h3>
-            </div>
-            <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-              Please have your supporting documents (Aadhaar Card, active mobile number for OTP, and relevant certificates) ready. Applications submitted through CSC DOST undergo certified VLE pre-verification before being dispatched to the official authority gateway.
-            </p>
-          </aside>
-
-          {/* Step-by-Step Numbered Guide (Section 14 Requirement) */}
-          <section className="space-y-3">
-            <h2 className="text-base sm:text-lg font-bold text-[#14213D] flex items-center gap-2 border-b border-[#E2E8F0] pb-2">
-              <Clock className="w-4 h-4 text-[#0759E8]" />
-              <span>Step-by-Step Procedure</span>
-            </h2>
-
-            <div className="space-y-3 text-xs sm:text-sm text-[#14213D]">
-              <div className="flex items-start gap-3 p-3.5 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
-                <span className="w-6 h-6 rounded-full bg-[#0759E8] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">1</span>
-                <div>
-                  <strong>Open the Relevant Official Portal</strong>
-                  <p className="text-[#64748B] text-xs mt-0.5">Access {officialPortal.name} or initiate your request through the CSC DOST online desk.</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 p-3.5 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
-                <span className="w-6 h-6 rounded-full bg-[#0759E8] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">2</span>
-                <div>
-                  <strong>Select the Relevant Service &amp; Form</strong>
-                  <p className="text-[#64748B] text-xs mt-0.5">Choose the appropriate category (e.g. New Allotment vs Correction / Update in existing record).</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 p-3.5 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
-                <span className="w-6 h-6 rounded-full bg-[#0759E8] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">3</span>
-                <div>
-                  <strong>Enter Required Particulars &amp; Upload Proofs</strong>
-                  <p className="text-[#64748B] text-xs mt-0.5">Fill applicant name, address, father's name, and contact details matching your official ID proof exactly.</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 p-3.5 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
-                <span className="w-6 h-6 rounded-full bg-[#0759E8] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">4</span>
-                <div>
-                  <strong>Verification &amp; Acknowledgment Generation</strong>
-                  <p className="text-[#64748B] text-xs mt-0.5">Complete OTP verification, submit the statutory fee, and download your unique tracking reference receipt.</p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Required Documents Checklist */}
-          <section className="space-y-3">
-            <h2 className="text-base sm:text-lg font-bold text-[#14213D] flex items-center gap-2 border-b border-[#E2E8F0] pb-2">
-              <FileCheck className="w-4 h-4 text-[#16A34A]" />
-              <span>Required Documents &amp; Information</span>
-            </h2>
-
-            {service.requirements && service.requirements.length > 0 ? (
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-[#14213D]">
-                {service.requirements.map((req, idx) => (
-                  <li key={idx} className="flex items-center gap-2 p-2.5 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0]">
-                    <CheckCircle className="w-4 h-4 text-[#16A34A] shrink-0" />
-                    <span>{req}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-xs sm:text-sm text-[#64748B]">
-                Standard Aadhaar Card / Government photo ID and active mobile number for OTP.
-              </p>
-            )}
-          </section>
-
-          {/* Official Source Links vs CSC Desk Assistance (Section 15 Requirement) */}
-          <section className="space-y-4 pt-4 border-t border-[#E2E8F0]">
-            <h2 className="text-base sm:text-lg font-bold text-[#14213D] flex items-center gap-2">
-              <ExternalLink className="w-4 h-4 text-[#0759E8]" />
-              <span>Official Government Source &amp; Submission</span>
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              
-              {/* Official Source Button */}
-              <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl space-y-2">
-                <span className="text-xs font-bold text-[#64748B] uppercase tracking-wider block">
-                  Official Government Portal
-                </span>
-                <h3 className="text-sm font-bold text-[#14213D]">
-                  {officialPortal.name}
-                </h3>
-                <p className="text-xs text-[#64748B]">
-                  Apply directly on the government portal independently:
-                </p>
-                <a
-                  href={officialPortal.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-slate-100 text-[#0759E8] border border-[#0759E8] text-xs font-bold rounded-lg transition-colors cursor-pointer mt-1"
-                >
-                  <span>Visit Official Website →</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              </div>
-
-              {/* CSC DOST Assistance Desk */}
-              <div className="p-4 bg-blue-50/50 border border-blue-200 rounded-xl space-y-2">
-                <span className="text-xs font-bold text-[#0759E8] uppercase tracking-wider block">
-                  Assisted Form Filling
-                </span>
-                <h3 className="text-sm font-bold text-[#14213D]">
-                  CSC DOST Online Desk
-                </h3>
-                <p className="text-xs text-[#64748B]">
-                  Have certified CSC operators review documents, format photos, and file on your behalf:
-                </p>
-                <button
-                  type="button"
-                  onClick={() => onApplyService(service.name)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0759E8] hover:bg-[#0646b8] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shadow-xs mt-1"
-                >
-                  <span>Apply via CSC Desk →</span>
-                </button>
-              </div>
-
-            </div>
-          </section>
-
-          {/* Footer Back & Action Buttons */}
-          <div className="pt-6 border-t border-[#E2E8F0] flex flex-wrap items-center justify-between gap-4">
-            <button
-              type="button"
-              onClick={onBack}
-              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#14213D] text-xs sm:text-sm font-semibold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Services</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onApplyService(service.name)}
-              className="px-6 py-2.5 bg-[#0759E8] hover:bg-[#0646b8] text-white text-xs sm:text-sm font-bold rounded-lg transition-colors cursor-pointer shadow-xs flex items-center gap-2"
-            >
-              <span>Apply via CSC Desk</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-
-        </article>
-
-      </div>
-
-    </div>
+      {/* 8. OFFICIAL SOURCES */}
+      <OfficialSourcesAndAssistance
+        sectionId="official-sources"
+        organisationName={officialPortal.name}
+        officialLinks={[
+          {
+            label: 'Official Government Portal',
+            href: officialPortal.url,
+          },
+        ]}
+        assistanceTitle="CSC DOST Digital Service Desk"
+        assistanceDescription={`Need help preparing and submitting your ${service.name} request? Our VLE desk handles document formatting and online filing for you.`}
+        assistanceButtonLabel="Request Assistance"
+        onRequestAssistance={handleRequestAssistance}
+      />
+    </ContentPageLayout>
   );
 }

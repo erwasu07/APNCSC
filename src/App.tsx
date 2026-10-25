@@ -603,6 +603,9 @@ export default function App() {
                 onOpenService={handleOpenServicePage}
                 onApplyService={handleServiceSelect}
                 onOpenGuide={(guideId) => {
+                  window.dispatchEvent(
+                    new CustomEvent('open-guide-article', { detail: { guideId } })
+                  );
                   const el = document.getElementById('knowledge-hub');
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}
@@ -743,11 +746,15 @@ export default function App() {
         </div>
       )}
 
-      {/* Floating WhatsApp Group Button - Compact on mobile so it does not cover buttons or form actions */}
+      {/* Floating WhatsApp Group Button - Hidden on mobile detail views where a sticky bottom action bar is present */}
       {!isAdminView && (
         <button
           onClick={handleWhatsAppFloating}
-          className="fixed bottom-3 right-3 sm:bottom-6 sm:right-6 px-3 py-2 sm:px-3.5 sm:py-2.5 bg-[#16A34A] hover:bg-emerald-700 text-white rounded-full shadow-lg transition-colors z-40 flex items-center gap-1.5 sm:gap-2 cursor-pointer border border-emerald-500"
+          className={`fixed bottom-3 right-3 sm:bottom-6 sm:right-6 px-3 py-2 sm:px-3.5 sm:py-2.5 bg-[#16A34A] hover:bg-emerald-700 text-white rounded-full shadow-lg transition-colors z-40 ${
+            activeJobPost || activeServicePost || isApplyView || isTrackView
+              ? 'hidden md:flex'
+              : 'flex'
+          } items-center gap-1.5 sm:gap-2 cursor-pointer border border-emerald-500`}
           title="Join CSC DOST WhatsApp Group"
           id="whatsapp-floating-badge"
           aria-label="Join WhatsApp Group"

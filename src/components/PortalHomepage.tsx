@@ -281,15 +281,130 @@ export default function PortalHomepage({
     ];
   }, []);
 
-  // Jobs with computed real deadline status
+  // Jobs with computed real deadline status and content type badge (Job vs Admission)
   const jobsWithStatus = useMemo(() => {
-    return SARKARI_DATA.map((item) => ({
-      item,
-      status: computeJobDeadlineStatus(item.lastDate),
-      organisation: getRecruitingOrganisation(item),
-      qualification: getShortQualification(item.eligibility),
-    }));
+    return SARKARI_DATA.map((item) => {
+      const isAdmission =
+        item.category === 'cluster_univ' ||
+        item.category === 'exam_forms' ||
+        item.category === 'admissions' ||
+        item.category === 'nta';
+      return {
+        item,
+        isAdmission,
+        contentTypeLabel: isAdmission ? ('Admission' as const) : ('Job' as const),
+        status: computeJobDeadlineStatus(item.lastDate),
+        organisation: getRecruitingOrganisation(item),
+        qualification: getShortQualification(item.eligibility),
+      };
+    });
   }, []);
+
+  // Mixed-Content "Latest Updates" feed (Jobs, Admissions, Schemes, Services, Guides)
+  const mixedLatestUpdates = useMemo(() => {
+    const topJobs = jobsWithStatus
+      .filter((j) => !j.isAdmission)
+      .slice(0, 3)
+      .map((j) => ({
+        id: `job-${j.item.id}`,
+        categoryBadge: 'Job' as const,
+        organisation: j.organisation,
+        title: j.item.title,
+        summaryField: j.qualification
+          ? `Qualification: ${j.qualification}`
+          : j.item.totalPosts
+          ? `Vacancies: ${j.item.totalPosts}`
+          : j.item.shortInfo,
+        dateOrMeta: j.item.lastDate ? `Closing: ${j.item.lastDate}` : `Published: ${j.item.postDate}`,
+        statusBadge: renderStatusBadge(j.status),
+        officialHref: j.item.officialLink,
+        actionLabel: 'View Details',
+        onOpen: () => onOpenJob(j.item),
+      }));
+
+    const topAdmissions = jobsWithStatus
+      .filter((j) => j.isAdmission)
+      .slice(0, 2)
+      .map((j) => ({
+        id: `adm-${j.item.id}`,
+        categoryBadge: 'Admission' as const,
+        organisation: j.organisation,
+        title: j.item.title,
+        summaryField: j.item.shortInfo,
+        dateOrMeta: j.item.lastDate ? `Closing: ${j.item.lastDate}` : `Published: ${j.item.postDate}`,
+        statusBadge: renderStatusBadge(j.status),
+        officialHref: j.item.officialLink,
+        actionLabel: 'View Notice',
+        onOpen: () => onOpenJob(j.item),
+      }));
+
+    const topSchemes = GUIDE_ARTICLES.filter((g) => g.category === 'Central Scheme')
+      .slice(0, 2)
+      .map((scheme) => ({
+        id: `sch-${scheme.id}`,
+        categoryBadge: 'Scheme' as const,
+        organisation: scheme.responsibleDepartment || scheme.officialPortal,
+        title: scheme.title,
+        summaryField: scheme.benefitSummary
+          ? `Benefit: ${scheme.benefitSummary}`
+          : scheme.summary,
+        dateOrMeta: `Updated: ${scheme.lastUpdated}`,
+        statusBadge: (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-[#16A34A] border border-emerald-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" aria-hidden="true" />
+            <span>Active Scheme</span>
+          </span>
+        ),
+        officialHref: scheme.officialUrl,
+        actionLabel: 'View Scheme',
+        onOpen: () => {
+          if (onOpenGuide) onOpenGuide(scheme.id);
+          else scrollToSection('knowledge-hub');
+        },
+      }));
+
+    const topServices = SERVICES_LIST.slice(0, 2).map((svc) => ({
+      id: `svc-${svc.id}`,
+      categoryBadge: 'Service' as const,
+      organisation: 'CSC Digital Seva Desk',
+      title: svc.name,
+      summaryField: `Fee: ${svc.price} · Turnaround: ${svc.estimatedTime}`,
+      dateOrMeta: 'Online & CSC Desk',
+      statusBadge: (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-[#2563EB] border border-blue-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB]" aria-hidden="true" />
+          <span>Available</span>
+        </span>
+      ),
+      officialHref: undefined,
+      actionLabel: 'View Service',
+      onOpen: () => onOpenService(svc),
+    }));
+
+    const topGuides = GUIDE_ARTICLES.filter((g) => g.category !== 'Central Scheme')
+      .slice(0, 2)
+      .map((guide) => ({
+        id: `gde-${guide.id}`,
+        categoryBadge: 'Guide' as const,
+        organisation: guide.officialPortal,
+        title: guide.title,
+        summaryField: guide.summary,
+        dateOrMeta: `${guide.readTime} · ${guide.lastUpdated}`,
+        statusBadge: (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-[#102A43] border border-slate-200">
+            <span>Citizen Guide</span>
+          </span>
+        ),
+        officialHref: guide.officialUrl,
+        actionLabel: 'Read Guide',
+        onOpen: () => {
+          if (onOpenGuide) onOpenGuide(guide.id);
+          else scrollToSection('knowledge-hub');
+        },
+      }));
+
+    return [...topJobs, ...topAdmissions, ...topSchemes, ...topServices, ...topGuides];
+  }, [jobsWithStatus, onOpenJob, onOpenService, onOpenGuide]);
 
   // Filtered and prioritized recruitment notices
   const filteredJobs = useMemo(() => {
@@ -821,7 +936,8 @@ export default function PortalHomepage({
             className="flex flex-wrap sm:flex-nowrap items-center gap-x-1.5 gap-y-2 sm:overflow-x-auto text-xs font-medium"
           >
             {[
-              { id: 'all', label: 'All Organisations' },
+              { id: 'all', label: 'All Recruitments' },
+              { id: 'latest_mixed', label: 'Latest Updates (All Categories)' },
               { id: 'jkssb', label: 'JKSSB' },
               { id: 'army_jobs', label: 'Indian Army' },
               { id: 'ssc_jobs', label: 'SSC' },
@@ -848,176 +964,309 @@ export default function PortalHomepage({
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 text-xs">
-            <span className="text-[#64748B] font-medium mr-0.5">Status:</span>
-            {[
-              { id: 'active', label: 'Open & Active' },
-              { id: 'all', label: 'All Notices' },
-              { id: 'closed', label: 'Closed Archive' },
-            ].map((st) => (
-              <button
-                key={st.id}
-                type="button"
-                onClick={() => {
-                  setJobStatusFilter(st.id as 'active' | 'all' | 'closed');
-                  setShowAllJobs(false);
-                }}
-                className={`min-h-[36px] px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer ${
-                  jobStatusFilter === st.id
-                    ? 'bg-[#102A43] text-white border-[#102A43] font-semibold'
-                    : 'bg-white text-[#64748B] border-[#E2E8F0] hover:text-[#102A43]'
-                }`}
-              >
-                {st.label}
-              </button>
-            ))}
-          </div>
+          {jobOrgFilter !== 'latest_mixed' && (
+            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 text-xs">
+              <span className="text-[#64748B] font-medium mr-0.5">Status:</span>
+              {[
+                { id: 'active', label: 'Open & Active' },
+                { id: 'all', label: 'All Notices' },
+                { id: 'closed', label: 'Closed Archive' },
+              ].map((st) => (
+                <button
+                  key={st.id}
+                  type="button"
+                  onClick={() => {
+                    setJobStatusFilter(st.id as 'active' | 'all' | 'closed');
+                    setShowAllJobs(false);
+                  }}
+                  className={`min-h-[36px] px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer ${
+                    jobStatusFilter === st.id
+                      ? 'bg-[#102A43] text-white border-[#102A43] font-semibold'
+                      : 'bg-white text-[#64748B] border-[#E2E8F0] hover:text-[#102A43]'
+                  }`}
+                >
+                  {st.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Desktop Compact Table View */}
-        <div className="hidden md:block bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden shadow-2xs">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-[#F6F8FC] border-b border-[#E2E8F0] text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
-                <th className="py-3.5 px-5">Recruitment / Notice</th>
-                <th className="py-3.5 px-4">Organisation</th>
-                <th className="py-3.5 px-4">Closing Date</th>
-                <th className="py-3.5 px-4">Status</th>
-                <th className="py-3.5 px-5 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E2E8F0] text-sm">
-              {displayedJobs.map(({ item, status, organisation, qualification }) => (
-                <tr
-                  key={item.id}
-                  className="hover:bg-[#F6F8FC]/80 transition-colors"
+        {jobOrgFilter === 'latest_mixed' ? (
+          /* ================================================================ */
+          /* MIXED-CONTENT LATEST UPDATES VIEW (Jobs, Admissions, Schemes...) */
+          /* ================================================================ */
+          <>
+            <div className="hidden md:block bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden shadow-2xs">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-[#F6F8FC] border-b border-[#E2E8F0] text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
+                    <th className="py-3.5 px-5">Update Title &amp; Summary</th>
+                    <th className="py-3.5 px-4">Category &amp; Source</th>
+                    <th className="py-3.5 px-4">Date / Info</th>
+                    <th className="py-3.5 px-4">Status</th>
+                    <th className="py-3.5 px-5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E2E8F0] text-sm">
+                  {mixedLatestUpdates.map((upd) => (
+                    <tr key={upd.id} className="hover:bg-[#F6F8FC]/80 transition-colors">
+                      <td className="py-4 px-5 max-w-md">
+                        <button
+                          type="button"
+                          onClick={upd.onOpen}
+                          className="text-left font-bold text-[#102A43] hover:text-[#2563EB] transition-colors leading-snug cursor-pointer block"
+                        >
+                          {upd.title}
+                        </button>
+                        <p className="text-xs text-[#64748B] mt-1 line-clamp-1">
+                          {upd.summaryField}
+                        </p>
+                      </td>
+                      <td className="py-4 px-4 text-xs whitespace-nowrap">
+                        <span className="inline-block font-bold uppercase tracking-wider text-[10px] px-2 py-0.5 rounded bg-[#F6F8FC] border border-[#E2E8F0] text-[#2563EB] mr-2">
+                          {upd.categoryBadge}
+                        </span>
+                        <span className="font-semibold text-[#102A43]">{upd.organisation}</span>
+                      </td>
+                      <td className="py-4 px-4 text-xs text-[#102A43] whitespace-nowrap font-medium">
+                        {upd.dateOrMeta}
+                      </td>
+                      <td className="py-4 px-4 whitespace-nowrap">{upd.statusBadge}</td>
+                      <td className="py-4 px-5 text-right whitespace-nowrap">
+                        <div className="inline-flex items-center justify-end gap-3">
+                          {upd.officialHref && (
+                            <a
+                              href={upd.officialHref}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs font-medium text-[#64748B] hover:text-[#102A43] inline-flex items-center gap-1"
+                            >
+                              <span>Official</span>
+                              <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                            </a>
+                          )}
+                          <button
+                            type="button"
+                            onClick={upd.onOpen}
+                            className="px-3 py-1.5 bg-blue-50 hover:bg-[#2563EB] text-[#2563EB] hover:text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                          >
+                            {upd.actionLabel}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="md:hidden -mx-4 divide-y divide-[#E2E8F0] border-t border-[#E2E8F0] bg-white">
+              {mixedLatestUpdates.map((upd) => (
+                <article
+                  key={upd.id}
+                  className="px-4 py-3.5 space-y-2 hover:bg-[#F6F8FC] transition-colors"
                 >
-                  <td className="py-4 px-5 max-w-md">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="font-bold uppercase tracking-wider text-[10px] px-2 py-0.5 rounded bg-[#F6F8FC] border border-[#E2E8F0] text-[#2563EB] shrink-0">
+                        {upd.categoryBadge}
+                      </span>
+                      <span className="text-xs font-semibold text-[#102A43] truncate">
+                        {upd.organisation}
+                      </span>
+                    </div>
+                    {upd.statusBadge}
+                  </div>
+
+                  <h3 className="text-sm font-bold text-[#102A43] leading-snug">
                     <button
                       type="button"
-                      onClick={() => onOpenJob(item)}
-                      className="text-left font-bold text-[#102A43] hover:text-[#2563EB] transition-colors leading-snug cursor-pointer block"
+                      onClick={upd.onOpen}
+                      className="text-left hover:text-[#2563EB] cursor-pointer"
                     >
-                      {item.title}
+                      {upd.title}
                     </button>
-                    {qualification && (
-                      <p className="text-xs text-[#64748B] mt-1">
-                        <span className="font-medium text-[#102A43]">Qualification:</span>{' '}
-                        {qualification}
-                      </p>
-                    )}
-                  </td>
-                  <td className="py-4 px-4 text-xs font-semibold text-[#102A43] whitespace-nowrap">
-                    {organisation}
-                  </td>
-                  <td className="py-4 px-4 text-xs text-[#102A43] whitespace-nowrap font-medium">
-                    {item.lastDate || 'See Notice'}
-                  </td>
-                  <td className="py-4 px-4 whitespace-nowrap">{renderStatusBadge(status)}</td>
-                  <td className="py-4 px-5 text-right whitespace-nowrap">
-                    <div className="inline-flex items-center justify-end gap-3">
-                      {item.officialLink && (
-                        <a
-                          href={item.officialLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs font-medium text-[#64748B] hover:text-[#102A43] inline-flex items-center gap-1"
-                          title="Official Source Portal"
-                        >
-                          <span>Official Link</span>
-                          <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                        </a>
-                      )}
+                  </h3>
+
+                  <p className="text-xs text-[#64748B] line-clamp-2">{upd.summaryField}</p>
+
+                  <div className="flex items-center justify-between text-xs text-[#64748B] pt-0.5">
+                    <span>{upd.dateOrMeta}</span>
+                    <button
+                      type="button"
+                      onClick={upd.onOpen}
+                      className="font-semibold text-[#2563EB] hover:underline cursor-pointer"
+                    >
+                      {upd.actionLabel} →
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </>
+        ) : (
+          /* ================================================================ */
+          /* RECRUITMENT & ADMISSIONS LISTING VIEW                            */
+          /* ================================================================ */
+          <>
+            {/* Desktop Compact Table View */}
+            <div className="hidden md:block bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden shadow-2xs">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-[#F6F8FC] border-b border-[#E2E8F0] text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
+                    <th className="py-3.5 px-5">Recruitment / Notice</th>
+                    <th className="py-3.5 px-4">Category &amp; Organisation</th>
+                    <th className="py-3.5 px-4">Closing Date</th>
+                    <th className="py-3.5 px-4">Status</th>
+                    <th className="py-3.5 px-5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E2E8F0] text-sm">
+                  {displayedJobs.map(
+                    ({ item, contentTypeLabel, status, organisation, qualification }) => (
+                      <tr key={item.id} className="hover:bg-[#F6F8FC]/80 transition-colors">
+                        <td className="py-4 px-5 max-w-md">
+                          <button
+                            type="button"
+                            onClick={() => onOpenJob(item)}
+                            className="text-left font-bold text-[#102A43] hover:text-[#2563EB] transition-colors leading-snug cursor-pointer block"
+                          >
+                            {item.title}
+                          </button>
+                          {qualification && (
+                            <p className="text-xs text-[#64748B] mt-1">
+                              <span className="font-medium text-[#102A43]">Qualification:</span>{' '}
+                              {qualification}
+                            </p>
+                          )}
+                        </td>
+                        <td className="py-4 px-4 text-xs font-semibold text-[#102A43] whitespace-nowrap">
+                          <span className="inline-block font-bold uppercase tracking-wider text-[10px] px-2 py-0.5 rounded bg-[#F6F8FC] border border-[#E2E8F0] text-[#2563EB] mr-2">
+                            {contentTypeLabel}
+                          </span>
+                          <span>{organisation}</span>
+                        </td>
+                        <td className="py-4 px-4 text-xs text-[#102A43] whitespace-nowrap font-medium">
+                          {item.lastDate || 'See Notice'}
+                        </td>
+                        <td className="py-4 px-4 whitespace-nowrap">{renderStatusBadge(status)}</td>
+                        <td className="py-4 px-5 text-right whitespace-nowrap">
+                          <div className="inline-flex items-center justify-end gap-3">
+                            {item.officialLink && (
+                              <a
+                                href={item.officialLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs font-medium text-[#64748B] hover:text-[#102A43] inline-flex items-center gap-1"
+                                title="Official Source Portal"
+                              >
+                                <span>Official Link</span>
+                                <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                              </a>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => onOpenJob(item)}
+                              className="px-3 py-1.5 bg-blue-50 hover:bg-[#2563EB] text-[#2563EB] hover:text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                            >
+                              View Details
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Open Full-Width List Rows */}
+            <div className="md:hidden -mx-4 divide-y divide-[#E2E8F0] border-t border-[#E2E8F0] bg-white">
+              {displayedJobs.map(
+                ({ item, contentTypeLabel, status, organisation, qualification }) => (
+                  <article
+                    key={item.id}
+                    className="px-4 py-3.5 space-y-2 hover:bg-[#F6F8FC] transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-bold uppercase tracking-wider text-[10px] px-2 py-0.5 rounded bg-[#F6F8FC] border border-[#E2E8F0] text-[#2563EB] shrink-0">
+                          {contentTypeLabel}
+                        </span>
+                        <span className="text-xs font-semibold text-[#2563EB] truncate">
+                          {organisation}
+                        </span>
+                      </div>
+                      {renderStatusBadge(status)}
+                    </div>
+
+                    <h3 className="text-sm font-bold text-[#102A43] leading-snug">
                       <button
                         type="button"
                         onClick={() => onOpenJob(item)}
-                        className="px-3 py-1.5 bg-blue-50 hover:bg-[#2563EB] text-[#2563EB] hover:text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                        className="text-left hover:text-[#2563EB] cursor-pointer"
                       >
-                        View Details
+                        {item.title}
                       </button>
+                    </h3>
+
+                    {qualification && (
+                      <p className="text-xs text-[#64748B]">
+                        <span className="font-semibold text-[#102A43]">Qualification:</span>{' '}
+                        {qualification}
+                      </p>
+                    )}
+
+                    <div className="flex items-center justify-between text-xs text-[#64748B] pt-0.5">
+                      <span>
+                        Closing Date:{' '}
+                        <strong className="text-[#102A43]">{item.lastDate || 'See Notice'}</strong>
+                      </span>
+
+                      <div className="flex items-center gap-3">
+                        {item.officialLink && (
+                          <a
+                            href={item.officialLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#64748B] hover:text-[#102A43] inline-flex items-center gap-1"
+                          >
+                            <span>Official</span>
+                            <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => onOpenJob(item)}
+                          className="font-semibold text-[#2563EB] hover:underline cursor-pointer"
+                        >
+                          View Details →
+                        </button>
+                      </div>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </article>
+                )
+              )}
+            </div>
 
-        {/* Mobile Open Full-Width List Rows */}
-        <div className="md:hidden -mx-4 divide-y divide-[#E2E8F0] border-t border-[#E2E8F0] bg-white">
-          {displayedJobs.map(({ item, status, organisation, qualification }) => (
-            <article
-              key={item.id}
-              className="px-4 py-3.5 space-y-2 hover:bg-[#F6F8FC] transition-colors"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-semibold text-[#2563EB]">{organisation}</span>
-                {renderStatusBadge(status)}
-              </div>
-
-              <h3 className="text-sm font-bold text-[#102A43] leading-snug">
+            {filteredJobs.length > 6 && (
+              <div className="flex justify-center pt-1">
                 <button
                   type="button"
-                  onClick={() => onOpenJob(item)}
-                  className="text-left hover:text-[#2563EB] cursor-pointer"
+                  onClick={() => setShowAllJobs((prev) => !prev)}
+                  className="min-h-[44px] px-5 py-2.5 bg-white hover:bg-[#F6F8FC] text-[#102A43] border border-[#E2E8F0] rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer inline-flex items-center gap-2"
                 >
-                  {item.title}
+                  <span>
+                    {showAllJobs
+                      ? 'Show Fewer Notices'
+                      : `View All ${filteredJobs.length} Recruitment Notices`}
+                  </span>
+                  <ArrowRight className="w-4 h-4 text-[#2563EB]" aria-hidden="true" />
                 </button>
-              </h3>
-
-              {qualification && (
-                <p className="text-xs text-[#64748B]">
-                  <span className="font-semibold text-[#102A43]">Qualification:</span>{' '}
-                  {qualification}
-                </p>
-              )}
-
-              <div className="flex items-center justify-between text-xs text-[#64748B] pt-0.5">
-                <span>
-                  Closing Date:{' '}
-                  <strong className="text-[#102A43]">{item.lastDate || 'See Notice'}</strong>
-                </span>
-
-                <div className="flex items-center gap-3">
-                  {item.officialLink && (
-                    <a
-                      href={item.officialLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#64748B] hover:text-[#102A43] inline-flex items-center gap-1"
-                    >
-                      <span>Official</span>
-                      <ExternalLink className="w-3 h-3" aria-hidden="true" />
-                    </a>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => onOpenJob(item)}
-                    className="font-semibold text-[#2563EB] hover:underline cursor-pointer"
-                  >
-                    View Details →
-                  </button>
-                </div>
               </div>
-            </article>
-          ))}
-        </div>
-
-        {filteredJobs.length > 6 && (
-          <div className="flex justify-center pt-1">
-            <button
-              type="button"
-              onClick={() => setShowAllJobs((prev) => !prev)}
-              className="min-h-[44px] px-5 py-2.5 bg-white hover:bg-[#F6F8FC] text-[#102A43] border border-[#E2E8F0] rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer inline-flex items-center gap-2"
-            >
-              <span>
-                {showAllJobs
-                  ? 'Show Fewer Notices'
-                  : `View All ${filteredJobs.length} Recruitment Notices`}
-              </span>
-              <ArrowRight className="w-4 h-4 text-[#2563EB]" aria-hidden="true" />
-            </button>
-          </div>
+            )}
+          </>
         )}
       </section>
 
@@ -1330,7 +1579,12 @@ export default function PortalHomepage({
           </div>
           <button
             type="button"
-            onClick={() => scrollToSection('knowledge-hub')}
+            onClick={() => {
+              window.dispatchEvent(
+                new CustomEvent('open-guide-article', { detail: { category: 'Central Scheme' } })
+              );
+              scrollToSection('knowledge-hub');
+            }}
             className="text-xs sm:text-sm font-semibold text-[#2563EB] hover:underline inline-flex items-center gap-1 cursor-pointer self-start sm:self-auto"
           >
             <span>View All Guides &amp; Schemes</span>
@@ -1360,7 +1614,7 @@ export default function PortalHomepage({
                 }}
                 className="font-semibold text-[#2563EB] hover:underline cursor-pointer"
               >
-                Read e-KYC Guide →
+                View Scheme Details →
               </button>
               <a
                 href="https://pmkisan.gov.in"
@@ -1390,12 +1644,15 @@ export default function PortalHomepage({
               <button
                 type="button"
                 onClick={() => {
-                  const ayushmanSvc = SERVICES_LIST.find((s) => s.id === 'csc-ayushman');
-                  if (ayushmanSvc) onOpenService(ayushmanSvc);
+                  if (onOpenGuide) onOpenGuide('ayushman-bharat-golden-card-guide-2026');
+                  else {
+                    const ayushmanSvc = SERVICES_LIST.find((s) => s.id === 'csc-ayushman');
+                    if (ayushmanSvc) onOpenService(ayushmanSvc);
+                  }
                 }}
                 className="font-semibold text-[#2563EB] hover:underline cursor-pointer"
               >
-                Request Card Assistance →
+                View Scheme Details →
               </button>
               <a
                 href="https://beneficiary.nha.gov.in"
