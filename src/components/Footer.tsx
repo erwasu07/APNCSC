@@ -33,6 +33,12 @@ export default function Footer({
       else window.location.hash = '#schemes';
       return;
     }
+    if (target === 'services' || target === 'csc-services') {
+      const el = document.getElementById('services-catalogue') || document.getElementById('services') || document.getElementById('services-board');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      else window.location.hash = '#services-catalogue';
+      return;
+    }
     if (target === 'aadhaar') {
       window.location.hash = '#service/aadhaar-card-services';
       return;
@@ -48,7 +54,12 @@ export default function Footer({
       return;
     }
     if (target === 'about') {
-      const el = document.getElementById('about-section') || document.getElementById('node-info');
+      const el = document.getElementById('node-info');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    if (target === 'faq') {
+      const el = document.getElementById('faq-section') || document.getElementById('faq');
       if (el) el.scrollIntoView({ behavior: 'smooth' });
       return;
     }
@@ -118,19 +129,10 @@ export default function Footer({
               <li>
                 <button
                   type="button"
-                  onClick={() => handleNav('aadhaar')}
+                  onClick={() => handleNav('services')}
                   className="hover:text-white transition-colors cursor-pointer"
                 >
-                  Aadhaar Services
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => handleNav('pan')}
-                  className="hover:text-white transition-colors cursor-pointer"
-                >
-                  PAN Card Services
+                  CSC E-Services
                 </button>
               </li>
               <li>

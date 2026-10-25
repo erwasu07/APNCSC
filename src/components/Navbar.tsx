@@ -80,6 +80,16 @@ export default function Navbar({
       return;
     }
 
+    if (target === 'services' || target === 'csc-services') {
+      if (onHomeClick) onHomeClick();
+      setTimeout(() => {
+        const el = document.getElementById('services-catalogue') || document.getElementById('services') || document.getElementById('services-board');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+        else window.location.hash = '#services-catalogue';
+      }, 50);
+      return;
+    }
+
     if (target === 'aadhaar') {
       window.location.hash = '#service/aadhaar-card-services';
       return;
@@ -97,7 +107,13 @@ export default function Navbar({
     }
 
     if (target === 'about') {
-      const el = document.getElementById('about-section') || document.getElementById('node-info');
+      const el = document.getElementById('node-info');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    if (target === 'faq') {
+      const el = document.getElementById('faq-section') || document.getElementById('faq');
       if (el) el.scrollIntoView({ behavior: 'smooth' });
       return;
     }
@@ -219,26 +235,14 @@ export default function Navbar({
 
           <button
             type="button"
-            onClick={() => navigateTo('aadhaar')}
+            onClick={() => navigateTo('services')}
             className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer ${
-              activeItem === 'aadhaar'
+              activeItem === 'services'
                 ? 'text-[#0B57D0] bg-blue-50/80 font-bold'
                 : 'text-[#172033] hover:text-[#0B57D0] hover:bg-slate-50'
             }`}
           >
-            Aadhaar
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigateTo('pan')}
-            className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer ${
-              activeItem === 'pan'
-                ? 'text-[#0B57D0] bg-blue-50/80 font-bold'
-                : 'text-[#172033] hover:text-[#0B57D0] hover:bg-slate-50'
-            }`}
-          >
-            PAN
+            CSC E-Services
           </button>
 
           <button
@@ -348,20 +352,11 @@ export default function Navbar({
 
             <button
               type="button"
-              onClick={() => navigateTo('aadhaar')}
+              onClick={() => navigateTo('services')}
               className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-[#F7F9FC] transition-colors flex items-center justify-between"
             >
-              <span>Aadhaar</span>
-              <span className="text-xs text-[#5F6B7A]">Update &amp; Revalidation</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => navigateTo('pan')}
-              className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-[#F7F9FC] transition-colors flex items-center justify-between"
-            >
-              <span>PAN Card</span>
-              <span className="text-xs text-[#5F6B7A]">New Application &amp; Correction</span>
+              <span className="font-semibold text-[#172033]">CSC E-Services</span>
+              <span className="text-xs text-[#5F6B7A]">Browse 30+ Govt &amp; Digital Services</span>
             </button>
 
             <button

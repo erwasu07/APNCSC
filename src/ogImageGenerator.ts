@@ -53,16 +53,16 @@ function getCategoryInfo(category: string) {
     case 'cluster_univ':
       return { label: 'CLUSTER UNIVERSITY SRINAGAR (CUS)', bg1: '#1E1B4B', bg2: '#4338CA', accent: '#FDE047', tagBg: '#4F46E5' };
     default:
-      return { label: 'SARKARI NOTIFICATION & UPDATE', bg1: '#0F172A', bg2: '#1E293B', accent: '#F59E0B', tagBg: '#DC2626' };
+      return { label: 'OFFICIAL CITIZEN NOTICE & UPDATE', bg1: '#0F172A', bg2: '#1E293B', accent: '#F59E0B', tagBg: '#155EEF' };
   }
 }
 
 /**
- * Generate a high-contrast, visually compelling SVG banner inspired by Sarkari Result social previews
+ * Generate a high-contrast, visually compelling SVG banner for CSC DOST social previews
  */
 export function generateOgSvg(item?: Partial<SarkariItem> | null): string {
   const isDefault = !item || !item.title;
-  const title = item?.title || 'CSC DOST - Official Sarkari Jobs, Exam Forms & Admissions';
+  const title = item?.title || 'CSC DOST - Official Recruitment Updates, Exam Forms & Admissions';
   const category = item?.category || 'jobs';
   const catInfo = getCategoryInfo(category);
   const lastDate = item?.lastDate || 'Check Official Notice';
@@ -83,25 +83,23 @@ export function generateOgSvg(item?: Partial<SarkariItem> | null): string {
   <defs>
     <!-- Background Gradient -->
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="${catInfo.bg1}" />
-      <stop offset="50%" stop-color="${catInfo.bg2}" />
-      <stop offset="100%" stop-color="#090d16" />
+      <stop offset="0%" stop-color="#101A36" />
+      <stop offset="50%" stop-color="#0B132B" />
+      <stop offset="100%" stop-color="#070C1A" />
     </linearGradient>
 
-    <!-- Outer Border Rainbow/Gold Gradient -->
+    <!-- Outer Border Clean Accent Gradient -->
     <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#F59E0B" />
-      <stop offset="25%" stop-color="#EF4444" />
-      <stop offset="50%" stop-color="#10B981" />
-      <stop offset="75%" stop-color="#3B82F6" />
-      <stop offset="100%" stop-color="#F59E0B" />
+      <stop offset="0%" stop-color="#243356" />
+      <stop offset="50%" stop-color="#155EEF" />
+      <stop offset="100%" stop-color="#243356" />
     </linearGradient>
 
-    <!-- Header Pill Gradient -->
-    <linearGradient id="redPillGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#B91C1C" />
-      <stop offset="50%" stop-color="#DC2626" />
-      <stop offset="100%" stop-color="#991B1B" />
+    <!-- Header Brand Pill Gradient -->
+    <linearGradient id="brandPillGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#101A36" />
+      <stop offset="50%" stop-color="#142145" />
+      <stop offset="100%" stop-color="#101A36" />
     </linearGradient>
 
     <!-- Yellow Gold Pill Gradient -->
@@ -112,8 +110,8 @@ export function generateOgSvg(item?: Partial<SarkariItem> | null): string {
 
     <!-- Card Inner Gradient -->
     <linearGradient id="innerCardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.08" />
-      <stop offset="100%" stop-color="#000000" stop-opacity="0.4" />
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.05" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.3" />
     </linearGradient>
 
     <!-- Drop Shadow Filter -->
@@ -129,35 +127,35 @@ export function generateOgSvg(item?: Partial<SarkariItem> | null): string {
   <!-- Base Canvas Background -->
   <rect width="1200" height="630" fill="url(#bgGrad)" />
 
-  <!-- Outer Decorative Border Frame (Sarkari Result style) -->
-  <rect x="18" y="18" width="1164" height="594" rx="28" fill="none" stroke="url(#borderGrad)" stroke-width="8" />
-  <rect x="28" y="28" width="1144" height="574" rx="20" fill="none" stroke="#FDE047" stroke-width="2" stroke-opacity="0.4" />
+  <!-- Outer Frame -->
+  <rect x="18" y="18" width="1164" height="594" rx="28" fill="none" stroke="url(#borderGrad)" stroke-width="3" />
+  <rect x="28" y="28" width="1144" height="574" rx="20" fill="none" stroke="#243356" stroke-width="1.5" stroke-opacity="0.6" />
 
   <!-- TOP HEADER SECTION -->
   <!-- CSC DOST Circular Seal Logo on Top Left -->
   <g transform="translate(65, 50)">
-    <!-- Outer Glow Circle -->
-    <circle cx="55" cy="55" r="50" fill="#0F172A" stroke="#F59E0B" stroke-width="4" filter="url(#dropShadow)" />
-    <circle cx="55" cy="55" r="44" fill="#1E293B" stroke="#FDE047" stroke-width="1.5" stroke-dasharray="4,2" />
+    <!-- Outer Circle -->
+    <circle cx="55" cy="55" r="50" fill="#101A36" stroke="#155EEF" stroke-width="3" filter="url(#dropShadow)" />
+    <circle cx="55" cy="55" r="44" fill="#142145" stroke="#243356" stroke-width="1.5" />
     
     <!-- Text inside Seal -->
-    <text x="55" y="44" font-family="Arial, sans-serif" font-weight="900" font-size="16" fill="#FDE047" text-anchor="middle" letter-spacing="1">CSC DOST</text>
+    <text x="55" y="44" font-family="Arial, sans-serif" font-weight="900" font-size="16" fill="#F4B400" text-anchor="middle" letter-spacing="1">CSC DOST</text>
     <text x="55" y="62" font-family="Arial, sans-serif" font-weight="900" font-size="20" fill="#FFFFFF" text-anchor="middle">★ VLE ★</text>
-    <text x="55" y="80" font-family="Arial, sans-serif" font-weight="700" font-size="10" fill="#94A3B8" text-anchor="middle">AUTHORIZED</text>
+    <text x="55" y="80" font-family="Arial, sans-serif" font-weight="700" font-size="10" fill="#B8C2D6" text-anchor="middle">AUTHORIZED</text>
   </g>
 
-  <!-- Big Red/Gold Header Brand Pill (Top Center) -->
+  <!-- Header Brand Pill (Top Center) -->
   <g transform="translate(195, 48)" filter="url(#dropShadow)">
-    <rect x="0" y="0" width="620" height="62" rx="14" fill="url(#redPillGrad)" stroke="#FDE047" stroke-width="2.5" />
-    <text x="310" y="40" font-family="Arial, sans-serif" font-weight="900" font-size="30" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">
-      CSC DOST • SARKARI RESULT
+    <rect x="0" y="0" width="620" height="62" rx="14" fill="url(#brandPillGrad)" stroke="#243356" stroke-width="2" />
+    <text x="310" y="40" font-family="Arial, sans-serif" font-weight="900" font-size="26" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">
+      CSC DOST • CITIZEN NOTICE DESK
     </text>
   </g>
 
   <!-- Top Right Category Badge Pill -->
   <g transform="translate(835, 48)" filter="url(#dropShadow)">
-    <rect x="0" y="0" width="300" height="62" rx="14" fill="#0F766E" stroke="#5EEAD4" stroke-width="2" />
-    <text x="150" y="38" font-family="Arial, sans-serif" font-weight="800" font-size="16" fill="#FFFFFF" text-anchor="middle">
+    <rect x="0" y="0" width="300" height="62" rx="14" fill="#182649" stroke="#2B3E6E" stroke-width="2" />
+    <text x="150" y="38" font-family="Arial, sans-serif" font-weight="800" font-size="16" fill="#93B4FF" text-anchor="middle">
       ${escapeXml(isDefault ? 'ONLINE CITIZEN DESK' : catInfo.label.slice(0, 24))}
     </text>
   </g>

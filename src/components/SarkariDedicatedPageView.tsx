@@ -303,9 +303,12 @@ export default function SarkariDedicatedPageView({
               )}
             </div>
 
-            {/* Visual Notice Poster (if available) */}
+            {/* Visual Notice Preview Card */}
             <section aria-label="Official Notification Banner">
-              <SarkariNotificationBanner item={item} />
+              <SarkariNotificationBanner 
+                item={item} 
+                onApply={() => onApplyService(item.title)}
+              />
             </section>
 
             {/* ================================================================ */}

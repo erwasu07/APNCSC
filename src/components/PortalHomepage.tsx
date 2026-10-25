@@ -9,18 +9,7 @@ import {
   Award, 
   FileText, 
   Calendar, 
-  ExternalLink, 
-  CheckCircle2, 
-  HelpCircle, 
-  ChevronDown, 
-  ChevronUp, 
-  Info, 
-  ShieldCheck, 
-  MapPin, 
-  Phone, 
-  Clock,
-  ArrowUpRight,
-  Filter
+  ExternalLink
 } from 'lucide-react';
 import { SARKARI_DATA, SARKARI_CATEGORIES, SarkariItem } from '../data/sarkariData';
 import { SERVICES_LIST, ServiceItem } from '../servicesData';
@@ -46,9 +35,8 @@ export default function PortalHomepage({
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('all');
   const [recruitmentFilter, setRecruitmentFilter] = useState<string>('all');
-  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
-  // Listen for search focus event from Navbar
+  // Listen for search focus event from Navbar and keyboard shortcuts (Ctrl+K, /, Escape)
   useEffect(() => {
     const handleFocusSearch = () => {
       const el = document.getElementById('portal-universal-search');
@@ -57,9 +45,29 @@ export default function PortalHomepage({
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is already typing in an input or textarea
+      const target = e.target as HTMLElement | null;
+      const isInput = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable;
+
+      if ((e.key === '/' || ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k')) && !isInput) {
+        e.preventDefault();
+        handleFocusSearch();
+      } else if (e.key === 'Escape') {
+        if (searchQuery) {
+          setSearchQuery('');
+        }
+      }
+    };
+
     window.addEventListener('focus-csc-search', handleFocusSearch);
-    return () => window.removeEventListener('focus-csc-search', handleFocusSearch);
-  }, []);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('focus-csc-search', handleFocusSearch);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [searchQuery]);
 
   // Quick popular search chips
   const popularKeywords = ['JKSSB', 'PM-KISAN', 'Aadhaar', 'PAN', 'Army Recruitment', 'SSC', 'RRB'];
@@ -156,7 +164,7 @@ export default function PortalHomepage({
 
           <button
             type="button"
-            onClick={() => scrollToSection('popular-guides-section')}
+            onClick={() => scrollToSection('knowledge-hub')}
             className="px-5 py-2.5 bg-white hover:bg-[#F7F9FC] text-[#172033] text-sm font-semibold rounded-lg transition-colors border border-[#E3E8EF] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0B57D0]"
           >
             Browse Guides
@@ -335,7 +343,7 @@ export default function PortalHomepage({
             { id: 'aadhaar', title: 'Aadhaar Services', count: 'UIDAI Guidance', icon: Fingerprint, hash: '#service/aadhaar-card-services' },
             { id: 'pan', title: 'PAN Card', count: 'NSDL / UTIITSL', icon: CreditCard, hash: '#service/pan-card-new-correction' },
             { id: 'digital-services', title: 'Digital Services', count: `${SERVICES_LIST.length} Services`, icon: FileText, hash: '#apply' },
-            { id: 'guides', title: 'Citizen Guides', count: `${GUIDE_ARTICLES.length} Walkthroughs`, icon: BookOpen, target: 'popular-guides-section' },
+            { id: 'guides', title: 'Citizen Guides', count: `${GUIDE_ARTICLES.length} Walkthroughs`, icon: BookOpen, target: 'knowledge-hub' },
           ].map((cat) => {
             const Icon = cat.icon;
             return (
@@ -423,61 +431,6 @@ export default function PortalHomepage({
         </div>
       </section>
 
-      {/* ==================================================================== */}
-      {/* SECTION 3: POPULAR GUIDES */}
-      {/* ==================================================================== */}
-      <section id="popular-guides-section" aria-labelledby="popular-guides-heading" className="space-y-4">
-        <div className="flex flex-wrap items-end justify-between gap-2 border-b border-[#E3E8EF] pb-3">
-          <div>
-            <h2 id="popular-guides-heading" className="text-lg sm:text-xl font-bold text-[#172033]">
-              Popular Citizen Guides
-            </h2>
-            <p className="text-xs text-[#5F6B7A]">In-depth, step-by-step instructions for essential procedures</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => scrollToSection('knowledge-hub')}
-            className="text-xs font-semibold text-[#0B57D0] hover:underline flex items-center gap-1 cursor-pointer"
-          >
-            <span>Explore Knowledge Hub</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {GUIDE_ARTICLES.slice(0, 6).map((guide) => (
-            <article
-              key={guide.id}
-              onClick={() => {
-                if (onOpenGuide) onOpenGuide(guide.id);
-                else scrollToSection('knowledge-hub');
-              }}
-              className="bg-white border border-[#E3E8EF] hover:border-[#0B57D0] rounded-xl p-5 flex flex-col justify-between transition-all hover:shadow-xs group cursor-pointer"
-            >
-              <div className="space-y-2.5">
-                <div className="flex items-center gap-2 text-xs text-[#5F6B7A]">
-                  <span className="font-semibold text-[#0B57D0]">{guide.category}</span>
-                  <span aria-hidden="true">·</span>
-                  <span>{guide.readTime}</span>
-                </div>
-
-                <h3 className="text-base font-bold text-[#172033] group-hover:text-[#0B57D0] transition-colors leading-snug">
-                  {guide.title}
-                </h3>
-
-                <p className="text-xs text-[#5F6B7A] leading-relaxed line-clamp-3">
-                  {guide.summary}
-                </p>
-              </div>
-
-              <div className="pt-4 mt-3 border-t border-[#E3E8EF] flex items-center justify-between text-xs font-semibold text-[#0B57D0]">
-                <span>Read Full Guide</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
 
       {/* ==================================================================== */}
       {/* SECTION 4: GOVERNMENT SCHEMES */}
@@ -571,6 +524,7 @@ export default function PortalHomepage({
       {/* SECTION 5: RECRUITMENT UPDATES (Filterable) */}
       {/* ==================================================================== */}
       <section id="recruitment-section" aria-labelledby="recruitment-heading" className="space-y-4 scroll-mt-20">
+        <div id="sarkari-board" className="scroll-mt-20" />
         <div className="flex flex-wrap items-end justify-between gap-2 border-b border-[#E3E8EF] pb-3">
           <div>
             <h2 id="recruitment-heading" className="text-lg sm:text-xl font-bold text-[#172033]">
@@ -596,10 +550,10 @@ export default function PortalHomepage({
               key={tab.id}
               type="button"
               onClick={() => setRecruitmentFilter(tab.id)}
-              className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer border ${
                 recruitmentFilter === tab.id
-                  ? 'bg-[#12304A] text-white font-bold'
-                  : 'bg-white text-[#172033] border border-[#E3E8EF] hover:bg-slate-50'
+                  ? 'bg-[#155EEF] text-white border-[#155EEF] font-semibold shadow-2xs'
+                  : 'bg-white text-[#172033] border-[#E4E7EC] hover:bg-[#F8FAFC]'
               }`}
             >
               {tab.label}
@@ -667,122 +621,6 @@ export default function PortalHomepage({
           ))}
         </div>
       </section>
-
-      {/* ==================================================================== */}
-      {/* SECTION 6: WHY CSC DOST / ABOUT CSC DOST */}
-      {/* ==================================================================== */}
-      <section id="about-section" aria-labelledby="about-heading" className="bg-white border border-[#E3E8EF] rounded-2xl p-6 sm:p-8 space-y-4">
-        <div className="max-w-3xl space-y-3">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-[#0B57D0]" />
-            <h2 id="about-heading" className="text-lg sm:text-xl font-bold text-[#172033]">
-              About CSC DOST &amp; Independent Portal Disclosure
-            </h2>
-          </div>
-
-          <p className="text-xs sm:text-sm text-[#5F6B7A] leading-relaxed">
-            <strong>CSC DOST (cscdost.com)</strong> is an independent citizen digital assistance center operated by <strong>Authorized CSC Village Level Entrepreneur (VLE) Wasim Ahmad Khanday (CSC ID: 212515670018)</strong>, located at Sangran Qazigund, Anantnag, Jammu &amp; Kashmir.
-          </p>
-
-          <p className="text-xs sm:text-sm text-[#5F6B7A] leading-relaxed">
-            Our purpose is to make government services and employment updates accessible to citizens by summarizing complex notifications, explaining step-by-step procedures, and providing in-person assistance for online form submissions, document formatting, and status tracking.
-          </p>
-
-          {/* Trust points */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs text-[#172033]">
-            <div className="flex items-start gap-2 p-3 bg-[#F7F9FC] rounded-lg border border-[#E3E8EF]">
-              <CheckCircle2 className="w-4 h-4 text-[#188038] shrink-0 mt-0.5" />
-              <div>
-                <strong>Official Sources First</strong>
-                <p className="text-[#5F6B7A] text-[11px] mt-0.5">Every notification links directly to the official government portal.</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2 p-3 bg-[#F7F9FC] rounded-lg border border-[#E3E8EF]">
-              <CheckCircle2 className="w-4 h-4 text-[#188038] shrink-0 mt-0.5" />
-              <div>
-                <strong>No Double Charges</strong>
-                <p className="text-[#5F6B7A] text-[11px] mt-0.5">Tariffs follow regulated CSC service norms with printed e-receipts.</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2 p-3 bg-[#F7F9FC] rounded-lg border border-[#E3E8EF]">
-              <CheckCircle2 className="w-4 h-4 text-[#188038] shrink-0 mt-0.5" />
-              <div>
-                <strong>DPDP Privacy Compliant</strong>
-                <p className="text-[#5F6B7A] text-[11px] mt-0.5">Candidate data is handled solely for filing applications with full consent.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ==================================================================== */}
-      {/* SECTION 7: REAL CITIZEN FAQS */}
-      {/* ==================================================================== */}
-      <section aria-labelledby="faq-heading" className="space-y-4 max-w-4xl mx-auto">
-        <div className="text-center space-y-1">
-          <h2 id="faq-heading" className="text-lg sm:text-xl font-bold text-[#172033]">
-            Frequently Asked Questions
-          </h2>
-          <p className="text-xs text-[#5F6B7A]">Answers to common queries regarding notifications, services, and online filing</p>
-        </div>
-
-        <div className="space-y-2.5">
-          {[
-            {
-              q: 'Is CSC DOST an official government department?',
-              a: 'No. CSC DOST (cscdost.com) is an independent citizen digital assistance and informational portal operated by Authorized CSC VLE Wasim Ahmad Khanday. We provide verified informational summaries and application assistance. Official government portals are always directly linked for verification.'
-            },
-            {
-              q: 'How do I verify if a job notification is genuine before applying?',
-              a: 'Every recruitment card on CSC DOST includes the official portal domain (e.g. jkssb.nic.in, joinindianarmy.nic.in, ssc.gov.in, rrbapply.gov.in) and a "Visit Official Portal" link. We recommend reviewing the PDF notification on the authority\'s server before submission.'
-            },
-            {
-              q: 'Can I apply online through the CSC DOST desk or do I have to visit in person?',
-              a: 'You can do both. You can use our "Apply Online" desk to upload your documents, generate a reference tracking token, and have our authorized operators process your application. You can also visit our physical center at Sangran Qazigund for biometric authentication.'
-            },
-            {
-              q: 'What should I do if my payment was deducted on an official exam portal but the receipt failed?',
-              a: 'Bank reconciliations typically take 24 to 48 hours. Avoid paying twice immediately. Log in to the official portal to check "Re-verify Payment" or contact our helpdesk with your bank UTR number for verification.'
-            },
-            {
-              q: 'What documents are typically needed for Aadhaar updates or new PAN cards?',
-              a: 'For Aadhaar updates, UIDAI accepts valid Proof of Identity (PoI) and Proof of Address (PoA) such as Voter ID, electricity bill, bank passbook with photo seal, or Domicile. For new PAN applications, Aadhaar OTP verification allows paperless e-PAN generation within hours.'
-            }
-          ].map((faq, idx) => {
-            const isOpen = openFaqIndex === idx;
-            return (
-              <div
-                key={idx}
-                className="bg-white border border-[#E3E8EF] rounded-xl overflow-hidden transition-colors"
-              >
-                <button
-                  type="button"
-                  onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                  className="w-full p-4 text-left flex items-center justify-between gap-4 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0B57D0]"
-                  aria-expanded={isOpen}
-                >
-                  <span className="text-sm font-bold text-[#172033] leading-snug">
-                    {faq.q}
-                  </span>
-                  {isOpen ? (
-                    <ChevronUp className="w-4 h-4 text-[#0B57D0] shrink-0" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-[#5F6B7A] shrink-0" />
-                  )}
-                </button>
-                {isOpen && (
-                  <div className="px-4 pb-4 text-xs sm:text-sm text-[#5F6B7A] leading-relaxed border-t border-[#E3E8EF] pt-3">
-                    {faq.a}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
     </div>
   );
 }

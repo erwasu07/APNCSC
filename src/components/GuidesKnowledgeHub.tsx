@@ -760,15 +760,39 @@ export default function GuidesKnowledgeHub({ onSelectService }: { onSelectServic
                 </div>
               </div>
 
-              {/* Bottom Apply / Assistance CTA */}
-              <div className="p-5 bg-gradient-to-r from-blue-700 to-indigo-800 text-white rounded-2xl shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+              {/* Official Source & Portal Link Card */}
+              <div className="p-4 sm:p-5 bg-white border border-[#E3E8EF] rounded-2xl shadow-xs space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#188038]" aria-hidden="true" />
+                  <h4 className="text-sm font-bold text-[#172033] uppercase tracking-wider">Official Authority &amp; Portal</h4>
+                </div>
+                <p className="text-xs text-[#5F6B7A] leading-relaxed">
+                  CSC DOST provides verified informational walkthroughs. To submit your form, check official merit lists, or download notifications directly from the administering authority, visit their official portal:
+                </p>
+                <div className="pt-1 flex flex-wrap items-center gap-3">
+                  <a
+                    href={selectedArticle.officialUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0B57D0] hover:bg-[#0842a0] text-white text-xs font-semibold rounded-lg transition-colors shadow-xs"
+                  >
+                    <span>Visit Official Portal ({selectedArticle.officialPortal})</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                  <span className="text-[11px] text-[#5F6B7A]">Opens official government/university portal in a new tab</span>
+                </div>
+              </div>
+
+              {/* Citizen Assistance CTA */}
+              <div className="p-5 bg-[#12304A] text-white rounded-2xl shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="space-y-1 text-center sm:text-left">
-                  <h4 className="text-sm sm:text-base font-black">Need assistance with your online application?</h4>
-                  <p className="text-xs text-blue-100">
-                    Visit your authorized CSC DOST Digital Seva Kendra or apply through our secure guided desk.
+                  <h4 className="text-sm sm:text-base font-bold">Need digital assistance with your application?</h4>
+                  <p className="text-xs text-slate-300">
+                    Get document scanning, fee payment, and error-free form submission at our authorized CSC Digital Seva Kendra.
                   </p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => {
                     if (onSelectService) {
                       onSelectService(selectedArticle.title);
@@ -776,7 +800,7 @@ export default function GuidesKnowledgeHub({ onSelectService }: { onSelectServic
                     const elem = document.getElementById('sarkari-results-desk') || document.getElementById('services-grid');
                     elem?.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs rounded-xl transition-all shadow-md cursor-pointer shrink-0"
+                  className="px-5 py-2.5 bg-white hover:bg-slate-100 text-[#12304A] font-bold text-xs rounded-lg transition-all shadow-xs cursor-pointer shrink-0"
                 >
                   Apply via CSC DOST Desk
                 </button>

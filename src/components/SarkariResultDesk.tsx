@@ -282,6 +282,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
   const [selectedItem, setSelectedItem] = useState<SarkariItem | null>(null);
   const [clickedItemId, setClickedItemId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'jkssb' | 'jobs' | 'admissions' | 'exam_forms' | 'cluster_univ' | 'ssc_jobs' | 'rrb_jobs' | 'army_jobs'>('all');
+  const [itemsLimit, setItemsLimit] = useState(10);
   const [deskViewMode, setDeskViewMode] = useState<'boxes' | 'cards'>('boxes');
 
   // Interactive Digital Application Portal State
@@ -1133,67 +1134,54 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
   return (
     <section id="sarkari-portal-section" className="pt-0 pb-12 md:pb-16 bg-slate-50 dark:bg-slate-950 transition-colors duration-300 w-full">
       
-      {/* 1. 📢 YELLOW TOP NEWS TICKER STRIP */}
-      <div className="bg-[#f59e0b] border-b border-amber-500 py-1.5 px-2.5 sm:py-2 sm:px-4 shadow-sm w-full mb-2 sm:mb-3 text-slate-950">
-        {/* Running Horizontal Ticker Marquee for Mobile & Desktop */}
-        <div className="flex max-w-7xl mx-auto items-center justify-between gap-2 sm:gap-3 text-xs font-sans relative">
-          <div className="flex items-center gap-1.5 sm:gap-2.5 flex-1 min-w-0 overflow-hidden">
-            <span className="bg-slate-950 text-amber-300 font-black text-[10px] sm:text-[11px] px-2 py-0.5 sm:px-2.5 sm:py-1 rounded uppercase tracking-wider shrink-0 flex items-center gap-1 sm:gap-1.5 shadow-xs z-10">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
-              <span>LATEST NEWS:</span>
-            </span>
-            <div className="overflow-hidden whitespace-nowrap text-xs font-bold text-slate-950 flex-1 relative group">
+      {/* 1. SUBTLE UPDATE STRIP */}
+      <div className="bg-white border-b border-[#E4E7EC] py-2 px-3 sm:px-4 w-full mb-6 sm:mb-8 text-[#172033]">
+        <div className="flex max-w-7xl mx-auto items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5 flex-1 min-w-0 overflow-hidden">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#EFF4FF] border border-[#D1E0FF] rounded-md text-[#155EEF] font-semibold text-xs shrink-0 select-none">
+              <span className="w-2 h-2 rounded-full bg-[#155EEF]" aria-hidden="true" />
+              <span>Latest updates</span>
+            </div>
+            <div className="overflow-hidden whitespace-nowrap text-xs text-[#172033] flex-1 relative group">
               <div className="animate-marquee whitespace-nowrap group-hover:[animation-play-state:paused] active:[animation-play-state:paused] flex items-center">
-                {/* Dynamic Latest Item from Each of the 7 Target Sections - Primary Copy */}
+                {/* Primary Ticker Items Copy */}
                 <div className="inline-flex items-center gap-4 sm:gap-6 pr-4 sm:pr-6 shrink-0">
-                  {latestTickerItems.map(({ item, tag, emoji }) => (
-                    <React.Fragment key={`ticker-item-1-${item.id}`}>
+                  {latestTickerItems.map(({ item }) => (
+                    <React.Fragment key={`ticker-1-${item.id}`}>
                       <button
                         type="button"
                         onClick={() => handleItemClick(item)}
-                        className="inline-flex items-center gap-1.5 hover:underline cursor-pointer text-left group/ticker font-bold"
-                        title="Click to view full details"
+                        className="inline-flex items-center gap-1.5 hover:text-[#155EEF] hover:underline cursor-pointer text-left font-medium text-[#172033] transition-colors"
                       >
-                        <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase tracking-wider shadow-xs">
-                          {tag}
-                        </span>
-                        <span className="text-slate-950 font-bold group-hover/ticker:text-blue-900">
-                          {emoji} <strong>{item.title}</strong>
-                        </span>
+                        <span>{item.title}</span>
                         {item.isNew && (
-                          <span className="px-1.5 py-0.2 bg-red-600 text-white rounded text-[8.5px] font-black font-mono animate-pulse">
+                          <span className="px-1.5 py-0.2 bg-slate-100 text-[#667085] border border-[#E4E7EC] rounded text-[9.5px] font-medium">
                             NEW
                           </span>
                         )}
                       </button>
-                      <span className="text-amber-800 font-black">•</span>
+                      <span className="text-[#667085]">•</span>
                     </React.Fragment>
                   ))}
                 </div>
-
                 {/* Duplicate Copy for Seamless Infinite Scrolling */}
                 <div className="inline-flex items-center gap-4 sm:gap-6 pr-4 sm:pr-6 shrink-0" aria-hidden="true">
-                  {latestTickerItems.map(({ item, tag, emoji }) => (
-                    <React.Fragment key={`ticker-item-2-${item.id}`}>
+                  {latestTickerItems.map(({ item }) => (
+                    <React.Fragment key={`ticker-2-${item.id}`}>
                       <button
                         type="button"
                         onClick={() => handleItemClick(item)}
                         tabIndex={-1}
-                        className="inline-flex items-center gap-1.5 hover:underline cursor-pointer text-left group/ticker font-bold"
+                        className="inline-flex items-center gap-1.5 hover:text-[#155EEF] hover:underline cursor-pointer text-left font-medium text-[#172033] transition-colors"
                       >
-                        <span className="px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded text-[9.5px] font-black font-mono uppercase tracking-wider shadow-xs">
-                          {tag}
-                        </span>
-                        <span className="text-slate-950 font-bold group-hover/ticker:text-blue-900">
-                          {emoji} <strong>{item.title}</strong>
-                        </span>
+                        <span>{item.title}</span>
                         {item.isNew && (
-                          <span className="px-1.5 py-0.2 bg-red-600 text-white rounded text-[8.5px] font-black font-mono">
+                          <span className="px-1.5 py-0.2 bg-slate-100 text-[#667085] border border-[#E4E7EC] rounded text-[9.5px] font-medium">
                             NEW
                           </span>
                         )}
                       </button>
-                      <span className="text-amber-800 font-black">•</span>
+                      <span className="text-[#667085]">•</span>
                     </React.Fragment>
                   ))}
                 </div>
@@ -1203,457 +1191,328 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
         </div>
       </div>
 
-      <div className="w-full max-w-7xl mx-auto px-1.5 sm:px-4 md:px-6">
-        {/* Section Header */}
-        <div id="sarkari-board" className="max-w-7xl mx-auto mb-2 sm:mb-3 scroll-mt-24">
-          <div className="flex items-center justify-center border-b border-slate-200 dark:border-slate-800 pb-1.5 sm:pb-2">
-            <h2 className="text-base sm:text-lg md:text-xl font-black text-slate-900 dark:text-white tracking-wider font-display uppercase text-center">
-              Jobs &amp; Edu Alerts
-            </h2>
-          </div>
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6">
+        {/* 2. SECTION HEADING */}
+        <div id="sarkari-board" className="max-w-7xl mx-auto mb-6 scroll-mt-24 space-y-1">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#172033] tracking-tight">
+            Jobs &amp; Recruitment
+          </h2>
+          <p className="text-xs sm:text-sm text-[#667085]">
+            Find the latest recruitment, railway, defence and education updates.
+          </p>
         </div>
 
-        {/* MODERN SARKARI CATEGORY QUICK ACCESS GRID - 4 IN A ROW ON MOBILE */}
-        <div className="max-w-7xl mx-auto mb-3 sm:mb-4">
-          <div className="grid grid-cols-4 gap-1.5 sm:gap-2.5">
+        {/* 3. CATEGORY NAVIGATION (Clean Chips, Mobile Horizontal-Scroll) */}
+        <div className="max-w-7xl mx-auto mb-6">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar text-xs">
             {[
-              {
-                id: 'jkssb',
-                label: 'JKSSB',
-                fullLabel: 'JKSSB Jobs',
-                gradient: 'from-indigo-600 to-blue-700',
-                border: 'border-indigo-500/40',
-                icon: Briefcase,
-              },
-              {
-                id: 'army_jobs',
-                label: 'Army',
-                fullLabel: 'Indian Army',
-                gradient: 'from-red-700 to-rose-900',
-                border: 'border-red-600/40',
-                icon: Shield,
-              },
-              {
-                id: 'ssc_jobs',
-                label: 'SSC',
-                fullLabel: 'SSC Jobs',
-                gradient: 'from-purple-600 to-indigo-700',
-                border: 'border-purple-500/40',
-                icon: FileCheck,
-              },
-              {
-                id: 'rrb_jobs',
-                label: 'Railway',
-                fullLabel: 'RRB Railway',
-                gradient: 'from-emerald-600 to-teal-700',
-                border: 'border-emerald-500/40',
-                icon: Train,
-              },
-              {
-                id: 'admissions',
-                label: 'KU Adm',
-                fullLabel: 'KU Admissions',
-                gradient: 'from-teal-600 to-emerald-700',
-                border: 'border-teal-500/40',
-                icon: GraduationCap,
-              },
-              {
-                id: 'exam_forms',
-                label: 'KU Exams',
-                fullLabel: 'KU Exam Forms',
-                gradient: 'from-amber-500 to-orange-600',
-                border: 'border-amber-500/40',
-                icon: BookOpen,
-              },
-              {
-                id: 'cluster_univ',
-                label: 'Cluster',
-                fullLabel: 'Cluster Univ',
-                gradient: 'from-cyan-600 to-blue-700',
-                border: 'border-cyan-500/40',
-                icon: Building2,
-              },
-              {
-                id: 'jobs',
-                label: 'Latest',
-                fullLabel: 'Latest Jobs',
-                gradient: 'from-blue-600 to-indigo-800',
-                border: 'border-blue-500/40',
-                icon: Briefcase,
-              },
+              { id: 'all', label: 'All', icon: Briefcase },
+              { id: 'jkssb', label: 'JKSSB', icon: Briefcase },
+              { id: 'army_jobs', label: 'Indian Army', icon: Shield },
+              { id: 'ssc_jobs', label: 'SSC', icon: FileCheck },
+              { id: 'rrb_jobs', label: 'RRB', icon: Train },
+              { id: 'admissions', label: 'Admissions', icon: GraduationCap },
+              { id: 'cluster_univ', label: 'Cluster Univ', icon: Building2 },
+              { id: 'exam_forms', label: 'KU Exams', icon: BookOpen },
             ].map((cat) => {
               const isActive = activeTab === cat.id;
               const IconComponent = cat.icon;
               return (
                 <button
                   key={cat.id}
-                  id={`sarkari-cat-btn-${cat.id}`}
-                  onClick={() => setActiveTab(cat.id)}
-                  className={`group relative h-10 sm:h-11 px-1.5 sm:px-3 rounded-lg sm:rounded-xl text-white transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 shadow-sm border ${cat.border} bg-gradient-to-r ${cat.gradient} hover:brightness-110 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] select-none text-center ${
+                  id={`recruitment-tab-${cat.id}`}
+                  type="button"
+                  onClick={() => {
+                    setActiveTab(cat.id as any);
+                    setItemsLimit(10);
+                  }}
+                  className={`px-3.5 py-2 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap border select-none ${
                     isActive
-                      ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900 shadow-md shadow-black/20 font-black brightness-105 scale-[1.02]'
-                      : 'opacity-95 hover:opacity-100'
+                      ? 'bg-[#155EEF] text-white border-[#155EEF] shadow-2xs font-semibold'
+                      : 'bg-white text-[#172033] border-[#E4E7EC] hover:bg-[#F8FAFC]'
                   }`}
                 >
-                  <IconComponent className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform duration-200 group-hover:scale-110 ${isActive ? 'text-amber-300' : 'text-white/90'}`} />
-                  <span className="text-[11px] sm:text-xs md:text-[13px] font-bold tracking-tight leading-tight truncate">
-                    <span className="sm:hidden">{cat.label}</span>
-                    <span className="hidden sm:inline">{cat.fullLabel}</span>
-                  </span>
+                  <IconComponent className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-[#667085]'}`} />
+                  <span>{cat.label}</span>
+                  {cat.id !== 'all' && (
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                      isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-[#667085]'
+                    }`}>
+                      {SARKARI_DATA.filter(i => i.category === cat.id).length}
+                    </span>
+                  )}
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* FEATURED JKSSB OFFICIAL BANNER WHEN JKSSB TAB IS ACTIVE */}
-        {activeTab === 'jkssb' && (
-          <div className="max-w-7xl mx-auto mb-5 p-4 sm:p-5 bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-900 rounded-2xl text-white border border-indigo-700 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
-                  OFFICIAL J&amp;K RECRUITMENT DESK
-                </span>
-                <span className="text-indigo-200 text-xs font-mono font-bold flex items-center gap-1">
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                  Verified Notifications from jkssb.nic.in
-                </span>
-              </div>
-              <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
-                Jammu &amp; Kashmir Services Selection Board (JKSSB) Notifications
-              </h3>
-              <p className="text-xs text-indigo-200 max-w-2xl font-medium">
-                Official Department-wise post breakdown, total vacancies, qualification criteria, age limit relaxation, and application closing dates parsed directly from official notifications. Apply online via CSC DOST Desk or link directly to the official portal.
-              </p>
-            </div>
-            <a
-              href="https://jkssb.nic.in/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02]"
-            >
-              <span>Visit jkssb.nic.in</span>
-              <ExternalLink className="w-4 h-4" />
-            </a>
-          </div>
-        )}
-
-        {/* FEATURED KASHMIR UNIVERSITY OFFICIAL ADMISSIONS BANNER WHEN ADMISSIONS TAB IS ACTIVE */}
-        {activeTab === 'admissions' && (
-          <div className="max-w-7xl mx-auto mb-6">
-            <div className="p-4 sm:p-5 bg-gradient-to-r from-teal-950 via-slate-900 to-teal-900 rounded-2xl text-white border border-teal-700 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
-                    OFFICIAL KASHMIR UNIVERSITY PORTAL
-                  </span>
-                  <span className="text-teal-200 text-xs font-mono font-bold flex items-center gap-1">
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                    Verified Active Admission Notices from kashmiruniversity.net
-                  </span>
-                </div>
-                <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
-                  University of Kashmir Admission Updates (August 2026 Notices)
-                </h3>
-                <p className="text-xs text-teal-200 max-w-2xl font-medium">
-                  Extracted Admission Registrations, 1st &amp; 2nd Selection Lists, Counseling Schedules, DDE Distance Mode Forms, Ph.D. Direct Admissions, and Diploma Notices posted on or after August 5, 2026.
-                </p>
-              </div>
-              <a
-                href="https://www.kashmiruniversity.net/admission.aspx"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5 shrink-0 hover:scale-[1.02] font-bold"
-              >
-                <span>Visit kashmiruniversity.net</span>
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
-        )}
-
-        {/* FEATURED KASHMIR UNIVERSITY EXAMINATION FORMS BANNER WHEN EXAM_FORMS TAB IS ACTIVE */}
-        {activeTab === 'exam_forms' && (
-          <div className="max-w-7xl mx-auto mb-6">
-            <div className="p-4 sm:p-5 bg-gradient-to-r from-amber-950 via-slate-900 to-yellow-950 rounded-2xl text-white border border-amber-700 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
-                    OFFICIAL KASHMIR UNIVERSITY EXAMINATION DESK
-                  </span>
-                  <span className="text-amber-200 text-xs font-mono font-bold flex items-center gap-1">
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                    Verified Active Exam Form Notices from kashmiruniversity.net
-                  </span>
-                </div>
-                <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
-                  University of Kashmir Exam Form Updates (August 2026 Notices)
-                </h3>
-                <p className="text-xs text-amber-200 max-w-2xl font-medium">
-                  Extracted Active Exam Form Submission Notices (UG BG 4th Sem, PG 1st &amp; 3rd Sem, B.Ed 1st &amp; 2nd Sem, Professional B.Tech 4th/6th/8th Sem, DDE Distance Mode) posted on or after August 5, 2026.
-                </p>
-              </div>
-              <a
-                href="https://www.kashmiruniversity.net/Examination.aspx"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02] font-bold"
-              >
-                <span>Visit kashmiruniversity.net</span>
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
-        )}
-
-        {/* FEATURED CLUSTER UNIVERSITY BANNER WHEN CLUSTER_UNIV TAB IS ACTIVE */}
-        {activeTab === 'cluster_univ' && (
-          <div className="max-w-7xl mx-auto mb-6">
-            <div className="p-4 sm:p-5 bg-gradient-to-r from-emerald-950 via-slate-900 to-teal-950 rounded-2xl text-white border border-emerald-700 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
-                    OFFICIAL CLUSTER UNIVERSITY SRINAGAR DESK
-                  </span>
-                  <span className="text-emerald-200 text-xs font-mono font-bold flex items-center gap-1">
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                    Verified Active Notifications from https://www.cusrinagar.edu.in/
-                  </span>
-                </div>
-                <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
-                  Cluster University Srinagar Admissions &amp; Exam Forms Desk (August 2026 Updates)
-                </h3>
-                <p className="text-xs text-emerald-200 max-w-2xl font-medium">
-                  Extracted Active Admission &amp; Examination Notices (UG 3rd &amp; 5th Sem Exam Forms, PG &amp; Integrated Spot Admission Registration, B.Ed/M.Ed Exam Schedule, UG Batch 2026 Registration, UG Re-evaluation Forms) with Official Links and Application Deadlines.
-                </p>
-              </div>
-              <a
-                href="https://www.cusrinagar.edu.in/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02] font-bold"
-              >
-                <span>Visit www.cusrinagar.edu.in</span>
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
-        )}
-
-
-        {/* FEATURED SSC JOBS BANNER WHEN SSC_JOBS TAB IS ACTIVE */}
-        {activeTab === 'ssc_jobs' && (
-          <div className="max-w-7xl mx-auto mb-6">
-            <div className="p-4 sm:p-5 bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-900 rounded-2xl text-white border border-indigo-700 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
-                    STAFF SELECTION COMMISSION (SSC) DESK
-                  </span>
-                  <span className="text-indigo-200 text-xs font-mono font-bold flex items-center gap-1">
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                    Active Notifications Extracted from https://ssc.gov.in/
-                  </span>
-                </div>
-                <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
-                  Staff Selection Commission Active Recruitment Desk (August 2026 Updates)
-                </h3>
-                <p className="text-xs text-indigo-200 max-w-2xl font-medium">
-                  Extracted Active Job Notifications (SSC Steno Grade C &amp; D 2026, CGL Tier-I Exam City Slip, GD Constable 2026 Mega Notice, Selection Posts Phase-XIV Correction, CHSL Tier-II Date) with Department Details, Official Portal Links (ssc.gov.in), Eligibility Criteria, and Application Windows.
-                </p>
-              </div>
-              <a
-                href="https://ssc.gov.in/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02] font-bold"
-              >
-                <span>Visit ssc.gov.in</span>
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
-        )}
-
-        {/* FEATURED RRB JOBS BANNER WHEN RRB_JOBS TAB IS ACTIVE */}
-        {activeTab === 'rrb_jobs' && (
-          <div className="max-w-7xl mx-auto mb-6">
-            <div className="p-4 sm:p-5 bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-900 rounded-2xl text-white border border-emerald-700 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
-                    RAILWAY RECRUITMENT BOARD (RRB) DESK
-                  </span>
-                  <span className="text-emerald-200 text-xs font-mono font-bold flex items-center gap-1">
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                    Active Notifications Extracted from https://www.rrbapply.gov.in/
-                  </span>
-                </div>
-                <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
-                  Railway Recruitment Board Active Recruitment Desk (RRB JE, Paramedical, ALP, Technician, NTPC)
-                </h3>
-                <p className="text-xs text-emerald-200 max-w-2xl font-medium">
-                  Extracted Active Railway Job Notifications with Department Details, Official Exam Form Link (rrbapply.gov.in), Eligibility Criteria, Age Limits, and Last Date with strict filtering out of expired notifications.
-                </p>
-              </div>
-              <a
-                href="https://www.rrbapply.gov.in/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02] font-bold"
-              >
-                <span>Visit rrbapply.gov.in</span>
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
-        )}
-
-        {/* FEATURED INDIAN ARMY JOBS BANNER WHEN ARMY_JOBS TAB IS ACTIVE */}
-        {activeTab === 'army_jobs' && (
-          <div className="max-w-7xl mx-auto mb-6">
-            <div className="p-4 sm:p-5 bg-gradient-to-r from-red-950 via-slate-900 to-red-900 rounded-2xl text-white border border-red-700 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="bg-amber-400 text-slate-950 text-[10px] font-mono font-black px-2.5 py-0.5 rounded uppercase tracking-wider">
-                    INDIAN ARMY RECRUITMENT DESK
-                  </span>
-                  <span className="text-red-200 text-xs font-mono font-bold flex items-center gap-1">
-                    <CheckCircle className="w-3.5 h-3.5 text-red-400" />
-                    Active Notifications Extracted from https://www.joinindianarmy.nic.in/
-                  </span>
-                </div>
-                <h3 className="text-lg sm:text-xl font-black text-white tracking-tight font-display">
-                  Join Indian Army Active Officer &amp; Agniveer Recruitment Desk
-                </h3>
-                <p className="text-xs text-red-200 max-w-2xl font-medium">
-                  Extracted Active Indian Army Notifications (NCC Special Entry 125th, JAG Entry 34th, Territorial Army Officer Entry, Ladakh Scouts Agniveer Rally, AOC Civilian Alert) with Department Details, Official Exam Form Link (joinindianarmy.nic.in), Eligibility, Age Limits, and Last Date with strict filtering out of expired notifications.
-                </p>
-              </div>
-              <a
-                href="https://www.joinindianarmy.nic.in/default.aspx"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02] font-bold"
-              >
-                <span>Visit joinindianarmy.nic.in</span>
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
-        )}
-
-        {/* COMPACT SARKARI BOXES GRID (2 columns on mobile when all is selected, full edge-to-edge when filtered) */}
+        {/* 4. MAIN CONTENT (Two-Column Desktop Layout: Main List + Popular Categories Sidebar) */}
         {(() => {
-          const displayedBoxes = [
-            { id: 'army_jobs', title: 'Indian Army Jobs', icon: Shield, color: 'bg-red-950 text-red-200 border-red-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
-            { id: 'rrb_jobs', title: 'RRB Jobs', icon: Train, color: 'bg-emerald-950 text-emerald-200 border-emerald-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
-            { id: 'ssc_jobs', title: 'SSC Jobs', icon: Briefcase, color: 'bg-orange-950 text-orange-200 border-orange-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
-            { id: 'cluster_univ', title: 'Cluster University', icon: Building2, color: 'bg-cyan-950 text-cyan-200 border-cyan-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
-            { id: 'jkssb', title: 'JKSSB Jobs', icon: Briefcase, color: 'bg-indigo-950 text-amber-300 border-indigo-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
-            { id: 'exam_forms', title: 'KU Exam Forms', icon: FileCheck, color: 'bg-amber-950 text-amber-300 border-amber-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
-            { id: 'admissions', title: 'KU Admissions', icon: GraduationCap, color: 'bg-teal-950 text-amber-300 border-teal-800', badgeColor: 'bg-amber-400 text-slate-950 font-black' },
-            { id: 'jobs', title: 'Latest Jobs', icon: Briefcase, color: 'bg-[#ab0000] text-white border-[#ab0000]' },
-          ].filter(box => activeTab === 'all' || activeTab === box.id);
+          const totalFilteredCount = filteredItems.length;
+          const displayedItems = filteredItems.slice(0, itemsLimit);
+          const hasMore = totalFilteredCount > itemsLimit;
 
-          const isSingle = displayedBoxes.length === 1;
+          const popularCategoriesList = [
+            { id: 'jkssb', label: 'JKSSB', count: SARKARI_DATA.filter(i => i.category === 'jkssb').length },
+            { id: 'army_jobs', label: 'Indian Army', count: SARKARI_DATA.filter(i => i.category === 'army_jobs').length },
+            { id: 'ssc_jobs', label: 'SSC', count: SARKARI_DATA.filter(i => i.category === 'ssc_jobs').length },
+            { id: 'rrb_jobs', label: 'RRB', count: SARKARI_DATA.filter(i => i.category === 'rrb_jobs').length },
+            { id: 'admissions', label: 'Admissions', count: SARKARI_DATA.filter(i => i.category === 'admissions').length },
+            { id: 'cluster_univ', label: 'Cluster University', count: SARKARI_DATA.filter(i => i.category === 'cluster_univ').length },
+            { id: 'exam_forms', label: 'KU Exam Forms', count: SARKARI_DATA.filter(i => i.category === 'exam_forms').length },
+          ];
 
           return (
-            <div className={`grid gap-2 sm:gap-4 md:gap-5 max-w-7xl mx-auto w-full ${isSingle ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-3'}`}>
-              {displayedBoxes.map(box => {
-                const allCategoryItems = getItemsByCategory(box.id as any);
-                // Show top 7 recent items on overview, all items when filtered to that tab
-                const boxItems = isSingle ? allCategoryItems : allCategoryItems.slice(0, 7);
-                const IconComp = box.icon;
-                return (
-                  <div
-                    key={box.id}
-                    className={`bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border sm:border-2 overflow-hidden shadow-xs sm:shadow-md flex flex-col transition-all duration-300 ${
-                      box.id === 'jkssb' ? 'border-indigo-600 dark:border-indigo-800' : 'border-[#ab0000] dark:border-slate-800'
-                    }`}
-                    id={`sarkari-box-${box.id}`}
-                  >
-                    {/* Header Bar */}
-                    <div className={`${box.color || 'bg-[#ab0000] text-white'} px-2.5 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between font-black uppercase text-xs sm:text-base tracking-wider font-display shrink-0 shadow-xs`}>
-                      <div className="flex items-center gap-1.5 sm:gap-2 truncate">
-                        <IconComp className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 text-amber-300 shrink-0" />
-                        <span className="truncate">{box.title}</span>
-                      </div>
-                      <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-mono font-bold shrink-0 ml-1 ${box.badgeColor || 'bg-black/30 text-white'}`}>
-                        {allCategoryItems.length}
-                      </span>
-                    </div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
+              
+              {/* MAIN COLUMN: Unified Recruitment List (8 cols on desktop) */}
+              <div className="lg:col-span-8 space-y-4">
+                
+                {/* List Header & Quick Filter */}
+                <div className="bg-white border border-[#E4E7EC] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                  <div>
+                    <h3 className="text-sm sm:text-base font-bold text-[#172033]">
+                      {activeTab === 'all' 
+                        ? 'Latest Recruitment' 
+                        : SARKARI_CATEGORIES[activeTab as keyof typeof SARKARI_CATEGORIES]?.label || 'Recruitment Updates'}
+                    </h3>
+                    <p className="text-xs text-[#667085]">
+                      Showing {displayedItems.length} of {totalFilteredCount} verified updates
+                    </p>
+                  </div>
 
-                    {/* Compact Scrollable List Box */}
-                    <div className={`divide-y divide-slate-100 dark:divide-slate-800/80 overflow-y-auto scrollbar-thin ${isSingle ? 'max-h-[540px] sm:max-h-[660px]' : 'max-h-[340px] sm:max-h-[380px]'}`}>
-                      {boxItems.length > 0 ? (
-                        boxItems.map(item => (
-                          <div
-                            key={item.id}
-                            onClick={() => handleItemClick(item)}
-                            className="py-1.5 px-2 sm:py-2 sm:px-3 hover:bg-amber-500/10 dark:hover:bg-slate-800/80 transition-all cursor-pointer flex items-center justify-between gap-1.5 group"
-                            id={`sarkari-box-item-${item.id}`}
-                          >
-                            <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0">
-                              <span className={`${box.id === 'jkssb' ? 'text-indigo-600 dark:text-amber-400' : 'text-[#ab0000] dark:text-amber-400'} font-extrabold text-xs sm:text-sm shrink-0 leading-none`}>•</span>
-                              <p className="text-[11px] sm:text-[12.5px] font-bold text-blue-900 dark:text-blue-300 group-hover:text-indigo-700 dark:group-hover:text-amber-400 group-hover:underline leading-snug transition-colors font-sans line-clamp-2 sm:line-clamp-1">
-                                {item.title}
-                              </p>
+                  <div className="relative w-full sm:w-60">
+                    <Search className="w-3.5 h-3.5 text-[#667085] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setItemsLimit(10);
+                      }}
+                      placeholder="Search recruitment..."
+                      className="w-full pl-8 pr-3 py-1.5 bg-[#F8FAFC] border border-[#E4E7EC] focus:border-[#155EEF] rounded-lg text-xs text-[#172033] placeholder-[#667085] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#155EEF]"
+                    />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery('')}
+                        className="text-[10px] text-[#667085] hover:text-[#172033] absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer font-medium"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Unified Recruitment Items List */}
+                <div className="space-y-3">
+                  {displayedItems.length > 0 ? (
+                    displayedItems.map((item) => (
+                      <article
+                        key={item.id}
+                        id={`recruitment-card-${item.id}`}
+                        onClick={() => handleItemClick(item)}
+                        className="bg-white border border-[#E4E7EC] hover:border-[#155EEF]/50 rounded-xl p-4 sm:p-5 transition-all hover:shadow-2xs flex flex-col justify-between group cursor-pointer"
+                      >
+                        <div className="space-y-2">
+                          {/* Top Row: Category Badge, Subtle NEW, Last Date */}
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] font-semibold text-[#155EEF] bg-[#EFF4FF] px-2.5 py-0.5 rounded-md border border-[#D1E0FF]">
+                                {SARKARI_CATEGORIES[item.category]?.label || item.category}
+                              </span>
                               {item.isNew && (
-                                <span className="px-1 py-0.2 bg-red-700 text-white font-black text-[8px] sm:text-[9px] rounded shrink-0 animate-pulse">
+                                <span className="text-[10px] font-medium text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
                                   NEW
                                 </span>
                               )}
                             </div>
-                            {isSingle && (
-                              <div className="hidden sm:flex items-center shrink-0">
-                                <span className="px-2 py-0.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-[10px] rounded flex items-center gap-1 transition-transform group-hover:scale-105 shadow-xs">
-                                  Details <ArrowRight className="w-2.5 h-2.5" />
-                                </span>
-                              </div>
+                            {item.lastDate && (
+                              <span className="text-xs text-[#667085] flex items-center gap-1 font-medium">
+                                <Calendar className="w-3.5 h-3.5 text-[#667085]" />
+                                <span>Last date: <strong className="text-[#172033] font-semibold">{item.lastDate}</strong></span>
+                              </span>
                             )}
                           </div>
-                        ))
-                      ) : (
-                        <div className="p-3 text-center text-xs text-slate-400 italic">
-                          No notices matching search filter
-                        </div>
-                      )}
-                    </div>
 
-                    {/* Footer: View All Jobs Option */}
-                    {!isSingle ? (
-                      <div className="p-2 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-100 dark:border-slate-800 text-center shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => setActiveTab(box.id as any)}
-                          className="text-[11px] sm:text-xs font-bold text-[#ab0000] dark:text-amber-400 hover:text-red-800 dark:hover:text-amber-300 flex items-center justify-center gap-1.5 w-full py-0.5 hover:underline transition-colors group cursor-pointer"
-                          id={`sarkari-view-all-${box.id}`}
-                        >
-                          <span>View all {allCategoryItems.length} {box.title}</span>
-                          <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="p-2 sm:p-2.5 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 font-mono px-3 shrink-0">
-                        <span className="font-bold text-slate-700 dark:text-slate-300">Showing all {allCategoryItems.length} notifications</span>
-                        <button
-                          type="button"
-                          onClick={() => setActiveTab('all')}
-                          className="text-xs font-bold text-[#ab0000] dark:text-amber-400 hover:underline flex items-center gap-1 cursor-pointer"
-                          id="sarkari-back-to-all-boxes"
-                        >
-                          <span>← Back to All Categories</span>
-                        </button>
-                      </div>
-                    )}
+                          {/* Title */}
+                          <h4 className="text-sm sm:text-base font-bold text-[#172033] group-hover:text-[#155EEF] transition-colors leading-snug">
+                            {item.title}
+                          </h4>
+
+                          {/* Short Description */}
+                          {item.shortInfo && (
+                            <p className="text-xs sm:text-sm text-[#667085] leading-relaxed line-clamp-2">
+                              {item.shortInfo}
+                            </p>
+                          )}
+
+                          {/* Metadata Row: Vacancies & Eligibility */}
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#667085] pt-0.5">
+                            {item.totalPosts && (
+                              <span>Vacancies: <strong className="text-[#172033] font-medium">{item.totalPosts}</strong></span>
+                            )}
+                            {item.eligibility && (
+                              <span className="truncate max-w-xs sm:max-w-md">Eligibility: <span className="text-[#172033]">{item.eligibility}</span></span>
+                            )}
+                            {item.fees?.genObc && (
+                              <span className="hidden sm:inline">Fee: <span className="text-[#172033]">{item.fees.genObc}</span></span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Card Bottom Row: Date & Read More CTA */}
+                        <div className="pt-3 mt-3 border-t border-[#E4E7EC] flex items-center justify-between text-xs">
+                          <span className="text-[#667085]">
+                            Updated: {item.postDate || 'Recent'}
+                          </span>
+                          <span className="text-[#155EEF] font-semibold inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                            <span>Read more</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </span>
+                        </div>
+                      </article>
+                    ))
+                  ) : (
+                    <div className="bg-white border border-[#E4E7EC] rounded-xl p-8 text-center space-y-2">
+                      <p className="text-sm font-semibold text-[#172033]">No recruitment updates found</p>
+                      <p className="text-xs text-[#667085]">Try adjusting your search query or selecting a different category.</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchQuery('');
+                          setActiveTab('all');
+                        }}
+                        className="mt-2 px-3 py-1.5 bg-[#EFF4FF] text-[#155EEF] text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors"
+                      >
+                        Reset filters
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Pagination / View More Action */}
+                {hasMore && (
+                  <div className="pt-2 text-center">
+                    <button
+                      type="button"
+                      onClick={() => setItemsLimit((prev) => prev + 10)}
+                      className="px-5 py-2.5 bg-white hover:bg-[#F8FAFC] text-[#155EEF] border border-[#E4E7EC] text-xs font-semibold rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                    >
+                      <span>View more updates ({totalFilteredCount - displayedItems.length} remaining) →</span>
+                    </button>
                   </div>
-                );
-              })}
+                )}
+
+                {activeTab !== 'all' && (
+                  <div className="pt-2 text-center sm:text-left">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('all');
+                        setItemsLimit(10);
+                      }}
+                      className="text-xs font-semibold text-[#155EEF] hover:underline inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>← Back to all recruitment categories</span>
+                    </button>
+                  </div>
+                )}
+
+              </div>
+
+              {/* SIDEBAR: Popular Categories & Verified Portals (4 cols on desktop) */}
+              <aside className="lg:col-span-4 space-y-5">
+                
+                {/* Popular Categories Card */}
+                <div className="bg-white border border-[#E4E7EC] rounded-xl p-5 space-y-3 shadow-2xs">
+                  <h3 className="text-xs font-bold text-[#172033] uppercase tracking-wider">
+                    Popular Categories
+                  </h3>
+                  <div className="divide-y divide-[#E4E7EC] text-xs">
+                    {popularCategoriesList.map((cat) => {
+                      const isCurrent = activeTab === cat.id;
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveTab(cat.id as any);
+                            setItemsLimit(10);
+                            const el = document.getElementById('sarkari-board');
+                            if (el) el.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          className={`w-full py-2.5 flex items-center justify-between text-left transition-colors cursor-pointer group ${
+                            isCurrent ? 'text-[#155EEF] font-bold' : 'text-[#172033] hover:text-[#155EEF]'
+                          }`}
+                        >
+                          <span className="flex items-center gap-2">
+                            <span className={`w-1.5 h-1.5 rounded-full ${isCurrent ? 'bg-[#155EEF]' : 'bg-[#E4E7EC] group-hover:bg-[#155EEF]'}`} />
+                            <span>{cat.label}</span>
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] text-[#667085] font-mono">({cat.count})</span>
+                            <ArrowRight className="w-3.5 h-3.5 text-[#667085] group-hover:text-[#155EEF] group-hover:translate-x-0.5 transition-all" />
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Verified Official Portals Card */}
+                <div className="bg-white border border-[#E4E7EC] rounded-xl p-5 space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-bold text-[#172033] uppercase tracking-wider">
+                      Official Portals
+                    </h3>
+                    <span className="text-[10px] text-[#667085]">Direct Sources</span>
+                  </div>
+                  <p className="text-xs text-[#667085] leading-relaxed">
+                    Submit applications and download original gazette notices directly from administering bodies:
+                  </p>
+                  <div className="space-y-1.5 pt-1 text-xs">
+                    {[
+                      { label: 'JKSSB Portal', url: 'https://jkssb.nic.in' },
+                      { label: 'Join Indian Army', url: 'https://joinindianarmy.nic.in' },
+                      { label: 'Staff Selection Commission (SSC)', url: 'https://ssc.gov.in' },
+                      { label: 'Railway Recruitment (RRB)', url: 'https://www.rrbapply.gov.in' },
+                      { label: 'Kashmir University Admissions', url: 'https://kashmiruniversity.net' },
+                      { label: 'Cluster University Srinagar', url: 'https://cusrinagar.edu.in' },
+                    ].map((portal, idx) => (
+                      <a
+                        key={idx}
+                        href={portal.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between p-2 rounded-lg hover:bg-[#F8FAFC] text-[#172033] hover:text-[#155EEF] transition-colors border border-transparent hover:border-[#E4E7EC]"
+                      >
+                        <span className="font-medium truncate">{portal.label}</span>
+                        <ExternalLink className="w-3.5 h-3.5 text-[#667085] shrink-0" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Independent Verification Notice */}
+                <div className="bg-[#F8FAFC] border border-[#E4E7EC] rounded-xl p-4 text-xs text-[#667085] space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-[#172033] font-semibold">
+                    <Info className="w-4 h-4 text-[#155EEF]" />
+                    <span>Independent Verification Notice</span>
+                  </div>
+                  <p className="leading-relaxed">
+                    CSC DOST is an independent citizen digital assistance desk. Candidates are advised to cross-check eligibility and closing dates with the official notification published by the respective board.
+                  </p>
+                </div>
+
+              </aside>
+
             </div>
           );
         })()}
-        </div>
+      </div>
 
       {/* DETAILED SARKARI DEDICATED POST PAGE VIEW */}
       {selectedItem && (

@@ -8,13 +8,13 @@ import { MessageSquare, ArrowLeft, Share2, X, MessageCircle, Copy, Check } from 
 
 // Route-Level & Component-Level Lazy Loading (Code Splitting)
 const PortalHomepage = lazy(() => import('./components/PortalHomepage'));
-const SarkariResultDesk = lazy(() => import('./components/SarkariResultDesk'));
 const SarkariDedicatedPageView = lazy(() => import('./components/SarkariDedicatedPageView'));
 const ServiceDedicatedPageView = lazy(() => import('./components/ServiceDedicatedPageView'));
 const ApplyDedicatedPageView = lazy(() => import('./components/ApplyDedicatedPageView'));
 const TrackDedicatedPageView = lazy(() => import('./components/TrackDedicatedPageView'));
 const ExploreServicesDesk = lazy(() => import('./components/ExploreServicesDesk'));
 const GuidesKnowledgeHub = lazy(() => import('./components/GuidesKnowledgeHub'));
+const FrequentlyAskedQuestions = lazy(() => import('./components/FrequentlyAskedQuestions'));
 const PushNotificationPrompt = lazy(() => import('./components/PushNotificationPrompt'));
 const NodeInformation = lazy(() => import('./components/NodeInformation'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
@@ -581,16 +581,6 @@ export default function App() {
               />
             </Suspense>
 
-            {/* Sarkari Result Deep Multi-Box Desk & Form Application Hub */}
-            <div id="sarkari-board" className="scroll-mt-20">
-              <Suspense fallback={<SectionSkeleton height="min-h-[480px]" title="Loading Sarkari Results & Booking Desk..." />}>
-                <SarkariResultDesk 
-                  onApplyService={handleServiceSelect} 
-                  selectedService={selectedService}
-                  onOpenDedicatedPage={handleOpenJobPage}
-                />
-              </Suspense>
-            </div>
 
             {/* Explore All Government & Digital Services Directory */}
             <div id="services-catalogue" className="scroll-mt-20">
@@ -607,6 +597,13 @@ export default function App() {
             <div id="knowledge-hub" className="scroll-mt-20">
               <Suspense fallback={<SectionSkeleton height="min-h-[320px]" title="Loading Citizen Guides & Knowledge Hub..." />}>
                 <GuidesKnowledgeHub onSelectService={handleServiceSelect} />
+              </Suspense>
+            </div>
+
+            {/* Frequently Asked Questions */}
+            <div id="faq" className="scroll-mt-20">
+              <Suspense fallback={<SectionSkeleton height="min-h-[260px]" title="Loading Frequently Asked Questions..." />}>
+                <FrequentlyAskedQuestions />
               </Suspense>
             </div>
 
