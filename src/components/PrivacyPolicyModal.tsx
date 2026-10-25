@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 
 export type PolicyTab = 'privacy' | 'terms' | 'hyperlink' | 'copyright' | 'disclaimer' | 'help' | 'refund';
+export type LegalTab = PolicyTab;
 
 interface PrivacyPolicyModalProps {
   isOpen: boolean;

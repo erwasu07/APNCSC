@@ -503,8 +503,8 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#F6F8FC] text-[#102A43] flex flex-col justify-between font-sans transition-colors duration-200 w-full max-w-full overflow-x-hidden">
       
-      {/* Top Navigation Panel (hidden in full-screen Staff Management Console) */}
-      {!isAdminView && (
+      {/* Top Navigation Panel (hidden in Staff Management Console and dedicated Apply/Track pages which use their own compact header) */}
+      {!isAdminView && !isApplyView && !isTrackView && (
         <Navbar
           cafeName={settings.cafeName}
           onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
@@ -514,7 +514,15 @@ export default function App() {
       )}
 
       {/* Main Container */}
-      <main className={isAdminView ? 'flex-grow w-full min-h-screen bg-[#F6F8FC] overflow-x-hidden' : 'flex-grow w-full max-w-7xl mx-auto px-0 md:px-6 py-0 md:py-6 overflow-x-hidden'}>
+      <main
+        className={
+          isAdminView
+            ? 'flex-grow w-full min-h-screen bg-[#F6F8FC] overflow-x-hidden'
+            : isApplyView || isTrackView
+            ? 'flex-grow w-full bg-white overflow-x-hidden'
+            : 'flex-grow w-full max-w-7xl mx-auto px-0 md:px-6 py-0 md:py-6 overflow-x-hidden'
+        }
+      >
         {isAdminView ? (
           <Suspense fallback={<PageRouteSkeleton message="Loading CSC Staff Management Console..." />}>
             <AdminDashboard
@@ -746,12 +754,12 @@ export default function App() {
         </div>
       )}
 
-      {/* Floating WhatsApp Group Button - Hidden on mobile detail views where a sticky bottom action bar is present */}
-      {!isAdminView && (
+      {/* Floating WhatsApp Group Button - Hidden on Apply/Track views and mobile detail views so it never covers buttons */}
+      {!isAdminView && !isApplyView && !isTrackView && (
         <button
           onClick={handleWhatsAppFloating}
           className={`fixed bottom-3 right-3 sm:bottom-6 sm:right-6 px-3 py-2 sm:px-3.5 sm:py-2.5 bg-[#16A34A] hover:bg-emerald-700 text-white rounded-full shadow-lg transition-colors z-40 ${
-            activeJobPost || activeServicePost || isApplyView || isTrackView
+            activeJobPost || activeServicePost
               ? 'hidden md:flex'
               : 'flex'
           } items-center gap-1.5 sm:gap-2 cursor-pointer border border-emerald-500`}

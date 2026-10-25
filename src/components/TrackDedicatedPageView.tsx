@@ -1,24 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Search, 
-  ArrowLeft, 
-  CheckCircle, 
-  Clock, 
-  FileCheck, 
-  X, 
-  MessageCircle, 
-  Printer, 
-  AlertCircle, 
-  Building2, 
-  Calendar, 
-  User, 
-  Smartphone, 
-  ExternalLink,
-  Shield,
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Search,
+  ArrowLeft,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  XCircle,
+  Printer,
+  MessageCircle,
   ArrowRight,
   RefreshCw,
   Copy,
-  Check
+  Check,
+  Download,
+  Phone,
+  FileText
 } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { doc, onSnapshot, getDoc } from 'firebase/firestore';
@@ -28,346 +24,592 @@ export interface WorkflowStep {
   stepNumber: number;
   title: string;
   description: string;
-  timestamp: string;
-  status: 'completed' | 'in_progress' | 'pending' | 'rejected';
+  timestamp?: string;
+  status: 'completed' | 'in_progress' | 'pending' | 'action_required' | 'rejected';
 }
 
 export interface TrackingData {
   appId: string;
   applicantName?: string;
+  maskedPhone?: string;
   serviceName?: string;
-  status?: string;
+  rawStatus: string;
+  statusLabel: string;
+  statusTone: 'completed' | 'in_progress' | 'pending' | 'action_required' | 'rejected';
   appliedDate?: string;
-  phoneNumber?: string;
+  lastUpdated?: string;
   userCategory?: string;
   paymentMode?: string;
   paymentStatus?: string;
   totalAmount?: number | string;
-  workflowSteps?: WorkflowStep[];
-  vleRemark?: {
-    nodeId?: string;
-    remarkText?: string;
-    vleName?: string;
-    vlePhone?: string;
-  };
-  documents?: any[];
+  workflowSteps: WorkflowStep[];
+  hasExplicitHistory: boolean;
+  operatorRemark?: string;
+  finalReceiptUrl?: string;
 }
 
 interface TrackDedicatedPageViewProps {
+  initialToken?: string;
   initialTokenId?: string;
   onBack: () => void;
+  onApplyNew?: (serviceName?: string) => void;
   onNavigateApply?: (serviceName?: string) => void;
 }
 
+function maskPhoneNumber(phone?: string): string | undefined {
+  if (!phone || typeof phone !== 'string') return undefined;
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length < 4) return undefined;
+  const last4 = digits.slice(-4);
+  return `••••••${last4}`;
+}
+
+function maskApplicantName(name?: string): string | undefined {
+  if (!name || typeof name !== 'string') return undefined;
+  const trimmed = name.trim();
+  if (!trimmed) return undefined;
+  return trimmed;
+}
+
+function formatKnownTimestamp(val?: unknown): string | undefined {
+  if (!val) return undefined;
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (!trimmed || trimmed.toLowerCase() === 'n/a' || trimmed.toLowerCase() === 'pending') {
+      return undefined;
+    }
+    const parsed = new Date(trimmed);
+    if (!isNaN(parsed.getTime())) {
+      return parsed.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+    return trimmed;
+  }
+  return undefined;
+}
+
+export function mapApplicationToTrackingData(rawApp: any, fallbackToken: string): TrackingData {
+  const rawStatusStr = String(rawApp.status || 'Pending').trim();
+  const sLower = rawStatusStr.toLowerCase();
+
+  const isCompleted =
+    sLower.includes('complete') ||
+    sLower.includes('delivered') ||
+    sLower.includes('dispatched');
+  const isRejected = sLower.includes('reject') || sLower.includes('cancel');
+  const isActionRequired =
+    sLower.includes('action') ||
+    sLower.includes('clarification') ||
+    sLower.includes('hold') ||
+    sLower.includes('correction');
+  const isProcessing =
+    sLower.includes('process') ||
+    sLower.includes('approved') ||
+    sLower.includes('verified') ||
+    sLower.includes('review') ||
+    sLower.includes('in_progress');
+
+  let statusLabel = 'Request Received (Pending Review)';
+  let statusTone: TrackingData['statusTone'] = 'pending';
+
+  if (isCompleted) {
+    statusLabel = 'Completed';
+    statusTone = 'completed';
+  } else if (isRejected) {
+    statusLabel = sLower.includes('cancel') ? 'Cancelled' : 'Rejected';
+    statusTone = 'rejected';
+  } else if (isActionRequired) {
+    statusLabel = 'Action Required';
+    statusTone = 'action_required';
+  } else if (isProcessing) {
+    statusLabel = 'Under Operator Process';
+    statusTone = 'in_progress';
+  } else if (rawStatusStr) {
+    statusLabel = rawStatusStr;
+    statusTone = 'pending';
+  }
+
+  const submittedDate = formatKnownTimestamp(
+    rawApp.submittedAt || rawApp.createdAt || rawApp.created_at || rawApp.date
+  );
+  const updatedDate = formatKnownTimestamp(
+    rawApp.statusUpdatedAt || rawApp.updatedAt || rawApp.updated_at
+  );
+
+  // Check if explicit status history array is stored on the record
+  const rawHistory = rawApp.statusHistory || rawApp.payload?.statusHistory;
+  let workflowSteps: WorkflowStep[] = [];
+  let hasExplicitHistory = false;
+
+  if (Array.isArray(rawHistory) && rawHistory.length > 0) {
+    hasExplicitHistory = true;
+    workflowSteps = rawHistory.map((item: any, index: number) => ({
+      stepNumber: index + 1,
+      title: String(item.title || item.status || `Stage ${index + 1}`),
+      description: String(item.description || item.note || ''),
+      timestamp: formatKnownTimestamp(item.timestamp || item.date),
+      status: item.state || 'completed'
+    }));
+  } else {
+    // Map actual stored backend status to factual stages without inventing timestamps
+    const step1: WorkflowStep = {
+      stepNumber: 1,
+      title: 'Assistance request received',
+      description: 'Application details and supporting documents logged with CSC DOST.',
+      timestamp: submittedDate,
+      status: 'completed'
+    };
+
+    const step2: WorkflowStep = {
+      stepNumber: 2,
+      title: isRejected
+        ? sLower.includes('cancel')
+          ? 'Request cancelled'
+          : 'Request not approved / rejected'
+        : isActionRequired
+        ? 'Action required from applicant'
+        : 'Operator verification & form preparation',
+      description: isRejected
+        ? rawApp.vleRemark ||
+          rawApp.payload?.vleRemark ||
+          'This request could not be processed. Please contact the assistance desk for details.'
+        : isActionRequired
+        ? rawApp.vleRemark ||
+          rawApp.payload?.vleRemark ||
+          'Additional clarification or document correction is required before filing.'
+        : isCompleted
+        ? 'Details reviewed and processed by the CSC operator.'
+        : isProcessing
+        ? 'Operator is verifying your details and preparing the official form.'
+        : 'Queued for operator verification at the CSC assistance desk.',
+      timestamp: isProcessing || isRejected || isActionRequired ? updatedDate : undefined,
+      status: isRejected
+        ? 'rejected'
+        : isActionRequired
+        ? 'action_required'
+        : isCompleted
+        ? 'completed'
+        : 'in_progress'
+    };
+
+    const step3: WorkflowStep = {
+      stepNumber: 3,
+      title: 'Request completion & acknowledgement',
+      description: isCompleted
+        ? 'CSC DOST processing completed. Acknowledgement is ready.'
+        : 'Final status and acknowledgement will be updated once processing finishes.',
+      timestamp: isCompleted ? updatedDate : undefined,
+      status: isCompleted ? 'completed' : 'pending'
+    };
+
+    workflowSteps = isRejected ? [step1, step2] : [step1, step2, step3];
+  }
+
+  const rawPaymentMode = rawApp.paymentMode || rawApp.payment_mode || rawApp.payload?.paymentMode;
+  const rawPaymentStatus = rawApp.paymentStatus || rawApp.payload?.paymentStatus;
+
+  let paymentDisplay: string | undefined;
+  if (rawPaymentStatus && String(rawPaymentStatus).trim() !== 'N/A') {
+    paymentDisplay = String(rawPaymentStatus).trim();
+  } else if (rawPaymentMode && String(rawPaymentMode).trim() !== 'N/A') {
+    const pmLower = String(rawPaymentMode).toLowerCase();
+    if (pmLower === 'cash' || pmLower.includes('desk') || pmLower.includes('completion')) {
+      paymentDisplay = 'Pay at CSC Desk upon completion';
+    } else {
+      paymentDisplay = String(rawPaymentMode);
+    }
+  }
+
+  const operatorRemark =
+    typeof rawApp.vleRemark === 'string'
+      ? rawApp.vleRemark
+      : typeof rawApp.vleRemark?.remarkText === 'string'
+      ? rawApp.vleRemark.remarkText
+      : typeof rawApp.payload?.vleRemark === 'string'
+      ? rawApp.payload.vleRemark
+      : undefined;
+
+  return {
+    appId: String(rawApp.appId || rawApp.token_id || rawApp.id || fallbackToken),
+    applicantName: maskApplicantName(
+      rawApp.customerName || rawApp.full_name || rawApp.applicantName || rawApp.name
+    ),
+    maskedPhone: maskPhoneNumber(
+      rawApp.phoneNumber || rawApp.whatsapp_number || rawApp.phone
+    ),
+    serviceName: String(
+      rawApp.selectedService || rawApp.service_selected || rawApp.service || 'CSC Assistance Request'
+    ),
+    rawStatus: rawStatusStr,
+    statusLabel,
+    statusTone,
+    appliedDate: submittedDate,
+    lastUpdated: updatedDate && updatedDate !== submittedDate ? updatedDate : undefined,
+    userCategory:
+      rawApp.userCategory || rawApp.user_category || rawApp.payload?.userCategory || undefined,
+    paymentMode: rawPaymentMode ? String(rawPaymentMode) : undefined,
+    paymentStatus: paymentDisplay,
+    totalAmount:
+      rawApp.totalAmount !== undefined && Number(rawApp.totalAmount) > 0
+        ? Number(rawApp.totalAmount)
+        : undefined,
+    workflowSteps,
+    hasExplicitHistory,
+    operatorRemark,
+    finalReceiptUrl:
+      rawApp.finalReceiptUrl || rawApp.payload?.finalReceiptUrl || undefined
+  };
+}
+
 export default function TrackDedicatedPageView({
+  initialToken = '',
   initialTokenId = '',
   onBack,
+  onApplyNew,
   onNavigateApply
 }: TrackDedicatedPageViewProps) {
-  const [searchInput, setSearchInput] = useState(initialTokenId || '');
-  const [activeToken, setActiveToken] = useState(initialTokenId || '');
+  const resolvedInitial = (initialToken || initialTokenId || '').trim();
+  const [searchInput, setSearchInput] = useState(resolvedInitial);
+  const [activeToken, setActiveToken] = useState(resolvedInitial);
   const [liveData, setLiveData] = useState<TrackingData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [notFound, setNotFound] = useState(false);
+  const [loading, setLoading] = useState<boolean>(Boolean(resolvedInitial));
+  const [notFound, setNotFound] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [recentTokens, setRecentTokens] = useState<string[]>([]);
-  const [copiedToken, setCopiedToken] = useState(false);
+  const [copiedToken, setCopiedToken] = useState<boolean>(false);
+  const [retryCount, setRetryCount] = useState<number>(0);
 
-  // Load recent tokens from localStorage
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const handleStartNewRequest = (serviceName?: string) => {
+    const fn = onApplyNew || onNavigateApply;
+    if (fn) {
+      fn(serviceName);
+    } else {
+      window.location.hash = serviceName
+        ? `#apply?service=${encodeURIComponent(serviceName)}`
+        : '#apply';
+    }
+  };
+
+  // Load recent tokens from current browser session's local applications list
   useEffect(() => {
     try {
       const tokensSet = new Set<string>();
       const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
       if (Array.isArray(localApps)) {
         localApps.forEach((a: any) => {
+          if (isDeletedApplicationRecord(a)) return;
           const t = a.appId || a.id;
-          if (t && !String(t).includes('PENDING')) {
-            tokensSet.add(String(t));
+          if (t && typeof t === 'string' && !t.includes('PENDING')) {
+            tokensSet.add(t.trim());
           }
         });
       }
-      setRecentTokens(Array.from(tokensSet).slice(0, 5));
+      setRecentTokens(Array.from(tokensSet).slice(0, 4));
     } catch {
       setRecentTokens([]);
     }
   }, []);
 
-  // Sync initial token
+  // Sync initial token prop if updated externally
   useEffect(() => {
-    if (initialTokenId) {
-      const tok = initialTokenId.trim();
-      setSearchInput(tok);
-      setActiveToken(tok);
+    const nextTok = (initialToken || initialTokenId || '').trim();
+    if (nextTok) {
+      setSearchInput(nextTok);
+      setActiveToken(nextTok);
     }
-  }, [initialTokenId]);
+  }, [initialToken, initialTokenId]);
 
-  // Fetch real-time application data from Firestore / LocalStorage / Server API
+  // Authorised single-application lookup by Application ID
   useEffect(() => {
-    if (!activeToken || !activeToken.trim()) {
+    const cleanToken = activeToken.trim();
+    if (!cleanToken) {
       setLiveData(null);
       setNotFound(false);
+      setErrorMessage(null);
       setLoading(false);
       return;
     }
 
-    const cleanToken = activeToken.trim();
+    let isCancelled = false;
+    let unsubFirestore: (() => void) | null = null;
+
+    // Clear previous results immediately when starting a new lookup
     setLoading(true);
     setNotFound(false);
+    setErrorMessage(null);
+    setLiveData(null);
 
-    let unsubApp: (() => void) | null = null;
+    const checkFirestoreOrLocalFallback = async (serverReturned404: boolean) => {
+      try {
+        const appDocRef = doc(db, 'applications', cleanToken);
+        const snap = await getDoc(appDocRef);
+        if (isCancelled) return;
 
-    const buildWorkflowSteps = (statusStr: string, submittedAtStr?: string, statusUpdatedAtStr?: string): WorkflowStep[] => {
-      const sLower = (statusStr || '').toLowerCase();
-      const isCompleted = sLower.includes('complete') || sLower.includes('delivered') || sLower.includes('dispatched');
-      const isProcessing = sLower.includes('process') || sLower.includes('verified') || sLower.includes('in progress') || isCompleted;
-      const isUnderReview = sLower.includes('review') || sLower.includes('desk') || isProcessing;
-      const isRejected = sLower.includes('reject') || sLower.includes('cancel');
+        if (snap.exists() && !isDeletedApplicationRecord(snap.data())) {
+          setLiveData(mapApplicationToTrackingData(snap.data(), cleanToken));
+          setNotFound(false);
+          setErrorMessage(null);
+          setLoading(false);
 
-      return [
-        {
-          stepNumber: 1,
-          title: 'Application Submitted & Logged',
-          description: 'Official token generated and queued at CSC Operator Desk.',
-          timestamp: submittedAtStr || 'Today',
-          status: isRejected ? 'rejected' : 'completed'
-        },
-        {
-          stepNumber: 2,
-          title: 'Document & Identity Verification',
-          description: 'VLE officer verifying Aadhaar, marksheet, and category eligibility.',
-          timestamp: isUnderReview ? (statusUpdatedAtStr || 'In Verification') : 'Pending',
-          status: isRejected ? 'rejected' : isUnderReview ? 'completed' : 'in_progress'
-        },
-        {
-          stepNumber: 3,
-          title: 'Official Portal Processing',
-          description: 'Application submitted to government recruitment / departmental portal.',
-          timestamp: isProcessing ? (statusUpdatedAtStr || 'Processing') : 'Pending',
-          status: isRejected ? 'rejected' : isProcessing ? 'completed' : isUnderReview ? 'in_progress' : 'pending'
-        },
-        {
-          stepNumber: 4,
-          title: 'Government Authorization & Acknowledgment',
-          description: 'Confirmation receipt & registration roll/admit slip created.',
-          timestamp: isCompleted ? (statusUpdatedAtStr || 'Approved') : 'Pending',
-          status: isRejected ? 'rejected' : isCompleted ? 'completed' : isProcessing ? 'in_progress' : 'pending'
-        },
-        {
-          stepNumber: 5,
-          title: 'Final Dispatch & WhatsApp Delivery',
-          description: 'Official acknowledgment slip & documents dispatched to candidate.',
-          timestamp: isCompleted ? (statusUpdatedAtStr || 'Dispatched') : 'Pending',
-          status: isRejected ? 'rejected' : isCompleted ? 'completed' : 'pending'
-        }
-      ];
-    };
-
-    const processLocalOrFetchedApp = (rawApp: any) => {
-      const submittedAt = rawApp.submittedAt ? new Date(rawApp.submittedAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recently';
-      const steps = buildWorkflowSteps(rawApp.status || 'Registered', submittedAt, rawApp.statusUpdatedAt);
-
-      setLiveData({
-        appId: rawApp.appId || rawApp.id || cleanToken,
-        applicantName: rawApp.customerName || rawApp.applicantName || rawApp.name || 'Candidate',
-        serviceName: rawApp.selectedService || rawApp.service || 'CSC Service Application',
-        status: rawApp.status || 'Registered at CSC Desk',
-        appliedDate: submittedAt,
-        phoneNumber: rawApp.phoneNumber || rawApp.phone || '',
-        userCategory: rawApp.userCategory || 'General',
-        paymentMode: rawApp.paymentMode || 'Pay at CSC Desk',
-        paymentStatus: rawApp.paymentStatus || 'Pay Upon Completion',
-        totalAmount: rawApp.totalAmount || 0,
-        workflowSteps: steps,
-        vleRemark: {
-          nodeId: 'CSC-VLE-001',
-          vleName: 'Wasim Ahmad (VLE Operator)',
-          vlePhone: '+91 70068 33767',
-          remarkText: rawApp.status === 'Completed'
-            ? 'Application submitted successfully on official government portal. Acknowledgment slip sent via WhatsApp.'
-            : 'Application received and currently under verification by CSC operator.'
-        },
-        documents: rawApp.documents || []
-      });
-      setLoading(false);
-      setNotFound(false);
-    };
-
-    // 1. Check authoritative server/Supabase API first so deleted records are not resurrected from localStorage
-    fetch(`/api/appointments/${encodeURIComponent(cleanToken)}`)
-      .then(res => res.ok ? res.json() : null)
-      .then(apiData => {
-        if (apiData && !isDeletedApplicationRecord(apiData) && (apiData.appId || apiData.id)) {
-          processLocalOrFetchedApp(apiData);
+          unsubFirestore = onSnapshot(
+            appDocRef,
+            (liveSnap) => {
+              if (!isCancelled && liveSnap.exists() && !isDeletedApplicationRecord(liveSnap.data())) {
+                setLiveData(mapApplicationToTrackingData(liveSnap.data(), cleanToken));
+              }
+            },
+            () => {}
+          );
           return;
         }
-        // Check Firestore fallback if not found in server API
-        try {
-          const appDocRef = doc(db, 'applications', cleanToken);
-          unsubApp = onSnapshot(appDocRef, (snap) => {
-            if (snap.exists() && !isDeletedApplicationRecord(snap.data())) {
-              processLocalOrFetchedApp(snap.data());
-            } else {
-              const aptDocRef = doc(db, 'appointments', cleanToken);
-              getDoc(aptDocRef).then((aptSnap) => {
-                if (aptSnap.exists() && !isDeletedApplicationRecord(aptSnap.data())) {
-                  processLocalOrFetchedApp(aptSnap.data());
-                } else {
-                  setLiveData(null);
-                  setNotFound(true);
-                  setLoading(false);
-                }
-              }).catch(() => {
-                setLiveData(null);
-                setNotFound(true);
-                setLoading(false);
-              });
-            }
-          }, () => {
-            setLiveData(null);
-            setNotFound(true);
-            setLoading(false);
-          });
-        } catch {
-          setLiveData(null);
-          setNotFound(true);
+
+        const aptDocRef = doc(db, 'appointments', cleanToken);
+        const aptSnap = await getDoc(aptDocRef);
+        if (isCancelled) return;
+
+        if (aptSnap.exists() && !isDeletedApplicationRecord(aptSnap.data())) {
+          setLiveData(mapApplicationToTrackingData(aptSnap.data(), cleanToken));
+          setNotFound(false);
+          setErrorMessage(null);
           setLoading(false);
+          return;
         }
-      })
-      .catch(() => {
-        // Offline fallback to localStorage only if server request fails due to network error
+      } catch {
+        // Firestore unavailable or blocked; continue to local check
+      }
+
+      if (isCancelled) return;
+
+      // Only check current browser's own submitted applications if server was unreachable (not on authoritative 404)
+      if (!serverReturned404) {
         try {
           const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-          const matchLocal = localApps.find((a: any) =>
-            !isDeletedApplicationRecord(a) && (
-              (a.appId && a.appId.toLowerCase() === cleanToken.toLowerCase()) ||
-              (a.id && a.id.toLowerCase() === cleanToken.toLowerCase()) ||
-              (a.phone && a.phone.replace(/\D/g, '') === cleanToken.replace(/\D/g, '')) ||
-              (a.phoneNumber && a.phoneNumber.replace(/\D/g, '') === cleanToken.replace(/\D/g, ''))
-            )
-          );
+          const matchLocal = Array.isArray(localApps)
+            ? localApps.find(
+                (a: any) =>
+                  !isDeletedApplicationRecord(a) &&
+                  ((a.appId && String(a.appId).toLowerCase() === cleanToken.toLowerCase()) ||
+                    (a.id && String(a.id).toLowerCase() === cleanToken.toLowerCase()))
+              )
+            : null;
+
           if (matchLocal) {
-            processLocalOrFetchedApp(matchLocal);
+            setLiveData(mapApplicationToTrackingData(matchLocal, cleanToken));
+            setNotFound(false);
+            setErrorMessage(null);
+            setLoading(false);
             return;
           }
         } catch {}
+      }
+
+      if (serverReturned404) {
         setLiveData(null);
         setNotFound(true);
+        setErrorMessage(null);
         setLoading(false);
+      } else {
+        setLiveData(null);
+        setNotFound(false);
+        setErrorMessage(
+          'Unable to reach the tracking service right now. Please check your internet connection and try again.'
+        );
+        setLoading(false);
+      }
+    };
+
+    fetch(`/api/appointments/${encodeURIComponent(cleanToken)}`)
+      .then(async (res) => {
+        if (isCancelled) return;
+
+        if (res.status === 404) {
+          await checkFirestoreOrLocalFallback(true);
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error(`Server returned HTTP ${res.status}`);
+        }
+
+        const apiData = await res.json();
+        if (isCancelled) return;
+
+        if (apiData && !isDeletedApplicationRecord(apiData) && (apiData.appId || apiData.id)) {
+          setLiveData(mapApplicationToTrackingData(apiData, cleanToken));
+          setNotFound(false);
+          setErrorMessage(null);
+          setLoading(false);
+        } else {
+          await checkFirestoreOrLocalFallback(true);
+        }
+      })
+      .catch(async () => {
+        if (isCancelled) return;
+        await checkFirestoreOrLocalFallback(false);
       });
 
     return () => {
-      if (unsubApp) unsubApp();
+      isCancelled = true;
+      if (unsubFirestore) unsubFirestore();
     };
-  }, [activeToken]);
+  }, [activeToken, retryCount]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchInput.trim()) {
-      setActiveToken(searchInput.trim());
+    const trimmed = searchInput.trim();
+    if (!trimmed) {
+      searchInputRef.current?.focus();
+      return;
+    }
+    if (trimmed === activeToken) {
+      setRetryCount((c) => c + 1);
+    } else {
+      setActiveToken(trimmed);
     }
   };
 
-  const copyTokenToClipboard = (token: string) => {
+  const handleCopyToken = (token: string) => {
     navigator.clipboard.writeText(token);
     setCopiedToken(true);
     setTimeout(() => setCopiedToken(false), 2000);
   };
 
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setActiveToken('');
+    setLiveData(null);
+    setNotFound(false);
+    setErrorMessage(null);
+    searchInputRef.current?.focus();
+  };
+
   return (
-    <main className="min-h-screen bg-white md:bg-slate-50 text-slate-900 pb-6 md:pb-16 pt-0 md:pt-6 font-sans">
-      <div className="max-w-4xl mx-auto px-0 md:px-6">
-        
-        {/* Navigation & Action Top Bar */}
-        <div className="mb-0 md:mb-6 flex flex-wrap items-center justify-between gap-2.5 bg-white px-4 py-3 sm:p-4 rounded-none md:rounded-2xl border-b md:border border-slate-200 shadow-none md:shadow-xs">
+    <div className="min-h-screen bg-white text-[#102A43] font-sans w-full overflow-x-hidden">
+      {/* Compact Top Bar with existing CSC DOST logo and Back to Portal */}
+      <header className="w-full bg-white border-b border-[#E2E8F0]">
+        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-2 min-h-[40px] px-3.5 py-2 bg-slate-900 hover:bg-black text-white text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer shadow-2xs"
-            id="track-back-btn"
+            className="flex items-center gap-2.5 min-w-0 text-left cursor-pointer rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]"
+            aria-label="CSC DOST - Back to Portal"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Portal</span>
+            <img
+              src="/favicon.svg"
+              alt="CSC DOST Logo"
+              className="w-8 h-8 rounded-lg shrink-0 object-contain"
+            />
+            <div className="min-w-0">
+              <span className="text-sm sm:text-base font-extrabold tracking-tight text-[#102A43] block leading-none">
+                CSC <span className="text-[#2563EB]">DOST</span>
+              </span>
+              <span className="text-[11px] text-[#64748B] block mt-0.5 truncate">
+                Citizen Service Portal
+              </span>
+            </div>
           </button>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                if (onNavigateApply) {
-                  onNavigateApply();
-                } else {
-                  window.location.hash = '#apply';
-                }
-              }}
-              className="inline-flex items-center gap-1.5 min-h-[40px] px-3.5 py-2 bg-[#172554] hover:bg-[#1e3a8a] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-2xs"
-              id="track-apply-nav-btn"
-            >
-              <span>Apply for New Service</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-
-            <a
-              href="https://whatsapp.com/channel/0029VbDgSe75a248qEZAbL3g"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 min-h-[40px] px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-2xs"
-            >
-              <MessageCircle className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">WhatsApp Help</span>
-            </a>
-          </div>
+          <button
+            type="button"
+            onClick={onBack}
+            id="track-back-btn"
+            className="inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 bg-white hover:bg-[#F8FAFC] text-[#102A43] border border-[#CBD5E1] text-xs sm:text-sm font-semibold rounded-lg transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]"
+          >
+            <ArrowLeft className="w-4 h-4 text-[#475569]" aria-hidden="true" />
+            <span>Back to Portal</span>
+          </button>
         </div>
+      </header>
 
-        {/* MAIN TRACKING CONTAINER */}
-        <div className="bg-white rounded-none md:rounded-3xl border-0 md:border md:border-slate-200/90 shadow-none md:shadow-md overflow-hidden space-y-4 md:space-y-6">
-          
-          {/* Header Banner */}
-          <div className="bg-gradient-to-r from-[#18204e] via-[#1f2b6c] to-[#18204e] text-white px-4 py-4 sm:p-7 border-b border-indigo-900">
-            <div>
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2.5 py-0.5 rounded font-mono uppercase tracking-wider">
-                  CSC LIVE TRACKER
-                </span>
-                <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono font-bold px-2 py-0.5 rounded flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <span>Real-time Status Feed</span>
-                </span>
-              </div>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-white font-display">
-                Track Application &amp; Order Status
-              </h1>
-              <p className="text-xs sm:text-sm text-indigo-200 font-medium mt-1.5">
-                Enter your CSC Token ID (e.g. CSC21251567001) or WhatsApp Mobile Number to check real-time progress.
-              </p>
-            </div>
+      {/* Main Content Area — Full-width open sections on mobile, comfortable centered width on desktop */}
+      <div className="max-w-3xl mx-auto">
+        {/* Page Heading & Search Section */}
+        <section
+          aria-labelledby="track-page-heading"
+          className="px-4 py-6 border-b border-[#E2E8F0] space-y-4"
+        >
+          <div className="space-y-1.5">
+            <h1
+              id="track-page-heading"
+              className="text-2xl sm:text-3xl font-extrabold text-[#102A43] tracking-tight"
+            >
+              Track your application
+            </h1>
+            <p className="text-sm text-[#475569]">
+              Follow your CSC DOST assistance request.
+            </p>
           </div>
 
-          {/* Search Box Form */}
-          <div className="px-4 sm:px-8 pt-0 sm:pt-2">
-            <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-2.5">
+          {/* Search Form */}
+          <form onSubmit={handleSearchSubmit} className="space-y-2" noValidate>
+            <label
+              htmlFor="track-app-id-input"
+              className="block text-xs sm:text-sm font-semibold text-[#102A43]"
+            >
+              Application ID (Reference Token)
+            </label>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
               <div className="relative flex-1">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Search
+                  className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                  aria-hidden="true"
+                />
                 <input
+                  ref={searchInputRef}
+                  id="track-app-id-input"
                   type="text"
-                  placeholder="Enter CSC Token ID (e.g. CSC21251567001) or Mobile..."
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  className="w-full min-h-[44px] pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all font-mono"
+                  placeholder="e.g. CSC21251567001"
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="w-full min-h-[44px] pl-10 pr-9 py-2.5 bg-white border border-[#CBD5E1] rounded-lg text-sm font-medium text-[#102A43] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-colors font-mono"
                 />
+                {searchInput && (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    aria-label="Clear Application ID"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#64748B] hover:text-[#102A43] rounded cursor-pointer"
+                  >
+                    ×
+                  </button>
+                )}
               </div>
+
               <button
                 type="submit"
-                className="min-h-[44px] px-6 py-2.5 bg-[#172554] hover:bg-[#1e3a8a] text-white text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm shrink-0 flex items-center justify-center gap-2"
+                disabled={loading}
+                id="track-submit-btn"
+                className="min-h-[44px] px-5 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer inline-flex items-center justify-center gap-2 shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2"
               >
-                <Search className="w-4 h-4" />
+                <Search className="w-4 h-4" aria-hidden="true" />
                 <span>Track Status</span>
               </button>
-            </form>
+            </div>
 
-            {/* Recent Tokens Quick Select */}
-            {recentTokens.length > 0 && (
-              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 mt-2.5 text-xs">
-                <span className="text-slate-500 font-bold">Recent Tokens:</span>
-                {recentTokens.map((tok) => (
+            <p className="text-xs text-[#64748B]">
+              Enter the reference ID shown on your CSC DOST acknowledgement slip.
+            </p>
+          </form>
+
+          {/* Recent Session References (if present on this device) */}
+          {recentTokens.length > 0 && (
+            <div className="pt-1 flex flex-wrap items-center gap-1.5">
+              <span className="text-xs font-medium text-[#64748B] mr-1">
+                Recent on this device:
+              </span>
+              {recentTokens.map((tok) => {
+                const isSelected = activeToken.toLowerCase() === tok.toLowerCase();
+                return (
                   <button
                     key={tok}
                     type="button"
@@ -375,204 +617,430 @@ export default function TrackDedicatedPageView({
                       setSearchInput(tok);
                       setActiveToken(tok);
                     }}
-                    className={`min-h-[34px] px-2.5 py-1 rounded-lg font-mono font-bold text-xs transition-all cursor-pointer ${
-                      activeToken === tok
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                    className={`min-h-[36px] px-2.5 py-1 rounded-md text-xs font-mono font-semibold border transition-colors cursor-pointer ${
+                      isSelected
+                        ? 'bg-[#2563EB] text-white border-[#2563EB]'
+                        : 'bg-[#F8FAFC] hover:bg-[#F1F5F9] text-[#102A43] border-[#E2E8F0]'
                     }`}
                   >
                     {tok}
                   </button>
-                ))}
-              </div>
-            )}
-          </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
 
-          {/* LIVE TRACKING RESULT OR EMPTY STATE */}
-          <div className="px-4 sm:px-8 pb-5 sm:pb-8">
-            {loading ? (
-              <div className="py-12 text-center space-y-3">
-                <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
-                <p className="text-xs font-mono text-slate-500">Querying CSC Live Database &amp; VLE Queue...</p>
-              </div>
-            ) : notFound ? (
-              <div className="p-6 sm:p-8 bg-amber-50 border border-amber-200 rounded-2xl text-center space-y-3">
-                <AlertCircle className="w-8 h-8 text-amber-600 mx-auto" />
-                <div className="space-y-1">
-                  <h3 className="text-sm font-bold text-amber-950">No Application Found for "{activeToken}"</h3>
-                  <p className="text-xs text-amber-800 max-w-md mx-auto">
-                    Please verify your Token ID or WhatsApp number. Tokens are generated instantly after submitting an application via the CSC Desk.
-                  </p>
-                </div>
+        {/* Status / Result Section */}
+        <div aria-live="polite">
+          {/* 1. INITIAL STATE */}
+          {!activeToken && !loading && !errorMessage && (
+            <section className="px-4 py-6 border-b border-[#E2E8F0] space-y-3">
+              <h2 className="text-base font-bold text-[#102A43]">
+                How to check your status
+              </h2>
+              <ul className="space-y-2 text-sm text-[#334155] list-disc list-inside">
+                <li>
+                  Locate your Application ID (starts with <span className="font-mono font-semibold text-[#102A43]">CSC</span>) from your confirmation screen or printed slip.
+                </li>
+                <li>
+                  Enter the full ID above and select <strong className="font-semibold text-[#102A43]">Track Status</strong>.
+                </li>
+              </ul>
+              <div className="pt-2 flex flex-wrap items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => {
-                    if (onNavigateApply) onNavigateApply();
-                    else window.location.hash = '#apply';
-                  }}
-                  className="min-h-[40px] px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5"
+                  onClick={() => handleStartNewRequest()}
+                  className="inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2 bg-[#F8FAFC] hover:bg-[#F1F5F9] text-[#102A43] border border-[#CBD5E1] rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
                 >
-                  <span>Submit New Application</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <span>Start a new request</span>
+                  <ArrowRight className="w-4 h-4 text-[#2563EB]" aria-hidden="true" />
                 </button>
               </div>
-            ) : liveData ? (
-              <div className="space-y-4 md:space-y-6">
-                
-                {/* Application Snapshot Card */}
-                <div className="p-5 bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-2xl shadow-sm space-y-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-700 pb-3">
-                    <div className="space-y-0.5">
-                      <span className="text-[10px] font-mono text-indigo-300 uppercase tracking-wider">
-                        CSC Reference Token
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg sm:text-xl font-mono font-black text-amber-300">
-                          {liveData.appId}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => copyTokenToClipboard(liveData.appId)}
-                          className="p-1 hover:bg-white/10 rounded text-slate-300 hover:text-white transition-colors cursor-pointer"
-                          title="Copy Token ID"
-                        >
-                          {copiedToken ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                        </button>
-                      </div>
-                    </div>
+            </section>
+          )}
 
-                    <div className="flex items-center gap-2">
-                      <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded-full font-bold text-xs">
-                        {liveData.status || 'Active & Registered'}
-                      </span>
-                    </div>
-                  </div>
+          {/* 2. LOADING STATE */}
+          {loading && (
+            <section
+              role="status"
+              className="px-4 py-6 border-b border-[#E2E8F0] flex items-center gap-3 text-sm text-[#334155]"
+            >
+              <RefreshCw className="w-5 h-5 text-[#2563EB] animate-spin shrink-0" aria-hidden="true" />
+              <span>
+                Checking status for <strong className="font-mono text-[#102A43]">{activeToken}</strong>...
+              </span>
+            </section>
+          )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                    <div>
-                      <span className="text-slate-400 block">Applicant:</span>
-                      <strong className="text-white font-bold">{liveData.applicantName}</strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block">Service:</span>
-                      <strong className="text-indigo-200 font-bold">{liveData.serviceName}</strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block">Date Logged:</span>
-                      <span className="text-slate-300 font-mono">{liveData.appliedDate}</span>
-                    </div>
-                  </div>
+          {/* 3. ERROR STATE (Distinct from Not Found) */}
+          {!loading && errorMessage && (
+            <section
+              role="alert"
+              className="px-4 py-6 border-b border-[#E2E8F0] space-y-4"
+            >
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-[#DC2626] shrink-0 mt-0.5" aria-hidden="true" />
+                <div className="space-y-1">
+                  <h2 className="text-base font-bold text-[#102A43]">
+                    Unable to load application status
+                  </h2>
+                  <p className="text-sm text-[#475569]">{errorMessage}</p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setRetryCount((c) => c + 1)}
+                  className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-semibold rounded-lg transition-colors cursor-pointer"
+                >
+                  <RefreshCw className="w-4 h-4" aria-hidden="true" />
+                  <span>Retry</span>
+                </button>
+
+                <a
+                  href="tel:+917006833767"
+                  className="inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2 bg-white hover:bg-[#F8FAFC] text-[#102A43] border border-[#CBD5E1] text-xs sm:text-sm font-semibold rounded-lg transition-colors"
+                >
+                  <Phone className="w-4 h-4 text-[#475569]" aria-hidden="true" />
+                  <span>Call Desk (+91 70068 33767)</span>
+                </a>
+              </div>
+            </section>
+          )}
+
+          {/* 4. NOT FOUND STATE */}
+          {!loading && !errorMessage && notFound && (
+            <section
+              role="region"
+              aria-labelledby="not-found-heading"
+              className="px-4 py-6 border-b border-[#E2E8F0] space-y-4"
+            >
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-[#D97706] shrink-0 mt-0.5" aria-hidden="true" />
+                <div className="space-y-1.5">
+                  <h2 id="not-found-heading" className="text-base font-bold text-[#102A43]">
+                    No application found for “{activeToken}”
+                  </h2>
+                  <p className="text-sm text-[#475569]">
+                    Please check that the Application ID matches your acknowledgement slip (for example, <span className="font-mono font-semibold text-[#102A43]">CSC21251567001</span>) without extra spaces.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => searchInputRef.current?.focus()}
+                  className="inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-semibold rounded-lg transition-colors cursor-pointer"
+                >
+                  <span>Check ID &amp; Try Again</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleStartNewRequest()}
+                  className="inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2 bg-white hover:bg-[#F8FAFC] text-[#102A43] border border-[#CBD5E1] text-xs sm:text-sm font-semibold rounded-lg transition-colors cursor-pointer"
+                >
+                  <span>Start a new request</span>
+                  <ArrowRight className="w-4 h-4 text-[#2563EB]" aria-hidden="true" />
+                </button>
+
+                <a
+                  href={`https://api.whatsapp.com/send?phone=917006833767&text=${encodeURIComponent(
+                    `Hello CSC DOST Desk, I need help locating my Application ID (${activeToken}).`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2 bg-white hover:bg-[#F8FAFC] text-[#102A43] border border-[#CBD5E1] text-xs sm:text-sm font-semibold rounded-lg transition-colors"
+                >
+                  <MessageCircle className="w-4 h-4 text-[#16A34A]" aria-hidden="true" />
+                  <span>Get help from operator</span>
+                </a>
+              </div>
+            </section>
+          )}
+
+          {/* 5. FOUND STATE */}
+          {!loading && !errorMessage && !notFound && liveData && (
+            <div className="divide-y divide-[#E2E8F0]">
+              {/* Application Summary Section (Open Labelled Rows) */}
+              <section
+                aria-labelledby="summary-heading"
+                className="px-4 py-6 space-y-3"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <h2 id="summary-heading" className="text-lg font-bold text-[#102A43]">
+                    Application summary
+                  </h2>
+                  <span
+                    className={`text-xs font-bold ${
+                      liveData.statusTone === 'completed'
+                        ? 'text-[#15803D]'
+                        : liveData.statusTone === 'rejected'
+                        ? 'text-[#B91C1C]'
+                        : liveData.statusTone === 'action_required'
+                        ? 'text-[#B45309]'
+                        : 'text-[#2563EB]'
+                    }`}
+                  >
+                    {liveData.statusLabel}
+                  </span>
                 </div>
 
-                {/* 5-Stage Live Progress Workflow */}
-                <div className="space-y-3">
-                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider border-b border-slate-200 pb-2">
-                    Application Lifecycle &amp; Progress Timeline
-                  </h3>
+                <dl className="divide-y divide-[#E2E8F0] border-t border-b border-[#E2E8F0] text-sm">
+                  {/* Application Reference */}
+                  <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <dt className="text-[#64748B] font-medium">Application reference</dt>
+                    <dd className="font-mono font-bold text-[#102A43] flex items-center gap-2">
+                      <span>{liveData.appId}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyToken(liveData.appId)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-sans font-semibold text-[#2563EB] hover:bg-[#F8FAFC] rounded border border-[#E2E8F0] cursor-pointer"
+                        title="Copy Application Reference"
+                      >
+                        {copiedToken ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-[#16A34A]" aria-hidden="true" />
+                            <span>Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Copy</span>
+                          </>
+                        )}
+                      </button>
+                    </dd>
+                  </div>
 
-                  <div className="space-y-3">
-                    {liveData.workflowSteps?.map((step) => {
-                      const isDone = step.status === 'completed';
-                      const isCurrent = step.status === 'in_progress';
-                      return (
-                        <div
-                          key={step.stepNumber}
-                          className={`p-3.5 sm:p-4 rounded-xl border flex items-start gap-3 transition-all ${
-                            isDone
-                              ? 'bg-emerald-50/70 border-emerald-200'
-                              : isCurrent
-                              ? 'bg-indigo-50/70 border-indigo-300 shadow-xs'
-                              : 'bg-slate-50 border-slate-200 opacity-60'
-                          }`}
-                        >
-                          <div className="shrink-0 mt-0.5">
-                            {isDone ? (
-                              <div className="w-6 h-6 bg-emerald-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
-                                ✓
-                              </div>
-                            ) : isCurrent ? (
-                              <div className="w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs font-bold animate-pulse">
-                                {step.stepNumber}
-                              </div>
-                            ) : (
-                              <div className="w-6 h-6 bg-slate-300 text-slate-600 rounded-full flex items-center justify-center text-xs font-bold">
-                                {step.stepNumber}
-                              </div>
-                            )}
-                          </div>
+                  {/* Requested Service */}
+                  <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <dt className="text-[#64748B] font-medium">Requested service</dt>
+                    <dd className="font-semibold text-[#102A43] sm:text-right break-words max-w-md">
+                      {liveData.serviceName}
+                    </dd>
+                  </div>
 
-                          <div className="flex-1 min-w-0 space-y-0.5">
-                            <div className="flex items-center justify-between gap-2">
-                              <h4 className={`text-xs sm:text-sm font-bold ${isDone ? 'text-emerald-950' : isCurrent ? 'text-indigo-950 font-black' : 'text-slate-700'}`}>
-                                {step.title}
-                              </h4>
-                              <span className="text-[10px] font-mono text-slate-500 shrink-0">
-                                {step.timestamp}
-                              </span>
+                  {/* Current Status */}
+                  <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <dt className="text-[#64748B] font-medium">Current status</dt>
+                    <dd className="font-semibold text-[#102A43] sm:text-right">
+                      {liveData.statusLabel}
+                    </dd>
+                  </div>
+
+                  {/* Applicant (if available) */}
+                  {liveData.applicantName && (
+                    <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                      <dt className="text-[#64748B] font-medium">Applicant</dt>
+                      <dd className="font-medium text-[#102A43] sm:text-right">
+                        {liveData.applicantName}
+                        {liveData.maskedPhone ? (
+                          <span className="text-[#64748B] font-mono text-xs ml-2">
+                            ({liveData.maskedPhone})
+                          </span>
+                        ) : null}
+                      </dd>
+                    </div>
+                  )}
+
+                  {/* Submission Date (only if recorded) */}
+                  {liveData.appliedDate && (
+                    <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                      <dt className="text-[#64748B] font-medium">Submission date</dt>
+                      <dd className="font-mono text-[#334155] sm:text-right">
+                        {liveData.appliedDate}
+                      </dd>
+                    </div>
+                  )}
+
+                  {/* Last Update (only if recorded) */}
+                  {liveData.lastUpdated && (
+                    <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                      <dt className="text-[#64748B] font-medium">Last update</dt>
+                      <dd className="font-mono text-[#334155] sm:text-right">
+                        {liveData.lastUpdated}
+                      </dd>
+                    </div>
+                  )}
+
+                  {/* Payment Status (only where supported/recorded) */}
+                  {liveData.paymentStatus && (
+                    <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                      <dt className="text-[#64748B] font-medium">Payment status</dt>
+                      <dd className="text-[#334155] font-medium sm:text-right">
+                        {liveData.paymentStatus}
+                        {liveData.totalAmount ? ` (₹${liveData.totalAmount})` : ''}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </section>
+
+              {/* Vertical Progress Timeline */}
+              <section
+                aria-labelledby="timeline-heading"
+                className="px-4 py-6 space-y-4"
+              >
+                <h2 id="timeline-heading" className="text-lg font-bold text-[#102A43]">
+                  Status timeline
+                </h2>
+
+                <ol className="relative space-y-5">
+                  {liveData.workflowSteps.map((step, idx) => {
+                    const isLast = idx === liveData.workflowSteps.length - 1;
+                    const isDone = step.status === 'completed';
+                    const isCurrent = step.status === 'in_progress';
+                    const isAction = step.status === 'action_required';
+                    const isRej = step.status === 'rejected';
+
+                    let stateLabel = 'Pending';
+                    if (isDone) stateLabel = 'Completed';
+                    else if (isCurrent) stateLabel = 'Current stage';
+                    else if (isAction) stateLabel = 'Action required';
+                    else if (isRej) stateLabel = 'Stopped';
+
+                    return (
+                      <li key={step.stepNumber} className="relative flex items-start gap-3.5">
+                        {!isLast && (
+                          <div
+                            aria-hidden="true"
+                            className={`absolute left-3.5 top-7 -bottom-5 w-px ${
+                              isDone ? 'bg-[#16A34A]' : 'bg-[#CBD5E1]'
+                            }`}
+                          />
+                        )}
+
+                        <div className="relative z-10 shrink-0 mt-0.5">
+                          {isDone ? (
+                            <div className="w-7 h-7 rounded-full bg-[#16A34A] text-white flex items-center justify-center">
+                              <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
                             </div>
-                            <p className="text-[11px] sm:text-xs text-slate-600">
-                              {step.description}
-                            </p>
-                          </div>
+                          ) : isRej ? (
+                            <div className="w-7 h-7 rounded-full bg-[#DC2626] text-white flex items-center justify-center">
+                              <XCircle className="w-4 h-4" aria-hidden="true" />
+                            </div>
+                          ) : isAction ? (
+                            <div className="w-7 h-7 rounded-full bg-[#D97706] text-white flex items-center justify-center">
+                              <AlertCircle className="w-4 h-4" aria-hidden="true" />
+                            </div>
+                          ) : isCurrent ? (
+                            <div className="w-7 h-7 rounded-full bg-[#2563EB] text-white flex items-center justify-center">
+                              <Clock className="w-4 h-4" aria-hidden="true" />
+                            </div>
+                          ) : (
+                            <div className="w-7 h-7 rounded-full bg-[#F1F5F9] border border-[#CBD5E1] text-[#64748B] flex items-center justify-center text-xs font-bold">
+                              {step.stepNumber}
+                            </div>
+                          )}
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
 
-                {/* Operator Remarks Card */}
-                {liveData.vleRemark && (
-                  <div className="p-4 bg-indigo-50/60 border border-indigo-100 rounded-2xl text-xs space-y-1.5">
-                    <div className="flex items-center gap-2 text-indigo-900 font-bold">
-                      <Shield className="w-4 h-4 text-indigo-600" />
-                      <span>VLE Operator Remarks &amp; Action</span>
-                    </div>
-                    <p className="text-slate-700">
-                      {liveData.vleRemark.remarkText}
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <div className="flex flex-wrap items-baseline justify-between gap-2">
+                            <h3 className="text-sm font-bold text-[#102A43]">
+                              {step.title}
+                            </h3>
+                            <span
+                              className={`text-xs font-semibold ${
+                                isDone
+                                  ? 'text-[#15803D]'
+                                  : isRej
+                                  ? 'text-[#B91C1C]'
+                                  : isAction
+                                  ? 'text-[#B45309]'
+                                  : isCurrent
+                                  ? 'text-[#2563EB]'
+                                  : 'text-[#64748B]'
+                              }`}
+                            >
+                              {stateLabel}
+                              {step.timestamp ? ` · ${step.timestamp}` : ''}
+                            </span>
+                          </div>
+                          <p className="text-xs sm:text-sm text-[#475569] leading-relaxed">
+                            {step.description}
+                          </p>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+
+                {/* Operator Note if specifically recorded */}
+                {liveData.operatorRemark && (
+                  <div className="pt-3 border-t border-[#E2E8F0] space-y-1">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#475569]">
+                      Desk Note
+                    </h3>
+                    <p className="text-sm text-[#102A43] leading-relaxed">
+                      {liveData.operatorRemark}
                     </p>
                   </div>
                 )}
 
-                {/* Bottom Action Footer */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-200">
+                {/* Mandatory Disclaimer */}
+                <p className="text-xs text-[#475569] pt-3 border-t border-[#E2E8F0] leading-relaxed">
+                  A CSC DOST request is not confirmation of submission to a government portal.
+                </p>
+              </section>
+
+              {/* Secondary Actions Section */}
+              <section
+                aria-label="Tracking actions"
+                className="px-4 py-6 space-y-3"
+              >
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {liveData.finalReceiptUrl && (
+                    <a
+                      href={liveData.finalReceiptUrl}
+                      download={`Acknowledgement-${liveData.appId}.pdf`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-semibold rounded-lg transition-colors"
+                    >
+                      <Download className="w-4 h-4" aria-hidden="true" />
+                      <span>Download Processed Receipt</span>
+                    </a>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => window.print()}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 border border-slate-300"
+                    className="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 bg-white hover:bg-[#F8FAFC] text-[#102A43] border border-[#CBD5E1] text-xs sm:text-sm font-semibold rounded-lg transition-colors cursor-pointer"
                   >
-                    <Printer className="w-3.5 h-3.5" />
-                    <span>Print Status Slip</span>
+                    <Printer className="w-4 h-4 text-[#475569]" aria-hidden="true" />
+                    <span>Print Status Summary</span>
                   </button>
 
                   <a
-                    href={`https://api.whatsapp.com/send?phone=917006833767&text=${encodeURIComponent(`Hello CSC DOST, I am inquiring about my Application Token: ${liveData.appId} for ${liveData.serviceName}.`)}`}
+                    href={`https://api.whatsapp.com/send?phone=917006833767&text=${encodeURIComponent(
+                      `Hello CSC DOST Operator, I am inquiring about my Application Reference: ${liveData.appId} (${liveData.serviceName}).`
+                    )}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
+                    className="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 bg-white hover:bg-[#F8FAFC] text-[#102A43] border border-[#CBD5E1] text-xs sm:text-sm font-semibold rounded-lg transition-colors"
                   >
-                    <MessageCircle className="w-3.5 h-3.5" />
-                    <span>Contact Operator via WhatsApp</span>
+                    <MessageCircle className="w-4 h-4 text-[#16A34A]" aria-hidden="true" />
+                    <span>Get help (Operator WhatsApp)</span>
                   </a>
-                </div>
 
-              </div>
-            ) : (
-              <div className="py-12 text-center space-y-3">
-                <div className="w-12 h-12 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center mx-auto">
-                  <Search className="w-6 h-6" />
+                  <button
+                    type="button"
+                    onClick={() => handleStartNewRequest()}
+                    className="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 bg-white hover:bg-[#F8FAFC] text-[#2563EB] border border-[#CBD5E1] text-xs sm:text-sm font-semibold rounded-lg transition-colors cursor-pointer"
+                  >
+                    <FileText className="w-4 h-4" aria-hidden="true" />
+                    <span>Start a new request</span>
+                  </button>
                 </div>
-                <div className="space-y-1 max-w-sm mx-auto">
-                  <p className="text-xs font-bold text-slate-700">Enter Token ID or Mobile Number Above</p>
-                  <p className="text-[11px] text-slate-500">
-                    You can track any application submitted online or at the CSC physical desk in real-time.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-
+              </section>
+            </div>
+          )}
         </div>
       </div>
-    </main>
+    </div>
   );
 }

@@ -594,7 +594,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         } catch {}
       }
 
-      sourceEntries.forEach((app) => {
+      sourceEntries.forEach((app: any) => {
         if (!app || isDeletedApplicationRecord(app)) return;
 
         const resolvedTokenId =
