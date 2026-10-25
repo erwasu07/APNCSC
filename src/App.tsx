@@ -717,13 +717,14 @@ export default function App() {
       {/* Floating WhatsApp Community Group Button */}
       <button
         onClick={handleWhatsAppFloating}
-        className="fixed bottom-24 right-6 p-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-2xl hover:scale-105 transition-all z-40 flex items-center justify-center animate-bounce group cursor-pointer border-2 border-emerald-400"
+        className="fixed bottom-4 right-3 sm:bottom-6 sm:right-6 w-12 h-12 sm:w-auto sm:h-auto p-0 sm:p-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-2xl hover:scale-105 transition-all z-40 flex items-center justify-center animate-bounce group cursor-pointer border-2 border-emerald-400"
         title="Join Our CSC DOST WhatsApp Group"
         id="whatsapp-floating-badge"
         style={{ animationDuration: '4s' }}
+        aria-label="Join CSC DOST WhatsApp Group"
       >
-        <MessageSquare className="w-6 h-6" />
-        <span className="max-w-0 overflow-hidden group-hover:max-w-xs group-hover:ml-2 text-xs font-bold transition-all duration-300 whitespace-nowrap">
+        <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6" />
+        <span className="hidden sm:inline max-w-0 overflow-hidden group-hover:max-w-xs group-hover:ml-2 text-xs font-bold transition-all duration-300 whitespace-nowrap">
           Join WhatsApp Group
         </span>
       </button>

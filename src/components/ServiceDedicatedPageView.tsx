@@ -156,14 +156,14 @@ export default function ServiceDedicatedPageView({
         }}
       />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-6">
+      <div className="w-full max-w-4xl mx-auto px-0 sm:px-6 space-y-3 sm:space-y-6 pb-24 sm:pb-8">
         
         {/* Navigation & Action Top Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-xl border border-[#E3E8EF] shadow-2xs">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 bg-white p-3 sm:p-4 rounded-none sm:rounded-xl border-y sm:border border-[#E3E8EF] shadow-2xs w-full">
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-2 px-3.5 py-2 bg-[#12304A] hover:bg-[#1e476d] text-white text-xs sm:text-sm font-semibold rounded-lg transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 px-3 sm:px-3.5 py-2 bg-[#12304A] hover:bg-[#1e476d] text-white text-xs sm:text-sm font-semibold rounded-lg transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to All Services</span>
@@ -173,7 +173,7 @@ export default function ServiceDedicatedPageView({
             <button
               type="button"
               onClick={handlePrint}
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 text-[#172033] text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-[#E3E8EF]"
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 bg-white hover:bg-slate-50 text-[#172033] text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-[#E3E8EF]"
             >
               <Printer className="w-3.5 h-3.5 text-[#5F6B7A]" />
               <span className="hidden sm:inline">Print</span>
@@ -182,7 +182,7 @@ export default function ServiceDedicatedPageView({
             <button
               type="button"
               onClick={() => onShare(service)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#F7F9FC] hover:bg-slate-100 text-[#172033] text-xs font-bold rounded-lg transition-colors cursor-pointer border border-[#E3E8EF]"
+              className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-[#F7F9FC] hover:bg-slate-100 text-[#172033] text-xs font-bold rounded-lg transition-colors cursor-pointer border border-[#E3E8EF]"
             >
               <Share2 className="w-3.5 h-3.5 text-[#5F6B7A]" />
               <span>Share</span>
@@ -191,7 +191,7 @@ export default function ServiceDedicatedPageView({
             <button
               type="button"
               onClick={() => onApplyService(service.name)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#0B57D0] hover:bg-[#0842a0] text-white text-xs sm:text-sm font-bold rounded-lg transition-colors cursor-pointer shadow-xs"
+              className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-[#0B57D0] hover:bg-[#0842a0] text-white text-xs sm:text-sm font-bold rounded-lg transition-colors cursor-pointer shadow-xs"
             >
               <span>Apply via CSC Desk</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -200,7 +200,7 @@ export default function ServiceDedicatedPageView({
         </div>
 
         {/* Main Document Article */}
-        <article className="bg-white rounded-2xl border border-[#E3E8EF] p-6 sm:p-8 space-y-8 shadow-xs">
+        <article className="bg-white rounded-none sm:rounded-2xl border-y sm:border border-[#E3E8EF] p-3.5 sm:p-8 space-y-6 sm:space-y-8 shadow-none sm:shadow-xs w-full max-w-full overflow-hidden">
           
           {/* Header Section */}
           <header className="space-y-4 border-b border-[#E3E8EF] pb-6">
@@ -224,12 +224,12 @@ export default function ServiceDedicatedPageView({
               <span className="text-xs font-bold uppercase tracking-wider text-[#0B57D0]">
                 {CATEGORY_LABELS[service.category] || 'Government Citizen Service'}
               </span>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#172033] tracking-tight leading-snug">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#172033] tracking-tight leading-snug break-words">
                 {service.name}
               </h1>
             </div>
 
-            <p className="text-sm text-[#5F6B7A] leading-relaxed">
+            <p className="text-sm text-[#5F6B7A] leading-relaxed break-words">
               {service.description}
             </p>
 

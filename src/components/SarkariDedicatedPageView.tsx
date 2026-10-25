@@ -151,14 +151,14 @@ export default function SarkariDedicatedPageView({
         }}
       />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 space-y-6">
+      <div className="w-full max-w-5xl mx-auto px-0 sm:px-6 space-y-3 sm:space-y-6 pb-24 sm:pb-8">
         
         {/* Navigation & Action Top Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-xl border border-[#E3E8EF] shadow-2xs">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 bg-white p-3 sm:p-4 rounded-none sm:rounded-xl border-y sm:border border-[#E3E8EF] shadow-2xs w-full">
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-2 px-3.5 py-2 bg-[#12304A] hover:bg-[#1e476d] text-white text-xs sm:text-sm font-semibold rounded-lg transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 px-3 sm:px-3.5 py-2 bg-[#12304A] hover:bg-[#1e476d] text-white text-xs sm:text-sm font-semibold rounded-lg transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to All Notifications</span>
@@ -168,7 +168,7 @@ export default function SarkariDedicatedPageView({
             <button
               type="button"
               onClick={handlePrint}
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 text-[#172033] text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-[#E3E8EF]"
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 bg-white hover:bg-slate-50 text-[#172033] text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-[#E3E8EF]"
               title="Print Notification"
             >
               <Printer className="w-3.5 h-3.5 text-[#5F6B7A]" />
@@ -178,7 +178,7 @@ export default function SarkariDedicatedPageView({
             <button
               type="button"
               onClick={() => onShare(item)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#F7F9FC] hover:bg-slate-100 text-[#172033] text-xs font-bold rounded-lg transition-colors cursor-pointer border border-[#E3E8EF]"
+              className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-[#F7F9FC] hover:bg-slate-100 text-[#172033] text-xs font-bold rounded-lg transition-colors cursor-pointer border border-[#E3E8EF]"
             >
               <Share2 className="w-3.5 h-3.5 text-[#5F6B7A]" />
               <span>Share</span>
@@ -188,7 +188,7 @@ export default function SarkariDedicatedPageView({
               <button
                 type="button"
                 onClick={() => onApplyService(`Filing Application: ${item.title}`)}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-[#0B57D0] hover:bg-[#0842a0] text-white text-xs sm:text-sm font-bold rounded-lg transition-colors cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-[#0B57D0] hover:bg-[#0842a0] text-white text-xs sm:text-sm font-bold rounded-lg transition-colors cursor-pointer shadow-xs"
               >
                 <span>Apply via CSC Desk</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -198,10 +198,10 @@ export default function SarkariDedicatedPageView({
         </div>
 
         {/* Main Article Container Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start w-full">
           
           {/* Main Content Column */}
-          <article className="lg:col-span-8 bg-white rounded-2xl border border-[#E3E8EF] p-6 sm:p-8 space-y-8 shadow-xs">
+          <article className="lg:col-span-8 bg-white rounded-none sm:rounded-2xl border-y sm:border border-[#E3E8EF] p-3.5 sm:p-8 space-y-6 sm:space-y-8 shadow-none sm:shadow-xs w-full max-w-full overflow-hidden">
             
             {/* Header / Meta Block */}
             <header className="space-y-4 border-b border-[#E3E8EF] pb-6">
@@ -228,18 +228,18 @@ export default function SarkariDedicatedPageView({
                 </span>
                 
                 {/* H1 Title */}
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#172033] tracking-tight leading-snug">
+                <h1 className="text-lg sm:text-2xl md:text-3xl font-extrabold text-[#172033] tracking-tight leading-snug break-words">
                   {item.title}
                 </h1>
               </div>
 
               {/* Short Introduction */}
-              <p className="text-sm text-[#5F6B7A] leading-relaxed">
+              <p className="text-xs sm:text-sm text-[#5F6B7A] leading-relaxed break-words">
                 {item.shortInfo || `${getOrgName(item)} has released the official recruitment notification for ${item.title}. Eligible candidates are advised to verify eligibility criteria, key deadlines, fee structure, and syllabus prior to submitting their online application.`}
               </p>
 
               {/* Published & Updated Dates (Unboxed text with typographic separators) */}
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#5F6B7A] pt-2 border-t border-[#E3E8EF]">
+              <div className="flex flex-wrap items-center gap-x-2.5 sm:gap-x-3 gap-y-1 text-[11px] sm:text-xs text-[#5F6B7A] pt-2 border-t border-[#E3E8EF]">
                 <div>
                   <span>Published: </span>
                   <strong className="text-[#172033] font-semibold">{item.postDate}</strong>
@@ -276,7 +276,7 @@ export default function SarkariDedicatedPageView({
             </header>
 
             {/* Mobile Table of Contents (Collapsible "On this page") */}
-            <div className="lg:hidden bg-[#F7F9FC] border border-[#E3E8EF] rounded-xl p-3.5">
+            <div className="lg:hidden bg-[#F7F9FC] border border-[#E3E8EF] rounded-lg sm:rounded-xl p-3 sm:p-3.5">
               <button
                 type="button"
                 onClick={() => setMobileTocOpen(!mobileTocOpen)}
@@ -320,60 +320,100 @@ export default function SarkariDedicatedPageView({
                 <span>Recruitment Information Summary</span>
               </h2>
 
-              <div className="overflow-x-auto border border-[#E3E8EF] rounded-xl">
-                <table className="w-full text-left text-xs sm:text-sm">
+              <div className="w-full overflow-x-auto border border-[#E3E8EF] rounded-lg sm:rounded-xl">
+                <table className="w-full text-left text-xs sm:text-sm table-fixed border-collapse">
+                  <colgroup>
+                    <col className="w-[34%] sm:w-[30%]" />
+                    <col className="w-[66%] sm:w-[70%]" />
+                  </colgroup>
                   <tbody className="divide-y divide-[#E3E8EF]">
                     <tr className="bg-[#F7F9FC]">
-                      <th className="py-2.5 px-4 font-semibold text-[#5F6B7A] w-1/3">Organization</th>
-                      <td className="py-2.5 px-4 font-bold text-[#172033]">{getOrgName(item)}</td>
+                      <th className="py-2 sm:py-2.5 px-3 sm:px-4 font-semibold text-[#5F6B7A] align-top text-[11px] sm:text-xs break-words">
+                        Organization
+                      </th>
+                      <td className="py-2 sm:py-2.5 px-3 sm:px-4 font-bold text-[#172033] align-top break-words">
+                        {getOrgName(item)}
+                      </td>
                     </tr>
                     <tr>
-                      <th className="py-2.5 px-4 font-semibold text-[#5F6B7A]">Post Title / Examination</th>
-                      <td className="py-2.5 px-4 font-bold text-[#0B57D0]">{item.title}</td>
+                      <th className="py-2 sm:py-2.5 px-3 sm:px-4 font-semibold text-[#5F6B7A] align-top text-[11px] sm:text-xs break-words">
+                        Post Title / Examination
+                      </th>
+                      <td className="py-2 sm:py-2.5 px-3 sm:px-4 font-bold text-[#0B57D0] align-top break-words">
+                        {item.title}
+                      </td>
                     </tr>
                     {item.advertisementNo && (
                       <tr className="bg-[#F7F9FC]">
-                        <th className="py-2.5 px-4 font-semibold text-[#5F6B7A]">Advertisement No.</th>
-                        <td className="py-2.5 px-4 font-mono font-medium text-[#172033]">{item.advertisementNo}</td>
+                        <th className="py-2 sm:py-2.5 px-3 sm:px-4 font-semibold text-[#5F6B7A] align-top text-[11px] sm:text-xs break-words">
+                          Advertisement No.
+                        </th>
+                        <td className="py-2 sm:py-2.5 px-3 sm:px-4 font-mono font-medium text-[#172033] align-top break-words">
+                          {item.advertisementNo}
+                        </td>
                       </tr>
                     )}
                     <tr>
-                      <th className="py-2.5 px-4 font-semibold text-[#5F6B7A]">Total Vacancies / Seats</th>
-                      <td className="py-2.5 px-4 font-bold text-[#172033]">{item.totalPosts || 'Refer to official notice'}</td>
+                      <th className="py-2 sm:py-2.5 px-3 sm:px-4 font-semibold text-[#5F6B7A] align-top text-[11px] sm:text-xs break-words">
+                        Total Vacancies / Seats
+                      </th>
+                      <td className="py-2 sm:py-2.5 px-3 sm:px-4 font-bold text-[#172033] align-top break-words">
+                        {item.totalPosts || 'Refer to official notice'}
+                      </td>
                     </tr>
                     <tr className="bg-[#F7F9FC]">
-                      <th className="py-2.5 px-4 font-semibold text-[#5F6B7A]">Application Start Date</th>
-                      <td className="py-2.5 px-4 font-semibold text-[#188038]">{item.startDate || item.postDate}</td>
+                      <th className="py-2 sm:py-2.5 px-3 sm:px-4 font-semibold text-[#5F6B7A] align-top text-[11px] sm:text-xs break-words">
+                        Application Start Date
+                      </th>
+                      <td className="py-2 sm:py-2.5 px-3 sm:px-4 font-semibold text-[#188038] align-top break-words">
+                        {item.startDate || item.postDate}
+                      </td>
                     </tr>
                     <tr>
-                      <th className="py-2.5 px-4 font-semibold text-[#5F6B7A]">Application Last Date</th>
-                      <td className="py-2.5 px-4 font-bold text-rose-700">{item.lastDate || 'As specified in notification'}</td>
+                      <th className="py-2 sm:py-2.5 px-3 sm:px-4 font-semibold text-[#5F6B7A] align-top text-[11px] sm:text-xs break-words">
+                        Application Last Date
+                      </th>
+                      <td className="py-2 sm:py-2.5 px-3 sm:px-4 font-bold text-rose-700 align-top break-words">
+                        {item.lastDate || 'As specified in notification'}
+                      </td>
                     </tr>
                     <tr className="bg-[#F7F9FC]">
-                      <th className="py-2.5 px-4 font-semibold text-[#5F6B7A]">Age Limit</th>
-                      <td className="py-2.5 px-4 text-[#172033]">{item.ageLimit || 'As per board regulations with category relaxation.'}</td>
+                      <th className="py-2 sm:py-2.5 px-3 sm:px-4 font-semibold text-[#5F6B7A] align-top text-[11px] sm:text-xs break-words">
+                        Age Limit
+                      </th>
+                      <td className="py-2 sm:py-2.5 px-3 sm:px-4 text-[#172033] align-top break-words leading-relaxed">
+                        {item.ageLimit || 'As per board regulations with category relaxation.'}
+                      </td>
                     </tr>
                     <tr>
-                      <th className="py-2.5 px-4 font-semibold text-[#5F6B7A]">Eligibility / Qualification</th>
-                      <td className="py-2.5 px-4 text-[#172033]">{item.eligibility || 'Class 10th / 12th / Graduate from a recognized Indian university.'}</td>
+                      <th className="py-2 sm:py-2.5 px-3 sm:px-4 font-semibold text-[#5F6B7A] align-top text-[11px] sm:text-xs break-words">
+                        Eligibility / Qualification
+                      </th>
+                      <td className="py-2 sm:py-2.5 px-3 sm:px-4 text-[#172033] align-top break-words leading-relaxed">
+                        {item.eligibility || 'Class 10th / 12th / Graduate from a recognized Indian university.'}
+                      </td>
                     </tr>
                     <tr className="bg-[#F7F9FC]">
-                      <th className="py-2.5 px-4 font-semibold text-[#5F6B7A]">Selection Process</th>
-                      <td className="py-2.5 px-4 text-[#172033]">
+                      <th className="py-2 sm:py-2.5 px-3 sm:px-4 font-semibold text-[#5F6B7A] align-top text-[11px] sm:text-xs break-words">
+                        Selection Process
+                      </th>
+                      <td className="py-2 sm:py-2.5 px-3 sm:px-4 text-[#172033] align-top break-words leading-relaxed">
                         {item.category === 'army_jobs' ? 'Physical Fitness Test (PFT), Written Exam (CEE) & Medical Review' : 'Written Test (CBT / OMR) followed by Document Verification'}
                       </td>
                     </tr>
                     <tr>
-                      <th className="py-2.5 px-4 font-semibold text-[#5F6B7A]">Official Portal</th>
-                      <td className="py-2.5 px-4">
+                      <th className="py-2 sm:py-2.5 px-3 sm:px-4 font-semibold text-[#5F6B7A] align-top text-[11px] sm:text-xs break-words">
+                        Official Portal
+                      </th>
+                      <td className="py-2 sm:py-2.5 px-3 sm:px-4 align-top break-words">
                         <a
                           href={item.officialLink || orgDomain()}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0B57D0] hover:underline"
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0B57D0] hover:underline break-all"
                         >
                           <span>Visit Official Website</span>
-                          <ExternalLink className="w-3.5 h-3.5" />
+                          <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                         </a>
                       </td>
                     </tr>
@@ -383,9 +423,9 @@ export default function SarkariDedicatedPageView({
             </section>
 
             {/* Candidate Advisory Box */}
-            <aside aria-label="Important Note" className="border-l-4 border-amber-500 bg-amber-50/70 p-4 rounded-r-lg space-y-1">
+            <aside aria-label="Important Note" className="border-l-4 border-amber-500 bg-amber-50/70 p-3 sm:p-4 rounded-r-lg space-y-1 break-words">
               <div className="flex items-center gap-2">
-                <Bell className="w-4 h-4 text-amber-800" />
+                <Bell className="w-4 h-4 text-amber-800 shrink-0" />
                 <h3 className="text-xs sm:text-sm font-bold text-amber-950">
                   Candidate Advisory &amp; Verification Note
                 </h3>
@@ -403,7 +443,7 @@ export default function SarkariDedicatedPageView({
             {/* ================================================================ */}
             {/* 2. IMPORTANT DATES & FEE STRUCTURE */}
             {/* ================================================================ */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 pt-2">
               
               {/* Important Dates Schedule */}
               <section id="important-dates" className="space-y-3 scroll-mt-24">
@@ -412,25 +452,25 @@ export default function SarkariDedicatedPageView({
                   <span>Important Dates Schedule</span>
                 </h2>
                 <div className="divide-y divide-[#E3E8EF] text-xs sm:text-sm">
-                  <div className="py-2 flex justify-between gap-4">
-                    <span className="text-[#5F6B7A]">Notification Released</span>
-                    <span className="font-semibold text-[#172033]">{item.postDate}</span>
+                  <div className="py-2 flex items-start justify-between gap-2.5 sm:gap-4 break-words">
+                    <span className="text-[#5F6B7A] shrink-0">Notification Released</span>
+                    <span className="font-semibold text-[#172033] text-right break-words">{item.postDate}</span>
                   </div>
-                  <div className="py-2 flex justify-between gap-4">
-                    <span className="text-[#5F6B7A]">Application Start Date</span>
-                    <span className="font-semibold text-[#188038]">{item.startDate || item.postDate}</span>
+                  <div className="py-2 flex items-start justify-between gap-2.5 sm:gap-4 break-words">
+                    <span className="text-[#5F6B7A] shrink-0">Application Start Date</span>
+                    <span className="font-semibold text-[#188038] text-right break-words">{item.startDate || item.postDate}</span>
                   </div>
-                  <div className="py-2 flex justify-between gap-4">
-                    <span className="text-[#5F6B7A]">Last Date to Apply</span>
-                    <span className="font-bold text-rose-700">{item.lastDate || 'As per notification'}</span>
+                  <div className="py-2 flex items-start justify-between gap-2.5 sm:gap-4 break-words">
+                    <span className="text-[#5F6B7A] shrink-0">Last Date to Apply</span>
+                    <span className="font-bold text-rose-700 text-right break-words">{item.lastDate || 'As per notification'}</span>
                   </div>
-                  <div className="py-2 flex justify-between gap-4">
-                    <span className="text-[#5F6B7A]">Fee Payment Last Date</span>
-                    <span className="font-semibold text-[#172033]">{item.lastDate || 'Same as last date'}</span>
+                  <div className="py-2 flex items-start justify-between gap-2.5 sm:gap-4 break-words">
+                    <span className="text-[#5F6B7A] shrink-0">Fee Payment Last Date</span>
+                    <span className="font-semibold text-[#172033] text-right break-words">{item.lastDate || 'Same as last date'}</span>
                   </div>
-                  <div className="py-2 flex justify-between gap-4">
-                    <span className="text-[#5F6B7A]">Exam / Hall Ticket</span>
-                    <span className="font-medium text-[#12304A]">
+                  <div className="py-2 flex items-start justify-between gap-2.5 sm:gap-4 break-words">
+                    <span className="text-[#5F6B7A] shrink-0">Exam / Hall Ticket</span>
+                    <span className="font-medium text-[#12304A] text-right break-words">
                       {item.category === 'army_jobs' ? 'joinindianarmy.nic.in' : item.category === 'rrb_jobs' ? 'rrbapply.gov.in' : item.category === 'ssc_jobs' ? 'ssc.gov.in' : 'To be notified on official portal'}
                     </span>
                   </div>
@@ -445,22 +485,22 @@ export default function SarkariDedicatedPageView({
                 </h2>
                 <div className="divide-y divide-[#E3E8EF] text-xs sm:text-sm">
                   {item.feePerSubject && (
-                    <div className="py-2 flex justify-between gap-4">
-                      <span className="text-[#5F6B7A]">Fee Per Subject / Paper</span>
-                      <span className="font-bold text-[#172033]">{item.feePerSubject}</span>
+                    <div className="py-2 flex items-start justify-between gap-2.5 sm:gap-4 break-words">
+                      <span className="text-[#5F6B7A] shrink-0">Fee Per Subject / Paper</span>
+                      <span className="font-bold text-[#172033] text-right break-words">{item.feePerSubject}</span>
                     </div>
                   )}
-                  <div className="py-2 flex justify-between gap-4">
-                    <span className="text-[#5F6B7A]">General / OBC Candidates</span>
-                    <span className="font-semibold text-[#172033]">{item.fees?.genObc || 'As specified in notification'}</span>
+                  <div className="py-2 flex items-start justify-between gap-2.5 sm:gap-4 break-words">
+                    <span className="text-[#5F6B7A] shrink-0">General / OBC Candidates</span>
+                    <span className="font-semibold text-[#172033] text-right break-words">{item.fees?.genObc || 'As specified in notification'}</span>
                   </div>
-                  <div className="py-2 flex justify-between gap-4">
-                    <span className="text-[#5F6B7A]">SC / ST / Reserved / Female</span>
-                    <span className="font-semibold text-[#188038]">{item.fees?.scSt || 'As per statutory norms'}</span>
+                  <div className="py-2 flex items-start justify-between gap-2.5 sm:gap-4 break-words">
+                    <span className="text-[#5F6B7A] shrink-0">SC / ST / Reserved / Female</span>
+                    <span className="font-semibold text-[#188038] text-right break-words">{item.fees?.scSt || 'As per statutory norms'}</span>
                   </div>
-                  <div className="py-2 flex justify-between gap-4">
-                    <span className="text-[#5F6B7A]">Payment Mode</span>
-                    <span className="font-medium text-[#172033]">Online (UPI / NetBanking / Debit Card)</span>
+                  <div className="py-2 flex items-start justify-between gap-2.5 sm:gap-4 break-words">
+                    <span className="text-[#5F6B7A] shrink-0">Payment Mode</span>
+                    <span className="font-medium text-[#172033] text-right break-words">Online (UPI / NetBanking / Debit Card)</span>
                   </div>
                 </div>
               </section>

@@ -297,3 +297,22 @@ body {
   }
 }
 
+/* Mobile Responsiveness & Overflow Protection */
+@media (max-width: 768px) {
+  table {
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  th, td {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+}
+
+/* Universal safe word breaking for long titles, URLs, and pipe separators */
+.break-words-safe {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
