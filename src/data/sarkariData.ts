@@ -45,6 +45,140 @@ export const SARKARI_CATEGORIES = {
 };
 
 export const SARKARI_DATA: SarkariItem[] = [
+  // 🇮🇳 DAILY OFFICIAL PORTAL UPDATES (25 OCTOBER 2026)
+  {
+    id: 'army-tes-57-course-2026',
+    title: 'Indian Army 10+2 Technical Entry Scheme (TES-57 Course) Online Form 2026',
+    category: 'army_jobs',
+    postDate: '25/10/2026',
+    startDate: '14/10/2026',
+    lastDate: '12/11/2026',
+    advertisementNo: 'TES-57 Course Notification (Commencing July 2027)',
+    shortInfo: 'Join Indian Army invites online applications from unmarried male candidates who have passed 10+2 examination with Physics, Chemistry, and Mathematics (PCM) and appeared in JEE (Mains) for the 10+2 Technical Entry Scheme (TES-57) course for grant of Permanent Commission in the Indian Army.',
+    ageLimit: '16½ to 19½ Years (Candidates must not be born before 02.01.2008 and not after 01.01.2011, both days inclusive)',
+    eligibility: 'Minimum 60% aggregate marks in Physics, Chemistry & Mathematics (PCM) in Class 12th (10+2) from a recognized Education Board, and mandatory appearance in JEE (Mains) 2026.',
+    totalPosts: '90 Posts',
+    officialLink: 'https://joinindianarmy.nic.in',
+    fees: {
+      genObc: '₹0/- (No Application Fee for any category)',
+      scSt: '₹0/- (Exempted)'
+    },
+    isNew: true
+  },
+  {
+    id: 'rrb-ntpc-undergraduate-cen-07-2026',
+    title: 'RRB NTPC Undergraduate (10+2) Level Posts Recruitment 2026 (CEN 07/2026)',
+    category: 'rrb_jobs',
+    postDate: '25/10/2026',
+    startDate: '15/10/2026',
+    lastDate: '13/11/2026',
+    advertisementNo: 'CEN No. 07/2026 (NTPC-UG)',
+    shortInfo: 'Railway Recruitment Boards (RRB) invite online applications on rrbapply.gov.in for Non-Technical Popular Categories (Undergraduate Level) including Commercial-cum-Ticket Clerk, Accounts Clerk-cum-Typist, Junior Clerk-cum-Typist, and Trains Clerk across various Zonal Railways and Production Units.',
+    ageLimit: '18 to 30 Years as on 01.01.2027 (Age relaxation of 3 years for OBC-NCL and 5 years for SC/ST candidates as per Railway rules)',
+    eligibility: '12th (+2 Stage) or its equivalent examination passed with minimum 50% marks in aggregate (pass marks for SC/ST/PwBD/Ex-SM candidates). Typing proficiency required for Clerk-cum-Typist posts.',
+    totalPosts: '3,445 Vacancies Across All RRB Zones',
+    officialLink: 'https://www.rrbapply.gov.in',
+    fees: {
+      genObc: '₹500/- (₹400/- refunded duly deducting bank charges on appearing in 1st Stage CBT)',
+      scSt: '₹250/- (For SC, ST, Ex-SM, Female, Transgender, Minorities & EBC - Fully refunded after CBT-1)'
+    },
+    isNew: true
+  },
+  {
+    id: 'ssc-chsl-10-plus-2-exam-2026-tier1',
+    title: 'SSC Combined Higher Secondary (10+2) Level (CHSL) Examination 2026 & Revised Vacancy Notice',
+    category: 'ssc_jobs',
+    postDate: '25/10/2026',
+    startDate: '07/09/2026',
+    lastDate: '30/11/2026',
+    advertisementNo: 'F.No. HQ-PPII01/2/2026-PP_II (SSC CHSL 2026)',
+    shortInfo: 'Staff Selection Commission (SSC) has released the notification and revised vacancy breakdown for the Combined Higher Secondary (10+2) Level Examination 2026 for recruitment to Lower Divisional Clerk (LDC) / Junior Secretariat Assistant (JSA), and Data Entry Operator (DEO / DEO Grade A) across Central Government Ministries and Departments.',
+    ageLimit: '18 to 27 Years as on 01.08.2026 (Candidates born not before 02.08.1999 and not later than 01.08.2008; SC/ST: +5 Years, OBC: +3 Years)',
+    eligibility: 'Candidates must have passed 12th Standard or equivalent examination from a recognized Board or University. For DEO Grade A in specific departments, 12th pass in Science stream with Mathematics as a subject is required.',
+    totalPosts: '2,536 Vacancies (LDC/JSA & DEO Cadres)',
+    officialLink: 'https://ssc.gov.in',
+    fees: {
+      genObc: '₹100/- (Payable online via BHIM UPI, Net Banking, or Debit/Credit Cards)',
+      scSt: '₹0/- (Women, SC, ST, PwBD and Ex-Servicemen candidates are exempted from fee payment)'
+    },
+    isNew: true
+  },
+  {
+    id: 'cus-bed-supplementary-4th-sem-exam-dyd-2026',
+    title: 'Cluster University Srinagar B.Ed 4th Semester Supplementary Exam Form & Design Your Degree (DYD) NEP Notice 2026',
+    category: 'cluster_univ',
+    postDate: '25/10/2026',
+    startDate: '20/10/2026',
+    lastDate: '10/11/2026',
+    advertisementNo: 'CUS/Exam/B.Ed-4th-Supp/2026',
+    shortInfo: 'Controller of Examinations, Cluster University Srinagar has issued the online examination form submission notice and date sheet schedule for B.Ed 4th Semester (Regular Batch 2024 & Backlog/Supplementary candidates) along with NEP-2020 Design Your Degree (DYD) 3rd & 4th Semester assessment updates.',
+    ageLimit: 'No Age Bar (Enrolled University Candidates)',
+    eligibility: 'Students enrolled in B.Ed 4th Semester (Regular Batch 2024 & eligible backlog batches) at IAES / Constituent Colleges and DYD NEP-2020 Undergraduate streams of Cluster University Srinagar.',
+    totalPosts: 'Semester Examination Notice',
+    officialLink: 'https://www.cusrinagar.edu.in',
+    fees: {
+      genObc: 'As per prescribed CUS Semester Examination Fee structure on student portal',
+      scSt: 'Exempted for Specially-Abled (PwD) & Orphan Category students as per University norms'
+    },
+    isNew: true
+  },
+  {
+    id: 'jkssb-advt-10-of-2026-je-mechanical-pwd',
+    title: 'JKSSB Advt 10 of 2026: Recruitment for 127 Junior Engineer (Mechanical) Posts in Public Works (R&B) Department',
+    category: 'jkssb',
+    postDate: '21/10/2026',
+    startDate: '16/11/2026',
+    lastDate: '15/12/2026',
+    advertisementNo: 'Advertisement Notification No. 10 of 2026 (Dated: 21.10.2026)',
+    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) invites online applications from eligible Domiciles of UT of Jammu & Kashmir for direct recruitment to 127 UT Cadre posts of Junior Engineer (Mechanical) in Pay Level-6 (₹35,400 - ₹1,12,400) under Public Works (R&B) Department.',
+    ageLimit: 'Open Merit (OM): 40 Years (as on 01.01.2026) | SC / ST-1 / ST-2 / RBA / ALC-IB / EWS / OBC: 43 Years | PwBD: 42 Years | In-Service / Contractual: 40 Years',
+    eligibility: 'Three Years Diploma in Mechanical Engineering from a Government recognized Institute / Indian University, OR Degree in Mechanical Engineering / AMIE Section (A&B) in Mechanical Engineering. Candidate must be a Domicile of UT of J&K.',
+    totalPosts: '127 Posts (OM: 51 | SC: 11 | ST-1: 12 | ST-2: 13 | OBC: 10 | ALC/IB: 05 | RBA: 13 | EWS: 12)',
+    officialLink: 'https://www.jkssb.nic.in',
+    fees: {
+      genObc: '₹600/- (For Open Merit, RBA, ALC/IB, OBC Categories)',
+      scSt: '₹500/- (For SC, ST-1, ST-2, EWS & PwBD Categories)'
+    },
+    isNew: true
+  },
+  {
+    id: 'ku-ug-5yr-integrated-pg-exam-datesheet-oct-2026',
+    title: 'University of Kashmir Examination Date Sheet & Online Exam Forms for 5-Year Integrated & UG/PG Programmes (Session Oct–Nov 2026)',
+    category: 'exam_forms',
+    postDate: '25/10/2026',
+    startDate: '22/10/2026',
+    lastDate: '12/11/2026',
+    advertisementNo: 'F(Exam-Integrated-UG-PG)/KU/2026',
+    shortInfo: 'Office of the Controller of Examinations, University of Kashmir has released the online examination form submission link and center-wise date sheets for 5-Year Integrated, Honours, Professional, and PG Semester examinations (Regular & Fresh Private batches) for the October–November 2026 session.',
+    ageLimit: 'As per University of Kashmir Examination Statutes',
+    eligibility: 'Regular and eligible backlog students of 5-Year Integrated Programmes, UG NEP Semesters, and Postgraduate Courses enrolled at Main Campus, Satellite Campuses, and Affiliated Colleges of University of Kashmir.',
+    totalPosts: 'University Exam Form & Date Sheet',
+    officialLink: 'https://www.kashmiruniversity.net',
+    fees: {
+      genObc: '₹750/- to ₹1,250/- (Depending on course & number of subjects via KU Student Portal)',
+      scSt: 'Fee concession applicable for Orphan & Visually Impaired / PwD students'
+    },
+    isNew: true
+  },
+  {
+    id: 'ku-ddoe-distance-education-pg-admissions-2026',
+    title: 'University of Kashmir DDOE Distance Mode PG Admissions (MA, M.Com & M.Sc Mathematics) Notification 2026',
+    category: 'admissions',
+    postDate: '25/10/2026',
+    startDate: '18/10/2026',
+    lastDate: '15/11/2026',
+    advertisementNo: 'Adm/DDOE-PG/KU/2026',
+    shortInfo: 'Directorate of Distance & Online Education (DDOE), University of Kashmir invites online admission applications for Postgraduate programmes in Distance Mode including MA (English, Urdu, Kashmiri, Islamic Studies, Education, Economics), M.Com, and M.Sc Mathematics for the Academic Session 2026.',
+    ageLimit: 'No Upper Age Limit for Distance Mode PG Admissions',
+    eligibility: 'Bachelor’s Degree (10+2+3 pattern) in the relevant or allied discipline from University of Kashmir or any other UGC-recognized University with minimum required aggregate marks (45% for Open Merit and 40% for Reserved Categories).',
+    totalPosts: 'Distance Mode PG Seats (All Study Centres)',
+    officialLink: 'https://www.kashmiruniversity.net',
+    fees: {
+      genObc: '₹400/- (Online Application & Processing Fee per Programme)',
+      scSt: '₹400/- (Online Application & Processing Fee per Programme)'
+    },
+    isNew: true
+  },
   // 🇮🇳 MEGA RECRUITMENT NOTIFICATION (01 SEPTEMBER 2026 - JKSSB ADVT 09 OF 2026)
   {
     id: 'jkssb-advt-09-of-2026-class-iv-mts-recruitment',
