@@ -36,6 +36,7 @@ import { SARKARI_DATA, SARKARI_CATEGORIES, SarkariItem } from '../data/sarkariDa
 import { SERVICES_LIST, ServiceItem } from '../servicesData';
 import { GUIDE_ARTICLES } from './GuidesKnowledgeHub';
 import { TOOLS_LIST } from './tools/toolsData';
+import CitizenToolsDesk from './CitizenToolsDesk';
 
 interface PortalHomepageProps {
   onOpenJob: (item: SarkariItem) => void;
@@ -766,75 +767,7 @@ export default function PortalHomepage({
       </section>
 
       {/* ==================================================================== */}
-      {/* 2. SIX POPULAR SERVICES (Compact 6-Card Grid) */}
-      {/* ==================================================================== */}
-      <section
-        id="popular-services"
-        aria-labelledby="popular-services-heading"
-        className="space-y-5 scroll-mt-20"
-      >
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E2E8F0] pb-3">
-          <div>
-            <h2
-              id="popular-services-heading"
-              className="text-xl sm:text-2xl font-bold text-[#102A43] tracking-tight"
-            >
-              Popular Citizen Services
-            </h2>
-            <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
-              Frequently requested identity, certificate, and application assistance services.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => scrollToSection('services')}
-            className="text-xs sm:text-sm font-semibold text-[#2563EB] hover:underline inline-flex items-center gap-1 cursor-pointer self-start sm:self-auto"
-          >
-            <span>View All Services</span>
-            <ArrowRight className="w-4 h-4" aria-hidden="true" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {popularServices.map((item) => {
-            const Icon = item.icon;
-            return (
-              <article
-                key={item.title}
-                className="bg-white border border-[#E2E8F0] hover:border-[#2563EB] rounded-2xl p-5 flex flex-col justify-between transition-colors shadow-2xs"
-              >
-                <div className="space-y-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center">
-                    <Icon className="w-5 h-5" aria-hidden="true" />
-                  </div>
-                  <h3 className="text-base font-bold text-[#102A43] leading-snug">
-                    {item.title}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">
-                    {item.shortDescription}
-                  </p>
-                </div>
-
-                <div className="pt-4 mt-4 border-t border-[#E2E8F0] flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (item.service) onOpenService(item.service);
-                    }}
-                    className="text-xs sm:text-sm font-semibold text-[#2563EB] hover:underline inline-flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <span>View Service</span>
-                    <ArrowRight className="w-4 h-4" aria-hidden="true" />
-                  </button>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ==================================================================== */}
-      {/* 3. IMPROVED LATEST JOBS & NOTICES */}
+      {/* 1. PUBLIC RECRUITMENTS — LATEST RECRUITMENT & EXAM NOTICES */}
       {/* ==================================================================== */}
       <section
         id="recruitment-section"
@@ -844,11 +777,15 @@ export default function PortalHomepage({
         <div id="sarkari-board" className="scroll-mt-20" />
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-[#E2E8F0] pb-3">
           <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2563EB] uppercase tracking-wider mb-1">
+              <Briefcase className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Public Recruitments</span>
+            </div>
             <h2
               id="recruitment-heading"
               className="text-xl sm:text-2xl font-bold text-[#102A43] tracking-tight"
             >
-              Latest Jobs &amp; Recruitment Notices
+              Latest Recruitment &amp; Exam Notices
             </h2>
             <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
               Verified recruitment updates from JKSSB, Indian Army, SSC, Railway RRB, and state universities.
@@ -1080,8 +1017,223 @@ export default function PortalHomepage({
       </section>
 
       {/* ==================================================================== */}
-      {/* 4. ORGANISED SERVICE DIRECTORY CATEGORY PREVIEWS */}
+      {/* 2. FAST, SIMPLE & SECURE DOCUMENT TOOLS */}
       {/* ==================================================================== */}
+      <section
+        id="tools-preview"
+        aria-labelledby="tools-preview-heading"
+        className="space-y-4 scroll-mt-20"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E2E8F0] pb-3">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2563EB] uppercase tracking-wider mb-1">
+              <Wrench className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Online Document Suite</span>
+            </div>
+            <h2
+              id="tools-preview-heading"
+              className="text-xl sm:text-2xl font-bold text-[#102A43] tracking-tight"
+            >
+              Fast, Simple &amp; Secure Document Tools
+            </h2>
+            <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+              Resize photos, compress images to 20KB–50KB, and format PDFs directly in your browser.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              window.location.hash = '#tools';
+            }}
+            className="text-xs sm:text-sm font-semibold text-[#2563EB] hover:underline inline-flex items-center gap-1 cursor-pointer self-start sm:self-auto"
+          >
+            <span>View All Tools ({TOOLS_LIST.length})</span>
+            <ArrowRight className="w-4 h-4" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {previewTools.map((tool) => {
+            const ToolIcon = getToolIcon(tool.iconName);
+            return (
+              <button
+                key={tool.id}
+                type="button"
+                onClick={() => {
+                  window.location.hash = `#tools/${tool.id}`;
+                }}
+                className="text-left bg-white border border-[#E2E8F0] hover:border-[#2563EB] rounded-2xl p-5 flex flex-col justify-between transition-colors shadow-2xs group cursor-pointer"
+              >
+                <div className="space-y-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center">
+                    <ToolIcon className="w-4 h-4" aria-hidden="true" />
+                  </div>
+                  <h3 className="text-sm font-bold text-[#102A43] group-hover:text-[#2563EB] transition-colors">
+                    {tool.name}
+                  </h3>
+                  <p className="text-xs text-[#64748B] line-clamp-2 leading-relaxed">
+                    {tool.shortDescription}
+                  </p>
+                </div>
+                <div className="pt-3 mt-3 border-t border-[#E2E8F0] flex items-center justify-between text-xs font-semibold text-[#2563EB]">
+                  <span>Open Tool</span>
+                  <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ==================================================================== */}
+      {/* 3. HIGHER EDUCATION & ADMISSIONS — EDUCATION & LEARNING RESOURCES */}
+      {/* ==================================================================== */}
+      <section
+        id="education-resources"
+        aria-labelledby="education-heading"
+        className="space-y-4 scroll-mt-20"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E2E8F0] pb-3">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2563EB] uppercase tracking-wider mb-1">
+              <GraduationCap className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Higher Education &amp; Admissions</span>
+            </div>
+            <h2
+              id="education-heading"
+              className="text-xl sm:text-2xl font-bold text-[#102A43] tracking-tight"
+            >
+              Education &amp; Learning Resources
+            </h2>
+            <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+              Admission notices, examination forms, and academic updates from Kashmir University and Cluster University.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowAllEducation((prev) => !prev)}
+            className="text-xs sm:text-sm font-semibold text-[#2563EB] hover:underline inline-flex items-center gap-1 cursor-pointer self-start sm:self-auto"
+          >
+            <span>{showAllEducation ? 'Show 3 Previews' : 'View All Education Notices'}</span>
+            <ArrowRight className="w-4 h-4" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {educationUpdates.map(({ item, status, organisation }) => (
+            <article
+              key={item.id}
+              className="bg-white border border-[#E2E8F0] hover:border-[#2563EB] rounded-2xl p-5 flex flex-col justify-between transition-colors shadow-2xs"
+            >
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-semibold text-[#2563EB]">{organisation}</span>
+                  {renderStatusBadge(status)}
+                </div>
+                <h3 className="text-sm sm:text-base font-bold text-[#102A43] line-clamp-2 leading-snug">
+                  <button
+                    type="button"
+                    onClick={() => onOpenJob(item)}
+                    className="text-left hover:text-[#2563EB] cursor-pointer"
+                  >
+                    {item.title}
+                  </button>
+                </h3>
+                <p className="text-xs text-[#64748B] line-clamp-2 leading-relaxed">
+                  {item.shortInfo}
+                </p>
+              </div>
+
+              <div className="pt-3 mt-4 border-t border-[#E2E8F0] flex items-center justify-between text-xs">
+                <span className="text-[#64748B]">
+                  Closing: <strong className="text-[#102A43]">{item.lastDate || 'See Notice'}</strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onOpenJob(item)}
+                  className="font-semibold text-[#2563EB] hover:underline cursor-pointer"
+                >
+                  View Notice →
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* ==================================================================== */}
+      {/* 4. ESSENTIAL CITIZEN E-SERVICES */}
+      {/* ==================================================================== */}
+      <section
+        id="popular-services"
+        aria-labelledby="popular-services-heading"
+        className="space-y-5 scroll-mt-20"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E2E8F0] pb-3">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2563EB] uppercase tracking-wider mb-1">
+              <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Citizen Service Desk</span>
+            </div>
+            <h2
+              id="popular-services-heading"
+              className="text-xl sm:text-2xl font-bold text-[#102A43] tracking-tight"
+            >
+              Essential Citizen E-Services
+            </h2>
+            <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+              Frequently requested identity, certificate, and application assistance services.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => scrollToSection('services')}
+            className="text-xs sm:text-sm font-semibold text-[#2563EB] hover:underline inline-flex items-center gap-1 cursor-pointer self-start sm:self-auto"
+          >
+            <span>View All Services</span>
+            <ArrowRight className="w-4 h-4" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {popularServices.map((item) => {
+            const Icon = item.icon;
+            return (
+              <article
+                key={item.title}
+                className="bg-white border border-[#E2E8F0] hover:border-[#2563EB] rounded-2xl p-5 flex flex-col justify-between transition-colors shadow-2xs"
+              >
+                <div className="space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center">
+                    <Icon className="w-5 h-5" aria-hidden="true" />
+                  </div>
+                  <h3 className="text-base font-bold text-[#102A43] leading-snug">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">
+                    {item.shortDescription}
+                  </p>
+                </div>
+
+                <div className="pt-4 mt-4 border-t border-[#E2E8F0] flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (item.service) onOpenService(item.service);
+                    }}
+                    className="text-xs sm:text-sm font-semibold text-[#2563EB] hover:underline inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>View Service</span>
+                    <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                  </button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Organised Service Directory Category Previews */}
       <section
         id="service-directory-preview"
         aria-labelledby="directory-preview-heading"
@@ -1144,9 +1296,143 @@ export default function PortalHomepage({
         </div>
       </section>
 
-      {/* ==================================================================== */}
-      {/* 5. SIMPLE 3-STEP "HOW IT WORKS" SECTION */}
-      {/* ==================================================================== */}
+      {/* Government Schemes Preview (3 items + View All) */}
+      <section
+        id="schemes-section"
+        aria-labelledby="schemes-heading"
+        className="space-y-4 scroll-mt-20"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E2E8F0] pb-3">
+          <div>
+            <h2
+              id="schemes-heading"
+              className="text-xl sm:text-2xl font-bold text-[#102A43] tracking-tight"
+            >
+              Government Schemes &amp; Citizen Benefits
+            </h2>
+            <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+              Key welfare schemes, eligibility guides, and direct official portal links.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => scrollToSection('knowledge-hub')}
+            className="text-xs sm:text-sm font-semibold text-[#2563EB] hover:underline inline-flex items-center gap-1 cursor-pointer self-start sm:self-auto"
+          >
+            <span>View All Guides &amp; Schemes</span>
+            <ArrowRight className="w-4 h-4" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <article className="bg-white border border-[#E2E8F0] rounded-2xl p-5 flex flex-col justify-between shadow-2xs">
+            <div className="space-y-2.5">
+              <span className="inline-block text-xs font-semibold text-[#16A34A] bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                Farmer Income Support
+              </span>
+              <h3 className="text-base font-bold text-[#102A43]">
+                PM Kisan Samman Nidhi (₹6,000/Year)
+              </h3>
+              <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">
+                Direct Benefit Transfer of ₹2,000 every four months for eligible landholding किसान families. Requires active e-KYC and Aadhaar-seeded bank account.
+              </p>
+            </div>
+            <div className="pt-4 mt-4 border-t border-[#E2E8F0] flex items-center justify-between gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  if (onOpenGuide) onOpenGuide('pm-kisan-ekyc-status-guide-2026');
+                  else scrollToSection('knowledge-hub');
+                }}
+                className="font-semibold text-[#2563EB] hover:underline cursor-pointer"
+              >
+                Read e-KYC Guide →
+              </button>
+              <a
+                href="https://pmkisan.gov.in"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#64748B] hover:text-[#102A43] inline-flex items-center gap-1"
+              >
+                <span>pmkisan.gov.in</span>
+                <ExternalLink className="w-3 h-3" aria-hidden="true" />
+              </a>
+            </div>
+          </article>
+
+          <article className="bg-white border border-[#E2E8F0] rounded-2xl p-5 flex flex-col justify-between shadow-2xs">
+            <div className="space-y-2.5">
+              <span className="inline-block text-xs font-semibold text-[#2563EB] bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">
+                Healthcare Assurance
+              </span>
+              <h3 className="text-base font-bold text-[#102A43]">
+                Ayushman Bharat PM-JAY &amp; SEHAT
+              </h3>
+              <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">
+                Cashless hospitalisation coverage up to ₹5,00,000 per family per year across empaneled hospitals, including universal coverage for J&amp;K residents.
+              </p>
+            </div>
+            <div className="pt-4 mt-4 border-t border-[#E2E8F0] flex items-center justify-between gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  const ayushmanSvc = SERVICES_LIST.find((s) => s.id === 'csc-ayushman');
+                  if (ayushmanSvc) onOpenService(ayushmanSvc);
+                }}
+                className="font-semibold text-[#2563EB] hover:underline cursor-pointer"
+              >
+                Request Card Assistance →
+              </button>
+              <a
+                href="https://beneficiary.nha.gov.in"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#64748B] hover:text-[#102A43] inline-flex items-center gap-1"
+              >
+                <span>nha.gov.in</span>
+                <ExternalLink className="w-3 h-3" aria-hidden="true" />
+              </a>
+            </div>
+          </article>
+
+          <article className="bg-white border border-[#E2E8F0] rounded-2xl p-5 flex flex-col justify-between shadow-2xs">
+            <div className="space-y-2.5">
+              <span className="inline-block text-xs font-semibold text-[#102A43] bg-[#F6F8FC] border border-[#E2E8F0] px-2.5 py-0.5 rounded-full">
+                Social Security &amp; Labour
+              </span>
+              <h3 className="text-base font-bold text-[#102A43]">
+                e-Shram &amp; Social Welfare Pensions
+              </h3>
+              <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">
+                Registration for unorganised sector workers, old-age/widow/disability pension schemes (ISSS), and marriage assistance in Jammu &amp; Kashmir.
+              </p>
+            </div>
+            <div className="pt-4 mt-4 border-t border-[#E2E8F0] flex items-center justify-between gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  const eshramSvc = SERVICES_LIST.find((s) => s.id === 'csc-eshram');
+                  if (eshramSvc) onOpenService(eshramSvc);
+                }}
+                className="font-semibold text-[#2563EB] hover:underline cursor-pointer"
+              >
+                View Service Details →
+              </button>
+              <a
+                href="https://eshram.gov.in"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#64748B] hover:text-[#102A43] inline-flex items-center gap-1"
+              >
+                <span>eshram.gov.in</span>
+                <ExternalLink className="w-3 h-3" aria-hidden="true" />
+              </a>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      {/* Simple 3-Step "How It Works" Section */}
       <section
         id="how-it-works"
         aria-labelledby="how-it-works-heading"
@@ -1209,278 +1495,9 @@ export default function PortalHomepage({
       </section>
 
       {/* ==================================================================== */}
-      {/* 6. SIMPLIFIED PREVIEWS: SCHEMES, EDUCATION & USEFUL TOOLS */}
+      {/* 5. DIGITAL TOOLS & CITIZEN CALCULATORS */}
       {/* ==================================================================== */}
-      <div className="space-y-12">
-        {/* Government Schemes Preview (3 items + View All) */}
-        <section
-          id="schemes-section"
-          aria-labelledby="schemes-heading"
-          className="space-y-4 scroll-mt-20"
-        >
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E2E8F0] pb-3">
-            <div>
-              <h2
-                id="schemes-heading"
-                className="text-xl sm:text-2xl font-bold text-[#102A43] tracking-tight"
-              >
-                Government Schemes &amp; Citizen Benefits
-              </h2>
-              <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
-                Key welfare schemes, eligibility guides, and direct official portal links.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => scrollToSection('knowledge-hub')}
-              className="text-xs sm:text-sm font-semibold text-[#2563EB] hover:underline inline-flex items-center gap-1 cursor-pointer self-start sm:self-auto"
-            >
-              <span>View All Guides &amp; Schemes</span>
-              <ArrowRight className="w-4 h-4" aria-hidden="true" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <article className="bg-white border border-[#E2E8F0] rounded-2xl p-5 flex flex-col justify-between shadow-2xs">
-              <div className="space-y-2.5">
-                <span className="inline-block text-xs font-semibold text-[#16A34A] bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                  Farmer Income Support
-                </span>
-                <h3 className="text-base font-bold text-[#102A43]">
-                  PM Kisan Samman Nidhi (₹6,000/Year)
-                </h3>
-                <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">
-                  Direct Benefit Transfer of ₹2,000 every four months for eligible landholding किसान families. Requires active e-KYC and Aadhaar-seeded bank account.
-                </p>
-              </div>
-              <div className="pt-4 mt-4 border-t border-[#E2E8F0] flex items-center justify-between gap-2 text-xs">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (onOpenGuide) onOpenGuide('pm-kisan-ekyc-status-guide-2026');
-                    else scrollToSection('knowledge-hub');
-                  }}
-                  className="font-semibold text-[#2563EB] hover:underline cursor-pointer"
-                >
-                  Read e-KYC Guide →
-                </button>
-                <a
-                  href="https://pmkisan.gov.in"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#64748B] hover:text-[#102A43] inline-flex items-center gap-1"
-                >
-                  <span>pmkisan.gov.in</span>
-                  <ExternalLink className="w-3 h-3" aria-hidden="true" />
-                </a>
-              </div>
-            </article>
-
-            <article className="bg-white border border-[#E2E8F0] rounded-2xl p-5 flex flex-col justify-between shadow-2xs">
-              <div className="space-y-2.5">
-                <span className="inline-block text-xs font-semibold text-[#2563EB] bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">
-                  Healthcare Assurance
-                </span>
-                <h3 className="text-base font-bold text-[#102A43]">
-                  Ayushman Bharat PM-JAY &amp; SEHAT
-                </h3>
-                <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">
-                  Cashless hospitalisation coverage up to ₹5,00,000 per family per year across empaneled hospitals, including universal coverage for J&amp;K residents.
-                </p>
-              </div>
-              <div className="pt-4 mt-4 border-t border-[#E2E8F0] flex items-center justify-between gap-2 text-xs">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const ayushmanSvc = SERVICES_LIST.find((s) => s.id === 'csc-ayushman');
-                    if (ayushmanSvc) onOpenService(ayushmanSvc);
-                  }}
-                  className="font-semibold text-[#2563EB] hover:underline cursor-pointer"
-                >
-                  Request Card Assistance →
-                </button>
-                <a
-                  href="https://beneficiary.nha.gov.in"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#64748B] hover:text-[#102A43] inline-flex items-center gap-1"
-                >
-                  <span>nha.gov.in</span>
-                  <ExternalLink className="w-3 h-3" aria-hidden="true" />
-                </a>
-              </div>
-            </article>
-
-            <article className="bg-white border border-[#E2E8F0] rounded-2xl p-5 flex flex-col justify-between shadow-2xs">
-              <div className="space-y-2.5">
-                <span className="inline-block text-xs font-semibold text-[#102A43] bg-[#F6F8FC] border border-[#E2E8F0] px-2.5 py-0.5 rounded-full">
-                  Social Security &amp; Labour
-                </span>
-                <h3 className="text-base font-bold text-[#102A43]">
-                  e-Shram &amp; Social Welfare Pensions
-                </h3>
-                <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">
-                  Registration for unorganised sector workers, old-age/widow/disability pension schemes (ISSS), and marriage assistance in Jammu &amp; Kashmir.
-                </p>
-              </div>
-              <div className="pt-4 mt-4 border-t border-[#E2E8F0] flex items-center justify-between gap-2 text-xs">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const eshramSvc = SERVICES_LIST.find((s) => s.id === 'csc-eshram');
-                    if (eshramSvc) onOpenService(eshramSvc);
-                  }}
-                  className="font-semibold text-[#2563EB] hover:underline cursor-pointer"
-                >
-                  View Service Details →
-                </button>
-                <a
-                  href="https://eshram.gov.in"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#64748B] hover:text-[#102A43] inline-flex items-center gap-1"
-                >
-                  <span>eshram.gov.in</span>
-                  <ExternalLink className="w-3 h-3" aria-hidden="true" />
-                </a>
-              </div>
-            </article>
-          </div>
-        </section>
-
-        {/* Education Updates Preview (3 items + View All) */}
-        <section
-          id="education-resources"
-          aria-labelledby="education-heading"
-          className="space-y-4 scroll-mt-20"
-        >
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E2E8F0] pb-3">
-            <div>
-              <h2
-                id="education-heading"
-                className="text-xl sm:text-2xl font-bold text-[#102A43] tracking-tight"
-              >
-                Education &amp; University Updates
-              </h2>
-              <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
-                Admission notices, examination forms, and academic updates from Kashmir University and Cluster University.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowAllEducation((prev) => !prev)}
-              className="text-xs sm:text-sm font-semibold text-[#2563EB] hover:underline inline-flex items-center gap-1 cursor-pointer self-start sm:self-auto"
-            >
-              <span>{showAllEducation ? 'Show 3 Previews' : 'View All Education Notices'}</span>
-              <ArrowRight className="w-4 h-4" aria-hidden="true" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {educationUpdates.map(({ item, status, organisation }) => (
-              <article
-                key={item.id}
-                className="bg-white border border-[#E2E8F0] hover:border-[#2563EB] rounded-2xl p-5 flex flex-col justify-between transition-colors shadow-2xs"
-              >
-                <div className="space-y-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold text-[#2563EB]">{organisation}</span>
-                    {renderStatusBadge(status)}
-                  </div>
-                  <h3 className="text-sm sm:text-base font-bold text-[#102A43] line-clamp-2 leading-snug">
-                    <button
-                      type="button"
-                      onClick={() => onOpenJob(item)}
-                      className="text-left hover:text-[#2563EB] cursor-pointer"
-                    >
-                      {item.title}
-                    </button>
-                  </h3>
-                  <p className="text-xs text-[#64748B] line-clamp-2 leading-relaxed">
-                    {item.shortInfo}
-                  </p>
-                </div>
-
-                <div className="pt-3 mt-4 border-t border-[#E2E8F0] flex items-center justify-between text-xs">
-                  <span className="text-[#64748B]">
-                    Closing: <strong className="text-[#102A43]">{item.lastDate || 'See Notice'}</strong>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => onOpenJob(item)}
-                    className="font-semibold text-[#2563EB] hover:underline cursor-pointer"
-                  >
-                    View Notice →
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        {/* Useful Online Tools Preview (4 shortcuts + View All Tools) */}
-        <section
-          id="tools-preview"
-          aria-labelledby="tools-preview-heading"
-          className="space-y-4 scroll-mt-20"
-        >
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E2E8F0] pb-3">
-            <div>
-              <h2
-                id="tools-preview-heading"
-                className="text-xl sm:text-2xl font-bold text-[#102A43] tracking-tight"
-              >
-                Useful Online Document Tools
-              </h2>
-              <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
-                Resize photos, compress images to 20KB–50KB, and format PDFs directly in your browser.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                window.location.hash = '#tools';
-              }}
-              className="text-xs sm:text-sm font-semibold text-[#2563EB] hover:underline inline-flex items-center gap-1 cursor-pointer self-start sm:self-auto"
-            >
-              <span>View All Tools ({TOOLS_LIST.length})</span>
-              <ArrowRight className="w-4 h-4" aria-hidden="true" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {previewTools.map((tool) => {
-              const ToolIcon = getToolIcon(tool.iconName);
-              return (
-                <button
-                  key={tool.id}
-                  type="button"
-                  onClick={() => {
-                    window.location.hash = `#tools/${tool.id}`;
-                  }}
-                  className="text-left bg-white border border-[#E2E8F0] hover:border-[#2563EB] rounded-2xl p-5 flex flex-col justify-between transition-colors shadow-2xs group cursor-pointer"
-                >
-                  <div className="space-y-2.5">
-                    <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center">
-                      <ToolIcon className="w-4 h-4" aria-hidden="true" />
-                    </div>
-                    <h3 className="text-sm font-bold text-[#102A43] group-hover:text-[#2563EB] transition-colors">
-                      {tool.name}
-                    </h3>
-                    <p className="text-xs text-[#64748B] line-clamp-2 leading-relaxed">
-                      {tool.shortDescription}
-                    </p>
-                  </div>
-                  <div className="pt-3 mt-3 border-t border-[#E2E8F0] flex items-center justify-between text-xs font-semibold text-[#2563EB]">
-                    <span>Open Tool</span>
-                    <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      </div>
+      <CitizenToolsDesk onApplyService={onApplyService} />
     </div>
   );
 }

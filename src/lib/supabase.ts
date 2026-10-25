@@ -332,8 +332,28 @@ export async function submitApplicationToSupabase(
   return { success: false, error: 'Unknown submission error' };
 }
 
+export const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isUuidString(val: unknown): boolean {
+  return typeof val === 'string' && UUID_REGEX.test(val.trim());
+}
+
+export function isDeletedApplicationRecord(row: any): boolean {
+  if (!row || typeof row !== 'object') return false;
+  const topStatus = String(row.status || '').trim().toLowerCase();
+  if (topStatus === 'deleted') return true;
+  if (row.deleted === true || Boolean(row.deletedAt) || Boolean(row.deleted_at)) return true;
+  const payload = row.payload;
+  if (payload && typeof payload === 'object') {
+    if (payload.deleted === true || Boolean(payload.deletedAt) || Boolean(payload.deleted_at)) return true;
+    if (String(payload.status || '').trim().toLowerCase() === 'deleted') return true;
+  }
+  return false;
+}
+
 /**
- * Fetch all submitted applications directly from Supabase, sorted by created_at DESC.
+ * Fetch all active submitted applications directly from Supabase, sorted by created_at DESC.
+ * Consistently filters out any soft-deleted / tombstoned records.
  */
 export async function fetchSupabaseApplications(): Promise<{
   data: any[];
@@ -354,38 +374,276 @@ export async function fetchSupabaseApplications(): Promise<{
       return { data: [], error: error.message };
     }
 
-    return { data: data || [] };
+    const activeRows = (data || []).filter((row: any) => !isDeletedApplicationRecord(row));
+    return { data: activeRows };
   } catch (err: any) {
     return { data: [], error: err?.message || String(err) };
   }
 }
 
 /**
- * Updates application status in Supabase table.
+ * Updates application status in Supabase table safely using primary key `id` (UUID) or `token_id`,
+ * never passing a non-UUID string into a UUID column filter.
  */
 export async function updateSupabaseApplicationStatus(
   appId: string,
-  newStatus: string
-): Promise<{ success: boolean; error?: string }> {
+  newStatus: string,
+  supabaseUuid?: string
+): Promise<{ success: boolean; affectedCount?: number; error?: string }> {
   const supabase = getSupabaseClient();
   if (!supabase) return { success: false, error: 'Supabase client not initialized' };
 
-  try {
-    // Try updating status by token_id or id
-    const { error } = await supabase
-      .from('applications')
-      .update({ status: newStatus })
-      .or(`token_id.eq.${appId},id.eq.${appId}`);
+  const cleanId = (appId || '').trim();
+  const cleanUuid = (supabaseUuid || '').trim();
 
-    if (error) {
-      // If status column is missing, that's okay, log notice
-      console.warn('Supabase status update notice:', error.message);
-      return { success: false, error: error.message };
+  try {
+    const uuidTarget = isUuidString(cleanUuid)
+      ? cleanUuid
+      : isUuidString(cleanId)
+      ? cleanId
+      : '';
+
+    if (uuidTarget) {
+      const { data, error } = await supabase
+        .from('applications')
+        .update({ status: newStatus })
+        .eq('id', uuidTarget)
+        .select('id, token_id, status');
+
+      if (!error && Array.isArray(data) && data.length > 0) {
+        return { success: true, affectedCount: data.length };
+      }
+      if (error) {
+        console.warn('Supabase status update by id notice:', error.message);
+      }
     }
 
-    return { success: true };
+    if (cleanId) {
+      const { data, error } = await supabase
+        .from('applications')
+        .update({ status: newStatus })
+        .eq('token_id', cleanId)
+        .select('id, token_id, status');
+
+      if (!error && Array.isArray(data) && data.length > 0) {
+        return { success: true, affectedCount: data.length };
+      }
+      if (error) {
+        console.warn('Supabase status update by token_id notice:', error.message);
+        return { success: false, error: error.message };
+      }
+    }
+
+    return { success: true, affectedCount: 0 };
   } catch (e: any) {
     return { success: false, error: e?.message || String(e) };
+  }
+}
+
+/**
+ * Deletes an application in Supabase by its primary key `id` (UUID) and/or `token_id`,
+ * confirming that the database operation affected at least one record.
+ * - First attempts physical DELETE (`DELETE FROM public.applications WHERE id = ...`).
+ * - If RLS on `public.applications` blocks physical DELETE for the publishable role (0 rows affected),
+ *   persists a verified tombstone (`status = 'Deleted'`, `payload.deleted = true`) on that exact primary key.
+ */
+export async function deleteSupabaseApplication(
+  appId: string,
+  supabaseUuid?: string
+): Promise<{
+  success: boolean;
+  foundInSupabase: boolean;
+  affectedCount: number;
+  deletedSupabaseIds: string[];
+  deletedTokenIds: string[];
+  error?: string;
+}> {
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    return {
+      success: false,
+      foundInSupabase: false,
+      affectedCount: 0,
+      deletedSupabaseIds: [],
+      deletedTokenIds: [],
+      error: 'Supabase client is not initialized.'
+    };
+  }
+
+  const cleanId = (appId || '').trim();
+  const cleanUuid = (supabaseUuid || '').trim();
+  const matchedMap = new Map<string, any>();
+
+  try {
+    const uuidCandidate = isUuidString(cleanUuid)
+      ? cleanUuid
+      : isUuidString(cleanId)
+      ? cleanId
+      : '';
+
+    if (uuidCandidate) {
+      const { data, error } = await supabase
+        .from('applications')
+        .select('*')
+        .eq('id', uuidCandidate);
+      if (error) {
+        return {
+          success: false,
+          foundInSupabase: false,
+          affectedCount: 0,
+          deletedSupabaseIds: [],
+          deletedTokenIds: [],
+          error: error.message
+        };
+      }
+      (data || []).forEach((r: any) => {
+        if (r && r.id) matchedMap.set(String(r.id), r);
+      });
+    }
+
+    if (cleanId) {
+      const { data, error } = await supabase
+        .from('applications')
+        .select('*')
+        .eq('token_id', cleanId);
+      if (!error && Array.isArray(data)) {
+        data.forEach((r: any) => {
+          if (r && r.id) matchedMap.set(String(r.id), r);
+        });
+      }
+    }
+
+    // Fallback for legacy rows with token_id: null (where UI synthesized CSC-<8-char-uuid>)
+    if (matchedMap.size === 0 && cleanId) {
+      const { data, error } = await supabase
+        .from('applications')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(300);
+
+      if (!error && Array.isArray(data)) {
+        const lowerClean = cleanId.toLowerCase();
+        for (const r of data) {
+          if (!r || !r.id) continue;
+          const rowUuid = String(r.id);
+          const synthToken = `CSC-${rowUuid.slice(0, 8)}`.toLowerCase();
+          const payloadAppId = String(r.payload?.appId || r.payload?.token || '').toLowerCase();
+          const tokenCol = String(r.token_id || '').toLowerCase();
+
+          if (
+            rowUuid.toLowerCase() === lowerClean ||
+            tokenCol === lowerClean ||
+            payloadAppId === lowerClean ||
+            synthToken === lowerClean
+          ) {
+            matchedMap.set(rowUuid, r);
+          }
+        }
+      }
+    }
+
+    const rows = Array.from(matchedMap.values());
+    if (rows.length === 0) {
+      return {
+        success: true,
+        foundInSupabase: false,
+        affectedCount: 0,
+        deletedSupabaseIds: [],
+        deletedTokenIds: []
+      };
+    }
+
+    const activeRows = rows.filter(r => !isDeletedApplicationRecord(r));
+    if (activeRows.length === 0) {
+      return {
+        success: true,
+        foundInSupabase: true,
+        affectedCount: rows.length,
+        deletedSupabaseIds: rows.map(r => String(r.id)),
+        deletedTokenIds: rows.map(r => String(r.token_id || r.payload?.appId || cleanId)).filter(Boolean)
+      };
+    }
+
+    let totalAffected = 0;
+    const deletedSupabaseIds: string[] = [];
+    const deletedTokenIds: string[] = [];
+    const errors: string[] = [];
+
+    for (const row of activeRows) {
+      const pkUuid = String(row.id);
+      const resolvedTok = String(row.token_id || row.payload?.appId || `CSC-${pkUuid.slice(0, 8)}`);
+
+      const { data: hardDeleted, error: hardErr } = await supabase
+        .from('applications')
+        .delete()
+        .eq('id', pkUuid)
+        .select('id, token_id');
+
+      if (!hardErr && Array.isArray(hardDeleted) && hardDeleted.length > 0) {
+        totalAffected += hardDeleted.length;
+        deletedSupabaseIds.push(pkUuid);
+        deletedTokenIds.push(resolvedTok);
+        continue;
+      }
+
+      const deletedAtIso = new Date().toISOString();
+      const existingPayload = row.payload && typeof row.payload === 'object' ? row.payload : {};
+
+      const { data: softDeleted, error: softErr } = await supabase
+        .from('applications')
+        .update({
+          status: 'Deleted',
+          payload: {
+            ...existingPayload,
+            appId: existingPayload.appId || resolvedTok,
+            status: 'Deleted',
+            deleted: true,
+            deletedAt: deletedAtIso
+          }
+        })
+        .eq('id', pkUuid)
+        .select('id, token_id, status');
+
+      if (!softErr && Array.isArray(softDeleted) && softDeleted.length > 0) {
+        totalAffected += softDeleted.length;
+        deletedSupabaseIds.push(pkUuid);
+        deletedTokenIds.push(resolvedTok);
+      } else {
+        errors.push(
+          softErr?.message ||
+          hardErr?.message ||
+          `Database deletion affected 0 rows for ${pkUuid}.`
+        );
+      }
+    }
+
+    if (totalAffected === 0) {
+      return {
+        success: false,
+        foundInSupabase: true,
+        affectedCount: 0,
+        deletedSupabaseIds: [],
+        deletedTokenIds: [],
+        error: errors.join('; ') || 'Deletion failed: 0 rows affected in Supabase.'
+      };
+    }
+
+    return {
+      success: true,
+      foundInSupabase: true,
+      affectedCount: totalAffected,
+      deletedSupabaseIds,
+      deletedTokenIds
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      foundInSupabase: false,
+      affectedCount: 0,
+      deletedSupabaseIds: [],
+      deletedTokenIds: [],
+      error: err?.message || String(err)
+    };
   }
 }
 

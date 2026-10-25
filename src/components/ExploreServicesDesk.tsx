@@ -210,11 +210,15 @@ export default function ExploreServicesDesk({
       {/* Section Header + Search Input */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#E2E8F0] pb-4">
         <div>
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2563EB] uppercase tracking-wider mb-1">
+            <FileCheck className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>Complete Service Directory</span>
+          </div>
           <h2
             id="services-board-heading"
             className="text-xl sm:text-2xl font-bold text-[#102A43] tracking-tight"
           >
-            Complete Service Directory
+            CSC E-SERVICES
           </h2>
           <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
             Search and browse all {SERVICES_LIST.length} citizen services, required documents, and fee details.

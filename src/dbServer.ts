@@ -11,6 +11,7 @@ interface DatabaseSchema {
   contactRequests: ContactRequest[];
   appointments: Appointment[];
   views: number;
+  lastIssuedTokenSeq?: number;
 }
 
 const DEFAULT_DB: DatabaseSchema = {
@@ -111,11 +112,53 @@ export function addContactRequest(req: Omit<ContactRequest, 'id' | 'status' | 'd
   return newReq;
 }
 
-export function addAppointment(apt: Omit<Appointment, 'id' | 'status' | 'date'> & { id?: string; appId?: string; status?: string; submittedAt?: string; createdAt?: string }): Appointment {
+function extractTokenSeq(val: unknown): number {
+  if (typeof val !== 'string') return 0;
+  const match = val.match(/^CSC21251567(\d+)/i);
+  if (match && match[1]) {
+    const num = parseInt(match[1], 10);
+    return isNaN(num) ? 0 : num;
+  }
+  return 0;
+}
+
+export function getNextMonotonicLocalSeq(externalHighestSeq = 0): number {
+  const db = getDb();
+  let maxSeq = Math.max(db.lastIssuedTokenSeq || 0, externalHighestSeq || 0);
+  (db.appointments || []).forEach((a: any) => {
+    const seq = Math.max(extractTokenSeq(a.appId), extractTokenSeq(a.id));
+    if (seq > maxSeq) maxSeq = seq;
+  });
+  const nextSeq = maxSeq + 1;
+  db.lastIssuedTokenSeq = nextSeq;
+  saveDb(db);
+  return nextSeq;
+}
+
+export function addAppointment(
+  apt: Omit<Appointment, 'id' | 'status' | 'date'> & {
+    id?: string;
+    appId?: string;
+    supabaseId?: string;
+    status?: string;
+    submittedAt?: string;
+    createdAt?: string;
+  }
+): Appointment {
   const db = getDb();
   const targetAppId = apt.appId || apt.id;
-  const existingIdx = db.appointments.findIndex(a => 
-    (targetAppId && ((a as any).appId === targetAppId || a.id === targetAppId))
+  const seq = Math.max(extractTokenSeq(apt.appId), extractTokenSeq(apt.id));
+  if (seq > (db.lastIssuedTokenSeq || 0)) {
+    db.lastIssuedTokenSeq = seq;
+  }
+
+  const existingIdx = db.appointments.findIndex(a =>
+    Boolean(
+      targetAppId &&
+      ((a as any).appId === targetAppId ||
+        a.id === targetAppId ||
+        (apt.supabaseId && (a as any).supabaseId === apt.supabaseId))
+    )
   );
   if (existingIdx !== -1) {
     db.appointments[existingIdx] = {
@@ -155,7 +198,9 @@ export function updateContactStatus(id: string, status: ContactRequest['status']
 
 export function updateAppointmentStatus(id: string, status: Appointment['status']): boolean {
   const db = getDb();
-  const item = db.appointments.find(r => r.id === id || (r as any).appId === id);
+  const item = db.appointments.find(
+    r => r.id === id || (r as any).appId === id || (r as any).supabaseId === id
+  );
   if (item) {
     item.status = status;
     saveDb(db);
@@ -164,10 +209,31 @@ export function updateAppointmentStatus(id: string, status: Appointment['status'
   return false;
 }
 
-export function deleteAppointment(id: string): boolean {
+export function deleteAppointment(id: string, extraIds: string[] = []): boolean {
   const db = getDb();
+  const targets = new Set(
+    [id, ...extraIds]
+      .filter(Boolean)
+      .map(s => String(s).trim().toLowerCase())
+  );
+  if (targets.size === 0) return false;
+
+  // Record highest sequence before removing so deleted sequence numbers are never re-issued
+  (db.appointments || []).forEach((a: any) => {
+    const seq = Math.max(extractTokenSeq(a.appId), extractTokenSeq(a.id));
+    if (seq > (db.lastIssuedTokenSeq || 0)) {
+      db.lastIssuedTokenSeq = seq;
+    }
+  });
+
   const lengthBefore = db.appointments.length;
-  db.appointments = db.appointments.filter(a => a.id !== id && (a as any).appId !== id);
+  db.appointments = db.appointments.filter((a: any) => {
+    const aId = String(a.id || '').trim().toLowerCase();
+    const aAppId = String(a.appId || '').trim().toLowerCase();
+    const aSupaId = String(a.supabaseId || '').trim().toLowerCase();
+    return !targets.has(aId) && !targets.has(aAppId) && (!aSupaId || !targets.has(aSupaId));
+  });
+
   if (db.appointments.length !== lengthBefore) {
     saveDb(db);
     return true;

@@ -19,6 +19,7 @@ import {
   updateContactStatus, 
   updateAppointmentStatus, 
   deleteAppointment,
+  getNextMonotonicLocalSeq,
   updateSettings, 
   addAnnouncement, 
   updateAnnouncement, 
@@ -28,7 +29,14 @@ import {
   incrementViews, 
   getAnalytics 
 } from './src/dbServer';
-import { persistCustomerApplication, getServerSupabaseClient } from './src/lib/supabaseServer';
+import {
+  persistCustomerApplication,
+  getServerSupabaseClient,
+  deleteCustomerApplicationFromSupabase,
+  findSupabaseApplicationRows,
+  getHighestSupabaseTokenSeq,
+  isDeletedApplicationRecord
+} from './src/lib/supabaseServer';
 
 // Setup environment variables
 import dotenv from 'dotenv';
@@ -338,40 +346,31 @@ setInterval(() => {
   });
 }, 15000);
 
-// Public API: Get all submitted applications
+// Public API: Get all submitted applications (excluding deleted records)
 app.get('/api/appointments', (req, res) => {
   const db = getDb();
-  res.json({ success: true, data: db.appointments || [] });
+  const activeList = (db.appointments || []).filter((a: any) => !isDeletedApplicationRecord(a));
+  res.json({ success: true, data: activeList });
 });
 
-// Public API: Get next available globally unique token ID
-app.get('/api/appointments/next-token', (req, res) => {
-  const db = getDb();
-  let maxSeq = 0;
-  (db.appointments || []).forEach((a: any) => {
-    const idStr = (a.appId || a.id || '').toString();
-    const match = idStr.match(/^CSC21251567(\d+)/i);
-    if (match && match[1]) {
-      const num = parseInt(match[1], 10);
-      if (!isNaN(num) && num > maxSeq) {
-        maxSeq = num;
-      }
-    }
-  });
-  const nextSeq = maxSeq + 1;
+// Public API: Get next available globally unique token ID (strictly monotonic across Supabase + local DB)
+app.get('/api/appointments/next-token', async (req, res) => {
+  const supaMax = await getHighestSupabaseTokenSeq();
+  const nextSeq = getNextMonotonicLocalSeq(supaMax);
   const seqPadded = String(nextSeq).padStart(3, '0');
   const nextToken = `CSC21251567${seqPadded}`;
   res.json({ success: true, nextToken, seq: nextSeq });
 });
 
-// Public API: Get single application by token / ID (local DB with Supabase fallback)
+// Public API: Get single application by token / ID (local DB with safe Supabase fallback)
 app.get('/api/appointments/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const db = getDb();
   const targetId = (id || '').toString().toLowerCase();
 
-  // 1. Check local database
+  // 1. Check local database (only active records)
   const found = (db.appointments || []).find((a: any) => {
+    if (isDeletedApplicationRecord(a)) return false;
     const appIdStr = (a.appId || a.id || '').toString().toLowerCase();
     const utrStr = (a.utrNumber || '').toString().toLowerCase();
     return appIdStr === targetId || utrStr === targetId;
@@ -381,41 +380,36 @@ app.get('/api/appointments/:id', async (req: Request, res: Response) => {
     return res.json(found);
   }
 
-  // 2. Fallback to Supabase 'applications' table
+  // 2. Fallback to Supabase 'applications' table (using safe UUID / token lookup)
   try {
-    const supabase = getServerSupabaseClient();
-    if (supabase) {
-      const { data, error } = await supabase
-        .from('applications')
-        .select('*')
-        .or(`token_id.eq.${id},id.eq.${id}`)
-        .limit(1);
+    const lookup = await findSupabaseApplicationRows(id);
+    const activeRow = (lookup.rows || []).find(r => !isDeletedApplicationRecord(r));
 
-      if (!error && data && data.length > 0) {
-        const row = data[0];
-        const mappedApp = {
-          appId: row.token_id || row.id,
-          id: row.token_id || row.id,
-          name: row.full_name,
-          customerName: row.full_name,
-          phone: row.whatsapp_number,
-          phoneNumber: row.whatsapp_number,
-          email: row.email_address || '',
-          emailAddress: row.email_address || '',
-          service: row.service_selected,
-          selectedService: row.service_selected,
-          status: row.status || 'Pending',
-          paymentMode: row.payment_mode || 'cash',
-          utrNumber: row.utr_number || 'N/A',
-          totalAmount: Number(row.total_amount) || 0,
-          userCategory: row.user_category || 'General/OBC',
-          documents: Array.isArray(row.document_urls) ? row.document_urls : [],
-          submittedAt: row.created_at,
-          createdAt: row.created_at,
-          payload: row.payload
-        };
-        return res.json(mappedApp);
-      }
+    if (activeRow) {
+      const resolvedToken = activeRow.token_id || activeRow.payload?.appId || `CSC-${String(activeRow.id).slice(0, 8)}`;
+      const mappedApp = {
+        appId: resolvedToken,
+        id: resolvedToken,
+        supabaseId: activeRow.id,
+        name: activeRow.full_name,
+        customerName: activeRow.full_name,
+        phone: activeRow.whatsapp_number,
+        phoneNumber: activeRow.whatsapp_number,
+        email: activeRow.email_address || '',
+        emailAddress: activeRow.email_address || '',
+        service: activeRow.service_selected,
+        selectedService: activeRow.service_selected,
+        status: activeRow.status || 'Pending',
+        paymentMode: activeRow.payment_mode || 'cash',
+        utrNumber: activeRow.utr_number || 'N/A',
+        totalAmount: Number(activeRow.total_amount) || 0,
+        userCategory: activeRow.user_category || 'General/OBC',
+        documents: Array.isArray(activeRow.document_urls) ? activeRow.document_urls : [],
+        submittedAt: activeRow.created_at,
+        createdAt: activeRow.created_at,
+        payload: activeRow.payload
+      };
+      return res.json(mappedApp);
     }
   } catch (supaErr) {
     console.warn('[Server] Supabase single app lookup notice:', supaErr);
@@ -440,16 +434,138 @@ app.patch('/api/appointments/:id/status', (req, res) => {
   }
 });
 
-// Delete appointment
-app.delete('/api/appointments/:id', (req, res) => {
-  const { id } = req.params;
-  const success = deleteAppointment(id);
-  if (success) {
-    broadcastRealtimeEvent('APPOINTMENT_DELETED', { id, appId: id });
-    res.json({ success: true, message: 'Appointment deleted successfully' });
-  } else {
-    res.status(404).json({ error: 'Appointment not found' });
+// Bulk delete appointments (persists across Supabase + local server DB with affected row verification)
+app.post('/api/appointments/bulk-delete', async (req: Request, res: Response) => {
+  const rawItems = Array.isArray(req.body?.items) ? req.body.items : [];
+  if (rawItems.length === 0) {
+    return res.status(400).json({
+      success: false,
+      affectedCount: 0,
+      error: 'No application IDs provided for bulk deletion.'
+    });
   }
+
+  const deletedIds: string[] = [];
+  const deletedSupabaseIds: string[] = [];
+  const deletedTokenIds: string[] = [];
+  const failedItems: Array<{ id: string; error: string }> = [];
+  let totalAffected = 0;
+
+  for (const item of rawItems) {
+    const targetId = typeof item === 'string' ? item : String(item?.appId || item?.id || '');
+    const supabaseUuid = typeof item === 'object' && item !== null ? String(item.supabaseId || '') : '';
+    if (!targetId && !supabaseUuid) continue;
+
+    const supaRes = await deleteCustomerApplicationFromSupabase(targetId || supabaseUuid, supabaseUuid);
+    const localRemoved = deleteAppointment(targetId || supabaseUuid, [
+      supabaseUuid,
+      ...supaRes.deletedSupabaseIds,
+      ...supaRes.deletedTokenIds
+    ]);
+
+    if (supaRes.foundInSupabase && !supaRes.success) {
+      failedItems.push({
+        id: targetId || supabaseUuid,
+        error: supaRes.error || 'Database failed to delete record in Supabase.'
+      });
+      continue;
+    }
+
+    if (!supaRes.foundInSupabase && !localRemoved) {
+      failedItems.push({
+        id: targetId || supabaseUuid,
+        error: 'Record not found in Supabase or local database.'
+      });
+      continue;
+    }
+
+    deletedIds.push(targetId || supabaseUuid);
+    deletedSupabaseIds.push(...supaRes.deletedSupabaseIds);
+    deletedTokenIds.push(...supaRes.deletedTokenIds);
+    totalAffected += Math.max(supaRes.affectedCount, localRemoved ? 1 : 0);
+  }
+
+  if (totalAffected > 0) {
+    broadcastRealtimeEvent('APPOINTMENTS_BULK_DELETED', {
+      deletedIds,
+      deletedSupabaseIds,
+      deletedTokenIds
+    });
+  }
+
+  if (totalAffected === 0 && failedItems.length > 0) {
+    return res.status(404).json({
+      success: false,
+      affectedCount: 0,
+      deletedIds: [],
+      deletedSupabaseIds: [],
+      deletedTokenIds: [],
+      failedItems,
+      error: failedItems[0].error
+    });
+  }
+
+  return res.json({
+    success: failedItems.length === 0,
+    affectedCount: totalAffected,
+    deletedIds,
+    deletedSupabaseIds,
+    deletedTokenIds,
+    failedItems,
+    message:
+      failedItems.length === 0
+        ? `Permanently deleted ${deletedIds.length} application(s).`
+        : `Deleted ${deletedIds.length} application(s); ${failedItems.length} failed.`
+  });
+});
+
+// Delete single appointment (persists across Supabase + local server DB with affected row verification)
+app.delete('/api/appointments/:id', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const supabaseId = String(req.query.supabaseId || req.body?.supabaseId || '').trim();
+
+  const supaRes = await deleteCustomerApplicationFromSupabase(id, supabaseId);
+  const localRemoved = deleteAppointment(id, [
+    supabaseId,
+    ...supaRes.deletedSupabaseIds,
+    ...supaRes.deletedTokenIds
+  ]);
+
+  if (supaRes.foundInSupabase && !supaRes.success) {
+    return res.status(500).json({
+      success: false,
+      affectedCount: 0,
+      error: supaRes.error || 'Failed to delete application from Supabase database.'
+    });
+  }
+
+  if (!supaRes.foundInSupabase && !localRemoved) {
+    return res.status(404).json({
+      success: false,
+      affectedCount: 0,
+      error: `Application "${id}" not found in Supabase or local server database.`
+    });
+  }
+
+  const affectedCount = Math.max(supaRes.affectedCount, localRemoved ? 1 : 0);
+  const eventPayload = {
+    id,
+    appId: id,
+    supabaseId: supabaseId || supaRes.deletedSupabaseIds[0] || undefined,
+    deletedSupabaseIds: supaRes.deletedSupabaseIds,
+    deletedTokenIds: supaRes.deletedTokenIds
+  };
+
+  broadcastRealtimeEvent('APPOINTMENT_DELETED', eventPayload);
+
+  return res.json({
+    success: true,
+    affectedCount,
+    deletionMode: supaRes.deletionMode || (localRemoved ? 'local_hard' : 'hard'),
+    deletedSupabaseIds: supaRes.deletedSupabaseIds,
+    deletedTokenIds: supaRes.deletedTokenIds,
+    message: 'Application permanently deleted.'
+  });
 });
 
 // Rate-limiting tracker for public submissions (prevent spam, allow retries)
@@ -533,20 +649,12 @@ app.post('/api/applications/submit', async (req: Request, res: Response) => {
     });
   }
 
-  // Generate / verify unique token ID
-  let assignedAppId = (appId || idempotencyKey || '').toString().trim();
+  // Generate / verify unique monotonic token ID across Supabase and local DB
+  const explicitCallerToken = (appId || idempotencyKey || '').toString().trim();
+  let assignedAppId = explicitCallerToken;
   if (!assignedAppId || !assignedAppId.startsWith('CSC')) {
-    const db = getDb();
-    let maxSeq = 0;
-    (db.appointments || []).forEach((a: any) => {
-      const idStr = (a.appId || a.id || '').toString();
-      const match = idStr.match(/^CSC21251567(\d+)/i);
-      if (match && match[1]) {
-        const num = parseInt(match[1], 10);
-        if (!isNaN(num) && num > maxSeq) maxSeq = num;
-      }
-    });
-    const nextSeq = maxSeq + 1;
+    const supaMaxSeq = await getHighestSupabaseTokenSeq();
+    const nextSeq = getNextMonotonicLocalSeq(supaMaxSeq);
     assignedAppId = `CSC21251567${String(nextSeq).padStart(3, '0')}`;
   }
 
@@ -557,7 +665,7 @@ app.post('/api/applications/submit', async (req: Request, res: Response) => {
   // 1. PERSIST TO SUPABASE (Awaited with verified confirmation)
   const persistResult = await persistCustomerApplication({
     appId: assignedAppId,
-    idempotencyKey: idempotencyKey || assignedAppId,
+    idempotencyKey: explicitCallerToken || undefined,
     customerName: finalName,
     phoneNumber: digitsOnly.length === 10 ? digitsOnly : rawPhone,
     emailAddress: (emailAddress || email || '').trim(),
@@ -583,6 +691,8 @@ app.post('/api/applications/submit', async (req: Request, res: Response) => {
     });
   }
 
+  const confirmedAppId = persistResult.appId || assignedAppId;
+
   // 2. Synchronize with local server database and SSE stream
   const sanitizedDocs = (persistResult.data?.document_urls || []).map((docItem: any, idx: number) => ({
     id: docItem.id || `doc-${idx}`,
@@ -593,8 +703,9 @@ app.post('/api/applications/submit', async (req: Request, res: Response) => {
   }));
 
   const localAppointment = addAppointment({
-    appId: assignedAppId,
-    id: assignedAppId,
+    appId: confirmedAppId,
+    id: confirmedAppId,
+    supabaseId: persistResult.data?.id ? String(persistResult.data.id) : undefined,
     name: finalName,
     email: (emailAddress || email || '').trim(),
     phone: digitsOnly.length === 10 ? digitsOnly : rawPhone,
@@ -625,7 +736,7 @@ app.post('/api/applications/submit', async (req: Request, res: Response) => {
       `Official Application Receipt - ${db.settings.cafeName}`,
       `📅 Hello ${finalName},<br/><br/>
       Your application for <b>${finalService}</b> has been securely registered in our CSC database.<br/>
-      <b>Official Tracking Token:</b> <b>${assignedAppId}</b><br/>
+      <b>Official Tracking Token:</b> <b>${confirmedAppId}</b><br/>
       Attached Documents: <b>${docCount} file(s) processed</b>.<br/>
       Our authorized staff will review and process your file.<br/><br/>
       Track Status: <a href="https://www.cscdost.com/#track">https://www.cscdost.com/#track</a><br/><br/>
@@ -643,8 +754,8 @@ app.post('/api/applications/submit', async (req: Request, res: Response) => {
         event: 'new_booking_application',
         category: 'booking',
         title: `Application Registered: ${finalService}`,
-        body: `Hello ${finalName}, your application for ${finalService} has been registered. Token ID: ${assignedAppId}. Track your status at https://www.cscdost.com/#track`,
-        token_id: assignedAppId,
+        body: `Hello ${finalName}, your application for ${finalService} has been registered. Token ID: ${confirmedAppId}. Track your status at https://www.cscdost.com/#track`,
+        token_id: confirmedAppId,
         customer_name: finalName,
         customer_phone: digitsOnly,
         service: finalService,
@@ -657,8 +768,9 @@ app.post('/api/applications/submit', async (req: Request, res: Response) => {
 
   return res.status(200).json({
     success: true,
-    appId: assignedAppId,
-    token_id: assignedAppId,
+    appId: confirmedAppId,
+    token_id: confirmedAppId,
+    supabaseId: persistResult.data?.id,
     status: 'Pending',
     data: persistResult.data,
     documentWarnings: persistResult.documentWarnings,
@@ -1397,15 +1509,29 @@ app.put('/api/admin/appointments/:id', authenticateAdmin, (req, res) => {
   }
 });
 
-// Delete appointment
-app.delete('/api/admin/appointments/:id', authenticateAdmin, (req, res) => {
+// Delete appointment (admin route — also deletes from Supabase + local DB)
+app.delete('/api/admin/appointments/:id', authenticateAdmin, async (req, res) => {
   const { id } = req.params;
-  const db = getDb();
-  const index = db.appointments.findIndex(a => a.id === id || (a as any).appId === id);
-  if (index !== -1) {
-    db.appointments.splice(index, 1);
-    saveDb(db);
-    res.json({ success: true, message: 'Appointment removed.' });
+  const supabaseId = String(req.query.supabaseId || req.body?.supabaseId || '').trim();
+  const supaRes = await deleteCustomerApplicationFromSupabase(id, supabaseId);
+  const localRemoved = deleteAppointment(id, [
+    supabaseId,
+    ...supaRes.deletedSupabaseIds,
+    ...supaRes.deletedTokenIds
+  ]);
+
+  if (supaRes.foundInSupabase && !supaRes.success) {
+    return res.status(500).json({ error: supaRes.error || 'Failed to delete from Supabase.' });
+  }
+  if (supaRes.affectedCount > 0 || localRemoved) {
+    broadcastRealtimeEvent('APPOINTMENT_DELETED', {
+      id,
+      appId: id,
+      supabaseId,
+      deletedSupabaseIds: supaRes.deletedSupabaseIds,
+      deletedTokenIds: supaRes.deletedTokenIds
+    });
+    res.json({ success: true, affectedCount: Math.max(supaRes.affectedCount, localRemoved ? 1 : 0), message: 'Appointment removed.' });
   } else {
     res.status(404).json({ error: 'Appointment not found.' });
   }

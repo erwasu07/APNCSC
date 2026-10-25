@@ -5,7 +5,10 @@ import {
   getSupabaseClient,
   fetchSupabaseApplications,
   testSupabaseLiveConnection,
-  updateSupabaseApplicationStatus
+  updateSupabaseApplicationStatus,
+  deleteSupabaseApplication,
+  isDeletedApplicationRecord,
+  isUuidString
 } from '../lib/supabase';
 import { getFormEndpoint, setFormEndpoint } from '../lib/getform';
 import { collection, onSnapshot, doc, updateDoc, setDoc, deleteDoc } from 'firebase/firestore';
@@ -193,6 +196,65 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   const firestoreAppsMapRef = useRef<Map<string, any>>(new Map());
   const firestoreAptsMapRef = useRef<Map<string, any>>(new Map());
   const supabaseMapRef = useRef<Map<string, any>>(new Map());
+  const mutationVersionRef = useRef<number>(0);
+  const updateCombinedAppsRef = useRef<(() => void) | null>(null);
+
+  // Helper to purge deleted application records from all in-memory maps and localStorage caches
+  const removeRecordsFromAllMapsAndStorage = (rawIdentifiers: Array<string | undefined | null>) => {
+    const targetSet = new Set(
+      rawIdentifiers
+        .filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
+        .map(v => v.trim().toLowerCase())
+    );
+    if (targetSet.size === 0) return;
+
+    const matchesTarget = (entry: any, mapKey?: string): boolean => {
+      if (mapKey && targetSet.has(String(mapKey).trim().toLowerCase())) return true;
+      if (!entry || typeof entry !== 'object') return false;
+      const candidates = [
+        entry.id,
+        entry.appId,
+        entry.token_id,
+        entry.token,
+        entry.tokenNo,
+        entry.supabaseId,
+        entry.payload?.appId,
+        entry.payload?.token,
+        entry.id ? `CSC-${String(entry.id).slice(0, 8)}` : ''
+      ];
+      return candidates.some(
+        c => typeof c === 'string' && c.trim().length > 0 && targetSet.has(c.trim().toLowerCase())
+      );
+    };
+
+    const pruneMap = (m: Map<string, any>) => {
+      for (const [k, v] of Array.from(m.entries())) {
+        if (matchesTarget(v, k)) {
+          m.delete(k);
+        }
+      }
+    };
+
+    pruneMap(serverApiMapRef.current);
+    pruneMap(supabaseMapRef.current);
+    pruneMap(firestoreAppsMapRef.current);
+    pruneMap(firestoreAptsMapRef.current);
+
+    try {
+      const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+      if (Array.isArray(localApps)) {
+        const filteredLocal = localApps.filter((item: any) => !matchesTarget(item));
+        localStorage.setItem('csc_local_applications', JSON.stringify(filteredLocal));
+      }
+      const web3Apps = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
+      if (Array.isArray(web3Apps)) {
+        const filteredWeb3 = web3Apps.filter((item: any) => !matchesTarget(item));
+        localStorage.setItem('csc_web3forms_submissions', JSON.stringify(filteredWeb3));
+      }
+    } catch (e) {
+      console.warn('Local storage prune notice:', e);
+    }
+  };
 
   // Debounce search query (200ms)
   useEffect(() => {
@@ -512,214 +574,217 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     let unsubApts: (() => void) | null = null;
 
     const updateCombinedApplications = () => {
-      let localApps: any[] = [];
-      let web3Apps: any[] = [];
-      try {
-        localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-        web3Apps = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
-      } catch (e) {
-        console.error('Local storage parse error:', e);
-      }
-
       const map = new Map<string, any>();
-      [
-        ...web3Apps,
-        ...localApps,
+
+      // Authoritative remote sources: Server API + Firestore + Supabase
+      // (Only fall back to localStorage if all remote maps are empty and still offline)
+      const remoteEntries = [
         ...Array.from(serverApiMapRef.current.values()),
         ...Array.from(firestoreAppsMapRef.current.values()),
         ...Array.from(firestoreAptsMapRef.current.values()),
         ...Array.from(supabaseMapRef.current.values())
-      ].forEach((app) => {
-        if (!app) return;
-        const key =
+      ];
+
+      let sourceEntries = remoteEntries;
+      if (remoteEntries.length === 0) {
+        try {
+          const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+          const web3Apps = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
+          sourceEntries = [...web3Apps, ...localApps];
+        } catch {}
+      }
+
+      sourceEntries.forEach((app) => {
+        if (!app || isDeletedApplicationRecord(app)) return;
+
+        const resolvedTokenId =
           app.token_id ||
           app.appId ||
-          app.id ||
+          app.payload?.appId ||
+          app.payload?.token ||
           app.token ||
           app.tokenNo ||
-          app.payload?.appId ||
-          app.payload?.token;
+          (app.id && String(app.id).length < 25 ? app.id : `CSC-${String(app.id).slice(0, 8)}`);
 
-        if (key) {
-          const existing = map.get(key) || {};
+        const canonicalKey = String(resolvedTokenId || app.id || '').trim();
+        if (!canonicalKey) return;
 
-          let parsedDocUrls: any[] = [];
-          if (app.document_urls) {
-            try {
-              const raw = typeof app.document_urls === 'string' ? JSON.parse(app.document_urls) : app.document_urls;
-              if (Array.isArray(raw)) {
-                parsedDocUrls = raw.map((u: any, idx: number) => {
-                  if (typeof u === 'string') {
-                    return {
-                      id: `supa-doc-${idx}`,
-                      name: `Uploaded Document ${idx + 1}`,
-                      url: u,
-                      dataUrl: u
-                    };
-                  }
+        const existing = map.get(canonicalKey) || {};
+        if (isDeletedApplicationRecord(existing)) return;
+
+        let parsedDocUrls: any[] = [];
+        if (app.document_urls) {
+          try {
+            const raw = typeof app.document_urls === 'string' ? JSON.parse(app.document_urls) : app.document_urls;
+            if (Array.isArray(raw)) {
+              parsedDocUrls = raw.map((u: any, idx: number) => {
+                if (typeof u === 'string') {
                   return {
-                    id: u.id || `supa-doc-${idx}`,
-                    name: u.name || `Uploaded Document ${idx + 1}`,
-                    url: u.url || u.dataUrl || '',
-                    dataUrl: u.url || u.dataUrl || '',
-                    size: u.size || 0,
-                    type: u.type || 'application/octet-stream'
+                    id: `supa-doc-${idx}`,
+                    name: `Uploaded Document ${idx + 1}`,
+                    url: u,
+                    dataUrl: u
                   };
-                });
-              }
-            } catch {}
-          }
-
-          let mergedDocs = existing.documents || [];
-          if (parsedDocUrls.length > 0 && mergedDocs.length === 0) {
-            mergedDocs = parsedDocUrls;
-          } else if (Array.isArray(app.documents) && app.documents.length > 0) {
-            if (app.documents.some((d: any) => d.dataUrl || d.url) || mergedDocs.length === 0) {
-              mergedDocs = app.documents;
+                }
+                return {
+                  id: u.id || `supa-doc-${idx}`,
+                  name: u.name || `Uploaded Document ${idx + 1}`,
+                  url: u.url || u.dataUrl || '',
+                  dataUrl: u.url || u.dataUrl || '',
+                  size: u.size || 0,
+                  type: u.type || 'application/octet-stream'
+                };
+              });
             }
-          } else if (Array.isArray(app.payload?.documents) && app.payload.documents.length > 0) {
-            mergedDocs = app.payload.documents;
-          }
-
-          const getPriority = (st?: string) => {
-            if (!st) return 0;
-            const l = st.toLowerCase();
-            if (l.includes('completed')) return 3;
-            if (l.includes('approved') || l.includes('process') || l.includes('reject')) return 2;
-            if (l.includes('pending') || l.includes('registered')) return 1;
-            return 1;
-          };
-
-          const existingPriority = getPriority(existing.status);
-          const newPriority = getPriority(app.status || app.payload?.status);
-
-          let resolvedStatus = existing.status || 'Pending';
-          if (newPriority >= existingPriority && (app.status || app.payload?.status)) {
-            resolvedStatus = app.status || app.payload?.status;
-          }
-          if (resolvedStatus.toLowerCase() === 'registered') {
-            resolvedStatus = 'Pending';
-          }
-
-          const resolvedTokenId =
-            app.token_id ||
-            app.appId ||
-            app.payload?.appId ||
-            app.payload?.token ||
-            existing.appId ||
-            (app.id && String(app.id).length < 25 ? app.id : `CSC-${String(app.id).slice(0, 8)}`);
-
-          map.set(key, {
-            ...existing,
-            ...app,
-            appId: resolvedTokenId,
-            id: app.id || existing.id || key,
-            supabaseId: (app.id && String(app.id).includes('-')) ? app.id : existing.supabaseId,
-            name:
-              app.full_name ||
-              app.name ||
-              app.customerName ||
-              app.applicantName ||
-              app.payload?.customerName ||
-              app.payload?.applicantName ||
-              existing.name ||
-              'N/A',
-            phone:
-              app.whatsapp_number ||
-              app.phone ||
-              app.phoneNumber ||
-              app.mobile ||
-              app.payload?.phoneNumber ||
-              existing.phone ||
-              'N/A',
-            email:
-              app.email_address ||
-              app.email ||
-              app.emailAddress ||
-              app.payload?.emailAddress ||
-              existing.email ||
-              'N/A',
-            service:
-              app.service_selected ||
-              app.service ||
-              app.selectedService ||
-              app.eService ||
-              app.payload?.selectedService ||
-              existing.service ||
-              'General Service',
-            documents: mergedDocs,
-            uploadedDocuments:
-              (app.uploadedDocuments && app.uploadedDocuments.length > 0)
-                ? app.uploadedDocuments
-                : (existing.uploadedDocuments || []),
-            paymentMode:
-              app.payment_mode ||
-              app.paymentMode ||
-              app.payload?.paymentMode ||
-              existing.paymentMode ||
-              'cash',
-            utrNumber:
-              app.utr_number ||
-              app.utrNumber ||
-              app.payload?.utrNumber ||
-              existing.utrNumber ||
-              'N/A',
-            totalAmount:
-              Number(app.total_amount) ||
-              Number(app.totalAmount) ||
-              Number(app.payload?.totalAmount) ||
-              existing.totalAmount ||
-              0,
-            userCategory:
-              app.user_category ||
-              app.userCategory ||
-              app.payload?.userCategory ||
-              existing.userCategory ||
-              'General/OBC',
-            dateOfBirth:
-              app.dateOfBirth ||
-              app.payload?.dateOfBirth ||
-              existing.dateOfBirth ||
-              'N/A',
-            message:
-              app.message ||
-              app.additionalDetails ||
-              app.payload?.message ||
-              existing.message ||
-              '',
-            staffNotes:
-              app.staffNotes ||
-              app.payload?.staffNotes ||
-              existing.staffNotes ||
-              '',
-            staffNoteUpdatedAt:
-              app.staffNoteUpdatedAt ||
-              app.payload?.staffNoteUpdatedAt ||
-              existing.staffNoteUpdatedAt ||
-              null,
-            submittedAt:
-              app.created_at ||
-              app.createdAt ||
-              app.submittedAt ||
-              app.payload?.submittedAt ||
-              existing.submittedAt ||
-              'Recent',
-            updatedAt:
-              app.updatedAt ||
-              app.statusUpdatedAt ||
-              existing.updatedAt ||
-              null,
-            finalReceiptUrl:
-              app.finalReceiptUrl ||
-              app.payload?.finalReceiptUrl ||
-              existing.finalReceiptUrl ||
-              null,
-            status: resolvedStatus
-          });
+          } catch {}
         }
+
+        let mergedDocs = existing.documents || [];
+        if (parsedDocUrls.length > 0 && mergedDocs.length === 0) {
+          mergedDocs = parsedDocUrls;
+        } else if (Array.isArray(app.documents) && app.documents.length > 0) {
+          if (app.documents.some((d: any) => d.dataUrl || d.url) || mergedDocs.length === 0) {
+            mergedDocs = app.documents;
+          }
+        } else if (Array.isArray(app.payload?.documents) && app.payload.documents.length > 0) {
+          mergedDocs = app.payload.documents;
+        }
+
+        const getPriority = (st?: string) => {
+          if (!st) return 0;
+          const l = st.toLowerCase();
+          if (l.includes('completed')) return 3;
+          if (l.includes('approved') || l.includes('process') || l.includes('reject')) return 2;
+          if (l.includes('pending') || l.includes('registered')) return 1;
+          return 1;
+        };
+
+        const existingPriority = getPriority(existing.status);
+        const newPriority = getPriority(app.status || app.payload?.status);
+
+        let resolvedStatus = existing.status || 'Pending';
+        if (newPriority >= existingPriority && (app.status || app.payload?.status)) {
+          resolvedStatus = app.status || app.payload?.status;
+        }
+        if (resolvedStatus.toLowerCase() === 'registered') {
+          resolvedStatus = 'Pending';
+        }
+
+        const resolvedSupabaseId =
+          app.supabaseId ||
+          (isUuidString(app.id) ? String(app.id) : undefined) ||
+          existing.supabaseId;
+
+        map.set(canonicalKey, {
+          ...existing,
+          ...app,
+          appId: resolvedTokenId,
+          id: app.id || existing.id || canonicalKey,
+          supabaseId: resolvedSupabaseId,
+          name:
+            app.full_name ||
+            app.name ||
+            app.customerName ||
+            app.applicantName ||
+            app.payload?.customerName ||
+            app.payload?.applicantName ||
+            existing.name ||
+            'N/A',
+          phone:
+            app.whatsapp_number ||
+            app.phone ||
+            app.phoneNumber ||
+            app.mobile ||
+            app.payload?.phoneNumber ||
+            existing.phone ||
+            'N/A',
+          email:
+            app.email_address ||
+            app.email ||
+            app.emailAddress ||
+            app.payload?.emailAddress ||
+            existing.email ||
+            'N/A',
+          service:
+            app.service_selected ||
+            app.service ||
+            app.selectedService ||
+            app.eService ||
+            app.payload?.selectedService ||
+            existing.service ||
+            'General Service',
+          documents: mergedDocs,
+          uploadedDocuments:
+            (app.uploadedDocuments && app.uploadedDocuments.length > 0)
+              ? app.uploadedDocuments
+              : (existing.uploadedDocuments || []),
+          paymentMode:
+            app.payment_mode ||
+            app.paymentMode ||
+            app.payload?.paymentMode ||
+            existing.paymentMode ||
+            'cash',
+          utrNumber:
+            app.utr_number ||
+            app.utrNumber ||
+            app.payload?.utrNumber ||
+            existing.utrNumber ||
+            'N/A',
+          totalAmount:
+            Number(app.total_amount) ||
+            Number(app.totalAmount) ||
+            Number(app.payload?.totalAmount) ||
+            existing.totalAmount ||
+            0,
+          userCategory:
+            app.user_category ||
+            app.userCategory ||
+            app.payload?.userCategory ||
+            existing.userCategory ||
+            'General/OBC',
+          dateOfBirth:
+            app.dateOfBirth ||
+            app.payload?.dateOfBirth ||
+            existing.dateOfBirth ||
+            'N/A',
+          message:
+            app.message ||
+            app.additionalDetails ||
+            app.payload?.message ||
+            existing.message ||
+            '',
+          staffNotes:
+            app.staffNotes ||
+            app.payload?.staffNotes ||
+            existing.staffNotes ||
+            '',
+          staffNoteUpdatedAt:
+            app.staffNoteUpdatedAt ||
+            app.payload?.staffNoteUpdatedAt ||
+            existing.staffNoteUpdatedAt ||
+            null,
+          submittedAt:
+            app.created_at ||
+            app.createdAt ||
+            app.submittedAt ||
+            app.payload?.submittedAt ||
+            existing.submittedAt ||
+            'Recent',
+          updatedAt:
+            app.updatedAt ||
+            app.statusUpdatedAt ||
+            existing.updatedAt ||
+            null,
+          finalReceiptUrl:
+            app.finalReceiptUrl ||
+            app.payload?.finalReceiptUrl ||
+            existing.finalReceiptUrl ||
+            null,
+          status: resolvedStatus
+        });
       });
 
-      const combinedList = Array.from(map.values());
+      const combinedList = Array.from(map.values()).filter(item => !isDeletedApplicationRecord(item));
       combinedList.sort((a, b) => {
         const getTs = (item: any) => {
           return getTimestampMs(item.created_at || item.createdAt || item.submittedAt || item.date || 0);
@@ -731,83 +796,42 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       setLoading(false);
     };
 
-    // Central Server API fetch helper
+    updateCombinedAppsRef.current = updateCombinedApplications;
+
+    // Central Server API fetch helper (race-safe: discards stale responses across mutations)
     const fetchServerAppointments = () => {
+      const versionAtStart = mutationVersionRef.current;
       fetch('/api/appointments')
         .then(res => res.json())
         .then(resData => {
+          if (versionAtStart !== mutationVersionRef.current) {
+            return; // Discard stale in-flight response that started before a deletion
+          }
           const list = resData?.data || resData || [];
-          const serverKeys = new Set<string>();
           if (Array.isArray(list)) {
+            serverApiMapRef.current.clear();
             list.forEach((item: any) => {
+              if (!item || isDeletedApplicationRecord(item)) return;
               const key = item.appId || item.id || item.token;
               if (key) {
-                serverApiMapRef.current.set(key, item);
-                serverKeys.add(key);
+                serverApiMapRef.current.set(String(key), item);
               }
             });
             updateCombinedApplications();
-
-            // Auto-sync local applications to central server DB if missing
-            try {
-              const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-              const web3Apps = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
-              const allLocal = [...localApps, ...web3Apps];
-
-              allLocal.forEach((item: any) => {
-                if (!item) return;
-                const key = item.appId || item.id || item.token;
-                if (key && !serverKeys.has(key)) {
-                  const docs = Array.isArray(item.documents) ? item.documents.map((f: any) => ({
-                    id: f.id || `doc-${Math.random().toString(36).substring(2, 6)}`,
-                    name: f.name || 'Document',
-                    size: typeof f.size === 'number' ? f.size : 0,
-                    type: f.type || 'application/octet-stream',
-                    url: f.url
-                  })) : [];
-
-                  const syncPayload = {
-                    appId: key,
-                    id: key,
-                    name: item.name || item.customerName || item.applicantName || 'Applicant',
-                    phone: item.phone || item.phoneNumber || item.mobile || 'N/A',
-                    email: item.email || item.emailAddress || 'N/A',
-                    service: item.service || item.selectedService || item.eService || 'General CSC Service',
-                    dateOfBirth: item.dateOfBirth || 'N/A',
-                    userCategory: item.userCategory || 'General/OBC',
-                    paymentMode: item.paymentMode || 'cash',
-                    utrNumber: item.utrNumber || 'N/A',
-                    totalAmount: item.totalAmount || 0,
-                    message: item.message || item.additionalDetails || 'None',
-                    documents: docs,
-                    status: item.status || 'Pending',
-                    submittedAt: item.submittedAt || item.createdAt || new Date().toISOString()
-                  };
-
-                  fetch('/api/appointments', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(syncPayload)
-                  }).then(() => {
-                    serverKeys.add(key);
-                    serverApiMapRef.current.set(key, syncPayload);
-                    updateCombinedApplications();
-                  }).catch(() => {});
-                }
-              });
-            } catch (e) {
-              console.warn('Auto sync local apps notice:', e);
-            }
           }
         })
         .catch(err => console.warn('Server API fetch warning:', err));
     };
 
-    // Dedicated Supabase Data Fetcher (ORDER BY created_at DESC)
+    // Dedicated Supabase Data Fetcher (ORDER BY created_at DESC, race-safe)
     const fetchSupabaseData = async (showToast = false) => {
+      const versionAtStart = mutationVersionRef.current;
       setSupabaseSyncStatus(prev => ({ ...(prev || {}), loading: true }));
       try {
         const res = await fetchSupabaseApplications();
+        if (versionAtStart !== mutationVersionRef.current) {
+          return; // Discard stale in-flight response that started before a deletion
+        }
         if (res.error) {
           console.warn('Supabase fetch notice:', res.error);
           setSupabaseSyncStatus({
@@ -822,25 +846,26 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         } else {
           setSupabaseSyncError(null);
           supabaseMapRef.current.clear();
-          (res.data || []).forEach((row: any) => {
+          const activeRows = (res.data || []).filter((row: any) => !isDeletedApplicationRecord(row));
+          activeRows.forEach((row: any) => {
             const key =
               row.token_id ||
               row.appId ||
               row.payload?.appId ||
               row.payload?.token ||
-              row.id;
+              (row.id && String(row.id).length < 25 ? row.id : `CSC-${String(row.id).slice(0, 8)}`);
             if (key) {
-              supabaseMapRef.current.set(key, row);
+              supabaseMapRef.current.set(String(key), row);
             }
           });
           updateCombinedApplications();
           setSupabaseSyncStatus({
             loading: false,
-            count: res.data?.length || 0,
+            count: activeRows.length,
             lastSyncedAt: new Date().toLocaleTimeString()
           });
           if (showToast) {
-            setActionSuccess(`Synchronized ${res.data?.length || 0} application(s) from Supabase.`);
+            setActionSuccess(`Synchronized ${activeRows.length} application(s) from Supabase.`);
             setTimeout(() => setActionSuccess(null), 3500);
           }
         }
@@ -872,16 +897,45 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       sseSource.onmessage = (evt) => {
         try {
           const msg = JSON.parse(evt.data);
-          if (msg && msg.type) {
-            if (msg.type === 'NEW_APPOINTMENT' && msg.data) {
-              const incoming = msg.data;
-              const incomingId = incoming.appId || incoming.token_id || incoming.id || 'New';
+          if (!msg || !msg.type) return;
+
+          const eventData = msg.payload || msg.data;
+
+          if (msg.type === 'APPOINTMENT_DELETED' && eventData) {
+            mutationVersionRef.current++;
+            const idsToPurge = [
+              eventData.id,
+              eventData.appId,
+              eventData.supabaseId,
+              ...(Array.isArray(eventData.deletedSupabaseIds) ? eventData.deletedSupabaseIds : []),
+              ...(Array.isArray(eventData.deletedTokenIds) ? eventData.deletedTokenIds : [])
+            ];
+            removeRecordsFromAllMapsAndStorage(idsToPurge);
+            updateCombinedApplications();
+            return;
+          }
+
+          if (msg.type === 'APPOINTMENTS_BULK_DELETED' && eventData) {
+            mutationVersionRef.current++;
+            const idsToPurge = [
+              ...(Array.isArray(eventData.deletedIds) ? eventData.deletedIds : []),
+              ...(Array.isArray(eventData.deletedSupabaseIds) ? eventData.deletedSupabaseIds : []),
+              ...(Array.isArray(eventData.deletedTokenIds) ? eventData.deletedTokenIds : [])
+            ];
+            removeRecordsFromAllMapsAndStorage(idsToPurge);
+            updateCombinedApplications();
+            return;
+          }
+
+          if ((msg.type === 'NEW_APPOINTMENT' || msg.type === 'APPOINTMENT_ADDED') && eventData) {
+            if (!isDeletedApplicationRecord(eventData)) {
+              const incomingId = eventData.appId || eventData.token_id || eventData.id || 'New';
               setRealtimeAlerts(prev => [
                 {
                   id: `${incomingId}-${Date.now()}`,
                   appId: incomingId,
-                  name: incoming.name || incoming.full_name || 'Customer',
-                  service: incoming.service || incoming.service_selected || 'CSC Application',
+                  name: eventData.name || eventData.full_name || 'Customer',
+                  service: eventData.service || eventData.service_selected || 'CSC Application',
                   time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                 },
                 ...prev.slice(0, 9)
@@ -889,9 +943,10 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               setActionSuccess(`New customer application received: ${incomingId}`);
               setTimeout(() => setActionSuccess(null), 4500);
             }
-            fetchServerAppointments();
-            fetchSupabaseData(false);
           }
+
+          fetchServerAppointments();
+          fetchSupabaseData(false);
         } catch {}
       };
     } catch (e) {
@@ -915,20 +970,37 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
             (payload) => {
               if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
                 const newApp = payload.new as any;
+                const synthKey = newApp?.id ? `CSC-${String(newApp.id).slice(0, 8)}` : '';
                 const key =
-                  newApp.token_id ||
-                  newApp.appId ||
-                  newApp.id ||
-                  newApp.token;
+                  newApp?.token_id ||
+                  newApp?.appId ||
+                  newApp?.payload?.appId ||
+                  newApp?.payload?.token ||
+                  synthKey ||
+                  newApp?.id;
+
+                if (isDeletedApplicationRecord(newApp)) {
+                  mutationVersionRef.current++;
+                  removeRecordsFromAllMapsAndStorage([
+                    newApp?.id,
+                    newApp?.token_id,
+                    newApp?.appId,
+                    newApp?.payload?.appId,
+                    synthKey
+                  ]);
+                  updateCombinedApplications();
+                  return;
+                }
+
                 if (key) {
-                  const isNewInsert = payload.eventType === 'INSERT' && !supabaseMapRef.current.has(key);
-                  supabaseMapRef.current.set(key, newApp);
+                  const isNewInsert = payload.eventType === 'INSERT' && !supabaseMapRef.current.has(String(key));
+                  supabaseMapRef.current.set(String(key), newApp);
                   updateCombinedApplications();
                   if (isNewInsert) {
                     setRealtimeAlerts(prev => [
                       {
                         id: `${key}-${Date.now()}`,
-                        appId: key,
+                        appId: String(key),
                         name: newApp.full_name || newApp.name || 'Customer',
                         service: newApp.service_selected || newApp.service || 'Application',
                         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -941,15 +1013,16 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                 }
               } else if (payload.eventType === 'DELETE') {
                 const oldApp = payload.old as any;
-                const key =
-                  oldApp.token_id ||
-                  oldApp.appId ||
-                  oldApp.id ||
-                  oldApp.token;
-                if (key) {
-                  supabaseMapRef.current.delete(key);
-                  updateCombinedApplications();
-                }
+                mutationVersionRef.current++;
+                const synthKey = oldApp?.id ? `CSC-${String(oldApp.id).slice(0, 8)}` : '';
+                removeRecordsFromAllMapsAndStorage([
+                  oldApp?.id,
+                  oldApp?.token_id,
+                  oldApp?.appId,
+                  oldApp?.token,
+                  synthKey
+                ]);
+                updateCombinedApplications();
               }
             }
           )
@@ -974,9 +1047,11 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       bc.onmessage = (event) => {
         if (event.data?.type === 'NEW_APPOINTMENT' && event.data?.payload) {
           const app = event.data.payload;
-          const key = app.appId || app.id || app.token;
-          if (key) {
-            serverApiMapRef.current.set(key, app);
+          if (!isDeletedApplicationRecord(app)) {
+            const key = app.appId || app.id || app.token;
+            if (key) {
+              serverApiMapRef.current.set(String(key), app);
+            }
           }
         }
         updateCombinedApplications();
@@ -992,17 +1067,19 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         firestoreAptsMapRef.current.clear();
 
         appsCache.forEach((app) => {
+          if (isDeletedApplicationRecord(app)) return;
           const key = app.appId || app.id || app.token;
-          if (key) firestoreAppsMapRef.current.set(key, app);
+          if (key) firestoreAppsMapRef.current.set(String(key), app);
         });
 
         aptsCache.forEach((apt) => {
+          if (isDeletedApplicationRecord(apt)) return;
           const key = apt.appId || apt.id || apt.token;
           if (key) {
-            if (firestoreAppsMapRef.current.has(key)) {
-              firestoreAppsMapRef.current.set(key, { ...firestoreAppsMapRef.current.get(key), ...apt });
+            if (firestoreAppsMapRef.current.has(String(key))) {
+              firestoreAppsMapRef.current.set(String(key), { ...firestoreAppsMapRef.current.get(String(key)), ...apt });
             } else {
-              firestoreAptsMapRef.current.set(key, apt);
+              firestoreAptsMapRef.current.set(String(key), apt);
             }
           }
         });
@@ -1107,6 +1184,8 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
   // Status Update Handler
   const handleUpdateStatus = async (appId: string, newStatus: string) => {
+    const targetApp = applications.find(a => a.appId === appId || a.id === appId || a.supabaseId === appId);
+    const supabaseUuid = targetApp?.supabaseId || (isUuidString(targetApp?.id) ? String(targetApp.id) : '');
     const isoNow = new Date().toISOString();
     const updatePayload = {
       status: newStatus,
@@ -1146,6 +1225,13 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       console.error('Local storage cache update error:', e);
     }
 
+    if (serverApiMapRef.current.has(appId)) {
+      serverApiMapRef.current.set(appId, { ...serverApiMapRef.current.get(appId), ...updatePayload });
+    }
+    if (supabaseMapRef.current.has(appId)) {
+      supabaseMapRef.current.set(appId, { ...supabaseMapRef.current.get(appId), status: newStatus });
+    }
+
     setApplications(prev =>
       prev.map(a =>
         (a.appId === appId || a.id === appId)
@@ -1154,14 +1240,14 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       )
     );
 
-    fetch(`/api/appointments/${appId}/status`, {
+    fetch(`/api/appointments/${encodeURIComponent(appId)}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus })
     }).catch(err => console.warn('Server status update warning:', err));
 
     try {
-      await updateSupabaseApplicationStatus(appId, newStatus);
+      await updateSupabaseApplicationStatus(appId, newStatus, supabaseUuid);
     } catch (err) {
       console.warn('Supabase status update error:', err);
     }
@@ -1170,47 +1256,106 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     setTimeout(() => setActionSuccess(null), 3000);
   };
 
-  // Permanent Delete Handler
+  // Permanent Single Delete Handler (Verified Database Persistence)
   const handleDelete = async (appId: string) => {
     if (!appId) return;
-    if (window.confirm(`Are you sure you want to PERMANENTLY remove application ${appId}? This action cannot be undone.`)) {
-      try {
-        await deleteDoc(doc(db, 'applications', appId));
-      } catch (e) {
-        console.error('Error deleting from applications collection:', e);
-      }
-
-      try {
-        await deleteDoc(doc(db, 'appointments', appId));
-      } catch (e) {
-        console.error('Error deleting from appointments collection:', e);
-      }
-
-      setApplications(prev => prev.filter(a => a.appId !== appId && a.id !== appId));
-      if (drawerAppId === appId) {
-        setDrawerAppId(null);
-      }
-
-      try {
-        const local = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-        localStorage.setItem('csc_local_applications', JSON.stringify(local.filter((a: any) => a.appId !== appId && a.id !== appId)));
-
-        const web3 = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
-        localStorage.setItem('csc_web3forms_submissions', JSON.stringify(web3.filter((a: any) => a.appId !== appId && a.id !== appId)));
-      } catch {}
-
-      fetch(`/api/appointments/${appId}`, { method: 'DELETE' }).catch(() => {});
-
-      try {
-        const sb = getSupabaseClient();
-        if (sb) {
-          sb.from('applications').delete().or(`token_id.eq.${appId},id.eq.${appId}`).then(null, () => {});
-        }
-      } catch {}
-
-      setActionSuccess(`Application ${appId} permanently removed.`);
-      setTimeout(() => setActionSuccess(null), 3000);
+    if (!window.confirm(`Are you sure you want to PERMANENTLY remove application ${appId}? This action cannot be undone.`)) {
+      return;
     }
+
+    const targetApp = applications.find(
+      a => a.appId === appId || a.id === appId || a.supabaseId === appId
+    );
+    const supabaseUuid =
+      targetApp?.supabaseId ||
+      (isUuidString(targetApp?.id) ? String(targetApp.id) : '') ||
+      (isUuidString(appId) ? appId : '');
+
+    // Increment mutation version so any in-flight poll started prior to this delete is discarded
+    mutationVersionRef.current++;
+
+    let deleteVerified = false;
+    let deleteErrorMsg = '';
+    let extraDeletedIds: string[] = [];
+
+    // 1. Delete via authoritative server endpoint (deletes from Supabase + local db.json and verifies affectedCount)
+    try {
+      const qs = supabaseUuid ? `?supabaseId=${encodeURIComponent(supabaseUuid)}` : '';
+      const res = await fetch(`/api/appointments/${encodeURIComponent(appId)}${qs}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const resData = await res.json().catch(() => ({}));
+
+      if (res.ok && resData.success && Number(resData.affectedCount) > 0) {
+        deleteVerified = true;
+        extraDeletedIds = [
+          ...(Array.isArray(resData.deletedSupabaseIds) ? resData.deletedSupabaseIds : []),
+          ...(Array.isArray(resData.deletedTokenIds) ? resData.deletedTokenIds : [])
+        ];
+      } else {
+        deleteErrorMsg = resData.error || `Server deletion returned HTTP ${res.status}`;
+      }
+    } catch (netErr: any) {
+      deleteErrorMsg = netErr?.message || 'Server connection error';
+    }
+
+    // 2. Direct Supabase fallback if server route was unreachable or record only existed in client Supabase view
+    if (!deleteVerified) {
+      const directRes = await deleteSupabaseApplication(appId, supabaseUuid);
+      if (directRes.success && directRes.affectedCount > 0) {
+        deleteVerified = true;
+        extraDeletedIds = [
+          ...directRes.deletedSupabaseIds,
+          ...directRes.deletedTokenIds
+        ];
+      } else if (directRes.error) {
+        deleteErrorMsg = directRes.error;
+      }
+    }
+
+    if (!deleteVerified) {
+      setSupabaseSyncError(
+        `Could not delete application ${appId}: ${deleteErrorMsg || 'No matching record was affected in the database.'}`
+      );
+      setTimeout(() => setSupabaseSyncError(null), 7000);
+      return;
+    }
+
+    // 3. Confirmed database deletion: purge from all in-memory maps, localStorage, and Firestore
+    mutationVersionRef.current++;
+    const allIdentifiersToPurge = [
+      appId,
+      targetApp?.id,
+      targetApp?.appId,
+      supabaseUuid,
+      ...extraDeletedIds
+    ];
+    removeRecordsFromAllMapsAndStorage(allIdentifiersToPurge);
+
+    try {
+      await deleteDoc(doc(db, 'applications', appId));
+    } catch {}
+    try {
+      await deleteDoc(doc(db, 'appointments', appId));
+    } catch {}
+
+    setApplications(prev =>
+      prev.filter(
+        a =>
+          a.appId !== appId &&
+          a.id !== appId &&
+          (!supabaseUuid || a.supabaseId !== supabaseUuid)
+      )
+    );
+    setSelectedAppIds(prev => prev.filter(id => id !== appId && id !== targetApp?.id));
+    if (drawerAppId === appId || drawerAppId === targetApp?.id) {
+      setDrawerAppId(null);
+      setDrawerNoteDirty(false);
+    }
+
+    setActionSuccess(`Application ${appId} permanently removed.`);
+    setTimeout(() => setActionSuccess(null), 3000);
   };
 
   // Selection Toggle Logic
@@ -1239,19 +1384,111 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     setTimeout(() => setActionSuccess(null), 3500);
   };
 
+  // Permanent Bulk Delete Handler (Verified Database Persistence)
   const handleBulkDelete = async () => {
     if (selectedAppIds.length === 0) return;
-    if (window.confirm(`Permanently remove ${selectedAppIds.length} selected applications?`)) {
-      for (const id of selectedAppIds) {
-        try {
-          await deleteDoc(doc(db, 'applications', id));
-          await deleteDoc(doc(db, 'appointments', id));
-        } catch {}
-        fetch(`/api/appointments/${id}`, { method: 'DELETE' }).catch(() => {});
+    if (!window.confirm(`Permanently remove ${selectedAppIds.length} selected application(s)? This action cannot be undone.`)) {
+      return;
+    }
+
+    const itemsPayload = selectedAppIds.map(selId => {
+      const found = applications.find(a => a.appId === selId || a.id === selId || a.supabaseId === selId);
+      const supabaseId =
+        found?.supabaseId ||
+        (isUuidString(found?.id) ? String(found.id) : '') ||
+        (isUuidString(selId) ? selId : '');
+      return {
+        id: selId,
+        appId: found?.appId || selId,
+        supabaseId
+      };
+    });
+
+    mutationVersionRef.current++;
+
+    let confirmedIds: string[] = [];
+    let extraDeletedIds: string[] = [];
+    let failedCount = 0;
+    let bulkErrorMsg = '';
+
+    try {
+      const res = await fetch('/api/appointments/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: itemsPayload })
+      });
+      const resData = await res.json().catch(() => ({}));
+
+      if (Number(resData.affectedCount) > 0 && Array.isArray(resData.deletedIds)) {
+        confirmedIds = resData.deletedIds;
+        extraDeletedIds = [
+          ...(Array.isArray(resData.deletedSupabaseIds) ? resData.deletedSupabaseIds : []),
+          ...(Array.isArray(resData.deletedTokenIds) ? resData.deletedTokenIds : [])
+        ];
+        failedCount = Array.isArray(resData.failedItems) ? resData.failedItems.length : 0;
+        if (failedCount > 0 && resData.failedItems[0]?.error) {
+          bulkErrorMsg = resData.failedItems[0].error;
+        }
+      } else {
+        bulkErrorMsg = resData.error || `Server bulk deletion returned HTTP ${res.status}`;
       }
-      setApplications(prev => prev.filter(a => !selectedAppIds.includes(a.appId) && !selectedAppIds.includes(a.id)));
-      setActionSuccess(`Deleted ${selectedAppIds.length} applications.`);
-      setSelectedAppIds([]);
+    } catch (err: any) {
+      bulkErrorMsg = err?.message || 'Network error during bulk deletion';
+    }
+
+    // Fallback to client-side Supabase deletion if server endpoint failed
+    if (confirmedIds.length === 0) {
+      for (const item of itemsPayload) {
+        const directRes = await deleteSupabaseApplication(item.appId, item.supabaseId);
+        if (directRes.success && directRes.affectedCount > 0) {
+          confirmedIds.push(item.id);
+          extraDeletedIds.push(...directRes.deletedSupabaseIds, ...directRes.deletedTokenIds);
+        } else {
+          failedCount++;
+          if (directRes.error) bulkErrorMsg = directRes.error;
+        }
+      }
+    }
+
+    if (confirmedIds.length === 0) {
+      setSupabaseSyncError(
+        `Bulk deletion failed: ${bulkErrorMsg || '0 records were affected in the database.'}`
+      );
+      setTimeout(() => setSupabaseSyncError(null), 7000);
+      return;
+    }
+
+    mutationVersionRef.current++;
+    const allPurgeIds = [...confirmedIds, ...extraDeletedIds];
+    removeRecordsFromAllMapsAndStorage(allPurgeIds);
+
+    for (const id of confirmedIds) {
+      try {
+        await deleteDoc(doc(db, 'applications', id));
+        await deleteDoc(doc(db, 'appointments', id));
+      } catch {}
+    }
+
+    const confirmedSet = new Set(allPurgeIds.map(s => String(s).toLowerCase()));
+    setApplications(prev =>
+      prev.filter(
+        a =>
+          !confirmedSet.has(String(a.appId || '').toLowerCase()) &&
+          !confirmedSet.has(String(a.id || '').toLowerCase()) &&
+          !confirmedSet.has(String(a.supabaseId || '').toLowerCase())
+      )
+    );
+    setSelectedAppIds(prev => prev.filter(id => !confirmedSet.has(String(id).toLowerCase())));
+    if (drawerAppId && confirmedSet.has(String(drawerAppId).toLowerCase())) {
+      setDrawerAppId(null);
+      setDrawerNoteDirty(false);
+    }
+
+    if (failedCount > 0) {
+      setSupabaseSyncError(`Deleted ${confirmedIds.length} application(s), but ${failedCount} failed: ${bulkErrorMsg}`);
+      setTimeout(() => setSupabaseSyncError(null), 7000);
+    } else {
+      setActionSuccess(`Permanently deleted ${confirmedIds.length} application(s).`);
       setTimeout(() => setActionSuccess(null), 3000);
     }
   };

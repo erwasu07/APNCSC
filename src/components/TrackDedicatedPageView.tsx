@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { doc, onSnapshot, getDoc } from 'firebase/firestore';
+import { isDeletedApplicationRecord } from '../lib/supabase';
 
 export interface WorkflowStep {
   stepNumber: number;
@@ -190,71 +191,68 @@ export default function TrackDedicatedPageView({
       setNotFound(false);
     };
 
-    // 1. Check LocalStorage first for instant UX
-    try {
-      const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-      const matchLocal = localApps.find((a: any) => 
-        (a.appId && a.appId.toLowerCase() === cleanToken.toLowerCase()) ||
-        (a.id && a.id.toLowerCase() === cleanToken.toLowerCase()) ||
-        (a.phone && a.phone.replace(/\D/g, '') === cleanToken.replace(/\D/g, '')) ||
-        (a.phoneNumber && a.phoneNumber.replace(/\D/g, '') === cleanToken.replace(/\D/g, ''))
-      );
-
-      if (matchLocal) {
-        processLocalOrFetchedApp(matchLocal);
-      }
-    } catch {}
-
-    // 2. Fetch from Firestore
-    try {
-      const appDocRef = doc(db, 'applications', cleanToken);
-      unsubApp = onSnapshot(appDocRef, (snap) => {
-        if (snap.exists()) {
-          processLocalOrFetchedApp(snap.data());
-        } else {
-          // Check appointments collection
-          const aptDocRef = doc(db, 'appointments', cleanToken);
-          getDoc(aptDocRef).then((aptSnap) => {
-            if (aptSnap.exists()) {
-              processLocalOrFetchedApp(aptSnap.data());
+    // 1. Check authoritative server/Supabase API first so deleted records are not resurrected from localStorage
+    fetch(`/api/appointments/${encodeURIComponent(cleanToken)}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(apiData => {
+        if (apiData && !isDeletedApplicationRecord(apiData) && (apiData.appId || apiData.id)) {
+          processLocalOrFetchedApp(apiData);
+          return;
+        }
+        // Check Firestore fallback if not found in server API
+        try {
+          const appDocRef = doc(db, 'applications', cleanToken);
+          unsubApp = onSnapshot(appDocRef, (snap) => {
+            if (snap.exists() && !isDeletedApplicationRecord(snap.data())) {
+              processLocalOrFetchedApp(snap.data());
             } else {
-              // Fetch from server API
-              fetch(`/api/appointments/${cleanToken}`)
-                .then(res => res.ok ? res.json() : null)
-                .then(apiData => {
-                  if (apiData && apiData.appId) {
-                    processLocalOrFetchedApp(apiData);
-                  } else {
-                    // Check if local had data, else notFound
-                    setLiveData(prev => {
-                      if (!prev) {
-                        setNotFound(true);
-                      }
-                      return prev;
-                    });
-                    setLoading(false);
-                  }
-                })
-                .catch(() => {
-                  setLiveData(prev => {
-                    if (!prev) setNotFound(true);
-                    return prev;
-                  });
+              const aptDocRef = doc(db, 'appointments', cleanToken);
+              getDoc(aptDocRef).then((aptSnap) => {
+                if (aptSnap.exists() && !isDeletedApplicationRecord(aptSnap.data())) {
+                  processLocalOrFetchedApp(aptSnap.data());
+                } else {
+                  setLiveData(null);
+                  setNotFound(true);
                   setLoading(false);
-                });
+                }
+              }).catch(() => {
+                setLiveData(null);
+                setNotFound(true);
+                setLoading(false);
+              });
             }
-          }).catch(() => {
+          }, () => {
+            setLiveData(null);
+            setNotFound(true);
             setLoading(false);
           });
+        } catch {
+          setLiveData(null);
+          setNotFound(true);
+          setLoading(false);
         }
-      }, (err) => {
-        console.warn('Firestore tracking error:', err);
+      })
+      .catch(() => {
+        // Offline fallback to localStorage only if server request fails due to network error
+        try {
+          const localApps = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+          const matchLocal = localApps.find((a: any) =>
+            !isDeletedApplicationRecord(a) && (
+              (a.appId && a.appId.toLowerCase() === cleanToken.toLowerCase()) ||
+              (a.id && a.id.toLowerCase() === cleanToken.toLowerCase()) ||
+              (a.phone && a.phone.replace(/\D/g, '') === cleanToken.replace(/\D/g, '')) ||
+              (a.phoneNumber && a.phoneNumber.replace(/\D/g, '') === cleanToken.replace(/\D/g, ''))
+            )
+          );
+          if (matchLocal) {
+            processLocalOrFetchedApp(matchLocal);
+            return;
+          }
+        } catch {}
+        setLiveData(null);
+        setNotFound(true);
         setLoading(false);
       });
-    } catch (err) {
-      console.warn('Firestore subscription exception:', err);
-      setLoading(false);
-    }
 
     return () => {
       if (unsubApp) unsubApp();

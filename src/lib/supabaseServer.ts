@@ -112,10 +112,305 @@ export async function uploadDocumentBufferToSupabase(
   }
 }
 
+export const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isUuidString(val: unknown): boolean {
+  return typeof val === 'string' && UUID_REGEX.test(val.trim());
+}
+
+export function isDeletedApplicationRecord(row: any): boolean {
+  if (!row || typeof row !== 'object') return false;
+  const topStatus = String(row.status || '').trim().toLowerCase();
+  if (topStatus === 'deleted') return true;
+  if (row.deleted === true || Boolean(row.deletedAt) || Boolean(row.deleted_at)) return true;
+  const payload = row.payload;
+  if (payload && typeof payload === 'object') {
+    if (payload.deleted === true || Boolean(payload.deletedAt) || Boolean(payload.deleted_at)) return true;
+    if (String(payload.status || '').trim().toLowerCase() === 'deleted') return true;
+  }
+  return false;
+}
+
+/**
+ * Computes the highest CSC21251567XXX sequence number present in Supabase `public.applications`
+ * (including soft-deleted rows) so token numbers are strictly monotonic and never reused.
+ */
+export async function getHighestSupabaseTokenSeq(): Promise<number> {
+  const supabase = getServerSupabaseClient();
+  if (!supabase) return 0;
+
+  let maxSeq = 0;
+  try {
+    const { data, error } = await supabase
+      .from('applications')
+      .select('token_id, payload')
+      .order('created_at', { ascending: false })
+      .limit(500);
+
+    if (!error && Array.isArray(data)) {
+      for (const row of data) {
+        const candidates = [
+          row?.token_id,
+          row?.payload?.appId,
+          row?.payload?.token
+        ];
+        for (const c of candidates) {
+          if (typeof c === 'string') {
+            const match = c.match(/^CSC21251567(\d+)/i);
+            if (match && match[1]) {
+              const num = parseInt(match[1], 10);
+              if (!isNaN(num) && num > maxSeq) {
+                maxSeq = num;
+              }
+            }
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[SupabaseServer] Token sequence probe notice:', err);
+  }
+  return maxSeq;
+}
+
+/**
+ * Safely locates matching rows in `public.applications` by UUID primary key `id`,
+ * `token_id`, `payload.appId`, or synthesized `CSC-<8-char-uuid>` prefix without
+ * ever passing a non-UUID string into a `.eq('id', ...)` filter.
+ */
+export async function findSupabaseApplicationRows(
+  identifier: string,
+  supabaseUuid?: string
+): Promise<{ rows: any[]; error?: string }> {
+  const supabase = getServerSupabaseClient();
+  if (!supabase) {
+    return { rows: [], error: 'Supabase client is not initialized.' };
+  }
+
+  const cleanId = (identifier || '').trim();
+  const cleanUuid = (supabaseUuid || '').trim();
+  const matchedMap = new Map<string, any>();
+
+  try {
+    // 1. Direct UUID primary key lookup if valid UUID provided
+    const uuidCandidate = isUuidString(cleanUuid)
+      ? cleanUuid
+      : isUuidString(cleanId)
+      ? cleanId
+      : '';
+
+    if (uuidCandidate) {
+      const { data, error } = await supabase
+        .from('applications')
+        .select('*')
+        .eq('id', uuidCandidate);
+
+      if (error) {
+        return { rows: [], error: error.message };
+      }
+      (data || []).forEach((r: any) => {
+        if (r && r.id) matchedMap.set(String(r.id), r);
+      });
+    }
+
+    // 2. Direct token_id lookup if cleanId is non-empty
+    if (cleanId) {
+      const { data, error } = await supabase
+        .from('applications')
+        .select('*')
+        .eq('token_id', cleanId);
+
+      if (error && !error.message?.includes('column')) {
+        return { rows: Array.from(matchedMap.values()), error: error.message };
+      }
+      (data || []).forEach((r: any) => {
+        if (r && r.id) matchedMap.set(String(r.id), r);
+      });
+    }
+
+    // 3. Fallback lookup for legacy rows where token_id is null (e.g., synthesized CSC-<8char> or payload.appId)
+    if (matchedMap.size === 0 && cleanId) {
+      const { data, error } = await supabase
+        .from('applications')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(300);
+
+      if (!error && Array.isArray(data)) {
+        const lowerClean = cleanId.toLowerCase();
+        for (const r of data) {
+          if (!r || !r.id) continue;
+          const rowUuid = String(r.id);
+          const synthToken = `CSC-${rowUuid.slice(0, 8)}`.toLowerCase();
+          const payloadAppId = String(r.payload?.appId || r.payload?.token || '').toLowerCase();
+          const tokenCol = String(r.token_id || '').toLowerCase();
+
+          if (
+            rowUuid.toLowerCase() === lowerClean ||
+            tokenCol === lowerClean ||
+            payloadAppId === lowerClean ||
+            synthToken === lowerClean
+          ) {
+            matchedMap.set(rowUuid, r);
+          }
+        }
+      }
+    }
+
+    return { rows: Array.from(matchedMap.values()) };
+  } catch (err: any) {
+    return { rows: Array.from(matchedMap.values()), error: err?.message || String(err) };
+  }
+}
+
+/**
+ * Deletes an application in Supabase `public.applications` by its actual UUID primary key `id`
+ * (and/or `token_id`), confirming that at least 1 row was affected.
+ * - First attempts physical hard DELETE (`DELETE FROM public.applications WHERE id = ...`).
+ * - If RLS on `public.applications` blocks physical DELETE for the publishable role (0 rows affected),
+ *   persists a verified tombstone (`status = 'Deleted'`, `payload.deleted = true`) on that exact primary key.
+ */
+export async function deleteCustomerApplicationFromSupabase(
+  identifier: string,
+  supabaseUuid?: string
+): Promise<{
+  success: boolean;
+  foundInSupabase: boolean;
+  affectedCount: number;
+  deletionMode?: 'hard' | 'soft_tombstone' | 'already_deleted';
+  deletedSupabaseIds: string[];
+  deletedTokenIds: string[];
+  error?: string;
+}> {
+  const supabase = getServerSupabaseClient();
+  if (!supabase) {
+    return {
+      success: false,
+      foundInSupabase: false,
+      affectedCount: 0,
+      deletedSupabaseIds: [],
+      deletedTokenIds: [],
+      error: 'Supabase client is not initialized.'
+    };
+  }
+
+  const lookup = await findSupabaseApplicationRows(identifier, supabaseUuid);
+  if (lookup.error) {
+    return {
+      success: false,
+      foundInSupabase: false,
+      affectedCount: 0,
+      deletedSupabaseIds: [],
+      deletedTokenIds: [],
+      error: lookup.error
+    };
+  }
+
+  if (lookup.rows.length === 0) {
+    return {
+      success: true,
+      foundInSupabase: false,
+      affectedCount: 0,
+      deletedSupabaseIds: [],
+      deletedTokenIds: []
+    };
+  }
+
+  const activeRows = lookup.rows.filter(r => !isDeletedApplicationRecord(r));
+  if (activeRows.length === 0) {
+    return {
+      success: true,
+      foundInSupabase: true,
+      affectedCount: lookup.rows.length,
+      deletionMode: 'already_deleted',
+      deletedSupabaseIds: lookup.rows.map(r => String(r.id)),
+      deletedTokenIds: lookup.rows.map(r => String(r.token_id || r.payload?.appId || identifier)).filter(Boolean)
+    };
+  }
+
+  let totalAffected = 0;
+  let modeUsed: 'hard' | 'soft_tombstone' = 'hard';
+  const deletedSupabaseIds: string[] = [];
+  const deletedTokenIds: string[] = [];
+  const errors: string[] = [];
+
+  for (const row of activeRows) {
+    const primaryKeyUuid = String(row.id);
+    const resolvedTok = String(row.token_id || row.payload?.appId || `CSC-${primaryKeyUuid.slice(0, 8)}`);
+
+    // Step 1: Attempt physical hard DELETE by primary key `id`
+    const { data: hardDeleted, error: hardErr } = await supabase
+      .from('applications')
+      .delete()
+      .eq('id', primaryKeyUuid)
+      .select('id, token_id');
+
+    if (!hardErr && Array.isArray(hardDeleted) && hardDeleted.length > 0) {
+      totalAffected += hardDeleted.length;
+      deletedSupabaseIds.push(primaryKeyUuid);
+      deletedTokenIds.push(resolvedTok);
+      continue;
+    }
+
+    // Step 2: If physical DELETE matched 0 rows (due to missing RLS FOR DELETE policy on anon key),
+    // persist deletion state on the exact row in Supabase so it never reappears on refetch/new submission.
+    const deletedAtIso = new Date().toISOString();
+    const existingPayload = row.payload && typeof row.payload === 'object' ? row.payload : {};
+
+    const { data: softDeleted, error: softErr } = await supabase
+      .from('applications')
+      .update({
+        status: 'Deleted',
+        payload: {
+          ...existingPayload,
+          appId: existingPayload.appId || resolvedTok,
+          status: 'Deleted',
+          deleted: true,
+          deletedAt: deletedAtIso
+        }
+      })
+      .eq('id', primaryKeyUuid)
+      .select('id, token_id, status');
+
+    if (!softErr && Array.isArray(softDeleted) && softDeleted.length > 0) {
+      modeUsed = 'soft_tombstone';
+      totalAffected += softDeleted.length;
+      deletedSupabaseIds.push(primaryKeyUuid);
+      deletedTokenIds.push(resolvedTok);
+    } else {
+      errors.push(
+        softErr?.message ||
+        hardErr?.message ||
+        `Database operation affected 0 rows for primary key ${primaryKeyUuid}. Check RLS policies.`
+      );
+    }
+  }
+
+  if (totalAffected === 0) {
+    return {
+      success: false,
+      foundInSupabase: true,
+      affectedCount: 0,
+      deletedSupabaseIds: [],
+      deletedTokenIds: [],
+      error: errors.join('; ') || 'Deletion failed: 0 rows were affected in Supabase.'
+    };
+  }
+
+  return {
+    success: true,
+    foundInSupabase: true,
+    affectedCount: totalAffected,
+    deletionMode: modeUsed,
+    deletedSupabaseIds,
+    deletedTokenIds
+  };
+}
+
 /**
  * Core application persistence engine for Supabase.
- * Guaranteed idempotent: if an application with the given token_id already exists,
- * returns the existing record without duplicating.
+ * Guaranteed idempotent when an explicit idempotencyKey is provided, and never
+ * resurrects a deleted record or collides with an existing token_id.
  */
 export async function persistCustomerApplication(
   input: CustomerApplicationInput
@@ -135,27 +430,43 @@ export async function persistCustomerApplication(
     };
   }
 
-  const finalAppId = (
+  let finalAppId = (
     input.appId ||
     input.idempotencyKey ||
     `CSC21251567${Math.floor(100 + Math.random() * 900)}`
   ).trim();
 
-  // 1. Idempotency Check: see if an application with this token_id already exists
+  // 1. Check if an application with this token_id already exists in Supabase
   try {
     const { data: existingRows } = await supabase
       .from('applications')
       .select('*')
       .eq('token_id', finalAppId)
-      .limit(1);
+      .limit(5);
 
     if (existingRows && existingRows.length > 0) {
-      console.log(`[SupabaseServer] Idempotent hit: Application ${finalAppId} already persisted.`);
-      return {
-        success: true,
-        appId: finalAppId,
-        data: existingRows[0]
-      };
+      const activeExisting = existingRows.find(r => !isDeletedApplicationRecord(r));
+      const hasExplicitIdempotency =
+        Boolean(input.idempotencyKey) &&
+        activeExisting &&
+        String(activeExisting.full_name || '').trim().toLowerCase() === String(input.customerName || '').trim().toLowerCase() &&
+        String(activeExisting.service_selected || '').trim().toLowerCase() === String(input.selectedService || '').trim().toLowerCase();
+
+      if (hasExplicitIdempotency && activeExisting) {
+        console.log(`[SupabaseServer] Idempotent hit: Application ${finalAppId} already persisted.`);
+        return {
+          success: true,
+          appId: finalAppId,
+          data: activeExisting
+        };
+      }
+
+      // Token collision with an existing or previously deleted row!
+      // Generate a strictly higher, unused token_id so we NEVER resurrect a deleted record or overwrite an existing one.
+      const supaMaxSeq = await getHighestSupabaseTokenSeq();
+      const nextSafeSeq = Math.max(supaMaxSeq + 1, Math.floor(1000 + Math.random() * 9000));
+      finalAppId = `CSC21251567${String(nextSafeSeq).padStart(3, '0')}`;
+      console.log(`[SupabaseServer] Resolved token collision; assigned fresh token_id: ${finalAppId}`);
     }
   } catch (idempErr) {
     console.warn('[SupabaseServer] Idempotency probe notice:', idempErr);
