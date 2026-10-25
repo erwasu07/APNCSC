@@ -98,6 +98,7 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
       case 'FileDown': return FileDown;
       case 'Camera': return Camera;
       case 'Signature': return PenTool;
+      case 'Crop': return Scissors;
       case 'RotateCw': return RotateCw;
       case 'ShieldAlert': return ShieldAlert;
       default: return Sparkles;
@@ -114,29 +115,32 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
           <button
             type="button"
             onClick={() => selectTool(null)}
-            className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#2563EB] hover:text-[#1D4ED8] bg-[#EFF6FF] px-3.5 py-1.5 rounded-xl transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#0759E8] hover:text-[#0B1F49] bg-[#EAF4FF] px-3.5 py-1.5 rounded-xl transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to All Online Tools</span>
           </button>
 
           <span className="text-xs text-[#64748B] hidden sm:inline font-medium">
-            Category: <strong className="text-[#102A56]">{currentTool?.categoryLabel || 'Utility'}</strong>
+            Category: <strong className="text-[#0B1F49]">{currentTool?.categoryLabel || 'Utility'}</strong>
           </span>
         </div>
 
         {/* Dynamic Tool Component Loading */}
         <div className="pt-2">
           {activeToolId === 'image-compressor' && <ImageCompressorTool />}
+          {(activeToolId === 'image-resizer') && <ImageSignatureResizerTool initialMode="image" />}
+          {(activeToolId === 'signature-resizer' || activeToolId === 'image-signature-resizer') && <ImageSignatureResizerTool initialMode="signature" />}
           {activeToolId === 'image-to-pdf' && <ImageToPdfTool />}
+          {activeToolId === 'pdf-to-image' && <PdfToImageTool />}
           {activeToolId === 'pdf-merge' && <PdfMergeTool />}
           {activeToolId === 'pdf-split' && <PdfSplitTool />}
           {activeToolId === 'pdf-compressor' && <PdfCompressorTool />}
           {activeToolId === 'background-remover' && <BackgroundRemoverTool />}
           {activeToolId === 'passport-photo-maker' && <PassportPhotoTool />}
-          {activeToolId === 'image-signature-resizer' && <ImageSignatureResizerTool />}
-          {activeToolId === 'pdf-to-image' && <PdfToImageTool />}
-          {activeToolId === 'image-converter' && <ImageConverterTool />}
+          {(activeToolId === 'jpg-to-png') && <ImageConverterTool initialFormat="image/png" />}
+          {(activeToolId === 'png-to-jpg') && <ImageConverterTool initialFormat="image/jpeg" />}
+          {(activeToolId === 'image-converter') && <ImageConverterTool />}
           {activeToolId === 'pdf-watermark-rotate' && <PdfWatermarkRotateTool />}
           {activeToolId === 'pdf-metadata-cleaner' && <PdfMetadataCleanerTool />}
         </div>
@@ -152,12 +156,12 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
       {/* ================================================================ */}
       <section className="text-center max-w-4xl mx-auto space-y-4">
         
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#EFF6FF] border border-[#BFDBFE] rounded-full text-xs font-bold text-[#2563EB]">
-          <Zap className="w-3.5 h-3.5 text-[#2563EB]" />
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#EAF4FF] border border-[#BFDBFE] rounded-full text-xs font-bold text-[#0759E8]">
+          <Zap className="w-3.5 h-3.5 text-[#0759E8]" />
           <span>100% Client-Side Processing • No Sign-Up Needed</span>
         </div>
 
-        <h1 className="text-3xl sm:text-5xl font-black text-[#102A56] tracking-tight leading-tight">
+        <h1 className="text-3xl sm:text-5xl font-black text-[#0B1F49] tracking-tight leading-tight">
           Free Online Tools — Fast, Simple &amp; Secure
         </h1>
 
@@ -174,13 +178,13 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search tools (e.g. compress 20kb, merge pdf, passport photo, resize signature)..."
-              className="w-full pl-12 pr-24 py-3.5 bg-white border border-[#E2E8F0] focus:border-[#2563EB] rounded-2xl text-xs sm:text-sm text-[#0F172A] placeholder-[#64748B] shadow-xs focus:ring-4 focus:ring-[#EFF6FF] focus:outline-none transition-all"
+              className="w-full pl-12 pr-24 py-3.5 bg-white border border-[#E2E8F0] focus:border-[#0759E8] rounded-2xl text-xs sm:text-sm text-[#14213D] placeholder-[#64748B] shadow-xs focus:ring-4 focus:ring-[#EAF4FF] focus:outline-none transition-all"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#64748B] hover:text-[#0F172A] px-2 py-1 bg-slate-100 rounded-lg cursor-pointer"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#64748B] hover:text-[#14213D] px-2 py-1 bg-slate-100 rounded-lg cursor-pointer"
               >
                 Clear
               </button>
@@ -225,8 +229,8 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
               onClick={() => setSelectedCategory(cat.id)}
               className={`px-4 py-2 rounded-xl whitespace-nowrap transition-all cursor-pointer border ${
                 selectedCategory === cat.id
-                  ? 'bg-[#2563EB] text-white border-[#2563EB] shadow-xs'
-                  : 'bg-white text-[#0F172A] border-[#E2E8F0] hover:bg-[#F8FAFC]'
+                  ? 'bg-[#0759E8] text-white border-[#0759E8] shadow-xs'
+                  : 'bg-white text-[#14213D] border-[#E2E8F0] hover:bg-[#F8FAFC]'
               }`}
             >
               {cat.label}
@@ -242,16 +246,16 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
               <div
                 key={tool.id}
                 onClick={() => selectTool(tool.id)}
-                className="bg-white border border-[#E2E8F0] hover:border-[#2563EB] rounded-2xl p-6 flex flex-col justify-between transition-all hover:shadow-xs group cursor-pointer"
+                className="bg-white border border-[#E2E8F0] hover:border-[#0759E8] rounded-2xl p-6 flex flex-col justify-between transition-all hover:shadow-xs group cursor-pointer"
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="w-11 h-11 rounded-xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center group-hover:bg-[#2563EB] group-hover:text-white transition-colors">
+                    <div className="w-11 h-11 rounded-xl bg-[#EAF4FF] text-[#0759E8] flex items-center justify-center group-hover:bg-[#0759E8] group-hover:text-white transition-colors">
                       <IconComponent className="w-5 h-5" />
                     </div>
 
                     {tool.badge && (
-                      <span className="text-[11px] font-bold text-[#2563EB] bg-[#EFF6FF] px-2.5 py-0.5 rounded-full">
+                      <span className="text-[11px] font-bold text-[#0759E8] bg-[#EAF4FF] px-2.5 py-0.5 rounded-full">
                         {tool.badge}
                       </span>
                     )}
@@ -261,7 +265,7 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
                     <span className="text-[10px] font-semibold text-[#64748B] uppercase tracking-wider block mb-0.5">
                       {tool.categoryLabel}
                     </span>
-                    <h3 className="text-base font-bold text-[#0F172A] group-hover:text-[#2563EB] transition-colors leading-snug">
+                    <h3 className="text-base font-bold text-[#14213D] group-hover:text-[#0759E8] transition-colors leading-snug">
                       {tool.name}
                     </h3>
                   </div>
@@ -271,7 +275,7 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
                   </p>
                 </div>
 
-                <div className="pt-4 mt-4 border-t border-[#E2E8F0] flex items-center justify-between text-xs font-bold text-[#2563EB]">
+                <div className="pt-4 mt-4 border-t border-[#E2E8F0] flex items-center justify-between text-xs font-bold text-[#0759E8]">
                   <span>Launch Free Tool</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </div>
@@ -303,8 +307,8 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
       {/* ================================================================ */}
       <section className="bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-8 space-y-6 shadow-xs">
         <div>
-          <h2 className="text-lg sm:text-xl font-bold text-[#102A56] flex items-center gap-2">
-            <HelpCircle className="w-5 h-5 text-[#2563EB]" />
+          <h2 className="text-lg sm:text-xl font-bold text-[#0B1F49] flex items-center gap-2">
+            <HelpCircle className="w-5 h-5 text-[#0759E8]" />
             <span>Frequently Asked Questions About CSC DOST Tools</span>
           </h2>
           <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
@@ -314,14 +318,14 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs text-[#64748B] leading-relaxed">
           <div className="space-y-1.5 p-4 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
-            <h4 className="font-bold text-[#0F172A] text-sm">Are these tools completely free to use?</h4>
+            <h4 className="font-bold text-[#14213D] text-sm">Are these tools completely free to use?</h4>
             <p>
               Yes. All image compressors, PDF converters, and signature resizers on this portal are 100% free of charge with zero watermarks and no registration required.
             </p>
           </div>
 
           <div className="space-y-1.5 p-4 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
-            <h4 className="font-bold text-[#0F172A] text-sm">Are my documents uploaded to any remote server?</h4>
+            <h4 className="font-bold text-[#14213D] text-sm">Are my documents uploaded to any remote server?</h4>
             <p>
               No. All operations (compressing images, merging PDFs, generating passport photos) execute in your browser's local sandbox memory using HTML5 Canvas and native JavaScript libraries.
             </p>

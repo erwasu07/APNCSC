@@ -503,34 +503,25 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#F7F9FC] text-[#172033] flex flex-col justify-between font-sans transition-colors duration-300 w-full max-w-full overflow-x-hidden">
       
-      {/* Top Navigation Panel */}
-      <Navbar
-        cafeName={settings.cafeName}
-        onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
-        onOpenAdmin={handleOpenStaffPortal}
-        onHomeClick={handleGoHome}
-      />
+      {/* Top Navigation Panel (hidden in full-screen Staff Management Console) */}
+      {!isAdminView && (
+        <Navbar
+          cafeName={settings.cafeName}
+          onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
+          onOpenAdmin={handleOpenStaffPortal}
+          onHomeClick={handleGoHome}
+        />
+      )}
 
       {/* Main Container */}
-      <main className="flex-grow w-full max-w-7xl mx-auto px-0 md:px-6 py-2 md:py-6 overflow-x-hidden">
+      <main className={isAdminView ? 'flex-grow w-full min-h-screen bg-[#F6F8FC] overflow-x-hidden' : 'flex-grow w-full max-w-7xl mx-auto px-0 md:px-6 py-2 md:py-6 overflow-x-hidden'}>
         {isAdminView ? (
-          <div className="px-2 sm:px-4 md:px-0">
-            <div className="mb-4 px-2 sm:px-0">
-              <button
-                onClick={handleCloseStaffPortal}
-                className="px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Return to Public Services Portal</span>
-              </button>
-            </div>
-            <Suspense fallback={<PageRouteSkeleton message="Loading Admin & Staff Portal..." />}>
-              <AdminDashboard
-                cafeName={settings.cafeName}
-                onClose={handleCloseStaffPortal}
-              />
-            </Suspense>
-          </div>
+          <Suspense fallback={<PageRouteSkeleton message="Loading CSC Staff Management Console..." />}>
+            <AdminDashboard
+              cafeName={settings.cafeName}
+              onClose={handleCloseStaffPortal}
+            />
+          </Suspense>
         ) : isApplyView ? (
           /* DEDICATED FULL-PAGE VIEW FOR ONLINE APPLICATION DESK */
           <div className="animate-fade-in w-full">
@@ -660,13 +651,15 @@ export default function App() {
       </main>
 
       {/* Global Page Footer (Below the Fold) */}
-      <Suspense fallback={<div className="h-28 bg-slate-900 border-t border-slate-800 animate-pulse" />}>
-        <Footer 
-          cafeName={settings.cafeName} 
-          onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
-          onOpenAdmin={handleOpenStaffPortal}
-        />
-      </Suspense>
+      {!isAdminView && (
+        <Suspense fallback={<div className="h-28 bg-slate-900 border-t border-slate-800 animate-pulse" />}>
+          <Footer 
+            cafeName={settings.cafeName} 
+            onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
+            onOpenAdmin={handleOpenStaffPortal}
+          />
+        </Suspense>
+      )}
 
       {/* Privacy Policy & Terms Interactive Modal */}
       {isPrivacyModalOpen && (

@@ -812,30 +812,40 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
           documents: processedDocs
         }).catch(formErr => console.warn('Form endpoint save notice:', formErr));
 
-        // Live Supabase Direct Submission
-        submitApplicationToSupabase({
-          appId: officialAppId,
-          customerName: formData.customerName,
-          phoneNumber: formData.phoneNumber,
-          emailAddress: formData.emailAddress,
-          selectedService: verifiedReceipt.selectedService,
-          userCategory: verifiedReceipt.userCategory,
-          paymentMode: verifiedReceipt.paymentMode,
-          utrNumber: 'N/A',
-          totalAmount: 0,
-          status: 'Pending',
-          dateOfBirth: formData.dateOfBirth,
-          message: formData.additionalDetails,
-          mandatoryDocName: verifiedReceipt.mandatoryDocName,
-          submittedAt: nowIso
-        }, uploadedFiles).then(res => {
-          if (!res.success) {
-            console.warn('Supabase quick-apply submit notice:', res.error);
+        // Live Supabase & Server Submission via unified persistence endpoint
+        fetch('/api/applications/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            appId: officialAppId,
+            customerName: formData.customerName,
+            phoneNumber: formData.phoneNumber,
+            emailAddress: formData.emailAddress,
+            selectedService: verifiedReceipt.selectedService,
+            userCategory: verifiedReceipt.userCategory,
+            paymentMode: verifiedReceipt.paymentMode,
+            utrNumber: 'N/A',
+            totalAmount: 0,
+            status: 'Pending',
+            dateOfBirth: formData.dateOfBirth,
+            message: formData.additionalDetails,
+            mandatoryDocName: verifiedReceipt.mandatoryDocName,
+            documents: uploadedFiles.map(f => ({
+              id: f.id,
+              name: f.name,
+              size: f.size,
+              type: f.type,
+              dataUrl: f.dataUrl
+            }))
+          })
+        }).then(r => r.json()).then(res => {
+          if (res.success) {
+            console.log('✅ Application persisted to Supabase via server endpoint:', res.appId);
           } else {
-            console.log('✅ Application synced to Supabase successfully:', res.insertedSchema);
+            console.warn('Supabase submission response notice:', res.error);
           }
         }).catch(err => {
-          console.warn('Supabase quick-apply submission exception:', err);
+          console.warn('Supabase unified submission exception:', err);
         });
       } catch (dbErr) {
         console.error('Database initial save notice:', dbErr);

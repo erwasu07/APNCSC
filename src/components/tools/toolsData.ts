@@ -21,34 +21,100 @@ export const TOOLS_CATEGORIES = [
 ] as const;
 
 export const TOOLS_LIST: ToolItem[] = [
-  // 1. Image Tools
+  // 1. Image Compressor
   {
     id: 'image-compressor',
     name: 'Image Compressor',
-    shortDescription: 'Compress JPG, PNG & WebP images to exact target sizes (20KB, 50KB, 100KB, 200KB) with zero server upload.',
+    shortDescription: 'Compress JPG, PNG & WebP images to exact target sizes (20KB, 50KB, 100KB, 200KB) with zero quality loss.',
     category: 'image',
     categoryLabel: 'Image Tools',
     iconName: 'Minimize2',
     featured: true,
     popular: true,
-    badge: 'High Accuracy',
-    keywords: ['compress image', 'reduce image size', '20kb photo', '50kb photo', 'jpg compressor', 'png compressor', 'webp compressor', 'target kb'],
+    badge: 'Popular',
+    keywords: ['compress image', 'reduce image size', '20kb photo', '50kb photo', 'jpg compressor', 'png compressor', 'target kb'],
     specs: 'Supports JPG, PNG, WebP up to 30MB'
   },
+  // 2. Image Resizer
   {
-    id: 'image-converter',
-    name: 'Image Format Converter',
-    shortDescription: 'Convert between JPG, PNG, and WebP instantly with transparency and custom background options.',
+    id: 'image-resizer',
+    name: 'Image Resizer',
+    shortDescription: 'Resize photos to custom width and height in pixels with aspect ratio lock and target file size limits.',
     category: 'image',
     categoryLabel: 'Image Tools',
-    iconName: 'RefreshCw',
-    keywords: ['convert image', 'png to jpg', 'jpg to png', 'webp to jpg', 'webp to png', 'transparent to white'],
-    specs: 'Batch conversion supported'
+    iconName: 'Crop',
+    featured: true,
+    keywords: ['resize image', 'scale photo', 'pixel resizer', 'width height change', 'photo dimensions'],
+    specs: 'Custom pixel dimensions'
   },
+  // 3. Image to PDF
+  {
+    id: 'image-to-pdf',
+    name: 'Image to PDF',
+    shortDescription: 'Convert and combine multiple JPG, PNG, and WebP photos into a single clean A4 or Letter PDF.',
+    category: 'pdf',
+    categoryLabel: 'PDF Tools',
+    iconName: 'FileImage',
+    featured: true,
+    popular: true,
+    badge: 'Essential',
+    keywords: ['jpg to pdf', 'image to pdf', 'photo to pdf', 'merge images to pdf', 'multiple pictures to pdf', 'a4 pdf'],
+    specs: 'Drag & reorder, rotate pages'
+  },
+  // 4. PDF to Image
+  {
+    id: 'pdf-to-image',
+    name: 'PDF to Image',
+    shortDescription: 'Render pages of any PDF document into crisp high-resolution JPG or PNG images with ZIP download.',
+    category: 'pdf',
+    categoryLabel: 'PDF Tools',
+    iconName: 'FileDown',
+    keywords: ['pdf to jpg', 'pdf to png', 'extract images from pdf', 'pdf page to image'],
+    specs: 'Adjustable resolution (150/300 DPI)'
+  },
+  // 5. PDF Merge
+  {
+    id: 'pdf-merge',
+    name: 'PDF Merge',
+    shortDescription: 'Combine multiple PDF documents, marksheets, and certificates into one ordered file securely.',
+    category: 'pdf',
+    categoryLabel: 'PDF Tools',
+    iconName: 'Files',
+    featured: true,
+    popular: true,
+    badge: 'Fast',
+    keywords: ['merge pdf', 'combine pdf', 'join pdf files', 'combine marksheets', 'pdf joiner'],
+    specs: 'Visual reordering & page count'
+  },
+  // 6. PDF Split
+  {
+    id: 'pdf-split',
+    name: 'PDF Split',
+    shortDescription: 'Extract specific pages or page ranges (e.g. 1-3, 5, 8-10) and download as single PDF or ZIP.',
+    category: 'pdf',
+    categoryLabel: 'PDF Tools',
+    iconName: 'Split',
+    popular: true,
+    keywords: ['split pdf', 'extract pages', 'separate pdf', 'pdf range extract', 'download pdf pages as zip'],
+    specs: 'Custom page ranges supported'
+  },
+  // 7. PDF Compressor
+  {
+    id: 'pdf-compressor',
+    name: 'PDF Compressor',
+    shortDescription: 'Optimize and reduce PDF document size with stream compression and scanned document rasterization.',
+    category: 'pdf',
+    categoryLabel: 'PDF Tools',
+    iconName: 'FileArchive',
+    featured: true,
+    keywords: ['compress pdf', 'reduce pdf size', 'optimize pdf', 'smaller pdf', 'scanned pdf compression'],
+    specs: 'Low, Medium, High presets'
+  },
+  // 8. Background Remover
   {
     id: 'background-remover',
     name: 'Background Remover',
-    shortDescription: 'Smart browser-based cutout tool to remove backgrounds, create transparent PNGs, or apply clean white/blue studio backdrops.',
+    shortDescription: 'Smart browser-based cutout tool to remove backgrounds, create transparent PNGs, or apply clean white studio backdrops.',
     category: 'image',
     categoryLabel: 'Image Tools',
     iconName: 'Scissors',
@@ -58,78 +124,7 @@ export const TOOLS_LIST: ToolItem[] = [
     keywords: ['remove bg', 'transparent background', 'photo background white', 'cutout', 'passport background change'],
     specs: 'Client-side processing'
   },
-
-  // 2. PDF Tools
-  {
-    id: 'image-to-pdf',
-    name: 'Image to PDF Maker',
-    shortDescription: 'Combine multiple JPG, PNG, and WebP photos into a single clean PDF with A4/Letter sizing and margin control.',
-    category: 'pdf',
-    categoryLabel: 'PDF Tools',
-    iconName: 'FileImage',
-    featured: true,
-    popular: true,
-    badge: 'Most Popular',
-    keywords: ['jpg to pdf', 'image to pdf', 'photo to pdf', 'merge images to pdf', 'multiple pictures to pdf', 'a4 pdf'],
-    specs: 'Drag & reorder, rotate pages'
-  },
-  {
-    id: 'pdf-merge',
-    name: 'PDF Merge Tool',
-    shortDescription: 'Combine multiple PDF documents, marksheets, and receipts into one ordered file securely.',
-    category: 'pdf',
-    categoryLabel: 'PDF Tools',
-    iconName: 'Files',
-    featured: true,
-    popular: true,
-    badge: 'Fast & Secure',
-    keywords: ['merge pdf', 'combine pdf', 'join pdf files', 'combine marksheets', 'pdf joiner'],
-    specs: 'Visual reordering & page count'
-  },
-  {
-    id: 'pdf-split',
-    name: 'PDF Split & Extract',
-    shortDescription: 'Extract specific pages or page ranges (e.g. 1-3, 5, 8-10) and download as a single PDF or individual ZIP.',
-    category: 'pdf',
-    categoryLabel: 'PDF Tools',
-    iconName: 'Split',
-    popular: true,
-    keywords: ['split pdf', 'extract pages', 'separate pdf', 'pdf range extract', 'download pdf pages as zip'],
-    specs: 'Custom page ranges supported'
-  },
-  {
-    id: 'pdf-compressor',
-    name: 'PDF Compressor & Optimizer',
-    shortDescription: 'Optimize and reduce PDF document size with honest compression presets, stream optimization, and scanned raster mode.',
-    category: 'pdf',
-    categoryLabel: 'PDF Tools',
-    iconName: 'FileArchive',
-    featured: true,
-    keywords: ['compress pdf', 'reduce pdf size', 'optimize pdf', 'smaller pdf', 'scanned pdf compression'],
-    specs: 'Low, Medium, High presets'
-  },
-  {
-    id: 'pdf-to-image',
-    name: 'PDF to Image Converter',
-    shortDescription: 'Render pages of any PDF document into crisp high-resolution JPG or PNG images with ZIP download.',
-    category: 'pdf',
-    categoryLabel: 'PDF Tools',
-    iconName: 'FileDown',
-    keywords: ['pdf to jpg', 'pdf to png', 'extract images from pdf', 'pdf page to image'],
-    specs: 'Adjustable resolution (150/300 DPI)'
-  },
-  {
-    id: 'pdf-watermark-rotate',
-    name: 'PDF Watermark & Page Rotator',
-    shortDescription: 'Add custom security text watermarks (e.g. CSC DOST VERIFIED, COPY) and rotate upside-down pages 90°/180°/270°.',
-    category: 'pdf',
-    categoryLabel: 'PDF Tools',
-    iconName: 'RotateCw',
-    keywords: ['rotate pdf', 'watermark pdf', 'add text to pdf', 'fix upside down pdf'],
-    specs: 'Custom opacity, angle & angle rotation'
-  },
-
-  // 3. Photo & Signature Tools
+  // 9. Passport Photo Maker
   {
     id: 'passport-photo-maker',
     name: 'Passport Photo Maker',
@@ -143,24 +138,56 @@ export const TOOLS_LIST: ToolItem[] = [
     keywords: ['passport photo', '35x45mm', '2x2 inch', 'passport size photo sheet', 'print passport photos', 'ssc photo', 'jkssb photo'],
     specs: 'No facial distortion, printable A4 sheet'
   },
+  // 10. Signature Resizer
   {
-    id: 'image-signature-resizer',
-    name: 'Image & Signature Resizer',
-    shortDescription: 'Meet exact recruitment portal dimensions & file sizes (JKSSB, SSC, Army Agniveer, RRB) with white-clean signature mode.',
+    id: 'signature-resizer',
+    name: 'Signature Resizer',
+    shortDescription: 'Crop excess whitespace, remove phone paper shadows, and scale signatures to 10–20 KB for government exams.',
     category: 'photo-signature',
     categoryLabel: 'Photo & Signature Tools',
     iconName: 'Signature',
     featured: true,
     popular: true,
-    badge: 'Portal Presets',
-    keywords: ['signature resizer', 'crop signature', 'jkssb signature', 'ssc signature 10 to 20 kb', 'army photo resize', 'clear signature background'],
-    specs: 'Includes whitespace crop & contrast boost'
+    badge: '10-20 KB',
+    keywords: ['signature resizer', 'crop signature', 'jkssb signature', 'ssc signature 10 to 20 kb', 'army signature', 'clean signature background'],
+    specs: 'Whitens background & crops borders'
   },
-
-  // 4. Document Utilities
+  // 11. JPG to PNG Converter
+  {
+    id: 'jpg-to-png',
+    name: 'JPG to PNG Converter',
+    shortDescription: 'Convert JPG photos and certificates into lossless PNG format with maximum clarity.',
+    category: 'image',
+    categoryLabel: 'Image Tools',
+    iconName: 'RefreshCw',
+    keywords: ['jpg to png', 'convert jpg to png', 'jpeg to png', 'lossless image conversion'],
+    specs: 'Lossless quality export'
+  },
+  // 12. PNG to JPG Converter
+  {
+    id: 'png-to-jpg',
+    name: 'PNG to JPG Converter',
+    shortDescription: 'Convert PNG graphics and transparent images into standard JPG files with solid white background.',
+    category: 'image',
+    categoryLabel: 'Image Tools',
+    iconName: 'RefreshCw',
+    keywords: ['png to jpg', 'convert png to jpg', 'transparent to jpg', 'png to jpeg'],
+    specs: 'Automatic background fill'
+  },
+  // Additional Utilities
+  {
+    id: 'pdf-watermark-rotate',
+    name: 'PDF Watermark & Page Rotator',
+    shortDescription: 'Add custom security text watermarks (e.g. CSC DOST VERIFIED) and rotate upside-down pages 90°/180°/270°.',
+    category: 'document',
+    categoryLabel: 'Document Utilities',
+    iconName: 'RotateCw',
+    keywords: ['rotate pdf', 'watermark pdf', 'add text to pdf', 'fix upside down pdf'],
+    specs: 'Custom opacity, angle & angle rotation'
+  },
   {
     id: 'pdf-metadata-cleaner',
-    name: 'PDF Metadata & Privacy Cleaner',
+    name: 'PDF Metadata Cleaner',
     shortDescription: 'Inspect hidden metadata (author, title, creation date, software) and remove personal identifiers before submitting online.',
     category: 'document',
     categoryLabel: 'Document Utilities',

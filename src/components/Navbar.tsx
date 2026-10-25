@@ -17,7 +17,8 @@ import {
   ExternalLink,
   GraduationCap,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Wrench
 } from 'lucide-react';
 import { PolicyTab } from './PrivacyPolicyModal';
 
@@ -68,7 +69,12 @@ export default function Navbar({
       return;
     }
 
-    // Return to home view first if currently in a subview (like apply, track, post details)
+    if (target === 'tools') {
+      window.location.hash = '#tools';
+      return;
+    }
+
+    // Return to home view first if currently in another subview
     if (onHomeClick) onHomeClick();
 
     setTimeout(() => {
@@ -96,23 +102,6 @@ export default function Navbar({
         return;
       }
 
-      if (target === 'tools') {
-        window.location.hash = '#tools';
-        return;
-      }
-
-      if (target === 'blog' || target === 'guides') {
-        const el = document.getElementById('knowledge-hub');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-        return;
-      }
-
-      if (target === 'about') {
-        const el = document.getElementById('node-info');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-        return;
-      }
-
       if (target === 'contact') {
         const el = document.getElementById('node-info') || document.getElementById('footer');
         if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -134,25 +123,23 @@ export default function Navbar({
   const navLinks = [
     { id: 'home', label: 'Home' },
     { id: 'services', label: 'Services' },
+    { id: 'tools', label: 'Online Tools' },
     { id: 'schemes', label: 'Government Schemes' },
     { id: 'jobs', label: 'Latest Jobs' },
     { id: 'education', label: 'Education' },
-    { id: 'tools', label: 'Tools' },
-    { id: 'blog', label: 'Blog' },
-    { id: 'about', label: 'About' },
     { id: 'contact', label: 'Contact' },
   ];
 
   return (
-    <header className="w-full sticky top-0 z-50 bg-white border-b border-[#E2E8F0] transition-shadow duration-200" style={{ boxShadow: isScrolled ? '0 4px 12px rgba(16, 42, 86, 0.08)' : 'none' }}>
+    <header className="w-full sticky top-0 z-50 bg-white border-b border-[#E2E8F0] transition-shadow duration-200" style={{ boxShadow: isScrolled ? '0 4px 16px rgba(11, 31, 73, 0.08)' : 'none' }}>
       
       {/* Top Quiet Citizen Advisory Ribbon */}
-      <div className="bg-[#102A56] text-white text-[11px] sm:text-xs py-1.5 px-3 sm:px-6">
+      <div className="bg-[#0B1F49] text-white text-[11px] sm:text-xs py-1.5 px-3 sm:px-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 truncate">
             <span className="font-bold text-[#F59E0B]">Independent Citizen Portal</span>
             <span className="text-slate-400 hidden sm:inline">|</span>
-            <span className="text-slate-300 truncate">Digital Assistance, Official Recruitment Updates &amp; Citizen Welfare Guides</span>
+            <span className="text-slate-200 truncate">Digital Assistance, Official Recruitment Updates, Education &amp; Free Online Tools</span>
           </div>
           <div className="flex items-center gap-3 shrink-0 text-slate-300">
             <button
@@ -183,7 +170,7 @@ export default function Navbar({
         <button
           type="button"
           onClick={() => navigateTo('home')}
-          className="flex items-center gap-3 text-left cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] rounded-lg p-1 -ml-1 shrink-0"
+          className="flex items-center gap-3 text-left cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0759E8] rounded-lg p-1 -ml-1 shrink-0"
           title="CSC DOST - Home"
         >
           <img
@@ -191,29 +178,29 @@ export default function Navbar({
             alt="CSC DOST"
             width="38"
             height="38"
-            className="w-9 h-9 sm:w-9 sm:h-9 object-contain shrink-0"
+            className="w-9 h-9 sm:w-10 sm:h-10 object-contain shrink-0"
           />
           <div className="leading-tight">
-            <span className="text-lg sm:text-xl font-black text-[#102A56] tracking-tight block">
+            <span className="text-lg sm:text-xl font-black text-[#0B1F49] tracking-tight block">
               CSC DOST
             </span>
             <span className="text-[10px] font-semibold text-[#64748B] block">
-              Digital Citizen Desk
+              Digital Services &amp; Citizen Desk
             </span>
           </div>
         </button>
 
         {/* Desktop Navigation Links */}
-        <nav aria-label="Main Navigation" className="hidden xl:flex items-center gap-0.5 2xl:gap-1">
+        <nav aria-label="Main Navigation" className="hidden lg:flex items-center gap-1 xl:gap-2">
           {navLinks.map((link) => (
             <button
               key={link.id}
               type="button"
               onClick={() => navigateTo(link.id)}
-              className={`px-2.5 py-1.5 text-[13px] font-bold rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
+              className={`px-3 py-1.5 text-[13px] font-bold rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
                 activeItem === link.id
-                  ? 'text-[#2563EB] bg-[#EFF6FF]'
-                  : 'text-[#0F172A] hover:text-[#2563EB] hover:bg-[#F8FAFC]'
+                  ? 'text-[#0759E8] bg-[#EAF4FF]'
+                  : 'text-[#14213D] hover:text-[#0759E8] hover:bg-[#F8FAFC]'
               }`}
             >
               {link.label}
@@ -228,8 +215,8 @@ export default function Navbar({
           <button
             type="button"
             onClick={triggerSearchFocus}
-            className="flex items-center gap-2 px-3 py-2 text-xs text-[#64748B] bg-[#F8FAFC] hover:bg-[#EFF6FF] hover:text-[#2563EB] border border-[#E2E8F0] rounded-xl transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]"
-            title="Search jobs, schemes, guides and services (Press / or Ctrl+K)"
+            className="flex items-center gap-2 px-3 py-2 text-xs text-[#64748B] bg-[#F8FAFC] hover:bg-[#EAF4FF] hover:text-[#0759E8] border border-[#E2E8F0] rounded-xl transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0759E8]"
+            title="Search jobs, schemes, guides and tools (Press / or Ctrl+K)"
             aria-label="Search CSC DOST"
           >
             <Search className="w-3.5 h-3.5 text-[#64748B]" />
@@ -243,7 +230,7 @@ export default function Navbar({
           <button
             type="button"
             onClick={() => navigateTo('services')}
-            className="hidden sm:inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-bold rounded-xl transition-all shadow-xs hover:shadow-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#2563EB]"
+            className="hidden sm:inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#0759E8] hover:bg-[#0646b8] text-white text-xs sm:text-sm font-bold rounded-xl transition-all shadow-xs hover:shadow-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0759E8]"
           >
             <span>Explore Services</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -253,7 +240,7 @@ export default function Navbar({
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="xl:hidden p-2 text-[#0F172A] hover:bg-[#F8FAFC] rounded-lg border border-[#E2E8F0] cursor-pointer"
+            className="lg:hidden p-2 text-[#14213D] hover:bg-[#F8FAFC] rounded-lg border border-[#E2E8F0] cursor-pointer"
             aria-label="Toggle navigation menu"
             aria-expanded={mobileMenuOpen}
           >
@@ -265,7 +252,7 @@ export default function Navbar({
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="xl:hidden bg-white border-b border-[#E2E8F0] px-4 py-4 space-y-3 shadow-lg animate-fade-in max-h-[80vh] overflow-y-auto">
+        <div className="lg:hidden bg-white border-b border-[#E2E8F0] px-4 py-4 space-y-3 shadow-lg animate-fade-in max-h-[80vh] overflow-y-auto">
           <div className="grid grid-cols-2 gap-2 pb-2 border-b border-[#E2E8F0]">
             {navLinks.map((link) => (
               <button
@@ -274,8 +261,8 @@ export default function Navbar({
                 onClick={() => navigateTo(link.id)}
                 className={`text-left px-3 py-2 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
                   activeItem === link.id
-                    ? 'text-[#2563EB] bg-[#EFF6FF]'
-                    : 'text-[#0F172A] hover:bg-slate-50'
+                    ? 'text-[#0759E8] bg-[#EAF4FF]'
+                    : 'text-[#14213D] hover:bg-slate-50'
                 }`}
               >
                 {link.label}
@@ -287,7 +274,7 @@ export default function Navbar({
             <button
               type="button"
               onClick={() => navigateTo('services')}
-              className="w-full py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold rounded-xl text-center shadow-xs cursor-pointer flex items-center justify-center gap-2"
+              className="w-full py-2.5 bg-[#0759E8] hover:bg-[#0646b8] text-white text-xs font-bold rounded-xl text-center shadow-xs cursor-pointer flex items-center justify-center gap-2"
             >
               <span>Explore Services</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -295,8 +282,17 @@ export default function Navbar({
 
             <button
               type="button"
+              onClick={() => navigateTo('tools')}
+              className="w-full py-2 bg-[#EAF4FF] hover:bg-blue-100 text-[#0759E8] border border-[#BFDBFE] text-xs font-bold rounded-xl text-center cursor-pointer flex items-center justify-center gap-2"
+            >
+              <Wrench className="w-3.5 h-3.5" />
+              <span>Free Online Tools</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => navigateTo('track')}
-              className="w-full py-2 bg-[#F8FAFC] hover:bg-slate-100 text-[#0F172A] border border-[#E2E8F0] text-xs font-bold rounded-xl text-center cursor-pointer"
+              className="w-full py-2 bg-[#F8FAFC] hover:bg-slate-100 text-[#14213D] border border-[#E2E8F0] text-xs font-bold rounded-xl text-center cursor-pointer"
             >
               Track Existing Application
             </button>

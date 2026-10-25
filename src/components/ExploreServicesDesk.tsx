@@ -44,6 +44,8 @@ export default function ExploreServicesDesk({ onApplyService, selectedService, o
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'cards_adda' | 'revenue' | 'jk_state' | 'csc' | 'digital' | 'education' | 'business'>('all');
   const [selectedServiceItem, setSelectedServiceItem] = useState<ServiceItem | null>(null);
 
+  const [showAllServices, setShowAllServices] = useState(false);
+
   // Sharing & Notification States
   const [shareToast, setShareToast] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -113,460 +115,149 @@ export default function ExploreServicesDesk({ onApplyService, selectedService, o
     return matchesCategory && matchesSearch;
   });
 
+  const displayedServices = showAllServices ? filteredServices : filteredServices.slice(0, 9);
+
   const handleApply = (service: ServiceItem) => {
     setSelectedServiceItem(null);
     onApplyService(service.name);
   };
 
-  const getServiceIcon = (id: string, category: string) => {
-    if (id.includes('pan')) return CreditCard;
-    if (id.includes('aadhaar')) return Fingerprint;
-    if (id.includes('voter')) return CheckCircle;
-    if (id.includes('ayushman')) return ShieldCheck;
-    if (id.includes('pmkisan')) return FileCheck;
-    if (id.includes('eshram')) return Edit;
-    if (id.includes('certif')) return FileText;
-    if (id.includes('passport')) return Shield;
-    if (category === 'csc') return Landmark;
-    if (category === 'digital') return Laptop;
-    if (category === 'education') return GraduationCap;
-    return Briefcase;
-  };
-
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'csc':
-        return Landmark;
-      case 'digital':
-        return Laptop;
-      case 'education':
-        return GraduationCap;
-      case 'business':
-        return Briefcase;
-      default:
-        return Layers;
-    }
-  };
-
-  const getFeeDetails = (service: ServiceItem) => {
-    if (service.id === 'csc-pan') {
-      return { govtFee: '₹107', cscFee: '₹70 (CSC Charge)', time: '2-3 Working Days' };
-    }
-    if (service.id === 'csc-aadhaar') {
-      return { govtFee: '₹50', cscFee: '₹70 (CSC Charge)', time: '24 Hours Slot' };
-    }
-    if (service.id === 'csc-ayushman') {
-      return { govtFee: '₹0 (Free)', cscFee: '₹70 (CSC Charge)', time: 'Same Day' };
-    }
-    if (service.id === 'csc-voter') {
-      return { govtFee: '₹0 (Free)', cscFee: '₹70 (CSC Charge)', time: '3-5 Working Days' };
-    }
-    if (service.id === 'csc-pmkisan') {
-      return { govtFee: '₹15', cscFee: '₹70 (CSC Charge)', time: 'Same Day' };
-    }
-
-    // Default parser
-    const priceParts = service.price.split('+');
-    let govtFee = 'Govt Fee As Applicable';
-    let cscFee = '₹70 (CSC Charge)';
-
-    if (priceParts.length > 1) {
-      govtFee = priceParts[0].trim();
-      cscFee = '₹70 (CSC Charge)';
-    } else if (service.price.toLowerCase().includes('free')) {
-      govtFee = '₹0 (Free)';
-      cscFee = '₹70 (CSC Charge)';
-    } else {
-      govtFee = service.price;
-      cscFee = '₹70 (CSC Charge)';
-    }
-
-    return {
-      govtFee,
-      cscFee,
-      time: service.estimatedTime || '1-3 Working Days'
-    };
-  };
-
   return (
-    <div className="bg-white dark:bg-slate-900/40 border-b border-slate-200/50 dark:border-slate-800/60 py-6 sm:py-10 transition-colors duration-300 scroll-mt-24 w-full" id="services">
-      <div className="w-full max-w-7xl mx-auto px-1.5 sm:px-4 md:px-6">
-        
-        {/* Section Header */}
-        <div id="services-board" className="max-w-7xl mx-auto mb-2 sm:mb-3 scroll-mt-24">
-          <div className="flex items-center justify-center border-b border-slate-200 dark:border-slate-800 pb-1.5 sm:pb-2">
-            <h2 className="text-base sm:text-lg md:text-xl font-black text-slate-900 dark:text-white tracking-wider font-display uppercase text-center">
-              CSC E-SERVICES
-            </h2>
-          </div>
+    <section id="services" aria-labelledby="services-board-heading" className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-5 scroll-mt-20">
+      <div id="services-board" className="scroll-mt-20" />
+
+      {/* Section Header matching Latest Recruitment & Exam Notices */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E2E8F0] pb-3">
+        <div>
+          <span className="text-xs font-bold uppercase text-[#0759E8] tracking-wider block mb-1">
+            CSC E-Services
+          </span>
+          <h2 id="services-board-heading" className="text-xl sm:text-2xl font-black text-[#0B1F49] tracking-tight">
+            CSC E-Services &amp; Digital Assistance
+          </h2>
+          <p className="text-xs sm:text-sm text-[#64748B]">
+            Verified government certificates, instant smart cards, J&amp;K revenue records, and citizen e-services.
+          </p>
         </div>
 
-        {/* MODERN CSC E-SERVICES QUICK ACCESS GRID - 4 IN A ROW ON MOBILE */}
-        <div className="max-w-7xl mx-auto mb-3 sm:mb-4">
-          <div className="grid grid-cols-4 gap-1.5 sm:gap-2.5">
-            {[
-              {
-                id: 'all',
-                label: 'All',
-                fullLabel: 'All Services',
-                gradient: 'from-blue-600 to-indigo-800',
-                border: 'border-blue-500/40',
-                icon: Layers,
-              },
-              {
-                id: 'cards_adda',
-                label: 'Cards',
-                fullLabel: 'Instant Cards',
-                gradient: 'from-amber-500 to-orange-600',
-                border: 'border-amber-500/40',
-                icon: CreditCard,
-              },
-              {
-                id: 'revenue',
-                label: 'Revenue',
-                fullLabel: 'JK Revenue',
-                gradient: 'from-emerald-600 to-teal-700',
-                border: 'border-emerald-500/40',
-                icon: Landmark,
-              },
-              {
-                id: 'jk_state',
-                label: 'JK State',
-                fullLabel: 'JK State e-Services',
-                gradient: 'from-indigo-600 to-blue-700',
-                border: 'border-indigo-500/40',
-                icon: ShieldCheck,
-              },
-              {
-                id: 'csc',
-                label: 'Govt CSC',
-                fullLabel: 'CSC Govt Portals',
-                gradient: 'from-purple-600 to-indigo-700',
-                border: 'border-purple-500/40',
-                icon: Building2,
-              },
-              {
-                id: 'digital',
-                label: 'Digital',
-                fullLabel: 'Cyber & Digital',
-                gradient: 'from-cyan-600 to-blue-700',
-                border: 'border-cyan-500/40',
-                icon: Laptop,
-              },
-              {
-                id: 'education',
-                label: 'Edu Desk',
-                fullLabel: 'Education Desk',
-                gradient: 'from-teal-600 to-emerald-700',
-                border: 'border-teal-500/40',
-                icon: GraduationCap,
-              },
-              {
-                id: 'business',
-                label: 'Business',
-                fullLabel: 'Business & Tax',
-                gradient: 'from-rose-600 to-red-700',
-                border: 'border-rose-500/40',
-                icon: Briefcase,
-              },
-            ].map((cat) => {
-              const isActive = selectedCategory === cat.id;
-              const IconComponent = cat.icon;
-              return (
-                <button
-                  key={cat.id}
-                  id={`services-cat-btn-${cat.id}`}
-                  onClick={() => setSelectedCategory(cat.id as any)}
-                  className={`group relative h-10 sm:h-11 px-1.5 sm:px-3 rounded-lg sm:rounded-xl text-white transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 shadow-sm border ${cat.border} bg-gradient-to-r ${cat.gradient} hover:brightness-110 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] select-none text-center ${
-                    isActive
-                      ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900 shadow-md shadow-black/20 font-black brightness-105 scale-[1.02]'
-                      : 'opacity-95 hover:opacity-100'
-                  }`}
-                >
-                  <IconComponent className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform duration-200 group-hover:scale-110 ${isActive ? 'text-amber-300' : 'text-white/90'}`} />
-                  <span className="text-[11px] sm:text-xs md:text-[13px] font-bold tracking-tight leading-tight truncate">
-                    <span className="sm:hidden">{cat.label}</span>
-                    <span className="hidden sm:inline">{cat.fullLabel}</span>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* COMPACT E-SERVICES BOXES GRID (2 columns on mobile when all is selected, full edge-to-edge when filtered) */}
-        {(() => {
-          const displayedBoxes = [
-            {
-              id: 'cards_adda_box',
-              categoryKey: 'cards_adda',
-              title: 'Instant & Smart Cards',
-              subtitle: 'Instant e-PAN, DL, Vehicle RC, Ayushman, Voter & PVC Smart Card Services',
-              icon: CreditCard,
-              badge: 'INSTANT & SMART CARDS',
-              itemIds: [
-                'ca-ayushman-pvc',
-                'ca-dl-pvc',
-                'ca-epan-download',
-                'ca-lost-pan-find',
-                'ca-vehicle-rc-pvc',
-                'ca-aadhaar-pvc',
-                'ca-voter-pvc',
-                'ca-voter-mobile-link',
-                'ca-dsc-class3',
-                'ca-nsdl-instant-pan',
-                'ca-agri-stack',
-                'ca-ration-rice-pvc',
-                'ca-gst-registration',
-                'ca-tn-birth-cert'
-              ]
-            },
-            {
-              id: 'jk_state_box',
-              categoryKey: 'jk_state',
-              title: 'J&K State e-Services',
-              subtitle: 'Official J&K Government Certificates & Welfare Applications',
-              icon: Landmark,
-              badge: 'J&K STATE PORTAL',
-              itemIds: [
-                'jk-domicile-cert',
-                'jk-rba-cert',
-                'jk-obc-cert',
-                'jk-st-cert',
-                'jk-sc-cert',
-                'jk-alc-ib-cert',
-                'jk-pahari-cert',
-                'jk-ews-cert',
-                'jk-birth-cert',
-                'jk-death-cert',
-                'jk-marriage-cert',
-                'jk-character-cert',
-                'jk-dependent-cert',
-                'jk-unemployment-cert',
-                'jk-pension-isss',
-                'jk-ladli-beti',
-                'jk-mgnrega-jobcard',
-                'jk-trade-license',
-                'jk-building-licenses',
-                'jk-drone-permission',
-                'jk-assistive-aids',
-                'jk-senior-citizen',
-                'jk-horticulture-passbook'
-              ]
-            },
-            {
-              id: 'jk_revenue',
-              categoryKey: 'revenue',
-              title: 'JK Revenue Services',
-              subtitle: 'Revenue Department Land Records & Certificates',
-              icon: Building2,
-              badge: 'OFFICIAL REVENUE PORTAL',
-              itemIds: [
-                'rev-attestation-mutation',
-                'rev-clu',
-                'rev-copy-mutation',
-                'rev-encumbrance-cert',
-                'rev-aks-masavi',
-                'rev-chulah-chowkidara',
-                'rev-girdawari',
-                'rev-jamabandi',
-                'rev-fard',
-                'rev-field-book',
-                'rev-court-files',
-                'rev-income-cert',
-                'rev-income-dependency',
-                'rev-land-passbook',
-                'rev-legal-heir',
-                'rev-demarcation',
-                'rev-prc-files',
-                'rev-property-cert',
-                'rev-shajra-nasab'
-              ]
-            },
-            {
-              id: 'csc_identity',
-              categoryKey: 'csc',
-              title: 'Govt & Identity Cards',
-              icon: Landmark,
-              itemIds: ['csc-pan', 'csc-aadhaar', 'csc-voter', 'csc-passport', 'csc-dl']
-            },
-            {
-              id: 'welfare_health',
-              categoryKey: 'csc',
-              title: 'Welfare & Health Cards',
-              icon: ShieldCheck,
-              itemIds: ['csc-ayushman', 'csc-pmkisan', 'csc-eshram', 'csc-ration']
-            },
-            {
-              id: 'certificates_state',
-              categoryKey: 'csc',
-              title: 'State Certificates',
-              icon: FileText,
-              itemIds: ['csc-certificates']
-            },
-            {
-              id: 'digital_cyber',
-              categoryKey: 'digital',
-              title: 'Digital & Cyber Desk',
-              icon: Laptop,
-              itemIds: ['csc-utility', 'dig-print', 'dig-photo', 'dig-form']
-            },
-            {
-              id: 'education_exams',
-              categoryKey: 'education',
-              title: 'Education & Admissions',
-              icon: GraduationCap,
-              itemIds: ['edu-admissions', 'edu-scholarship', 'edu-exams']
-            },
-            {
-              id: 'business_tax',
-              categoryKey: 'business',
-              title: 'Business & Registrations',
-              icon: Briefcase,
-              itemIds: ['biz-gst', 'biz-udyam', 'biz-dsc']
-            }
-          ]
-          .filter(box => selectedCategory === 'all' || box.categoryKey === selectedCategory);
-
-          const isSingle = displayedBoxes.length === 1;
-
-          return (
-            <div className={`grid gap-2 sm:gap-4 md:gap-5 max-w-7xl mx-auto w-full ${isSingle ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-3'}`}>
-              {displayedBoxes.map(box => {
-                const BoxIcon = box.icon;
-                const allBoxItems = SERVICES_LIST.filter(s => {
-                  const isBoxMatch = box.itemIds.includes(s.id);
-                  const searchLower = searchQuery.toLowerCase();
-                  const isSearchMatch = !searchQuery || 
-                    s.name.toLowerCase().includes(searchLower) ||
-                    s.description.toLowerCase().includes(searchLower) ||
-                    s.requirements.some(req => req.toLowerCase().includes(searchLower));
-                  return isBoxMatch && isSearchMatch;
-                });
-
-                // Show top 7 items in overview mode, all items when filtered to that tab
-                const boxItems = isSingle ? allBoxItems : allBoxItems.slice(0, 7);
-
-                return (
-                  <div
-                    key={box.id}
-                    className={`bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border sm:border-2 overflow-hidden shadow-xs sm:shadow-md flex flex-col transition-all duration-300 ${
-                      box.id === 'cards_adda_box'
-                        ? 'border-purple-600 dark:border-purple-500'
-                        : box.id === 'jk_state_box'
-                        ? 'border-emerald-600 dark:border-emerald-500'
-                        : box.id === 'jk_revenue'
-                        ? 'border-amber-500 dark:border-amber-600'
-                        : 'border-blue-600 dark:border-blue-700'
-                    }`}
-                    id={`eservices-box-${box.id}`}
-                  >
-                    {/* Box Header Bar */}
-                    <div className={`${
-                      box.id === 'cards_adda_box'
-                        ? 'bg-gradient-to-r from-purple-700 via-indigo-800 to-purple-900'
-                        : box.id === 'jk_state_box'
-                        ? 'bg-gradient-to-r from-emerald-700 via-teal-800 to-emerald-900'
-                        : box.id === 'jk_revenue'
-                        ? 'bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800'
-                        : 'bg-[#1d4ed8]'
-                    } text-white px-2.5 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between font-black uppercase text-xs sm:text-base tracking-wider font-display shrink-0 shadow-xs`}>
-                      <div className="flex items-center gap-1.5 sm:gap-2 truncate">
-                        <BoxIcon className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 text-amber-300 shrink-0" />
-                        <span className="truncate">{box.title}</span>
-                      </div>
-                      <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-mono font-bold shrink-0 ml-1 bg-black/30 text-white">
-                        {allBoxItems.length}
-                      </span>
-                    </div>
-
-                    {/* Compact Minimized Items List Inside Box */}
-                    <div className={`divide-y divide-slate-100 dark:divide-slate-800/80 overflow-y-auto scrollbar-thin ${isSingle ? 'max-h-[540px] sm:max-h-[660px]' : 'max-h-[340px] sm:max-h-[380px]'}`}>
-                      {boxItems.length > 0 ? (
-                        boxItems.map(item => (
-                          <div
-                            key={item.id}
-                            onClick={() => handleOpenService(item)}
-                            className="py-1.5 px-2 sm:py-2 sm:px-3 hover:bg-blue-50/70 dark:hover:bg-slate-800/80 transition-all cursor-pointer flex items-center justify-between gap-1.5 group"
-                            id={`eservice-item-${item.id}`}
-                          >
-                            <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0">
-                              <span className={`${
-                                item.category === 'revenue' 
-                                  ? 'text-amber-500 dark:text-amber-400' 
-                                  : item.category === 'jk_state'
-                                  ? 'text-emerald-600 dark:text-emerald-400'
-                                  : item.category === 'cards_adda'
-                                  ? 'text-purple-600 dark:text-purple-400'
-                                  : 'text-blue-600 dark:text-blue-400'
-                              } font-extrabold text-xs sm:text-sm shrink-0 leading-none`}>•</span>
-                              <p className="text-[11px] sm:text-[12.5px] font-bold text-blue-900 dark:text-blue-300 group-hover:text-indigo-700 dark:group-hover:text-amber-400 group-hover:underline leading-snug transition-colors font-sans line-clamp-2 sm:line-clamp-1">
-                                {item.name}
-                              </p>
-                              {item.popular && (
-                                <span className="px-1 py-0.2 bg-amber-500 text-slate-950 font-black text-[8px] sm:text-[9px] rounded shrink-0">
-                                  HOT
-                                </span>
-                              )}
-                            </div>
-                            {isSingle && (
-                              <div className="hidden sm:flex items-center shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleApply(item);
-                                  }}
-                                  className="px-2 py-0.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-[10px] font-bold flex items-center gap-1 shadow-xs transition-transform group-hover:scale-105 cursor-pointer"
-                                >
-                                  <span>Apply</span>
-                                  <ArrowRight className="w-2.5 h-2.5" />
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        ))
-                      ) : (
-                        <div className="p-3 text-center text-xs text-slate-400 italic">
-                          No matching services
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Footer: View All Services Option */}
-                    {!isSingle ? (
-                      <div className="p-2 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-100 dark:border-slate-800 text-center shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedCategory(box.categoryKey)}
-                          className="text-[11px] sm:text-xs font-bold text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 flex items-center justify-center gap-1.5 w-full py-0.5 hover:underline transition-colors group cursor-pointer"
-                          id={`eservice-view-all-${box.id}`}
-                        >
-                          <span>View all {allBoxItems.length} {box.title}</span>
-                          <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="p-2 sm:p-2.5 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 font-mono px-3 shrink-0">
-                        <span className="font-bold text-slate-700 dark:text-slate-300">Showing all {allBoxItems.length} services</span>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedCategory('all')}
-                          className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
-                          id="eservice-back-to-all-boxes"
-                        >
-                          <span>← Back to All Services</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })()}
-
+        {filteredServices.length > 9 && (
+          <button
+            type="button"
+            onClick={() => setShowAllServices(prev => !prev)}
+            className="text-xs font-bold text-[#0759E8] hover:underline flex items-center gap-1 cursor-pointer self-start sm:self-auto"
+          >
+            <span>{showAllServices ? 'Show Featured (9)' : `View All ${filteredServices.length} Services`}</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
+
+      {/* Filter Bar matching Latest Recruitment & Exam Notices */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs font-medium">
+        {[
+          { id: 'all', label: 'All Services' },
+          { id: 'cards_adda', label: 'Instant Cards' },
+          { id: 'jk_state', label: 'JK State e-Services' },
+          { id: 'revenue', label: 'JK Revenue' },
+          { id: 'csc', label: 'CSC Govt Portals' },
+          { id: 'digital', label: 'Cyber & Digital' },
+          { id: 'education', label: 'Education Desk' },
+          { id: 'business', label: 'Business & Tax' },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            id={`services-cat-btn-${tab.id}`}
+            type="button"
+            onClick={() => {
+              setSelectedCategory(tab.id as any);
+              setShowAllServices(false);
+            }}
+            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer border ${
+              selectedCategory === tab.id
+                ? 'bg-[#0759E8] text-white border-[#0759E8] font-bold shadow-2xs'
+                : 'bg-white text-[#14213D] border-[#E2E8F0] hover:bg-[#F8FAFC]'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Services Cards Grid matching Latest Recruitment & Exam Notices */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {displayedServices.map((item) => (
+          <article
+            key={item.id}
+            id={`eservice-item-${item.id}`}
+            className="bg-white border border-[#E2E8F0] hover:border-[#0759E8] rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-xs group"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs text-[#64748B]">
+                <span className="font-bold text-[#0759E8]">{CATEGORY_LABELS[item.category]}</span>
+                {item.estimatedTime && (
+                  <span className="text-[#14213D] font-semibold">Time: {item.estimatedTime}</span>
+                )}
+              </div>
+
+              <h3
+                onClick={() => handleOpenService(item)}
+                className="text-sm sm:text-base font-bold text-[#14213D] hover:text-[#0759E8] cursor-pointer transition-colors leading-snug line-clamp-2"
+              >
+                {item.name}
+              </h3>
+
+              {item.price && (
+                <p className="text-xs text-[#14213D]">
+                  Fee / Charges: <span className="font-bold text-[#0759E8]">{item.price}</span>
+                </p>
+              )}
+
+              <p className="text-xs text-[#64748B] line-clamp-2 leading-relaxed">
+                {item.description}
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="pt-4 mt-4 border-t border-[#E2E8F0] flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => handleOpenService(item)}
+                className="text-xs font-bold text-[#0759E8] hover:underline cursor-pointer"
+              >
+                View Details →
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleApply(item)}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#64748B] hover:text-[#14213D] cursor-pointer transition-colors"
+                title="Apply online for this service"
+              >
+                <span>Apply Online</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      {/* Show All / Show Less Toggle */}
+      {filteredServices.length > 9 && (
+        <div className="pt-2 flex justify-center">
+          <button
+            type="button"
+            onClick={() => setShowAllServices(prev => !prev)}
+            className="px-4 py-2 rounded-lg text-xs font-bold bg-white text-[#14213D] border border-[#E2E8F0] hover:border-[#0759E8] hover:text-[#0759E8] transition-colors cursor-pointer flex items-center gap-1.5"
+          >
+            <span>
+              {showAllServices
+                ? 'Show Fewer Services'
+                : `View All ${filteredServices.length} Services in ${selectedCategory === 'all' ? 'Catalogue' : CATEGORY_LABELS[selectedCategory]}`}
+            </span>
+            <ArrowRight className={`w-3.5 h-3.5 transition-transform ${showAllServices ? '-rotate-90' : ''}`} />
+          </button>
+        </div>
+      )}
 
       {/* SERVICE DETAILS MODAL */}
       {selectedServiceItem && (
@@ -823,7 +514,7 @@ export default function ExploreServicesDesk({ onApplyService, selectedService, o
         </div>
       )}
 
-    </div>
+    </section>
   );
 }
 

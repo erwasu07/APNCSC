@@ -19,9 +19,13 @@ interface ConvertedItem {
   sizeKb: number;
 }
 
-export default function ImageConverterTool() {
+interface ImageConverterToolProps {
+  initialFormat?: 'image/jpeg' | 'image/png' | 'image/webp';
+}
+
+export default function ImageConverterTool({ initialFormat = 'image/jpeg' }: ImageConverterToolProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [targetFormat, setTargetFormat] = useState<'image/jpeg' | 'image/png' | 'image/webp'>('image/jpeg');
+  const [targetFormat, setTargetFormat] = useState<'image/jpeg' | 'image/png' | 'image/webp'>(initialFormat);
   const [quality, setQuality] = useState<number>(90);
   const [transparencyBg, setTransparencyBg] = useState<string>('#FFFFFF');
   const [isConverting, setIsConverting] = useState(false);

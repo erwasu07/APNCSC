@@ -28,6 +28,7 @@ import {
   incrementViews, 
   getAnalytics 
 } from './src/dbServer';
+import { persistCustomerApplication, getServerSupabaseClient } from './src/lib/supabaseServer';
 
 // Setup environment variables
 import dotenv from 'dotenv';
@@ -363,11 +364,13 @@ app.get('/api/appointments/next-token', (req, res) => {
   res.json({ success: true, nextToken, seq: nextSeq });
 });
 
-// Public API: Get single application by token / ID
-app.get('/api/appointments/:id', (req, res) => {
+// Public API: Get single application by token / ID (local DB with Supabase fallback)
+app.get('/api/appointments/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const db = getDb();
   const targetId = (id || '').toString().toLowerCase();
+
+  // 1. Check local database
   const found = (db.appointments || []).find((a: any) => {
     const appIdStr = (a.appId || a.id || '').toString().toLowerCase();
     const utrStr = (a.utrNumber || '').toString().toLowerCase();
@@ -377,6 +380,47 @@ app.get('/api/appointments/:id', (req, res) => {
   if (found) {
     return res.json(found);
   }
+
+  // 2. Fallback to Supabase 'applications' table
+  try {
+    const supabase = getServerSupabaseClient();
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('applications')
+        .select('*')
+        .or(`token_id.eq.${id},id.eq.${id}`)
+        .limit(1);
+
+      if (!error && data && data.length > 0) {
+        const row = data[0];
+        const mappedApp = {
+          appId: row.token_id || row.id,
+          id: row.token_id || row.id,
+          name: row.full_name,
+          customerName: row.full_name,
+          phone: row.whatsapp_number,
+          phoneNumber: row.whatsapp_number,
+          email: row.email_address || '',
+          emailAddress: row.email_address || '',
+          service: row.service_selected,
+          selectedService: row.service_selected,
+          status: row.status || 'Pending',
+          paymentMode: row.payment_mode || 'cash',
+          utrNumber: row.utr_number || 'N/A',
+          totalAmount: Number(row.total_amount) || 0,
+          userCategory: row.user_category || 'General/OBC',
+          documents: Array.isArray(row.document_urls) ? row.document_urls : [],
+          submittedAt: row.created_at,
+          createdAt: row.created_at,
+          payload: row.payload
+        };
+        return res.json(mappedApp);
+      }
+    }
+  } catch (supaErr) {
+    console.warn('[Server] Supabase single app lookup notice:', supaErr);
+  }
+
   return res.status(404).json({ error: 'Application record not found' });
 });
 
@@ -408,8 +452,222 @@ app.delete('/api/appointments/:id', (req, res) => {
   }
 });
 
-// Public API: Book appointment / Submit online application
-app.post('/api/appointments', (req, res) => {
+// Rate-limiting tracker for public submissions (prevent spam, allow retries)
+const submissionRateMap = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = submissionRateMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    submissionRateMap.set(ip, { count: 1, resetAt: now + 60000 });
+    return true;
+  }
+  if (entry.count >= 25) {
+    return false;
+  }
+  entry.count++;
+  return true;
+}
+
+// ============================================================
+// DEDICATED REAL CUSTOMER APPLICATION SUBMISSION ENDPOINT
+// ============================================================
+app.post('/api/applications/submit', async (req: Request, res: Response) => {
+  const clientIp = (req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '127.0.0.1').split(',')[0].trim();
+
+  if (!checkRateLimit(clientIp)) {
+    return res.status(429).json({
+      success: false,
+      error: 'Submission rate limit reached. Please wait a minute before submitting again.'
+    });
+  }
+
+  const {
+    appId,
+    idempotencyKey,
+    customerName,
+    name,
+    applicantName,
+    phoneNumber,
+    phone,
+    mobile,
+    emailAddress,
+    email,
+    selectedService,
+    service,
+    userCategory,
+    dateOfBirth,
+    paymentMode,
+    utrNumber,
+    totalAmount,
+    message,
+    documents,
+    mandatoryDocName,
+    status
+  } = req.body || {};
+
+  const finalName = (customerName || name || applicantName || '').toString().trim();
+  const rawPhone = (phoneNumber || phone || mobile || '').toString().trim();
+  const digitsOnly = rawPhone.replace(/\D/g, '');
+  const finalService = (selectedService || service || '').toString().trim();
+
+  // Strict Validation Rules
+  if (!finalName) {
+    return res.status(400).json({
+      success: false,
+      error: 'Full Name is required to register an official application.'
+    });
+  }
+
+  if (digitsOnly.length < 10) {
+    return res.status(400).json({
+      success: false,
+      error: 'A valid 10-digit WhatsApp Mobile Number is required.'
+    });
+  }
+
+  if (!finalService) {
+    return res.status(400).json({
+      success: false,
+      error: 'Please select an official government service or specify your requirement.'
+    });
+  }
+
+  // Generate / verify unique token ID
+  let assignedAppId = (appId || idempotencyKey || '').toString().trim();
+  if (!assignedAppId || !assignedAppId.startsWith('CSC')) {
+    const db = getDb();
+    let maxSeq = 0;
+    (db.appointments || []).forEach((a: any) => {
+      const idStr = (a.appId || a.id || '').toString();
+      const match = idStr.match(/^CSC21251567(\d+)/i);
+      if (match && match[1]) {
+        const num = parseInt(match[1], 10);
+        if (!isNaN(num) && num > maxSeq) maxSeq = num;
+      }
+    });
+    const nextSeq = maxSeq + 1;
+    assignedAppId = `CSC21251567${String(nextSeq).padStart(3, '0')}`;
+  }
+
+  const nowIso = new Date().toISOString();
+  const currentDate = nowIso.split('T')[0];
+  const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+  // 1. PERSIST TO SUPABASE (Awaited with verified confirmation)
+  const persistResult = await persistCustomerApplication({
+    appId: assignedAppId,
+    idempotencyKey: idempotencyKey || assignedAppId,
+    customerName: finalName,
+    phoneNumber: digitsOnly.length === 10 ? digitsOnly : rawPhone,
+    emailAddress: (emailAddress || email || '').trim(),
+    selectedService: finalService,
+    userCategory: userCategory || 'General/OBC',
+    dateOfBirth: dateOfBirth || 'N/A',
+    paymentMode: paymentMode || 'Pay at CSC Desk Upon Completion',
+    utrNumber: utrNumber || 'N/A',
+    totalAmount: typeof totalAmount === 'number' ? totalAmount : Number(totalAmount) || 0,
+    message: message || 'None',
+    status: status || 'Pending',
+    submittedAt: nowIso,
+    mandatoryDocName: mandatoryDocName,
+    documents: Array.isArray(documents) ? documents : []
+  });
+
+  if (!persistResult.success) {
+    console.error(`❌ [Submission Error] Customer submission failed for ${finalName}:`, persistResult.error);
+    return res.status(500).json({
+      success: false,
+      appId: assignedAppId,
+      error: persistResult.error || 'Failed to save application to Supabase database. Please try again.'
+    });
+  }
+
+  // 2. Synchronize with local server database and SSE stream
+  const sanitizedDocs = (persistResult.data?.document_urls || []).map((docItem: any, idx: number) => ({
+    id: docItem.id || `doc-${idx}`,
+    name: docItem.name || 'Document',
+    size: docItem.size || 0,
+    type: docItem.type || 'application/octet-stream',
+    url: docItem.url || ''
+  }));
+
+  const localAppointment = addAppointment({
+    appId: assignedAppId,
+    id: assignedAppId,
+    name: finalName,
+    email: (emailAddress || email || '').trim(),
+    phone: digitsOnly.length === 10 ? digitsOnly : rawPhone,
+    service: finalService,
+    appointmentDate: currentDate,
+    appointmentTime: currentTime,
+    message: message || 'None',
+    dateOfBirth: dateOfBirth || 'N/A',
+    userCategory: userCategory || 'General/OBC',
+    paymentMode: paymentMode || 'Pay at CSC Desk Upon Completion',
+    utrNumber: utrNumber || 'N/A',
+    totalAmount: typeof totalAmount === 'number' ? totalAmount : Number(totalAmount) || 0,
+    documents: sanitizedDocs,
+    status: 'Pending',
+    submittedAt: `${currentDate} ${currentTime}`,
+    createdAt: nowIso
+  });
+
+  broadcastRealtimeEvent('APPOINTMENT_ADDED', localAppointment);
+
+  const db = getDb();
+  const docCount = sanitizedDocs.length;
+
+  // 3. Send notifications
+  if (emailAddress && emailAddress !== 'N/A') {
+    simulateEmail(
+      emailAddress,
+      `Official Application Receipt - ${db.settings.cafeName}`,
+      `📅 Hello ${finalName},<br/><br/>
+      Your application for <b>${finalService}</b> has been securely registered in our CSC database.<br/>
+      <b>Official Tracking Token:</b> <b>${assignedAppId}</b><br/>
+      Attached Documents: <b>${docCount} file(s) processed</b>.<br/>
+      Our authorized staff will review and process your file.<br/><br/>
+      Track Status: <a href="https://www.cscdost.com/#track">https://www.cscdost.com/#track</a><br/><br/>
+      Regards,<br/>CSC DOST Portal - ${db.settings.cafeName}`
+    );
+  }
+
+  // Webhook notification to Make.com / WhatsApp
+  const makeWebhook = process.env.WHATSAPP_BROADCAST_WEBHOOK_URL || 'https://hook.eu1.make.com/64f9lm3a5sgm4pt9qbc832xgx0nw6bpl';
+  if (makeWebhook && makeWebhook.startsWith('http')) {
+    fetch(makeWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event: 'new_booking_application',
+        category: 'booking',
+        title: `Application Registered: ${finalService}`,
+        body: `Hello ${finalName}, your application for ${finalService} has been registered. Token ID: ${assignedAppId}. Track your status at https://www.cscdost.com/#track`,
+        token_id: assignedAppId,
+        customer_name: finalName,
+        customer_phone: digitsOnly,
+        service: finalService,
+        timestamp: nowIso
+      })
+    }).catch(err => {
+      console.warn('[Webhook Auto-Dispatch] Notification ping error:', err.message);
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    appId: assignedAppId,
+    token_id: assignedAppId,
+    status: 'Pending',
+    data: persistResult.data,
+    documentWarnings: persistResult.documentWarnings,
+    message: 'Application registered and verified in Supabase database.'
+  });
+});
+
+// Legacy Public API: Book appointment / Submit online application (with automatic Supabase sync)
+app.post('/api/appointments', async (req: Request, res: Response) => {
   const { 
     appId, 
     id,
@@ -484,6 +742,25 @@ app.post('/api/appointments', (req, res) => {
   const db = getDb();
   broadcastRealtimeEvent('APPOINTMENT_ADDED', appointment);
 
+  // Background Supabase Sync for legacy endpoint
+  persistCustomerApplication({
+    appId: finalAppId,
+    customerName: finalName,
+    phoneNumber: finalPhone,
+    emailAddress: finalEmail,
+    selectedService: finalService,
+    userCategory: userCategory || 'General/OBC',
+    dateOfBirth: dateOfBirth || 'N/A',
+    paymentMode: paymentMode || 'cash',
+    utrNumber: utrNumber || 'N/A',
+    totalAmount: typeof totalAmount === 'number' ? totalAmount : Number(totalAmount) || 0,
+    message: message || 'None',
+    status: status || 'Pending',
+    documents: rawDocs
+  }).catch(err => {
+    console.warn('[Server] Supabase background sync notice:', err);
+  });
+
   const docCount = Array.isArray(documents) ? documents.length : 0;
 
   // Send confirmation email to client
@@ -491,8 +768,8 @@ app.post('/api/appointments', (req, res) => {
     simulateEmail(
       email,
       `Application & Slot Confirmation - ${db.settings.cafeName}`,
-      `📅 Hello ${name},<br/><br/>
-      Your application/booking request for <b>${service}</b> [ID: <b>${appointment.appId}</b>] has been registered.<br/>
+      `📅 Hello ${finalName},<br/><br/>
+      Your application/booking request for <b>${finalService}</b> [ID: <b>${appointment.appId}</b>] has been registered.<br/>
       Attached Documents: <b>${docCount} file(s) uploaded</b>.<br/>
       Our team will review your application and documents.<br/><br/>
       Regards,<br/>CSC DOST Portal - ${db.settings.cafeName}`
@@ -502,21 +779,21 @@ app.post('/api/appointments', (req, res) => {
   // Send notification to owner
   simulateEmail(
     db.settings.email,
-    `🚨 NEW Application Submitted: ${service} by ${name} [${docCount} Docs]`,
+    `🚨 NEW Application Submitted: ${finalService} by ${finalName} [${docCount} Docs]`,
     `🔔 Hello Desk Administrator,<br/><br/>
     A customer has submitted a new application with documents on the portal:<br/><br/>
     <b>Application Details:</b><br/>
     - Application Token ID: ${appointment.appId}<br/>
-    - Customer Name: ${name}<br/>
-    - Phone: ${phone}<br/>
-    - Service: ${service}<br/>
+    - Customer Name: ${finalName}<br/>
+    - Phone: ${finalPhone}<br/>
+    - Service: ${finalService}<br/>
     - Attached Documents: ${docCount} file(s) uploaded<br/>
     - Payment Mode: ${paymentMode || 'cash'} (UTR: ${utrNumber || 'N/A'})<br/>
     - Date & Time: ${appointmentDate || currentDate} at ${appointmentTime || currentTime}<br/><br/>
     Log in to the Admin Dashboard to view/download attached documents.`
   );
 
-  // Automated Webhook Trigger to Make.com for automated Email & WhatsApp dispatch
+  // Automated Webhook Trigger to Make.com
   const makeWebhook = process.env.WHATSAPP_BROADCAST_WEBHOOK_URL || 'https://hook.eu1.make.com/64f9lm3a5sgm4pt9qbc832xgx0nw6bpl';
   if (makeWebhook && makeWebhook.startsWith('http')) {
     fetch(makeWebhook, {
@@ -1338,11 +1615,18 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 CSC DOST Server successfully started on http://0.0.0.0:${PORT}`);
+  if (!process.env.VERCEL) {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 CSC DOST Server successfully started on http://0.0.0.0:${PORT}`);
+    });
+  }
+}
+
+if (!process.env.VERCEL) {
+  startServer().catch((err) => {
+    console.error('Fatal error setting up server:', err);
   });
 }
 
-startServer().catch((err) => {
-  console.error('Fatal error setting up server:', err);
-});
+export default app;
+export { app };

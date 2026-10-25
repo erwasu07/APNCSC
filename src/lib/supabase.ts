@@ -223,11 +223,15 @@ export async function submitApplicationToSupabase(
     console.warn('Document storage upload notice:', upErr);
   }
 
-  // Format document list for JSONB column
+  // Format document list for JSONB column (ensure no bloated base64 is stored in DB JSONB)
   const docUrlsOrObjects = processedDocs.map((docItem, idx) => ({
     id: docItem.id || `doc-${idx}`,
     name: docItem.name || 'Document',
-    url: docItem.url || docItem.dataUrl || '',
+    url: (docItem.url && docItem.url.startsWith('http'))
+      ? docItem.url
+      : (docItem.dataUrl && docItem.dataUrl.startsWith('http'))
+      ? docItem.dataUrl
+      : '',
     size: docItem.size || 0,
     type: docItem.type || 'application/octet-stream',
     tokenId: appData.appId,
@@ -266,7 +270,7 @@ export async function submitApplicationToSupabase(
       totalAmount: appData.totalAmount,
       status: appData.status || 'Pending',
       submittedAt: appData.submittedAt || nowIso,
-      documents: processedDocs,
+      documents: docUrlsOrObjects,
       mandatoryDocName: appData.mandatoryDocName
     }
   };

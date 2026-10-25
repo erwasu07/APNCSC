@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowUp, Info, MapPin, ExternalLink, Lock } from 'lucide-react';
+import { ArrowUp, Info, MapPin, ExternalLink, Lock, Wrench, ShieldCheck, Heart } from 'lucide-react';
 import { PolicyTab } from './PrivacyPolicyModal';
 
 interface FooterProps {
@@ -34,23 +34,18 @@ export default function Footer({
       return;
     }
     if (target === 'services' || target === 'csc-services') {
-      const el = document.getElementById('services-catalogue') || document.getElementById('services') || document.getElementById('services-board');
+      const el = document.getElementById('services-bento') || document.getElementById('services-catalogue');
       if (el) el.scrollIntoView({ behavior: 'smooth' });
       else window.location.hash = '#services-catalogue';
       return;
     }
-    if (target === 'aadhaar') {
-      window.location.hash = '#service/aadhaar-card-services';
+    if (target === 'tools') {
+      window.location.hash = '#tools';
       return;
     }
-    if (target === 'pan') {
-      window.location.hash = '#service/pan-card-new-correction';
-      return;
-    }
-    if (target === 'guides') {
-      const el = document.getElementById('popular-guides-section') || document.getElementById('knowledge-hub');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-      else window.location.hash = '#guides';
+    if (target.startsWith('tool:')) {
+      const toolId = target.replace('tool:', '');
+      window.location.hash = `#tools/${toolId}`;
       return;
     }
     if (target === 'education') {
@@ -58,17 +53,8 @@ export default function Footer({
       if (el) el.scrollIntoView({ behavior: 'smooth' });
       return;
     }
-    if (target === 'tools') {
-      window.location.hash = '#tools';
-      return;
-    }
     if (target === 'about') {
       const el = document.getElementById('node-info');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-      return;
-    }
-    if (target === 'faq') {
-      const el = document.getElementById('faq');
       if (el) el.scrollIntoView({ behavior: 'smooth' });
       return;
     }
@@ -80,41 +66,104 @@ export default function Footer({
   };
 
   return (
-    <footer id="footer" className="bg-[#12304A] text-slate-300 pt-12 pb-8 border-t border-slate-800 font-sans">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
+    <footer id="footer" className="bg-[#0B1F49] text-slate-300 pt-14 pb-8 border-t border-slate-800 font-sans">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-12">
         
-        {/* Main 3-Column Footer Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+        {/* Main 4-Column Footer Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10">
           
           {/* Column 1: CSC DOST Brand & Independent Summary */}
-          <div className="md:col-span-5 space-y-3">
-            <div className="flex items-center gap-2.5">
+          <div className="lg:col-span-4 space-y-3.5">
+            <div className="flex items-center gap-3">
               <img
                 src="/favicon.svg"
                 alt="CSC DOST"
-                width="32"
-                height="32"
-                className="w-8 h-8 object-contain"
+                width="36"
+                height="36"
+                className="w-9 h-9 object-contain"
               />
-              <span className="text-xl font-extrabold text-white tracking-tight">
+              <span className="text-xl font-black text-white tracking-tight">
                 CSC DOST
               </span>
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed max-w-sm">
-              CSC DOST is an independent citizen digital assistance and knowledge portal. We provide simplified recruitment updates, welfare scheme guidance, and online form-filling assistance linking to official government portals.
+              CSC DOST is an independent citizen digital assistance and knowledge portal. We provide simplified recruitment updates, welfare scheme guidance, online form-filling assistance, and free browser-based document tools.
             </p>
 
-            <div className="pt-2 text-xs text-slate-400 space-y-1">
+            <div className="pt-2 text-xs text-slate-400 space-y-1 border-t border-slate-800/80">
               <p>Operator: Wasim Ahmad Khanday (CSC ID: 212515670018)</p>
               <p>Center: Sangran Qazigund, Anantnag, Jammu &amp; Kashmir 192221</p>
             </div>
           </div>
 
-          {/* Column 2: Explore */}
-          <div className="md:col-span-3 space-y-3">
+          {/* Column 2: Free Online Tools */}
+          <div className="lg:col-span-3 space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-white">
-              Explore
+              Online Tools
+            </h3>
+            <ul className="space-y-2 text-xs text-slate-300 font-medium">
+              <li>
+                <button
+                  type="button"
+                  onClick={() => handleNav('tool:image-compressor')}
+                  className="hover:text-white transition-colors cursor-pointer"
+                >
+                  Image Compressor (20KB / 50KB)
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => handleNav('tool:image-to-pdf')}
+                  className="hover:text-white transition-colors cursor-pointer"
+                >
+                  Image to PDF Maker
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => handleNav('tool:pdf-merge')}
+                  className="hover:text-white transition-colors cursor-pointer"
+                >
+                  PDF Merge Tool
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => handleNav('tool:background-remover')}
+                  className="hover:text-white transition-colors cursor-pointer"
+                >
+                  Background Remover
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => handleNav('tool:passport-photo-maker')}
+                  className="hover:text-white transition-colors cursor-pointer"
+                >
+                  Passport Photo Maker (35×45 mm)
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => handleNav('tool:signature-resizer')}
+                  className="hover:text-white transition-colors cursor-pointer"
+                >
+                  Signature Resizer (10–20 KB)
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 3: Government Schemes & Updates */}
+          <div className="lg:col-span-2 space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white">
+              Schemes &amp; Jobs
             </h3>
             <ul className="space-y-2 text-xs text-slate-300 font-medium">
               <li>
@@ -123,7 +172,7 @@ export default function Footer({
                   onClick={() => handleNav('jobs')}
                   className="hover:text-white transition-colors cursor-pointer"
                 >
-                  Jobs &amp; Recruitment
+                  Latest Recruitments
                 </button>
               </li>
               <li>
@@ -132,7 +181,25 @@ export default function Footer({
                   onClick={() => handleNav('schemes')}
                   className="hover:text-white transition-colors cursor-pointer"
                 >
-                  Government Schemes
+                  PM-KISAN Samman Nidhi
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => handleNav('schemes')}
+                  className="hover:text-white transition-colors cursor-pointer"
+                >
+                  Ayushman Bharat PM-JAY
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => handleNav('education')}
+                  className="hover:text-white transition-colors cursor-pointer"
+                >
+                  Education Notices
                 </button>
               </li>
               <li>
@@ -144,40 +211,13 @@ export default function Footer({
                   CSC E-Services
                 </button>
               </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => handleNav('education')}
-                  className="hover:text-white transition-colors cursor-pointer"
-                >
-                  Education &amp; KU/CUS Notices
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => handleNav('tools')}
-                  className="hover:text-white transition-colors cursor-pointer"
-                >
-                  Citizen Tools &amp; Calculators
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => handleNav('guides')}
-                  className="hover:text-white transition-colors cursor-pointer"
-                >
-                  Citizen Guides &amp; Knowledge Hub
-                </button>
-              </li>
             </ul>
           </div>
 
-          {/* Column 3: Information & Legal */}
-          <div className="md:col-span-4 space-y-3">
+          {/* Column 4: Information & Policies */}
+          <div className="lg:col-span-3 space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-white">
-              Information &amp; Policies
+              Information &amp; Legal
             </h3>
             <ul className="space-y-2 text-xs text-slate-300 font-medium">
               <li>
@@ -225,15 +265,6 @@ export default function Footer({
                   Terms &amp; Conditions
                 </button>
               </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onOpenPrivacyPolicy?.('refund')}
-                  className="hover:text-white transition-colors cursor-pointer"
-                >
-                  Refund &amp; Cancellation Policy
-                </button>
-              </li>
             </ul>
 
             {onOpenAdmin && (
@@ -254,12 +285,12 @@ export default function Footer({
 
         {/* Independent Portal Trust & Disclaimer Banner */}
         <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-slate-300 space-y-1.5">
-          <div className="flex items-center gap-2 text-amber-400 font-bold text-xs">
+          <div className="flex items-center gap-2 text-[#F59E0B] font-bold text-xs">
             <Info className="w-4 h-4 shrink-0" />
             <span>Important Citizen Disclaimer</span>
           </div>
           <p className="leading-relaxed text-[11px] text-slate-400">
-            <strong>CSC DOST (cscdost.com)</strong> is an independent citizen digital assistance desk operated by Authorized CSC VLE Wasim Ahmad Khanday. <strong>We are NOT an official government department, ministry, or government-owned website.</strong> Official government portals can be accessed directly at <a href="https://csc.gov.in" target="_blank" rel="noopener noreferrer" className="text-amber-300 underline">csc.gov.in</a>, <a href="https://digitalseva.csc.gov.in" target="_blank" rel="noopener noreferrer" className="text-amber-300 underline">digitalseva.csc.gov.in</a>, and respective official recruiting agency portals. For all official filings, citizens are encouraged to verify notifications directly against official government gazettes.
+            <strong>CSC DOST (cscdost.com)</strong> is an independent citizen digital assistance desk operated by Authorized CSC VLE Wasim Ahmad Khanday. <strong>We are NOT an official government department, ministry, or government-owned website.</strong> Official government portals can be accessed directly at <a href="https://csc.gov.in" target="_blank" rel="noopener noreferrer" className="text-amber-300 underline">csc.gov.in</a>, <a href="https://digitalseva.csc.gov.in" target="_blank" rel="noopener noreferrer" className="text-amber-300 underline">digitalseva.csc.gov.in</a>, and respective official recruiting agency portals.
           </p>
         </div>
 

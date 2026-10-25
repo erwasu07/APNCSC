@@ -328,17 +328,112 @@ export default function ApplyDedicatedPageView({
     setIsSubmitting(true);
 
     try {
+      const selectedServiceClean =
+        formData.selectedService === 'other' || formData.selectedService === 'Custom Unlisted Request'
+          ? formData.customServiceText || 'Custom Service Request'
+          : formData.selectedService;
+
+      const userCategoryClean = formData.userCategory === 'genObc' ? 'General/OBC' : 'SC/ST/Female';
+
+      // 1. Prepare documents safely (clean format)
+      const docsToSubmit = uploadedFiles.map((f, idx) => ({
+        id: f.id || `doc-${idx}`,
+        name: f.name || 'Document',
+        size: f.size || 0,
+        type: f.type || 'application/octet-stream',
+        dataUrl: f.dataUrl
+      }));
+
+      const submitPayload = {
+        customerName: formData.customerName.trim(),
+        phoneNumber: formData.phoneNumber.trim(),
+        emailAddress: (formData.emailAddress || '').trim(),
+        dateOfBirth: formData.dateOfBirth || 'N/A',
+        selectedService: selectedServiceClean,
+        userCategory: userCategoryClean,
+        paymentMode: 'Pay at CSC Desk Upon Completion (No Advance Online Payment)',
+        utrNumber: 'N/A',
+        totalAmount: 0,
+        message: formData.additionalDetails || 'None',
+        mandatoryDocName: uploadedFiles[0]?.name || 'Aadhaar Card / ID Attached',
+        documents: docsToSubmit
+      };
+
+      let confirmedAppId: string = '';
+      let savedData: any = null;
+      let persistSuccess = false;
+      let lastErrorMessage = '';
+
+      // Pathway A: Submit to dedicated server endpoint that persists directly to Supabase
+      try {
+        const res = await fetch('/api/applications/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(submitPayload)
+        });
+
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const resData = await res.json();
+          if (res.ok && resData.success) {
+            persistSuccess = true;
+            confirmedAppId = resData.appId || resData.token_id;
+            savedData = resData.data;
+          } else {
+            lastErrorMessage = resData.error || `Server returned error (${res.status})`;
+          }
+        } else {
+          lastErrorMessage = `API returned HTTP ${res.status}`;
+        }
+      } catch (serverErr: any) {
+        lastErrorMessage = serverErr?.message || 'Server connection notice';
+      }
+
+      // Pathway B: Direct Supabase Client Fallback (if server endpoint failed or unreachable)
+      if (!persistSuccess) {
+        console.warn('Server pathway notice, executing client-side Supabase persistence fallback:', lastErrorMessage);
+        const fallbackToken = await getNextCscTokenIdAsync();
+        const supaDirectRes = await submitApplicationToSupabase({
+          appId: fallbackToken,
+          customerName: formData.customerName.trim(),
+          phoneNumber: formData.phoneNumber.trim(),
+          emailAddress: formData.emailAddress,
+          selectedService: selectedServiceClean,
+          userCategory: userCategoryClean,
+          paymentMode: 'Pay at CSC Desk Upon Completion',
+          utrNumber: 'N/A',
+          totalAmount: 0,
+          status: 'Pending',
+          dateOfBirth: formData.dateOfBirth,
+          message: formData.additionalDetails,
+          mandatoryDocName: uploadedFiles[0]?.name || 'Aadhaar Card Attached',
+          submittedAt: new Date().toISOString()
+        }, uploadedFiles);
+
+        if (supaDirectRes.success && supaDirectRes.data) {
+          persistSuccess = true;
+          confirmedAppId = supaDirectRes.data?.token_id || fallbackToken;
+          savedData = supaDirectRes.data;
+        } else {
+          throw new Error(
+            supaDirectRes.error ||
+            lastErrorMessage ||
+            'Unable to secure application in Supabase database. Please check your network connection and retry.'
+          );
+        }
+      }
+
+      // 3. PERSISTENCE CONFIRMED BY DATABASE
       const uploadedDocsList = uploadedFiles.map(f => `${f.name} (${(f.size / 1024).toFixed(1)} KB)`);
-      const officialAppId = await getNextCscTokenIdAsync();
 
       const verifiedReceipt = {
-        appId: officialAppId,
-        customerName: formData.customerName,
-        phoneNumber: formData.phoneNumber,
+        appId: confirmedAppId,
+        customerName: formData.customerName.trim(),
+        phoneNumber: formData.phoneNumber.trim(),
         emailAddress: formData.emailAddress || 'N/A',
         dateOfBirth: formData.dateOfBirth || 'N/A',
-        selectedService: formData.selectedService === 'other' || formData.selectedService === 'Custom Unlisted Request' ? formData.customServiceText : formData.selectedService,
-        userCategory: formData.userCategory === 'genObc' ? 'General/OBC' : 'SC/ST/Female',
+        selectedService: selectedServiceClean,
+        userCategory: userCategoryClean,
         paymentMode: 'Pay at CSC Desk Upon Completion (No Advance Online Payment)',
         utrNumber: 'N/A',
         paymentStatus: 'No Advance Online Payment Required',
@@ -354,137 +449,48 @@ export default function ApplyDedicatedPageView({
       setSubmissionReceipt(verifiedReceipt);
       setIsFormSubmitted(true);
 
-      // Upload to Supabase if configured
-      let processedDocs: UploadedDocument[] = uploadedFiles;
-      try {
-        processedDocs = await uploadMultipleDocumentsToSupabase(uploadedFiles, officialAppId);
-        setUploadedFiles(processedDocs);
-      } catch (upErr) {
-        console.warn('Supabase document upload notice:', upErr);
-      }
+      setSupabaseNotice({
+        type: 'success',
+        message: `Application permanently secured in Supabase Cloud [Token: ${confirmedAppId}]`
+      });
 
-      const nowIso = new Date().toISOString();
-      const payload = {
-        appId: officialAppId,
-        id: officialAppId,
-        name: formData.customerName,
-        customerName: formData.customerName,
-        email: formData.emailAddress || 'N/A',
-        phone: formData.phoneNumber,
-        phoneNumber: formData.phoneNumber,
-        service: verifiedReceipt.selectedService,
-        selectedService: verifiedReceipt.selectedService,
-        dateOfBirth: formData.dateOfBirth || 'N/A',
-        userCategory: verifiedReceipt.userCategory,
-        paymentMode: 'Pay at CSC Desk Upon Completion',
-        utrNumber: 'N/A',
-        totalAmount: 0,
-        message: formData.additionalDetails || 'None',
-        documents: processedDocs,
-        status: 'Registered',
-        paymentStatus: 'No Advance Online Payment Required',
-        submittedAt: nowIso,
-        createdAt: nowIso,
-        updatedAt: nowIso,
-        statusUpdatedAt: nowIso
-      };
-
-      // 1. Cloud Firestore
+      // Local storage cache for quick tracking
       try {
-        await Promise.all([
-          setDoc(doc(db, 'applications', officialAppId), payload, { merge: true }),
-          setDoc(doc(db, 'appointments', officialAppId), payload, { merge: true })
-        ]);
-      } catch (dbErr) {
-        console.warn('Firestore setDoc notice:', dbErr);
-      }
-
-      // 2. Getform.io
-      try {
-        saveApplicationToFormEndpoint(officialAppId, {
-          ...payload,
-          applicantName: formData.customerName,
-          phoneNumber: formData.phoneNumber,
-          emailAddress: formData.emailAddress,
-          selectedService: verifiedReceipt.selectedService,
-          userCategory: verifiedReceipt.userCategory,
-          totalAmount: 0,
-          documents: processedDocs
-        }).catch(() => {});
-      } catch {}
-
-      // 3. Supabase Direct Insertion & Storage Sync
-      try {
-        const supaRes = await submitApplicationToSupabase({
-          appId: officialAppId,
-          customerName: formData.customerName,
-          phoneNumber: formData.phoneNumber,
-          emailAddress: formData.emailAddress,
-          selectedService: verifiedReceipt.selectedService,
-          userCategory: verifiedReceipt.userCategory,
-          paymentMode: verifiedReceipt.paymentMode,
-          utrNumber: 'N/A',
-          totalAmount: 0,
+        const localCacheItem = {
+          ...verifiedReceipt,
+          id: confirmedAppId,
+          name: formData.customerName.trim(),
+          phone: formData.phoneNumber.trim(),
+          service: selectedServiceClean,
           status: 'Pending',
-          dateOfBirth: formData.dateOfBirth,
-          message: formData.additionalDetails,
-          mandatoryDocName: verifiedReceipt.mandatoryDocName,
-          submittedAt: nowIso
-        }, uploadedFiles);
-
-        if (supaRes.success) {
-          if (supaRes.warning) {
-            setSupabaseNotice({
-              type: 'warning',
-              message: supaRes.warning
-            });
-          } else {
-            setSupabaseNotice({
-              type: 'success',
-              message: 'Saved directly to live Supabase database & storage bucket!'
-            });
-          }
-        } else {
-          console.warn('Supabase submission notice:', supaRes.error);
-          setSupabaseNotice({
-            type: 'error',
-            message: `Supabase Error: ${supaRes.error || 'Connection notice'}`
-          });
-        }
-      } catch (sbErr: any) {
-        console.warn('Supabase direct submission exception:', sbErr);
-        setSupabaseNotice({
-          type: 'error',
-          message: `Supabase Exception: ${sbErr?.message || String(sbErr)}`
-        });
+          documents: savedData?.document_urls || []
+        };
+        const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+        localStorage.setItem(
+          'csc_local_applications',
+          JSON.stringify([localCacheItem, ...existing.filter((i: any) => i.appId !== confirmedAppId)])
+        );
+        window.dispatchEvent(new CustomEvent('csc_appointment_created', { detail: localCacheItem }));
+        window.dispatchEvent(new Event('storage'));
+      } catch (cacheErr) {
+        console.warn('Local storage cache notice:', cacheErr);
       }
 
-      // 4. LocalStorage
+      // Secondary Firestore sync (non-blocking)
       try {
-        const existing = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-        localStorage.setItem('csc_local_applications', JSON.stringify([payload, ...existing.filter((i: any) => i.appId !== officialAppId)]));
+        Promise.all([
+          setDoc(doc(db, 'applications', confirmedAppId), verifiedReceipt, { merge: true }),
+          setDoc(doc(db, 'appointments', confirmedAppId), verifiedReceipt, { merge: true })
+        ]).catch(() => {});
       } catch {}
 
-      // 5. Server API
-      try {
-        fetch('/api/appointments', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-          keepalive: true
-        }).catch(() => {});
-      } catch {}
-
-      // 6. Broadcast live events
-      try {
-        window.dispatchEvent(new CustomEvent('csc_appointment_created', { detail: payload }));
-        window.dispatchEvent(new Event('storage'));
-      } catch {}
-
+      // Trigger WhatsApp Invoice Notification
       triggerWhatsAppInvoiceDispatch(verifiedReceipt);
     } catch (err: any) {
-      console.error('Application submission error:', err);
-      setDocumentError('Error submitting application. Please try again.');
+      console.error('Customer Application Submission Error:', err);
+      // PRESERVE FORM: do not clear fields, do not flip to success
+      setIsFormSubmitted(false);
+      setDocumentError(`⚠️ Submission Failed: ${err?.message || 'Database connection error. Please try again.'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -914,6 +920,14 @@ export default function ApplyDedicatedPageView({
                   )}
                 </div>
               </div>
+
+              {/* Error Notice above Submit Button */}
+              {documentError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-bold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{documentError}</span>
+                </div>
+              )}
 
               {/* Submit Button Section */}
               <div className="pt-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">

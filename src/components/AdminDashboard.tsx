@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { db, auth, storage } from '../lib/firebase';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { db, auth } from '../lib/firebase';
 import {
   uploadReceiptFileToSupabase,
   getSupabaseClient,
@@ -9,7 +9,6 @@ import {
 } from '../lib/supabase';
 import { getFormEndpoint, setFormEndpoint } from '../lib/getform';
 import { collection, onSnapshot, doc, updateDoc, setDoc, deleteDoc } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
   signInWithEmailAndPassword,
   signInAnonymously,
@@ -36,16 +35,12 @@ import {
   LogOut,
   X,
   FileSpreadsheet,
-  Building2,
   Phone,
   Mail,
   Calendar,
-  Tag,
   CreditCard,
   IndianRupee,
   ExternalLink,
-  Info,
-  Flame,
   Check,
   Upload,
   MessageSquare,
@@ -53,19 +48,30 @@ import {
   Copy,
   CheckSquare,
   Square,
-  Send,
-  TrendingUp,
   Edit3,
-  Share2,
   Users,
   PhoneCall,
   MessageCircle,
   MapPin,
-  Unlock,
   ShieldAlert,
   Globe,
   Radio,
-  AlertCircle
+  AlertCircle,
+  LayoutDashboard,
+  FolderOpen,
+  ChevronLeft,
+  ChevronRight,
+  Menu,
+  Bell,
+  Settings,
+  ArrowLeft,
+  MoreHorizontal,
+  ArrowUpDown,
+  FileCheck,
+  SlidersHorizontal,
+  Sparkles,
+  FileImage,
+  File
 } from 'lucide-react';
 import WhatsAppBroadcaster from './WhatsAppBroadcaster';
 
@@ -74,10 +80,26 @@ interface AdminDashboardProps {
   onClose?: () => void;
 }
 
+type NavSectionId =
+  | 'overview'
+  | 'all_apps'
+  | 'pending_apps'
+  | 'process_apps'
+  | 'completed_apps'
+  | 'rejected_apps'
+  | 'documents'
+  | 'payments'
+  | 'vle_logs'
+  | 'whatsapp_sync'
+  | 'reports';
+
 export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProps) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return sessionStorage.getItem('csc_admin_authed') === 'true';
+  });
+  const [staffDisplayName, setStaffDisplayName] = useState<string>(() => {
+    return sessionStorage.getItem('csc_staff_name') || 'Mahi';
   });
 
   const [username, setUsername] = useState('');
@@ -86,9 +108,18 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   const [authLoading, setAuthLoading] = useState(false);
 
   const usernameInputRef = useRef<HTMLInputElement>(null);
+  const globalSearchInputRef = useRef<HTMLInputElement>(null);
 
-  // Tab state: 'applications' | 'vle_inquiries' | 'whatsapp_broadcast'
-  const [activeMainTab, setActiveMainTab] = useState<'applications' | 'vle_inquiries' | 'whatsapp_broadcast'>('applications');
+  // Navigation & Layout State
+  const [activeNav, setActiveNav] = useState<NavSectionId>('overview');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
+  const [mobileFilterDrawerOpen, setMobileFilterDrawerOpen] = useState<boolean>(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState<boolean>(false);
+  const [notificationsOpen, setNotificationsOpen] = useState<boolean>(false);
+
+  // New Realtime Arrival Notifications
+  const [realtimeAlerts, setRealtimeAlerts] = useState<Array<{ id: string; appId: string; name: string; service: string; time: string }>>([]);
 
   // VLE Inquiries state
   const [vleInquiries, setVleInquiries] = useState<any[]>([]);
@@ -96,36 +127,41 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   const [vleFilterState, setVleFilterState] = useState<string>('all');
   const [selectedVleIds, setSelectedVleIds] = useState<string[]>([]);
 
-  // Automatically focus Username input field upon redirection to Staff Login
-  useEffect(() => {
-    if (!isAuthenticated) {
-      const timer = setTimeout(() => {
-        if (usernameInputRef.current) {
-          try {
-            usernameInputRef.current.focus({ preventScroll: false });
-          } catch {
-            usernameInputRef.current.focus();
-          }
-        }
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [isAuthenticated]);
-
+  // Applications & Filtering State
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [paymentFilter, setPaymentFilter] = useState<string>('all');
+  const [dateRangeFilter, setDateRangeFilter] = useState<'all' | 'today' | '7days' | '30days'>('all');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'amount_high' | 'name_asc'>('newest');
+
+  // Table Pagination State
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(15);
+  const [openRowMenuId, setOpenRowMenuId] = useState<string | null>(null);
+
+  // Document & Payment View Search
+  const [docSearchQuery, setDocSearchQuery] = useState<string>('');
+  const [docTypeFilter, setDocTypeFilter] = useState<'all' | 'image' | 'pdf' | 'receipt'>('all');
+  const [paymentViewFilter, setPaymentViewFilter] = useState<'all' | 'upi_paid' | 'cash_collected' | 'cash_pending' | 'pending_verification'>('all');
+
+  // Right-Side Application Details Drawer State
+  const [drawerAppId, setDrawerAppId] = useState<string | null>(null);
+  const [drawerNoteInput, setDrawerNoteInput] = useState<string>('');
+  const [drawerNoteDirty, setDrawerNoteDirty] = useState<boolean>(false);
+  const [savingDrawerNote, setSavingDrawerNote] = useState<boolean>(false);
+
+  // Lightbox & Toast States
   const [selectedDocPreview, setSelectedDocPreview] = useState<{ name: string; url: string; type?: string } | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
-  // States for Bulk Actions & Staff Utilities
+  // Bulk Actions & Copy States
   const [selectedAppIds, setSelectedAppIds] = useState<string[]>([]);
-  const [editingStaffNotesAppId, setEditingStaffNotesAppId] = useState<string | null>(null);
-  const [staffNoteInput, setStaffNoteInput] = useState<string>('');
   const [copiedAppId, setCopiedAppId] = useState<string | null>(null);
 
-  // States for Mark Completed Upload Modal
+  // Mark Completed Upload Modal States
   const [uploadModalApp, setUploadModalApp] = useState<any | null>(null);
   const [receiptDataUrl, setReceiptDataUrl] = useState<string>('');
   const [selectedReceiptFile, setSelectedReceiptFile] = useState<File | null>(null);
@@ -134,7 +170,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
   // Getform.io / Formspree & Supabase Integration Modal States
   const [showGetformModal, setShowGetformModal] = useState(false);
-  const [snippetTab, setSnippetTab] = useState<'getform' | 'supabase' | 'sql'>('getform');
+  const [snippetTab, setSnippetTab] = useState<'getform' | 'supabase' | 'sql'>('supabase');
   const [getformEndpointInput, setGetformEndpointInput] = useState<string>(() => getFormEndpoint());
   const [getformTestResult, setGetformTestResult] = useState<{ status: 'idle' | 'testing' | 'success' | 'error'; message?: string }>({ status: 'idle' });
 
@@ -158,6 +194,101 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   const firestoreAptsMapRef = useRef<Map<string, any>>(new Map());
   const supabaseMapRef = useRef<Map<string, any>>(new Map());
 
+  // Debounce search query (200ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Synchronize sidebar status nav items with filterStatus
+  const handleSelectNav = (navId: NavSectionId) => {
+    setActiveNav(navId);
+    setMobileSidebarOpen(false);
+    setCurrentPage(1);
+
+    if (navId === 'all_apps' || navId === 'overview') {
+      setFilterStatus('all');
+    } else if (navId === 'pending_apps') {
+      setFilterStatus('pending');
+    } else if (navId === 'process_apps') {
+      setFilterStatus('approved');
+    } else if (navId === 'completed_apps') {
+      setFilterStatus('completed');
+    } else if (navId === 'rejected_apps') {
+      setFilterStatus('rejected');
+    }
+  };
+
+  // Focus Username input field upon redirection to Staff Login
+  useEffect(() => {
+    if (!isAuthenticated) {
+      const timer = setTimeout(() => {
+        if (usernameInputRef.current) {
+          try {
+            usernameInputRef.current.focus({ preventScroll: false });
+          } catch {
+            usernameInputRef.current.focus();
+          }
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated]);
+
+  // Keyboard shortcuts: Escape closes drawer/modals, Ctrl+K focuses search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        globalSearchInputRef.current?.focus();
+      } else if (e.key === 'Escape') {
+        if (selectedDocPreview) {
+          setSelectedDocPreview(null);
+        } else if (uploadModalApp) {
+          setUploadModalApp(null);
+        } else if (showGetformModal) {
+          setShowGetformModal(false);
+        } else if (drawerAppId) {
+          handleCloseDrawer();
+        } else if (openRowMenuId) {
+          setOpenRowMenuId(null);
+        } else if (profileMenuOpen) {
+          setProfileMenuOpen(false);
+        } else if (notificationsOpen) {
+          setNotificationsOpen(false);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedDocPreview, uploadModalApp, showGetformModal, drawerAppId, drawerNoteDirty, openRowMenuId, profileMenuOpen, notificationsOpen]);
+
+  // Active drawer application object (always live-synced with `applications`)
+  const selectedDrawerApp = useMemo(() => {
+    if (!drawerAppId) return null;
+    return applications.find(a => (a.appId || a.id) === drawerAppId) || null;
+  }, [drawerAppId, applications]);
+
+  const handleOpenDrawer = (app: any) => {
+    const id = app.appId || app.id;
+    setDrawerAppId(id);
+    setDrawerNoteInput(app.staffNotes || '');
+    setDrawerNoteDirty(false);
+    setOpenRowMenuId(null);
+  };
+
+  const handleCloseDrawer = () => {
+    if (drawerNoteDirty) {
+      const confirmDiscard = window.confirm('You have unsaved staff remarks. Close without saving?');
+      if (!confirmDiscard) return;
+    }
+    setDrawerAppId(null);
+    setDrawerNoteDirty(false);
+  };
+
   const handleTestGetformEndpoint = async () => {
     setGetformTestResult({ status: 'testing' });
     const cleanUrl = getformEndpointInput.trim();
@@ -174,14 +305,14 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     try {
       const res = await fetch(cleanUrl, {
         method: 'POST',
-        headers: { 'Accept': 'application/json' },
+        headers: { Accept: 'application/json' },
         body: new FormData()
       });
 
       if (res.ok || res.status === 200 || res.status === 400 || res.status === 422) {
         setGetformTestResult({
           status: 'success',
-          message: `Saved & Verified! Getform.io / Formspree endpoint is active and ready to process form submissions.`
+          message: 'Saved & Verified! Getform.io / Formspree endpoint is active and ready to process form submissions.'
         });
       } else {
         setGetformTestResult({
@@ -229,6 +360,11 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       if (user) {
         setIsAuthenticated(true);
         sessionStorage.setItem('csc_admin_authed', 'true');
+        if (user.email) {
+          const emailUser = user.email.split('@')[0];
+          setStaffDisplayName(emailUser);
+          sessionStorage.setItem('csc_staff_name', emailUser);
+        }
       }
     });
     return () => unsub();
@@ -244,21 +380,27 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
     try {
       if (trimmedUser === 'Mahi' && trimmedPass === 'Wasu@9687') {
-        // Sign in via staff credentials with fallback support
+        setStaffDisplayName('Mahi');
+        sessionStorage.setItem('csc_staff_name', 'Mahi');
         try {
           await signInAnonymously(auth);
-        } catch (authErr) {
+        } catch {
           setIsAuthenticated(true);
           sessionStorage.setItem('csc_admin_authed', 'true');
         }
       } else if (trimmedUser.includes('@')) {
         await signInWithEmailAndPassword(auth, trimmedUser, trimmedPass);
+        const namePart = trimmedUser.split('@')[0];
+        setStaffDisplayName(namePart);
+        sessionStorage.setItem('csc_staff_name', namePart);
       } else {
         setLoginError('Invalid Staff Credentials. Use "Mahi" / "Wasu@9687" or a registered staff email.');
       }
     } catch (err: any) {
       console.error('Staff authentication notice:', err);
       if (trimmedUser === 'Mahi' && trimmedPass === 'Wasu@9687') {
+        setStaffDisplayName('Mahi');
+        sessionStorage.setItem('csc_staff_name', 'Mahi');
         setIsAuthenticated(true);
         sessionStorage.setItem('csc_admin_authed', 'true');
       } else {
@@ -277,6 +419,8 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     } catch (err: any) {
       console.error('Staff auth notice:', err);
     } finally {
+      setStaffDisplayName('Mahi');
+      sessionStorage.setItem('csc_staff_name', 'Mahi');
       setIsAuthenticated(true);
       sessionStorage.setItem('csc_admin_authed', 'true');
       setAuthLoading(false);
@@ -286,37 +430,34 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   const handleLogout = async () => {
     try {
       await signOut(auth);
-    } catch (e) {}
+    } catch {}
     setIsAuthenticated(false);
     sessionStorage.removeItem('csc_admin_authed');
+    setProfileMenuOpen(false);
   };
 
-  // Robust Date/Timestamp Formatting Helper
+  // Robust Date/Timestamp Helpers
+  const getTimestampMs = (dateVal: any): number => {
+    if (!dateVal) return 0;
+    try {
+      if (typeof dateVal === 'object' && dateVal !== null) {
+        if (typeof dateVal.toDate === 'function') return dateVal.toDate().getTime();
+        if (typeof dateVal.seconds === 'number') return dateVal.seconds * 1000;
+      }
+      if (typeof dateVal === 'number') return dateVal;
+      const parsed = new Date(String(dateVal)).getTime();
+      return isNaN(parsed) ? 0 : parsed;
+    } catch {
+      return 0;
+    }
+  };
+
   const formatDisplayDate = (dateVal: any): string => {
     if (!dateVal) return 'N/A';
     try {
-      let d: Date;
-      if (typeof dateVal === 'object' && dateVal !== null) {
-        if (typeof dateVal.toDate === 'function') {
-          d = dateVal.toDate();
-        } else if (typeof dateVal.seconds === 'number') {
-          d = new Date(dateVal.seconds * 1000);
-        } else {
-          d = new Date(dateVal);
-        }
-      } else if (typeof dateVal === 'number') {
-        d = new Date(dateVal);
-      } else {
-        const parsed = new Date(String(dateVal));
-        if (!isNaN(parsed.getTime())) {
-          d = parsed;
-        } else {
-          return String(dateVal);
-        }
-      }
-
-      if (isNaN(d.getTime())) return String(dateVal);
-
+      const ms = getTimestampMs(dateVal);
+      if (!ms) return String(dateVal);
+      const d = new Date(ms);
       return d.toLocaleString('en-IN', {
         day: '2-digit',
         month: 'short',
@@ -325,12 +466,44 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         minute: '2-digit',
         hour12: true
       });
-    } catch (e) {
+    } catch {
       return String(dateVal);
     }
   };
 
-  // Connect real-time Cloud Firestore listener and central Server API for applications & appointments
+  const formatShortDate = (dateVal: any): string => {
+    if (!dateVal) return 'N/A';
+    try {
+      const ms = getTimestampMs(dateVal);
+      if (!ms) return String(dateVal);
+      const d = new Date(ms);
+      return d.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+    } catch {
+      return String(dateVal);
+    }
+  };
+
+  const formatShortTime = (dateVal: any): string => {
+    if (!dateVal) return '';
+    try {
+      const ms = getTimestampMs(dateVal);
+      if (!ms) return '';
+      const d = new Date(ms);
+      return d.toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch {
+      return '';
+    }
+  };
+
+  // Connect real-time Cloud Firestore listener, Central Server API, and Supabase Realtime
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -394,7 +567,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   };
                 });
               }
-            } catch (e) {}
+            } catch {}
           }
 
           let mergedDocs = existing.documents || [];
@@ -503,6 +676,27 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               app.payload?.userCategory ||
               existing.userCategory ||
               'General/OBC',
+            dateOfBirth:
+              app.dateOfBirth ||
+              app.payload?.dateOfBirth ||
+              existing.dateOfBirth ||
+              'N/A',
+            message:
+              app.message ||
+              app.additionalDetails ||
+              app.payload?.message ||
+              existing.message ||
+              '',
+            staffNotes:
+              app.staffNotes ||
+              app.payload?.staffNotes ||
+              existing.staffNotes ||
+              '',
+            staffNoteUpdatedAt:
+              app.staffNoteUpdatedAt ||
+              app.payload?.staffNoteUpdatedAt ||
+              existing.staffNoteUpdatedAt ||
+              null,
             submittedAt:
               app.created_at ||
               app.createdAt ||
@@ -517,6 +711,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               null,
             finalReceiptUrl:
               app.finalReceiptUrl ||
+              app.payload?.finalReceiptUrl ||
               existing.finalReceiptUrl ||
               null,
             status: resolvedStatus
@@ -527,9 +722,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       const combinedList = Array.from(map.values());
       combinedList.sort((a, b) => {
         const getTs = (item: any) => {
-          if (item.createdAt && typeof item.createdAt.seconds === 'number') return item.createdAt.seconds * 1000;
-          if (item.submittedAt && typeof item.submittedAt.seconds === 'number') return item.submittedAt.seconds * 1000;
-          return new Date(item.createdAt || item.submittedAt || item.date || 0).getTime();
+          return getTimestampMs(item.created_at || item.createdAt || item.submittedAt || item.date || 0);
         };
         return getTs(b) - getTs(a);
       });
@@ -647,7 +840,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
             lastSyncedAt: new Date().toLocaleTimeString()
           });
           if (showToast) {
-            setActionSuccess(`Synced latest ${res.data?.length || 0} application(s) from Supabase!`);
+            setActionSuccess(`Synchronized ${res.data?.length || 0} application(s) from Supabase.`);
             setTimeout(() => setActionSuccess(null), 3500);
           }
         }
@@ -665,17 +858,14 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       }
     };
 
-    // Store fetch helpers in ref for external button triggers (e.g. Refresh button)
+    // Expose refresh helpers
     (window as any).__csc_refresh_supabase = fetchSupabaseData;
     (window as any).__csc_refresh_server = fetchServerAppointments;
 
-    // Initial fetch from Server API
     fetchServerAppointments();
-
-    // Initial fetch from Supabase
     fetchSupabaseData(false);
 
-    // SSE Real-Time Stream Connection for 0ms multi-device live sync
+    // SSE Real-Time Stream Connection
     let sseSource: EventSource | null = null;
     try {
       sseSource = new EventSource('/api/realtime/stream');
@@ -683,16 +873,31 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         try {
           const msg = JSON.parse(evt.data);
           if (msg && msg.type) {
+            if (msg.type === 'NEW_APPOINTMENT' && msg.data) {
+              const incoming = msg.data;
+              const incomingId = incoming.appId || incoming.token_id || incoming.id || 'New';
+              setRealtimeAlerts(prev => [
+                {
+                  id: `${incomingId}-${Date.now()}`,
+                  appId: incomingId,
+                  name: incoming.name || incoming.full_name || 'Customer',
+                  service: incoming.service || incoming.service_selected || 'CSC Application',
+                  time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                },
+                ...prev.slice(0, 9)
+              ]);
+              setActionSuccess(`New customer application received: ${incomingId}`);
+              setTimeout(() => setActionSuccess(null), 4500);
+            }
             fetchServerAppointments();
             fetchSupabaseData(false);
           }
-        } catch (e) {}
+        } catch {}
       };
     } catch (e) {
       console.warn('SSE stream init notice:', e);
     }
 
-    // Poll Server API & Supabase in background fallback
     const pollInterval = setInterval(() => {
       fetchServerAppointments();
     }, 6000);
@@ -702,7 +907,6 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
     if (supabaseClient) {
       try {
-        // Realtime postgres_changes listener for Supabase
         supabaseChannel = supabaseClient
           .channel('realtime-staff-portal-apps')
           .on(
@@ -710,18 +914,33 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
             { event: '*', schema: 'public', table: 'applications' },
             (payload) => {
               if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-                const newApp = payload.new;
+                const newApp = payload.new as any;
                 const key =
                   newApp.token_id ||
                   newApp.appId ||
                   newApp.id ||
                   newApp.token;
                 if (key) {
+                  const isNewInsert = payload.eventType === 'INSERT' && !supabaseMapRef.current.has(key);
                   supabaseMapRef.current.set(key, newApp);
                   updateCombinedApplications();
+                  if (isNewInsert) {
+                    setRealtimeAlerts(prev => [
+                      {
+                        id: `${key}-${Date.now()}`,
+                        appId: key,
+                        name: newApp.full_name || newApp.name || 'Customer',
+                        service: newApp.service_selected || newApp.service || 'Application',
+                        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      },
+                      ...prev.slice(0, 9)
+                    ]);
+                    setActionSuccess(`New Supabase application received: ${key}`);
+                    setTimeout(() => setActionSuccess(null), 4500);
+                  }
                 }
               } else if (payload.eventType === 'DELETE') {
-                const oldApp = payload.old;
+                const oldApp = payload.old as any;
                 const key =
                   oldApp.token_id ||
                   oldApp.appId ||
@@ -740,7 +959,6 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       }
     }
 
-    // Local tab & window cross-communication event listeners
     const handleLocalSync = () => {
       fetchServerAppointments();
       updateCombinedApplications();
@@ -763,9 +981,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         }
         updateCombinedApplications();
       };
-    } catch (e) {
-      console.warn('BroadcastChannel not supported:', e);
-    }
+    } catch {}
 
     try {
       let appsCache: any[] = [];
@@ -775,13 +991,11 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         firestoreAppsMapRef.current.clear();
         firestoreAptsMapRef.current.clear();
 
-        // Add applications to map
         appsCache.forEach((app) => {
           const key = app.appId || app.id || app.token;
           if (key) firestoreAppsMapRef.current.set(key, app);
         });
 
-        // Merge appointments (combining fields if same ID exists)
         aptsCache.forEach((apt) => {
           const key = apt.appId || apt.id || apt.token;
           if (key) {
@@ -793,11 +1007,9 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           }
         });
 
-        // Single atomic update to dashboard state
         updateCombinedApplications();
       };
 
-      // 1. Listen to "applications"
       unsubApps = onSnapshot(
         collection(db, 'applications'),
         (snapshot) => {
@@ -813,7 +1025,6 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         }
       );
 
-      // 2. Listen to "appointments"
       unsubApts = onSnapshot(
         collection(db, 'appointments'),
         (snapshot) => {
@@ -829,15 +1040,14 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         }
       );
 
-      // 3. Listen to "vle_inquiries"
-      const unsubVle = onSnapshot(
+      onSnapshot(
         collection(db, 'vle_inquiries'),
         (snapshot) => {
           const remoteInquiries = snapshot.docs.map((docSnap) => ({
             id: docSnap.id,
             ...docSnap.data(),
           }));
-          
+
           let localInquiries: any[] = [];
           try {
             localInquiries = JSON.parse(localStorage.getItem('csc_vle_inquiries_log') || '[]');
@@ -882,7 +1092,20 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     };
   }, [isAuthenticated]);
 
-  // Handle status update in Firestore & state with timestamp safely using setDoc merge
+  // Manual Refresh Handler
+  const handleManualRefresh = async () => {
+    setLoading(true);
+    window.dispatchEvent(new Event('csc_appointment_updated'));
+    if ((window as any).__csc_refresh_server) {
+      (window as any).__csc_refresh_server();
+    }
+    if ((window as any).__csc_refresh_supabase) {
+      await (window as any).__csc_refresh_supabase(true);
+    }
+    setTimeout(() => setLoading(false), 300);
+  };
+
+  // Status Update Handler
   const handleUpdateStatus = async (appId: string, newStatus: string) => {
     const isoNow = new Date().toISOString();
     const updatePayload = {
@@ -893,7 +1116,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
     try {
       await setDoc(doc(db, 'applications', appId), updatePayload, { merge: true });
-    } catch (e) {
+    } catch {
       try {
         await updateDoc(doc(db, 'applications', appId), updatePayload);
       } catch (err) {
@@ -903,7 +1126,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
     try {
       await setDoc(doc(db, 'appointments', appId), updatePayload, { merge: true });
-    } catch (e) {
+    } catch {
       try {
         await updateDoc(doc(db, 'appointments', appId), updatePayload);
       } catch (err) {
@@ -931,7 +1154,6 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       )
     );
 
-    // Update central server API
     fetch(`/api/appointments/${appId}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -944,48 +1166,41 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       console.warn('Supabase status update error:', err);
     }
 
-    setActionSuccess(`Status updated to ${newStatus}`);
+    setActionSuccess(`Application ${appId} updated to "${newStatus}"`);
     setTimeout(() => setActionSuccess(null), 3000);
   };
 
-  // Handle permanent delete application in Firestore & state
+  // Permanent Delete Handler
   const handleDelete = async (appId: string) => {
     if (!appId) return;
     if (window.confirm(`Are you sure you want to PERMANENTLY remove application ${appId}? This action cannot be undone.`)) {
-      // 1. Await deleteDoc on 'applications' collection
       try {
         await deleteDoc(doc(db, 'applications', appId));
       } catch (e) {
-        console.error('Error permanently deleting document from applications collection:', e);
+        console.error('Error deleting from applications collection:', e);
       }
 
-      // 2. Await deleteDoc on 'appointments' collection
       try {
         await deleteDoc(doc(db, 'appointments', appId));
       } catch (e) {
-        console.error('Error permanently deleting document from appointments collection:', e);
+        console.error('Error deleting from appointments collection:', e);
       }
 
-      // 3. Immediately filter local state
       setApplications(prev => prev.filter(a => a.appId !== appId && a.id !== appId));
+      if (drawerAppId === appId) {
+        setDrawerAppId(null);
+      }
 
-      // 4. Clear from local storage caches
       try {
         const local = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-        const filteredLocal = local.filter((a: any) => a.appId !== appId && a.id !== appId);
-        localStorage.setItem('csc_local_applications', JSON.stringify(filteredLocal));
+        localStorage.setItem('csc_local_applications', JSON.stringify(local.filter((a: any) => a.appId !== appId && a.id !== appId)));
 
         const web3 = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
-        const filteredWeb3 = web3.filter((a: any) => a.appId !== appId && a.id !== appId);
-        localStorage.setItem('csc_web3forms_submissions', JSON.stringify(filteredWeb3));
-      } catch (e) {
-        console.error('Local storage deletion cleanup error:', e);
-      }
+        localStorage.setItem('csc_web3forms_submissions', JSON.stringify(web3.filter((a: any) => a.appId !== appId && a.id !== appId)));
+      } catch {}
 
-      // Fallback API delete
       fetch(`/api/appointments/${appId}`, { method: 'DELETE' }).catch(() => {});
 
-      // Supabase table delete
       try {
         const sb = getSupabaseClient();
         if (sb) {
@@ -998,34 +1213,32 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     }
   };
 
-  // Selection toggle logic
+  // Selection Toggle Logic
   const toggleSelectApp = (appId: string) => {
     setSelectedAppIds(prev =>
       prev.includes(appId) ? prev.filter(id => id !== appId) : [...prev, appId]
     );
   };
 
-  const toggleSelectAll = (filteredList: any[]) => {
-    const allFilteredIds = filteredList.map(a => a.appId || a.id).filter(Boolean);
-    if (selectedAppIds.length >= allFilteredIds.length && allFilteredIds.length > 0) {
+  const toggleSelectAll = (list: any[]) => {
+    const allIds = list.map(a => a.appId || a.id).filter(Boolean);
+    if (selectedAppIds.length >= allIds.length && allIds.length > 0) {
       setSelectedAppIds([]);
     } else {
-      setSelectedAppIds(allFilteredIds);
+      setSelectedAppIds(allIds);
     }
   };
 
-  // Bulk Status Update
   const handleBulkStatusChange = async (newStatus: string) => {
     if (selectedAppIds.length === 0) return;
     for (const id of selectedAppIds) {
       await handleUpdateStatus(id, newStatus);
     }
-    setActionSuccess(`Bulk Status updated to "${newStatus}" for ${selectedAppIds.length} application(s).`);
+    setActionSuccess(`Updated ${selectedAppIds.length} application(s) to "${newStatus}".`);
     setSelectedAppIds([]);
     setTimeout(() => setActionSuccess(null), 3500);
   };
 
-  // Bulk Delete
   const handleBulkDelete = async () => {
     if (selectedAppIds.length === 0) return;
     if (window.confirm(`Permanently remove ${selectedAppIds.length} selected applications?`)) {
@@ -1033,9 +1246,8 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         try {
           await deleteDoc(doc(db, 'applications', id));
           await deleteDoc(doc(db, 'appointments', id));
-        } catch (e) {
-          console.warn('Bulk delete error:', e);
-        }
+        } catch {}
+        fetch(`/api/appointments/${id}`, { method: 'DELETE' }).catch(() => {});
       }
       setApplications(prev => prev.filter(a => !selectedAppIds.includes(a.appId) && !selectedAppIds.includes(a.id)));
       setActionSuccess(`Deleted ${selectedAppIds.length} applications.`);
@@ -1047,21 +1259,29 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   // Save Internal Staff Note / Remark
   const handleSaveStaffNote = async (appId: string, noteText: string) => {
     if (!appId) return;
+    setSavingDrawerNote(true);
     const isoNow = new Date().toISOString();
     const updatePayload = { staffNotes: noteText, staffNoteUpdatedAt: isoNow };
 
     try {
       await setDoc(doc(db, 'applications', appId), updatePayload, { merge: true });
     } catch (e) {
-      console.warn('Firestore staffNote error:', e);
+      console.warn('Firestore staffNote notice:', e);
     }
+
+    try {
+      const local = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
+      const updatedLocal = local.map((a: any) => (a.appId === appId || a.id === appId) ? { ...a, ...updatePayload } : a);
+      localStorage.setItem('csc_local_applications', JSON.stringify(updatedLocal));
+    } catch {}
 
     setApplications(prev =>
       prev.map(a => (a.appId === appId || a.id === appId) ? { ...a, ...updatePayload } : a)
     );
 
-    setEditingStaffNotesAppId(null);
-    setActionSuccess(`Staff note saved for ${appId}`);
+    setDrawerNoteDirty(false);
+    setSavingDrawerNote(false);
+    setActionSuccess(`Staff remark saved for ${appId}`);
     setTimeout(() => setActionSuccess(null), 2500);
   };
 
@@ -1082,31 +1302,44 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     window.open(`https://wa.me/${phoneWithCode}?text=${text}`, '_blank');
   };
 
-  // Copy 1-Click Application Summary
+  // Copy 1-Click Application Summary or Reference ID
   const handleCopyAppInfo = (app: any) => {
     const appId = app.appId || app.id;
     const summary = `CSC Token: ${appId}\nName: ${app.name || app.customerName}\nPhone: ${app.phone || app.phoneNumber}\nService: ${app.service || app.selectedService}\nFee: ₹${app.totalAmount || 0}\nStatus: ${app.status || 'Pending'}`;
     navigator.clipboard.writeText(summary);
     setCopiedAppId(appId);
+    setActionSuccess(`Copied summary for ${appId}`);
+    setTimeout(() => {
+      setCopiedAppId(null);
+      setActionSuccess(null);
+    }, 2000);
+  };
+
+  const handleCopyTokenId = (tokenId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    navigator.clipboard.writeText(tokenId);
+    setCopiedAppId(tokenId);
     setTimeout(() => setCopiedAppId(null), 2000);
   };
 
-  // Export to CSV
-  const handleExportCSV = () => {
-    if (applications.length === 0) return;
-    const headers = ['Token ID', 'Applicant Name', 'Mobile', 'Email', 'Service', 'Category', 'Payment Mode', 'UTR Ref', 'Amount', 'Date', 'Status'];
-    const rows = applications.map(a => [
-      a.appId || '',
-      `"${a.name || a.customerName || ''}"`,
+  // Export Applications to CSV (supports full or filtered list)
+  const handleExportCSV = (customList?: any[]) => {
+    const targetList = customList || filteredApplications;
+    if (targetList.length === 0) return;
+    const headers = ['Token ID', 'Applicant Name', 'Mobile', 'Email', 'Requested Service', 'Category', 'Payment Mode', 'UTR Reference', 'Amount (INR)', 'Submitted Date', 'Application Status', 'Staff Remarks'];
+    const rows = targetList.map(a => [
+      a.appId || a.id || '',
+      `"${(a.name || a.customerName || '').replace(/"/g, '""')}"`,
       a.phone || a.phoneNumber || '',
       a.email || a.emailAddress || '',
-      `"${a.service || a.selectedService || ''}"`,
-      a.userCategory || '',
-      a.paymentMode || '',
-      a.utrNumber || '',
-      a.totalAmount || '',
-      `"${a.submittedAt || a.date || ''}"`,
-      a.status || 'pending'
+      `"${(a.service || a.selectedService || '').replace(/"/g, '""')}"`,
+      `"${(a.userCategory || '').replace(/"/g, '""')}"`,
+      a.paymentMode || 'cash',
+      a.utrNumber || 'N/A',
+      a.totalAmount || 0,
+      `"${formatDisplayDate(a.createdAt || a.submittedAt || a.date)}"`,
+      `"${a.status || 'Pending'}"`,
+      `"${(a.staffNotes || '').replace(/"/g, '""')}"`
     ]);
 
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -1117,6 +1350,8 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    setActionSuccess(`Exported ${targetList.length} application record(s) to CSV.`);
+    setTimeout(() => setActionSuccess(null), 3000);
   };
 
   // Export VLE Visitor Inquiries to CSV
@@ -1130,7 +1365,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       inq.email || '',
       `"${inq.state || ''}"`,
       `"${inq.address || ''}"`,
-      `"${inq.timestamp || inq.createdAt || ''}"`,
+      `"${formatDisplayDate(inq.timestamp || inq.createdAt)}"`,
       `"${inq.status || 'Verified'}"`
     ]);
 
@@ -1144,7 +1379,6 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     document.body.removeChild(link);
   };
 
-  // Delete Single VLE Inquiry
   const handleDeleteVleInquiry = async (inquiryId: string) => {
     if (!inquiryId) return;
     if (window.confirm(`Permanently remove visitor log for ID ${inquiryId}?`)) {
@@ -1166,7 +1400,6 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     }
   };
 
-  // Clear All VLE Inquiries
   const handleClearAllVleInquiries = async () => {
     if (vleInquiries.length === 0) return;
     if (window.confirm(`Are you sure you want to PURGE ALL ${vleInquiries.length} visitor access logs? This cannot be undone.`)) {
@@ -1189,7 +1422,6 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     }
   };
 
-  // Bulk Delete Selected VLE Inquiries
   const handleBulkDeleteVle = async () => {
     if (selectedVleIds.length === 0) return;
     if (window.confirm(`Permanently delete ${selectedVleIds.length} selected visitor log(s)?`)) {
@@ -1211,100 +1443,431 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     }
   };
 
-  // Filter VLE Inquiries
-  const filteredVleInquiries = vleInquiries.filter(inq => {
-    const q = vleSearchQuery.toLowerCase().trim();
-    const name = (inq.name || '').toLowerCase();
-    const phone = (inq.phone || '').toLowerCase();
-    const email = (inq.email || '').toLowerCase();
-    const state = (inq.state || '').toLowerCase();
-    const address = (inq.address || '').toLowerCase();
-    const id = (inq.id || inq.inquiryId || '').toLowerCase();
+  // Classification Helpers
+  const isOnlinePayment = (app: any): boolean => {
+    const mode = (app.paymentMode || app.payment_mode || '').toLowerCase();
+    const st = (app.status || '').toLowerCase();
+    const utr = (app.utrNumber || app.utr_number || '').trim();
+    return mode === 'online' || mode === 'upi' || st.includes('online') || st.includes('upi') || (utr !== '' && utr !== 'N/A' && utr !== 'none');
+  };
 
-    const matchesQuery = !q ||
-      name.includes(q) ||
-      phone.includes(q) ||
-      email.includes(q) ||
-      state.includes(q) ||
-      address.includes(q) ||
-      id.includes(q);
+  const getAppCategoryStatus = (app: any): 'pending' | 'approved' | 'completed' | 'rejected' => {
+    const st = (app.status || 'Pending').toLowerCase();
+    if (st.includes('completed') || st.includes('done')) return 'completed';
+    if (st.includes('reject') || st.includes('cancel')) return 'rejected';
+    if (st.includes('approved') || st.includes('process') || st.includes('under') || st.includes('verif')) return 'approved';
+    return 'pending';
+  };
 
-    if (vleFilterState === 'all') return matchesQuery;
-    if (vleFilterState === 'jk') return matchesQuery && (state.includes('jammu') || state.includes('kashmir') || state.includes('ladakh'));
-    if (vleFilterState === 'other') return matchesQuery && !state.includes('jammu') && !state.includes('kashmir') && !state.includes('ladakh');
+  const getPaymentStatusInfo = (app: any): { label: string; colorClass: string; isVerifiedRevenue: boolean } => {
+    const online = isOnlinePayment(app);
+    const catStatus = getAppCategoryStatus(app);
+    const utr = (app.utrNumber || app.utr_number || '').trim();
+    const hasUtr = utr !== '' && utr !== 'N/A' && utr !== 'none';
 
-    return matchesQuery;
-  });
+    if (catStatus === 'rejected') {
+      return {
+        label: 'Cancelled',
+        colorClass: 'bg-red-50 text-[#DC2626] border-red-200',
+        isVerifiedRevenue: false
+      };
+    }
+    if (online) {
+      if (hasUtr || catStatus === 'completed' || catStatus === 'approved') {
+        return {
+          label: 'UPI Paid',
+          colorClass: 'bg-emerald-50 text-[#16A34A] border-emerald-200',
+          isVerifiedRevenue: true
+        };
+      }
+      return {
+        label: 'Pending Verification',
+        colorClass: 'bg-amber-50 text-[#F59E0B] border-amber-200',
+        isVerifiedRevenue: false
+      };
+    }
+    // Cash Counter
+    if (catStatus === 'completed') {
+      return {
+        label: 'Cash Collected',
+        colorClass: 'bg-emerald-50 text-[#16A34A] border-emerald-200',
+        isVerifiedRevenue: true
+      };
+    }
+    return {
+      label: 'Pay at Counter',
+      colorClass: 'bg-slate-100 text-[#64748B] border-slate-200',
+      isVerifiedRevenue: false
+    };
+  };
 
-  // Filter logic
-  const filteredApplications = applications.filter(app => {
-    const q = searchQuery.toLowerCase().trim();
-    const name = (app.name || app.customerName || app.applicantName || '').toLowerCase();
-    const phone = (app.phone || app.phoneNumber || app.mobile || '').toLowerCase();
-    const appId = (app.appId || app.id || '').toLowerCase();
-    const service = (app.service || app.selectedService || app.eService || '').toLowerCase();
-    const utr = (app.utrNumber || '').toLowerCase();
+  // Real KPI Metrics Computed from Applications
+  const kpiStats = useMemo(() => {
+    let pending = 0;
+    let underProcess = 0;
+    let completed = 0;
+    let rejected = 0;
+    let upiCount = 0;
+    let cashCount = 0;
+    let verifiedRevenue = 0;
+    let totalPipelineAmount = 0;
+    let totalDocs = 0;
 
+    applications.forEach((app) => {
+      const cat = getAppCategoryStatus(app);
+      if (cat === 'pending') pending++;
+      else if (cat === 'approved') underProcess++;
+      else if (cat === 'completed') completed++;
+      else if (cat === 'rejected') rejected++;
+
+      const online = isOnlinePayment(app);
+      if (online) upiCount++;
+      else cashCount++;
+
+      const amt = Number(app.totalAmount) || Number(app.total_amount) || Number(app.payload?.totalAmount) || 0;
+      totalPipelineAmount += amt;
+
+      const payInfo = getPaymentStatusInfo(app);
+      if (payInfo.isVerifiedRevenue) {
+        verifiedRevenue += amt;
+      }
+
+      const docLen = Array.isArray(app.documents) ? app.documents.length : 0;
+      const upDocLen = Array.isArray(app.uploadedDocuments) ? app.uploadedDocuments.length : 0;
+      const urlDocLen = Array.isArray(app.document_urls) ? app.document_urls.length : 0;
+      totalDocs += Math.max(docLen, upDocLen, urlDocLen, app.mandatoryDocName ? 1 : 0);
+    });
+
+    return {
+      total: applications.length,
+      pending,
+      underProcess,
+      completed,
+      rejected,
+      upiCount,
+      cashCount,
+      verifiedRevenue,
+      totalPipelineAmount,
+      totalDocs
+    };
+  }, [applications]);
+
+  // All Uploaded Documents flattened for the Dedicated Document Management view
+  const allDocumentsCatalog = useMemo(() => {
+    const list: Array<{
+      uid: string;
+      appId: string;
+      applicantName: string;
+      phone: string;
+      service: string;
+      status: string;
+      submittedAt: any;
+      docName: string;
+      docUrl: string;
+      docSize: number;
+      docType: string;
+      isFinalReceipt?: boolean;
+      appRef: any;
+    }> = [];
+
+    applications.forEach((app) => {
+      const appId = app.appId || app.id || 'N/A';
+      const rawDocs = Array.isArray(app.documents) ? app.documents : [];
+      rawDocs.forEach((d: any, idx: number) => {
+        const url = d.dataUrl || d.url || '';
+        if (url || d.name) {
+          list.push({
+            uid: `${appId}-doc-${idx}`,
+            appId,
+            applicantName: app.name || app.customerName || 'Applicant',
+            phone: app.phone || app.phoneNumber || 'N/A',
+            service: app.service || app.selectedService || 'Service',
+            status: app.status || 'Pending',
+            submittedAt: app.createdAt || app.submittedAt || app.date,
+            docName: d.name || `Document ${idx + 1}`,
+            docUrl: url,
+            docSize: typeof d.size === 'number' ? d.size : 0,
+            docType: d.type || (url.startsWith('data:image/') || /\.(jpg|jpeg|png|webp)$/i.test(d.name || '') ? 'image/jpeg' : url.startsWith('data:application/pdf') || /\.pdf$/i.test(d.name || '') ? 'application/pdf' : 'application/octet-stream'),
+            isFinalReceipt: false,
+            appRef: app
+          });
+        }
+      });
+
+      if (app.finalReceiptUrl) {
+        list.push({
+          uid: `${appId}-receipt`,
+          appId,
+          applicantName: app.name || app.customerName || 'Applicant',
+          phone: app.phone || app.phoneNumber || 'N/A',
+          service: app.service || app.selectedService || 'Service',
+          status: app.status || 'Completed',
+          submittedAt: app.updatedAt || app.submittedAt,
+          docName: `Processed Receipt (${appId})`,
+          docUrl: app.finalReceiptUrl,
+          docSize: 0,
+          docType: 'application/pdf',
+          isFinalReceipt: true,
+          appRef: app
+        });
+      }
+    });
+
+    return list.filter((docItem) => {
+      const q = docSearchQuery.toLowerCase().trim();
+      const matchesQ =
+        !q ||
+        docItem.docName.toLowerCase().includes(q) ||
+        docItem.appId.toLowerCase().includes(q) ||
+        docItem.applicantName.toLowerCase().includes(q) ||
+        docItem.service.toLowerCase().includes(q);
+
+      if (!matchesQ) return false;
+      if (docTypeFilter === 'receipt') return Boolean(docItem.isFinalReceipt);
+      if (docTypeFilter === 'image') return docItem.docType.startsWith('image/');
+      if (docTypeFilter === 'pdf') return docItem.docType === 'application/pdf' || docItem.docName.toLowerCase().endsWith('.pdf');
+      return true;
+    });
+  }, [applications, docSearchQuery, docTypeFilter]);
+
+  // Filtered & Sorted Applications for the Data Table
+  const filteredApplications = useMemo(() => {
+    const q = debouncedSearch.toLowerCase().trim();
     const qDigits = q.replace(/\D/g, '');
-    const appIdDigits = appId.replace(/\D/g, '');
-    const phoneDigits = phone.replace(/\D/g, '');
+    const nowMs = Date.now();
 
-    const matchesQuery = !q ||
-      name.includes(q) ||
-      phone.includes(q) ||
-      appId.includes(q) ||
-      service.includes(q) ||
-      utr.includes(q) ||
-      (qDigits.length >= 2 && (appIdDigits.includes(qDigits) || phoneDigits.includes(qDigits)));
+    const filtered = applications.filter((app) => {
+      const name = (app.name || app.customerName || app.applicantName || '').toLowerCase();
+      const phone = (app.phone || app.phoneNumber || app.mobile || '').toLowerCase();
+      const email = (app.email || app.emailAddress || '').toLowerCase();
+      const appId = (app.appId || app.id || '').toLowerCase();
+      const service = (app.service || app.selectedService || app.eService || '').toLowerCase();
+      const utr = (app.utrNumber || '').toLowerCase();
 
-    if (filterStatus === 'all') return matchesQuery;
+      const appIdDigits = appId.replace(/\D/g, '');
+      const phoneDigits = phone.replace(/\D/g, '');
 
-    const statusStr = (app.status || 'Pending').toLowerCase();
-    const modeStr = (app.paymentMode || app.payment_mode || '').toLowerCase();
-    const utrStr = (app.utrNumber || app.utr_number || '').trim();
+      const matchesQuery =
+        !q ||
+        name.includes(q) ||
+        phone.includes(q) ||
+        email.includes(q) ||
+        appId.includes(q) ||
+        service.includes(q) ||
+        utr.includes(q) ||
+        (qDigits.length >= 2 && (appIdDigits.includes(qDigits) || phoneDigits.includes(qDigits)));
 
-    if (filterStatus === 'online') {
-      return matchesQuery && (modeStr === 'online' || modeStr === 'upi' || statusStr.includes('online') || statusStr.includes('upi') || (utrStr !== '' && utrStr !== 'N/A' && utrStr !== 'none'));
-    }
-    if (filterStatus === 'cash') {
-      return matchesQuery && (modeStr === 'cash' || modeStr.includes('counter') || modeStr.includes('desk') || modeStr.includes('pay at csc') || statusStr.includes('cash'));
-    }
-    if (filterStatus === 'pending') {
-      return matchesQuery && (statusStr.includes('pending') || statusStr.includes('registered') || !app.status);
-    }
-    if (filterStatus === 'approved') {
-      return matchesQuery && (statusStr.includes('approved') || statusStr.includes('process') || statusStr.includes('under') || statusStr.includes('verif'));
-    }
-    if (filterStatus === 'completed') {
-      return matchesQuery && (statusStr.includes('completed') || statusStr.includes('done') || statusStr.includes('paid'));
-    }
-    if (filterStatus === 'rejected') {
-      return matchesQuery && (statusStr.includes('reject') || statusStr.includes('cancel'));
-    }
+      if (!matchesQuery) return false;
 
-    return matchesQuery;
-  });
+      // Status filter
+      const catStatus = getAppCategoryStatus(app);
+      if (filterStatus === 'pending' && catStatus !== 'pending') return false;
+      if (filterStatus === 'approved' && catStatus !== 'approved') return false;
+      if (filterStatus === 'completed' && catStatus !== 'completed') return false;
+      if (filterStatus === 'rejected' && catStatus !== 'rejected') return false;
+      if (filterStatus === 'online' && !isOnlinePayment(app)) return false;
+      if (filterStatus === 'cash' && isOnlinePayment(app)) return false;
 
-  // Render Login Modal if not logged in
+      // Payment dropdown filter
+      if (paymentFilter === 'online' && !isOnlinePayment(app)) return false;
+      if (paymentFilter === 'cash' && isOnlinePayment(app)) return false;
+
+      // Date range filter
+      if (dateRangeFilter !== 'all') {
+        const ts = getTimestampMs(app.created_at || app.createdAt || app.submittedAt || app.date);
+        if (ts > 0) {
+          const diffDays = (nowMs - ts) / (1000 * 60 * 60 * 24);
+          if (dateRangeFilter === 'today' && diffDays > 1) return false;
+          if (dateRangeFilter === '7days' && diffDays > 7) return false;
+          if (dateRangeFilter === '30days' && diffDays > 30) return false;
+        }
+      }
+
+      return true;
+    });
+
+    filtered.sort((a, b) => {
+      if (sortBy === 'oldest') {
+        return getTimestampMs(a.created_at || a.createdAt || a.submittedAt) - getTimestampMs(b.created_at || b.createdAt || b.submittedAt);
+      }
+      if (sortBy === 'amount_high') {
+        return (Number(b.totalAmount) || 0) - (Number(a.totalAmount) || 0);
+      }
+      if (sortBy === 'name_asc') {
+        return String(a.name || '').localeCompare(String(b.name || ''));
+      }
+      return getTimestampMs(b.created_at || b.createdAt || b.submittedAt) - getTimestampMs(a.created_at || a.createdAt || a.submittedAt);
+    });
+
+    return filtered;
+  }, [applications, debouncedSearch, filterStatus, paymentFilter, dateRangeFilter, sortBy]);
+
+  // Paginated Applications
+  const totalPages = Math.max(1, Math.ceil(filteredApplications.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedApplications = useMemo(() => {
+    const start = (safeCurrentPage - 1) * pageSize;
+    return filteredApplications.slice(start, start + pageSize);
+  }, [filteredApplications, safeCurrentPage, pageSize]);
+
+  // Filter VLE Inquiries
+  const filteredVleInquiries = useMemo(() => {
+    return vleInquiries.filter((inq) => {
+      const q = vleSearchQuery.toLowerCase().trim();
+      const name = (inq.name || '').toLowerCase();
+      const phone = (inq.phone || '').toLowerCase();
+      const email = (inq.email || '').toLowerCase();
+      const state = (inq.state || '').toLowerCase();
+      const address = (inq.address || '').toLowerCase();
+      const id = (inq.id || inq.inquiryId || '').toLowerCase();
+
+      const matchesQuery =
+        !q ||
+        name.includes(q) ||
+        phone.includes(q) ||
+        email.includes(q) ||
+        state.includes(q) ||
+        address.includes(q) ||
+        id.includes(q);
+
+      if (vleFilterState === 'all') return matchesQuery;
+      if (vleFilterState === 'jk') return matchesQuery && (state.includes('jammu') || state.includes('kashmir') || state.includes('ladakh'));
+      if (vleFilterState === 'other') return matchesQuery && !state.includes('jammu') && !state.includes('kashmir') && !state.includes('ladakh');
+      return matchesQuery;
+    });
+  }, [vleInquiries, vleSearchQuery, vleFilterState]);
+
+  const hasActiveFilters = searchQuery.trim() !== '' || filterStatus !== 'all' || paymentFilter !== 'all' || dateRangeFilter !== 'all' || sortBy !== 'newest';
+
+  const clearAllFilters = () => {
+    setSearchQuery('');
+    setDebouncedSearch('');
+    setFilterStatus('all');
+    setPaymentFilter('all');
+    setDateRangeFilter('all');
+    setSortBy('newest');
+    setCurrentPage(1);
+    if (['pending_apps', 'process_apps', 'completed_apps', 'rejected_apps'].includes(activeNav)) {
+      setActiveNav('all_apps');
+    }
+  };
+
+  // Status Badge Helper
+  const renderApplicationStatusBadge = (statusRaw?: string) => {
+    const st = (statusRaw || 'Pending').toLowerCase();
+    if (st.includes('completed') || st.includes('done')) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-[#16A34A] border border-emerald-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" />
+          Completed
+        </span>
+      );
+    }
+    if (st.includes('reject') || st.includes('cancel')) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-50 text-[#DC2626] border border-red-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#DC2626]" />
+          Rejected
+        </span>
+      );
+    }
+    if (st.includes('approved') || st.includes('process') || st.includes('under') || st.includes('verif')) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-[#2563EB] border border-blue-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB]" />
+          Under Process
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-[#D97706] border border-amber-200">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]" />
+        Pending
+      </span>
+    );
+  };
+
+  // Current Section Metadata for Top Header
+  const sectionHeaderInfo: Record<NavSectionId, { title: string; subtitle: string; breadcrumb: string }> = {
+    overview: {
+      title: 'Dashboard Overview',
+      subtitle: 'Real-time operational metrics, customer applications, and payment performance.',
+      breadcrumb: 'Overview'
+    },
+    all_apps: {
+      title: 'Customer Applications',
+      subtitle: 'Complete directory of all submitted citizen service and recruitment applications.',
+      breadcrumb: 'Applications / All'
+    },
+    pending_apps: {
+      title: 'Pending Applications',
+      subtitle: 'Newly submitted customer applications awaiting initial staff review.',
+      breadcrumb: 'Applications / Pending'
+    },
+    process_apps: {
+      title: 'Under Process',
+      subtitle: 'Approved applications currently being filed or processed at the CSC desk.',
+      breadcrumb: 'Applications / Under Process'
+    },
+    completed_apps: {
+      title: 'Completed Applications',
+      subtitle: 'Successfully processed applications and issued citizen acknowledgments.',
+      breadcrumb: 'Applications / Completed'
+    },
+    rejected_apps: {
+      title: 'Rejected Applications',
+      subtitle: 'Applications closed or rejected due to incomplete details or invalid documents.',
+      breadcrumb: 'Applications / Rejected'
+    },
+    documents: {
+      title: 'Uploaded Documents',
+      subtitle: 'Secure repository of customer identity proofs, certificates, and processed receipts.',
+      breadcrumb: 'Storage / Documents'
+    },
+    payments: {
+      title: 'Payment Records',
+      subtitle: 'Verified UPI transactions, UTR references, and CSC cash counter collections.',
+      breadcrumb: 'Finance / Payments'
+    },
+    vle_logs: {
+      title: 'VLE Visitor Access Logs',
+      subtitle: 'Identity verification records for visitors unlocking CSC VLE station credentials.',
+      breadcrumb: 'Operations / Visitor Logs'
+    },
+    whatsapp_sync: {
+      title: 'WhatsApp Channel & Group Sync',
+      subtitle: 'Broadcast official recruitment alerts and scheme updates to WhatsApp subscribers.',
+      breadcrumb: 'Operations / WhatsApp Sync'
+    },
+    reports: {
+      title: 'Reports & Export',
+      subtitle: 'Generate filtered CSV reports and inspect live Supabase database & storage health.',
+      breadcrumb: 'Operations / Reports & Export'
+    }
+  };
+
+  // ============================================================================
+  // LOGIN VIEW (WHEN UNAUTHENTICATED)
+  // ============================================================================
   if (!isAuthenticated) {
     return (
-      <div className="min-h-[500px] flex items-center justify-center py-12 px-4">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl p-8 max-w-md w-full relative overflow-hidden animate-fade-in">
-          {/* Header Banner */}
-          <div className="text-center space-y-2 mb-6">
-            <div className="w-14 h-14 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl flex items-center justify-center mx-auto border border-amber-500/20 shadow-inner">
-              <ShieldCheck className="w-8 h-8" />
+      <div className="min-h-screen bg-[#F6F8FC] flex flex-col justify-center items-center px-4 py-12">
+        <div className="w-full max-w-md bg-white border border-[#E2E8F0] rounded-2xl shadow-lg p-8 space-y-6">
+          {/* Brand Header */}
+          <div className="text-center space-y-2">
+            <div className="w-12 h-12 bg-[#101B35] text-white rounded-xl flex items-center justify-center mx-auto shadow-sm">
+              <ShieldCheck className="w-6 h-6 text-[#2563EB]" />
             </div>
-            <h2 className="text-xl font-black uppercase tracking-tight text-slate-900 dark:text-white font-display">
-              CSC Staff Portal Login
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Access online applications &amp; customer documents
+            <h1 className="text-xl font-bold text-[#111827] tracking-tight">
+              CSC DOST Staff Console
+            </h1>
+            <p className="text-xs text-[#64748B]">
+              Sign in with authorized operator credentials to manage applications and documents.
             </p>
           </div>
 
           {loginError && (
-            <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 text-xs font-bold flex items-center gap-2 animate-shake">
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-[#DC2626] text-xs font-medium flex items-center gap-2">
               <XCircle className="w-4 h-4 shrink-0" />
               <span>{loginError}</span>
             </div>
@@ -1312,11 +1875,11 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
-                Username
+              <label htmlFor="staff-username-input" className="block text-xs font-semibold text-[#111827] mb-1.5">
+                Operator Username or Email
               </label>
               <div className="relative">
-                <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                <User className="w-4 h-4 text-[#64748B] absolute left-3.5 top-3" />
                 <input
                   ref={usernameInputRef}
                   id="staff-username-input"
@@ -1326,24 +1889,25 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   placeholder="Enter staff username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+              <label htmlFor="staff-password-input" className="block text-xs font-semibold text-[#111827] mb-1.5">
                 Password
               </label>
               <div className="relative">
-                <Key className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                <Key className="w-4 h-4 text-[#64748B] absolute left-3.5 top-3" />
                 <input
+                  id="staff-password-input"
                   type="password"
                   required
                   placeholder="Enter staff password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all"
                 />
               </div>
             </div>
@@ -1351,33 +1915,40 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
             <button
               type="submit"
               disabled={authLoading}
-              className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer mt-2 disabled:opacity-50"
+              className="w-full py-2.5 px-4 bg-[#2563EB] hover:bg-blue-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               <Lock className="w-4 h-4" />
-              <span>{authLoading ? 'Authenticating Staff Login...' : 'Authenticate Staff Login'}</span>
+              <span>{authLoading ? 'Authenticating...' : 'Sign In to Staff Console'}</span>
             </button>
           </form>
 
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200 dark:border-slate-800"></div></div>
-            <div className="relative flex justify-center text-[10px] uppercase font-black"><span className="bg-white dark:bg-slate-900 px-2 text-slate-400">Or Quick Auth</span></div>
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-[#E2E8F0]" />
+            </div>
+            <div className="relative flex justify-center text-[11px]">
+              <span className="bg-white px-2.5 text-[#64748B] font-medium">Or Operator Session</span>
+            </div>
           </div>
 
           <button
+            type="button"
             onClick={handleQuickFirebaseAuth}
             disabled={authLoading}
-            className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-extrabold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer border border-slate-200 dark:border-slate-700"
+            className="w-full py-2.5 px-4 bg-[#F6F8FC] hover:bg-slate-100 text-[#111827] font-semibold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer border border-[#E2E8F0]"
           >
-            <ShieldCheck className="w-4 h-4 text-emerald-500" />
-            <span>🔐 One-Click Secure CSC Staff Portal Access</span>
+            <ShieldCheck className="w-4 h-4 text-[#16A34A]" />
+            <span>One-Click Authorized Staff Access</span>
           </button>
 
           {onClose && (
             <button
+              type="button"
               onClick={onClose}
-              className="mt-4 w-full text-center text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold transition-colors"
+              className="w-full text-center text-xs text-[#64748B] hover:text-[#111827] font-medium transition-colors flex items-center justify-center gap-1.5 pt-1 cursor-pointer"
             >
-              ← Back to Visitor Portal
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Return to Public Website</span>
             </button>
           )}
         </div>
@@ -1385,1029 +1956,2522 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     );
   }
 
-  // Render Admin Dashboard
+  // Resolved Authenticated Staff Name
+  const authenticatedStaffLabel = firebaseUser?.email
+    ? firebaseUser.email
+    : `${staffDisplayName} (Staff Admin)`;
+
+  // Sidebar Navigation Groups
+  const mainNavItems: Array<{ id: NavSectionId; label: string; icon: any; count?: number; badgeColor?: string }> = [
+    { id: 'overview', label: 'Dashboard Overview', icon: LayoutDashboard },
+    { id: 'all_apps', label: 'Customer Applications', icon: FileText, count: kpiStats.total },
+    { id: 'pending_apps', label: 'Pending Applications', icon: Clock, count: kpiStats.pending, badgeColor: 'bg-amber-500/20 text-amber-300' },
+    { id: 'process_apps', label: 'Under Process', icon: RefreshCw, count: kpiStats.underProcess, badgeColor: 'bg-blue-500/20 text-blue-300' },
+    { id: 'completed_apps', label: 'Completed Applications', icon: CheckCircle2, count: kpiStats.completed, badgeColor: 'bg-emerald-500/20 text-emerald-300' },
+    { id: 'rejected_apps', label: 'Rejected Applications', icon: XCircle, count: kpiStats.rejected, badgeColor: 'bg-red-500/20 text-red-300' },
+    { id: 'documents', label: 'Uploaded Documents', icon: FolderOpen, count: allDocumentsCatalog.length },
+    { id: 'payments', label: 'Payment Records', icon: CreditCard, count: kpiStats.upiCount + kpiStats.cashCount }
+  ];
+
+  const operationsNavItems: Array<{ id: NavSectionId; label: string; icon: any; count?: number }> = [
+    { id: 'vle_logs', label: 'VLE Visitor Access Logs', icon: ShieldAlert, count: vleInquiries.length },
+    { id: 'whatsapp_sync', label: 'WhatsApp Channel & Sync', icon: Radio },
+    { id: 'reports', label: 'Reports & Export', icon: FileSpreadsheet }
+  ];
+
+  const isApplicationsView = ['overview', 'all_apps', 'pending_apps', 'process_apps', 'completed_apps', 'rejected_apps'].includes(activeNav);
+
+  // ============================================================================
+  // ENTERPRISE DASHBOARD SHELL
+  // ============================================================================
   return (
-    <div className="space-y-6 animate-fade-in pb-12">
-      {/* Top Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white rounded-none sm:rounded-3xl p-4 sm:p-6 shadow-xl border-x-0 sm:border-x border-y sm:border border-blue-900/50 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 w-full">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-amber-500 text-slate-950 rounded-2xl shadow-lg shrink-0">
-            <ShieldCheck className="w-7 h-7" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl font-black uppercase tracking-tight font-display">
-                CSC Staff Dashboard
-              </h2>
-              <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[10px] font-mono font-bold flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>Supabase &amp; Live Sync</span>
-              </span>
-              <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded text-[10px] font-mono font-bold">
-                Staff Session: {firebaseUser ? (firebaseUser.email || `Mahi (Admin)`) : 'Mahi Staff'}
-              </span>
+    <div className="min-h-screen bg-[#F6F8FC] text-[#111827] flex font-sans antialiased selection:bg-[#2563EB] selection:text-white">
+      {/* Mobile Sidebar Backdrop */}
+      {mobileSidebarOpen && (
+        <div
+          onClick={() => setMobileSidebarOpen(false)}
+          className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 lg:hidden"
+        />
+      )}
+
+      {/* ==================================================================== */}
+      {/* 1. COLLAPSIBLE LEFT SIDEBAR (#101B35) */}
+      {/* ==================================================================== */}
+      <aside
+        aria-label="Staff Navigation Sidebar"
+        className={`fixed inset-y-0 left-0 z-50 bg-[#101B35] text-white flex flex-col border-r border-white/10 transition-all duration-200 select-none ${
+          sidebarCollapsed ? 'lg:w-[72px]' : 'lg:w-[252px]'
+        } ${
+          mobileSidebarOpen ? 'translate-x-0 w-[260px]' : '-translate-x-full lg:translate-x-0'
+        }`}
+      >
+        {/* Sidebar Branding Header */}
+        <div className="h-16 px-4 flex items-center justify-between border-b border-white/10 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[#2563EB] flex items-center justify-center text-white font-black text-sm shadow-xs shrink-0">
+              <ShieldCheck className="w-5 h-5" />
             </div>
-            <p className="text-xs text-blue-200 mt-0.5">
-              Manage submitted applications &amp; download customer uploaded documents
-            </p>
+            {(!sidebarCollapsed || mobileSidebarOpen) && (
+              <div className="min-w-0">
+                <span className="text-sm font-bold tracking-tight text-white block truncate">
+                  CSC DOST
+                </span>
+                <span className="text-[11px] text-slate-400 block truncate">
+                  Staff Management Console
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Close Button */}
+          <button
+            type="button"
+            onClick={() => setMobileSidebarOpen(false)}
+            className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg"
+            title="Close navigation"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Navigation Links Scroll Container */}
+        <div className="flex-1 overflow-y-auto py-4 px-2.5 space-y-6 scrollbar-thin">
+          {/* MAIN NAVIGATION */}
+          <div className="space-y-1">
+            {(!sidebarCollapsed || mobileSidebarOpen) && (
+              <div className="px-2.5 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                Main Navigation
+              </div>
+            )}
+            {mainNavItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeNav === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  title={sidebarCollapsed && !mobileSidebarOpen ? `${item.label}${item.count !== undefined ? ` (${item.count})` : ''}` : undefined}
+                  onClick={() => handleSelectNav(item.id)}
+                  className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer ${
+                    isActive
+                      ? 'bg-[#2563EB] text-white font-semibold shadow-xs'
+                      : 'text-slate-300 hover:bg-white/8 hover:text-white'
+                  } ${sidebarCollapsed && !mobileSidebarOpen ? 'justify-center px-0' : ''}`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                    {(!sidebarCollapsed || mobileSidebarOpen) && (
+                      <span className="truncate">{item.label}</span>
+                    )}
+                  </div>
+                  {(!sidebarCollapsed || mobileSidebarOpen) && item.count !== undefined && (
+                    <span
+                      className={`text-[11px] font-mono px-2 py-0.5 rounded-md shrink-0 ${
+                        isActive
+                          ? 'bg-white/20 text-white font-semibold'
+                          : item.badgeColor || 'bg-white/10 text-slate-300'
+                      }`}
+                    >
+                      {item.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* OPERATIONS */}
+          <div className="space-y-1">
+            {(!sidebarCollapsed || mobileSidebarOpen) && (
+              <div className="px-2.5 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                Operations
+              </div>
+            )}
+            {operationsNavItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeNav === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  title={sidebarCollapsed && !mobileSidebarOpen ? item.label : undefined}
+                  onClick={() => handleSelectNav(item.id)}
+                  className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer ${
+                    isActive
+                      ? 'bg-[#2563EB] text-white font-semibold shadow-xs'
+                      : 'text-slate-300 hover:bg-white/8 hover:text-white'
+                  } ${sidebarCollapsed && !mobileSidebarOpen ? 'justify-center px-0' : ''}`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                    {(!sidebarCollapsed || mobileSidebarOpen) && (
+                      <span className="truncate">{item.label}</span>
+                    )}
+                  </div>
+                  {(!sidebarCollapsed || mobileSidebarOpen) && item.count !== undefined && (
+                    <span
+                      className={`text-[11px] font-mono px-2 py-0.5 rounded-md shrink-0 ${
+                        isActive ? 'bg-white/20 text-white font-semibold' : 'bg-white/10 text-slate-300'
+                      }`}
+                    >
+                      {item.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            onClick={async () => {
-              setLoading(true);
-              window.dispatchEvent(new Event('csc_appointment_updated'));
-              if ((window as any).__csc_refresh_server) {
-                (window as any).__csc_refresh_server();
-              }
-              if ((window as any).__csc_refresh_supabase) {
-                await (window as any).__csc_refresh_supabase(true);
-              }
-              setTimeout(() => setLoading(false), 300);
-            }}
-            className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-white/10 cursor-pointer"
-            title="Refresh Data & Sync Directly from Supabase (ORDER BY created_at DESC)"
+        {/* BOTTOM SECTION: Staff Profile, Settings, Return to Public Website, Logout */}
+        <div className="p-2.5 border-t border-white/10 space-y-1.5 shrink-0 bg-[#0c152b]">
+          {/* Staff Profile */}
+          <div
+            title={sidebarCollapsed && !mobileSidebarOpen ? `Signed in as ${authenticatedStaffLabel}` : undefined}
+            className={`flex items-center gap-2.5 px-2.5 py-2 rounded-xl bg-white/5 border border-white/5 ${
+              sidebarCollapsed && !mobileSidebarOpen ? 'justify-center px-0' : ''
+            }`}
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading || supabaseSyncStatus?.loading ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
-          </button>
+            <div className="w-7 h-7 rounded-lg bg-[#2563EB]/20 border border-[#2563EB]/40 text-blue-300 flex items-center justify-center font-bold text-xs shrink-0">
+              {staffDisplayName.charAt(0).toUpperCase()}
+            </div>
+            {(!sidebarCollapsed || mobileSidebarOpen) && (
+              <div className="min-w-0 flex-1">
+                <span className="text-xs font-semibold text-white block truncate">
+                  {authenticatedStaffLabel}
+                </span>
+                <span className="text-[10px] text-emerald-400 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  Authorized Operator
+                </span>
+              </div>
+            )}
+          </div>
 
+          {/* Settings / Supabase Diagnostics */}
           <button
+            type="button"
+            title={sidebarCollapsed && !mobileSidebarOpen ? 'Backend & Supabase Settings' : undefined}
             onClick={() => {
               setShowGetformModal(true);
               setSnippetTab('supabase');
               runSupabaseDiagnosticTest();
             }}
-            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-md cursor-pointer border border-emerald-400/30"
-            title="Supabase Backend, Live Diagnostics & SQL Setup"
-          >
-            <Database className="w-3.5 h-3.5 text-emerald-200" />
-            <span>Supabase / Form Backend</span>
-          </button>
-
-          <button
-            onClick={handleExportCSV}
-            className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
-            title="Export CSV"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5" />
-            <span>Export CSV</span>
-          </button>
-
-          <button
-            onClick={handleLogout}
-            className="px-3.5 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer"
-            title="Sign Out"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Logout</span>
-          </button>
-        </div>
-      </div>
-
-      {actionSuccess && (
-        <div className="p-3 bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800 rounded-xl text-emerald-700 dark:text-emerald-300 text-xs font-bold flex items-center gap-2 animate-fade-in">
-          <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600" />
-          <span>{actionSuccess}</span>
-        </div>
-      )}
-
-      {supabaseSyncError && (
-        <div className="p-3 bg-rose-50 dark:bg-rose-950/80 border border-rose-300 dark:border-rose-800 rounded-xl text-rose-700 dark:text-rose-300 text-xs font-bold flex items-center justify-between gap-2 animate-fade-in">
-          <div className="flex items-center gap-2 min-w-0">
-            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-            <span className="truncate">{supabaseSyncError}</span>
-          </div>
-          <button
-            onClick={() => setSupabaseSyncError(null)}
-            className="p-1 hover:bg-rose-200 dark:hover:bg-rose-900 rounded-lg text-rose-600 dark:text-rose-400 cursor-pointer shrink-0"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
-
-      {/* Main Admin Section Tabs */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={() => setActiveMainTab('applications')}
-            className={`px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer ${
-              activeMainTab === 'applications'
-                ? 'bg-amber-500 text-slate-950 shadow-md ring-2 ring-amber-400/30'
-                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:bg-white/8 hover:text-white transition-colors cursor-pointer ${
+              sidebarCollapsed && !mobileSidebarOpen ? 'justify-center px-0' : ''
             }`}
           >
-            <FileText className="w-4 h-4" />
-            <span>Customer Applications &amp; Orders</span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-              activeMainTab === 'applications' ? 'bg-slate-950 text-amber-400' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-            }`}>
-              {applications.length}
-            </span>
+            <Settings className="w-4 h-4 text-slate-400 shrink-0" />
+            {(!sidebarCollapsed || mobileSidebarOpen) && <span className="truncate">Backend &amp; Settings</span>}
           </button>
 
-          <button
-            onClick={() => setActiveMainTab('vle_inquiries')}
-            className={`px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer ${
-              activeMainTab === 'vle_inquiries'
-                ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-400/30'
-                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
-            }`}
-          >
-            <ShieldAlert className="w-4 h-4 text-amber-400" />
-            <span>VLE Visitor Access Logs</span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-              activeMainTab === 'vle_inquiries' ? 'bg-white text-blue-900' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-            }`}>
-              {vleInquiries.length}
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveMainTab('whatsapp_broadcast')}
-            className={`px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer ${
-              activeMainTab === 'whatsapp_broadcast'
-                ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-400/30'
-                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
-            }`}
-          >
-            <Radio className="w-4 h-4 text-amber-300 animate-pulse" />
-            <span>WhatsApp Channel &amp; Group Sync</span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-              activeMainTab === 'whatsapp_broadcast' ? 'bg-white text-emerald-900' : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300'
-            }`}>
-              1-Click
-            </span>
-          </button>
-        </div>
-
-        {activeMainTab === 'vle_inquiries' && (
-          <div className="flex items-center gap-2">
+          {/* Return to Public Website */}
+          {onClose && (
             <button
-              onClick={handleExportVLEInquiriesCSV}
-              disabled={vleInquiries.length === 0}
-              className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
-              title="Download VLE Visitors CSV"
+              type="button"
+              title={sidebarCollapsed && !mobileSidebarOpen ? 'Return to Public Website' : undefined}
+              onClick={onClose}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:bg-white/8 hover:text-white transition-colors cursor-pointer ${
+                sidebarCollapsed && !mobileSidebarOpen ? 'justify-center px-0' : ''
+              }`}
             >
-              <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span>Export Visitors CSV</span>
+              <ArrowLeft className="w-4 h-4 text-slate-400 shrink-0" />
+              {(!sidebarCollapsed || mobileSidebarOpen) && <span className="truncate">Return to Public Site</span>}
             </button>
-            <button
-              onClick={handleClearAllVleInquiries}
-              disabled={vleInquiries.length === 0}
-              className="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/20 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer disabled:opacity-40"
-              title="Clear all logs"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Purge Logs</span>
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* VLE VISITOR INQUIRIES TAB CONTENT */}
-      {activeMainTab === 'vle_inquiries' && (
-        <div className="space-y-6 animate-fade-in">
-          {/* VLE Inquiries Metrics */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block flex items-center gap-1">
-                <Users className="w-3 h-3 text-blue-500" /> Total Verified Visitors
-              </span>
-              <span className="text-2xl font-black text-slate-900 dark:text-white font-mono mt-1 block">
-                {vleInquiries.length}
-              </span>
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block flex items-center gap-1">
-                <MapPin className="w-3 h-3 text-emerald-500" /> J&amp;K Residents
-              </span>
-              <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono mt-1 block">
-                {vleInquiries.filter(i => (i.state || '').toLowerCase().includes('jammu') || (i.state || '').toLowerCase().includes('kashmir')).length}
-              </span>
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-500 block flex items-center gap-1">
-                <Globe className="w-3 h-3 text-amber-500" /> Other States / UTs
-              </span>
-              <span className="text-2xl font-black text-amber-600 dark:text-amber-400 font-mono mt-1 block">
-                {vleInquiries.filter(i => !(i.state || '').toLowerCase().includes('jammu') && !(i.state || '').toLowerCase().includes('kashmir') && !(i.state || '').toLowerCase().includes('ladakh')).length}
-              </span>
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-500 block flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-purple-500" /> Security Access Unlocked
-              </span>
-              <span className="text-2xl font-black text-purple-600 dark:text-purple-400 font-mono mt-1 block">
-                100% Verified
-              </span>
-            </div>
-          </div>
-
-          {/* Bulk Action Toolbar for VLE Inquiries */}
-          {selectedVleIds.length > 0 && (
-            <div className="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl shadow-lg flex flex-wrap items-center justify-between gap-3 animate-fade-in border border-blue-400">
-              <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider">
-                <CheckSquare className="w-5 h-5 text-amber-300" />
-                <span>{selectedVleIds.length} Visitor Log(s) Selected</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleBulkDeleteVle}
-                  className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Delete Selected ({selectedVleIds.length})</span>
-                </button>
-                <button
-                  onClick={() => setSelectedVleIds([])}
-                  className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
-                >
-                  Deselect All
-                </button>
-              </div>
-            </div>
           )}
 
-          {/* Search & State Filter for VLE Inquiries */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
-            <div className="relative w-full md:w-96">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+          {/* Logout & Collapse Row */}
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              title={sidebarCollapsed && !mobileSidebarOpen ? 'Logout' : undefined}
+              onClick={handleLogout}
+              className={`flex-1 flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-red-300 hover:bg-red-500/15 hover:text-red-200 transition-colors cursor-pointer ${
+                sidebarCollapsed && !mobileSidebarOpen ? 'justify-center px-0' : ''
+              }`}
+            >
+              <LogOut className="w-4 h-4 shrink-0" />
+              {(!sidebarCollapsed || mobileSidebarOpen) && <span>Logout</span>}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSidebarCollapsed(prev => !prev)}
+              className="hidden lg:flex p-2 rounded-xl text-slate-400 hover:bg-white/8 hover:text-white transition-colors cursor-pointer"
+              title={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            >
+              {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* ==================================================================== */}
+      {/* MAIN CONTENT COLUMN */}
+      {/* ==================================================================== */}
+      <div
+        className={`flex-1 flex flex-col min-w-0 transition-all duration-200 ${
+          sidebarCollapsed ? 'lg:pl-[72px]' : 'lg:pl-[252px]'
+        }`}
+      >
+        {/* ================================================================== */}
+        {/* 2. COMPACT TOP HEADER */}
+        {/* ================================================================== */}
+        <header className="sticky top-0 z-30 h-16 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 sm:px-6 flex items-center justify-between gap-4">
+          {/* Left: Hamburger + Breadcrumb & Page Title */}
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={() => setMobileSidebarOpen(true)}
+              className="lg:hidden p-2 -ml-1 rounded-xl text-[#64748B] hover:text-[#111827] hover:bg-slate-100 transition-colors cursor-pointer"
+              aria-label="Open sidebar navigation"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            <div className="min-w-0">
+              <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-medium text-[#64748B]">
+                <span>CSC Console</span>
+                <span>/</span>
+                <span className="text-[#111827]">{sectionHeaderInfo[activeNav].breadcrumb}</span>
+              </div>
+              <h1 className="text-sm sm:text-base font-bold text-[#111827] tracking-tight truncate">
+                {sectionHeaderInfo[activeNav].title}
+              </h1>
+            </div>
+          </div>
+
+          {/* Right: Search Shortcut, Supabase Status, Refresh, Export CSV, Notifications, Staff Profile */}
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+            {/* Compact Header Search Shortcut */}
+            <div className="hidden md:flex items-center relative w-56 lg:w-64">
+              <Search className="w-3.5 h-3.5 text-[#64748B] absolute left-3 pointer-events-none" />
               <input
+                ref={globalSearchInputRef}
                 type="text"
-                placeholder="Search by Visitor Name, Mobile, Email, State, District..."
-                value={vleSearchQuery}
-                onChange={(e) => setVleSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-slate-900 dark:text-white"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (!isApplicationsView) setActiveNav('all_apps');
+                }}
+                placeholder="Quick search (Ctrl+K)..."
+                className="w-full pl-8 pr-12 py-1.5 bg-[#F6F8FC] border border-[#E2E8F0] rounded-lg text-xs text-[#111827] placeholder-[#64748B] focus:outline-none focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 transition-all"
               />
-              {vleSearchQuery && (
+              {searchQuery ? (
                 <button
-                  onClick={() => setVleSearchQuery('')}
-                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 text-[#64748B] hover:text-[#111827]"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3.5 h-3.5" />
                 </button>
+              ) : (
+                <kbd className="absolute right-2 px-1.5 py-0.5 text-[10px] font-mono text-[#64748B] bg-white border border-[#E2E8F0] rounded">
+                  ⌘K
+                </kbd>
               )}
             </div>
 
-            <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+            {/* Real Supabase Connection Status Indicator */}
+            <button
+              type="button"
+              onClick={() => {
+                setShowGetformModal(true);
+                setSnippetTab('supabase');
+                runSupabaseDiagnosticTest();
+              }}
+              title={
+                supabaseSyncStatus?.error
+                  ? `Supabase Error: ${supabaseSyncStatus.error}`
+                  : supabaseSyncStatus?.lastSyncedAt
+                  ? `Supabase Live (${supabaseSyncStatus.count ?? applications.length} records, synced at ${supabaseSyncStatus.lastSyncedAt})`
+                  : 'Click to inspect Supabase connection diagnostics'
+              }
+              className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                supabaseSyncStatus?.loading
+                  ? 'bg-blue-50 text-[#2563EB] border-blue-200'
+                  : supabaseSyncStatus?.error
+                  ? 'bg-red-50 text-[#DC2626] border-red-200'
+                  : 'bg-emerald-50 text-[#16A34A] border-emerald-200 hover:bg-emerald-100/70'
+              }`}
+            >
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  supabaseSyncStatus?.loading
+                    ? 'bg-[#2563EB] animate-ping'
+                    : supabaseSyncStatus?.error
+                    ? 'bg-[#DC2626]'
+                    : 'bg-[#16A34A]'
+                }`}
+              />
+              <span>
+                {supabaseSyncStatus?.loading
+                  ? 'Syncing...'
+                  : supabaseSyncStatus?.error
+                  ? 'Sync Notice'
+                  : 'Supabase Live'}
+              </span>
+            </button>
+
+            {/* Manual Refresh Button */}
+            <button
+              type="button"
+              onClick={handleManualRefresh}
+              className="p-2 rounded-lg bg-white hover:bg-[#F6F8FC] text-[#111827] border border-[#E2E8F0] transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-medium"
+              title="Refresh applications from Supabase & Server"
+            >
+              <RefreshCw className={`w-4 h-4 text-[#64748B] ${loading || supabaseSyncStatus?.loading ? 'animate-spin text-[#2563EB]' : ''}`} />
+              <span className="hidden xl:inline">Refresh</span>
+            </button>
+
+            {/* Export CSV Action */}
+            <button
+              type="button"
+              onClick={() => handleExportCSV()}
+              disabled={applications.length === 0}
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-[#F6F8FC] text-[#111827] border border-[#E2E8F0] text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+              title="Export current applications view to CSV"
+            >
+              <Download className="w-3.5 h-3.5 text-[#64748B]" />
+              <span>Export CSV</span>
+            </button>
+
+            {/* Notification Indicator */}
+            <div className="relative">
               <button
+                type="button"
                 onClick={() => {
-                  const allIds = filteredVleInquiries.map(i => i.id || i.inquiryId).filter(Boolean);
-                  if (selectedVleIds.length >= allIds.length && allIds.length > 0) {
-                    setSelectedVleIds([]);
-                  } else {
-                    setSelectedVleIds(allIds);
-                  }
+                  setNotificationsOpen(prev => !prev);
+                  setProfileMenuOpen(false);
                 }}
-                className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-700 flex items-center gap-1"
+                className="relative p-2 rounded-lg bg-white hover:bg-[#F6F8FC] text-[#64748B] hover:text-[#111827] border border-[#E2E8F0] transition-colors cursor-pointer"
+                title="Application alerts & pending notifications"
               >
-                {selectedVleIds.length >= filteredVleInquiries.length && filteredVleInquiries.length > 0 ? (
-                  <CheckSquare className="w-3.5 h-3.5 text-blue-500" />
-                ) : (
-                  <Square className="w-3.5 h-3.5 text-slate-400" />
+                <Bell className="w-4 h-4" />
+                {(realtimeAlerts.length > 0 || kpiStats.pending > 0) && (
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#2563EB] text-white text-[10px] font-bold flex items-center justify-center">
+                    {realtimeAlerts.length > 0 ? realtimeAlerts.length : kpiStats.pending}
+                  </span>
                 )}
-                <span>Select All</span>
               </button>
 
+              {notificationsOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white border border-[#E2E8F0] rounded-2xl shadow-xl z-50 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F6F8FC]">
+                    <span className="text-xs font-bold text-[#111827]">Activity &amp; Alerts</span>
+                    {realtimeAlerts.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setRealtimeAlerts([])}
+                        className="text-[11px] font-medium text-[#2563EB] hover:underline cursor-pointer"
+                      >
+                        Clear alerts
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-72 overflow-y-auto divide-y divide-[#E2E8F0]">
+                    {realtimeAlerts.length > 0 ? (
+                      realtimeAlerts.map((alert) => (
+                        <div
+                          key={alert.id}
+                          onClick={() => {
+                            const found = applications.find(a => (a.appId || a.id) === alert.appId);
+                            if (found) handleOpenDrawer(found);
+                            setNotificationsOpen(false);
+                          }}
+                          className="p-3 hover:bg-[#F6F8FC] cursor-pointer transition-colors"
+                        >
+                          <div className="flex items-center justify-between text-[11px] text-[#64748B]">
+                            <span className="font-mono font-bold text-[#2563EB]">{alert.appId}</span>
+                            <span>{alert.time}</span>
+                          </div>
+                          <p className="text-xs font-semibold text-[#111827] mt-0.5">{alert.name}</p>
+                          <p className="text-[11px] text-[#64748B] truncate">{alert.service}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center space-y-2">
+                        <p className="text-xs font-medium text-[#111827]">
+                          {kpiStats.pending} Pending Application(s)
+                        </p>
+                        <p className="text-[11px] text-[#64748B]">
+                          Realtime listener is active. New customer submissions will appear here immediately.
+                        </p>
+                        {kpiStats.pending > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleSelectNav('pending_apps');
+                              setNotificationsOpen(false);
+                            }}
+                            className="text-xs font-semibold text-[#2563EB] hover:underline cursor-pointer"
+                          >
+                            View Pending Applications →
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Staff Profile Menu */}
+            <div className="relative">
               <button
-                onClick={() => setVleFilterState('all')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 ${
-                  vleFilterState === 'all'
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
+                type="button"
+                onClick={() => {
+                  setProfileMenuOpen(prev => !prev);
+                  setNotificationsOpen(false);
+                }}
+                className="flex items-center gap-2 pl-2 pr-2.5 py-1.5 rounded-lg bg-white hover:bg-[#F6F8FC] border border-[#E2E8F0] transition-colors cursor-pointer"
               >
-                All Visitors ({vleInquiries.length})
+                <div className="w-6 h-6 rounded-md bg-[#111C3D] text-white flex items-center justify-center text-xs font-bold">
+                  {staffDisplayName.charAt(0).toUpperCase()}
+                </div>
+                <span className="hidden md:inline text-xs font-semibold text-[#111827] max-w-[120px] truncate">
+                  {staffDisplayName}
+                </span>
               </button>
 
-              <button
-                onClick={() => setVleFilterState('jk')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 ${
-                  vleFilterState === 'jk'
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
-              >
-                J&amp;K / Ladakh ({vleInquiries.filter(i => (i.state || '').toLowerCase().includes('jammu') || (i.state || '').toLowerCase().includes('kashmir') || (i.state || '').toLowerCase().includes('ladakh')).length})
-              </button>
-
-              <button
-                onClick={() => setVleFilterState('other')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 ${
-                  vleFilterState === 'other'
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
-              >
-                Other States
-              </button>
+              {profileMenuOpen && (
+                <div className="absolute right-0 mt-2 w-60 bg-white border border-[#E2E8F0] rounded-2xl shadow-xl z-50 overflow-hidden py-1">
+                  <div className="px-4 py-2.5 border-b border-[#E2E8F0] bg-[#F6F8FC]">
+                    <p className="text-xs font-bold text-[#111827] truncate">{authenticatedStaffLabel}</p>
+                    <p className="text-[11px] text-[#64748B] truncate">{cafeName}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      setShowGetformModal(true);
+                      setSnippetTab('supabase');
+                      runSupabaseDiagnosticTest();
+                    }}
+                    className="w-full px-4 py-2 text-left text-xs font-medium text-[#111827] hover:bg-[#F6F8FC] flex items-center gap-2 cursor-pointer"
+                  >
+                    <Database className="w-3.5 h-3.5 text-[#64748B]" />
+                    <span>Supabase &amp; Form Diagnostics</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      handleExportCSV(applications);
+                    }}
+                    className="w-full px-4 py-2 text-left text-xs font-medium text-[#111827] hover:bg-[#F6F8FC] flex items-center gap-2 cursor-pointer"
+                  >
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-[#64748B]" />
+                    <span>Export All Applications CSV</span>
+                  </button>
+                  {onClose && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileMenuOpen(false);
+                        onClose();
+                      }}
+                      className="w-full px-4 py-2 text-left text-xs font-medium text-[#111827] hover:bg-[#F6F8FC] flex items-center gap-2 cursor-pointer"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5 text-[#64748B]" />
+                      <span>Return to Public Website</span>
+                    </button>
+                  )}
+                  <div className="border-t border-[#E2E8F0] mt-1 pt-1">
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="w-full px-4 py-2 text-left text-xs font-semibold text-[#DC2626] hover:bg-red-50 flex items-center gap-2 cursor-pointer"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
+        </header>
 
-          {/* VLE Inquiries Records List */}
-          {filteredVleInquiries.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center text-slate-400 space-y-2">
-              <ShieldAlert className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-700" />
-              <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">No Visitor Access Logs Found</h4>
-              <p className="text-xs">
-                When visitors verify their identity on the CSC Station / VLE Credentials card, their complete details will appear here in real time.
-              </p>
+        {/* ================================================================== */}
+        {/* WORKSPACE BODY */}
+        {/* ================================================================== */}
+        <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] w-full mx-auto space-y-6">
+          {/* Status Toast / Sync Error Banners */}
+          {actionSuccess && (
+            <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-[#16A34A] text-xs font-semibold flex items-center justify-between gap-2 shadow-2xs">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>{actionSuccess}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActionSuccess(null)}
+                className="text-emerald-700 hover:text-emerald-900"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredVleInquiries.map((inq, idx) => {
-                const inqId = inq.id || inq.inquiryId || `VLE-${idx}`;
-                const rawPhone = inq.phone || '';
-                const cleanPhone = rawPhone.replace(/\D/g, '');
-                const phoneWithCode = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
-                const isSelected = selectedVleIds.includes(inqId);
+          )}
 
+          {supabaseSyncError && (
+            <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-[#DC2626] text-xs font-semibold flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span className="truncate">{supabaseSyncError}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSupabaseSyncError(null)}
+                className="p-1 hover:bg-red-100 rounded-lg shrink-0"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* ================================================================ */}
+          {/* 3. DASHBOARD OVERVIEW & 8 KPI CARDS */}
+          {/* ================================================================ */}
+          {activeNav === 'overview' && (
+            <section aria-label="Key Performance Indicators" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                {
+                  id: 'kpi-total',
+                  title: 'Total Applications',
+                  value: kpiStats.total,
+                  subtitle: 'All synced submissions',
+                  icon: FileText,
+                  iconBg: 'bg-blue-50 text-[#2563EB]',
+                  onClick: () => handleSelectNav('all_apps')
+                },
+                {
+                  id: 'kpi-pending',
+                  title: 'Pending Applications',
+                  value: kpiStats.pending,
+                  subtitle: 'Awaiting staff action',
+                  icon: Clock,
+                  iconBg: 'bg-amber-50 text-[#F59E0B]',
+                  onClick: () => handleSelectNav('pending_apps')
+                },
+                {
+                  id: 'kpi-process',
+                  title: 'Under Process',
+                  value: kpiStats.underProcess,
+                  subtitle: 'Approved & active filing',
+                  icon: RefreshCw,
+                  iconBg: 'bg-blue-50 text-[#2563EB]',
+                  onClick: () => handleSelectNav('process_apps')
+                },
+                {
+                  id: 'kpi-completed',
+                  title: 'Completed Applications',
+                  value: kpiStats.completed,
+                  subtitle: 'Processed & delivered',
+                  icon: CheckCircle2,
+                  iconBg: 'bg-emerald-50 text-[#16A34A]',
+                  onClick: () => handleSelectNav('completed_apps')
+                },
+                {
+                  id: 'kpi-revenue',
+                  title: 'Total Verified Revenue',
+                  value: `₹${kpiStats.verifiedRevenue.toLocaleString('en-IN')}`,
+                  subtitle: `Pipeline total: ₹${kpiStats.totalPipelineAmount.toLocaleString('en-IN')}`,
+                  icon: IndianRupee,
+                  iconBg: 'bg-emerald-50 text-[#16A34A]',
+                  onClick: () => handleSelectNav('payments')
+                },
+                {
+                  id: 'kpi-upi',
+                  title: 'UPI Paid',
+                  value: kpiStats.upiCount,
+                  subtitle: 'Online UTR submissions',
+                  icon: CreditCard,
+                  iconBg: 'bg-purple-50 text-[#8B5CF6]',
+                  onClick: () => {
+                    setActiveNav('all_apps');
+                    setPaymentFilter('online');
+                  }
+                },
+                {
+                  id: 'kpi-cash',
+                  title: 'Cash Counter Applications',
+                  value: kpiStats.cashCount,
+                  subtitle: 'Pay at CSC desk',
+                  icon: Users,
+                  iconBg: 'bg-slate-100 text-[#111C3D]',
+                  onClick: () => {
+                    setActiveNav('all_apps');
+                    setPaymentFilter('cash');
+                  }
+                },
+                {
+                  id: 'kpi-docs',
+                  title: 'Uploaded Documents',
+                  value: kpiStats.totalDocs,
+                  subtitle: 'Customer files & receipts',
+                  icon: FolderOpen,
+                  iconBg: 'bg-blue-50 text-[#2563EB]',
+                  onClick: () => handleSelectNav('documents')
+                }
+              ].map((card) => {
+                const Icon = card.icon;
                 return (
                   <div
-                    key={inqId}
-                    className={`bg-white dark:bg-slate-900 border rounded-2xl p-4 shadow-sm transition-all relative overflow-hidden flex flex-col justify-between ${
-                      isSelected
-                        ? 'border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/20 dark:bg-blue-950/20'
-                        : 'border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-900'
-                    }`}
+                    key={card.id}
+                    onClick={card.onClick}
+                    className="bg-white border border-[#E2E8F0] hover:border-[#2563EB]/50 rounded-2xl p-5 shadow-2xs hover:shadow-sm transition-all duration-150 cursor-pointer flex flex-col justify-between min-h-[124px]"
                   >
-                    <div>
-                      {/* Top Row: Checkbox, Name, Status Badge, Timestamp */}
-                      <div className="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-slate-800/80 pb-3 mb-3">
-                        <div className="flex items-center gap-2.5">
-                          <button
-                            onClick={() => {
-                              setSelectedVleIds(prev =>
-                                prev.includes(inqId) ? prev.filter(id => id !== inqId) : [...prev, inqId]
-                              );
-                            }}
-                            className="text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
-                          >
-                            {isSelected ? (
-                              <CheckSquare className="w-5 h-5 text-blue-600" />
-                            ) : (
-                              <Square className="w-5 h-5 text-slate-300 dark:text-slate-600" />
-                            )}
-                          </button>
-
-                          <div>
-                            <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-1.5">
-                              <span>{inq.name || 'Verified Visitor'}</span>
-                              <span className="px-1.5 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded text-[9px] font-bold">
-                                ✓ Verified
-                              </span>
-                            </h4>
-                            <span className="text-[10px] font-mono text-slate-400 block">
-                              ID: {inqId}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="text-right">
-                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1 justify-end">
-                            <Clock className="w-3 h-3 text-slate-400" />
-                            {inq.timestamp || inq.createdAt ? new Date(inq.createdAt || inq.timestamp).toLocaleString() : 'Recent'}
-                          </span>
-                          <span className="text-[9px] text-blue-600 dark:text-blue-400 font-extrabold uppercase">
-                            VLE Credentials Unlocked
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Middle Details Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs mb-4">
-                        <div className="space-y-1.5 bg-slate-50 dark:bg-slate-950/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                          <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-bold">
-                            <Phone className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                            <span className="font-mono">{inq.phone || 'N/A'}</span>
-                          </div>
-                          {inq.email && (
-                            <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 truncate">
-                              <Mail className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                              <span className="truncate">{inq.email}</span>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="space-y-1 bg-slate-50 dark:bg-slate-950/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                          <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-bold">
-                            <MapPin className="w-3.5 h-3.5 text-red-500 shrink-0" />
-                            <span className="font-semibold text-slate-900 dark:text-white">{inq.state || 'N/A'}</span>
-                          </div>
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">
-                            {inq.address || 'Address provided upon verification'}
-                          </div>
-                        </div>
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="text-xs font-semibold text-[#64748B]">
+                        {card.title}
+                      </span>
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${card.iconBg}`}>
+                        <Icon className="w-4 h-4" />
                       </div>
                     </div>
-
-                    {/* Action Bar */}
-                    <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100 dark:border-slate-800/80">
-                      <div className="flex items-center gap-1.5">
-                        {cleanPhone && (
-                          <>
-                            <a
-                              href={`tel:${cleanPhone}`}
-                              className="px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-all"
-                              title="Call Visitor"
-                            >
-                              <PhoneCall className="w-3 h-3" />
-                              <span>Call</span>
-                            </a>
-
-                            <a
-                              href={`https://wa.me/${phoneWithCode}?text=${encodeURIComponent(`Hello ${inq.name || ''}, thank you for verifying on our CSC Digital Portal. How may we assist you today?`)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold flex items-center gap-1 transition-all shadow-xs"
-                              title="WhatsApp Visitor"
-                            >
-                              <MessageCircle className="w-3 h-3" />
-                              <span>WhatsApp</span>
-                            </a>
-                          </>
-                        )}
-
-                        {inq.email && (
-                          <a
-                            href={`mailto:${inq.email}?subject=${encodeURIComponent('CSC Digital Seva - Following up on your inquiry')}`}
-                            className="px-2.5 py-1.5 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-all"
-                            title="Email Visitor"
-                          >
-                            <Mail className="w-3 h-3" />
-                            <span>Email</span>
-                          </a>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => {
-                            const details = `VLE Visitor Inquiry ID: ${inqId}\nName: ${inq.name}\nPhone: ${inq.phone}\nEmail: ${inq.email}\nState: ${inq.state}\nAddress: ${inq.address}\nDate: ${inq.timestamp || inq.createdAt}`;
-                            navigator.clipboard.writeText(details);
-                            setActionSuccess(`Copied visitor details for ${inq.name}`);
-                            setTimeout(() => setActionSuccess(null), 2500);
-                          }}
-                          className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                          title="Copy details"
-                        >
-                          <Copy className="w-3.5 h-3.5" />
-                        </button>
-
-                        <button
-                          onClick={() => handleDeleteVleInquiry(inqId)}
-                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
-                          title="Delete visitor log"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                    <div className="mt-3">
+                      {loading && applications.length === 0 ? (
+                        <div className="h-7 w-20 bg-slate-100 rounded animate-pulse" />
+                      ) : (
+                        <div className="text-2xl font-bold text-[#111827] tracking-tight font-mono">
+                          {card.value}
+                        </div>
+                      )}
+                      <p className="text-[11px] text-[#64748B] mt-0.5 truncate">
+                        {card.subtitle}
+                      </p>
                     </div>
                   </div>
                 );
               })}
-            </div>
+            </section>
           )}
-        </div>
-      )}
 
-      {/* WHATSAPP CHANNEL & GROUP BROADCASTER TAB CONTENT */}
-      {activeMainTab === 'whatsapp_broadcast' && (
-        <WhatsAppBroadcaster cafeName={cafeName} />
-      )}
+          {/* ================================================================ */}
+          {/* 4. CUSTOMER APPLICATIONS TABLE & TOOLBAR */}
+          {/* ================================================================ */}
+          {isApplicationsView && (
+            <section aria-label="Customer Applications Management" className="space-y-4">
+              {/* Bulk Selection Bar */}
+              {selectedAppIds.length > 0 && (
+                <div className="p-3.5 bg-[#111C3D] text-white rounded-xl shadow-md flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-xs font-semibold">
+                    <CheckSquare className="w-4 h-4 text-[#2563EB]" />
+                    <span>{selectedAppIds.length} application(s) selected</span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => handleBulkStatusChange('Approved & Under Process')}
+                      className="px-3 py-1.5 bg-[#2563EB] hover:bg-blue-500 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Mark Under Process</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkStatusChange('Completed')}
+                      className="px-3 py-1.5 bg-[#16A34A] hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Mark Completed</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleBulkDelete}
+                      className="px-3 py-1.5 bg-[#DC2626] hover:bg-red-500 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete Selected</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedAppIds([])}
+                      className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                    >
+                      Clear Selection
+                    </button>
+                  </div>
+                </div>
+              )}
 
-      {/* CUSTOMER APPLICATIONS TAB CONTENT */}
-      {activeMainTab === 'applications' && (
-        <div className="space-y-6 animate-fade-in">
-          {/* Metrics Row */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
-                Total Submissions
-              </span>
-              <span className="text-2xl font-black text-slate-900 dark:text-white font-mono mt-1 block">
-                {applications.length}
-              </span>
-            </div>
+              {/* Search and Filter Toolbar */}
+              <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-2xs space-y-3">
+                <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+                  {/* Debounced Search Input */}
+                  <div className="relative flex-1 max-w-xl">
+                    <Search className="w-4 h-4 text-[#64748B] absolute left-3.5 top-2.5 pointer-events-none" />
+                    <input
+                      type="text"
+                      placeholder="Search by applicant name, mobile, email, token ID, service, or UTR..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-9 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827] placeholder-[#64748B] focus:outline-none focus:bg-white focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 transition-all"
+                    />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery('')}
+                        className="absolute right-3 top-2.5 text-[#64748B] hover:text-[#111827]"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
 
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block flex items-center gap-1">
-                <IndianRupee className="w-3 h-3" /> Total Revenue
-              </span>
-              <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono mt-1 block">
-                ₹{applications.reduce((acc, a) => acc + (Number(a.totalAmount) || Number(a.total_amount) || Number(a.payload?.totalAmount) || 0), 0)}
-              </span>
-            </div>
+                  {/* Desktop Filter Controls */}
+                  <div className="hidden md:flex items-center gap-2 flex-wrap">
+                    {/* Status Dropdown */}
+                    <select
+                      aria-label="Filter by Application Status"
+                      value={filterStatus}
+                      onChange={(e) => {
+                        setFilterStatus(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                      className="px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827] focus:outline-none focus:border-[#2563EB] cursor-pointer"
+                    >
+                      <option value="all">Status: All ({applications.length})</option>
+                      <option value="pending">Pending ({kpiStats.pending})</option>
+                      <option value="approved">Under Process ({kpiStats.underProcess})</option>
+                      <option value="completed">Completed ({kpiStats.completed})</option>
+                      <option value="rejected">Rejected ({kpiStats.rejected})</option>
+                    </select>
 
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-500 block">
-                UPI Paid (Online)
-              </span>
-              <span className="text-2xl font-black text-amber-600 dark:text-amber-400 font-mono mt-1 block">
-                {applications.filter(a => {
-                  const mode = (a.paymentMode || a.payment_mode || '').toLowerCase();
-                  const st = (a.status || '').toLowerCase();
-                  const utr = (a.utrNumber || a.utr_number || '').trim();
-                  return mode === 'online' || mode === 'upi' || st.includes('online') || st.includes('upi') || (utr !== '' && utr !== 'N/A' && utr !== 'none');
-                }).length}
-              </span>
-            </div>
+                    {/* Payment Method Dropdown */}
+                    <select
+                      aria-label="Filter by Payment Method"
+                      value={paymentFilter}
+                      onChange={(e) => {
+                        setPaymentFilter(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                      className="px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827] focus:outline-none focus:border-[#2563EB] cursor-pointer"
+                    >
+                      <option value="all">Payment: All Methods</option>
+                      <option value="online">UPI Online ({kpiStats.upiCount})</option>
+                      <option value="cash">Cash Counter ({kpiStats.cashCount})</option>
+                    </select>
 
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-500 block">
-                Cash Counter
-              </span>
-              <span className="text-2xl font-black text-blue-600 dark:text-blue-400 font-mono mt-1 block">
-                {applications.filter(a => {
-                  const mode = (a.paymentMode || a.payment_mode || '').toLowerCase();
-                  const st = (a.status || '').toLowerCase();
-                  return mode === 'cash' || mode.includes('counter') || mode.includes('desk') || mode.includes('pay at csc') || st.includes('cash');
-                }).length}
-              </span>
-            </div>
+                    {/* Date Range Dropdown */}
+                    <select
+                      aria-label="Filter by Date Range"
+                      value={dateRangeFilter}
+                      onChange={(e) => {
+                        setDateRangeFilter(e.target.value as any);
+                        setCurrentPage(1);
+                      }}
+                      className="px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827] focus:outline-none focus:border-[#2563EB] cursor-pointer"
+                    >
+                      <option value="all">Date: All Time</option>
+                      <option value="today">Today</option>
+                      <option value="7days">Last 7 Days</option>
+                      <option value="30days">Last 30 Days</option>
+                    </select>
 
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs col-span-2 md:col-span-1">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-500 block">
-                Uploaded Docs Total
-              </span>
-              <span className="text-2xl font-black text-purple-600 dark:text-purple-400 font-mono mt-1 block">
-                {applications.reduce((acc, app) => {
-                  const docLen = Array.isArray(app.documents) ? app.documents.length : 0;
-                  const upDocLen = Array.isArray(app.uploadedDocuments) ? app.uploadedDocuments.length : 0;
-                  let urlDocLen = 0;
-                  if (Array.isArray(app.document_urls)) urlDocLen = app.document_urls.length;
-                  return acc + Math.max(docLen, upDocLen, urlDocLen, (app.mandatoryDocName ? 1 : 0));
-                }, 0)}
-              </span>
-            </div>
-          </div>
+                    {/* Sort Control */}
+                    <select
+                      aria-label="Sort Applications"
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as any)}
+                      className="px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827] focus:outline-none focus:border-[#2563EB] cursor-pointer"
+                    >
+                      <option value="newest">Sort: Newest First</option>
+                      <option value="oldest">Sort: Oldest First</option>
+                      <option value="amount_high">Sort: Amount (High–Low)</option>
+                      <option value="name_asc">Sort: Applicant (A–Z)</option>
+                    </select>
 
-      {/* Bulk Action Toolbar Banner (Appears when items are selected) */}
-      {selectedAppIds.length > 0 && (
-        <div className="p-4 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-950 rounded-2xl shadow-lg flex flex-wrap items-center justify-between gap-3 animate-fade-in border border-amber-400">
-          <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider">
-            <CheckSquare className="w-5 h-5 text-slate-950" />
-            <span>{selectedAppIds.length} Application(s) Selected</span>
-          </div>
+                    {hasActiveFilters && (
+                      <button
+                        type="button"
+                        onClick={clearAllFilters}
+                        className="px-3 py-2 text-xs font-semibold text-[#DC2626] hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
+                      >
+                        Clear Filters
+                      </button>
+                    )}
 
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => handleBulkStatusChange('Approved & Under Process')}
-              className="px-3 py-1.5 bg-slate-950 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
-            >
-              <Check className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Bulk Approve</span>
-            </button>
+                    <button
+                      type="button"
+                      onClick={() => handleExportCSV(filteredApplications)}
+                      disabled={filteredApplications.length === 0}
+                      className="px-3 py-2 bg-[#111C3D] hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Export ({filteredApplications.length})</span>
+                    </button>
+                  </div>
 
-            <button
-              onClick={() => handleBulkStatusChange('Completed')}
-              className="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
-            >
-              <CheckCircle2 className="w-3.5 h-3.5 text-white" />
-              <span>Bulk Complete</span>
-            </button>
+                  {/* Mobile Filter Drawer Trigger */}
+                  <div className="flex md:hidden items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setMobileFilterDrawerOpen(prev => !prev)}
+                      className="flex-1 py-2 px-3 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-semibold text-[#111827] flex items-center justify-center gap-1.5"
+                    >
+                      <SlidersHorizontal className="w-3.5 h-3.5 text-[#2563EB]" />
+                      <span>Filters &amp; Sort</span>
+                    </button>
+                    {hasActiveFilters && (
+                      <button
+                        type="button"
+                        onClick={clearAllFilters}
+                        className="py-2 px-3 bg-red-50 text-[#DC2626] rounded-xl text-xs font-semibold"
+                      >
+                        Reset
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleExportCSV(filteredApplications)}
+                      className="py-2 px-3 bg-[#111C3D] text-white rounded-xl text-xs font-semibold flex items-center gap-1"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>CSV</span>
+                    </button>
+                  </div>
+                </div>
 
-            <button
-              onClick={handleBulkDelete}
-              className="px-3 py-1.5 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Bulk Delete</span>
-            </button>
+                {/* Collapsible Mobile Filter Panel */}
+                {mobileFilterDrawerOpen && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-3 border-t border-[#E2E8F0] md:hidden">
+                    <select
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                      className="px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827]"
+                    >
+                      <option value="all">Status: All</option>
+                      <option value="pending">Pending</option>
+                      <option value="approved">Under Process</option>
+                      <option value="completed">Completed</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                    <select
+                      value={paymentFilter}
+                      onChange={(e) => setPaymentFilter(e.target.value)}
+                      className="px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827]"
+                    >
+                      <option value="all">Payment: All Methods</option>
+                      <option value="online">UPI Online</option>
+                      <option value="cash">Cash Counter</option>
+                    </select>
+                    <select
+                      value={dateRangeFilter}
+                      onChange={(e) => setDateRangeFilter(e.target.value as any)}
+                      className="px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827]"
+                    >
+                      <option value="all">Date: All Time</option>
+                      <option value="today">Today</option>
+                      <option value="7days">Last 7 Days</option>
+                      <option value="30days">Last 30 Days</option>
+                    </select>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as any)}
+                      className="px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827]"
+                    >
+                      <option value="newest">Sort: Newest First</option>
+                      <option value="oldest">Sort: Oldest First</option>
+                      <option value="amount_high">Sort: Amount (High–Low)</option>
+                      <option value="name_asc">Sort: Applicant (A–Z)</option>
+                    </select>
+                  </div>
+                )}
+              </div>
 
-            <button
-              onClick={() => setSelectedAppIds([])}
-              className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-slate-950 rounded-xl text-xs font-extrabold transition-all cursor-pointer"
-            >
-              Deselect All
-            </button>
-          </div>
-        </div>
-      )}
+              {/* ============================================================== */}
+              {/* PROFESSIONAL APPLICATIONS DATA TABLE (DESKTOP) & CARDS (MOBILE) */}
+              {/* ============================================================== */}
+              <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-2xs overflow-hidden">
+                {loading && applications.length === 0 ? (
+                  <div className="p-12 text-center space-y-3">
+                    <RefreshCw className="w-7 h-7 animate-spin mx-auto text-[#2563EB]" />
+                    <p className="text-xs font-semibold text-[#64748B]">
+                      Synchronizing applications from Supabase...
+                    </p>
+                  </div>
+                ) : filteredApplications.length === 0 ? (
+                  <div className="p-12 text-center space-y-3">
+                    <div className="w-12 h-12 rounded-2xl bg-[#F6F8FC] border border-[#E2E8F0] flex items-center justify-center mx-auto text-[#64748B]">
+                      <FileText className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-sm font-bold text-[#111827]">No matching applications found</h3>
+                      <p className="text-xs text-[#64748B]">
+                        {hasActiveFilters
+                          ? 'Try adjusting your search query or clearing active filters.'
+                          : 'New customer applications will automatically appear here in real time.'}
+                      </p>
+                    </div>
+                    {hasActiveFilters && (
+                      <button
+                        type="button"
+                        onClick={clearAllFilters}
+                        className="px-4 py-2 bg-[#2563EB] text-white text-xs font-semibold rounded-xl hover:bg-blue-700 transition-colors cursor-pointer"
+                      >
+                        Reset All Filters
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    {/* DESKTOP DATA TABLE (md and up) */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-[#F6F8FC] border-b border-[#E2E8F0] text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+                            <th className="py-3.5 pl-4 pr-2 w-10">
+                              <button
+                                type="button"
+                                onClick={() => toggleSelectAll(paginatedApplications)}
+                                className="text-[#64748B] hover:text-[#111827] flex items-center cursor-pointer"
+                                title="Select all rows on this page"
+                              >
+                                {paginatedApplications.length > 0 &&
+                                paginatedApplications.every(a => selectedAppIds.includes(a.appId || a.id)) ? (
+                                  <CheckSquare className="w-4 h-4 text-[#2563EB]" />
+                                ) : (
+                                  <Square className="w-4 h-4" />
+                                )}
+                              </button>
+                            </th>
+                            <th className="py-3.5 px-3">Application ID</th>
+                            <th className="py-3.5 px-3">Applicant</th>
+                            <th className="py-3.5 px-3">Requested Service</th>
+                            <th className="py-3.5 px-3">Submitted Date</th>
+                            <th className="py-3.5 px-3">Payment Method</th>
+                            <th className="py-3.5 px-3">Payment Status</th>
+                            <th className="py-3.5 px-3">Application Status</th>
+                            <th className="py-3.5 px-3">Documents</th>
+                            <th className="py-3.5 pl-3 pr-5 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#E2E8F0] text-xs">
+                          {paginatedApplications.map((app, idx) => {
+                            const appId = app.appId || app.id || `CSC-${idx + 1}`;
+                            const isSelected = selectedAppIds.includes(appId);
+                            const isDrawerOpenForRow = drawerAppId === appId;
+                            const rawDocs = Array.isArray(app.documents) ? app.documents : [];
+                            const textDocs = Array.isArray(app.uploadedDocuments) ? app.uploadedDocuments : [];
+                            const docCount = rawDocs.length || textDocs.length;
+                            const online = isOnlinePayment(app);
+                            const payStatus = getPaymentStatusInfo(app);
 
-      {/* Search & Filter Bar */}
-      <div className="bg-white dark:bg-slate-900 border-x-0 sm:border-x border-y sm:border border-slate-200 dark:border-slate-800 rounded-none sm:rounded-2xl p-3.5 sm:p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3 w-full">
-        <div className="relative w-full md:w-96">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-          <input
-            type="text"
-            placeholder="Search by Applicant Name, Phone, Token ID, Service, UTR..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/30 text-slate-900 dark:text-white"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
-            >
-              <X className="w-4 h-4" />
-            </button>
+                            return (
+                              <tr
+                                key={appId}
+                                onClick={() => handleOpenDrawer(app)}
+                                className={`group transition-colors duration-150 cursor-pointer ${
+                                  isDrawerOpenForRow
+                                    ? 'bg-blue-50/70'
+                                    : isSelected
+                                    ? 'bg-blue-50/40'
+                                    : 'hover:bg-[#F6F8FC]'
+                                }`}
+                              >
+                                {/* Checkbox */}
+                                <td
+                                  className="py-3.5 pl-4 pr-2 align-middle"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleSelectApp(appId);
+                                  }}
+                                >
+                                  <button type="button" className="text-[#64748B] hover:text-[#2563EB] flex items-center cursor-pointer">
+                                    {isSelected ? (
+                                      <CheckSquare className="w-4 h-4 text-[#2563EB]" />
+                                    ) : (
+                                      <Square className="w-4 h-4" />
+                                    )}
+                                  </button>
+                                </td>
+
+                                {/* Application ID + Copy */}
+                                <td className="py-3.5 px-3 align-middle whitespace-nowrap">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-mono font-bold text-[#111C3D] bg-[#F6F8FC] border border-[#E2E8F0] px-2 py-0.5 rounded-md">
+                                      {appId}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => handleCopyTokenId(appId, e)}
+                                      className="p-1 text-[#64748B] hover:text-[#2563EB] rounded hover:bg-white transition-colors cursor-pointer"
+                                      title="Copy Application ID"
+                                    >
+                                      {copiedAppId === appId ? (
+                                        <Check className="w-3.5 h-3.5 text-[#16A34A]" />
+                                      ) : (
+                                        <Copy className="w-3.5 h-3.5" />
+                                      )}
+                                    </button>
+                                  </div>
+                                </td>
+
+                                {/* Applicant */}
+                                <td className="py-3.5 px-3 align-middle max-w-[200px]">
+                                  <div className="font-semibold text-[#111827] truncate">
+                                    {app.name || app.customerName || 'N/A'}
+                                  </div>
+                                  <div className="text-[11px] text-[#64748B] truncate mt-0.5">
+                                    {app.phone || app.phoneNumber || 'N/A'}
+                                    {app.email && app.email !== 'N/A' ? ` · ${app.email}` : ''}
+                                  </div>
+                                </td>
+
+                                {/* Requested Service */}
+                                <td className="py-3.5 px-3 align-middle max-w-[220px]">
+                                  <div
+                                    title={app.service || app.selectedService || 'General Service'}
+                                    className="font-semibold text-[#111827] truncate"
+                                  >
+                                    {app.service || app.selectedService || 'General Service'}
+                                  </div>
+                                  <div className="text-[11px] text-[#64748B] truncate mt-0.5">
+                                    {app.userCategory || 'General/OBC'}
+                                    {app.staffNotes ? ' · 📝 Has Staff Remark' : ''}
+                                  </div>
+                                </td>
+
+                                {/* Submitted Date */}
+                                <td className="py-3.5 px-3 align-middle whitespace-nowrap">
+                                  <div className="font-medium text-[#111827]">
+                                    {formatShortDate(app.createdAt || app.submittedAt || app.date)}
+                                  </div>
+                                  <div className="text-[11px] text-[#64748B]">
+                                    {formatShortTime(app.createdAt || app.submittedAt || app.date)}
+                                  </div>
+                                </td>
+
+                                {/* Payment Method */}
+                                <td className="py-3.5 px-3 align-middle whitespace-nowrap">
+                                  <div className="font-semibold text-[#111827]">
+                                    {online ? 'UPI Online' : 'Cash Counter'}
+                                  </div>
+                                  <div className="text-[11px] font-mono text-[#64748B]">
+                                    ₹{Number(app.totalAmount || 0).toLocaleString('en-IN')}
+                                    {online && app.utrNumber && app.utrNumber !== 'N/A' ? ` · UTR: ${String(app.utrNumber).slice(-6)}` : ''}
+                                  </div>
+                                </td>
+
+                                {/* Payment Status */}
+                                <td className="py-3.5 px-3 align-middle whitespace-nowrap">
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${payStatus.colorClass}`}>
+                                    {payStatus.label}
+                                  </span>
+                                </td>
+
+                                {/* Application Status */}
+                                <td className="py-3.5 px-3 align-middle whitespace-nowrap">
+                                  {renderApplicationStatusBadge(app.status)}
+                                </td>
+
+                                {/* Documents */}
+                                <td className="py-3.5 px-3 align-middle whitespace-nowrap">
+                                  {docCount > 0 ? (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (rawDocs.length > 0 && (rawDocs[0].dataUrl || rawDocs[0].url)) {
+                                          setSelectedDocPreview({
+                                            name: rawDocs[0].name || 'Document',
+                                            url: rawDocs[0].dataUrl || rawDocs[0].url,
+                                            type: rawDocs[0].type
+                                          });
+                                        } else {
+                                          handleOpenDrawer(app);
+                                        }
+                                      }}
+                                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#F6F8FC] hover:bg-blue-50 text-[#111827] hover:text-[#2563EB] border border-[#E2E8F0] text-[11px] font-semibold transition-colors cursor-pointer"
+                                      title="Click to preview attached documents"
+                                    >
+                                      <FileText className="w-3.5 h-3.5 text-[#2563EB]" />
+                                      <span>{docCount} {docCount === 1 ? 'File' : 'Files'}</span>
+                                    </button>
+                                  ) : (
+                                    <span className="text-[11px] text-[#64748B]">None</span>
+                                  )}
+                                </td>
+
+                                {/* Actions */}
+                                <td
+                                  className="py-3.5 pl-3 pr-5 align-middle whitespace-nowrap text-right"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <div className="inline-flex items-center justify-end gap-1.5 relative">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenDrawer(app)}
+                                      className="px-2.5 py-1.5 rounded-lg bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold transition-colors cursor-pointer"
+                                    >
+                                      View Details
+                                    </button>
+
+                                    <div className="relative">
+                                      <button
+                                        type="button"
+                                        onClick={() => setOpenRowMenuId(openRowMenuId === appId ? null : appId)}
+                                        className="p-1.5 rounded-lg bg-[#F6F8FC] hover:bg-slate-200/70 text-[#64748B] hover:text-[#111827] border border-[#E2E8F0] transition-colors cursor-pointer"
+                                        title="More actions"
+                                      >
+                                        <MoreHorizontal className="w-4 h-4" />
+                                      </button>
+
+                                      {openRowMenuId === appId && (
+                                        <div className="absolute right-0 mt-1.5 w-48 bg-white border border-[#E2E8F0] rounded-xl shadow-xl z-40 py-1 text-left">
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setOpenRowMenuId(null);
+                                              handleUpdateStatus(appId, 'Approved & Under Process');
+                                            }}
+                                            className="w-full px-3.5 py-2 text-xs font-medium text-[#111827] hover:bg-[#F6F8FC] flex items-center gap-2 cursor-pointer"
+                                          >
+                                            <RefreshCw className="w-3.5 h-3.5 text-[#2563EB]" />
+                                            <span>Mark Under Process</span>
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setOpenRowMenuId(null);
+                                              setUploadModalApp(app);
+                                              setReceiptDataUrl(app.finalReceiptUrl || '');
+                                            }}
+                                            className="w-full px-3.5 py-2 text-xs font-medium text-[#111827] hover:bg-[#F6F8FC] flex items-center gap-2 cursor-pointer"
+                                          >
+                                            <CheckCircle2 className="w-3.5 h-3.5 text-[#16A34A]" />
+                                            <span>Complete &amp; Receipt</span>
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setOpenRowMenuId(null);
+                                              handleUpdateStatus(appId, 'Rejected');
+                                            }}
+                                            className="w-full px-3.5 py-2 text-xs font-medium text-[#111827] hover:bg-[#F6F8FC] flex items-center gap-2 cursor-pointer"
+                                          >
+                                            <XCircle className="w-3.5 h-3.5 text-[#F59E0B]" />
+                                            <span>Mark Rejected</span>
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setOpenRowMenuId(null);
+                                              handleSendWhatsAppNotification(app);
+                                            }}
+                                            className="w-full px-3.5 py-2 text-xs font-medium text-[#111827] hover:bg-[#F6F8FC] flex items-center gap-2 cursor-pointer"
+                                          >
+                                            <MessageSquare className="w-3.5 h-3.5 text-[#16A34A]" />
+                                            <span>Send WhatsApp Update</span>
+                                          </button>
+                                          <div className="border-t border-[#E2E8F0] my-1" />
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setOpenRowMenuId(null);
+                                              handleDelete(appId);
+                                            }}
+                                            className="w-full px-3.5 py-2 text-xs font-semibold text-[#DC2626] hover:bg-red-50 flex items-center gap-2 cursor-pointer"
+                                          >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                            <span>Delete Application</span>
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* RESPONSIVE MOBILE APPLICATION CARDS (< md) */}
+                    <div className="md:hidden divide-y divide-[#E2E8F0]">
+                      {paginatedApplications.map((app, idx) => {
+                        const appId = app.appId || app.id || `CSC-${idx + 1}`;
+                        const rawDocs = Array.isArray(app.documents) ? app.documents : [];
+                        const textDocs = Array.isArray(app.uploadedDocuments) ? app.uploadedDocuments : [];
+                        const docCount = rawDocs.length || textDocs.length;
+                        const online = isOnlinePayment(app);
+                        const payStatus = getPaymentStatusInfo(app);
+
+                        return (
+                          <div
+                            key={appId}
+                            onClick={() => handleOpenDrawer(app)}
+                            className="p-4 hover:bg-[#F6F8FC] transition-colors space-y-3 cursor-pointer"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-mono font-bold text-xs text-[#111C3D] bg-[#F6F8FC] border border-[#E2E8F0] px-2 py-0.5 rounded-md">
+                                  {appId}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleCopyTokenId(appId, e)}
+                                  className="p-1 text-[#64748B]"
+                                  title="Copy Application ID"
+                                >
+                                  <Copy className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                              {renderApplicationStatusBadge(app.status)}
+                            </div>
+
+                            <div>
+                              <h3 className="text-sm font-bold text-[#111827]">
+                                {app.name || app.customerName || 'N/A'}
+                              </h3>
+                              <p className="text-xs font-medium text-[#2563EB] mt-0.5">
+                                {app.service || app.selectedService || 'General Service'}
+                              </p>
+                              <p className="text-[11px] text-[#64748B] mt-0.5">
+                                {app.phone || app.phoneNumber || 'N/A'} · {formatShortDate(app.createdAt || app.submittedAt || app.date)}
+                              </p>
+                            </div>
+
+                            <div className="flex items-center justify-between pt-2 border-t border-[#E2E8F0] text-xs">
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${payStatus.colorClass}`}>
+                                  {online ? 'UPI' : 'Cash'} · ₹{app.totalAmount || 0}
+                                </span>
+                                {docCount > 0 && (
+                                  <span className="text-[11px] font-medium text-[#64748B] flex items-center gap-1">
+                                    <FileText className="w-3 h-3 text-[#2563EB]" />
+                                    {docCount}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-xs font-semibold text-[#2563EB]">
+                                View Details →
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Table Footer / Pagination */}
+                    <div className="px-4 sm:px-6 py-3.5 bg-[#F6F8FC] border-t border-[#E2E8F0] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#64748B]">
+                      <div className="flex items-center gap-3">
+                        <span>
+                          Showing{' '}
+                          <strong className="text-[#111827]">
+                            {(safeCurrentPage - 1) * pageSize + 1}–{Math.min(safeCurrentPage * pageSize, filteredApplications.length)}
+                          </strong>{' '}
+                          of <strong className="text-[#111827]">{filteredApplications.length}</strong> application(s)
+                        </span>
+                        <select
+                          aria-label="Rows per page"
+                          value={pageSize}
+                          onChange={(e) => {
+                            setPageSize(Number(e.target.value));
+                            setCurrentPage(1);
+                          }}
+                          className="px-2 py-1 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#111827] cursor-pointer"
+                        >
+                          <option value={15}>15 / page</option>
+                          <option value={30}>30 / page</option>
+                          <option value={50}>50 / page</option>
+                        </select>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          disabled={safeCurrentPage <= 1}
+                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                          className="px-3 py-1.5 rounded-lg bg-white border border-[#E2E8F0] text-[#111827] font-medium hover:bg-slate-50 disabled:opacity-40 cursor-pointer"
+                        >
+                          Previous
+                        </button>
+                        <span className="px-2.5 font-semibold text-[#111827]">
+                          Page {safeCurrentPage} of {totalPages}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={safeCurrentPage >= totalPages}
+                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                          className="px-3 py-1.5 rounded-lg bg-white border border-[#E2E8F0] text-[#111827] font-medium hover:bg-slate-50 disabled:opacity-40 cursor-pointer"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </section>
           )}
-        </div>
 
-        <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-          <button
-            onClick={() => toggleSelectAll(filteredApplications)}
-            className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-700 flex items-center gap-1"
-            title="Select or deselect all shown applications"
-          >
-            {selectedAppIds.length >= filteredApplications.length && filteredApplications.length > 0 ? (
-              <CheckSquare className="w-3.5 h-3.5 text-amber-500" />
-            ) : (
-              <Square className="w-3.5 h-3.5 text-slate-400" />
-            )}
-            <span>Select All</span>
-          </button>
+          {/* ================================================================ */}
+          {/* 5. DEDICATED DOCUMENT MANAGEMENT INTERFACE */}
+          {/* ================================================================ */}
+          {activeNav === 'documents' && (
+            <section aria-label="Uploaded Documents Repository" className="space-y-4">
+              {/* Document Search & Filter Bar */}
+              <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-2xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="w-4 h-4 text-[#64748B] absolute left-3.5 top-2.5" />
+                  <input
+                    type="text"
+                    placeholder="Search documents by file name, applicant, or Application ID..."
+                    value={docSearchQuery}
+                    onChange={(e) => setDocSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827] focus:outline-none focus:bg-white focus:border-[#2563EB]"
+                  />
+                </div>
 
-          {['all', 'pending', 'approved', 'completed', 'rejected', 'online', 'cash'].map((st) => (
-            <button
-              key={st}
-              onClick={() => setFilterStatus(st)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 ${
-                filterStatus === st
-                  ? 'bg-amber-500 text-slate-950 shadow-xs'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-              }`}
-            >
-              {st === 'all'
-                ? 'All Submissions'
-                : st === 'approved'
-                ? 'Under Process'
-                : st === 'online'
-                ? 'UPI Paid'
-                : st === 'cash'
-                ? 'Cash Counter'
-                : st}
-            </button>
-          ))}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {[
+                    { id: 'all', label: 'All Files' },
+                    { id: 'image', label: 'Images' },
+                    { id: 'pdf', label: 'PDF Documents' },
+                    { id: 'receipt', label: 'Processed Receipts' }
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setDocTypeFilter(tab.id as any)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors cursor-pointer ${
+                        docTypeFilter === tab.id
+                          ? 'bg-[#2563EB] text-white border-[#2563EB]'
+                          : 'bg-[#F6F8FC] text-[#64748B] border-[#E2E8F0] hover:text-[#111827]'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {allDocumentsCatalog.length === 0 ? (
+                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-12 text-center space-y-2">
+                  <FolderOpen className="w-10 h-10 text-[#64748B] mx-auto" />
+                  <h3 className="text-sm font-bold text-[#111827]">No uploaded documents found</h3>
+                  <p className="text-xs text-[#64748B]">
+                    Customer identity documents and processed receipts linked to applications will appear here.
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-2xs overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-[#F6F8FC] border-b border-[#E2E8F0] text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+                          <th className="py-3.5 px-4">File Name &amp; Type</th>
+                          <th className="py-3.5 px-4">Linked Application</th>
+                          <th className="py-3.5 px-4">Applicant</th>
+                          <th className="py-3.5 px-4">Service</th>
+                          <th className="py-3.5 px-4">File Size</th>
+                          <th className="py-3.5 px-4">Upload Date</th>
+                          <th className="py-3.5 px-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#E2E8F0] text-xs">
+                        {allDocumentsCatalog.map((docItem) => {
+                          const isImg = docItem.docType.startsWith('image/');
+                          const FileIcon = isImg ? FileImage : FileText;
+                          return (
+                            <tr key={docItem.uid} className="hover:bg-[#F6F8FC] transition-colors">
+                              <td className="py-3.5 px-4 align-middle">
+                                <div className="flex items-center gap-2.5">
+                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                                    docItem.isFinalReceipt
+                                      ? 'bg-emerald-50 text-[#16A34A]'
+                                      : isImg
+                                      ? 'bg-purple-50 text-[#8B5CF6]'
+                                      : 'bg-blue-50 text-[#2563EB]'
+                                  }`}>
+                                    <FileIcon className="w-4 h-4" />
+                                  </div>
+                                  <div className="min-w-0 max-w-[220px]">
+                                    <span className="font-semibold text-[#111827] block truncate">
+                                      {docItem.docName}
+                                    </span>
+                                    <span className="text-[11px] text-[#64748B]">
+                                      {docItem.isFinalReceipt ? 'Official Processed Receipt' : docItem.docType}
+                                    </span>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-3.5 px-4 align-middle whitespace-nowrap">
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenDrawer(docItem.appRef)}
+                                  className="font-mono font-bold text-[#2563EB] hover:underline cursor-pointer"
+                                >
+                                  {docItem.appId}
+                                </button>
+                              </td>
+                              <td className="py-3.5 px-4 align-middle">
+                                <div className="font-semibold text-[#111827]">{docItem.applicantName}</div>
+                                <div className="text-[11px] text-[#64748B]">{docItem.phone}</div>
+                              </td>
+                              <td className="py-3.5 px-4 align-middle max-w-[200px] truncate text-[#111827]">
+                                {docItem.service}
+                              </td>
+                              <td className="py-3.5 px-4 align-middle whitespace-nowrap font-mono text-[#64748B]">
+                                {docItem.docSize > 0 ? `${(docItem.docSize / 1024).toFixed(1)} KB` : 'Stored'}
+                              </td>
+                              <td className="py-3.5 px-4 align-middle whitespace-nowrap text-[#64748B]">
+                                {formatShortDate(docItem.submittedAt)}
+                              </td>
+                              <td className="py-3.5 px-4 align-middle whitespace-nowrap text-right">
+                                <div className="inline-flex items-center gap-1.5">
+                                  {docItem.docUrl && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setSelectedDocPreview({
+                                            name: docItem.docName,
+                                            url: docItem.docUrl,
+                                            type: docItem.docType
+                                          })
+                                        }
+                                        className="px-2.5 py-1.5 rounded-lg bg-[#F6F8FC] hover:bg-blue-50 text-[#111827] hover:text-[#2563EB] border border-[#E2E8F0] font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                                      >
+                                        <Eye className="w-3.5 h-3.5" />
+                                        <span>Preview</span>
+                                      </button>
+                                      <a
+                                        href={docItem.docUrl}
+                                        download={docItem.docName}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-2.5 py-1.5 rounded-lg bg-[#2563EB] hover:bg-blue-700 text-white font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                                      >
+                                        <Download className="w-3.5 h-3.5" />
+                                        <span>Download</span>
+                                      </a>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* ================================================================ */}
+          {/* 6. PAYMENT OVERVIEW & LEDGER */}
+          {/* ================================================================ */}
+          {activeNav === 'payments' && (
+            <section aria-label="Payment Records Overview" className="space-y-5">
+              {/* Payment KPI Summary Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+                  <span className="text-xs font-semibold text-[#64748B] block">Verified Collected Revenue</span>
+                  <span className="text-2xl font-bold text-[#16A34A] font-mono mt-2 block">
+                    ₹{kpiStats.verifiedRevenue.toLocaleString('en-IN')}
+                  </span>
+                  <span className="text-[11px] text-[#64748B] mt-1 block">
+                    Confirmed UPI &amp; completed cash orders
+                  </span>
+                </div>
+
+                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+                  <span className="text-xs font-semibold text-[#64748B] block">UPI Online Transactions</span>
+                  <span className="text-2xl font-bold text-[#8B5CF6] font-mono mt-2 block">
+                    {kpiStats.upiCount}
+                  </span>
+                  <span className="text-[11px] text-[#64748B] mt-1 block">
+                    Online QR / UTR submissions
+                  </span>
+                </div>
+
+                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+                  <span className="text-xs font-semibold text-[#64748B] block">Cash Counter Applications</span>
+                  <span className="text-2xl font-bold text-[#111C3D] font-mono mt-2 block">
+                    {kpiStats.cashCount}
+                  </span>
+                  <span className="text-[11px] text-[#64748B] mt-1 block">
+                    Collected upon desk completion
+                  </span>
+                </div>
+
+                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+                  <span className="text-xs font-semibold text-[#64748B] block">Total Pipeline Value</span>
+                  <span className="text-2xl font-bold text-[#2563EB] font-mono mt-2 block">
+                    ₹{kpiStats.totalPipelineAmount.toLocaleString('en-IN')}
+                  </span>
+                  <span className="text-[11px] text-[#64748B] mt-1 block">
+                    Includes pending cash counter filings
+                  </span>
+                </div>
+              </div>
+
+              {/* Payment Filter Bar */}
+              <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {[
+                    { id: 'all', label: 'All Payment Records' },
+                    { id: 'upi_paid', label: 'UPI Online' },
+                    { id: 'cash_collected', label: 'Cash Collected (Completed)' },
+                    { id: 'cash_pending', label: 'Cash Pending at Counter' },
+                    { id: 'pending_verification', label: 'Pending Verification' }
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setPaymentViewFilter(tab.id as any)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors cursor-pointer ${
+                        paymentViewFilter === tab.id
+                          ? 'bg-[#2563EB] text-white border-[#2563EB]'
+                          : 'bg-[#F6F8FC] text-[#64748B] border-[#E2E8F0] hover:text-[#111827]'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleExportCSV(applications)}
+                  className="px-3 py-1.5 bg-[#111C3D] text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export Payment Ledger</span>
+                </button>
+              </div>
+
+              {/* Payment Ledger Table */}
+              <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-2xs overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-[#F6F8FC] border-b border-[#E2E8F0] text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+                        <th className="py-3.5 px-4">Application ID</th>
+                        <th className="py-3.5 px-4">Applicant</th>
+                        <th className="py-3.5 px-4">Service</th>
+                        <th className="py-3.5 px-4">Method</th>
+                        <th className="py-3.5 px-4">UTR / Reference</th>
+                        <th className="py-3.5 px-4">Amount</th>
+                        <th className="py-3.5 px-4">Payment Status</th>
+                        <th className="py-3.5 px-4">Application Status</th>
+                        <th className="py-3.5 px-4 text-right">Inspect</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#E2E8F0] text-xs">
+                      {applications
+                        .filter((app) => {
+                          const online = isOnlinePayment(app);
+                          const payInfo = getPaymentStatusInfo(app);
+                          if (paymentViewFilter === 'upi_paid') return online;
+                          if (paymentViewFilter === 'cash_collected') return !online && payInfo.isVerifiedRevenue;
+                          if (paymentViewFilter === 'cash_pending') return !online && !payInfo.isVerifiedRevenue;
+                          if (paymentViewFilter === 'pending_verification') return payInfo.label === 'Pending Verification';
+                          return true;
+                        })
+                        .map((app, i) => {
+                          const appId = app.appId || app.id || `CSC-${i + 1}`;
+                          const online = isOnlinePayment(app);
+                          const payInfo = getPaymentStatusInfo(app);
+                          return (
+                            <tr
+                              key={appId}
+                              onClick={() => handleOpenDrawer(app)}
+                              className="hover:bg-[#F6F8FC] transition-colors cursor-pointer"
+                            >
+                              <td className="py-3.5 px-4 font-mono font-bold text-[#111C3D]">{appId}</td>
+                              <td className="py-3.5 px-4">
+                                <div className="font-semibold text-[#111827]">{app.name || app.customerName || 'N/A'}</div>
+                                <div className="text-[11px] text-[#64748B]">{app.phone || app.phoneNumber || 'N/A'}</div>
+                              </td>
+                              <td className="py-3.5 px-4 max-w-[200px] truncate text-[#111827]">
+                                {app.service || app.selectedService || 'Service'}
+                              </td>
+                              <td className="py-3.5 px-4 font-semibold text-[#111827]">
+                                {online ? 'UPI Online' : 'Cash Counter'}
+                              </td>
+                              <td className="py-3.5 px-4 font-mono text-[#64748B]">
+                                {app.utrNumber && app.utrNumber !== 'N/A' ? app.utrNumber : '—'}
+                              </td>
+                              <td className="py-3.5 px-4 font-mono font-bold text-[#111827]">
+                                ₹{Number(app.totalAmount || 0).toLocaleString('en-IN')}
+                              </td>
+                              <td className="py-3.5 px-4">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${payInfo.colorClass}`}>
+                                  {payInfo.label}
+                                </span>
+                              </td>
+                              <td className="py-3.5 px-4">{renderApplicationStatusBadge(app.status)}</td>
+                              <td className="py-3.5 px-4 text-right">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenDrawer(app);
+                                  }}
+                                  className="text-xs font-semibold text-[#2563EB] hover:underline cursor-pointer"
+                                >
+                                  Details →
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* ================================================================ */}
+          {/* 7. VLE VISITOR ACCESS LOGS */}
+          {/* ================================================================ */}
+          {activeNav === 'vle_logs' && (
+            <section aria-label="VLE Visitor Access Logs" className="space-y-5">
+              {/* VLE Metrics */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+                  <span className="text-xs font-semibold text-[#64748B] block">Total Verified Visitors</span>
+                  <span className="text-2xl font-bold text-[#111827] font-mono mt-2 block">
+                    {vleInquiries.length}
+                  </span>
+                </div>
+                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+                  <span className="text-xs font-semibold text-[#64748B] block">J&amp;K / Ladakh Residents</span>
+                  <span className="text-2xl font-bold text-[#16A34A] font-mono mt-2 block">
+                    {vleInquiries.filter(i => (i.state || '').toLowerCase().includes('jammu') || (i.state || '').toLowerCase().includes('kashmir') || (i.state || '').toLowerCase().includes('ladakh')).length}
+                  </span>
+                </div>
+                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+                  <span className="text-xs font-semibold text-[#64748B] block">Other States / UTs</span>
+                  <span className="text-2xl font-bold text-[#2563EB] font-mono mt-2 block">
+                    {vleInquiries.filter(i => !(i.state || '').toLowerCase().includes('jammu') && !(i.state || '').toLowerCase().includes('kashmir') && !(i.state || '').toLowerCase().includes('ladakh')).length}
+                  </span>
+                </div>
+                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+                  <span className="text-xs font-semibold text-[#64748B] block">Verification Status</span>
+                  <span className="text-2xl font-bold text-[#8B5CF6] font-mono mt-2 block">
+                    100% Logged
+                  </span>
+                </div>
+              </div>
+
+              {/* Bulk Selection Bar for VLE */}
+              {selectedVleIds.length > 0 && (
+                <div className="p-3.5 bg-[#111C3D] text-white rounded-xl flex flex-wrap items-center justify-between gap-3">
+                  <span className="text-xs font-semibold">{selectedVleIds.length} visitor log(s) selected</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleBulkDeleteVle}
+                      className="px-3 py-1.5 bg-[#DC2626] hover:bg-red-500 text-white rounded-lg text-xs font-semibold cursor-pointer"
+                    >
+                      Delete Selected ({selectedVleIds.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedVleIds([])}
+                      className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-medium cursor-pointer"
+                    >
+                      Deselect All
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* VLE Toolbar */}
+              <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-2xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="w-4 h-4 text-[#64748B] absolute left-3.5 top-2.5" />
+                  <input
+                    type="text"
+                    placeholder="Search visitor name, phone, email, state, address..."
+                    value={vleSearchQuery}
+                    onChange={(e) => setVleSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-medium text-[#111827] focus:outline-none focus:bg-white focus:border-[#2563EB]"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  {[
+                    { id: 'all', label: `All (${vleInquiries.length})` },
+                    { id: 'jk', label: 'J&K / Ladakh' },
+                    { id: 'other', label: 'Other States' }
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setVleFilterState(tab.id)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors cursor-pointer ${
+                        vleFilterState === tab.id
+                          ? 'bg-[#2563EB] text-white border-[#2563EB]'
+                          : 'bg-[#F6F8FC] text-[#64748B] border-[#E2E8F0] hover:text-[#111827]'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={handleExportVLEInquiriesCSV}
+                    disabled={vleInquiries.length === 0}
+                    className="px-3 py-1.5 bg-[#111C3D] text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Export Logs CSV</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleClearAllVleInquiries}
+                    disabled={vleInquiries.length === 0}
+                    className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-[#DC2626] border border-red-200 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-40"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Purge All</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* VLE Table */}
+              {filteredVleInquiries.length === 0 ? (
+                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-12 text-center space-y-2">
+                  <ShieldAlert className="w-10 h-10 text-[#64748B] mx-auto" />
+                  <h3 className="text-sm font-bold text-[#111827]">No Visitor Access Logs Found</h3>
+                  <p className="text-xs text-[#64748B]">
+                    When visitors verify their identity on the CSC Station / VLE Credentials card, their details appear here in real time.
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-2xs overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-[#F6F8FC] border-b border-[#E2E8F0] text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+                          <th className="py-3.5 pl-4 pr-2 w-10">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const allIds = filteredVleInquiries.map(i => i.id || i.inquiryId).filter(Boolean);
+                                if (selectedVleIds.length >= allIds.length && allIds.length > 0) {
+                                  setSelectedVleIds([]);
+                                } else {
+                                  setSelectedVleIds(allIds);
+                                }
+                              }}
+                              className="text-[#64748B] hover:text-[#111827] flex items-center cursor-pointer"
+                            >
+                              {selectedVleIds.length >= filteredVleInquiries.length && filteredVleInquiries.length > 0 ? (
+                                <CheckSquare className="w-4 h-4 text-[#2563EB]" />
+                              ) : (
+                                <Square className="w-4 h-4" />
+                              )}
+                            </button>
+                          </th>
+                          <th className="py-3.5 px-4">Inquiry ID</th>
+                          <th className="py-3.5 px-4">Visitor Name</th>
+                          <th className="py-3.5 px-4">Contact</th>
+                          <th className="py-3.5 px-4">State &amp; District</th>
+                          <th className="py-3.5 px-4">Timestamp</th>
+                          <th className="py-3.5 px-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#E2E8F0] text-xs">
+                        {filteredVleInquiries.map((inq, idx) => {
+                          const inqId = inq.id || inq.inquiryId || `VLE-${idx}`;
+                          const rawPhone = inq.phone || '';
+                          const cleanPhone = rawPhone.replace(/\D/g, '');
+                          const phoneWithCode = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+                          const isSelected = selectedVleIds.includes(inqId);
+
+                          return (
+                            <tr key={inqId} className="hover:bg-[#F6F8FC] transition-colors">
+                              <td className="py-3.5 pl-4 pr-2 align-middle">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setSelectedVleIds(prev =>
+                                      prev.includes(inqId) ? prev.filter(id => id !== inqId) : [...prev, inqId]
+                                    )
+                                  }
+                                  className="text-[#64748B] hover:text-[#2563EB] flex items-center cursor-pointer"
+                                >
+                                  {isSelected ? <CheckSquare className="w-4 h-4 text-[#2563EB]" /> : <Square className="w-4 h-4" />}
+                                </button>
+                              </td>
+                              <td className="py-3.5 px-4 font-mono font-bold text-[#111C3D]">{inqId}</td>
+                              <td className="py-3.5 px-4">
+                                <div className="font-semibold text-[#111827]">{inq.name || 'Verified Visitor'}</div>
+                                <span className="inline-flex items-center text-[10px] font-semibold text-[#16A34A]">
+                                  ✓ VLE Credentials Unlocked
+                                </span>
+                              </td>
+                              <td className="py-3.5 px-4">
+                                <div className="font-mono font-medium text-[#111827]">{inq.phone || 'N/A'}</div>
+                                <div className="text-[11px] text-[#64748B]">{inq.email || ''}</div>
+                              </td>
+                              <td className="py-3.5 px-4 max-w-[220px]">
+                                <div className="font-semibold text-[#111827]">{inq.state || 'N/A'}</div>
+                                <div className="text-[11px] text-[#64748B] truncate">{inq.address || ''}</div>
+                              </td>
+                              <td className="py-3.5 px-4 whitespace-nowrap text-[#64748B]">
+                                {formatDisplayDate(inq.timestamp || inq.createdAt)}
+                              </td>
+                              <td className="py-3.5 px-4 whitespace-nowrap text-right">
+                                <div className="inline-flex items-center gap-1.5">
+                                  {cleanPhone && (
+                                    <>
+                                      <a
+                                        href={`tel:${cleanPhone}`}
+                                        className="px-2.5 py-1 rounded-lg bg-[#F6F8FC] hover:bg-slate-200/70 text-[#111827] border border-[#E2E8F0] font-semibold flex items-center gap-1"
+                                      >
+                                        <PhoneCall className="w-3 h-3 text-[#2563EB]" />
+                                        <span>Call</span>
+                                      </a>
+                                      <a
+                                        href={`https://wa.me/${phoneWithCode}?text=${encodeURIComponent(`Hello ${inq.name || ''}, thank you for verifying on our CSC Digital Portal. How may we assist you today?`)}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-2.5 py-1 rounded-lg bg-[#16A34A] hover:bg-emerald-700 text-white font-semibold flex items-center gap-1"
+                                      >
+                                        <MessageCircle className="w-3 h-3" />
+                                        <span>WhatsApp</span>
+                                      </a>
+                                    </>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteVleInquiry(inqId)}
+                                    className="p-1.5 text-[#64748B] hover:text-[#DC2626] rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
+                                    title="Delete visitor log"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* ================================================================ */}
+          {/* 8. WHATSAPP CHANNEL & GROUP SYNC */}
+          {/* ================================================================ */}
+          {activeNav === 'whatsapp_sync' && (
+            <section aria-label="WhatsApp Channel and Group Synchronization" className="space-y-4">
+              {/* Status Strip */}
+              <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#16A34A] flex items-center justify-center shrink-0">
+                    <Radio className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-sm font-bold text-[#111827]">
+                        WhatsApp Channel &amp; Community Broadcast Desk
+                      </h2>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-[#16A34A] border border-emerald-200">
+                        ● Ready
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#64748B] mt-0.5">
+                      Format and dispatch verified recruitment notifications, date sheets, and CSC service updates directly to your WhatsApp Channel and Groups.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <WhatsAppBroadcaster cafeName={cafeName} />
+            </section>
+          )}
+
+          {/* ================================================================ */}
+          {/* 9. REPORTS & CSV EXPORT + SUPABASE DIAGNOSTICS */}
+          {/* ================================================================ */}
+          {activeNav === 'reports' && (
+            <section aria-label="Reports and Data Export" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-2xs flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center">
+                      <FileSpreadsheet className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-sm font-bold text-[#111827]">Complete Applications Report (CSV)</h3>
+                    <p className="text-xs text-[#64748B] leading-relaxed">
+                      Export all {applications.length} customer applications including applicant contact details, service requested, payment UTR, status, and internal staff remarks.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleExportCSV(applications)}
+                    disabled={applications.length === 0}
+                    className="w-full py-2.5 px-4 bg-[#2563EB] hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download All Applications CSV ({applications.length})</span>
+                  </button>
+                </div>
+
+                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-2xs flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#16A34A] flex items-center justify-center">
+                      <Users className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-sm font-bold text-[#111827]">VLE Visitor Access Logs (CSV)</h3>
+                    <p className="text-xs text-[#64748B] leading-relaxed">
+                      Export all {vleInquiries.length} verified visitor identity logs recorded from the public VLE credentials verification station.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleExportVLEInquiriesCSV}
+                    disabled={vleInquiries.length === 0}
+                    className="w-full py-2.5 px-4 bg-[#111C3D] hover:bg-slate-800 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download Visitor Logs CSV ({vleInquiries.length})</span>
+                  </button>
+                </div>
+
+                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-2xs flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
+                    <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#8B5CF6] flex items-center justify-center">
+                      <Database className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-sm font-bold text-[#111827]">Supabase &amp; Backend Diagnostics</h3>
+                    <p className="text-xs text-[#64748B] leading-relaxed">
+                      Verify live read/write connectivity to <code className="font-mono">public.applications</code> and the <code className="font-mono">documents</code> storage bucket.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowGetformModal(true);
+                      setSnippetTab('supabase');
+                      runSupabaseDiagnosticTest();
+                    }}
+                    className="w-full py-2.5 px-4 bg-white hover:bg-[#F6F8FC] text-[#111827] border border-[#E2E8F0] rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Database className="w-4 h-4 text-[#2563EB]" />
+                    <span>Open Live Diagnostics Suite</span>
+                  </button>
+                </div>
+              </div>
+            </section>
+          )}
         </div>
       </div>
 
-      {/* Applications List */}
-      {loading ? (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center text-slate-400">
-          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2 text-amber-500" />
-          <p className="text-xs font-bold">Loading submitted customer applications...</p>
-        </div>
-      ) : filteredApplications.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center text-slate-400 space-y-2">
-          <FileText className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-700" />
-          <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">No applications found</h4>
-          <p className="text-xs">No records match your search query or filter selection.</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {filteredApplications.map((app, idx) => {
-            const rawDocs = app.documents || [];
-            const textDocs = app.uploadedDocuments || [];
+      {/* ==================================================================== */}
+      {/* 10. MANDATORY RIGHT-SIDE APPLICATION DETAILS DRAWER */}
+      {/* ==================================================================== */}
+      {selectedDrawerApp && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          {/* Backdrop */}
+          <div
+            onClick={handleCloseDrawer}
+            className="fixed inset-0 bg-slate-950/50 backdrop-blur-xs transition-opacity"
+          />
 
-            return (
-              <div
-                key={app.appId || idx}
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4 hover:border-amber-400/50 transition-all"
-              >
-                {/* Application Header Card */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {/* Checkbox for Bulk Actions */}
+          <div className="fixed inset-y-0 right-0 max-w-full flex pl-0 sm:pl-10">
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="drawer-app-id-heading"
+              className="w-screen max-w-full sm:max-w-[540px] bg-white shadow-2xl border-l border-[#E2E8F0] flex flex-col justify-between overflow-hidden animate-fade-in"
+            >
+              {/* DRAWER HEADER */}
+              <div className="px-6 py-4 bg-[#111C3D] text-white flex items-center justify-between gap-3 shrink-0">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h2 id="drawer-app-id-heading" className="text-base font-mono font-bold tracking-tight truncate">
+                      {selectedDrawerApp.appId || selectedDrawerApp.id}
+                    </h2>
                     <button
                       type="button"
-                      onClick={() => toggleSelectApp(app.appId || app.id)}
-                      className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                      title="Select for bulk action"
+                      onClick={() => handleCopyTokenId(selectedDrawerApp.appId || selectedDrawerApp.id)}
+                      className="p-1 rounded bg-white/10 hover:bg-white/20 text-slate-200 transition-colors cursor-pointer"
+                      title="Copy Application Reference"
                     >
-                      {selectedAppIds.includes(app.appId || app.id) ? (
-                        <CheckSquare className="w-4 h-4 text-amber-500" />
+                      {copiedAppId === (selectedDrawerApp.appId || selectedDrawerApp.id) ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
                       ) : (
-                        <Square className="w-4 h-4 text-slate-400" />
+                        <Copy className="w-3.5 h-3.5" />
                       )}
                     </button>
+                  </div>
+                  <p className="text-[11px] text-slate-300 mt-0.5 truncate">
+                    Submitted: {formatDisplayDate(selectedDrawerApp.createdAt || selectedDrawerApp.submittedAt || selectedDrawerApp.date)}
+                  </p>
+                </div>
 
-                    <span className="px-2.5 py-1 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-mono font-black text-xs rounded-lg border border-amber-500/20">
-                      {app.appId || `CSC21251567${String(idx + 1).padStart(3, '0')}`}
-                    </span>
+                <div className="flex items-center gap-2.5 shrink-0">
+                  {renderApplicationStatusBadge(selectedDrawerApp.status)}
+                  <button
+                    type="button"
+                    onClick={handleCloseDrawer}
+                    className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white transition-colors cursor-pointer"
+                    title="Close Drawer (Esc)"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
 
-                    {/* Copy Info Button */}
+              {/* DRAWER SCROLLABLE BODY */}
+              <div className="p-6 overflow-y-auto space-y-6 flex-1 bg-[#F6F8FC]">
+                {/* SECTION A — APPLICANT INFORMATION */}
+                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 space-y-4 shadow-2xs">
+                  <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2.5">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#111C3D] flex items-center gap-1.5">
+                      <User className="w-3.5 h-3.5 text-[#2563EB]" />
+                      <span>Applicant Information</span>
+                    </h3>
                     <button
                       type="button"
-                      onClick={() => handleCopyAppInfo(app)}
-                      className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1"
-                      title="Copy application details"
+                      onClick={() => handleCopyAppInfo(selectedDrawerApp)}
+                      className="text-[11px] font-semibold text-[#2563EB] hover:underline flex items-center gap-1 cursor-pointer"
                     >
-                      <Copy className="w-3 h-3 text-amber-500" />
-                      <span>{copiedAppId === (app.appId || app.id) ? 'Copied!' : 'Copy Info'}</span>
+                      <Copy className="w-3 h-3" />
+                      <span>Copy Summary</span>
                     </button>
-
-                    <span className="text-xs text-slate-500 dark:text-slate-400 font-mono font-semibold">
-                      📅 Submitted: {formatDisplayDate(app.createdAt || app.submittedAt || app.date)}
-                    </span>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <span className={`px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${
-                      app.paymentMode === 'online'
-                        ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800'
-                        : 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-800'
-                    }`}>
-                      {app.paymentMode === 'online' ? 'UPI Online Paid' : 'Cash Counter'}
-                    </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
+                    <div>
+                      <span className="text-[11px] font-medium text-[#64748B] block">Full Name</span>
+                      <span className="font-bold text-[#111827] text-sm mt-0.5 block">
+                        {selectedDrawerApp.name || selectedDrawerApp.customerName || 'N/A'}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-[11px] font-medium text-[#64748B] block">Mobile / WhatsApp</span>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="font-mono font-bold text-[#111827]">
+                          {selectedDrawerApp.phone || selectedDrawerApp.phoneNumber || 'N/A'}
+                        </span>
+                        {(selectedDrawerApp.phone || selectedDrawerApp.phoneNumber) && (
+                          <button
+                            type="button"
+                            onClick={() => handleSendWhatsAppNotification(selectedDrawerApp)}
+                            className="px-2 py-0.5 rounded-md bg-emerald-50 text-[#16A34A] border border-emerald-200 text-[10px] font-semibold hover:bg-emerald-100 cursor-pointer"
+                          >
+                            WhatsApp
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="text-[11px] font-medium text-[#64748B] block">Email Address</span>
+                      <span className="font-medium text-[#111827] mt-0.5 block break-all">
+                        {selectedDrawerApp.email || selectedDrawerApp.emailAddress || 'N/A'}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-[11px] font-medium text-[#64748B] block">Category &amp; DOB</span>
+                      <span className="font-medium text-[#111827] mt-0.5 block">
+                        {selectedDrawerApp.userCategory || 'General/OBC'}
+                        {selectedDrawerApp.dateOfBirth && selectedDrawerApp.dateOfBirth !== 'N/A'
+                          ? ` · DOB: ${selectedDrawerApp.dateOfBirth}`
+                          : ''}
+                      </span>
+                    </div>
+
+                    <div className="sm:col-span-2 pt-2 border-t border-[#E2E8F0]">
+                      <span className="text-[11px] font-medium text-[#64748B] block">Requested Service</span>
+                      <span className="font-bold text-[#2563EB] text-sm mt-0.5 block">
+                        {selectedDrawerApp.service || selectedDrawerApp.selectedService || 'General Service'}
+                      </span>
+                    </div>
+
+                    {selectedDrawerApp.message && selectedDrawerApp.message !== 'None' && (
+                      <div className="sm:col-span-2 p-3 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#64748B] block mb-1">
+                          Applicant Instructions / Additional Details
+                        </span>
+                        <p className="text-xs text-[#111827] leading-relaxed whitespace-pre-wrap">
+                          {selectedDrawerApp.message}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* SECTION B — APPLICATION STATUS & WORKFLOW */}
+                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 space-y-4 shadow-2xs">
+                  <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2.5">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#111C3D] flex items-center gap-1.5">
+                      <RefreshCw className="w-3.5 h-3.5 text-[#2563EB]" />
+                      <span>Application Status Control</span>
+                    </h3>
+                    {(selectedDrawerApp.statusUpdatedAt || selectedDrawerApp.updatedAt) && (
+                      <span className="text-[10px] font-mono text-[#64748B]">
+                        Updated: {formatShortDate(selectedDrawerApp.statusUpdatedAt || selectedDrawerApp.updatedAt)}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateStatus(selectedDrawerApp.appId || selectedDrawerApp.id, 'Pending')}
+                      className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                        getAppCategoryStatus(selectedDrawerApp) === 'pending'
+                          ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                          : 'bg-[#F6F8FC] text-[#111827] border-[#E2E8F0] hover:border-amber-400'
+                      }`}
+                    >
+                      Pending
+                    </button>
 
                     <button
-                      onClick={() => handleDelete(app.appId)}
-                      className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/50 rounded-lg transition-colors cursor-pointer"
-                      title="Delete Record"
+                      type="button"
+                      onClick={() => handleUpdateStatus(selectedDrawerApp.appId || selectedDrawerApp.id, 'Approved & Under Process')}
+                      className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                        getAppCategoryStatus(selectedDrawerApp) === 'approved'
+                          ? 'bg-[#2563EB] text-white border-[#2563EB] shadow-xs'
+                          : 'bg-[#F6F8FC] text-[#111827] border-[#E2E8F0] hover:border-[#2563EB]'
+                      }`}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      Under Process
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUploadModalApp(selectedDrawerApp);
+                        setReceiptDataUrl(selectedDrawerApp.finalReceiptUrl || '');
+                      }}
+                      className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                        getAppCategoryStatus(selectedDrawerApp) === 'completed'
+                          ? 'bg-[#16A34A] text-white border-[#16A34A] shadow-xs'
+                          : 'bg-[#F6F8FC] text-[#111827] border-[#E2E8F0] hover:border-[#16A34A]'
+                      }`}
+                    >
+                      Complete
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateStatus(selectedDrawerApp.appId || selectedDrawerApp.id, 'Rejected')}
+                      className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                        getAppCategoryStatus(selectedDrawerApp) === 'rejected'
+                          ? 'bg-[#DC2626] text-white border-[#DC2626] shadow-xs'
+                          : 'bg-[#F6F8FC] text-[#111827] border-[#E2E8F0] hover:border-[#DC2626]'
+                      }`}
+                    >
+                      Reject
                     </button>
                   </div>
                 </div>
 
-                {/* Details Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-                  <div>
-                    <span className="text-[10px] font-extrabold uppercase text-slate-400 block">Applicant Name</span>
-                    <span className="font-extrabold text-slate-900 dark:text-white text-sm">
-                      {app.name || app.customerName || 'N/A'}
+                {/* SECTION C — PAYMENT DETAILS */}
+                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 space-y-3.5 shadow-2xs">
+                  <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2.5">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#111C3D] flex items-center gap-1.5">
+                      <CreditCard className="w-3.5 h-3.5 text-[#2563EB]" />
+                      <span>Payment Details</span>
+                    </h3>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${getPaymentStatusInfo(selectedDrawerApp).colorClass}`}>
+                      {getPaymentStatusInfo(selectedDrawerApp).label}
                     </span>
                   </div>
 
-                  <div>
-                    <span className="text-[10px] font-extrabold uppercase text-slate-400 block">Mobile &amp; Email</span>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="font-bold text-slate-800 dark:text-slate-200">
-                        📞 {app.phone || app.phoneNumber || 'N/A'}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                    <div>
+                      <span className="text-[11px] font-medium text-[#64748B] block">Payment Method</span>
+                      <span className="font-bold text-[#111827] mt-0.5 block">
+                        {isOnlinePayment(selectedDrawerApp) ? 'UPI Online' : 'Cash Counter'}
                       </span>
-                      {(app.phone || app.phoneNumber) && (
+                    </div>
+
+                    <div>
+                      <span className="text-[11px] font-medium text-[#64748B] block">Fee Amount</span>
+                      <span className="font-mono font-bold text-[#16A34A] text-sm mt-0.5 block">
+                        ₹{Number(selectedDrawerApp.totalAmount || 0).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+
+                    <div className="col-span-2 sm:col-span-1">
+                      <span className="text-[11px] font-medium text-[#64748B] block">UTR / Reference No.</span>
+                      <span className="font-mono font-semibold text-[#111827] mt-0.5 block break-all">
+                        {selectedDrawerApp.utrNumber && selectedDrawerApp.utrNumber !== 'N/A'
+                          ? selectedDrawerApp.utrNumber
+                          : 'Not Applicable'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* SECTION D — UPLOADED DOCUMENTS */}
+                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 space-y-3.5 shadow-2xs">
+                  <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2.5">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#111C3D] flex items-center gap-1.5">
+                      <FolderOpen className="w-3.5 h-3.5 text-[#2563EB]" />
+                      <span>
+                        Uploaded Customer Documents (
+                        {(Array.isArray(selectedDrawerApp.documents) ? selectedDrawerApp.documents.length : 0) ||
+                          (Array.isArray(selectedDrawerApp.uploadedDocuments) ? selectedDrawerApp.uploadedDocuments.length : 0)}
+                        )
+                      </span>
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUploadModalApp(selectedDrawerApp);
+                        setReceiptDataUrl(selectedDrawerApp.finalReceiptUrl || '');
+                      }}
+                      className="text-[11px] font-semibold text-[#2563EB] hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <Upload className="w-3 h-3" />
+                      <span>{selectedDrawerApp.finalReceiptUrl ? 'Update Receipt' : 'Attach Final Receipt'}</span>
+                    </button>
+                  </div>
+
+                  {/* Final Processed Receipt Banner if uploaded */}
+                  {selectedDrawerApp.finalReceiptUrl && (
+                    <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <CheckCircle2 className="w-4 h-4 text-[#16A34A] shrink-0" />
+                        <div className="min-w-0">
+                          <span className="text-xs font-bold text-[#111827] block truncate">
+                            Final Processed Receipt / Certificate
+                          </span>
+                          <span className="text-[10px] text-[#16A34A] block">Ready for citizen download</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           type="button"
-                          onClick={() => handleSendWhatsAppNotification(app)}
-                          className="px-1.5 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded text-[10px] font-extrabold transition-all cursor-pointer flex items-center gap-1"
-                          title="Send update on WhatsApp"
+                          onClick={() =>
+                            setSelectedDocPreview({
+                              name: `Receipt-${selectedDrawerApp.appId}`,
+                              url: selectedDrawerApp.finalReceiptUrl
+                            })
+                          }
+                          className="px-2.5 py-1 bg-white text-[#111827] border border-emerald-300 rounded-lg text-xs font-semibold cursor-pointer"
                         >
-                          <MessageSquare className="w-3 h-3 text-emerald-500" />
-                          <span>WhatsApp</span>
+                          Preview
                         </button>
-                      )}
-                    </div>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate block mt-0.5">
-                      ✉️ {app.email || app.emailAddress || 'N/A'}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] font-extrabold uppercase text-slate-400 block">Requested Service</span>
-                    <span className="font-bold text-amber-600 dark:text-amber-400">
-                      {app.service || app.selectedService || 'General Form'}
-                    </span>
-                    <span className="text-[10px] text-slate-400 block mt-0.5">
-                      Cat: {app.userCategory || 'General'} | DOB: {app.dateOfBirth || 'N/A'}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] font-extrabold uppercase text-slate-400 block">Payment &amp; UTR</span>
-                    <span className="font-black text-emerald-600 dark:text-emerald-400 font-mono text-sm block">
-                      ₹{app.totalAmount || 0}
-                    </span>
-                    <span className="text-[10px] font-mono text-slate-600 dark:text-slate-300 block">
-                      UTR: {app.utrNumber || 'N/A'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Additional Notes */}
-                {app.message && app.message !== 'None' && (
-                  <div className="p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-150 dark:border-slate-800 text-xs">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Instructions / Note:</span>
-                    <p className="text-slate-700 dark:text-slate-300 font-medium">{app.message}</p>
-                  </div>
-                )}
-
-                {/* UPLOADED CUSTOMER DOCUMENTS DISPLAY SECTION */}
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mb-2">
-                    <FileText className="w-3.5 h-3.5 text-amber-500" />
-                    <span>Uploaded Customer Documents ({rawDocs.length || textDocs.length})</span>
-                  </span>
-
-                  {rawDocs.length === 0 && textDocs.length === 0 ? (
-                    <p className="text-xs text-slate-400 italic">No files uploaded with this application.</p>
-                  ) : rawDocs.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {rawDocs.map((doc: any, dIdx: number) => (
-                        <div
-                          key={doc.id || dIdx}
-                          className="p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2"
+                        <a
+                          href={selectedDrawerApp.finalReceiptUrl}
+                          download={`Receipt-${selectedDrawerApp.appId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2.5 py-1 bg-[#16A34A] text-white rounded-lg text-xs font-semibold"
                         >
-                          <div className="flex items-center gap-2 overflow-hidden">
-                            <div className="p-1.5 bg-amber-500/10 text-amber-600 rounded-lg shrink-0">
-                              <FileText className="w-4 h-4" />
-                            </div>
-                            <div className="truncate">
-                              <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate block">
-                                {doc.name}
-                              </span>
-                              <span className="text-[10px] text-slate-400 font-mono">
-                                {(doc.size / 1024).toFixed(1)} KB
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-1 shrink-0">
-                            {/* Preview Button */}
-                            {(doc.dataUrl || doc.url) && (
-                              <button
-                                onClick={() => setSelectedDocPreview({ name: doc.name, url: doc.dataUrl || doc.url, type: doc.type })}
-                                className="p-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
-                                title="View/Preview Document"
-                              >
-                                <Eye className="w-3.5 h-3.5" />
-                                <span>Preview</span>
-                              </button>
-                            )}
-
-                            {/* Download Button */}
-                            {(doc.dataUrl || doc.url) && (
-                              <a
-                                href={doc.dataUrl || doc.url}
-                                download={doc.name}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
-                                title="Download Document"
-                              >
-                                <Download className="w-3.5 h-3.5" />
-                                <span>Download</span>
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                          Download
+                        </a>
+                      </div>
                     </div>
-                  ) : (
+                  )}
+
+                  {/* Customer Uploaded Files List */}
+                  {Array.isArray(selectedDrawerApp.documents) && selectedDrawerApp.documents.length > 0 ? (
+                    <div className="space-y-2">
+                      {selectedDrawerApp.documents.map((docItem: any, dIdx: number) => {
+                        const fileUrl = docItem.dataUrl || docItem.url || '';
+                        return (
+                          <div
+                            key={docItem.id || dIdx}
+                            className="p-3 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl flex items-center justify-between gap-3"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#2563EB] flex items-center justify-center shrink-0">
+                                <FileText className="w-4 h-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <span className="text-xs font-semibold text-[#111827] block truncate">
+                                  {docItem.name || `Document ${dIdx + 1}`}
+                                </span>
+                                <span className="text-[10px] font-mono text-[#64748B]">
+                                  {docItem.size ? `${(docItem.size / 1024).toFixed(1)} KB` : 'Attached File'}
+                                  {docItem.type ? ` · ${docItem.type}` : ''}
+                                </span>
+                              </div>
+                            </div>
+
+                            {fileUrl && (
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setSelectedDocPreview({
+                                      name: docItem.name || `Document ${dIdx + 1}`,
+                                      url: fileUrl,
+                                      type: docItem.type
+                                    })
+                                  }
+                                  className="px-2.5 py-1.5 bg-white hover:bg-blue-50 text-[#111827] hover:text-[#2563EB] border border-[#E2E8F0] rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                  <span>Preview</span>
+                                </button>
+                                <a
+                                  href={fileUrl}
+                                  download={docItem.name || `Document-${dIdx + 1}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="px-2.5 py-1.5 bg-[#2563EB] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                                >
+                                  <Download className="w-3.5 h-3.5" />
+                                  <span>Download</span>
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : Array.isArray(selectedDrawerApp.uploadedDocuments) && selectedDrawerApp.uploadedDocuments.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
-                      {textDocs.map((docStr: string, tIdx: number) => (
-                        <span key={tIdx} className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                      {selectedDrawerApp.uploadedDocuments.map((docStr: string, tIdx: number) => (
+                        <span
+                          key={tIdx}
+                          className="px-2.5 py-1 bg-[#F6F8FC] border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#111827]"
+                        >
                           📎 {docStr}
                         </span>
                       ))}
                     </div>
-                  )}
-                </div>
-
-                {/* STAFF INTERNAL REMARKS / NOTES SECTION */}
-                <div className="p-3 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40 rounded-xl text-xs space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-extrabold uppercase tracking-wider text-[10px] text-amber-700 dark:text-amber-400 flex items-center gap-1">
-                      <Edit3 className="w-3 h-3" /> Staff Internal Remarks &amp; Comments
-                    </span>
-                    {editingStaffNotesAppId !== (app.appId || app.id) && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingStaffNotesAppId(app.appId || app.id);
-                          setStaffNoteInput(app.staffNotes || '');
-                        }}
-                        className="text-[10px] font-bold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
-                      >
-                        {app.staffNotes ? 'Edit Note' : '+ Add Note'}
-                      </button>
-                    )}
-                  </div>
-
-                  {editingStaffNotesAppId === (app.appId || app.id) ? (
-                    <div className="flex items-center gap-2 mt-1">
-                      <input
-                        type="text"
-                        placeholder="e.g., Called applicant on 2 Aug for signature update..."
-                        value={staffNoteInput}
-                        onChange={(e) => setStaffNoteInput(e.target.value)}
-                        className="flex-1 px-3 py-1.5 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-medium focus:ring-2 focus:ring-amber-500/30 outline-none text-slate-900 dark:text-white"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleSaveStaffNote(app.appId || app.id, staffNoteInput)}
-                        className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold rounded-lg text-xs transition-all cursor-pointer shadow-xs"
-                      >
-                        Save
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setEditingStaffNotesAppId(null)}
-                        className="px-2.5 py-1.5 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : app.staffNotes ? (
-                    <p className="text-slate-800 dark:text-slate-200 font-medium italic">
-                      "{app.staffNotes}"
-                    </p>
                   ) : (
-                    <p className="text-slate-400 italic text-[11px]">
-                      No staff remarks added yet. Click "+ Add Note" to record processing comments.
+                    <p className="text-xs text-[#64748B] italic">
+                      No supporting documents uploaded with this application.
                     </p>
                   )}
                 </div>
 
-                {/* STAFF APPLICATION STATUS & ACTIONS BAR */}
-                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-50 dark:bg-slate-950/80 p-3.5 rounded-xl border border-slate-150 dark:border-slate-800/80">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      Filing Status:
-                    </span>
-                    <span className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider ${
-                      (app.status === 'Approved & Under Process' || app.status === 'approved')
-                        ? 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800'
-                        : (app.status === 'Completed' || app.status === 'completed')
-                        ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
-                        : (app.status === 'Rejected' || app.status === 'rejected')
-                        ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800'
-                        : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
-                    }`}>
-                      {app.status || 'Pending'}
-                    </span>
-                    {(app.statusUpdatedAt || app.updatedAt) && (
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
-                        (Updated: {formatDisplayDate(app.statusUpdatedAt || app.updatedAt)})
+                {/* SECTION E — STAFF INTERNAL REMARKS */}
+                <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2.5">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#111C3D] flex items-center gap-1.5">
+                      <Edit3 className="w-3.5 h-3.5 text-[#2563EB]" />
+                      <span>Staff Internal Remarks</span>
+                    </h3>
+                    {selectedDrawerApp.staffNoteUpdatedAt && (
+                      <span className="text-[10px] font-mono text-[#64748B]">
+                        Saved: {formatDisplayDate(selectedDrawerApp.staffNoteUpdatedAt)}
                       </span>
                     )}
-                    {app.finalReceiptUrl && (
-                      <a
-                        href={app.finalReceiptUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[11px] text-emerald-600 dark:text-emerald-400 font-extrabold hover:underline flex items-center gap-1"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Receipt Ready</span>
-                      </a>
-                    )}
                   </div>
 
-                  {/* ACTION BUTTONS OR FINAL STATE INDICATOR */}
-                  <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-                    {(app.status || '').toLowerCase().includes('completed') ? (
-                      <div className="px-3 py-1.5 bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 rounded-lg text-xs font-extrabold flex items-center gap-1.5 shadow-xs">
-                        <span>✅ Application Processed</span>
-                      </div>
-                    ) : (app.status || '').toLowerCase().includes('reject') ? (
-                      <div className="px-3 py-1.5 bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300 border border-red-300 dark:border-red-800 rounded-lg text-xs font-extrabold flex items-center gap-1.5 shadow-xs">
-                        <span>❌ Application Closed</span>
-                      </div>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => handleUpdateStatus(app.appId, 'Approved & Under Process')}
-                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer shadow-xs"
-                          title="Approve & mark as Under Process"
-                        >
-                          <Check className="w-3.5 h-3.5" />
-                          <span>Approve</span>
-                        </button>
+                  {selectedDrawerApp.staffNotes && (
+                    <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-xs text-[#111827]">
+                      <span className="text-[10px] font-bold uppercase text-amber-800 block mb-0.5">
+                        Current Recorded Note ({staffDisplayName}):
+                      </span>
+                      <p className="font-medium">{selectedDrawerApp.staffNotes}</p>
+                    </div>
+                  )}
 
+                  <div className="space-y-2">
+                    <textarea
+                      rows={3}
+                      placeholder="Add internal processing notes, verification remarks, or follow-up details..."
+                      value={drawerNoteInput}
+                      onChange={(e) => {
+                        setDrawerNoteInput(e.target.value);
+                        setDrawerNoteDirty(e.target.value !== (selectedDrawerApp.staffNotes || ''));
+                      }}
+                      className="w-full p-3 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs text-[#111827] placeholder-[#64748B] focus:outline-none focus:bg-white focus:border-[#2563EB] resize-none"
+                    />
+                    <div className="flex items-center justify-end gap-2">
+                      {drawerNoteDirty && (
                         <button
-                          onClick={() => handleUpdateStatus(app.appId, 'Rejected')}
-                          className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer shadow-xs"
-                          title="Reject application"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                          <span>Reject</span>
-                        </button>
-
-                        <button
+                          type="button"
                           onClick={() => {
-                            setUploadModalApp(app);
-                            setReceiptDataUrl(app.finalReceiptUrl || '');
+                            setDrawerNoteInput(selectedDrawerApp.staffNotes || '');
+                            setDrawerNoteDirty(false);
                           }}
-                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer shadow-xs"
-                          title="Upload final processed receipt & mark Completed"
+                          className="px-3 py-1.5 text-xs font-medium text-[#64748B] hover:text-[#111827] cursor-pointer"
                         >
-                          <Upload className="w-3.5 h-3.5" />
-                          <span>Mark Completed</span>
+                          Reset
                         </button>
-                      </>
-                    )}
+                      )}
+                      <button
+                        type="button"
+                        disabled={savingDrawerNote}
+                        onClick={() => handleSaveStaffNote(selectedDrawerApp.appId || selectedDrawerApp.id, drawerNoteInput)}
+                        className="px-4 py-1.5 bg-[#111C3D] hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        {savingDrawerNote ? 'Saving...' : 'Save Remark'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            );
-          })}
+
+              {/* SECTION F — QUICK ACTIONS FOOTER */}
+              <div className="px-6 py-4 bg-white border-t border-[#E2E8F0] flex flex-wrap items-center justify-between gap-2 shrink-0">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleSendWhatsAppNotification(selectedDrawerApp)}
+                    className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#16A34A] border border-emerald-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>WhatsApp Applicant</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(selectedDrawerApp.appId || selectedDrawerApp.id)}
+                    className="p-2 text-[#64748B] hover:text-[#DC2626] hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
+                    title="Delete Application Permanently"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCloseDrawer}
+                    className="px-4 py-2 bg-[#F6F8FC] hover:bg-slate-200/70 text-[#111827] border border-[#E2E8F0] rounded-xl text-xs font-semibold cursor-pointer transition-colors"
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUploadModalApp(selectedDrawerApp);
+                      setReceiptDataUrl(selectedDrawerApp.finalReceiptUrl || '');
+                    }}
+                    className="px-4 py-2 bg-[#2563EB] hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Mark Completed</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
-      </div>
-      )}
 
+      {/* ==================================================================== */}
       {/* MARK COMPLETED FILE UPLOAD MODAL */}
+      {/* ==================================================================== */}
       {uploadModalApp && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-[60] flex items-center justify-center p-4 animate-fade-in">
           <form
             onSubmit={async (e) => {
               e.preventDefault();
@@ -2429,14 +4493,13 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               }
 
               if (!finalUrl) {
-                alert("Please select a file or enter a valid URL.");
+                setUploadError('Please select a receipt file or enter a valid document URL.');
                 return;
               }
 
               setIsUploadingReceipt(true);
 
               try {
-                console.log('Updating document with receipt URL:', finalUrl.substring(0, 60) + '...');
                 const isoNow = new Date().toISOString();
                 const updatePayload = {
                   status: 'Completed',
@@ -2448,59 +4511,60 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                 const docRef = doc(db, 'applications', uploadModalApp.appId);
                 try {
                   await updateDoc(docRef, updatePayload);
-                  console.log('7. Application document updated via updateDoc');
-                } catch (err: any) {
-                  console.warn('7b. updateDoc failed, falling back to setDoc merge:', err);
+                } catch {
                   await setDoc(docRef, updatePayload, { merge: true });
                 }
 
-                // Also update appointments collection if present
                 try {
                   const appointmentRef = doc(db, 'appointments', uploadModalApp.appId);
                   await updateDoc(appointmentRef, updatePayload);
-                } catch (e) {
-                  // non-critical
-                }
+                } catch {}
 
-                // Update local storage cache
                 try {
                   const local = JSON.parse(localStorage.getItem('csc_local_applications') || '[]');
-                  const updatedLocal = local.map((a: any) => (a.appId === uploadModalApp.appId || a.id === uploadModalApp.appId) ? { ...a, ...updatePayload } : a);
+                  const updatedLocal = local.map((a: any) =>
+                    a.appId === uploadModalApp.appId || a.id === uploadModalApp.appId ? { ...a, ...updatePayload } : a
+                  );
                   localStorage.setItem('csc_local_applications', JSON.stringify(updatedLocal));
+                } catch {}
 
-                  const web3 = JSON.parse(localStorage.getItem('csc_web3forms_submissions') || '[]');
-                  const updatedWeb3 = web3.map((a: any) => (a.appId === uploadModalApp.appId || a.id === uploadModalApp.appId) ? { ...a, ...updatePayload } : a);
-                  localStorage.setItem('csc_web3forms_submissions', JSON.stringify(updatedWeb3));
-                } catch (e) {
-                  console.error('LocalStorage cache update error:', e);
-                }
+                fetch(`/api/appointments/${uploadModalApp.appId}/status`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ status: 'Completed' })
+                }).catch(() => {});
 
-                // Update React state
+                try {
+                  await updateSupabaseApplicationStatus(uploadModalApp.appId, 'Completed');
+                } catch {}
+
                 setApplications(prev =>
-                  prev.map(a => (a.appId === uploadModalApp.appId || a.id === uploadModalApp.appId) ? { ...a, status: 'Completed', finalReceiptUrl: finalUrl, updatedAt: isoNow, statusUpdatedAt: isoNow } : a)
+                  prev.map(a =>
+                    a.appId === uploadModalApp.appId || a.id === uploadModalApp.appId
+                      ? { ...a, status: 'Completed', finalReceiptUrl: finalUrl, updatedAt: isoNow, statusUpdatedAt: isoNow }
+                      : a
+                  )
                 );
 
-                alert("Success! Application completed.");
+                setActionSuccess(`Application ${uploadModalApp.appId} marked as Completed with receipt.`);
+                setTimeout(() => setActionSuccess(null), 3500);
 
-                // Close modal
                 setUploadModalApp(null);
                 setReceiptDataUrl('');
                 setSelectedReceiptFile(null);
                 setUploadError(null);
               } catch (error: any) {
-                console.error("Critical Upload Error:", error);
                 const errMsg = error?.message || String(error);
                 setUploadError(`Failed to upload: ${errMsg}`);
-                alert(`Failed to upload: ${errMsg}. Please check console.`);
               } finally {
-                setIsUploadingReceipt(false); // Guarantee button reset
+                setIsUploadingReceipt(false);
               }
             }}
-            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl"
+            className="bg-white border border-[#E2E8F0] rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl"
           >
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <h3 className="text-base font-black text-slate-900 dark:text-white uppercase">
-                Upload Processed Receipt / Document
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+              <h3 className="text-sm font-bold text-[#111827]">
+                Upload Processed Receipt &amp; Complete Application
               </h3>
               <button
                 type="button"
@@ -2510,26 +4574,28 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   setSelectedReceiptFile(null);
                   setUploadError(null);
                 }}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                className="text-[#64748B] hover:text-[#111827]"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {uploadError && (
-              <div className="p-3 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 text-xs font-bold flex items-center gap-2 animate-fade-in">
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-[#DC2626] text-xs font-medium flex items-center gap-2">
                 <XCircle className="w-4 h-4 shrink-0" />
-                <span className="break-words">{uploadError}</span>
+                <span>{uploadError}</span>
               </div>
             )}
 
             <div className="space-y-3 text-xs">
-              <p className="text-slate-600 dark:text-slate-300 font-medium">
-                Attach the final processed receipt or document for <strong className="text-amber-500 font-mono">{uploadModalApp.appId}</strong> ({uploadModalApp.name || uploadModalApp.customerName}).
+              <p className="text-[#64748B]">
+                Attach the final processed certificate or acknowledgment receipt for{' '}
+                <strong className="text-[#111827] font-mono">{uploadModalApp.appId}</strong> (
+                {uploadModalApp.name || uploadModalApp.customerName}).
               </p>
 
-              <div className="space-y-1">
-                <label className="text-[11px] font-black uppercase text-slate-500 block">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-[#111827] block">
                   1. Select Receipt File (PDF or Image)
                 </label>
                 <input
@@ -2545,23 +4611,21 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                       try {
                         const appId = uploadModalApp?.appId || 'APP_RECEIPT';
                         const res = await uploadReceiptFileToSupabase(file, appId);
-                        console.log(`Receipt processed via ${res.provider}:`, res.url.substring(0, 60) + '...');
                         setReceiptDataUrl(res.url);
-                      } catch (err: any) {
-                        console.error('File process error:', err);
+                      } catch {
                         setUploadError('Failed to process selected file.');
                       } finally {
                         setIsUploadingReceipt(false);
                       }
                     }
                   }}
-                  className="w-full text-xs text-slate-700 dark:text-slate-200 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-600 cursor-pointer"
+                  className="w-full text-xs text-[#111827] file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#2563EB] file:text-white hover:file:bg-blue-700 cursor-pointer"
                 />
               </div>
 
-              <div className="space-y-1 pt-1">
-                <label className="text-[11px] font-black uppercase text-slate-500 block">
-                  2. Auto-Populated Supabase / Public Storage Download Link
+              <div className="space-y-1.5 pt-1">
+                <label className="text-xs font-semibold text-[#111827] block">
+                  2. Storage Document URL
                 </label>
                 <input
                   type="text"
@@ -2572,27 +4636,19 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                     setSelectedReceiptFile(null);
                     setUploadError(null);
                   }}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white text-xs font-mono break-all focus:ring-2 focus:ring-amber-400"
+                  className="w-full px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-[#111827] text-xs font-mono focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
               {receiptDataUrl && (
-                <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-xl text-emerald-800 dark:text-emerald-300 text-[11px] font-bold flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span>
-                    {receiptDataUrl.includes('supabase')
-                      ? 'Public Supabase Storage URL generated & populated!'
-                      : receiptDataUrl.startsWith('https://firebasestorage')
-                      ? 'Public Firebase Storage URL generated & populated!'
-                      : selectedReceiptFile
-                      ? `File processed: ${selectedReceiptFile.name} (${Math.round(selectedReceiptFile.size / 1024)} KB)`
-                      : 'Receipt download link ready!'}
-                  </span>
+                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-[#16A34A] text-xs font-medium flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>Receipt file ready to link with application.</span>
                 </div>
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#E2E8F0]">
               <button
                 type="button"
                 disabled={isUploadingReceipt}
@@ -2602,7 +4658,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   setSelectedReceiptFile(null);
                   setUploadError(null);
                 }}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all disabled:opacity-50"
+                className="px-4 py-2 bg-[#F6F8FC] hover:bg-slate-200/70 text-[#111827] rounded-xl text-xs font-semibold cursor-pointer"
               >
                 Cancel
               </button>
@@ -2610,12 +4666,12 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               <button
                 type="submit"
                 disabled={isUploadingReceipt}
-                className="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="px-5 py-2 bg-[#16A34A] hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {isUploadingReceipt ? (
                   <>
-                    <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
-                    <span>Uploading to Storage...</span>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Uploading...</span>
                   </>
                 ) : (
                   <>
@@ -2629,679 +4685,199 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         </div>
       )}
 
-      {/* GETFORM.IO / FORMSPREE INTEGRATION SUITE MODAL */}
+      {/* ==================================================================== */}
+      {/* SUPABASE & BACKEND DIAGNOSTICS MODAL */}
+      {/* ==================================================================== */}
       {showGetformModal && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fade-in overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl my-8">
-            {/* Modal Header */}
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-indigo-950 text-white shrink-0">
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-[60] flex items-center justify-center p-4 animate-fade-in overflow-y-auto">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+            <div className="px-6 py-4 bg-[#111C3D] text-white flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-indigo-600 rounded-xl">
-                  <Database className="w-5 h-5 text-indigo-100" />
-                </div>
+                <Database className="w-5 h-5 text-[#2563EB]" />
                 <div>
-                  <h3 className="text-sm font-extrabold text-white">
-                    Getform.io &amp; Formspree Integration Suite
-                  </h3>
-                  <p className="text-[11px] text-indigo-300 font-medium">
-                    Configure form endpoints, manage attributes, and generate HTML &amp; JS code snippets
+                  <h3 className="text-sm font-bold">Supabase &amp; Form Backend Diagnostics</h3>
+                  <p className="text-[11px] text-slate-300">
+                    Inspect live Supabase connectivity, storage health, and form integration endpoints
                   </p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setShowGetformModal(false)}
-                className="p-1.5 text-indigo-300 hover:text-white hover:bg-indigo-900/50 rounded-xl transition-all cursor-pointer"
+                className="p-1.5 text-slate-300 hover:text-white rounded-lg cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Modal Scrollable Body */}
-            <div className="p-6 overflow-y-auto space-y-6 text-slate-800 dark:text-slate-200 bg-slate-50/50 dark:bg-slate-950/50">
-              {/* SECTION 1: ENDPOINT MANAGER */}
-              <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
-                    <RefreshCw className="w-4 h-4" />
-                    <span>1. Form Endpoint URL Configuration</span>
-                  </h4>
-                  <span className="text-[11px] px-2 py-0.5 rounded-full font-bold bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
-                    Getform.io / Formspree Endpoint
-                  </span>
+            <div className="p-6 overflow-y-auto space-y-5 bg-[#F6F8FC] text-xs">
+              {/* Live Supabase Diagnostics Card */}
+              <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E2E8F0] pb-3">
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-[#111C3D]">
+                      Live Supabase Connection Status
+                    </h4>
+                    <p className="text-[11px] text-[#64748B] font-mono mt-0.5">
+                      Project: https://yvxqyczeavhfwxxjxwgl.supabase.co
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={runSupabaseDiagnosticTest}
+                    disabled={supabaseDiagnostic?.running}
+                    className="px-3.5 py-2 bg-[#2563EB] hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${supabaseDiagnostic?.running ? 'animate-spin' : ''}`} />
+                    <span>{supabaseDiagnostic?.running ? 'Testing...' : 'Run Diagnostic Test'}</span>
+                  </button>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                {supabaseDiagnostic?.result && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="p-3.5 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-[#111827]">Table (public.applications)</span>
+                        {supabaseDiagnostic.result.tableAccess.success ? (
+                          <span className="text-[#16A34A] font-semibold flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Connected ({supabaseDiagnostic.result.tableAccess.rowsCount || 0} rows)
+                          </span>
+                        ) : (
+                          <span className="text-[#DC2626] font-semibold flex items-center gap-1">
+                            <XCircle className="w-3.5 h-3.5" /> Error
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-[#64748B]">{supabaseDiagnostic.result.tableAccess.message}</p>
+                    </div>
+
+                    <div className="p-3.5 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-[#111827]">Storage Bucket (documents)</span>
+                        {supabaseDiagnostic.result.storageAccess.success ? (
+                          <span className="text-[#16A34A] font-semibold flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Active
+                          </span>
+                        ) : (
+                          <span className="text-[#DC2626] font-semibold flex items-center gap-1">
+                            <XCircle className="w-3.5 h-3.5" /> Notice
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-[#64748B]">{supabaseDiagnostic.result.storageAccess.message}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Secondary Webhook Endpoint Configuration */}
+              <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#111C3D]">
+                  Optional Webhook Endpoint (Getform.io / Formspree)
+                </h4>
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="url"
                     value={getformEndpointInput}
                     onChange={(e) => setGetformEndpointInput(e.target.value)}
-                    placeholder="https://getform.io/f/YOUR_UNIQUE_ENDPOINT or https://formspree.io/f/xyza123"
-                    className="flex-grow px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-mono font-medium focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    placeholder="https://getform.io/f/YOUR_UNIQUE_ENDPOINT"
+                    className="flex-1 px-3.5 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-mono text-[#111827]"
                   />
                   <button
+                    type="button"
                     onClick={handleTestGetformEndpoint}
-                    disabled={getformTestResult.status === 'testing'}
-                    className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-black transition-all shadow-md shrink-0 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="px-4 py-2 bg-[#111C3D] text-white rounded-xl text-xs font-semibold cursor-pointer"
                   >
-                    {getformTestResult.status === 'testing' ? (
-                      <>
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        <span>Verifying...</span>
-                      </>
-                    ) : (
-                      <>
-                        <ShieldCheck className="w-3.5 h-3.5" />
-                        <span>Test &amp; Save Endpoint</span>
-                      </>
-                    )}
+                    Test &amp; Save
                   </button>
                 </div>
-
-                {getformTestResult.status === 'success' && (
-                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span>{getformTestResult.message}</span>
-                  </div>
+                {getformTestResult.message && (
+                  <p className={`text-xs font-medium ${getformTestResult.status === 'success' ? 'text-[#16A34A]' : 'text-[#DC2626]'}`}>
+                    {getformTestResult.message}
+                  </p>
                 )}
-
-                {getformTestResult.status === 'error' && (
-                  <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-2">
-                    <XCircle className="w-4 h-4 text-rose-500 shrink-0" />
-                    <span>{getformTestResult.message}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* SECTION 2: FIELD ATTRIBUTES CHECKLIST */}
-              <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
-                  <Database className="w-4 h-4" />
-                  <span>2. Form Field Name Attributes Mapping</span>
-                </h4>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
-                  Ensure all form controls have the exact <code className="font-mono text-indigo-600 dark:text-indigo-400 font-bold">name</code> attribute defined so Getform.io / Formspree captures each field correctly:
-                </p>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-950/50">
-                        <th className="p-2 font-black">Field Label</th>
-                        <th className="p-2 font-black">Control Type</th>
-                        <th className="p-2 font-black">Required <code className="font-mono text-indigo-600 dark:text-indigo-400">name="..."</code></th>
-                        <th className="p-2 font-black">Purpose / Example</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50 font-mono text-[11px]">
-                      <tr>
-                        <td className="p-2 font-bold">Full Name</td>
-                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">&lt;input type="text"&gt;</span></td>
-                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">name="full_name"</td>
-                        <td className="p-2 text-slate-500">Applicant Name</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2 font-bold">WhatsApp Mobile Number</td>
-                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">&lt;input type="tel"&gt;</span></td>
-                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">name="whatsapp_number"</td>
-                        <td className="p-2 text-slate-500">10-digit mobile number</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2 font-bold">Email Address</td>
-                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">&lt;input type="email"&gt;</span></td>
-                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">name="email_address"</td>
-                        <td className="p-2 text-slate-500">Applicant Email</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2 font-bold">Service Selection</td>
-                        <td className="p-2"><span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">&lt;select&gt;</span></td>
-                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">name="service_selected"</td>
-                        <td className="p-2 text-slate-500">PAN, Ayushman, Aadhaar, etc.</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2 font-bold">Document Attachments</td>
-                        <td className="p-2"><span className="px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-950 text-indigo-600 font-bold rounded">&lt;input type="file"&gt;</span></td>
-                        <td className="p-2 font-bold text-indigo-600 dark:text-indigo-400">name="aadhaar_upload" or name="documents"</td>
-                        <td className="p-2 text-indigo-600 dark:text-indigo-400 font-bold">Supports PDF, JPG, PNG attachments</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* SECTION 3: READY-TO-USE HTML & AJAX / SUPABASE SCRIPTS */}
-              <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
-                    <FileText className="w-4 h-4" />
-                    <span>3. Production HTML &amp; JavaScript Integration Snippets</span>
-                  </h4>
-                  <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
-                    <button
-                      onClick={() => setSnippetTab('getform')}
-                      className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
-                        snippetTab === 'getform'
-                          ? 'bg-indigo-600 text-white shadow-xs'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                      }`}
-                    >
-                      Getform.io / Formspree
-                    </button>
-                    <button
-                      onClick={() => setSnippetTab('supabase')}
-                      className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
-                        snippetTab === 'supabase'
-                          ? 'bg-indigo-600 text-white shadow-xs'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                      }`}
-                    >
-                      Supabase Storage &amp; DB
-                    </button>
-                    <button
-                      onClick={() => setSnippetTab('sql')}
-                      className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
-                        snippetTab === 'sql'
-                          ? 'bg-indigo-600 text-white shadow-xs'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                      }`}
-                    >
-                      Supabase SQL Editor Setup
-                    </button>
-                  </div>
-                </div>
-
-                {snippetTab === 'supabase' && (
-                  <div className="p-4 bg-slate-900 border border-indigo-500/30 rounded-2xl text-white space-y-3 shadow-md">
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
-                      <div className="flex items-center gap-2">
-                        <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-xl">
-                          <Database className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <h5 className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center gap-2">
-                            <span>Live Supabase Diagnostics</span>
-                            {supabaseDiagnostic?.result?.overallStatus === 'connected' ? (
-                              <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded-full text-[9px] font-mono">
-                                ● Connected &amp; Ready
-                              </span>
-                            ) : supabaseDiagnostic?.result?.overallStatus === 'partially_configured' ? (
-                              <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 rounded-full text-[9px] font-mono">
-                                ⚠ Action Recommended
-                              </span>
-                            ) : supabaseDiagnostic?.result?.overallStatus === 'error' ? (
-                              <span className="px-2 py-0.5 bg-rose-500/20 text-rose-300 border border-rose-500/40 rounded-full text-[9px] font-mono">
-                                ✕ Error Detected
-                              </span>
-                            ) : null}
-                          </h5>
-                          <span className="text-[10px] text-slate-400 font-mono">
-                            Endpoint: https://yvxqyczeavhfwxxjxwgl.supabase.co
-                          </span>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={runSupabaseDiagnosticTest}
-                        disabled={supabaseDiagnostic?.running}
-                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-                      >
-                        <RefreshCw className={`w-3.5 h-3.5 ${supabaseDiagnostic?.running ? 'animate-spin' : ''}`} />
-                        <span>{supabaseDiagnostic?.running ? 'Testing Supabase...' : 'Run Live Diagnostic Test'}</span>
-                      </button>
-                    </div>
-
-                    {supabaseDiagnostic?.result && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                        <div className="p-2.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-slate-400 font-bold text-[11px]">Database Table (public.applications):</span>
-                            {supabaseDiagnostic.result.tableAccess.success ? (
-                              <span className="text-emerald-400 font-bold text-[10px] flex items-center gap-1">
-                                <CheckCircle2 className="w-3.5 h-3.5" /> Readable ({supabaseDiagnostic.result.tableAccess.rowsCount || 0} rows)
-                              </span>
-                            ) : (
-                              <span className="text-rose-400 font-bold text-[10px] flex items-center gap-1">
-                                <XCircle className="w-3.5 h-3.5" /> Blocked / Error
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-[11px] text-slate-300">
-                            {supabaseDiagnostic.result.tableAccess.message}
-                          </p>
-                        </div>
-
-                        <div className="p-2.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-slate-400 font-bold text-[11px]">Storage Bucket ('documents'):</span>
-                            {supabaseDiagnostic.result.storageAccess.success ? (
-                              <span className="text-emerald-400 font-bold text-[10px] flex items-center gap-1">
-                                <CheckCircle2 className="w-3.5 h-3.5" /> Live &amp; Writable
-                              </span>
-                            ) : (
-                              <span className="text-rose-400 font-bold text-[10px] flex items-center gap-1">
-                                <XCircle className="w-3.5 h-3.5" /> Bucket Missing
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-[11px] text-slate-300">
-                            {supabaseDiagnostic.result.storageAccess.message}
-                          </p>
-                        </div>
-
-                        <div className="p-2.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-1 sm:col-span-2">
-                          <span className="text-slate-400 font-bold text-[11px] block">Table Columns Schema Status:</span>
-                          <p className="text-[11px] text-slate-300">
-                            {supabaseDiagnostic.result.columnsStatus.message}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {supabaseDiagnostic?.result?.rawErrors && supabaseDiagnostic.result.rawErrors.length > 0 && (
-                      <div className="p-3 bg-rose-950/60 border border-rose-800 rounded-xl space-y-1 text-xs">
-                        <span className="font-bold text-rose-300 block flex items-center gap-1">
-                          <AlertCircle className="w-4 h-4 text-rose-400" />
-                          <span>Exact Supabase Error Details:</span>
-                        </span>
-                        {supabaseDiagnostic.result.rawErrors.map((err: string, i: number) => (
-                          <p key={i} className="text-rose-200 font-mono text-[11px]">{err}</p>
-                        ))}
-                        <p className="text-amber-300 text-[11px] pt-1 font-bold">
-                          👉 Fix: Switch to the "Supabase SQL Editor Setup" tab above and run the SQL script in your Supabase dashboard to allow all permissions and add missing columns!
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <p className="text-xs text-slate-600 dark:text-slate-400">
-                  {snippetTab === 'getform'
-                    ? 'Copy and paste this clean Getform.io / Formspree form code with multipart document support into your website frontend:'
-                    : snippetTab === 'supabase'
-                    ? 'Copy and paste this Supabase Storage & Database integration snippet into your website frontend:'
-                    : 'Run this complete SQL script in your Supabase Dashboard SQL Editor to instantly setup tables, RLS policies, and storage buckets:'}
-                </p>
-
-                <div className="relative group">
-                  <pre className="p-4 bg-slate-950 text-slate-100 rounded-xl text-[11px] font-mono overflow-x-auto leading-relaxed border border-slate-800">
-{snippetTab === 'getform'
-  ? `<!-- CSC Portal Application Form with Getform.io / Formspree Integration -->
-<form
-  id="cscApplicationForm"
-  method="POST"
-  action="${getformEndpointInput || 'https://getform.io/f/YOUR_UNIQUE_ENDPOINT'}"
-  enctype="multipart/form-data"
->
-  <div class="form-group">
-    <label>Full Name:</label>
-    <input type="text" name="full_name" placeholder="Enter Full Name" required />
-  </div>
-
-  <div class="form-group">
-    <label>WhatsApp Number:</label>
-    <input type="tel" name="whatsapp_number" placeholder="Enter 10-digit WhatsApp Mobile" required />
-  </div>
-
-  <div class="form-group">
-    <label>Email Address:</label>
-    <input type="email" name="email_address" placeholder="Enter Email Address" />
-  </div>
-
-  <div class="form-group">
-    <label>Select CSC Service:</label>
-    <select name="service_selected" required>
-      <option value="">-- Choose Service --</option>
-      <option value="PAN Card Application">PAN Card Application</option>
-      <option value="Ayushman Bharat Card">Ayushman Bharat Card</option>
-      <option value="Aadhaar Address Update">Aadhaar Address Update</option>
-      <option value="Income Certificate">Income Certificate</option>
-      <option value="Caste Certificate">Caste Certificate</option>
-      <option value="Other Service">Other Service</option>
-    </select>
-  </div>
-
-  <div class="form-group">
-    <label>Upload Documents (Aadhaar / Photo / Proof):</label>
-    <input type="file" name="aadhaar_upload" id="documentInput" multiple required />
-  </div>
-
-  <button type="submit" id="submitBtn">Submit Application</button>
-</form>
-
-<!-- Vanilla JavaScript AJAX Submission Script -->
-<script>
-  document.getElementById('cscApplicationForm').addEventListener('submit', async function(e) {
-    e.preventDefault(); // Prevent default browser page reload
-
-    const form = e.target;
-    const submitBtn = document.getElementById('submitBtn') || form.querySelector('button[type="submit"]');
-    const originalBtnText = submitBtn ? submitBtn.innerText : 'Submit Application';
-
-    // Show loading state
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.innerText = 'Submitting...';
-    }
-
-    // Construct FormData object containing all inputs and file uploads
-    const formData = new FormData(form);
-
-    try {
-      const response = await fetch(form.action, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        alert('✅ Application submitted successfully! Thank you for contacting CSC Portal.');
-        form.reset();
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        alert('⚠️ Submission failed: ' + (errorData.message || 'Please verify your endpoint or try again.'));
-      }
-    } catch (error) {
-      console.error('Submission error:', error);
-      alert('⚠️ Network error submitting application. Please check your internet connection.');
-    } finally {
-      // Restore button state
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerText = originalBtnText;
-      }
-    }
-  });
-</script>`
-  : snippetTab === 'supabase'
-  ? `<!-- CSC Portal Application Form with Supabase Integration -->
-<form id="cscApplicationForm" enctype="multipart/form-data">
-  <div class="form-group">
-    <label for="full_name">Full Name:</label>
-    <input type="text" id="full_name" name="full_name" placeholder="Enter Full Name" required />
-  </div>
-
-  <div class="form-group">
-    <label for="whatsapp_number">WhatsApp Number:</label>
-    <input type="tel" id="whatsapp_number" name="whatsapp_number" placeholder="Enter 10-digit WhatsApp Mobile" required />
-  </div>
-
-  <div class="form-group">
-    <label for="email_address">Email Address:</label>
-    <input type="email" id="email_address" name="email_address" placeholder="Enter Email Address" />
-  </div>
-
-  <div class="form-group">
-    <label for="service_selected">Select CSC Service:</label>
-    <select id="service_selected" name="service_selected" required>
-      <option value="">-- Choose Service --</option>
-      <option value="PAN Card Application">PAN Card Application</option>
-      <option value="Ayushman Bharat Card">Ayushman Bharat Card</option>
-      <option value="Aadhaar Address Update">Aadhaar Address Update</option>
-      <option value="Income Certificate">Income Certificate</option>
-      <option value="Caste Certificate">Caste Certificate</option>
-      <option value="Other Service">Other Service</option>
-    </select>
-  </div>
-
-  <div class="form-group">
-    <label for="aadhaar_upload">Upload Documents (Photo / Proof):</label>
-    <input type="file" id="aadhaar_upload" name="aadhaar_upload" multiple required />
-  </div>
-
-  <button type="submit" id="submitBtn">Submit Application</button>
-</form>
-
-<!-- Supabase CDN and Submission Script -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  // ⚠️ Replace these with your actual Supabase project keys
-  const supabaseUrl = 'YOUR_SUPABASE_URL';
-  const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
-  const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-  document.getElementById('cscApplicationForm').addEventListener('submit', async function(e) {
-    e.preventDefault(); 
-    
-    const form = e.target;
-    const submitBtn = document.getElementById('submitBtn');
-    const originalBtnText = submitBtn.innerText;
-
-    submitBtn.disabled = true;
-    submitBtn.innerText = 'Uploading files & Submitting...';
-
-    try {
-      const formData = new FormData(form);
-      const fileInput = document.getElementById('aadhaar_upload');
-      let uploadedFileUrls = [];
-
-      // 1. Upload files to Supabase Storage
-      if (fileInput.files.length > 0) {
-        for (const file of fileInput.files) {
-          // Create a unique file name so old files aren't overwritten
-          const fileExt = file.name.split('.').pop();
-          const uniqueFileName = \`\${Date.now()}-\${Math.random().toString(36).substring(2)}.\${fileExt}\`;
-          
-          const { data, error: uploadError } = await supabase.storage
-            .from('documents')
-            .upload(uniqueFileName, file);
-
-          if (uploadError) throw new Error('File upload failed: ' + uploadError.message);
-          
-          // Get the public URL for the file we just uploaded
-          const { data: publicUrlData } = supabase.storage
-            .from('documents')
-            .getPublicUrl(uniqueFileName);
-            
-          uploadedFileUrls.push(publicUrlData.publicUrl);
-        }
-      }
-
-      // 2. Insert text data and file URLs into Supabase Database
-      const { data: insertData, error: dbError } = await supabase
-        .from('applications')
-        .insert([
-          {
-            full_name: formData.get('full_name'),
-            whatsapp_number: formData.get('whatsapp_number'),
-            email_address: formData.get('email_address'),
-            service_selected: formData.get('service_selected'),
-            document_urls: JSON.stringify(uploadedFileUrls) // Stored as text array/JSON
-          }
-        ]);
-
-      if (dbError) throw new Error('Database insert failed: ' + dbError.message);
-
-      alert('✅ Application submitted successfully! We will contact you on WhatsApp.');
-      form.reset();
-
-    } catch (error) {
-      console.error('Submission error:', error);
-      alert('⚠️ ' + error.message);
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.innerText = originalBtnText;
-    }
-  });
-</script>`
-  : `-- ==============================================================================
--- SUPABASE BACKEND SETUP SCRIPT FOR CSC APPLICATION PORTAL (cscdost.com)
--- Run this in your Supabase SQL Editor: https://supabase.com/dashboard/project/_/sql
--- ==============================================================================
-
--- 1. Create or Upgrade the "applications" table
-CREATE TABLE IF NOT EXISTS public.applications (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    full_name TEXT NOT NULL,
-    whatsapp_number TEXT NOT NULL,
-    email_address TEXT,
-    service_selected TEXT NOT NULL,
-    document_urls JSONB DEFAULT '[]'::jsonb
-);
-
--- 2. Add rich workflow columns if they don't exist yet (idempotent migration)
-ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS token_id TEXT;
-ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'Pending';
-ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS payment_mode TEXT DEFAULT 'cash';
-ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS utr_number TEXT DEFAULT 'N/A';
-ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS total_amount NUMERIC DEFAULT 0;
-ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS user_category TEXT DEFAULT 'General/OBC';
-ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS payload JSONB DEFAULT '{}'::jsonb;
-
--- Optional index for faster token lookup and date sorting
-CREATE INDEX IF NOT EXISTS idx_applications_created_at ON public.applications (created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_applications_token_id ON public.applications (token_id);
-
--- 3. Enable Row Level Security (RLS)
-ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
-
--- 4. RLS Policies: Allow public anonymous submissions, staff dashboard selects & status updates
-DROP POLICY IF EXISTS "Allow public insert to applications" ON public.applications;
-CREATE POLICY "Allow public insert to applications"
-ON public.applications
-FOR INSERT
-TO public
-WITH CHECK (true);
-
-DROP POLICY IF EXISTS "Allow public select from applications" ON public.applications;
-CREATE POLICY "Allow public select from applications"
-ON public.applications
-FOR SELECT
-TO public
-USING (true);
-
-DROP POLICY IF EXISTS "Allow public update applications" ON public.applications;
-CREATE POLICY "Allow public update applications"
-ON public.applications
-FOR UPDATE
-TO public
-USING (true)
-WITH CHECK (true);
-
--- 5. Realtime replication setup (allows live updates without manual refresh)
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_publication_tables 
-    WHERE pubname = 'supabase_realtime' 
-      AND schemaname = 'public' 
-      AND tablename = 'applications'
-  ) THEN
-    ALTER PUBLICATION supabase_realtime ADD TABLE public.applications;
-  END IF;
-EXCEPTION
-  WHEN OTHERS THEN
-    -- In case supabase_realtime publication is managed by supabase dashboard
-    NULL;
-END $$;
-
--- 6. Storage Bucket setup for uploaded documents
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES ('documents', 'documents', true, 52428800, NULL)
-ON CONFLICT (id) DO UPDATE SET public = true;
-
--- 7. Storage RLS Policies (Allow document upload and reading)
-DROP POLICY IF EXISTS "Allow public insert into documents bucket" ON storage.objects;
-CREATE POLICY "Allow public insert into documents bucket"
-ON storage.objects
-FOR INSERT
-TO public
-WITH CHECK (bucket_id = 'documents');
-
-DROP POLICY IF EXISTS "Allow public select from documents bucket" ON storage.objects;
-CREATE POLICY "Allow public select from documents bucket"
-ON storage.objects
-FOR SELECT
-TO public
-USING (bucket_id = 'documents');
-
-DROP POLICY IF EXISTS "Allow public update in documents bucket" ON storage.objects;
-CREATE POLICY "Allow public update in documents bucket"
-ON storage.objects
-FOR UPDATE
-TO public
-USING (bucket_id = 'documents');`}
-                  </pre>
-                </div>
               </div>
             </div>
 
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 flex justify-end shrink-0">
+            <div className="px-6 py-3.5 bg-white border-t border-[#E2E8F0] flex justify-end shrink-0">
               <button
+                type="button"
                 onClick={() => setShowGetformModal(false)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-extrabold cursor-pointer transition-all"
+                className="px-4 py-2 bg-[#111C3D] text-white rounded-xl text-xs font-semibold cursor-pointer"
               >
-                Close Integration Suite
+                Close Diagnostics
               </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* ==================================================================== */}
       {/* DOCUMENT PREVIEW LIGHTBOX MODAL */}
+      {/* ==================================================================== */}
       {selectedDocPreview && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
-            {/* Modal Header */}
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950">
-              <div className="flex items-center gap-2 overflow-hidden">
-                <FileText className="w-5 h-5 text-amber-500 shrink-0" />
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate">
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-[70] flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+            <div className="px-5 py-3.5 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F6F8FC]">
+              <div className="flex items-center gap-2 min-w-0">
+                <FileText className="w-4 h-4 text-[#2563EB] shrink-0" />
+                <h3 className="text-xs font-bold text-[#111827] truncate">
                   {selectedDocPreview.name}
                 </h3>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <a
                   href={selectedDocPreview.url}
                   download={selectedDocPreview.name}
-                  className="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-extrabold rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Download</span>
                 </a>
                 <button
+                  type="button"
                   onClick={() => setSelectedDocPreview(null)}
-                  className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg cursor-pointer"
+                  className="p-1.5 text-[#64748B] hover:text-[#111827] rounded-lg cursor-pointer"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            {/* Modal Content */}
-            <div className="p-4 flex-grow overflow-auto flex items-center justify-center bg-slate-100 dark:bg-slate-950">
-              {selectedDocPreview.type?.startsWith('image/') || selectedDocPreview.url.startsWith('data:image/') ? (
+            <div className="p-4 flex-1 overflow-auto flex items-center justify-center bg-slate-100">
+              {selectedDocPreview.type?.startsWith('image/') ||
+              selectedDocPreview.url.startsWith('data:image/') ||
+              /\.(jpg|jpeg|png|webp|gif)$/i.test(selectedDocPreview.name || '') ? (
                 <img
                   src={selectedDocPreview.url}
                   alt={selectedDocPreview.name}
-                  width="600"
-                  height="450"
-                  loading="lazy"
-                  decoding="async"
-                  className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-md"
+                  className="max-w-full max-h-[72vh] object-contain rounded-lg shadow-sm"
                 />
-              ) : selectedDocPreview.type === 'application/pdf' || selectedDocPreview.url.startsWith('data:application/pdf') ? (
+              ) : selectedDocPreview.type === 'application/pdf' ||
+                selectedDocPreview.url.startsWith('data:application/pdf') ||
+                /\.pdf$/i.test(selectedDocPreview.name || '') ? (
                 <iframe
                   src={selectedDocPreview.url}
                   title={selectedDocPreview.name}
-                  className="w-full h-[70vh] rounded-lg border border-slate-200"
+                  className="w-full h-[72vh] rounded-lg border border-[#E2E8F0] bg-white"
                 />
               ) : (
                 <div className="text-center p-8 space-y-3">
-                  <FileText className="w-12 h-12 text-amber-500 mx-auto" />
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Document preview is ready for download.
+                  <FileText className="w-10 h-10 text-[#2563EB] mx-auto" />
+                  <p className="text-xs font-semibold text-[#111827]">
+                    Document is ready for download.
                   </p>
                   <a
                     href={selectedDocPreview.url}
                     download={selectedDocPreview.name}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-md"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-[#2563EB] text-white font-semibold text-xs rounded-xl"
                   >
                     <Download className="w-4 h-4" />
-                    <span>Download File ({selectedDocPreview.name})</span>
+                    <span>Download ({selectedDocPreview.name})</span>
                   </a>
                 </div>
               )}

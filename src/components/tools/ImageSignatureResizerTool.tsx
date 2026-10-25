@@ -23,8 +23,12 @@ interface Preset {
   maxKb: number;
 }
 
-export default function ImageSignatureResizerTool() {
-  const [activeTab, setActiveTab] = useState<'signature' | 'image'>('signature');
+interface ImageSignatureResizerToolProps {
+  initialMode?: 'signature' | 'image';
+}
+
+export default function ImageSignatureResizerTool({ initialMode = 'signature' }: ImageSignatureResizerToolProps) {
+  const [activeTab, setActiveTab] = useState<'signature' | 'image'>(initialMode);
   const [file, setFile] = useState<File | null>(null);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [naturalW, setNaturalW] = useState<number>(0);
