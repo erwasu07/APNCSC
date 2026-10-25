@@ -53,13 +53,23 @@ export default function Footer({
       else window.location.hash = '#guides';
       return;
     }
+    if (target === 'education') {
+      const el = document.getElementById('education-resources');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    if (target === 'tools') {
+      const el = document.getElementById('citizen-tools');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
     if (target === 'about') {
       const el = document.getElementById('node-info');
       if (el) el.scrollIntoView({ behavior: 'smooth' });
       return;
     }
     if (target === 'faq') {
-      const el = document.getElementById('faq-section') || document.getElementById('faq');
+      const el = document.getElementById('faq');
       if (el) el.scrollIntoView({ behavior: 'smooth' });
       return;
     }
@@ -133,6 +143,24 @@ export default function Footer({
                   className="hover:text-white transition-colors cursor-pointer"
                 >
                   CSC E-Services
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => handleNav('education')}
+                  className="hover:text-white transition-colors cursor-pointer"
+                >
+                  Education &amp; KU/CUS Notices
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => handleNav('tools')}
+                  className="hover:text-white transition-colors cursor-pointer"
+                >
+                  Citizen Tools &amp; Calculators
                 </button>
               </li>
               <li>
