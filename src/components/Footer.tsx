@@ -59,8 +59,7 @@ export default function Footer({
       return;
     }
     if (target === 'tools') {
-      const el = document.getElementById('citizen-tools');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      window.location.hash = '#tools';
       return;
     }
     if (target === 'about') {

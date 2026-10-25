@@ -794,6 +794,57 @@ export default function PortalHomepage({
       {/* ==================================================================== */}
       <CitizenToolsDesk onApplyService={onApplyService} />
 
+      {/* Featured Banner: Advanced Free Online Tools Suite */}
+      <section className="bg-gradient-to-r from-[#102A56] to-[#1E3A8A] text-white rounded-3xl p-6 sm:p-10 shadow-lg relative overflow-hidden space-y-6">
+        <div className="relative z-10 max-w-3xl space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/20 border border-blue-400/30 rounded-full text-xs font-bold text-blue-200">
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>New Feature Suite</span>
+          </div>
+
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-white">
+            Free Online Tools Hub — Fast, Simple &amp; Secure
+          </h2>
+
+          <p className="text-xs sm:text-sm text-slate-200 leading-relaxed max-w-2xl">
+            Compress images to 20 KB/50 KB, create PDFs from photos, merge and split documents, format 35×45 mm passport photo sheets, and remove backgrounds with 100% private, client-side processing.
+          </p>
+
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                window.location.hash = '#tools';
+              }}
+              className="px-6 py-3 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-2"
+            >
+              <span>Explore All Free Online Tools</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                window.location.hash = '#tools/image-compressor';
+              }}
+              className="px-4 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer"
+            >
+              Image Compressor (20KB - 50KB)
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                window.location.hash = '#tools/image-to-pdf';
+              }}
+              className="px-4 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer"
+            >
+              Image to PDF Maker
+            </button>
+          </div>
+        </div>
+      </section>
+
     </div>
   );
 }

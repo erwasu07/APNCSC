@@ -20,6 +20,7 @@ const NodeInformation = lazy(() => import('./components/NodeInformation'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const Footer = lazy(() => import('./components/Footer'));
 const PrivacyPolicyModal = lazy(() => import('./components/PrivacyPolicyModal'));
+const ToolsHub = lazy(() => import('./components/tools/ToolsHub'));
 
 // Lightweight Skeleton Fallback for Section Containers (Prevents Layout Shift)
 function SectionSkeleton({ height = 'min-h-[360px]', title = 'Loading Desk...' }: { height?: string; title?: string }) {
@@ -99,6 +100,8 @@ export default function App() {
   const [applyInitialService, setApplyInitialService] = useState<string>('');
   const [isTrackView, setIsTrackView] = useState<boolean>(false);
   const [trackInitialToken, setTrackInitialToken] = useState<string>('');
+  const [isToolsView, setIsToolsView] = useState<boolean>(false);
+  const [activeToolId, setActiveToolId] = useState<string | null>(null);
 
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
   const [legalModalTab, setLegalModalTab] = useState<PolicyTab>('privacy');
@@ -186,6 +189,28 @@ export default function App() {
         return;
       } else {
         setIsTrackView(false);
+      }
+
+      // 2.5 Check Tools route (/tools, /tools/:toolId, #tools, #tools/:toolId)
+      const pathToolsMatch = pathname.match(/^\/tools(?:\/([^/?#]+))?/i);
+      if (hash.startsWith('#tools') || pathToolsMatch) {
+        let toolParam = null;
+        if (pathToolsMatch && pathToolsMatch[1]) {
+          toolParam = pathToolsMatch[1];
+        } else if (hash.startsWith('#tools/')) {
+          toolParam = hash.replace(/^#tools\//, '').split('?')[0];
+        }
+        setIsToolsView(true);
+        setActiveToolId(toolParam || null);
+        setIsApplyView(false);
+        setIsTrackView(false);
+        setActiveJobPost(null);
+        setActiveServicePost(null);
+        setIsAdminView(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      } else {
+        setIsToolsView(false);
       }
 
       // 3. Check Service route
@@ -457,6 +482,8 @@ export default function App() {
 
   const handleGoHome = () => {
     setIsAdminView(false);
+    setIsToolsView(false);
+    setActiveToolId(null);
     setActiveJobPost(null);
     setActiveServicePost(null);
     setIsApplyView(false);
@@ -559,6 +586,18 @@ export default function App() {
                   handleOpenApplyPage(service);
                 }}
                 onShare={handleShareServiceItem}
+              />
+            </Suspense>
+          </div>
+        ) : isToolsView ? (
+          /* DEDICATED FULL-PAGE VIEW FOR FREE ONLINE TOOLS HUB */
+          <div className="animate-fade-in w-full">
+            <Suspense fallback={<PageRouteSkeleton message="Loading Free Online Tools Hub..." />}>
+              <ToolsHub
+                initialToolId={activeToolId || undefined}
+                onSelectTool={(id) => {
+                  setActiveToolId(id);
+                }}
               />
             </Suspense>
           </div>

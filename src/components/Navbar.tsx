@@ -97,8 +97,7 @@ export default function Navbar({
       }
 
       if (target === 'tools') {
-        const el = document.getElementById('citizen-tools');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
+        window.location.hash = '#tools';
         return;
       }
 
