@@ -131,6 +131,39 @@ function getShortQualification(eligibility?: string): string | null {
   return `${cleaned.slice(0, 70).trim()}…`;
 }
 
+function renderStatusBadge(status: JobDeadlineStatus) {
+  if (status.code === 'open') {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-[#16A34A] border border-emerald-200">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" aria-hidden="true" />
+        <span>Open</span>
+      </span>
+    );
+  }
+  if (status.code === 'closing_soon') {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]" aria-hidden="true" />
+        <span>Closing Soon</span>
+      </span>
+    );
+  }
+  if (status.code === 'closed') {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-[#64748B] border border-slate-200">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#64748B]" aria-hidden="true" />
+        <span>Closed</span>
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-[#2563EB] border border-blue-200">
+      <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB]" aria-hidden="true" />
+      <span>Check Notice</span>
+    </span>
+  );
+}
+
 export default function PortalHomepage({
   onOpenJob,
   onOpenService,
@@ -560,39 +593,6 @@ export default function PortalHomepage({
       default:
         return Wrench;
     }
-  };
-
-  const renderStatusBadge = (status: JobDeadlineStatus) => {
-    if (status.code === 'open') {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-[#16A34A] border border-emerald-200">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" aria-hidden="true" />
-          <span>Open</span>
-        </span>
-      );
-    }
-    if (status.code === 'closing_soon') {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]" aria-hidden="true" />
-          <span>Closing Soon</span>
-        </span>
-      );
-    }
-    if (status.code === 'closed') {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-[#64748B] border border-slate-200">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#64748B]" aria-hidden="true" />
-          <span>Closed</span>
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-[#2563EB] border border-blue-200">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB]" aria-hidden="true" />
-        <span>Check Notice</span>
-      </span>
-    );
   };
 
   return (
