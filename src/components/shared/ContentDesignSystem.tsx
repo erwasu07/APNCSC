@@ -929,37 +929,22 @@ export function ContentPageLayout({
               {safeRelated.length > 0 && (
                 <section
                   aria-label={relatedTitle}
-                  className="lg:hidden pt-5 mt-2 border-t border-[#E2E8F0] space-y-3"
+                  className="lg:hidden pt-5 mt-3 border-t border-[#E2E8F0] space-y-3"
                 >
                   <h2 className="text-base font-bold text-[#102A43]">{relatedTitle}</h2>
-                  <div className="-mx-4 divide-y divide-[#E2E8F0] border-y border-[#E2E8F0]">
+                  <div className="space-y-2.5">
                     {safeRelated.map((rel) => {
                       const displayMeta = rel.metaText || rel.meta;
                       return (
-                        <button
+                        <ColourAccentCard
                           key={rel.id}
-                          type="button"
-                          onClick={rel.onClick}
-                          className="w-full text-left px-4 py-3.5 hover:bg-[#F6F8FC] transition-colors flex items-start justify-between gap-3 cursor-pointer"
-                        >
-                          <div className="space-y-1 min-w-0">
-                            <span className="text-[11px] font-semibold text-[#2563EB] block">
-                              {rel.categoryLabel}
-                            </span>
-                            <h3 className="text-xs sm:text-sm font-bold text-[#102A43] leading-snug">
-                              {rel.title}
-                            </h3>
-                            {displayMeta && (
-                              <span className="text-[11px] text-[#64748B] block">
-                                {displayMeta}
-                              </span>
-                            )}
-                          </div>
-                          <ArrowRight
-                            className="w-4 h-4 text-[#2563EB] shrink-0 mt-1"
-                            aria-hidden="true"
-                          />
-                        </button>
+                          categoryType={rel.categoryLabel}
+                          categoryLabel={rel.categoryLabel}
+                          title={rel.title}
+                          footerMeta={displayMeta}
+                          statusBadge={rel.statusNode}
+                          onPrimaryClick={rel.onClick}
+                        />
                       );
                     })}
                   </div>
@@ -1030,28 +1015,59 @@ export function ContentPageLayout({
                   <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">
                     {relatedTitle}
                   </span>
-                  <div className="divide-y divide-[#E2E8F0]">
+                  <div className="space-y-2.5">
                     {safeRelated.map((rel) => {
                       const displayMeta = rel.metaText || rel.meta;
+                      const relTheme = getCategoryTheme(rel.categoryLabel);
                       return (
-                        <button
+                        <article
                           key={rel.id}
-                          type="button"
-                          onClick={rel.onClick}
-                          className="w-full text-left py-2.5 first:pt-0 last:pb-0 group cursor-pointer space-y-0.5"
+                          style={{
+                            borderLeft: `4px solid ${relTheme.accent}`,
+                            backgroundImage: `linear-gradient(90deg, ${relTheme.paleTint} 0%, #FFFFFF 36%)`,
+                            backgroundColor: '#FFFFFF',
+                          }}
+                          className="border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-[10px] p-3 transition-colors space-y-1.5"
                         >
-                          <span className="text-[11px] font-semibold text-[#2563EB] block">
-                            {rel.categoryLabel}
-                          </span>
-                          <h4 className="text-xs font-bold text-[#102A43] group-hover:text-[#2563EB] transition-colors leading-snug line-clamp-2">
-                            {rel.title}
-                          </h4>
-                          {displayMeta && (
-                            <span className="text-[11px] text-[#64748B] block tabular-nums">
-                              {displayMeta}
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <span
+                              style={{
+                                backgroundColor: relTheme.paleTint,
+                                color: relTheme.badgeText,
+                                borderColor: relTheme.badgeBorder,
+                              }}
+                              className="text-[10px] font-bold px-2 py-0.5 rounded border leading-tight"
+                            >
+                              {rel.categoryLabel}
                             </span>
-                          )}
-                        </button>
+                            {rel.statusNode}
+                          </div>
+                          <h4 className="text-xs sm:text-[13px] font-bold text-[#102A43] leading-snug">
+                            <button
+                              type="button"
+                              onClick={rel.onClick}
+                              className="text-left hover:text-[#2563EB] transition-colors cursor-pointer w-full focus-visible:outline-2 focus-visible:outline-[#2563EB] rounded"
+                            >
+                              {rel.title}
+                            </button>
+                          </h4>
+                          <div className="pt-1.5 border-t border-[#E2E8F0] flex items-center justify-between gap-2 text-[11px]">
+                            {displayMeta ? (
+                              <span className="text-[#64748B] tabular-nums truncate">
+                                {displayMeta}
+                              </span>
+                            ) : (
+                              <span />
+                            )}
+                            <button
+                              type="button"
+                              onClick={rel.onClick}
+                              className="font-bold text-[#2563EB] hover:underline cursor-pointer shrink-0"
+                            >
+                              {relTheme.defaultActionLabel}
+                            </button>
+                          </div>
+                        </article>
                       );
                     })}
                   </div>
@@ -1100,3 +1116,329 @@ export function ContentPageLayout({
     </div>
   );
 }
+
+/**
+ * ============================================================================
+ * APPROVED COLOUR-ACCENT LISTING CARD SYSTEM
+ * ============================================================================
+ * Shared category-to-colour mapping:
+ * - Jobs / Recruitment: Accent #2563EB, Pale tint #EFF6FF
+ * - Government Schemes: Accent #0D9488, Pale tint #F0FDFA
+ * - Admissions / Education: Accent #7C3AED, Pale tint #F5F3FF
+ * - Knowledge Hub / Guides: Accent #D97706, Pale tint #FFFBEB
+ * - CSC E-SERVICES: Accent #0284C7, Pale tint #F0F9FF
+ */
+export type ListingCategoryKey =
+  | 'job'
+  | 'scheme'
+  | 'admission'
+  | 'guide'
+  | 'service'
+  | 'neutral';
+
+export interface CategoryColourTheme {
+  key: ListingCategoryKey;
+  accent: string;
+  paleTint: string;
+  badgeText: string;
+  badgeBorder: string;
+  defaultBadgeLabel: string;
+  defaultActionLabel: string;
+}
+
+export const CATEGORY_COLOUR_THEMES: Record<ListingCategoryKey, CategoryColourTheme> = {
+  job: {
+    key: 'job',
+    accent: '#2563EB',
+    paleTint: '#EFF6FF',
+    badgeText: '#1D4ED8',
+    badgeBorder: '#BFDBFE',
+    defaultBadgeLabel: 'Job / Recruitment',
+    defaultActionLabel: 'View Details →',
+  },
+  scheme: {
+    key: 'scheme',
+    accent: '#0D9488',
+    paleTint: '#F0FDFA',
+    badgeText: '#0F766E',
+    badgeBorder: '#99F6E4',
+    defaultBadgeLabel: 'Government Scheme',
+    defaultActionLabel: 'Explore Scheme →',
+  },
+  admission: {
+    key: 'admission',
+    accent: '#7C3AED',
+    paleTint: '#F5F3FF',
+    badgeText: '#6D28D9',
+    badgeBorder: '#DDD6FE',
+    defaultBadgeLabel: 'Admission / Education',
+    defaultActionLabel: 'View Details →',
+  },
+  guide: {
+    key: 'guide',
+    accent: '#D97706',
+    paleTint: '#FFFBEB',
+    badgeText: '#B45309',
+    badgeBorder: '#FDE68A',
+    defaultBadgeLabel: 'Citizen Guide',
+    defaultActionLabel: 'Read Guide →',
+  },
+  service: {
+    key: 'service',
+    accent: '#0284C7',
+    paleTint: '#F0F9FF',
+    badgeText: '#0369A1',
+    badgeBorder: '#BAE6FD',
+    defaultBadgeLabel: 'CSC E-Service',
+    defaultActionLabel: 'View Service →',
+  },
+  neutral: {
+    key: 'neutral',
+    accent: '#475569',
+    paleTint: '#F8FAFC',
+    badgeText: '#334155',
+    badgeBorder: '#E2E8F0',
+    defaultBadgeLabel: 'Public Update',
+    defaultActionLabel: 'View Details →',
+  },
+};
+
+export function resolveListingCategoryKey(rawCategory?: string): ListingCategoryKey {
+  if (!rawCategory) return 'neutral';
+  const norm = rawCategory.trim().toLowerCase();
+
+  if (
+    norm === 'job' ||
+    norm === 'jobs' ||
+    norm === 'jkssb' ||
+    norm === 'army_jobs' ||
+    norm === 'ssc_jobs' ||
+    norm === 'rrb_jobs' ||
+    norm === 'recruitment' ||
+    norm.includes('job') ||
+    norm.includes('recruitment') ||
+    norm.includes('vacancy') ||
+    norm.includes('admit_card') ||
+    norm.includes('result') ||
+    norm.includes('answer_key') ||
+    norm.includes('syllabus')
+  ) {
+    return 'job';
+  }
+
+  if (
+    norm === 'scheme' ||
+    norm === 'schemes' ||
+    norm === 'central scheme' ||
+    norm.includes('scheme') ||
+    norm.includes('welfare') ||
+    norm.includes('kisan') ||
+    norm.includes('ayushman') ||
+    norm.includes('benefit')
+  ) {
+    return 'scheme';
+  }
+
+  if (
+    norm === 'admission' ||
+    norm === 'admissions' ||
+    norm === 'cluster_univ' ||
+    norm === 'exam_forms' ||
+    norm === 'nta' ||
+    norm === 'education' ||
+    norm.includes('admission') ||
+    norm.includes('university') ||
+    norm.includes('exam') ||
+    norm.includes('education') ||
+    norm.includes('scholarship')
+  ) {
+    return 'admission';
+  }
+
+  if (
+    norm === 'guide' ||
+    norm === 'guides' ||
+    norm === 'identity & tax' ||
+    norm === 'state services' ||
+    norm.includes('guide') ||
+    norm.includes('knowledge')
+  ) {
+    return 'guide';
+  }
+
+  if (
+    norm === 'service' ||
+    norm === 'services' ||
+    norm === 'csc_service' ||
+    norm === 'cards_adda' ||
+    norm === 'jk_state' ||
+    norm === 'revenue' ||
+    norm === 'business' ||
+    norm === 'digital' ||
+    norm.includes('service') ||
+    norm.includes('certificate') ||
+    norm.includes('identity')
+  ) {
+    return 'service';
+  }
+
+  return 'neutral';
+}
+
+export function getCategoryTheme(rawCategory?: string): CategoryColourTheme {
+  const key = resolveListingCategoryKey(rawCategory);
+  return CATEGORY_COLOUR_THEMES[key];
+}
+
+export interface ColourAccentCardProps {
+  key?: React.Key;
+  id?: string;
+  categoryType?: string;
+  categoryLabel?: string;
+  organisation?: string;
+  statusBadge?: React.ReactNode;
+  title: string;
+  summary?: string;
+  /** Optional content-specific structured line (e.g. Qualification, Benefit, Fee) */
+  metadataLine?: React.ReactNode;
+  /** Footer left-side metadata (e.g. Closing date, Read time, Department, or Fee) */
+  footerMeta?: React.ReactNode;
+  /** Primary action label (defaults to category-appropriate label with arrow) */
+  actionLabel?: string;
+  onPrimaryClick: () => void;
+  /** Optional official source link on footer */
+  officialHref?: string;
+  officialLabel?: string;
+  /** Optional secondary action button on footer (e.g. Request Assistance) */
+  secondaryActionLabel?: string;
+  onSecondaryClick?: () => void;
+}
+
+export function ColourAccentCard({
+  id,
+  categoryType,
+  categoryLabel,
+  organisation,
+  statusBadge,
+  title,
+  summary,
+  metadataLine,
+  footerMeta,
+  actionLabel,
+  onPrimaryClick,
+  officialHref,
+  officialLabel = 'Official Link',
+  secondaryActionLabel,
+  onSecondaryClick,
+}: ColourAccentCardProps) {
+  const theme = getCategoryTheme(categoryType || categoryLabel);
+  const resolvedBadgeLabel = categoryLabel || theme.defaultBadgeLabel;
+  const resolvedActionLabel = actionLabel
+    ? actionLabel.includes('→')
+      ? actionLabel
+      : `${actionLabel} →`
+    : theme.defaultActionLabel;
+
+  return (
+    <article
+      id={id}
+      style={{
+        borderLeft: `4px solid ${theme.accent}`,
+        backgroundImage: `linear-gradient(90deg, ${theme.paleTint} 0%, #FFFFFF 34%)`,
+        backgroundColor: '#FFFFFF',
+      }}
+      className="w-full border border-[#E2E8F0] hover:border-[#94A3B8] rounded-[11px] p-[14px] sm:p-4 transition-colors flex flex-col justify-between shadow-none"
+    >
+      <div>
+        {/* TOP: Category Badge, Optional Status Badge, and Organisation Beneath */}
+        <div>
+          <div className="flex items-start justify-between gap-2 flex-wrap">
+            <span
+              style={{
+                backgroundColor: theme.paleTint,
+                color: theme.badgeText,
+                borderColor: theme.badgeBorder,
+              }}
+              className="inline-flex items-center px-2.5 py-0.5 rounded-md border text-[11px] font-bold tracking-tight leading-snug"
+            >
+              {resolvedBadgeLabel}
+            </span>
+
+            {statusBadge && <div className="shrink-0">{statusBadge}</div>}
+          </div>
+
+          {organisation && (
+            <div className="mt-1.5 text-xs font-medium text-[#475569] leading-snug break-words">
+              {organisation}
+            </div>
+          )}
+        </div>
+
+        {/* TITLE: Bold Navy #102A43, ~17–18px on mobile, line-height 1.4 */}
+        <h3 className="mt-2 text-[17px] sm:text-[18px] font-bold text-[#102A43] leading-[1.4] break-words">
+          <button
+            type="button"
+            onClick={onPrimaryClick}
+            className="text-left text-[#102A43] hover:text-[#2563EB] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] rounded transition-colors cursor-pointer w-full"
+          >
+            {title}
+          </button>
+        </h3>
+
+        {/* SUMMARY: Muted readable text, ~14px on mobile, up to 2 lines */}
+        {summary && (
+          <p className="mt-2 text-[14px] text-[#475569] leading-[1.45] line-clamp-2 break-words">
+            {summary}
+          </p>
+        )}
+
+        {/* CONTENT-SPECIFIC METADATA LINE (Qualification / Benefit / Service Fee) */}
+        {metadataLine && (
+          <div className="mt-2 text-xs text-[#334155] leading-snug break-words">
+            {metadataLine}
+          </div>
+        )}
+      </div>
+
+      {/* FOOTER: Subtle horizontal divider, metadata on left, action link with arrow on right */}
+      <div className="mt-3 pt-2.5 border-t border-[#E2E8F0] flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 text-xs">
+        <div className="text-[#475569] font-medium leading-snug min-w-0 break-words">
+          {footerMeta}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 ml-auto shrink-0">
+          {officialHref && (
+            <a
+              href={officialHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="min-h-[40px] sm:min-h-[44px] -my-1.5 py-1.5 px-1 text-xs font-medium text-[#475569] hover:text-[#102A43] hover:underline focus-visible:outline-2 focus-visible:outline-[#2563EB] rounded inline-flex items-center gap-1 transition-colors"
+            >
+              <span>{officialLabel}</span>
+              <ExternalLink className="w-3 h-3 shrink-0" aria-hidden="true" />
+            </a>
+          )}
+
+          {secondaryActionLabel && onSecondaryClick && (
+            <button
+              type="button"
+              onClick={onSecondaryClick}
+              className="min-h-[40px] sm:min-h-[44px] -my-1.5 py-1.5 px-1 text-xs font-medium text-[#475569] hover:text-[#102A43] hover:underline focus-visible:outline-2 focus-visible:outline-[#2563EB] rounded inline-flex items-center gap-1 transition-colors cursor-pointer"
+            >
+              <span>{secondaryActionLabel}</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={onPrimaryClick}
+            className="min-h-[40px] sm:min-h-[44px] -my-1.5 py-1.5 px-1 text-xs sm:text-[13px] font-bold text-[#2563EB] hover:text-[#1D4ED8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] rounded inline-flex items-center gap-1 transition-colors cursor-pointer"
+          >
+            <span>{resolvedActionLabel}</span>
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
+

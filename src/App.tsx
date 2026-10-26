@@ -602,7 +602,7 @@ export default function App() {
           </div>
         ) : (
           /* PUBLIC VISITOR INTERFACE */
-          <div className="animate-fade-in space-y-0 md:space-y-12 w-full">
+          <div className="animate-fade-in space-y-0 md:space-y-10 pb-16 md:pb-6 w-full">
             
             {/* Dedicated Modern Citizen Homepage Layout */}
             <Suspense fallback={<SectionSkeleton height="min-h-[520px]" title="Loading CSC DOST Citizen Portal..." />}>
@@ -754,25 +754,23 @@ export default function App() {
         </div>
       )}
 
-      {/* Floating WhatsApp Group Button - Hidden on Apply/Track views and mobile detail views so it never covers buttons */}
-      {!isAdminView && !isApplyView && !isTrackView && (
+      {/* Floating WhatsApp Updates Group Button - Compact 48px circle on mobile with safe-area clearance */}
+      {!isAdminView && !isApplyView && !isTrackView && !isPrivacyModalOpen && !showShareModal && (
         <button
+          type="button"
           onClick={handleWhatsAppFloating}
-          className={`fixed bottom-3 right-3 sm:bottom-6 sm:right-6 px-3 py-2 sm:px-3.5 sm:py-2.5 bg-[#16A34A] hover:bg-emerald-700 text-white rounded-full shadow-lg transition-colors z-40 ${
+          className={`fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-3.5 sm:bottom-6 sm:right-6 w-12 h-12 sm:w-auto sm:h-11 sm:px-4 bg-[#16A34A] hover:bg-emerald-700 text-white rounded-full shadow-md transition-colors z-30 ${
             activeJobPost || activeServicePost
               ? 'hidden md:flex'
               : 'flex'
-          } items-center gap-1.5 sm:gap-2 cursor-pointer border border-emerald-500`}
-          title="Join CSC DOST WhatsApp Group"
+          } items-center justify-center sm:gap-2 cursor-pointer border border-emerald-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#16A34A]`}
+          title="Join CSC DOST WhatsApp Updates Group"
           id="whatsapp-floating-badge"
-          aria-label="Join WhatsApp Group"
+          aria-label="Join CSC DOST WhatsApp Updates Group"
         >
-          <MessageSquare className="w-4 h-4 shrink-0" />
-          <span className="text-[11px] sm:text-xs font-semibold whitespace-nowrap sm:hidden">
-            WhatsApp
-          </span>
+          <MessageCircle className="w-5 h-5 sm:w-4 sm:h-4 shrink-0" aria-hidden="true" />
           <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">
-            Join WhatsApp Group
+            Join WhatsApp Updates Group
           </span>
         </button>
       )}

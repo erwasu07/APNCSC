@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Search, ArrowRight, ShieldCheck, Clock, Check } from 'lucide-react';
-import { SERVICES_LIST, CATEGORY_LABELS, ServiceItem } from '../servicesData';
+import { Search } from 'lucide-react';
+import { SERVICES_LIST, CATEGORY_LABELS } from '../servicesData';
+import { ColourAccentCard } from './shared/ContentDesignSystem';
 
 interface ServicesProps {
   onServiceSelect: (serviceName: string) => void;
@@ -10,7 +11,6 @@ export default function Services({ onServiceSelect }: ServicesProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Filter logic
   const filteredServices = SERVICES_LIST.filter(service => {
     const matchesCategory = selectedCategory === 'all' || service.category === selectedCategory;
     const searchLower = searchQuery.toLowerCase();
@@ -23,51 +23,51 @@ export default function Services({ onServiceSelect }: ServicesProps) {
   });
 
   return (
-    <section id="services" className="py-16 md:py-24 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 transition-colors">
-      <div className="max-w-7xl mx-auto px-4">
+    <section id="services" className="py-6 md:py-12 bg-[#F6F8FC] border-t border-[#E2E8F0] transition-colors w-full">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 space-y-4">
         
         {/* Header Block */}
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <span className="text-orange-500 font-extrabold tracking-widest text-xs uppercase mb-2 block font-display">Authorized Service Catalogue</span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-blue-950 dark:text-white tracking-tight font-display">
+        <div className="max-w-3xl space-y-1.5 px-1 sm:px-0">
+          <span className="text-[#0284C7] font-bold tracking-wider text-xs uppercase block">Authorized Service Catalogue</span>
+          <h2 className="text-xl sm:text-2xl font-bold text-[#102A43] tracking-tight">
             Explore All Government &amp; Digital Services
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 mt-3 text-base sm:text-lg">
-            Authorized CSC center delivering over 25+ certified services. Select any service to view required documents and apply instantly.
+          <p className="text-[#64748B] text-xs sm:text-sm">
+            Select any service to view required documents and request assistance.
           </p>
         </div>
 
         {/* Search & Tabs Controls bar */}
-        <div className="space-y-6 mb-10">
-          {/* Real-time search */}
-          <div className="max-w-xl mx-auto relative group">
-            <Search className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-blue-500 transition-colors" />
+        <div className="space-y-3 px-1 sm:px-0">
+          <div className="max-w-xl relative">
+            <Search className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search for PAN card, Aadhaar update, GST, Passbook, resume typing..."
+              placeholder="Search for PAN card, Aadhaar update, GST, Domicile..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/30 transition-all font-medium text-sm"
+              className="w-full min-h-[44px] pl-10 pr-14 py-2 bg-white border border-[#E2E8F0] rounded-xl text-[#102A43] placeholder-[#64748B] outline-none focus:border-[#2563EB] text-xs sm:text-sm"
               id="service-search-input"
             />
             {searchQuery && (
               <button
+                type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#64748B] hover:text-[#102A43] cursor-pointer"
               >
                 Clear
               </button>
             )}
           </div>
 
-          {/* Category Tabs Scroll wrapper */}
-          <div className="flex items-center justify-start md:justify-center gap-2 overflow-x-auto pb-3 pt-1 scrollbar-none px-2">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-x-1.5 gap-y-2 sm:overflow-x-auto pb-1 text-xs font-medium">
             <button
+              type="button"
               onClick={() => setSelectedCategory('all')}
-              className={`px-5 py-2.5 rounded-full text-xs font-bold tracking-wide transition-all whitespace-nowrap ${
+              className={`min-h-[38px] px-3 py-1.5 rounded-xl whitespace-nowrap border transition-colors cursor-pointer ${
                 selectedCategory === 'all'
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-100 dark:shadow-none'
-                  : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300'
+                  ? 'bg-[#2563EB] text-white border-[#2563EB] font-semibold'
+                  : 'bg-white text-[#102A43] border-[#E2E8F0] hover:bg-[#F6F8FC]'
               }`}
               id="category-tab-all"
             >
@@ -78,11 +78,12 @@ export default function Services({ onServiceSelect }: ServicesProps) {
               return (
                 <button
                   key={key}
+                  type="button"
                   onClick={() => setSelectedCategory(key)}
-                  className={`px-5 py-2.5 rounded-full text-xs font-bold tracking-wide transition-all whitespace-nowrap ${
+                  className={`min-h-[38px] px-3 py-1.5 rounded-xl whitespace-nowrap border transition-colors cursor-pointer ${
                     selectedCategory === key
-                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-100 dark:shadow-none'
-                      : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300'
+                      ? 'bg-[#2563EB] text-white border-[#2563EB] font-semibold'
+                      : 'bg-white text-[#102A43] border-[#E2E8F0] hover:bg-[#F6F8FC]'
                   }`}
                   id={`category-tab-${key}`}
                 >
@@ -93,81 +94,46 @@ export default function Services({ onServiceSelect }: ServicesProps) {
           </div>
         </div>
 
-        {/* Services Grid */}
+        {/* Services Colour-Accent Cards Grid */}
         {filteredServices.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
             {filteredServices.map((service) => (
-              <div
+              <ColourAccentCard
                 key={service.id}
-                className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 rounded-3xl p-6 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-white dark:hover:bg-slate-850 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group"
                 id={`service-card-${service.id}`}
-              >
-                <div>
-                  {/* Category Header */}
-                  <div className="flex items-center justify-between gap-2 mb-3.5">
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                      {CATEGORY_LABELS[service.category]}
+                categoryType="service"
+                categoryLabel="CSC E-Service"
+                organisation={CATEGORY_LABELS[service.category]}
+                title={service.name}
+                summary={service.description}
+                metadataLine={
+                  service.requirements.length > 0 ? (
+                    <span>
+                      <strong className="font-semibold text-[#102A43]">Required Docs:</strong>{' '}
+                      {service.requirements.slice(0, 2).join(', ')}
                     </span>
-                    {service.popular && (
-                      <span className="px-2.5 py-0.5 bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 text-[9px] font-extrabold uppercase tracking-wider rounded-full">
-                        ★ Popular
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Title & Description */}
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors font-display">
-                    {service.name}
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
-                    {service.description}
-                  </p>
-
-                  {/* Document Requirements Tags */}
-                  <div className="mt-4 pt-4 border-t border-slate-200/50 dark:border-slate-850">
-                    <h4 className="text-[10px] font-extrabold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-2">
-                      Required Documents:
-                    </h4>
-                    <ul className="space-y-1.5">
-                      {service.requirements.map((req, idx) => (
-                        <li key={idx} className="flex items-start gap-1.5 text-xs text-slate-600 dark:text-slate-300 font-medium">
-                          <Check className="w-3.5 h-3.5 text-emerald-500 mt-0.5 flex-shrink-0" />
-                          <span>{req}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                {/* Footer of Card */}
-                <div className="mt-6 pt-4 border-t border-slate-200/50 dark:border-slate-850 flex items-center justify-between">
-                  <div className="flex items-center gap-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                    <Clock className="w-3.5 h-3.5 text-orange-500" />
-                    <span>Est: {service.estimatedTime}</span>
-                  </div>
-
-                  <button
-                    onClick={() => onServiceSelect(service.name)}
-                    className="px-4 py-2 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white dark:bg-slate-800 dark:hover:bg-blue-600 dark:text-blue-400 dark:hover:text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1"
-                    id={`service-apply-btn-${service.id}`}
-                  >
-                    Apply Now
-                    <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-                </div>
-              </div>
+                  ) : undefined
+                }
+                footerMeta={
+                  service.price
+                    ? `Fee: ${service.price} · Est: ${service.estimatedTime}`
+                    : `Est: ${service.estimatedTime}`
+                }
+                actionLabel="View Service →"
+                onPrimaryClick={() => onServiceSelect(service.name)}
+              />
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 bg-slate-50 dark:bg-slate-800/20 border border-dashed border-slate-200 dark:border-slate-700 rounded-3xl max-w-md mx-auto">
-            <span className="text-4xl block mb-2">🔍</span>
-            <h3 className="font-bold text-slate-850 dark:text-white">No services match your search</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 px-4">
-              Try searching with general keywords or check another category. You can also send us a message in the custom query box!
+          <div className="text-center py-8 bg-white border border-[#E2E8F0] rounded-xl max-w-md mx-auto">
+            <h3 className="font-bold text-sm text-[#102A43]">No services match your search</h3>
+            <p className="text-xs text-[#64748B] mt-1 px-4">
+              Try searching with general keywords or check another category.
             </p>
             <button
+              type="button"
               onClick={() => { setSelectedCategory('all'); setSearchQuery(''); }}
-              className="mt-4 px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl"
+              className="mt-3 px-4 py-2 bg-[#2563EB] text-white text-xs font-semibold rounded-xl cursor-pointer"
             >
               Reset Filters
             </button>

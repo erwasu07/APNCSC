@@ -16,6 +16,7 @@ import {
   Send,
 } from 'lucide-react';
 import { SERVICES_LIST, CATEGORY_LABELS, ServiceItem } from '../servicesData';
+import { ColourAccentCard } from './shared/ContentDesignSystem';
 
 interface ExploreServicesDeskProps {
   onApplyService: (serviceName: string) => void;
@@ -203,15 +204,15 @@ export default function ExploreServicesDesk({
     <section
       id="services"
       aria-labelledby="services-board-heading"
-      className="w-full max-w-7xl mx-auto bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 sm:px-6 pt-3 pb-3 md:py-2 space-y-3.5 md:space-y-5 scroll-mt-20"
+      className="w-full max-w-7xl mx-auto bg-[#F6F8FC] px-3 sm:px-6 py-5 md:py-2 space-y-3.5 md:space-y-4 scroll-mt-20"
     >
       {/* Section Header + Search Input */}
       <div
         id="services-board"
-        className="flex flex-col md:flex-row md:items-end justify-between gap-3 border-b border-[#E2E8F0] pb-3 scroll-mt-20"
+        className="flex flex-col md:flex-row md:items-end justify-between gap-3 border-b border-[#E2E8F0] pb-3 scroll-mt-20 px-1 sm:px-0"
       >
         <div>
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2563EB] uppercase tracking-wider mb-1">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0284C7] uppercase tracking-wider mb-1">
             <FileCheck className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Complete Service Directory</span>
           </div>
@@ -259,7 +260,7 @@ export default function ExploreServicesDesk({
       <div
         role="tablist"
         aria-label="Service categories"
-        className="flex flex-wrap sm:flex-nowrap items-center gap-x-1.5 gap-y-2 sm:overflow-x-auto text-xs font-medium"
+        className="flex flex-wrap sm:flex-nowrap items-center gap-x-1.5 gap-y-2 sm:overflow-x-auto text-xs font-medium px-1 sm:px-0"
       >
         {DIRECTORY_TABS.map((tab) => (
           <button
@@ -283,9 +284,9 @@ export default function ExploreServicesDesk({
         ))}
       </div>
 
-      {/* Services List Rows (Mobile) / Cards Grid (Desktop) */}
+      {/* Services Colour-Accent Cards Grid */}
       {displayedServices.length === 0 ? (
-        <div className="bg-white md:border md:border-[#E2E8F0] md:rounded-2xl py-6 px-4 text-center space-y-2">
+        <div className="bg-white border border-[#E2E8F0] rounded-xl py-6 px-4 text-center space-y-2">
           <p className="text-sm font-bold text-[#102A43]">No matching services found</p>
           <p className="text-xs text-[#64748B]">
             Try clearing your search filter or switching to &ldquo;All Services&rdquo;.
@@ -302,64 +303,40 @@ export default function ExploreServicesDesk({
           </button>
         </div>
       ) : (
-        <div className="-mx-4 sm:-mx-6 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-t md:border-0 border-[#E2E8F0] bg-white md:bg-transparent grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 md:gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           {displayedServices.map((item) => (
-            <article
+            <ColourAccentCard
               key={item.id}
               id={`eservice-item-${item.id}`}
-              className="bg-white md:border md:border-[#E2E8F0] md:hover:border-[#2563EB] md:rounded-2xl px-4 sm:px-6 py-3.5 md:p-5 flex flex-col justify-between transition-colors md:shadow-2xs"
-            >
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs text-[#64748B]">
-                  <span className="font-semibold text-[#2563EB]">
-                    {CATEGORY_LABELS[item.category]}
+              categoryType="service"
+              categoryLabel="CSC E-Service"
+              organisation={CATEGORY_LABELS[item.category]}
+              title={item.name}
+              summary={item.description}
+              metadataLine={
+                item.requirements && item.requirements.length > 0 ? (
+                  <span>
+                    <strong className="font-semibold text-[#102A43]">Key Requirements:</strong>{' '}
+                    {item.requirements.slice(0, 2).join(', ')}
+                    {item.requirements.length > 2 ? ` (+${item.requirements.length - 2} more)` : ''}
                   </span>
-                  {item.estimatedTime && (
-                    <span className="text-[#64748B]">Est: {item.estimatedTime}</span>
-                  )}
-                </div>
-
-                <h3 className="text-base font-bold text-[#102A43] leading-snug">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenService(item)}
-                    className="text-left hover:text-[#2563EB] transition-colors cursor-pointer"
-                  >
-                    {item.name}
-                  </button>
-                </h3>
-
-                <p className="text-xs sm:text-sm text-[#64748B] line-clamp-2 leading-relaxed">
-                  {item.description}
-                </p>
-
-                {item.price && (
-                  <p className="text-xs text-[#102A43] pt-0.5">
-                    <span className="text-[#64748B]">Fee details:</span>{' '}
-                    <span className="font-semibold">{item.price}</span>
-                  </p>
-                )}
-              </div>
-
-              <div className="pt-2.5 mt-2 md:pt-4 md:mt-4 md:border-t border-[#E2E8F0] flex items-center justify-between gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleOpenService(item)}
-                  className="text-xs font-semibold text-[#2563EB] hover:underline cursor-pointer"
-                >
-                  View Service →
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleApply(item)}
-                  className="min-h-[38px] px-3 py-1.5 bg-[#F6F8FC] hover:bg-[#2563EB] text-[#102A43] hover:text-white border border-[#E2E8F0] hover:border-[#2563EB] text-xs font-semibold rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1"
-                >
-                  <span>Request Assistance</span>
-                  <ArrowRight className="w-3 h-3" aria-hidden="true" />
-                </button>
-              </div>
-            </article>
+                ) : undefined
+              }
+              footerMeta={
+                item.price ? (
+                  <span>
+                    Fee: <strong className="font-semibold text-[#102A43]">{item.price}</strong>
+                    {item.estimatedTime ? ` · Est: ${item.estimatedTime}` : ''}
+                  </span>
+                ) : item.estimatedTime ? (
+                  <span>Est: {item.estimatedTime}</span>
+                ) : undefined
+              }
+              secondaryActionLabel="Request Assistance"
+              onSecondaryClick={() => handleApply(item)}
+              actionLabel="View Service →"
+              onPrimaryClick={() => handleOpenService(item)}
+            />
           ))}
         </div>
       )}

@@ -52,6 +52,7 @@ import {
 import { SARKARI_DATA, SARKARI_CATEGORIES, SarkariItem } from '../data/sarkariData';
 import { SERVICES_LIST } from '../servicesData';
 import { UploadedDocument } from '../types';
+import { ColourAccentCard } from './shared/ContentDesignSystem';
 
 interface SarkariResultDeskProps {
   onApplyService: (serviceName: string) => void;
@@ -1319,72 +1320,60 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                 {/* Unified Recruitment Items List */}
                 <div className="space-y-3">
                   {displayedItems.length > 0 ? (
-                    displayedItems.map((item) => (
-                      <article
-                        key={item.id}
-                        id={`recruitment-card-${item.id}`}
-                        onClick={() => handleItemClick(item)}
-                        className="bg-white border border-[#E4E7EC] hover:border-[#155EEF]/50 rounded-xl p-4 sm:p-5 transition-all hover:shadow-2xs flex flex-col justify-between group cursor-pointer"
-                      >
-                        <div className="space-y-2">
-                          {/* Top Row: Category Badge, Subtle NEW, Last Date */}
-                          <div className="flex items-center justify-between gap-2 flex-wrap">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[11px] font-semibold text-[#155EEF] bg-[#EFF4FF] px-2.5 py-0.5 rounded-md border border-[#D1E0FF]">
-                                {SARKARI_CATEGORIES[item.category]?.label || item.category}
+                    displayedItems.map((item) => {
+                      const isAdmission =
+                        item.category === 'admissions' ||
+                        item.category === 'cluster_univ' ||
+                        item.category === 'exam_forms' ||
+                        item.category === 'nta';
+                      return (
+                        <ColourAccentCard
+                          key={item.id}
+                          id={`recruitment-card-${item.id}`}
+                          categoryType={isAdmission ? 'admission' : 'job'}
+                          categoryLabel={
+                            isAdmission
+                              ? 'Admission / Exam'
+                              : SARKARI_CATEGORIES[item.category]?.label || 'Job / Recruitment'
+                          }
+                          organisation={getOrgName(item)}
+                          title={item.title}
+                          summary={item.shortInfo}
+                          metadataLine={
+                            item.eligibility || item.totalPosts ? (
+                              <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1">
+                                {item.totalPosts && (
+                                  <span>
+                                    <strong className="font-semibold text-[#102A43]">Vacancies:</strong>{' '}
+                                    {item.totalPosts}
+                                  </span>
+                                )}
+                                {item.eligibility && (
+                                  <span>
+                                    <strong className="font-semibold text-[#102A43]">Eligibility:</strong>{' '}
+                                    {item.eligibility}
+                                  </span>
+                                )}
                               </span>
-                              {item.isNew && (
-                                <span className="text-[10px] font-medium text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
-                                  NEW
-                                </span>
-                              )}
-                            </div>
-                            {item.lastDate && (
-                              <span className="text-xs text-[#667085] flex items-center gap-1 font-medium">
-                                <Calendar className="w-3.5 h-3.5 text-[#667085]" />
-                                <span>Last date: <strong className="text-[#172033] font-semibold">{item.lastDate}</strong></span>
+                            ) : undefined
+                          }
+                          footerMeta={
+                            item.lastDate ? (
+                              <span>
+                                Closing Date:{' '}
+                                <strong className="font-semibold text-[#102A43]">{item.lastDate}</strong>
                               </span>
-                            )}
-                          </div>
-
-                          {/* Title */}
-                          <h4 className="text-sm sm:text-base font-bold text-[#172033] group-hover:text-[#155EEF] transition-colors leading-snug">
-                            {item.title}
-                          </h4>
-
-                          {/* Short Description */}
-                          {item.shortInfo && (
-                            <p className="text-xs sm:text-sm text-[#667085] leading-relaxed line-clamp-2">
-                              {item.shortInfo}
-                            </p>
-                          )}
-
-                          {/* Metadata Row: Vacancies & Eligibility */}
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#667085] pt-0.5">
-                            {item.totalPosts && (
-                              <span>Vacancies: <strong className="text-[#172033] font-medium">{item.totalPosts}</strong></span>
-                            )}
-                            {item.eligibility && (
-                              <span className="truncate max-w-xs sm:max-w-md">Eligibility: <span className="text-[#172033]">{item.eligibility}</span></span>
-                            )}
-                            {item.fees?.genObc && (
-                              <span className="hidden sm:inline">Fee: <span className="text-[#172033]">{item.fees.genObc}</span></span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Card Bottom Row: Date & Read More CTA */}
-                        <div className="pt-3 mt-3 border-t border-[#E4E7EC] flex items-center justify-between text-xs">
-                          <span className="text-[#667085]">
-                            Updated: {item.postDate || 'Recent'}
-                          </span>
-                          <span className="text-[#155EEF] font-semibold inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                            <span>Read more</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </span>
-                        </div>
-                      </article>
-                    ))
+                            ) : (
+                              <span>Published: {item.postDate || 'Recent'}</span>
+                            )
+                          }
+                          officialHref={item.officialLink}
+                          officialLabel="Official Link"
+                          actionLabel="View Details →"
+                          onPrimaryClick={() => handleItemClick(item)}
+                        />
+                      );
+                    })
                   ) : (
                     <div className="bg-white border border-[#E4E7EC] rounded-xl p-8 text-center space-y-2">
                       <p className="text-sm font-semibold text-[#172033]">No recruitment updates found</p>
