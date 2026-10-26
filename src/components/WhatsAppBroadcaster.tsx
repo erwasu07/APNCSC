@@ -2,6 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { SARKARI_DATA, SarkariItem } from '../data/sarkariData';
 import SarkariNotificationBanner from './SarkariNotificationBanner';
 import {
+  buildWhatsAppNotification,
+  detectWhatsAppNotificationCategory,
+  resolvePostOrganization,
+  extractCompactQualification,
+  extractCompactVacancies,
+  extractCompactLastDate,
+  extractCourseOrProgramme,
+  extractAdmissionSession,
+  extractResultDetails,
+  generateShortWhatsAppTitle,
+  getCanonicalPostUrl,
+  WhatsAppNotificationCategory,
+} from '../utils/whatsappFormatter';
+import {
   MessageCircle,
   Send,
   Copy,
@@ -19,8 +33,6 @@ import {
   ChevronDown,
   ChevronUp,
   Activity,
-  Download,
-  Image as ImageIcon
 } from 'lucide-react';
 
 interface WhatsAppBroadcasterProps {
@@ -35,14 +47,19 @@ export default function WhatsAppBroadcaster({ cafeName }: WhatsAppBroadcasterPro
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
 
-  // Form Fields for Message Construction
+  // Form Fields for Option 1 Message Construction
   const [customTitle, setCustomTitle] = useState('');
-  const [customLastDate, setCustomLastDate] = useState('');
+  const [customOrganization, setCustomOrganization] = useState('');
+  const [customQualification, setCustomQualification] = useState('');
   const [customSeats, setCustomSeats] = useState('');
-  const [customSummary, setCustomSummary] = useState('');
+  const [customLastDate, setCustomLastDate] = useState('');
+  const [customCourse, setCustomCourse] = useState('');
+  const [customSession, setCustomSession] = useState('');
+  const [customExamination, setCustomExamination] = useState('');
+  const [customResultStatus, setCustomResultStatus] = useState('');
   const [customLink, setCustomLink] = useState('');
   const [customCategory, setCustomCategory] = useState('exam_forms');
-  const [includeBannerHeader, setIncludeBannerHeader] = useState(true);
+  const [formatCategoryType, setFormatCategoryType] = useState<WhatsAppNotificationCategory>('job');
 
   // Group & Webhook Configuration
   const [targetGroupLink, setTargetGroupLink] = useState<string>(() => {
@@ -84,26 +101,31 @@ export default function WhatsAppBroadcaster({ cafeName }: WhatsAppBroadcasterPro
     }
   });
 
-  // Load selected notification details into form
+  // Load selected notification details into Option 1 form
   const loadNotificationData = (item: SarkariItem) => {
+    const detectedType = detectWhatsAppNotificationCategory(item);
+    const shortTitle = generateShortWhatsAppTitle(item.title, item.category);
+    const org = resolvePostOrganization(item);
+    const qual = extractCompactQualification(item.eligibility, item.title);
+    const vac = extractCompactVacancies(item.totalPosts, detectedType);
+    const lastDt = extractCompactLastDate(item.lastDate, detectedType);
+    const course = extractCourseOrProgramme(item);
+    const session = extractAdmissionSession(item);
+    const resDetails = extractResultDetails(item);
+
     setSelectedNotificationId(item.id);
-    setCustomTitle(item.title);
     setCustomCategory(item.category);
-    
-    // Format last date nicely
-    const lastDateFormatted = item.lastDate
-      ? `${item.lastDate}${item.feePerSubject ? ` (${item.feePerSubject})` : ''}`
-      : 'Check Official Notification';
-    setCustomLastDate(lastDateFormatted);
-
-    // Format vacancies / seats
-    const seatsFormatted = item.totalPosts
-      ? String(item.totalPosts)
-      : (item.eligibility ? item.eligibility.slice(0, 45) + '...' : 'Open for eligible candidates');
-    setCustomSeats(seatsFormatted);
-
-    setCustomSummary(item.shortInfo);
-    setCustomLink(`https://www.cscdost.com/post/${item.id}`);
+    setFormatCategoryType(detectedType);
+    setCustomTitle(shortTitle);
+    setCustomOrganization(org);
+    setCustomQualification(qual);
+    setCustomSeats(vac);
+    setCustomLastDate(lastDt);
+    setCustomCourse(course);
+    setCustomSession(session);
+    setCustomExamination(resDetails.examination);
+    setCustomResultStatus(resDetails.resultStatus);
+    setCustomLink(getCanonicalPostUrl(item.id, 'post'));
   };
 
   // Initialize on mount with first notification
@@ -199,29 +221,25 @@ export default function WhatsAppBroadcaster({ cafeName }: WhatsAppBroadcasterPro
     }
   };
 
-  // Build the Exact WhatsApp Formatted Message (matching verified template)
-  const generateFormattedMessage = (): string => {
-    const postUrl = customLink.trim() || 'https://www.cscdost.com';
-    
-    const bannerPart = includeBannerHeader 
-      ? `*CSC DOST - Independent Digital Service Portal*\nCSC DOST (cscdost.com) is an independent private digital assistance portal for online form filling, exam results, and scheme updates.\nwww.cscdost.com\n\n`
-      : '';
+  // Build the Option 1 WhatsApp Notification Payload (single canonical URL, category-specific fields)
+  const activeSelectedItem =
+    SARKARI_DATA.find((i) => i.id === selectedNotificationId) || SARKARI_DATA[0];
 
-    const message = 
-`${bannerPart}📢 *${customTitle.trim()}*
-⏰ *Last Date:* ${customLastDate.trim() || 'Check Official Notification'}
-👥 *Vacancies/Seats:* ${customSeats.trim() || 'Eligible Candidates'}
+  const currentNotificationPayload = buildWhatsAppNotification(activeSelectedItem || {}, {
+    forceCategoryType: formatCategoryType,
+    customTitle,
+    customOrganization,
+    customQualification,
+    customVacancies: customSeats,
+    customLastDate,
+    customCourse,
+    customSession,
+    customExamination,
+    customResultStatus,
+    customUrl: customLink,
+  });
 
-${customSummary.trim()}
-
-👉 *Read full notification & apply at CSC DOST:*
-${postUrl}
-${postUrl}`;
-
-    return message;
-  };
-
-  const currentFormattedMessage = generateFormattedMessage();
+  const currentFormattedMessage = currentNotificationPayload.message;
 
   // Copy to clipboard handler
   const handleCopyMessage = async () => {
@@ -247,7 +265,7 @@ ${postUrl}`;
     setBroadcastStatus(null);
 
     const activeWebhook = getEffectiveWebhookUrl();
-    const formattedMsg = generateFormattedMessage();
+    const formattedMsg = currentFormattedMessage;
 
     // Record locally in history right away
     recordBroadcastHistory(activeWebhook ? 'Automated Gateway' : 'Auto Broadcast Queue');
@@ -257,10 +275,10 @@ ${postUrl}`;
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: customTitle,
+          title: currentNotificationPayload.shortTitle || customTitle,
           category: customCategory,
           messageText: formattedMsg,
-          postUrl: customLink,
+          postUrl: currentNotificationPayload.canonicalUrl,
           targetGroup: targetGroupLink,
           webhookUrl: activeWebhook,
           gatewayProvider
@@ -298,14 +316,13 @@ ${postUrl}`;
     }
   };
 
-  // Manual Fallback Link Handler (Only opens if user clicks manual fallback)
+  // Manual Fallback Link Handler (Uses single-encoded Option 1 URL)
   const handleManualOpenWhatsApp = (mode: 'group' | 'channel') => {
-    const encoded = encodeURIComponent(currentFormattedMessage);
     recordBroadcastHistory(`Manual Browser (${mode === 'group' ? 'Group' : 'Channel'})`);
     if (mode === 'channel') {
-      window.open(`https://web.whatsapp.com/send?text=${encoded}`, '_blank');
+      window.open(currentNotificationPayload.whatsappWebShareUrl, '_blank');
     } else {
-      window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+      window.open(currentNotificationPayload.whatsappShareUrl, '_blank');
     }
   };
 
@@ -659,12 +676,14 @@ ${postUrl}`;
                 className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 dark:text-slate-300 focus:outline-none"
               >
                 <option value="all">All Categories</option>
-                <option value="exam_forms">KU Exam Forms</option>
-                <option value="admissions">KU Admissions</option>
-                <option value="jkssb">JKSSB Jobs</option>
                 <option value="army_jobs">Indian Army</option>
+                <option value="jkssb">JKSSB Jobs</option>
                 <option value="ssc_jobs">SSC Jobs</option>
                 <option value="rrb_jobs">RRB Jobs</option>
+                <option value="jobs">National Jobs</option>
+                <option value="admissions">Admissions &amp; Scholarships</option>
+                <option value="results">Results</option>
+                <option value="exam_forms">KU Exam Forms</option>
                 <option value="cluster_univ">Cluster Univ</option>
               </select>
             </div>
@@ -710,26 +729,31 @@ ${postUrl}`;
 
           {/* Form Editor */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3.5">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2.5">
               <span className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
                 <FileText className="w-3.5 h-3.5 text-blue-500" />
-                2. Customize Announcement Content
+                2. Option 1 Notification Fields ({formatCategoryType.toUpperCase()})
               </span>
-              <label className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={includeBannerHeader}
-                  onChange={(e) => setIncludeBannerHeader(e.target.checked)}
-                  className="rounded text-emerald-600 focus:ring-emerald-500"
-                />
-                <span>Include Portal Header</span>
-              </label>
+
+              <select
+                value={formatCategoryType}
+                onChange={(e) => setFormatCategoryType(e.target.value as WhatsAppNotificationCategory)}
+                className="bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 rounded-lg px-2.5 py-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 focus:outline-none"
+                aria-label="Select WhatsApp Notification Template Category"
+              >
+                <option value="job">📢 Job &amp; Recruitment Alert</option>
+                <option value="admission">🎓 Admission Update</option>
+                <option value="result">📢 Result Update</option>
+                <option value="scholarship">🎓 Scholarship Alert</option>
+                <option value="scheme">📢 Government Scheme Update</option>
+                <option value="generic">📢 Official Update</option>
+              </select>
             </div>
 
             <div className="space-y-3">
               <div className="space-y-1">
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono">
-                  Notification Title (📢)
+                  Short Notification Title (🇮🇳)
                 </label>
                 <input
                   type="text"
@@ -742,46 +766,128 @@ ${postUrl}`;
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono">
-                    Last Date (⏰)
+                    {formatCategoryType === 'admission'
+                      ? 'University / Institution (🏛️)'
+                      : formatCategoryType === 'result'
+                      ? 'Board / University (🏛️)'
+                      : formatCategoryType === 'scholarship'
+                      ? 'Scheme Name (🏅)'
+                      : 'Organization / Department (📌)'}
                   </label>
                   <input
                     type="text"
-                    value={customLastDate}
-                    onChange={(e) => setCustomLastDate(e.target.value)}
-                    placeholder="e.g. 03/09/2026"
+                    value={customOrganization}
+                    onChange={(e) => setCustomOrganization(e.target.value)}
+                    placeholder="e.g. Indian Army / JKSSB / IGNOU"
                     className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono">
-                    Vacancies / Seats (👥)
-                  </label>
-                  <input
-                    type="text"
-                    value={customSeats}
-                    onChange={(e) => setCustomSeats(e.target.value)}
-                    placeholder="e.g. B.Ed Examination Desk"
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
+                {formatCategoryType === 'admission' ? (
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono">
+                      Course / Programme (📘)
+                    </label>
+                    <input
+                      type="text"
+                      value={customCourse}
+                      onChange={(e) => setCustomCourse(e.target.value)}
+                      placeholder="e.g. BA, B.Com, B.Sc, MA, MBA"
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                ) : formatCategoryType === 'result' ? (
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono">
+                      Examination (📝)
+                    </label>
+                    <input
+                      type="text"
+                      value={customExamination}
+                      onChange={(e) => setCustomExamination(e.target.value)}
+                      placeholder="e.g. Class 10th & 12th Annual Regular 2026"
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono">
+                      {formatCategoryType === 'scholarship'
+                        ? 'Eligible Candidates (🎓)'
+                        : 'Qualification / Eligibility (🎓)'}
+                    </label>
+                    <input
+                      type="text"
+                      value={customQualification}
+                      onChange={(e) => setCustomQualification(e.target.value)}
+                      placeholder="Leave blank to omit cleanly"
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {formatCategoryType === 'admission' ? (
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono">
+                      Admission Session (🗓️)
+                    </label>
+                    <input
+                      type="text"
+                      value={customSession}
+                      onChange={(e) => setCustomSession(e.target.value)}
+                      placeholder="e.g. July 2026 Session"
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                ) : formatCategoryType === 'result' ? (
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono">
+                      Result Status / Date (📊)
+                    </label>
+                    <input
+                      type="text"
+                      value={customResultStatus}
+                      onChange={(e) => setCustomResultStatus(e.target.value)}
+                      placeholder="e.g. Declared (25/10/2026)"
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono">
+                      Vacancies / Seats (👥)
+                    </label>
+                    <input
+                      type="text"
+                      value={customSeats}
+                      onChange={(e) => setCustomSeats(e.target.value)}
+                      placeholder="Leave blank if not applicable"
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                )}
+
+                {formatCategoryType !== 'result' && (
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono">
+                      Last Date (📅)
+                    </label>
+                    <input
+                      type="text"
+                      value={customLastDate}
+                      onChange={(e) => setCustomLastDate(e.target.value)}
+                      placeholder="e.g. 12/11/2026 (Leave blank to omit)"
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1">
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono">
-                  Concise Description
-                </label>
-                <textarea
-                  rows={3}
-                  value={customSummary}
-                  onChange={(e) => setCustomSummary(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono">
-                  Direct Post URL (👉)
+                  Canonical Post URL (🔗 Single URL Enforced)
                 </label>
                 <input
                   type="text"
@@ -795,7 +901,7 @@ ${postUrl}`;
 
         </div>
 
-        {/* Right Column: Live WhatsApp Bubble Preview & Zero-Click Action Controls (5 Cols) */}
+        {/* Right Column: Live WhatsApp Bubble Preview & Action Controls (5 Cols) */}
         <div className="lg:col-span-5 space-y-4">
           
           {/* Live WhatsApp Bubble Preview */}
@@ -806,87 +912,80 @@ ${postUrl}`;
                 Live WhatsApp Message Preview
               </span>
               <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-400 px-2 py-0.5 rounded-full font-bold">
-                Exact Verified Format
+                Option 1 • Single URL
               </span>
             </div>
 
             {/* Visual Thumbnail Card Preview */}
-            {(() => {
-              const activeItem = SARKARI_DATA.find(i => i.id === selectedNotificationId) || SARKARI_DATA[0];
-              if (!activeItem) return null;
-              return (
-                <div className="pt-1">
-                  <SarkariNotificationBanner item={activeItem} className="scale-[0.98] origin-top" />
-                </div>
-              );
-            })()}
+            {activeSelectedItem && (
+              <div className="pt-1">
+                <SarkariNotificationBanner item={activeSelectedItem} className="scale-[0.98] origin-top" />
+              </div>
+            )}
 
-            {/* Simulated WhatsApp Chat Bubble matching verified screenshot */}
-            <div className="p-3.5 sm:p-4 rounded-2xl bg-[#E8F8F0] dark:bg-[#005c4b]/30 text-slate-900 dark:text-slate-100 text-xs sm:text-[13px] border border-emerald-300/40 dark:border-emerald-500/20 shadow-xs relative space-y-3 font-sans leading-relaxed">
-              
-              {/* Header card preview */}
-              {includeBannerHeader && (
-                <div className="p-2.5 bg-white/70 dark:bg-slate-900/60 rounded-xl border border-emerald-200 dark:border-emerald-900/60 space-y-1">
-                  <div className="flex items-center gap-1.5 text-[11px] font-black text-emerald-800 dark:text-emerald-300">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span>CSC DOST - Independent Digital Service Portal</span>
-                  </div>
-                  <p className="text-[10.5px] text-slate-600 dark:text-slate-300 leading-tight">
-                    CSC DOST (cscdost.com) is an independent private digital assistance portal for online form filling, exam results, and scheme updates.
-                  </p>
-                  <p className="text-[10px] text-blue-600 dark:text-blue-400 underline font-mono">
-                    www.cscdost.com
-                  </p>
+            {/* Simulated WhatsApp Chat Bubble rendering the exact Option 1 Notification */}
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-[#E8F8F0] dark:bg-[#005c4b]/30 text-slate-900 dark:text-slate-100 text-xs sm:text-[13px] border border-emerald-300/40 dark:border-emerald-500/20 shadow-xs relative space-y-2.5 font-sans leading-relaxed">
+              <div className="font-extrabold text-slate-900 dark:text-white tracking-tight">
+                {currentNotificationPayload.heading.replace(/\*/g, '')}
+                <div className="text-slate-400 dark:text-slate-500 font-mono text-[11px] select-none">
+                  ━━━━━━━━━━━━━━━━━━
+                </div>
+              </div>
+
+              <div className="font-extrabold text-slate-900 dark:text-white leading-snug">
+                🇮🇳 {currentNotificationPayload.shortTitle}
+              </div>
+
+              {currentNotificationPayload.fields.length > 0 && (
+                <div className="space-y-1.5 text-slate-800 dark:text-slate-200">
+                  {currentNotificationPayload.fields.map((field, idx) => (
+                    <p key={idx}>
+                      {field.icon} <strong>{field.label}:</strong> {field.value}
+                    </p>
+                  ))}
                 </div>
               )}
 
-              {/* Title with Emoji */}
-              <div className="font-extrabold text-slate-900 dark:text-white leading-snug">
-                📢 {customTitle}
-              </div>
-
-              {/* Highlight Details */}
-              <div className="space-y-1 text-slate-800 dark:text-slate-200">
-                <p>
-                  ⏰ <strong>Last Date:</strong> {customLastDate}
+              <div className="space-y-1 pt-0.5">
+                <div className="text-slate-400 dark:text-slate-500 font-mono text-[11px] select-none">
+                  ━━━━━━━━━━━━━━━━━━
+                </div>
+                <p className="font-bold text-slate-900 dark:text-white">
+                  🔗 Apply &amp; View Details:
                 </p>
-                <p>
-                  👥 <strong>Vacancies/Seats:</strong> {customSeats}
+                <p className="text-emerald-700 dark:text-emerald-400 underline break-all font-mono text-[11.5px] pt-0.5">
+                  {currentNotificationPayload.canonicalUrl}
                 </p>
-              </div>
-
-              {/* Summary Paragraph */}
-              <div className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                {customSummary}
-              </div>
-
-              {/* Direct Clickable Links */}
-              <div className="space-y-0.5 pt-1 border-t border-emerald-200/60 dark:border-emerald-800/40">
-                <p className="font-bold text-slate-900 dark:text-white flex items-center gap-1">
-                  👉 <span>Read full notification &amp; apply at CSC DOST:</span>
-                </p>
-                <p className="text-emerald-700 dark:text-emerald-400 underline break-all font-mono text-[11px]">
-                  {customLink}
-                </p>
-                <p className="text-emerald-700 dark:text-emerald-400 underline break-all font-mono text-[11px]">
-                  {customLink}
+                <p className="italic text-slate-600 dark:text-slate-400 text-[11.5px] pt-1">
+                  CSC DOST — Citizen Service Portal
                 </p>
               </div>
 
-              <div className="text-right text-[10px] text-slate-400 font-mono pt-1">
+              <div className="text-right text-[10px] text-slate-400 font-mono pt-0.5">
                 {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} ✓✓
               </div>
             </div>
 
             {/* ACTION CONTROLS */}
             <div className="space-y-2.5 pt-2">
-              
-              {/* 🌟 PRIMARY HERO BUTTON: AUTO-POST DIRECTLY (ZERO-CLICK, NO WHATSAPP TAB POPUP) */}
+              {/* Direct Path A: Share on WhatsApp */}
+              <a
+                href={currentNotificationPayload.whatsappShareUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => recordBroadcastHistory('Direct WhatsApp Share')}
+                className="w-full py-3 px-4 bg-[#16A34A] hover:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+              >
+                <MessageCircle className="w-4 h-4 text-white" />
+                <span>Share Formatted Alert on WhatsApp</span>
+              </a>
+
+              {/* 🌟 AUTO-POST VIA WEBHOOK GATEWAY */}
               <button
                 type="button"
                 disabled={isBroadcasting}
                 onClick={handleAutoBroadcastNow}
-                className="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white rounded-2xl text-xs sm:text-sm font-black uppercase tracking-wider flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-lg hover:shadow-emerald-600/30 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+                className="w-full py-3 px-4 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md disabled:opacity-50"
               >
                 {isBroadcasting ? (
                   <>

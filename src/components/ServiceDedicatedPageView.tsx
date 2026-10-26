@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ServiceItem, CATEGORY_LABELS, SERVICES_LIST } from '../servicesData';
+import { buildServiceWhatsAppNotification } from '../utils/whatsappFormatter';
 import {
   ContentPageLayout,
   ContentArticleHeader,
@@ -216,6 +217,7 @@ export default function ServiceDedicatedPageView({
       onBack={onBack}
       backLabel="Back to All Services"
       onPrint={() => window.print()}
+      whatsappShareUrl={buildServiceWhatsAppNotification(service).whatsappShareUrl}
       onShare={() => onShare(service)}
       sections={sections}
       activeSectionId={activeSectionId}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { SarkariItem, SARKARI_CATEGORIES, SARKARI_DATA } from '../data/sarkariData';
 import { computeJobDeadlineStatus } from './PortalHomepage';
 import SarkariNotificationBanner from './SarkariNotificationBanner';
+import { buildWhatsAppNotification } from '../utils/whatsappFormatter';
 import {
   ContentPageLayout,
   ContentArticleHeader,
@@ -298,6 +299,7 @@ export default function SarkariDedicatedPageView({
       onBack={onBack}
       backLabel={isAdmissionOrEdu ? 'Back to Education Notices' : 'Back to All Notifications'}
       onPrint={() => window.print()}
+      whatsappShareUrl={buildWhatsAppNotification(item).whatsappShareUrl}
       onShare={() => onShare(item)}
       sections={sections}
       activeSectionId={activeSectionId}

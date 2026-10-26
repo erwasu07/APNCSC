@@ -3,6 +3,7 @@ import { db } from '../lib/firebase';
 import { getSupabaseClient, uploadMultipleDocumentsToSupabase, submitApplicationToSupabase } from '../lib/supabase';
 import { saveApplicationToFormEndpoint } from '../lib/getform';
 import { doc, setDoc } from 'firebase/firestore';
+import { buildWhatsAppNotification } from '../utils/whatsappFormatter';
 
 const TrackApplication = lazy(() => import('./TrackApplication'));
 import { 
@@ -353,27 +354,14 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
   };
 
   const handleShareSarkari = async (item: SarkariItem) => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.cscdost.com';
-    const shareUrl = `${origin}/post/${item.id}`;
-    const orgName = getOrgName(item);
-    const shareTitle = `📢 ${item.title}`;
-    const shareText = `📢 *${item.title}*\n🏢 *Board/Dept:* ${orgName}\n${item.lastDate ? `⏰ *Last Date:* ${item.lastDate}\n` : ''}${item.totalPosts ? `👥 *Vacancies/Seats:* ${item.totalPosts}\n` : ''}\n${item.shortInfo ? item.shortInfo + '\n\n' : ''}👉 View full notification & Apply online via CSC DOST:\n${shareUrl}`;
-
-    const dataPayload = { title: shareTitle, text: shareText, url: shareUrl, name: item.title };
+    const payload = buildWhatsAppNotification(item);
+    const dataPayload = {
+      title: payload.nativeShareData.title,
+      text: payload.message,
+      url: payload.canonicalUrl,
+      name: payload.shortTitle || item.title,
+    };
     setActiveShareData(dataPayload);
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: shareTitle,
-          text: shareText,
-          url: shareUrl
-        });
-        return;
-      } catch (err) {
-        // Fallback to share modal if cancelled or unsupported
-      }
-    }
     setShowShareModal(true);
   };
 

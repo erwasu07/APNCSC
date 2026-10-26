@@ -2192,7 +2192,34 @@ export const SARKARI_DATA: SarkariItem[] = [
     shortInfo: 'Central Board of Secondary Education CTET Paper I and Paper II pre-admit card city intimation download.'
   },
 
-  // RESULTS
+  // RESULTS & SCHOLARSHIPS
+  {
+    id: 'res-jkbose-10th-12th-2026',
+    title: 'JKBOSE Class 10th & 12th Annual Regular Result 2026 (Soft & Hard Zone)',
+    category: 'results',
+    department: 'J&K Board of School Education (JKBOSE)',
+    postType: 'Result',
+    status: 'Result',
+    postDate: '25/10/2026',
+    shortInfo: 'Jammu and Kashmir Board of School Education (JKBOSE) has declared the Secondary School (Class 10th) and Higher Secondary Part-II (Class 12th) Annual Regular 2026 Examination Results online by Roll Number and Name at jkbose.nic.in.',
+    officialLink: 'https://jkbose.nic.in',
+    isNew: true
+  },
+  {
+    id: 'nsp-post-matric-scholarship-jk-2026',
+    title: 'NSP Post-Matric & Pragati Scholarship Scheme 2026-27 Online Registration',
+    category: 'admissions',
+    department: 'National Scholarship Portal (NSP)',
+    postType: 'Scholarship',
+    status: 'Open',
+    postDate: '25/10/2026',
+    startDate: '01/10/2026',
+    lastDate: '30/11/2026',
+    shortInfo: 'National Scholarship Portal (NSP) online registration and renewal for Centrally Sponsored Post-Matric Scholarships (SC/ST/OBC/Minority/EBC) and AICTE Pragati/Saksham Scholarships for students studying in Class 11th, 12th, UG, PG, and Technical/Professional courses.',
+    eligibility: 'Class 11th to Post-Graduation Students with Min 50% Marks & Family Income below ₹2.50 Lakh/year',
+    officialLink: 'https://scholarships.gov.in',
+    isNew: true
+  },
   {
     id: 'res-cbse-12th',
     title: 'CBSE Board Class 12th & 10th Result 2026',

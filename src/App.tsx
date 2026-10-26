@@ -4,6 +4,10 @@ import type { PolicyTab } from './components/PrivacyPolicyModal';
 import { WebsiteSettings, Announcement, GalleryItem } from './types';
 import { SARKARI_DATA, SarkariItem } from './data/sarkariData';
 import { SERVICES_LIST, ServiceItem } from './servicesData';
+import {
+  buildWhatsAppNotification,
+  buildServiceWhatsAppNotification,
+} from './utils/whatsappFormatter';
 import { MessageSquare, ArrowLeft, Share2, X, MessageCircle, Copy, Check } from 'lucide-react';
 
 // Route-Level & Component-Level Lazy Loading (Code Splitting)
@@ -108,8 +112,15 @@ export default function App() {
 
   // Share modal state
   const [showShareModal, setShowShareModal] = useState(false);
-  const [shareData, setShareData] = useState<{ title: string; text: string; url: string; name: string } | null>(null);
+  const [shareData, setShareData] = useState<{
+    title: string;
+    text: string;
+    url: string;
+    whatsappShareUrl: string;
+    name: string;
+  } | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [copyMessageSuccess, setCopyMessageSuccess] = useState(false);
 
   const openLegalModal = (tab: PolicyTab = 'privacy') => {
     setLegalModalTab(tab);
@@ -412,43 +423,26 @@ export default function App() {
   };
 
   const handleShareServiceItem = async (item: ServiceItem) => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.cscdost.com';
-    const shareUrl = `${origin}/service/${item.id}`;
-    const shareTitle = `📌 ${item.name} - CSC DOST`;
-    const shareText = `📌 *${item.name}*\n💰 Fee: ${item.price}\n⏱️ Turnaround: ${item.estimatedTime}\n\n${item.description}\n\n👉 Full details & apply online:\n${shareUrl}`;
-
-    const data = { title: shareTitle, text: shareText, url: shareUrl, name: item.name };
-    setShareData(data);
-
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
-        return;
-      } catch (e) {
-        // Fallback to modal
-      }
-    }
+    const payload = buildServiceWhatsAppNotification(item);
+    setShareData({
+      title: payload.nativeShareData.title,
+      text: payload.message,
+      url: payload.canonicalUrl,
+      whatsappShareUrl: payload.whatsappShareUrl,
+      name: item.name,
+    });
     setShowShareModal(true);
   };
 
   const handleShareItem = async (item: SarkariItem) => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.cscdost.com';
-    const canonicalBase = (origin.includes('localhost') || origin.includes('127.0.0.1')) ? origin : 'https://www.cscdost.com';
-    const shareUrl = `${canonicalBase}/post/${item.id}`;
-    const shareTitle = `${item.title} - CSC DOST`;
-    const shareText = `📢 *${item.title}*\n${item.lastDate ? `⏰ *Last Date:* ${item.lastDate}\n` : ''}${item.totalPosts ? `👥 *Vacancies/Seats:* ${item.totalPosts}\n` : ''}\n${item.shortInfo ? item.shortInfo + '\n\n' : ''}👉 Read full notification & apply at CSC DOST:\n${shareUrl}`;
-
-    const data = { title: shareTitle, text: shareText, url: shareUrl, name: item.title };
-    setShareData(data);
-
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
-        return;
-      } catch (e) {
-        // Fallback to modal
-      }
-    }
+    const payload = buildWhatsAppNotification(item);
+    setShareData({
+      title: payload.nativeShareData.title,
+      text: payload.message,
+      url: payload.canonicalUrl,
+      whatsappShareUrl: payload.whatsappShareUrl,
+      name: payload.shortTitle || item.title,
+    });
     setShowShareModal(true);
   };
 
@@ -689,7 +683,7 @@ export default function App() {
       {/* Global Share Options Modal */}
       {showShareModal && shareData && (
         <div className="fixed inset-0 bg-slate-950/70 flex items-center justify-center p-4 z-[70]">
-          <div className="bg-white border border-[#E2E8F0] rounded-2xl max-w-md w-full p-6 space-y-5 shadow-xl relative text-[#102A43]">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl max-w-md w-full p-5 sm:p-6 space-y-4 shadow-xl relative text-[#102A43]">
             <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
               <div className="flex items-center gap-2">
                 <Share2 className="w-5 h-5 text-[#2563EB]" />
@@ -705,36 +699,80 @@ export default function App() {
             </div>
 
             <p className="text-xs text-[#64748B] font-medium">
-              Share <strong className="text-[#102A43]">{shareData.name}</strong> with candidates or via social networks:
+              Share <strong className="text-[#102A43]">{shareData.name}</strong> with candidates or on WhatsApp:
             </p>
 
+            {/* Formatted WhatsApp Notification Preview */}
+            <div className="p-3 bg-[#E8F8F0] border border-emerald-300/60 rounded-xl text-[11.5px] text-[#102A43] font-sans whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed">
+              {shareData.text}
+            </div>
+
             <div className="grid grid-cols-1 gap-2.5">
+              {/* PATH A — SHARE ON WHATSAPP */}
               <a
-                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(shareData.text)}`}
+                href={shareData.whatsappShareUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-between p-3.5 bg-[#16A34A] hover:bg-emerald-700 text-white rounded-xl font-semibold text-xs transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   <MessageCircle className="w-4 h-4" />
-                  <span>Share via WhatsApp</span>
+                  <span>Share on WhatsApp</span>
                 </div>
-                <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Instant</span>
+                <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Formatted Alert</span>
               </a>
 
-              <a
-                href={`https://t.me/share/url?url=${encodeURIComponent(shareData.url)}&text=${encodeURIComponent(shareData.title)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between p-3.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl font-semibold text-xs transition-colors cursor-pointer"
+              {/* PATH B — NATIVE SHARE (Other Apps) */}
+              {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      // Pass text (which already includes the single canonical URL) without a separate duplicate url field
+                      await navigator.share({
+                        title: shareData.title,
+                        text: shareData.text,
+                      });
+                    } catch {
+                      // User cancelled native share sheet
+                    }
+                  }}
+                  className="flex items-center justify-between p-3.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl font-semibold text-xs transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <Share2 className="w-4 h-4" />
+                    <span>Share via Other Apps (System Share)</span>
+                  </div>
+                  <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Native</span>
+                </button>
+              )}
+
+              {/* Copy Formatted WhatsApp Message */}
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(shareData.text);
+                  setCopyMessageSuccess(true);
+                  setTimeout(() => setCopyMessageSuccess(false), 2500);
+                }}
+                className="flex items-center justify-between p-3.5 bg-emerald-50 hover:bg-emerald-100/80 text-emerald-950 rounded-xl font-semibold text-xs transition-colors border border-emerald-200 cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <Share2 className="w-4 h-4" />
-                  <span>Share on Telegram</span>
+                  {copyMessageSuccess ? (
+                    <Check className="w-4 h-4 text-[#16A34A]" />
+                  ) : (
+                    <Copy className="w-4 h-4 text-[#16A34A]" />
+                  )}
+                  <span>
+                    {copyMessageSuccess
+                      ? 'WhatsApp Message Copied!'
+                      : 'Copy Formatted WhatsApp Message'}
+                  </span>
                 </div>
-                <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Channel</span>
-              </a>
+                <span className="text-[10px] text-emerald-700 font-mono">Text</span>
+              </button>
 
+              {/* Copy Direct Page Link Fallback */}
               <button
                 type="button"
                 onClick={() => {
@@ -748,7 +786,7 @@ export default function App() {
                   {copySuccess ? <Check className="w-4 h-4 text-[#16A34A]" /> : <Copy className="w-4 h-4 text-[#64748B]" />}
                   <span>{copySuccess ? 'Link Copied to Clipboard!' : 'Copy Direct Page Link'}</span>
                 </div>
-                <span className="text-[10px] text-[#64748B]">URL</span>
+                <span className="text-[10px] text-[#64748B] font-mono">URL</span>
               </button>
             </div>
           </div>

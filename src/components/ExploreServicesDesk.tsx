@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { SERVICES_LIST, CATEGORY_LABELS, ServiceItem } from '../servicesData';
 import { ColourAccentCard } from './shared/ContentDesignSystem';
+import { buildServiceWhatsAppNotification } from '../utils/whatsappFormatter';
 
 interface ExploreServicesDeskProps {
   onApplyService: (serviceName: string) => void;
@@ -147,27 +148,14 @@ export default function ExploreServicesDesk({
   };
 
   const handleShareService = async (item: ServiceItem) => {
-    const origin =
-      typeof window !== 'undefined' ? window.location.origin : 'https://www.cscdost.com';
-    const shareUrl = `${origin}/service/${item.id}`;
-    const shareTitle = `${item.name} - CSC DOST Service`;
-    const shareText = `${item.name}\nFee: ${item.price}\nEstimated Time: ${item.estimatedTime}\n\n${item.description}\n\nApply or view details on CSC DOST:\n${shareUrl}`;
-
-    const dataPayload = { title: shareTitle, text: shareText, url: shareUrl, name: item.name };
+    const payload = buildServiceWhatsAppNotification(item);
+    const dataPayload = {
+      title: payload.nativeShareData.title,
+      text: payload.message,
+      url: payload.canonicalUrl,
+      name: item.name,
+    };
     setActiveShareData(dataPayload);
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: shareTitle,
-          text: shareText,
-          url: shareUrl,
-        });
-        return;
-      } catch {
-        // Fallback to share options modal
-      }
-    }
     setShowShareModal(true);
   };
 

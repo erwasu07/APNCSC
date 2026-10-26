@@ -19,6 +19,7 @@ import {
   Clock,
   Tag,
   MapPin,
+  MessageCircle,
 } from 'lucide-react';
 
 export interface BreadcrumbItem {
@@ -787,6 +788,7 @@ export function ContentPageLayout({
   onBack,
   onPrint,
   onShare,
+  whatsappShareUrl,
   sections,
   tocSections,
   activeSectionId,
@@ -811,6 +813,7 @@ export function ContentPageLayout({
   onBack: () => void;
   onPrint?: () => void;
   onShare?: () => void;
+  whatsappShareUrl?: string;
   sections?: SectionNavItem[];
   tocSections?: SectionNavItem[];
   activeSectionId?: string;
@@ -913,6 +916,19 @@ export function ContentPageLayout({
               <Printer className="w-3.5 h-3.5" aria-hidden="true" />
               <span className="hidden sm:inline">Print</span>
             </button>
+          )}
+
+          {whatsappShareUrl && (
+            <a
+              href={whatsappShareUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="min-h-[38px] inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#16A34A] hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg border border-emerald-600 transition-colors cursor-pointer"
+              title="Share formatted notification on WhatsApp"
+            >
+              <MessageCircle className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>WhatsApp</span>
+            </a>
           )}
 
           {onShare && (
