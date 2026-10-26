@@ -352,6 +352,7 @@ export default function PortalHomepage({
         }
         return {
           id: `job-${j.item.id}`,
+          rawId: j.item.id,
           categoryType: j.item.category,
           categoryBadge: 'Job / Recruitment',
           organisation: j.organisation,
@@ -361,6 +362,7 @@ export default function PortalHomepage({
           statusBadge: renderStatusBadge(j.status),
           officialHref: j.item.officialLink,
           actionLabel: 'View Details →',
+          thumbnailUrl: j.item.thumbnailUrl || `/thumbnails/${j.item.id}.png`,
           onOpen: () => onOpenJob(j.item),
         };
       });
@@ -380,6 +382,7 @@ export default function PortalHomepage({
         }
         return {
           id: `adm-${j.item.id}`,
+          rawId: j.item.id,
           categoryType: 'admission' as const,
           categoryBadge: 'Admission / Education',
           organisation: j.organisation,
@@ -389,6 +392,7 @@ export default function PortalHomepage({
           statusBadge: renderStatusBadge(j.status),
           officialHref: j.item.officialLink,
           actionLabel: 'View Details →',
+          thumbnailUrl: j.item.thumbnailUrl || `/thumbnails/${j.item.id}.png`,
           onOpen: () => onOpenJob(j.item),
         };
       });
@@ -976,6 +980,8 @@ export default function PortalHomepage({
                               return (
                                 <ColourAccentCard
                                   key={job.id}
+                                  id={`search-recruitment-card-${job.id}`}
+                                  thumbnailUrl={job.thumbnailUrl || `/thumbnails/${job.id}.png`}
                                   categoryType={isAdmission ? 'admission' : job.category}
                                   categoryLabel={isAdmission ? 'Admission / Education' : 'Job / Recruitment'}
                                   organisation={getRecruitingOrganisation(job)}
@@ -1215,6 +1221,8 @@ export default function PortalHomepage({
               {mixedLatestUpdates.map((upd) => (
                 <ColourAccentCard
                   key={upd.id}
+                  id={upd.id}
+                  thumbnailUrl={upd.thumbnailUrl}
                   categoryType={upd.categoryType}
                   categoryLabel={upd.categoryBadge}
                   organisation={upd.organisation}
@@ -1262,6 +1270,7 @@ export default function PortalHomepage({
                       <ColourAccentCard
                         key={item.id}
                         id={`home-recruitment-card-${item.id}`}
+                        thumbnailUrl={item.thumbnailUrl || `/thumbnails/${item.id}.png`}
                         categoryType={isAdmission ? 'admission' : item.category}
                         categoryLabel={
                           isAdmission
@@ -1421,6 +1430,8 @@ export default function PortalHomepage({
             return (
               <ColourAccentCard
                 key={item.id}
+                id={`home-admission-card-${item.id}`}
+                thumbnailUrl={item.thumbnailUrl || `/thumbnails/${item.id}.png`}
                 categoryType="admission"
                 categoryLabel="Admission / Education"
                 organisation={organisation}

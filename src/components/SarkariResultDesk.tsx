@@ -1330,6 +1330,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                         <ColourAccentCard
                           key={item.id}
                           id={`recruitment-card-${item.id}`}
+                          thumbnailUrl={item.thumbnailUrl || `/thumbnails/${item.id}.png`}
                           categoryType={isAdmission ? 'admission' : item.category}
                           categoryLabel={
                             isAdmission

@@ -257,6 +257,7 @@ export default function SarkariDedicatedPageView({
         title: rel.title,
         categoryLabel: SARKARI_CATEGORIES[rel.category]?.label || rel.category,
         metaText: rel.lastDate ? `Closing Date: ${rel.lastDate}` : `Published: ${rel.postDate}`,
+        thumbnailUrl: rel.thumbnailUrl || `/thumbnails/${rel.id}.png`,
         onClick: () => {
           window.location.hash = `#post/${rel.id}`;
           window.scrollTo({ top: 0, behavior: 'smooth' });

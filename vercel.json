@@ -1,8 +1,25 @@
 {
   "version": 2,
+  "functions": {
+    "api/index.ts": {
+      "includeFiles": "{public/assets/**,public/thumbnails/**}"
+    }
+  },
   "rewrites": [
     {
+      "source": "/(post|job|jobs|sarkari|notice|admissions|notification|service)/:path*",
+      "destination": "/api"
+    },
+    {
       "source": "/api/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/thumbnails/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/og-image/(.*)",
       "destination": "/api"
     },
     {

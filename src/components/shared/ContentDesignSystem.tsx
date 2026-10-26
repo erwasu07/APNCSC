@@ -52,6 +52,7 @@ export interface RelatedContentItem {
   metaText?: string;
   meta?: string;
   statusNode?: React.ReactNode;
+  thumbnailUrl?: string;
   onClick: () => void;
 }
 
@@ -1066,6 +1067,31 @@ export function ContentPageLayout({
                             {rel.statusNode && <div className="shrink-0">{rel.statusNode}</div>}
                           </div>
 
+                          {/* Related Item Post Thumbnail */}
+                          {(rel.thumbnailUrl || rel.id) && (
+                            <div
+                              onClick={rel.onClick}
+                              className="overflow-hidden rounded-lg border border-[#E2E8F0] hover:border-[#CBD5E1] bg-slate-50 cursor-pointer"
+                              style={{ aspectRatio: '2048 / 677' }}
+                            >
+                              <img
+                                src={rel.thumbnailUrl || `/thumbnails/${rel.id}.png`}
+                                alt={rel.title}
+                                loading="lazy"
+                                className="w-full h-full object-cover block"
+                                onError={(e) => {
+                                  const target = e.currentTarget;
+                                  if (!target.dataset.triedApi) {
+                                    target.dataset.triedApi = '1';
+                                    target.src = `/api/thumbnails/post/${rel.id}.png`;
+                                  } else {
+                                    target.style.display = 'none';
+                                  }
+                                }}
+                              />
+                            </div>
+                          )}
+
                           <h4 className="text-sm font-bold text-[#102A43] leading-[1.4]">
                             <button
                               type="button"
@@ -1453,6 +1479,8 @@ export interface ColourAccentCardProps {
   /** Primary action label (defaults to category-appropriate label with arrow) */
   actionLabel?: string;
   onPrimaryClick: () => void;
+  /** Optional featured post thumbnail URL (2048x677 aspect ratio) */
+  thumbnailUrl?: string;
   /** Optional official source link on bottom-left */
   officialHref?: string;
   officialLabel?: string;
@@ -1474,6 +1502,7 @@ export function ColourAccentCard({
   footerMeta,
   actionLabel,
   onPrimaryClick,
+  thumbnailUrl,
   officialHref,
   officialLabel = 'Official source',
   secondaryActionLabel,
@@ -1567,6 +1596,31 @@ export function ColourAccentCard({
 
           {statusBadge && <div className="shrink-0">{statusBadge}</div>}
         </div>
+
+        {/* Optional 2048x677 Master Post Thumbnail */}
+        {thumbnailUrl && (
+          <div
+            onClick={onPrimaryClick}
+            className="mt-2.5 overflow-hidden rounded-lg border border-[#E2E8F0] hover:border-[#CBD5E1] bg-slate-50 cursor-pointer transition-transform duration-150 hover:scale-[1.005]"
+            style={{ aspectRatio: '2048 / 677' }}
+          >
+            <img
+              src={thumbnailUrl}
+              alt={title}
+              loading="lazy"
+              className="w-full h-full object-cover block"
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (!target.dataset.triedFallback && id) {
+                  target.dataset.triedFallback = '1';
+                  target.src = `/thumbnails/${id}.png`;
+                } else {
+                  target.style.display = 'none';
+                }
+              }}
+            />
+          </div>
+        )}
 
         {/* B. TITLE: 10px below top row, Bold Navy #102A43, 17–18px on mobile, line-height 1.4 */}
         <h3 className="mt-2.5 text-[17px] sm:text-[18px] font-bold text-[#102A43] leading-[1.4] break-words">

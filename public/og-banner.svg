@@ -48,7 +48,7 @@
   <!-- Base Canvas Background -->
   <rect width="1200" height="630" fill="url(#bgGrad)" />
 
-  <!-- Outer Decorative Border Frame (Sarkari Result style) -->
+  <!-- Outer Decorative Border Frame (CSC DOST style) -->
   <rect x="18" y="18" width="1164" height="594" rx="28" fill="none" stroke="url(#borderGrad)" stroke-width="8" />
   <rect x="28" y="28" width="1144" height="574" rx="20" fill="none" stroke="#FDE047" stroke-width="2" stroke-opacity="0.4" />
 
@@ -68,8 +68,8 @@
   <!-- Big Red/Gold Header Brand Pill (Top Center) -->
   <g transform="translate(195, 48)" filter="url(#dropShadow)">
     <rect x="0" y="0" width="620" height="62" rx="14" fill="url(#redPillGrad)" stroke="#FDE047" stroke-width="2.5" />
-    <text x="310" y="40" font-family="Arial, sans-serif" font-weight="900" font-size="30" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">
-      CSC DOST • SARKARI RESULT
+    <text x="310" y="40" font-family="Arial, sans-serif" font-weight="900" font-size="28" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">
+      CSC DOST • Citizen Service Portal
     </text>
   </g>
 
@@ -99,11 +99,11 @@
     <g transform="translate(35, 95)">
       
         <text x="0" y="0" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="36" fill="#FFFFFF" filter="url(#dropShadow)">
-          CSC DOST - Official Sarkari Jobs, Exam
+          CSC DOST — Jobs, Admissions &amp;
         </text>
       
         <text x="0" y="46" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="36" fill="#FFFFFF" filter="url(#dropShadow)">
-          Forms &amp; Admissions
+          Citizen Government Services
         </text>
       
     </g>

@@ -21,6 +21,7 @@ import {
   buildDeterministicThumbnailSpec,
   extractThumbnailSpecWithAI,
   renderMasterThumbnailBuffer,
+  renderStandaloneMasterThumbnailSvg,
   generatePostThumbnailPng
 } from './src/thumbnailGenerator';
 import { 
@@ -1624,85 +1625,107 @@ app.get('/api/thumbnails/map', (_req: Request, res: Response) => {
 
 // 2. Serve or dynamically render the 2048x677 Master Reference Thumbnail for any post ID
 app.get(
-  ['/api/thumbnails/post/:id.png', '/api/thumbnails/post/:id.webp', '/api/thumbnails/post/:id'],
+  [
+    '/api/thumbnails/post/:id.png',
+    '/api/thumbnails/post/:id.webp',
+    '/api/thumbnails/post/:id.svg',
+    '/api/thumbnails/post/:id',
+    '/thumbnails/post/:id.png',
+    '/thumbnails/post/:id.webp',
+    '/thumbnails/post/:id.svg',
+    '/thumbnails/post/:id',
+    '/thumbnails/:id.png',
+    '/thumbnails/:id.webp',
+    '/thumbnails/:id.svg'
+  ],
   async (req: Request, res: Response) => {
+    let resolvedSpec: ThumbnailSpec | null = null;
     try {
       syncCustomPostsAndThumbnailsInMemory();
-      const rawId = (req.params.id || '').replace(/\.(png|webp)$/i, '');
-      const format: 'png' | 'webp' =
-        req.path.endsWith('.webp') || req.query.format === 'webp' ? 'webp' : 'png';
+      const rawId = (req.params.id || '').replace(/\.(png|webp|svg)$/i, '');
+      const isSvg = req.path.endsWith('.svg') || req.query.format === 'svg';
+      const isWebp = req.path.endsWith('.webp') || req.query.format === 'webp';
+      const format: 'png' | 'webp' | 'svg' = isSvg ? 'svg' : isWebp ? 'webp' : 'png';
 
-      // Check if a local file already exists in /public/thumbnails/<rawId>.<ext> unless force=1
-      const localFilePath = path.join(process.cwd(), 'public', 'thumbnails', `${rawId}.${format}`);
-      if (req.query.force !== '1' && fs.existsSync(localFilePath)) {
-        res.setHeader('Content-Type', format === 'webp' ? 'image/webp' : 'image/png');
-        res.setHeader('Cache-Control', 'public, max-age=3600');
-        return res.sendFile(localFilePath);
+      // 1. Check if a local file already exists in /public/thumbnails/<rawId>.<ext> unless force=1
+      if (!isSvg) {
+        const localFilePath = path.join(process.cwd(), 'public', 'thumbnails', `${rawId}.${format}`);
+        if (req.query.force !== '1' && fs.existsSync(localFilePath)) {
+          res.setHeader('Content-Type', format === 'webp' ? 'image/webp' : 'image/png');
+          res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+          return res.sendFile(localFilePath);
+        }
       }
 
       const thumbnailsMap = getPostThumbnailsMap();
       const savedEntry = thumbnailsMap[rawId] as any;
 
-      // Check if saved entry has a custom spec
+      // 2. Check if saved entry has a custom spec
       if (savedEntry && savedEntry.spec && !savedEntry.isCustomUpload) {
-        const buffer = await renderMasterThumbnailBuffer(savedEntry.spec, format);
-        res.setHeader('Content-Type', format === 'webp' ? 'image/webp' : 'image/png');
-        res.setHeader('Cache-Control', 'public, max-age=3600');
-        return res.send(buffer);
+        resolvedSpec = savedEntry.spec;
+      } else {
+        // Look up in SARKARI_DATA
+        const sarkariItem = SARKARI_DATA.find(i => i.id === rawId);
+        if (sarkariItem) {
+          resolvedSpec = buildDeterministicThumbnailSpec({
+            id: sarkariItem.id,
+            title: sarkariItem.title,
+            category: sarkariItem.category,
+            department: sarkariItem.department,
+            postType: sarkariItem.postType,
+            shortInfo: sarkariItem.shortInfo,
+            startDate: sarkariItem.startDate,
+            lastDate: sarkariItem.lastDate,
+            status: sarkariItem.status
+          });
+        } else {
+          // Look up in SERVICES_LIST
+          const serviceItem = SERVICES_LIST.find(s => s.id === rawId);
+          if (serviceItem) {
+            resolvedSpec = buildDeterministicThumbnailSpec({
+              id: serviceItem.id,
+              title: serviceItem.name,
+              category: serviceItem.category,
+              department: 'CSC E-Governance Services India',
+              postType: 'Service',
+              shortInfo: serviceItem.description,
+              status: 'Open'
+            });
+          } else {
+            // Default fallback spec
+            resolvedSpec = buildDeterministicThumbnailSpec({
+              title: rawId ? rawId.replace(/[-_]+/g, ' ').toUpperCase() : 'JKSSB Class IV Recruitment',
+              category: 'jkssb',
+              postType: 'Job',
+              status: 'Open'
+            });
+          }
+        }
       }
 
-      // Look up in SARKARI_DATA
-      const sarkariItem = SARKARI_DATA.find(i => i.id === rawId);
-      if (sarkariItem) {
-        const spec = buildDeterministicThumbnailSpec({
-          id: sarkariItem.id,
-          title: sarkariItem.title,
-          category: sarkariItem.category,
-          department: sarkariItem.department,
-          postType: sarkariItem.postType,
-          shortInfo: sarkariItem.shortInfo,
-          startDate: sarkariItem.startDate,
-          lastDate: sarkariItem.lastDate,
-          status: sarkariItem.status
-        });
-        const buffer = await renderMasterThumbnailBuffer(spec, format);
-        res.setHeader('Content-Type', format === 'webp' ? 'image/webp' : 'image/png');
-        res.setHeader('Cache-Control', 'public, max-age=3600');
-        return res.send(buffer);
+      if (isSvg) {
+        const svgContent = renderStandaloneMasterThumbnailSvg(resolvedSpec);
+        res.setHeader('Content-Type', 'image/svg+xml');
+        res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+        return res.send(svgContent);
       }
 
-      // Look up in SERVICES_LIST
-      const serviceItem = SERVICES_LIST.find(s => s.id === rawId);
-      if (serviceItem) {
-        const spec = buildDeterministicThumbnailSpec({
-          id: serviceItem.id,
-          title: serviceItem.name,
-          category: serviceItem.category,
-          department: 'CSC E-Governance Services India',
-          postType: 'Service',
-          shortInfo: serviceItem.description,
-          status: 'Open'
-        });
-        const buffer = await renderMasterThumbnailBuffer(spec, format);
-        res.setHeader('Content-Type', format === 'webp' ? 'image/webp' : 'image/png');
-        res.setHeader('Cache-Control', 'public, max-age=3600');
-        return res.send(buffer);
-      }
-
-      // Default fallback 2048x677 banner
-      const fallbackSpec = buildDeterministicThumbnailSpec({
-        title: rawId ? rawId.replace(/-/g, ' ').toUpperCase() : 'JKSSB Class IV Recruitment',
-        category: 'jkssb',
-        postType: 'Job',
-        status: 'Open'
-      });
-      const buffer = await renderMasterThumbnailBuffer(fallbackSpec, format);
+      const buffer = await renderMasterThumbnailBuffer(resolvedSpec, format as 'png' | 'webp');
       res.setHeader('Content-Type', format === 'webp' ? 'image/webp' : 'image/png');
-      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
       return res.send(buffer);
     } catch (err: any) {
       console.error('[Thumbnails] Dynamic post thumbnail generation error:', err);
-      res.status(500).json({ error: err?.message || 'Failed to generate 2048x677 thumbnail' });
+      // Fail-safe: Always return standalone SVG instead of an empty 500 error
+      const safeSpec = resolvedSpec || buildDeterministicThumbnailSpec({
+        title: 'CSC DOST Citizen Service Portal',
+        category: 'jobs',
+        status: 'Open'
+      });
+      const fallbackSvg = renderStandaloneMasterThumbnailSvg(safeSpec);
+      res.setHeader('Content-Type', 'image/svg+xml');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      return res.send(fallbackSvg);
     }
   }
 );

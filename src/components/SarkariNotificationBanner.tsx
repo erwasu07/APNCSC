@@ -1,5 +1,10 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { SarkariItem } from '../data/sarkariData';
+import {
+  buildDeterministicThumbnailSpec,
+  renderStandaloneMasterThumbnailSvg,
+  ThumbnailSpec
+} from '../utils/thumbnailSpecHelper';
 
 interface SarkariNotificationBannerProps {
   item: SarkariItem;
@@ -14,7 +19,55 @@ export default function SarkariNotificationBanner({
   onApply,
   onViewDetails
 }: SarkariNotificationBannerProps) {
-  const thumbnailUrl = item.thumbnailUrl || `/api/thumbnails/post/${item.id}.png`;
+  // Deterministic Thumbnail Specification for fallback SVG rendering
+  const spec: ThumbnailSpec = useMemo(() => {
+    return (
+      (item as any).thumbnailSpec ||
+      buildDeterministicThumbnailSpec({
+        id: item.id,
+        title: item.title,
+        category: item.category,
+        department: item.department,
+        postType: item.postType,
+        shortInfo: item.shortInfo,
+        startDate: item.startDate,
+        lastDate: item.lastDate,
+        status: item.status
+      })
+    );
+  }, [item]);
+
+  // List of progressive image URL candidates
+  const imageCandidates = useMemo(() => {
+    const list: string[] = [];
+    if (item.thumbnailUrl) {
+      list.push(item.thumbnailUrl);
+    }
+    // High-speed static asset in /public/thumbnails/
+    list.push(`/thumbnails/${item.id}.png`);
+    // Dynamic server endpoint
+    list.push(`/api/thumbnails/post/${item.id}.png`);
+    // Vector SVG endpoint
+    list.push(`/api/thumbnails/post/${item.id}.svg`);
+    // Social preview endpoint
+    list.push(`/api/og-image/${encodeURIComponent(item.id)}.png`);
+    return Array.from(new Set(list));
+  }, [item.id, item.thumbnailUrl]);
+
+  const [candidateIndex, setCandidateIndex] = useState(0);
+  const [useInlineSvg, setUseInlineSvg] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  const currentSrc = imageCandidates[candidateIndex] || '';
+
+  const handleImageError = () => {
+    if (candidateIndex + 1 < imageCandidates.length) {
+      setCandidateIndex((prev) => prev + 1);
+    } else {
+      // All remote image candidates failed: Switch to instant inline vector SVG fallback
+      setUseInlineSvg(true);
+    }
+  };
 
   const handleCtaClick = (e: React.MouseEvent) => {
     if (onApply) {
@@ -27,7 +80,10 @@ export default function SarkariNotificationBanner({
       onViewDetails();
       return;
     }
-    const summaryTable = document.getElementById('overview-section') || document.getElementById('summary-table');
+    const summaryTable =
+      document.getElementById('overview-section') ||
+      document.getElementById('summary-table') ||
+      document.getElementById('important-dates');
     if (summaryTable) {
       summaryTable.scrollIntoView({ behavior: 'smooth' });
       return;
@@ -37,21 +93,47 @@ export default function SarkariNotificationBanner({
     }
   };
 
+  const standaloneSvgHtml = useMemo(() => {
+    return renderStandaloneMasterThumbnailSvg(spec);
+  }, [spec]);
+
   return (
     <div className={className}>
       <div
         id={`sarkari-thumbnail-card-${item.id}`}
         data-card-id={item.id}
         onClick={handleCtaClick}
-        className="relative overflow-hidden rounded-xl border border-[#CBD5E1] bg-[#092556] shadow-xs cursor-pointer group"
+        className="relative overflow-hidden rounded-xl border border-[#CBD5E1] shadow-xs cursor-pointer group bg-white"
         style={{ aspectRatio: '2048 / 677' }}
       >
-        <img
-          src={thumbnailUrl}
-          alt={`${item.title} — CSC DOST Official Notification Banner`}
-          loading="eager"
-          className="w-full h-full object-contain block select-none transition-transform duration-200 group-hover:scale-[1.003]"
-        />
+        {useInlineSvg ? (
+          // Inline Standalone SVG: Guaranteed 100% visual fidelity matching Master Reference
+          <div
+            className="w-full h-full select-none"
+            dangerouslySetInnerHTML={{ __html: standaloneSvgHtml }}
+          />
+        ) : (
+          <>
+            {/* Soft skeleton placeholder while the high-res 2048x677 image is streaming */}
+            {!isLoaded && (
+              <div
+                className="absolute inset-0 select-none pointer-events-none opacity-90"
+                dangerouslySetInnerHTML={{ __html: standaloneSvgHtml }}
+              />
+            )}
+            <img
+              key={currentSrc}
+              src={currentSrc}
+              alt={`${item.title} — CSC DOST Official Notification Banner`}
+              loading="eager"
+              onLoad={() => setIsLoaded(true)}
+              onError={handleImageError}
+              className={`w-full h-full object-contain block select-none transition-transform duration-200 group-hover:scale-[1.003] ${
+                isLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
+            />
+          </>
+        )}
       </div>
     </div>
   );
