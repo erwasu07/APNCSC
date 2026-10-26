@@ -148,12 +148,12 @@ export default function App() {
       const hash = window.location.hash;
       const pathname = window.location.pathname;
       const searchParams = new URLSearchParams(window.location.search);
-      const postParam = searchParams.get('post') || searchParams.get('job');
+      const postParam = searchParams.get('post') || searchParams.get('job') || searchParams.get('notice') || searchParams.get('id');
       const serviceParam = searchParams.get('service');
       const trackParam = searchParams.get('track') || searchParams.get('token') || searchParams.get('id');
 
-      // Check direct pathname matches (e.g. /post/xyz, /job/xyz, /service/xyz)
-      const pathPostMatch = pathname.match(/^\/(?:post|job|sarkari)\/([^/?#]+)/i);
+      // Check direct pathname matches (e.g. /post/xyz, /job/xyz, /sarkari/xyz, /notice/xyz, /admissions/xyz, /service/xyz)
+      const pathPostMatch = pathname.match(/^\/(?:post|job|jobs|sarkari|notice|admissions|notification)\/([^/?#]+)/i);
       const pathServiceMatch = pathname.match(/^\/service\/([^/?#]+)/i);
       const pathTrackMatch = pathname.match(/^\/track\/([^/?#]+)/i);
       const pathApplyMatch = pathname.startsWith('/apply');
@@ -433,8 +433,9 @@ export default function App() {
 
   const handleShareItem = async (item: SarkariItem) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.cscdost.com';
-    const shareUrl = `${origin}/post/${item.id}`;
-    const shareTitle = `📢 ${item.title}`;
+    const canonicalBase = (origin.includes('localhost') || origin.includes('127.0.0.1')) ? origin : 'https://www.cscdost.com';
+    const shareUrl = `${canonicalBase}/post/${item.id}`;
+    const shareTitle = `${item.title} - CSC DOST`;
     const shareText = `📢 *${item.title}*\n${item.lastDate ? `⏰ *Last Date:* ${item.lastDate}\n` : ''}${item.totalPosts ? `👥 *Vacancies/Seats:* ${item.totalPosts}\n` : ''}\n${item.shortInfo ? item.shortInfo + '\n\n' : ''}👉 Read full notification & apply at CSC DOST:\n${shareUrl}`;
 
     const data = { title: shareTitle, text: shareText, url: shareUrl, name: item.title };

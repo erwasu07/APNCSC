@@ -1,6 +1,12 @@
+import fs from 'fs';
+import path from 'path';
 import sharp from 'sharp';
-import { SarkariItem } from './data/sarkariData';
+import { SarkariItem, SARKARI_CATEGORIES } from './data/sarkariData';
 import { ServiceItem } from './servicesData';
+import {
+  renderMasterThumbnailBuffer,
+  buildDeterministicThumbnailSpec
+} from './thumbnailGenerator';
 
 // Helper to escape XML special characters
 function escapeXml(unsafe: string): string {
@@ -232,6 +238,136 @@ export async function generateOgPng(item?: Partial<SarkariItem> | null): Promise
   return sharp(Buffer.from(svgString))
     .png({ quality: 90, compressionLevel: 8 })
     .toBuffer();
+}
+
+/**
+ * Generates a 1200x630 social preview variant incorporating the approved
+ * post thumbnail (2048x677) within a standard Open Graph frame.
+ * Preserves the original 2048x677 website thumbnail while ensuring social platforms
+ * (WhatsApp, Facebook, Twitter, LinkedIn) display the card without clipping.
+ */
+export async function generateSocialPreviewPng(
+  item?: Partial<SarkariItem> | null
+): Promise<Buffer> {
+  // If no post exists, return the default CSC DOST 1200x630 artwork
+  if (!item || !item.id) {
+    const defaultBannerPath = path.join(process.cwd(), 'public', 'og-banner.png');
+    if (fs.existsSync(defaultBannerPath)) {
+      try {
+        return fs.readFileSync(defaultBannerPath);
+      } catch (e) {}
+    }
+    return generateOgPng(null);
+  }
+
+  try {
+    let thumbBuffer: Buffer | null = null;
+
+    // 1. Check if a pre-generated local 2048x677 thumbnail exists
+    const candidates = [
+      path.join(process.cwd(), 'public', 'thumbnails', `${item.id}.png`),
+      path.join(process.cwd(), 'public', 'thumbnails', `${item.id}.webp`),
+      item.id === 'jkssb-class-iv-recruitment-2026' || item.id === 'preset-jkssb-class-iv'
+        ? path.join(process.cwd(), 'public', 'thumbnails', 'test-jkssb-class-iv.png')
+        : null,
+      item.id === 'ignou-admission-2026-july-session'
+        ? path.join(process.cwd(), 'public', 'thumbnails', 'test-ignou-admission.png')
+        : null,
+      item.id === 'jkbose-class-10-result-2026'
+        ? path.join(process.cwd(), 'public', 'thumbnails', 'test-jkbose-class-10-result.png')
+        : null
+    ].filter(Boolean) as string[];
+
+    for (const p of candidates) {
+      if (fs.existsSync(p)) {
+        try {
+          thumbBuffer = fs.readFileSync(p);
+          break;
+        } catch (e) {}
+      }
+    }
+
+    // 2. If no thumbnail file is cached on disk, render it from the master template engine
+    if (!thumbBuffer) {
+      const spec = buildDeterministicThumbnailSpec({
+        id: item.id,
+        title: item.title || 'CSC DOST Citizen Update',
+        category: item.category,
+        department: item.department,
+        postType: item.postType,
+        shortInfo: item.shortInfo,
+        startDate: item.startDate,
+        lastDate: item.lastDate,
+        status: item.status
+      });
+      thumbBuffer = await renderMasterThumbnailBuffer(spec, 'png');
+    }
+
+    // 3. Resize 2048x677 thumbnail to fit standard 1200x630 canvas (1160 x 383 px)
+    const resizedThumb = await sharp(thumbBuffer)
+      .resize(1160, 383, { fit: 'fill' })
+      .png()
+      .toBuffer();
+
+    const categoryLabel = (
+      (item.category && SARKARI_CATEGORIES[item.category as any]?.label) ||
+      'OFFICIAL NOTIFICATION'
+    ).toUpperCase();
+
+    const bgSvg = `<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="socialBg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#071533" />
+          <stop offset="50%" stop-color="#092556" />
+          <stop offset="100%" stop-color="#051026" />
+        </linearGradient>
+        <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+          <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.5"/>
+        </filter>
+      </defs>
+
+      <!-- Background Canvas (1200 x 630) -->
+      <rect width="1200" height="630" fill="url(#socialBg)" />
+      <rect x="8" y="8" width="1184" height="614" rx="20" fill="none" stroke="#1E3A8A" stroke-width="2" />
+
+      <!-- Top Header Branding Bar -->
+      <g filter="url(#shadow)">
+        <rect x="20" y="20" width="1160" height="82" rx="14" fill="#0D1F47" stroke="#2563EB" stroke-width="1.5" />
+        
+        <!-- CSC DOST Logo Circle -->
+        <circle cx="68" cy="61" r="28" fill="#2563EB" />
+        <text x="68" y="67" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="15" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">CSC</text>
+        
+        <text x="110" y="55" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="22" fill="#FFFFFF" letter-spacing="0.5">CSC DOST</text>
+        <text x="110" y="77" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="600" font-size="13" fill="#93C5FD">Official Citizen Notice Desk • cscdost.com</text>
+        
+        <!-- Category Badge Pill -->
+        <rect x="880" y="38" width="280" height="46" rx="10" fill="#1E3A8A" stroke="#60A5FA" stroke-width="1" />
+        <text x="1020" y="66" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="800" font-size="13" fill="#FDE047" text-anchor="middle" letter-spacing="0.5">${escapeXml(categoryLabel.slice(0, 26))}</text>
+      </g>
+
+      <!-- Bottom Supporting Action Bar -->
+      <g filter="url(#shadow)">
+        <rect x="20" y="528" width="1160" height="82" rx="14" fill="#0D1F47" stroke="#1E3A8A" stroke-width="1.5" />
+        <text x="45" y="575" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="800" font-size="17" fill="#FDE047">⚡ Easy and Reliable Online Application Assistance</text>
+        <text x="1155" y="575" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="800" font-size="17" fill="#FFFFFF" text-anchor="end">Apply Online at www.cscdost.com 👉</text>
+      </g>
+    </svg>`;
+
+    return await sharp(Buffer.from(bgSvg))
+      .composite([
+        {
+          input: resizedThumb,
+          left: 20,
+          top: 124
+        }
+      ])
+      .png({ quality: 94, compressionLevel: 7 })
+      .toBuffer();
+  } catch (err) {
+    console.warn('[OG] Error generating composite 1200x630 social variant, falling back:', err);
+    return generateOgPng(item);
+  }
 }
 
 /**

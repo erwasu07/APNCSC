@@ -10,7 +10,8 @@ import {
   generateOgPng, 
   generateOgSvg, 
   generateServiceOgPng, 
-  generateServiceOgSvg 
+  generateServiceOgSvg,
+  generateSocialPreviewPng 
 } from './src/ogImageGenerator';
 import {
   THUMBNAIL_WIDTH,
@@ -1952,13 +1953,14 @@ app.delete('/api/posts/:id', (req: Request, res: Response) => {
 });
 
 // Dynamic Open Graph Image Generator Endpoint for WhatsApp / Facebook / Social Share Previews
-app.get(['/api/og-image/:id.png', '/api/og-image/:id.svg', '/api/og-image/:id', '/api/og-image'], async (req: Request, res: Response) => {
+app.get(['/api/og-image/:id.png', '/api/og-image/:id.webp', '/api/og-image/:id.svg', '/api/og-image/:id', '/api/og-image'], async (req: Request, res: Response) => {
   try {
-    let id = (req.params.id || (req.query.id as string) || '').replace(/\.(png|svg)$/i, '');
+    const rawId = (req.params.id || (req.query.id as string) || '').replace(/\.(png|svg|webp)$/i, '');
     const format = req.path.endsWith('.svg') || req.query.format === 'svg' ? 'svg' : 'png';
 
-    // 1. Search in Sarkari notifications
-    const sarkariItem = SARKARI_DATA.find(i => i.id === id);
+    // 1. Search in Sarkari notifications (both predefined SARKARI_DATA and custom posts)
+    const allSarkari = [...SARKARI_DATA, ...getCustomSarkariPosts()];
+    const sarkariItem = allSarkari.find(i => i.id === rawId || i.id === decodeURIComponent(rawId));
     if (sarkariItem) {
       if (format === 'svg') {
         const svg = generateOgSvg(sarkariItem);
@@ -1966,14 +1968,14 @@ app.get(['/api/og-image/:id.png', '/api/og-image/:id.svg', '/api/og-image/:id', 
         res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
         return res.send(svg);
       }
-      const png = await generateOgPng(sarkariItem);
+      const png = await generateSocialPreviewPng(sarkariItem);
       res.setHeader('Content-Type', 'image/png');
       res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
       return res.send(png);
     }
 
     // 2. Search in Services list
-    const serviceItem = SERVICES_LIST.find(s => s.id === id);
+    const serviceItem = SERVICES_LIST.find(s => s.id === rawId || s.id === decodeURIComponent(rawId));
     if (serviceItem) {
       if (format === 'svg') {
         const svg = generateServiceOgSvg(serviceItem);
@@ -1987,14 +1989,14 @@ app.get(['/api/og-image/:id.png', '/api/og-image/:id.svg', '/api/og-image/:id', 
       return res.send(png);
     }
 
-    // 3. Fallback: Default CSC DOST Open Graph Banner
+    // 3. Fallback: Default CSC DOST Open Graph Banner (1200x630)
     if (format === 'svg') {
       const svg = generateOgSvg(null);
       res.setHeader('Content-Type', 'image/svg+xml');
       res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
       return res.send(svg);
     }
-    const png = await generateOgPng(null);
+    const png = await generateSocialPreviewPng(null);
     res.setHeader('Content-Type', 'image/png');
     res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
     return res.send(png);
@@ -2022,55 +2024,132 @@ app.get(['/og-banner.svg', '/og-image.svg'], (req: Request, res: Response) => {
 // Helper to inject rich Open Graph tags for WhatsApp / Facebook / Twitter scrapers and users
 function renderDynamicMetaHtml(rawHtml: string, req: Request): string {
   const urlPath = req.path;
-  const matchPost = urlPath.match(/^\/(?:post|job|sarkari)\/([^/?#]+)/i);
+  const matchPost = urlPath.match(/^\/(?:post|job|jobs|sarkari|notice|admissions|notification)\/([^/?#]+)/i);
   const matchService = urlPath.match(/^\/service\/([^/?#]+)/i);
-  const postParam = (req.query.post as string) || (req.query.job as string);
+  const postParam = (req.query.post as string) || (req.query.job as string) || (req.query.id as string) || (req.query.notice as string);
   const serviceParam = req.query.service as string;
 
   // Determine host and protocol dynamically
   const host = req.get('x-forwarded-host') || req.get('host') || 'www.cscdost.com';
-  const protocol = req.get('x-forwarded-proto') || (req.secure ? 'https' : 'https');
-  const baseOrigin = host.includes('localhost') ? `http://${host}` : `https://${host}`;
+  const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
+  const baseOrigin = isLocal ? `http://${host}` : (host.includes('.run.app') ? `https://${host}` : 'https://www.cscdost.com');
 
-  let title = 'CSC DOST - Sarkari Jobs, Exam Forms & Citizen E-Services';
-  let description = 'Official Notifications for Indian Army, RRB, SSC, JKSSB, Kashmir University Admissions & Online Forms. Fast, reliable application assistance at cscdost.com.';
+  let title = 'CSC DOST – Guide to Government Services, Schemes & Recruitment';
+  let description = 'CSC DOST is an independent citizen assistance and information portal. Explore recruitment updates, government schemes, Aadhaar, PAN card, and direct official links.';
   let ogImage = `${baseOrigin}/og-banner.png`;
-  let canonicalUrl = `${baseOrigin}${urlPath}`;
+  let canonicalUrl = `https://www.cscdost.com${urlPath === '/' ? '' : urlPath}`;
+  let ogType = 'website';
+  let articlePublishedDate = '';
 
-  const targetPostId = matchPost ? matchPost[1] : postParam;
-  const targetServiceId = matchService ? matchService[1] : serviceParam;
+  const targetPostId = (matchPost ? matchPost[1] : postParam)?.replace(/\.html?$/i, '');
+  const targetServiceId = (matchService ? matchService[1] : serviceParam)?.replace(/\.html?$/i, '');
 
   if (targetPostId) {
-    const item = SARKARI_DATA.find(i => i.id === targetPostId);
+    const allSarkari = [...SARKARI_DATA, ...getCustomSarkariPosts()];
+    const item = allSarkari.find(i => i.id === targetPostId || i.id === decodeURIComponent(targetPostId));
     if (item) {
-      title = `${item.title} - CSC DOST`;
-      description = item.shortInfo || `Apply online for ${item.title}. Last Date: ${item.lastDate || 'Check Notification'}. Vacancies: ${item.totalPosts || 'Open'}. Official updates at cscdost.com.`;
-      ogImage = `${baseOrigin}/api/og-image/${item.id}.png`;
-      canonicalUrl = `${baseOrigin}/post/${item.id}`;
+      title = `${item.title} | CSC DOST`;
+      description = item.shortInfo || `Apply online for ${item.title}. Last Date: ${item.lastDate || 'Check Notification'}. Vacancies: ${item.totalPosts || 'Open'}. Official updates & application assistance at cscdost.com.`;
+      const dateVersion = (item.lastDate || item.postDate || '2026').replace(/[^0-9]/g, '') || '2026';
+      ogImage = `${baseOrigin}/api/og-image/${encodeURIComponent(item.id)}.png?v=${dateVersion}`;
+      canonicalUrl = `https://www.cscdost.com/post/${item.id}`;
+      ogType = 'article';
+      articlePublishedDate = item.postDate || '2026-02-20';
     }
   } else if (targetServiceId) {
-    const service = SERVICES_LIST.find(s => s.id === targetServiceId);
+    const service = SERVICES_LIST.find(s => s.id === targetServiceId || s.id === decodeURIComponent(targetServiceId));
     if (service) {
-      title = `${service.name} Online Application - CSC DOST`;
-      description = `${service.description} Fast turnaround time: ${service.estimatedTime}. Apply securely at cscdost.com.`;
-      ogImage = `${baseOrigin}/api/og-image/${service.id}.png`;
-      canonicalUrl = `${baseOrigin}/service/${service.id}`;
+      title = `${service.name} Online Application | CSC DOST`;
+      description = `${service.description} Processing time: ${service.estimatedTime}. Official fee: ${service.price}. Fast & reliable application assistance at cscdost.com.`;
+      ogImage = `${baseOrigin}/api/og-image/${encodeURIComponent(service.id)}.png?v=srv`;
+      canonicalUrl = `https://www.cscdost.com/service/${service.id}`;
+      ogType = 'website';
     }
   }
 
-  // Escape HTML entities
-  const safeTitle = title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  const safeDesc = description.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  // Escape HTML / XML special characters
+  const escAttr = (s: string) => String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const escText = (s: string) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-  return rawHtml
-    .replace(/<title>.*?<\/title>/i, `<title>${safeTitle}</title>`)
-    .replace(/<meta property="og:title" content=".*?" \/>/i, `<meta property="og:title" content="${safeTitle}" />`)
-    .replace(/<meta property="og:description" content=".*?" \/>/i, `<meta property="og:description" content="${safeDesc}" />`)
-    .replace(/<meta property="og:image" content=".*?" \/>/i, `<meta property="og:image" content="${ogImage}" />\n    <meta property="og:image:secure_url" content="${ogImage}" />\n    <meta property="og:image:type" content="image/png" />\n    <meta property="og:image:width" content="1200" />\n    <meta property="og:image:height" content="630" />`)
-    .replace(/<meta property="og:url" content=".*?" \/>/i, `<meta property="og:url" content="${canonicalUrl}" />`)
-    .replace(/<meta name="twitter:title" content=".*?" \/>/i, `<meta name="twitter:title" content="${safeTitle}" />`)
-    .replace(/<meta name="twitter:description" content=".*?" \/>/i, `<meta name="twitter:description" content="${safeDesc}" />`)
-    .replace(/<meta name="twitter:image" content=".*?" \/>/i, `<meta name="twitter:image" content="${ogImage}" />`);
+  const safeTitle = escText(title);
+  const safeAttrTitle = escAttr(title);
+  const safeAttrDesc = escAttr(description);
+  const safeOgImage = escAttr(ogImage);
+  const safeCanonical = escAttr(canonicalUrl);
+
+  let html = rawHtml;
+
+  // Replace <title>
+  html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${safeTitle}</title>`);
+  
+  // Replace <meta name="title">
+  html = html.replace(/<meta\s+name=["']title["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta name="title" content="${safeAttrTitle}" />`);
+  
+  // Replace <meta name="description">
+  html = html.replace(/<meta\s+name=["']description["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta name="description" content="${safeAttrDesc}" />`);
+  
+  // Replace <link rel="canonical">
+  html = html.replace(/<link\s+rel=["']canonical["']\s+href=["'][\s\S]*?["']\s*\/?>/i, `<link rel="canonical" href="${safeCanonical}" />`);
+
+  // Replace og:type
+  html = html.replace(/<meta\s+property=["']og:type["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta property="og:type" content="${ogType}" />`);
+
+  // Replace og:url
+  html = html.replace(/<meta\s+property=["']og:url["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta property="og:url" content="${safeCanonical}" />`);
+
+  // Replace og:title
+  html = html.replace(/<meta\s+property=["']og:title["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta property="og:title" content="${safeAttrTitle}" />`);
+
+  // Replace og:description
+  html = html.replace(/<meta\s+property=["']og:description["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta property="og:description" content="${safeAttrDesc}" />`);
+
+  // Replace og:image & og:image:secure_url & og:image:alt
+  html = html.replace(/<meta\s+property=["']og:image["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta property="og:image" content="${safeOgImage}" />`);
+  html = html.replace(/<meta\s+property=["']og:image:secure_url["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta property="og:image:secure_url" content="${safeOgImage}" />`);
+  html = html.replace(/<meta\s+property=["']og:image:alt["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta property="og:image:alt" content="${safeAttrTitle}" />`);
+
+  // Replace twitter:card
+  html = html.replace(/<meta\s+name=["']twitter:card["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta name="twitter:card" content="summary_large_image" />`);
+
+  // Replace twitter:title
+  html = html.replace(/<meta\s+name=["']twitter:title["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta name="twitter:title" content="${safeAttrTitle}" />`);
+
+  // Replace twitter:description
+  html = html.replace(/<meta\s+name=["']twitter:description["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta name="twitter:description" content="${safeAttrDesc}" />`);
+
+  // Replace twitter:image & twitter:image:alt
+  html = html.replace(/<meta\s+name=["']twitter:image["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta name="twitter:image" content="${safeOgImage}" />`);
+  html = html.replace(/<meta\s+name=["']twitter:image:alt["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta name="twitter:image:alt" content="${safeAttrTitle}" />`);
+
+  // If article, inject article JSON-LD before </head>
+  if (ogType === 'article') {
+    const articleLd = `
+    <!-- Dynamic Post Article Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "NewsArticle",
+      "headline": "${safeAttrTitle}",
+      "description": "${safeAttrDesc}",
+      "image": ["${safeOgImage}"],
+      "datePublished": "${articlePublishedDate}",
+      "dateModified": "${articlePublishedDate}",
+      "mainEntityOfPage": "${safeCanonical}",
+      "publisher": {
+        "@type": "Organization",
+        "name": "CSC DOST",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://www.cscdost.com/favicon.png"
+        }
+      }
+    }
+    </script>
+  </head>`;
+    html = html.replace(/<\/head>/i, articleLd);
+  }
+
+  return html;
 }
 
 // Explicitly serve sitemap.xml and robots.txt with correct MIME headers
@@ -2101,9 +2180,16 @@ async function startServer() {
     // Custom middleware to inject dynamic Open Graph tags in development
     app.use(async (req, res, next) => {
       const url = req.originalUrl || req.url;
-      const isPostOrService = /^\/(?:post|job|sarkari|service)\//i.test(req.path);
+      const isPostOrService =
+        /^\/(?:post|job|jobs|sarkari|notice|admissions|notification|service)\//i.test(req.path) ||
+        Boolean(req.query.post || req.query.job || req.query.service || req.query.id);
       
-      if (isPostOrService && req.method === 'GET' && !req.path.includes('.')) {
+      const isCrawler = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Googlebot|bingbot|Slackbot/i.test(
+        req.headers['user-agent'] || ''
+      );
+
+      // If it's a post/service page, or crawler requesting HTML page, or direct post URL navigation
+      if ((isPostOrService || isCrawler) && req.method === 'GET' && !req.path.includes('.')) {
         try {
           const indexHtml = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf-8');
           const transformedHtml = await vite.transformIndexHtml(url, indexHtml);
