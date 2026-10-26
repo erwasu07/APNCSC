@@ -406,6 +406,164 @@ export function getCustomSarkariPosts(): any[] {
   return Array.isArray(db.customPosts) ? db.customPosts : [];
 }
 
+export type WhatsAppPublishStatus =
+  | 'Prepared'
+  | 'Opened in WhatsApp'
+  | 'Manually Confirmed'
+  | 'Submitted to Provider'
+  | 'Sent'
+  | 'Delivered'
+  | 'Failed';
+
+export interface WhatsAppPublishHistoryRecord {
+  id: string;
+  postId: string;
+  title: string;
+  category: string;
+  destination: string;
+  sharingMethod: string;
+  dateTime: string;
+  isoTimestamp: string;
+  status: WhatsAppPublishStatus;
+  adminUser: string;
+  canonicalUrl: string;
+  confirmedAt?: string;
+  confirmedBy?: string;
+  providerMessageId?: string;
+  errorDetails?: string;
+}
+
+export interface WhatsAppPublisherConfig {
+  channelUrl: string;
+  channelName: string;
+  groupInviteUrl: string;
+  groupName: string;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+const DEFAULT_WHATSAPP_CONFIG: WhatsAppPublisherConfig = {
+  channelUrl: '',
+  channelName: 'CSC DOST Official WhatsApp Channel',
+  groupInviteUrl: 'https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI',
+  groupName: 'CSC DOST Community Group',
+};
+
+export function getWhatsAppPublisherConfig(): WhatsAppPublisherConfig {
+  const db = getDb() as any;
+  return {
+    ...DEFAULT_WHATSAPP_CONFIG,
+    ...(db.whatsappPublisherConfig || {}),
+  };
+}
+
+export function saveWhatsAppPublisherConfig(
+  partial: Partial<WhatsAppPublisherConfig>
+): WhatsAppPublisherConfig {
+  const db = getDb() as any;
+  const current = getWhatsAppPublisherConfig();
+  const updated: WhatsAppPublisherConfig = {
+    ...current,
+    ...partial,
+    updatedAt: new Date().toISOString(),
+  };
+  db.whatsappPublisherConfig = updated;
+  saveDb(db);
+  return updated;
+}
+
+export function getWhatsAppPublishHistory(): WhatsAppPublishHistoryRecord[] {
+  const db = getDb() as any;
+  return Array.isArray(db.whatsappPublishHistory) ? db.whatsappPublishHistory : [];
+}
+
+export function addWhatsAppPublishHistoryRecord(
+  record: Omit<WhatsAppPublishHistoryRecord, 'id' | 'dateTime' | 'isoTimestamp'> & {
+    id?: string;
+    dateTime?: string;
+    isoTimestamp?: string;
+  }
+): WhatsAppPublishHistoryRecord {
+  const db = getDb() as any;
+  if (!Array.isArray(db.whatsappPublishHistory)) {
+    db.whatsappPublishHistory = [];
+  }
+  const now = new Date();
+  const datePart = now.toLocaleDateString('en-GB');
+  const timePart = now.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
+
+  const entry: WhatsAppPublishHistoryRecord = {
+    id: record.id || `wapub-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    postId: record.postId || '',
+    title: record.title || 'CSC DOST Notification',
+    category: record.category || 'job',
+    destination: record.destination || 'WhatsApp Group',
+    sharingMethod: record.sharingMethod || 'WhatsApp Share Link',
+    dateTime: record.dateTime || `${datePart}, ${timePart}`,
+    isoTimestamp: record.isoTimestamp || now.toISOString(),
+    status: record.status,
+    adminUser: record.adminUser || 'Authorized Staff',
+    canonicalUrl: record.canonicalUrl || 'https://www.cscdost.com',
+    confirmedAt: record.confirmedAt,
+    confirmedBy: record.confirmedBy,
+    providerMessageId: record.providerMessageId,
+    errorDetails: record.errorDetails,
+  };
+
+  db.whatsappPublishHistory.unshift(entry);
+  if (db.whatsappPublishHistory.length > 100) {
+    db.whatsappPublishHistory = db.whatsappPublishHistory.slice(0, 100);
+  }
+  saveDb(db);
+  return entry;
+}
+
+export function updateWhatsAppPublishHistoryStatus(
+  id: string,
+  status: WhatsAppPublishStatus,
+  adminUser?: string,
+  extra?: Partial<WhatsAppPublishHistoryRecord>
+): WhatsAppPublishHistoryRecord | null {
+  const db = getDb() as any;
+  if (!Array.isArray(db.whatsappPublishHistory)) return null;
+  const idx = db.whatsappPublishHistory.findIndex((item: any) => item && item.id === id);
+  if (idx === -1) return null;
+
+  const now = new Date();
+  const datePart = now.toLocaleDateString('en-GB');
+  const timePart = now.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
+
+  db.whatsappPublishHistory[idx] = {
+    ...db.whatsappPublishHistory[idx],
+    ...(extra || {}),
+    status,
+    confirmedAt:
+      status === 'Manually Confirmed'
+        ? `${datePart}, ${timePart}`
+        : db.whatsappPublishHistory[idx].confirmedAt,
+    confirmedBy:
+      status === 'Manually Confirmed'
+        ? adminUser || db.whatsappPublishHistory[idx].adminUser
+        : db.whatsappPublishHistory[idx].confirmedBy,
+  };
+  saveDb(db);
+  return db.whatsappPublishHistory[idx];
+}
+
+export function clearWhatsAppPublishHistory(): void {
+  const db = getDb() as any;
+  db.whatsappPublishHistory = [];
+  saveDb(db);
+}
+
 export function deleteCustomSarkariPost(postId: string): boolean {
   const db = getDb();
   if (!Array.isArray(db.customPosts)) return false;
@@ -417,4 +575,5 @@ export function deleteCustomSarkariPost(postId: string): boolean {
   }
   return false;
 }
+
 

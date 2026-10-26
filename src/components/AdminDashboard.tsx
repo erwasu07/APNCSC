@@ -2079,9 +2079,9 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       breadcrumb: 'Operations / Visitor Logs'
     },
     whatsapp_sync: {
-      title: 'WhatsApp Channel & Group Sync',
-      subtitle: 'Broadcast official recruitment alerts and scheme updates to WhatsApp subscribers.',
-      breadcrumb: 'Operations / WhatsApp Sync'
+      title: 'WhatsApp Group & Channel Publisher',
+      subtitle: 'Manage and publish CSC DOST notifications to your WhatsApp communities.',
+      breadcrumb: 'Operations / WhatsApp Publisher'
     },
     reports: {
       title: 'Reports & Export',
@@ -2220,7 +2220,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   const operationsNavItems: Array<{ id: NavSectionId; label: string; icon: any; count?: number }> = [
     { id: 'post_thumbnails', label: 'Post & AI Thumbnail (2048×677)', icon: Sparkles },
     { id: 'vle_logs', label: 'VLE Visitor Access Logs', icon: ShieldAlert, count: vleInquiries.length },
-    { id: 'whatsapp_sync', label: 'WhatsApp Channel & Sync', icon: Radio },
+    { id: 'whatsapp_sync', label: 'WhatsApp Publisher', icon: Radio },
     { id: 'reports', label: 'Reports & Export', icon: FileSpreadsheet }
   ];
 
@@ -4159,33 +4159,11 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           )}
 
           {/* ================================================================ */}
-          {/* 8. WHATSAPP CHANNEL & GROUP SYNC */}
+          {/* 8. WHATSAPP GROUP & CHANNEL PUBLISHER */}
           {/* ================================================================ */}
           {activeNav === 'whatsapp_sync' && (
-            <section aria-label="WhatsApp Channel and Group Synchronization" className="space-y-0 md:space-y-4">
-              {/* Status Strip */}
-              <div className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl p-4 md:p-5 shadow-none md:shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#16A34A] flex items-center justify-center shrink-0">
-                    <Radio className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-sm font-bold text-[#111827]">
-                        WhatsApp Channel &amp; Community Broadcast Desk
-                      </h2>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-[#16A34A] border border-emerald-200">
-                        ● Ready
-                      </span>
-                    </div>
-                    <p className="text-xs text-[#64748B] mt-0.5">
-                      Format and dispatch verified recruitment notifications, date sheets, and CSC service updates directly to your WhatsApp Channel and Groups.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <WhatsAppBroadcaster cafeName={cafeName} />
+            <section aria-label="WhatsApp Group and Channel Publisher" className="space-y-4">
+              <WhatsAppBroadcaster cafeName={cafeName} adminUser={authenticatedStaffLabel} />
             </section>
           )}
 

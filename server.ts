@@ -45,7 +45,14 @@ import {
   getPostThumbnailsMap,
   upsertCustomSarkariPost,
   getCustomSarkariPosts,
-  deleteCustomSarkariPost
+  deleteCustomSarkariPost,
+  WhatsAppPublishStatus,
+  getWhatsAppPublisherConfig,
+  saveWhatsAppPublisherConfig,
+  getWhatsAppPublishHistory,
+  addWhatsAppPublishHistoryRecord,
+  updateWhatsAppPublishHistoryStatus,
+  clearWhatsAppPublishHistory
 } from './src/dbServer';
 import {
   persistCustomerApplication,
@@ -1115,274 +1122,486 @@ _Thank you for choosing ${storeName}! If you have any questions, reply directly 
   }
 });
 
-// Broadcast notification storage in memory
-const broadcastLogs: any[] = [];
+// ============================================================================
+// WHATSAPP GROUP & CHANNEL PUBLISHER — DIAGNOSTICS, CONFIG, HISTORY & API
+// ============================================================================
 
-// WhatsApp Channel & Group Automated Broadcast Endpoint
-app.post('/api/whatsapp/broadcast', async (req: Request, res: Response) => {
+const ALLOWED_WHATSAPP_STATUSES = new Set<WhatsAppPublishStatus>([
+  'Prepared',
+  'Opened in WhatsApp',
+  'Manually Confirmed',
+  'Submitted to Provider',
+  'Sent',
+  'Delivered',
+  'Failed'
+]);
+
+// Idempotency guard to prevent duplicate automated submissions within 60 seconds
+const recentAutomatedSubmissions = new Map<string, number>();
+
+function isValidWhatsAppChannelUrl(rawUrl: string): boolean {
+  if (!rawUrl || !rawUrl.trim()) return true; // allow empty when clearing
   try {
-    const { 
-      title, 
-      category, 
-      messageText, 
-      postUrl, 
-      targetGroup, 
-      targetChannel, 
-      webhookUrl,
-      gatewayProvider
-    } = req.body || {};
+    const parsed = new URL(rawUrl.trim());
+    if (parsed.protocol !== 'https:') return false;
+    const host = parsed.hostname.toLowerCase();
+    if (host !== 'whatsapp.com' && host !== 'www.whatsapp.com') return false;
+    return /^\/channel\/[A-Za-z0-9_-]{6,}/i.test(parsed.pathname);
+  } catch {
+    return false;
+  }
+}
 
-    if (!messageText) {
-      return res.status(400).json({ success: false, error: 'messageText is required for broadcasting.' });
-    }
+function isValidWhatsAppGroupInviteUrl(rawUrl: string): boolean {
+  if (!rawUrl || !rawUrl.trim()) return true;
+  try {
+    const parsed = new URL(rawUrl.trim());
+    if (parsed.protocol !== 'https:') return false;
+    const host = parsed.hostname.toLowerCase();
+    if (host !== 'chat.whatsapp.com') return false;
+    return /^\/[A-Za-z0-9_-]{6,}/i.test(parsed.pathname);
+  } catch {
+    return false;
+  }
+}
 
-    const effectiveWebhook = (webhookUrl || process.env.WHATSAPP_BROADCAST_WEBHOOK_URL || '').trim();
-    const effectiveGroup = (targetGroup || process.env.WHATSAPP_TARGET_GROUP_ID || '').trim();
+// 1. Diagnose Official WhatsApp Business Platform API & Legacy Auto-Post Status
+app.get('/api/whatsapp/diagnostics', authenticateAdmin, (_req: Request, res: Response) => {
+  const cloudApiTokenConfigured = Boolean((process.env.WHATSAPP_CLOUD_API_TOKEN || '').trim());
+  const phoneNumberIdConfigured = Boolean((process.env.WHATSAPP_PHONE_NUMBER_ID || '').trim());
+  const officialGroupIdConfigured = Boolean((process.env.WHATSAPP_OFFICIAL_GROUP_ID || '').trim());
+  const webhookUrlConfigured = Boolean((process.env.WHATSAPP_BROADCAST_WEBHOOK_URL || '').trim());
 
-    let webhookStatus = 'skipped';
-    let webhookResponse: any = null;
-    let dispatchedVia = 'server-simulated';
+  const cloudApiReady = cloudApiTokenConfigured && phoneNumberIdConfigured;
+  const officialGroupsApiReady = cloudApiReady && officialGroupIdConfigured;
 
-    // If an actual HTTP webhook endpoint is provided (e.g. UltraMsg, GreenAPI, Baileys Bot, Evolution API, Make/Zapier)
-    if (effectiveWebhook && (effectiveWebhook.startsWith('http://') || effectiveWebhook.startsWith('https://'))) {
-      
-      // If user accidentally put a chat.whatsapp.com invite link in the webhook box instead of the group link box
-      if (effectiveWebhook.includes('chat.whatsapp.com')) {
-        dispatchedVia = 'WhatsApp Community Group Link';
-        webhookStatus = 'saved (invite link attached)';
-        console.log(`ℹ️ Group Invite link detected in setup: ${effectiveWebhook}`);
-      } else {
-        try {
-          let fetchUrl = effectiveWebhook;
-          let fetchOptions: any = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            signal: AbortSignal.timeout(7000) // 7-second safe timeout
-          };
-
-          const isUltraMsg = effectiveWebhook.includes('ultramsg.com') || gatewayProvider === 'ultramsg';
-          const isGreenApi = effectiveWebhook.includes('green-api.com') || effectiveWebhook.includes('greenapi.com') || gatewayProvider === 'greenapi';
-          const isEvolution = effectiveWebhook.includes('evolution') || gatewayProvider === 'evolution';
-
-          if (isUltraMsg) {
-            dispatchedVia = 'UltraMsg Gateway';
-            if (!fetchUrl.endsWith('/messages/chat')) {
-              fetchUrl = fetchUrl.replace(/\/+$/, '') + '/messages/chat';
-            }
-            fetchOptions.body = JSON.stringify({
-              to: effectiveGroup || 'all',
-              body: messageText
-            });
-          } else if (isGreenApi) {
-            dispatchedVia = 'Green API Gateway';
-            fetchOptions.body = JSON.stringify({
-              chatId: effectiveGroup.includes('@') ? effectiveGroup : `${effectiveGroup}@g.us`,
-              message: messageText
-            });
-          } else if (isEvolution) {
-            dispatchedVia = 'Evolution API Gateway';
-            fetchOptions.body = JSON.stringify({
-              number: effectiveGroup,
-              text: messageText
-            });
-          } else {
-            dispatchedVia = fetchUrl.includes('make.com') ? 'Make.com Webhook Gateway' : 'Direct Webhook Gateway';
-            fetchOptions.body = JSON.stringify({
-              category: category || 'job',
-              title: title || 'New Notification',
-              body: messageText,
-              url: postUrl || 'https://www.cscdost.com',
-              published_at: new Date().toISOString(),
-              message: messageText,
-              messageText,
-              targetGroup: effectiveGroup,
-              targetChannel: targetChannel || 'CSC DOST Channel',
-              to: effectiveGroup,
-              chatId: effectiveGroup,
-              postUrl: postUrl || 'https://www.cscdost.com',
-              timestamp: new Date().toISOString(),
-              notices: [
-                {
-                  type: category || 'job',
-                  title: title || 'Notification',
-                  description: messageText,
-                  date: new Date().toISOString().slice(0, 10),
-                  url: postUrl || 'https://www.cscdost.com'
-                }
-              ]
-            });
-          }
-
-          console.log(`📡 Dispatching automated WhatsApp broadcast to ${fetchUrl} via ${dispatchedVia}...`);
-
-          const fetchRes = await fetch(fetchUrl, fetchOptions);
-          const resText = await fetchRes.text();
-          
-          try {
-            webhookResponse = JSON.parse(resText);
-          } catch {
-            webhookResponse = resText;
-          }
-
-          webhookStatus = fetchRes.ok ? 'success' : `failed (HTTP ${fetchRes.status})`;
-          console.log(`✅ WhatsApp Webhook Dispatch result: ${webhookStatus}`);
-        } catch (webhookErr: any) {
-          console.error('❌ WhatsApp Webhook Dispatch Error:', webhookErr);
-          webhookStatus = 'notice: ' + (webhookErr?.name === 'TimeoutError' ? 'Webhook request timed out' : (webhookErr?.message || 'Connection notice'));
-        }
+  return res.json({
+    success: true,
+    checkedAt: new Date().toISOString(),
+    diagnostics: {
+      cloudApiReady,
+      cloudApiTokenConfigured,
+      phoneNumberIdConfigured,
+      officialGroupsApiReady,
+      officialGroupIdConfigured,
+      automatedChannelApiSupported: false,
+      webhookUrlConfigured,
+      legacyAutoPostDiagnosis: {
+        status: 'unsupported_for_existing_consumer_groups_and_channels',
+        summary:
+          'Why the legacy Auto-Post button did not deliver to your Group or Channel: (1) A public group invite link (chat.whatsapp.com/...) is a browser join link, not an API destination ID. (2) Standard Meta WhatsApp Cloud API does not provide an endpoint for automated publishing to WhatsApp Channels (whatsapp.com/channel/...). (3) A generic webhook returning HTTP 200 only confirms the webhook received JSON ("Submitted to Provider"), not that WhatsApp delivered a message.',
+        supportedGroupWorkflow:
+          'Use "Share on WhatsApp" (official api.whatsapp.com/send link) to select your existing CSC DOST WhatsApp Group(s) and confirm sending in WhatsApp, then mark as "Manually Confirmed".',
+        supportedChannelWorkflow:
+          'Use "Copy Channel Notification" + "Open My WhatsApp Channel" to paste and publish directly in your WhatsApp Channel, then mark as "Manually Confirmed".',
+        officialApiSupport: officialGroupsApiReady
+          ? 'Official Meta Cloud API + API-Managed Group ID detected on server.'
+          : 'No official API-managed Group credentials (WHATSAPP_CLOUD_API_TOKEN + WHATSAPP_PHONE_NUMBER_ID + WHATSAPP_OFFICIAL_GROUP_ID) are configured on the server.'
       }
-    } else {
-      console.log('ℹ️ No external HTTP webhook configured. Logging broadcast to server queue and memory.');
     }
+  });
+});
 
-    // Direct WhatsApp Sharing URLs (for manual fallback)
-    const encodedText = encodeURIComponent(messageText);
-    const directShareUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
-    const webShareUrl = `https://web.whatsapp.com/send?text=${encodedText}`;
+// 2. Get & Save WhatsApp Channel / Group Publisher Configuration
+app.get('/api/whatsapp/config', authenticateAdmin, (_req: Request, res: Response) => {
+  return res.json({
+    success: true,
+    config: getWhatsAppPublisherConfig()
+  });
+});
 
-    // Record in broadcast history
-    const logItem = {
-      id: `bc-${Date.now()}`,
-      title: title || 'Job / Edu Alert',
-      category: category || 'general',
-      messageText,
-      postUrl: postUrl || '',
-      targetGroup: effectiveGroup || 'Community Group',
-      targetChannel: targetChannel || 'CSC DOST Channel',
-      webhookStatus,
-      dispatchedVia,
-      webhookUrl: effectiveWebhook ? effectiveWebhook.slice(0, 35) + '...' : 'Not configured',
-      dispatchedAt: new Date().toISOString()
-    };
-    broadcastLogs.unshift(logItem);
-    if (broadcastLogs.length > 50) broadcastLogs.pop();
+app.put('/api/whatsapp/config', authenticateAdmin, (req: Request, res: Response) => {
+  const { channelUrl, channelName, groupInviteUrl, groupName, updatedBy } = req.body || {};
 
-    console.log('\n========================================');
-    console.log(`📢 AUTOMATED WHATSAPP BROADCAST DISPATCHED`);
-    console.log(`🏷️ TITLE: ${title || 'Notice'}`);
-    console.log(`🎯 TARGET GROUP: ${effectiveGroup || 'Configured Community Group'}`);
-    console.log(`📡 WEBHOOK STATUS: ${webhookStatus}`);
-    console.log('----------------------------------------');
-    console.log(messageText);
-    console.log('========================================\n');
+  const cleanChannelUrl = typeof channelUrl === 'string' ? channelUrl.trim() : undefined;
+  const cleanGroupUrl = typeof groupInviteUrl === 'string' ? groupInviteUrl.trim() : undefined;
 
-    return res.status(200).json({
-      success: true,
-      log: logItem,
-      directShareUrl,
-      webShareUrl,
-      webhookStatus,
-      webhookResponse,
-      dispatchedVia,
-      message: effectiveWebhook 
-        ? `Broadcast processed via ${dispatchedVia}! Status: ${webhookStatus}`
-        : 'Broadcast saved and logged to server queue.'
-    });
-  } catch (err: any) {
-    console.error('Broadcast endpoint error:', err);
-    return res.status(200).json({ 
-      success: true, 
-      warning: err?.message || 'Processed with warnings',
-      message: 'Broadcast payload formatted and processed.' 
+  if (cleanChannelUrl !== undefined && !isValidWhatsAppChannelUrl(cleanChannelUrl)) {
+    return res.status(400).json({
+      success: false,
+      error:
+        'Invalid WhatsApp Channel URL. Please enter a valid https://whatsapp.com/channel/... link.'
     });
   }
+
+  if (cleanGroupUrl !== undefined && !isValidWhatsAppGroupInviteUrl(cleanGroupUrl)) {
+    return res.status(400).json({
+      success: false,
+      error:
+        'Invalid WhatsApp Group Invite URL. Please enter a valid https://chat.whatsapp.com/... link.'
+    });
+  }
+
+  const saved = saveWhatsAppPublisherConfig({
+    ...(cleanChannelUrl !== undefined ? { channelUrl: cleanChannelUrl } : {}),
+    ...(typeof channelName === 'string' ? { channelName: channelName.trim() || 'CSC DOST Official WhatsApp Channel' } : {}),
+    ...(cleanGroupUrl !== undefined ? { groupInviteUrl: cleanGroupUrl } : {}),
+    ...(typeof groupName === 'string' ? { groupName: groupName.trim() || 'CSC DOST Community Group' } : {}),
+    ...(typeof updatedBy === 'string' ? { updatedBy: updatedBy.trim() } : {})
+  });
+
+  return res.json({
+    success: true,
+    config: saved,
+    message: 'WhatsApp Publisher destination settings saved.'
+  });
 });
 
-// Retrieve recent broadcast logs
-app.get('/api/whatsapp/broadcast-logs', (req: Request, res: Response) => {
-  return res.json({ success: true, logs: broadcastLogs });
+// 3. Get, Record, Confirm & Clear Publishing History
+app.get(['/api/whatsapp/history', '/api/whatsapp/broadcast-logs'], authenticateAdmin, (_req: Request, res: Response) => {
+  const history = getWhatsAppPublishHistory();
+  return res.json({
+    success: true,
+    history,
+    logs: history
+  });
 });
 
-// Test Webhook Gateway Connection
-app.post('/api/whatsapp/test-webhook', async (req: Request, res: Response) => {
+app.post('/api/whatsapp/history', authenticateAdmin, (req: Request, res: Response) => {
+  const {
+    postId,
+    title,
+    category,
+    destination,
+    sharingMethod,
+    status,
+    adminUser,
+    canonicalUrl,
+    errorDetails
+  } = req.body || {};
+
+  const validStatus: WhatsAppPublishStatus = ALLOWED_WHATSAPP_STATUSES.has(status)
+    ? status
+    : 'Prepared';
+
+  const entry = addWhatsAppPublishHistoryRecord({
+    postId: String(postId || '').trim(),
+    title: String(title || 'CSC DOST Notification').trim(),
+    category: String(category || 'job').trim(),
+    destination: String(destination || 'WhatsApp Group').trim(),
+    sharingMethod: String(sharingMethod || 'WhatsApp Share Link').trim(),
+    status: validStatus,
+    adminUser: String(adminUser || 'Authorized Staff').trim(),
+    canonicalUrl: String(canonicalUrl || 'https://www.cscdost.com').trim(),
+    confirmedAt:
+      validStatus === 'Manually Confirmed'
+        ? `${new Date().toLocaleDateString('en-GB')}, ${new Date().toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          })}`
+        : undefined,
+    confirmedBy: validStatus === 'Manually Confirmed' ? String(adminUser || 'Authorized Staff').trim() : undefined,
+    errorDetails: errorDetails ? String(errorDetails) : undefined
+  });
+
+  return res.json({
+    success: true,
+    entry,
+    history: getWhatsAppPublishHistory()
+  });
+});
+
+app.patch('/api/whatsapp/history/:id/status', authenticateAdmin, (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { status, adminUser } = req.body || {};
+
+  if (!ALLOWED_WHATSAPP_STATUSES.has(status)) {
+    return res.status(400).json({
+      success: false,
+      error: `Invalid status "${status}". Allowed statuses: ${Array.from(ALLOWED_WHATSAPP_STATUSES).join(', ')}`
+    });
+  }
+
+  // Only allow manual promotion to Manually Confirmed (or Prepared/Opened in WhatsApp/Failed) from UI;
+  // Sent and Delivered require verified provider responses.
+  if (status === 'Sent' || status === 'Delivered') {
+    return res.status(400).json({
+      success: false,
+      error: 'Sent and Delivered statuses are reserved for verified official API responses.'
+    });
+  }
+
+  const updated = updateWhatsAppPublishHistoryStatus(
+    id,
+    status as WhatsAppPublishStatus,
+    typeof adminUser === 'string' ? adminUser.trim() : undefined
+  );
+
+  if (!updated) {
+    return res.status(404).json({
+      success: false,
+      error: 'Publishing history entry not found.'
+    });
+  }
+
+  return res.json({
+    success: true,
+    entry: updated,
+    history: getWhatsAppPublishHistory()
+  });
+});
+
+app.delete('/api/whatsapp/history', authenticateAdmin, (_req: Request, res: Response) => {
+  clearWhatsAppPublishHistory();
+  return res.json({
+    success: true,
+    history: []
+  });
+});
+
+// 4. Official API / Verified Provider Dispatch Endpoint (with Idempotency & Honest Status Reporting)
+app.post('/api/whatsapp/broadcast', authenticateAdmin, async (req: Request, res: Response) => {
   try {
-    const { webhookUrl, targetGroup, gatewayProvider } = req.body || {};
-    const testWebhook = (webhookUrl || process.env.WHATSAPP_BROADCAST_WEBHOOK_URL || '').trim();
-    const testGroup = (targetGroup || process.env.WHATSAPP_TARGET_GROUP_ID || '').trim();
+    const {
+      postId,
+      title,
+      category,
+      messageText,
+      postUrl,
+      destination,
+      adminUser,
+      force
+    } = req.body || {};
 
-    if (!testWebhook) {
-      return res.status(200).json({ success: false, error: 'Please provide a Webhook URL to test.' });
-    }
-
-    if (testWebhook.includes('chat.whatsapp.com')) {
-      return res.status(200).json({
-        success: true,
-        message: 'Valid WhatsApp Community Group link detected!',
-        response: { type: 'invite_link', link: testWebhook }
+    if (!messageText || !String(messageText).trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'messageText is required for publishing.'
       });
     }
 
-    let fetchUrl = testWebhook;
-    let fetchOptions: any = {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(6000)
-    };
+    const cleanPostId = String(postId || title || 'post').trim().toLowerCase();
+    const cleanDest = String(destination || 'Official API Destination').trim();
+    const cleanAdmin = String(adminUser || 'Authorized Staff').trim();
+    const dedupKey = `${cleanPostId}::${cleanDest}`;
 
-    const isUltraMsg = testWebhook.includes('ultramsg.com') || gatewayProvider === 'ultramsg';
-    const isGreenApi = testWebhook.includes('green-api.com') || testWebhook.includes('greenapi.com') || gatewayProvider === 'greenapi';
-    const isEvolution = testWebhook.includes('evolution') || gatewayProvider === 'evolution';
+    // Prevent duplicate automated submissions within 60 seconds
+    const nowMs = Date.now();
+    const lastSentMs = recentAutomatedSubmissions.get(dedupKey) || 0;
+    if (!force && nowMs - lastSentMs < 60000) {
+      return res.status(429).json({
+        success: false,
+        error:
+          'Duplicate automated submission prevented: this notification was already submitted to this destination within the last 60 seconds.'
+      });
+    }
 
-    const testMsg = `🔔 *CSC DOST Webhook Connection Test*\n✅ Time: ${new Date().toLocaleString()}\n👉 Target Group: ${testGroup || 'Default'}\n🚀 WhatsApp Broadcast Engine is Connected and Ready!`;
+    const cloudToken = (process.env.WHATSAPP_CLOUD_API_TOKEN || '').trim();
+    const phoneNumberId = (process.env.WHATSAPP_PHONE_NUMBER_ID || '').trim();
+    const officialGroupId = (process.env.WHATSAPP_OFFICIAL_GROUP_ID || '').trim();
+    const configuredWebhook = (process.env.WHATSAPP_BROADCAST_WEBHOOK_URL || '').trim();
 
-    if (isUltraMsg) {
-      if (!fetchUrl.endsWith('/messages/chat')) {
-        fetchUrl = fetchUrl.replace(/\/+$/, '') + '/messages/chat';
+    // Case 1: Official Meta WhatsApp Cloud API with an API-managed Group ID
+    if (cloudToken && phoneNumberId && officialGroupId) {
+      try {
+        const metaRes = await fetch(
+          `https://graph.facebook.com/v18.0/${encodeURIComponent(phoneNumberId)}/messages`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${cloudToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              messaging_product: 'whatsapp',
+              recipient_type: 'group',
+              to: officialGroupId,
+              type: 'text',
+              text: { preview_url: true, body: String(messageText) }
+            }),
+            signal: AbortSignal.timeout(8000)
+          }
+        );
+
+        const metaData: any = await metaRes.json().catch(() => ({}));
+        const messageId = metaData?.messages?.[0]?.id;
+
+        if (metaRes.ok && messageId) {
+          recentAutomatedSubmissions.set(dedupKey, nowMs);
+          const entry = addWhatsAppPublishHistoryRecord({
+            postId: cleanPostId,
+            title: String(title || 'CSC DOST Notification'),
+            category: String(category || 'job'),
+            destination: `Official API Group (${officialGroupId})`,
+            sharingMethod: 'Official WhatsApp Cloud API',
+            status: 'Sent',
+            adminUser: cleanAdmin,
+            canonicalUrl: String(postUrl || 'https://www.cscdost.com'),
+            providerMessageId: String(messageId)
+          });
+
+          return res.status(200).json({
+            success: true,
+            status: 'Sent',
+            providerMessageId: messageId,
+            entry,
+            history: getWhatsAppPublishHistory(),
+            message: `Verified by Meta Cloud API (Message ID: ${messageId}). Status recorded as Sent.`
+          });
+        } else {
+          const apiErrMsg =
+            metaData?.error?.message || `Meta Cloud API returned HTTP ${metaRes.status}`;
+          const failedEntry = addWhatsAppPublishHistoryRecord({
+            postId: cleanPostId,
+            title: String(title || 'CSC DOST Notification'),
+            category: String(category || 'job'),
+            destination: `Official API Group`,
+            sharingMethod: 'Official WhatsApp Cloud API',
+            status: 'Failed',
+            adminUser: cleanAdmin,
+            canonicalUrl: String(postUrl || 'https://www.cscdost.com'),
+            errorDetails: apiErrMsg
+          });
+
+          return res.status(400).json({
+            success: false,
+            status: 'Failed',
+            error: apiErrMsg,
+            entry: failedEntry,
+            history: getWhatsAppPublishHistory()
+          });
+        }
+      } catch (err: any) {
+        const errMsg = err?.message || 'Network error contacting Meta Cloud API';
+        const failedEntry = addWhatsAppPublishHistoryRecord({
+          postId: cleanPostId,
+          title: String(title || 'CSC DOST Notification'),
+          category: String(category || 'job'),
+          destination: 'Official API Group',
+          sharingMethod: 'Official WhatsApp Cloud API',
+          status: 'Failed',
+          adminUser: cleanAdmin,
+          canonicalUrl: String(postUrl || 'https://www.cscdost.com'),
+          errorDetails: errMsg
+        });
+
+        return res.status(500).json({
+          success: false,
+          status: 'Failed',
+          error: errMsg,
+          entry: failedEntry,
+          history: getWhatsAppPublishHistory()
+        });
       }
-      fetchOptions.body = JSON.stringify({
-        to: testGroup || '120363000000000000@g.us',
-        body: testMsg
-      });
-    } else if (isGreenApi) {
-      fetchOptions.body = JSON.stringify({
-        chatId: testGroup ? (testGroup.includes('@') ? testGroup : `${testGroup}@g.us`) : '120363000000000000@g.us',
-        message: testMsg
-      });
-    } else if (isEvolution) {
-      fetchOptions.body = JSON.stringify({
-        number: testGroup || '120363000000000000@g.us',
-        text: testMsg
-      });
-    } else {
-      fetchOptions.body = JSON.stringify({
-        type: 'test_connection',
-        category: 'job',
-        title: 'CSC DOST Webhook Connection Test',
-        body: testMsg,
-        url: 'https://www.cscdost.com',
-        published_at: new Date().toISOString(),
-        message: testMsg,
-        targetGroup: testGroup,
-        to: testGroup,
-        chatId: testGroup,
-        timestamp: new Date().toISOString()
-      });
     }
 
-    const start = Date.now();
-    const fetchRes = await fetch(fetchUrl, fetchOptions);
-    const duration = Date.now() - start;
-    const resText = await fetchRes.text();
+    // Case 2: Server Webhook configured (e.g. Make.com / custom automation)
+    // IMPORTANT: A webhook returning HTTP 200 only proves the payload was "Submitted to Provider",
+    // NOT that a WhatsApp message was delivered to a Group or Channel.
+    if (configuredWebhook && /^https?:\/\//i.test(configuredWebhook) && !configuredWebhook.includes('chat.whatsapp.com')) {
+      try {
+        const hookRes = await fetch(configuredWebhook, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: 'csc_dost_whatsapp_notification',
+            postId: cleanPostId,
+            title: title || 'CSC DOST Notification',
+            category: category || 'job',
+            messageText: String(messageText),
+            canonicalUrl: postUrl || 'https://www.cscdost.com',
+            submittedBy: cleanAdmin,
+            timestamp: new Date().toISOString()
+          }),
+          signal: AbortSignal.timeout(7000)
+        });
 
-    let parsedResponse: any = null;
-    try {
-      parsedResponse = JSON.parse(resText);
-    } catch {
-      parsedResponse = resText;
+        if (hookRes.ok) {
+          recentAutomatedSubmissions.set(dedupKey, nowMs);
+          const entry = addWhatsAppPublishHistoryRecord({
+            postId: cleanPostId,
+            title: String(title || 'CSC DOST Notification'),
+            category: String(category || 'job'),
+            destination: cleanDest || 'Configured Server Webhook',
+            sharingMethod: 'Server Webhook Relay',
+            status: 'Submitted to Provider',
+            adminUser: cleanAdmin,
+            canonicalUrl: String(postUrl || 'https://www.cscdost.com')
+          });
+
+          return res.status(200).json({
+            success: true,
+            status: 'Submitted to Provider',
+            entry,
+            history: getWhatsAppPublishHistory(),
+            message:
+              'Payload accepted by server webhook (Status: Submitted to Provider). Note: Webhook acceptance does not confirm WhatsApp Group or Channel delivery unless your downstream provider verifies delivery.'
+          });
+        } else {
+          const errText = await hookRes.text().catch(() => '');
+          const failedEntry = addWhatsAppPublishHistoryRecord({
+            postId: cleanPostId,
+            title: String(title || 'CSC DOST Notification'),
+            category: String(category || 'job'),
+            destination: cleanDest || 'Configured Server Webhook',
+            sharingMethod: 'Server Webhook Relay',
+            status: 'Failed',
+            adminUser: cleanAdmin,
+            canonicalUrl: String(postUrl || 'https://www.cscdost.com'),
+            errorDetails: `Webhook returned HTTP ${hookRes.status}: ${errText.slice(0, 120)}`
+          });
+
+          return res.status(400).json({
+            success: false,
+            status: 'Failed',
+            error: `Webhook returned HTTP ${hookRes.status}.`,
+            entry: failedEntry,
+            history: getWhatsAppPublishHistory()
+          });
+        }
+      } catch (err: any) {
+        const errMsg = err?.message || 'Webhook request failed';
+        const failedEntry = addWhatsAppPublishHistoryRecord({
+          postId: cleanPostId,
+          title: String(title || 'CSC DOST Notification'),
+          category: String(category || 'job'),
+          destination: cleanDest || 'Configured Server Webhook',
+          sharingMethod: 'Server Webhook Relay',
+          status: 'Failed',
+          adminUser: cleanAdmin,
+          canonicalUrl: String(postUrl || 'https://www.cscdost.com'),
+          errorDetails: errMsg
+        });
+
+        return res.status(500).json({
+          success: false,
+          status: 'Failed',
+          error: errMsg,
+          entry: failedEntry,
+          history: getWhatsAppPublishHistory()
+        });
+      }
     }
 
-    return res.status(200).json({
-      success: fetchRes.ok,
-      status: fetchRes.status,
-      statusText: fetchRes.statusText,
-      durationMs: duration,
-      response: parsedResponse,
-      message: fetchRes.ok ? `Gateway responded with HTTP ${fetchRes.status} in ${duration}ms!` : `Gateway returned HTTP ${fetchRes.status}: ${resText.slice(0, 150)}`
+    // Case 3: No official API or valid webhook configured
+    const failedEntry = addWhatsAppPublishHistoryRecord({
+      postId: cleanPostId,
+      title: String(title || 'CSC DOST Notification'),
+      category: String(category || 'job'),
+      destination: cleanDest,
+      sharingMethod: 'Official API Attempt',
+      status: 'Failed',
+      adminUser: cleanAdmin,
+      canonicalUrl: String(postUrl || 'https://www.cscdost.com'),
+      errorDetails:
+        'Official WhatsApp Business Cloud API credentials (WHATSAPP_CLOUD_API_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_OFFICIAL_GROUP_ID) are not configured on the server.'
+    });
+
+    return res.status(400).json({
+      success: false,
+      status: 'Failed',
+      error:
+        'Automated API delivery is unavailable: No official WhatsApp Business Cloud API credentials are configured on the server. Please use the supported "Share to WhatsApp Groups" or "Publish to WhatsApp Channel" workflows.',
+      entry: failedEntry,
+      history: getWhatsAppPublishHistory()
     });
   } catch (err: any) {
-    return res.status(200).json({ 
-      success: false, 
-      error: err?.name === 'TimeoutError' ? 'Webhook connection timed out (server did not respond in 6s).' : (err?.message || String(err)) 
+    console.error('[WhatsApp Publisher] Broadcast error:', err);
+    return res.status(500).json({
+      success: false,
+      status: 'Failed',
+      error: err?.message || 'Unexpected server error while processing WhatsApp request.'
     });
   }
 });
