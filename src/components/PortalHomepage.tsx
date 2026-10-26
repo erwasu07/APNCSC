@@ -605,6 +605,9 @@ export default function PortalHomepage({
         title: 'Identity & Documents',
         description: 'PAN Card, Aadhaar updates, Voter ID, Passport, and Driving Licence services.',
         icon: CreditCard,
+        iconBg: '#EFF6FF',
+        iconBorder: '#DBEAFE',
+        iconColor: '#2563EB',
         count: countByFilter(
           (s) =>
             s.category === 'cards_adda' ||
@@ -616,6 +619,9 @@ export default function PortalHomepage({
         title: 'J&K Certificates & Revenue',
         description: 'Domicile, Income, RBA/OBC/SC/ST certificates, Jamabandi, Fard, and Mutations.',
         icon: Landmark,
+        iconBg: '#ECFDF5',
+        iconBorder: '#D1FAE5',
+        iconColor: '#059669',
         count: countByFilter(
           (s) => s.category === 'revenue' || s.category === 'jk_state' || s.id === 'csc-certificates'
         ),
@@ -625,6 +631,9 @@ export default function PortalHomepage({
         title: 'Jobs & Application Assistance',
         description: 'JKSSB, SSC, Army & Railway online forms, admit cards, and document formatting.',
         icon: Briefcase,
+        iconBg: '#FFF7ED',
+        iconBorder: '#FFEDD5',
+        iconColor: '#EA580C',
         count: countByFilter((s) => ['edu-exams', 'dig-form', 'dig-photo'].includes(s.id)),
       },
       {
@@ -632,6 +641,9 @@ export default function PortalHomepage({
         title: 'Education & Scholarships',
         description: 'NSP & State scholarships, college admissions, IGNOU forms, and exam registrations.',
         icon: GraduationCap,
+        iconBg: '#F5F3FF',
+        iconBorder: '#EDE9FE',
+        iconColor: '#7C3AED',
         count: countByFilter((s) => s.category === 'education'),
       },
       {
@@ -639,10 +651,14 @@ export default function PortalHomepage({
         title: 'Welfare & Health',
         description: 'Ayushman Bharat Golden Card, PM-KISAN e-KYC, e-Shram, and pension schemes.',
         icon: ShieldCheck,
+        iconBg: '#FFF1F2',
+        iconBorder: '#FFE4E6',
+        iconColor: '#E11D48',
         count: countByFilter((s) =>
           ['csc-ayushman', 'csc-pmkisan', 'csc-eshram'].includes(s.id) ||
           s.name.toLowerCase().includes('pension') ||
-          s.name.toLowerCase().includes('welfare')
+          s.name.toLowerCase().includes('welfare') ||
+          s.name.toLowerCase().includes('marriage')
         ),
       },
       {
@@ -650,6 +666,9 @@ export default function PortalHomepage({
         title: 'Business & Tax',
         description: 'UDYAM MSME registration, GST assistance, and Class-3 Digital Signature (DSC).',
         icon: Building2,
+        iconBg: '#FFFBEB',
+        iconBorder: '#FEF3C7',
+        iconColor: '#D97706',
         count: countByFilter((s) => s.category === 'business'),
       },
       {
@@ -657,6 +676,9 @@ export default function PortalHomepage({
         title: 'Digital & Printing Services',
         description: 'Document scanning, PDF formatting, passport photo printing, and utility bills.',
         icon: Laptop,
+        iconBg: '#F0FDFA',
+        iconBorder: '#CCFBF1',
+        iconColor: '#0D9488',
         count: countByFilter((s) => s.category === 'digital' || s.id === 'csc-utility'),
       },
     ];
@@ -1960,9 +1982,173 @@ export default function PortalHomepage({
       <section
         id="service-directory-preview"
         aria-labelledby="directory-preview-heading"
-        className="w-full bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-4 pt-3 pb-0 md:p-0 space-y-3.5 md:space-y-5 scroll-mt-20"
+        className="w-full bg-[#F7F9FC] md:bg-transparent border-b border-[#E2E8F0] md:border-0 px-3 md:px-0 py-4 md:p-0 space-y-3.5 md:space-y-5 scroll-mt-20"
       >
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-1 md:border-b md:border-[#E2E8F0] md:pb-3">
+        {/* MOBILE LAYOUT (< 768px): Premium Category Header Banner + 2-Column Category Grid */}
+        <div className="md:hidden space-y-3">
+          {/* Premium Category Header Banner */}
+          <div className="relative overflow-hidden rounded-[20px] bg-gradient-to-br from-white via-[#F4F8FF] to-[#EBF3FF] border border-[#DBEAFE] p-3.5 shadow-[0_4px_14px_rgba(37,99,235,0.06)]">
+            {/* Subtle decorative accent circles */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -right-6 -top-6 w-24 h-24 rounded-full bg-[#DBEAFE]/40 blur-xl"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute right-10 -bottom-6 w-20 h-20 rounded-full bg-[#BFDBFE]/30 blur-lg"
+            />
+
+            <div className="relative flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="inline-flex items-center gap-1.5 text-[11.5px] font-bold text-[#2563EB] uppercase tracking-wider">
+                  <LayoutGrid className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                  <span>SERVICE CATEGORIES</span>
+                </div>
+                <h2 className="text-[23px] font-extrabold text-[#102A43] tracking-tight leading-[1.18] mt-1">
+                  Browse Services by Category
+                </h2>
+                <p className="text-[13px] text-[#475569] leading-[1.38] mt-1">
+                  Explore all CSC services across different categories and find the help you need.
+                </p>
+              </div>
+
+              {/* Lightweight Folder & Documents SVG Illustration */}
+              <div
+                aria-hidden="true"
+                className="w-14 h-14 rounded-2xl bg-white/95 border border-[#DBEAFE] shadow-2xs flex items-center justify-center shrink-0 mt-0.5"
+              >
+                <svg
+                  viewBox="0 0 56 56"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-11 h-11"
+                >
+                  {/* Back Document Sheet */}
+                  <rect
+                    x="14"
+                    y="8"
+                    width="26"
+                    height="30"
+                    rx="3.5"
+                    fill="#EFF6FF"
+                    stroke="#3B82F6"
+                    strokeWidth="1.75"
+                  />
+                  <path
+                    d="M19 14H33M19 18.5H29"
+                    stroke="#60A5FA"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                  />
+                  {/* Front Service Folder */}
+                  <path
+                    d="M7 20C7 17.7909 8.79086 16 11 16H21.5L25 20H45C47.2091 20 49 21.7909 49 24V42C49 44.2091 47.2091 46 45 46H11C8.79086 46 7 44.2091 7 42V20Z"
+                    fill="#DBEAFE"
+                    stroke="#2563EB"
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                  />
+                  {/* Folder Inner Highlight Flap */}
+                  <rect
+                    x="11"
+                    y="25"
+                    width="22"
+                    height="14"
+                    rx="2.5"
+                    fill="#FFFFFF"
+                    stroke="#93C5FD"
+                    strokeWidth="1.5"
+                  />
+                  <path
+                    d="M15 30H27M15 34H23"
+                    stroke="#2563EB"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                  />
+                  {/* Category Check Badge */}
+                  <circle
+                    cx="41"
+                    cy="37"
+                    r="6.5"
+                    fill="#ECFDF5"
+                    stroke="#059669"
+                    strokeWidth="1.75"
+                  />
+                  <path
+                    d="M38.3 37L40.2 38.9L43.8 35.2"
+                    stroke="#059669"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* 2-Column Mobile Category Card Grid */}
+          <div className="grid grid-cols-1 min-[340px]:grid-cols-2 gap-2.5">
+            {[
+              ...directoryCategories,
+              {
+                id: 'all',
+                title: 'All Citizen Services',
+                description: 'Browse our complete directory of citizen e-services, certificates, and online forms.',
+                icon: LayoutGrid,
+                iconBg: '#EEF2FF',
+                iconBorder: '#E0E7FF',
+                iconColor: '#4F46E5',
+                count: SERVICES_LIST.length,
+              },
+            ].map((cat) => {
+              const Icon = cat.icon;
+              return (
+                <button
+                  key={`mob-cat-${cat.id}`}
+                  type="button"
+                  onClick={() => selectServiceDirectoryCategory(cat.id)}
+                  className="w-full text-left bg-white border border-[#E2E8F0] hover:border-[#BFDBFE] rounded-[16px] p-3 shadow-[0_2px_8px_rgba(16,42,67,0.04)] active:scale-[0.99] transition-all flex flex-col justify-between group cursor-pointer"
+                >
+                  <div>
+                    <div
+                      style={{
+                        backgroundColor: cat.iconBg,
+                        borderColor: cat.iconBorder,
+                        color: cat.iconColor,
+                      }}
+                      className="w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 mb-2"
+                    >
+                      <Icon className="w-4 h-4" aria-hidden="true" />
+                    </div>
+
+                    <h3 className="text-[13.5px] font-bold text-[#102A43] leading-[1.25] group-hover:text-[#2563EB] transition-colors">
+                      {cat.title}
+                    </h3>
+
+                    <p className="text-[11.5px] text-[#475569] leading-[1.35] line-clamp-2 mt-1">
+                      {cat.description}
+                    </p>
+                  </div>
+
+                  <div className="mt-2.5 pt-2 border-t border-[#F1F5F9] flex items-center justify-between gap-1.5">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#F8FAFC] text-[#334155] border border-[#E2E8F0] tabular-nums">
+                      {cat.count} Services
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      className="w-6 h-6 rounded-full bg-[#EFF6FF] border border-[#DBEAFE] text-[#2563EB] flex items-center justify-center shrink-0 group-hover:bg-[#2563EB] group-hover:text-white transition-colors"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* DESKTOP LAYOUT (>= 768px): Preserved Unchanged */}
+        <div className="hidden md:flex sm:flex-row sm:items-end justify-between gap-2 pb-1 md:border-b md:border-[#E2E8F0] md:pb-3">
           <div>
             <h2
               id="directory-preview-heading"
@@ -1984,7 +2170,7 @@ export default function PortalHomepage({
           </button>
         </div>
 
-        <div className="-mx-4 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-t md:border-0 border-[#E2E8F0] bg-white md:bg-transparent grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0 md:gap-4">
+        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-4">
           {directoryCategories.map((cat) => {
             const Icon = cat.icon;
             return (
