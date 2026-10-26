@@ -6,11 +6,8 @@ import {
   CreditCard,
   Fingerprint,
   FileText,
-  ExternalLink,
   GraduationCap,
   ShieldCheck,
-  CheckCircle2,
-  Clock,
   Compass,
   Wrench,
   Minimize2,
@@ -27,17 +24,17 @@ import {
   Building2,
   Landmark,
   Laptop,
-  FileSearch,
-  CheckCircle,
-  AlertCircle,
-  Info
+  Info,
+  HeartHandshake,
+  LayoutGrid,
+  X,
 } from 'lucide-react';
 import { SARKARI_DATA, SARKARI_CATEGORIES, SarkariItem } from '../data/sarkariData';
 import { SERVICES_LIST, CATEGORY_LABELS, ServiceItem } from '../servicesData';
 import { GUIDE_ARTICLES } from './GuidesKnowledgeHub';
 import { TOOLS_LIST } from './tools/toolsData';
 import CitizenToolsDesk from './CitizenToolsDesk';
-import { ColourAccentCard } from './shared/ContentDesignSystem';
+import { ColourAccentCard, PortalCardFact } from './shared/ContentDesignSystem';
 
 interface PortalHomepageProps {
   onOpenJob: (item: SarkariItem) => void;
@@ -128,8 +125,8 @@ function getRecruitingOrganisation(item: SarkariItem): string {
 function getShortQualification(eligibility?: string): string | null {
   if (!eligibility || !eligibility.trim()) return null;
   const cleaned = eligibility.replace(/\s+/g, ' ').trim();
-  if (cleaned.length <= 72) return cleaned;
-  return `${cleaned.slice(0, 70).trim()}…`;
+  if (cleaned.length <= 68) return cleaned;
+  return `${cleaned.slice(0, 66).trim()}…`;
 }
 
 function renderStatusBadge(status: JobDeadlineStatus) {
@@ -170,22 +167,25 @@ export default function PortalHomepage({
   onOpenService,
   onApplyService,
   onOpenGuide,
-  onOpenTrack,
 }: PortalHomepageProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [showHeaderSearch, setShowHeaderSearch] = useState(false);
   const [jobOrgFilter, setJobOrgFilter] = useState<string>('all');
   const [jobStatusFilter, setJobStatusFilter] = useState<'active' | 'all' | 'closed'>('active');
   const [showAllJobs, setShowAllJobs] = useState(false);
   const [showAllEducation, setShowAllEducation] = useState(false);
 
-  // Listen for search focus event and keyboard shortcuts (Ctrl+K, /, Escape)
+  // Listen for search focus event from Header and keyboard shortcuts (Ctrl+K, /, Escape)
   useEffect(() => {
     const handleFocusSearch = () => {
-      const el = document.getElementById('portal-universal-search');
-      if (el) {
-        el.focus();
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+      setShowHeaderSearch(true);
+      setTimeout(() => {
+        const el = document.getElementById('portal-universal-search');
+        if (el) {
+          el.focus();
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 60);
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -198,8 +198,9 @@ export default function PortalHomepage({
       if ((e.key === '/' || ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k')) && !isInput) {
         e.preventDefault();
         handleFocusSearch();
-      } else if (e.key === 'Escape' && searchQuery) {
+      } else if (e.key === 'Escape' && (searchQuery || showHeaderSearch)) {
         setSearchQuery('');
+        setShowHeaderSearch(false);
       }
     };
 
@@ -209,7 +210,7 @@ export default function PortalHomepage({
       window.removeEventListener('focus-csc-search', handleFocusSearch);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [searchQuery]);
+  }, [searchQuery, showHeaderSearch]);
 
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
@@ -339,93 +340,150 @@ export default function PortalHomepage({
     const topJobs = jobsWithStatus
       .filter((j) => !j.isAdmission)
       .slice(0, 3)
-      .map((j) => ({
-        id: `job-${j.item.id}`,
-        categoryType: 'job' as const,
-        categoryBadge: 'Job',
-        organisation: j.organisation,
-        title: j.item.title,
-        summaryField: j.item.shortInfo,
-        metadataLine: j.qualification ? `Qualification: ${j.qualification}` : undefined,
-        dateOrMeta: j.item.lastDate ? `Closing: ${j.item.lastDate}` : `Published: ${j.item.postDate}`,
-        statusBadge: renderStatusBadge(j.status),
-        officialHref: j.item.officialLink,
-        actionLabel: 'View Details →',
-        onOpen: () => onOpenJob(j.item),
-      }));
+      .map((j) => {
+        const facts: PortalCardFact[] = [];
+        if (j.qualification) {
+          facts.push({ icon: 'qualification', label: 'Qualification', value: j.qualification });
+        }
+        if (j.item.lastDate) {
+          facts.push({ icon: 'calendar', label: 'Closing Date', value: j.item.lastDate });
+        } else if (j.item.postDate) {
+          facts.push({ icon: 'calendar', label: 'Published', value: j.item.postDate });
+        }
+        return {
+          id: `job-${j.item.id}`,
+          categoryType: j.item.category,
+          categoryBadge: 'Job / Recruitment',
+          organisation: j.organisation,
+          title: j.item.title,
+          summaryField: j.item.shortInfo,
+          infoFacts: facts,
+          statusBadge: renderStatusBadge(j.status),
+          officialHref: j.item.officialLink,
+          actionLabel: 'View Details →',
+          onOpen: () => onOpenJob(j.item),
+        };
+      });
 
     const topAdmissions = jobsWithStatus
       .filter((j) => j.isAdmission)
       .slice(0, 2)
-      .map((j) => ({
-        id: `adm-${j.item.id}`,
-        categoryType: 'admission' as const,
-        categoryBadge: 'Admission',
-        organisation: j.organisation,
-        title: j.item.title,
-        summaryField: j.item.shortInfo,
-        metadataLine: j.qualification ? `Qualification: ${j.qualification}` : undefined,
-        dateOrMeta: j.item.lastDate ? `Closing: ${j.item.lastDate}` : `Published: ${j.item.postDate}`,
-        statusBadge: renderStatusBadge(j.status),
-        officialHref: j.item.officialLink,
-        actionLabel: 'View Details →',
-        onOpen: () => onOpenJob(j.item),
-      }));
+      .map((j) => {
+        const facts: PortalCardFact[] = [];
+        if (j.qualification) {
+          facts.push({ icon: 'qualification', label: 'Eligibility', value: j.qualification });
+        }
+        if (j.item.lastDate) {
+          facts.push({ icon: 'calendar', label: 'Closing Date', value: j.item.lastDate });
+        } else if (j.item.postDate) {
+          facts.push({ icon: 'calendar', label: 'Published', value: j.item.postDate });
+        }
+        return {
+          id: `adm-${j.item.id}`,
+          categoryType: 'admission' as const,
+          categoryBadge: 'Admission / Education',
+          organisation: j.organisation,
+          title: j.item.title,
+          summaryField: j.item.shortInfo,
+          infoFacts: facts,
+          statusBadge: renderStatusBadge(j.status),
+          officialHref: j.item.officialLink,
+          actionLabel: 'View Details →',
+          onOpen: () => onOpenJob(j.item),
+        };
+      });
 
     const topSchemes = GUIDE_ARTICLES.filter((g) => g.category === 'Central Scheme')
       .slice(0, 2)
-      .map((scheme) => ({
-        id: `sch-${scheme.id}`,
-        categoryType: 'scheme' as const,
-        categoryBadge: 'Scheme',
-        organisation: scheme.responsibleDepartment || scheme.officialPortal,
-        title: scheme.title,
-        summaryField: scheme.summary,
-        metadataLine: scheme.benefitSummary ? `Benefit: ${scheme.benefitSummary}` : undefined,
-        dateOrMeta: scheme.lastUpdated ? `Updated: ${scheme.lastUpdated}` : undefined,
-        statusBadge: undefined,
-        officialHref: scheme.officialUrl,
-        actionLabel: 'Explore Scheme →',
-        onOpen: () => {
-          if (onOpenGuide) onOpenGuide(scheme.id);
-          else scrollToSection('knowledge-hub');
-        },
-      }));
+      .map((scheme) => {
+        const facts: PortalCardFact[] = [];
+        if (scheme.benefitSummary) {
+          facts.push({ icon: 'benefit', label: 'Benefit', value: scheme.benefitSummary });
+        }
+        if (scheme.applicableRegion) {
+          facts.push({ icon: 'region', label: 'Region', value: scheme.applicableRegion });
+        } else if (scheme.lastUpdated) {
+          facts.push({ icon: 'clock', label: 'Updated', value: scheme.lastUpdated });
+        }
+        return {
+          id: `sch-${scheme.id}`,
+          categoryType: 'scheme' as const,
+          categoryBadge: 'Government Scheme',
+          organisation: scheme.responsibleDepartment || scheme.officialPortal,
+          title: scheme.title,
+          summaryField: scheme.summary,
+          infoFacts: facts,
+          statusBadge: undefined,
+          officialHref: scheme.officialUrl,
+          actionLabel: 'Explore Scheme →',
+          onOpen: () => {
+            if (onOpenGuide) onOpenGuide(scheme.id);
+            else scrollToSection('knowledge-hub');
+          },
+        };
+      });
 
-    const topServices = SERVICES_LIST.slice(0, 2).map((svc) => ({
-      id: `svc-${svc.id}`,
-      categoryType: 'service' as const,
-      categoryBadge: 'CSC Service',
-      organisation: CATEGORY_LABELS[svc.category] || 'CSC Digital Seva Desk',
-      title: svc.name,
-      summaryField: svc.description,
-      metadataLine: svc.price ? `Fee: ${svc.price}` : undefined,
-      dateOrMeta: svc.estimatedTime ? `Est. Time: ${svc.estimatedTime}` : undefined,
-      statusBadge: undefined,
-      officialHref: undefined,
-      actionLabel: 'View Service →',
-      onOpen: () => onOpenService(svc),
-    }));
+    const topServices = SERVICES_LIST.slice(0, 2).map((svc) => {
+      const facts: PortalCardFact[] = [];
+      if (svc.requirements && svc.requirements.length > 0) {
+        facts.push({
+          icon: 'requirement',
+          label: 'Requirement',
+          value: svc.requirements[0],
+        });
+      }
+      if (svc.price) {
+        facts.push({
+          icon: 'fee',
+          label: 'Fee',
+          value: svc.estimatedTime ? `${svc.price} (${svc.estimatedTime})` : svc.price,
+        });
+      } else if (svc.estimatedTime) {
+        facts.push({
+          icon: 'clock',
+          label: 'Processing',
+          value: svc.estimatedTime,
+        });
+      }
+      return {
+        id: `svc-${svc.id}`,
+        categoryType: 'service' as const,
+        categoryBadge: 'CSC E-Service',
+        organisation: CATEGORY_LABELS[svc.category] || 'CSC Digital Seva Desk',
+        title: svc.name,
+        summaryField: svc.description,
+        infoFacts: facts,
+        statusBadge: undefined,
+        officialHref: undefined,
+        actionLabel: 'View Service →',
+        onOpen: () => onOpenService(svc),
+      };
+    });
 
     const topGuides = GUIDE_ARTICLES.filter((g) => g.category !== 'Central Scheme')
       .slice(0, 2)
-      .map((guide) => ({
-        id: `gde-${guide.id}`,
-        categoryType: guide.category === 'Education' ? ('admission' as const) : ('guide' as const),
-        categoryBadge: guide.category === 'Education' ? 'Admission / Education' : 'Guide',
-        organisation: guide.officialPortal,
-        title: guide.title,
-        summaryField: guide.summary,
-        metadataLine: undefined,
-        dateOrMeta: `${guide.readTime} · ${guide.lastUpdated}`,
-        statusBadge: undefined,
-        officialHref: guide.officialUrl,
-        actionLabel: 'Read Guide →',
-        onOpen: () => {
-          if (onOpenGuide) onOpenGuide(guide.id);
-          else scrollToSection('knowledge-hub');
-        },
-      }));
+      .map((guide) => {
+        const facts: PortalCardFact[] = [
+          { icon: 'topic', label: 'Topic', value: guide.category },
+          { icon: 'clock', label: 'Updated', value: `${guide.lastUpdated} · ${guide.readTime}` },
+        ];
+        return {
+          id: `gde-${guide.id}`,
+          categoryType: guide.category === 'Education' ? ('admission' as const) : ('guide' as const),
+          categoryBadge: guide.category === 'Education' ? 'Admission / Education' : 'Citizen Guide',
+          organisation: guide.officialPortal,
+          title: guide.title,
+          summaryField: guide.summary,
+          infoFacts: facts,
+          statusBadge: undefined,
+          officialHref: guide.officialUrl,
+          actionLabel: 'Read Guide →',
+          onOpen: () => {
+            if (onOpenGuide) onOpenGuide(guide.id);
+            else scrollToSection('knowledge-hub');
+          },
+        };
+      });
 
     return [...topJobs, ...topAdmissions, ...topSchemes, ...topServices, ...topGuides];
   }, [jobsWithStatus, onOpenJob, onOpenService, onOpenGuide]);
@@ -586,485 +644,663 @@ export default function PortalHomepage({
     }
   };
 
+  // 6 Circular Category Shortcuts for "Browse by need"
+  const browseCategories = useMemo(
+    () => [
+      {
+        id: 'documents',
+        label: 'Documents',
+        Icon: FileText,
+        circleBg: '#EFF6FF',
+        circleBorder: '#DBEAFE',
+        iconColor: '#2563EB',
+        onClick: () => selectServiceDirectoryCategory('identity'),
+      },
+      {
+        id: 'jobs',
+        label: 'Jobs',
+        Icon: Briefcase,
+        circleBg: '#ECFDF5',
+        circleBorder: '#D1FAE5',
+        iconColor: '#0D9488',
+        onClick: () => {
+          setJobOrgFilter('all');
+          scrollToSection('recruitment-section');
+        },
+      },
+      {
+        id: 'education',
+        label: 'Education',
+        Icon: GraduationCap,
+        circleBg: '#F5F3FF',
+        circleBorder: '#EDE9FE',
+        iconColor: '#7C3AED',
+        onClick: () => scrollToSection('education-resources'),
+      },
+      {
+        id: 'schemes',
+        label: 'Schemes',
+        Icon: HeartHandshake,
+        circleBg: '#FFFBEB',
+        circleBorder: '#FEF3C7',
+        iconColor: '#D97706',
+        onClick: () => scrollToSection('schemes-section'),
+      },
+      {
+        id: 'tools',
+        label: 'Tools',
+        Icon: Wrench,
+        circleBg: '#EFF6FF',
+        circleBorder: '#DBEAFE',
+        iconColor: '#102A43',
+        onClick: () => {
+          window.location.hash = '#tools';
+        },
+      },
+      {
+        id: 'all-services',
+        label: 'All Services',
+        Icon: LayoutGrid,
+        circleBg: '#F1F5F9',
+        circleBorder: '#E2E8F0',
+        iconColor: '#102A43',
+        onClick: () => selectServiceDirectoryCategory('all'),
+      },
+    ],
+    []
+  );
+
   return (
-    <div className="space-y-0 md:space-y-14 pb-0 md:pb-8 w-full max-w-7xl mx-auto px-0 md:px-6">
+    <div className="w-full pb-0 md:pb-8">
       {/* ==================================================================== */}
-      {/* 1. SHORTENED, ACTION-FOCUSED HERO SECTION */}
+      {/* 1. COMPACT "BROWSE BY NEED" SECTION (Full-Width White Section)       */}
       {/* ==================================================================== */}
       <section
         id="hero-heading-section"
-        aria-labelledby="hero-heading"
-        className="w-full bg-white border-b border-[#E2E8F0] md:border md:rounded-2xl px-4 py-4 sm:p-8 md:p-10 shadow-none md:shadow-2xs mt-0 md:mt-4"
+        aria-label="Browse by need"
+        className="w-full bg-white border-b border-[#E2E8F0] px-4 sm:px-6 py-4 md:py-6"
       >
-        <div className="max-w-3xl mx-auto text-center space-y-3.5 md:space-y-5">
-          <div>
-            <h1
-              id="hero-heading"
-              className="text-2xl sm:text-4xl font-extrabold text-[#102A43] tracking-tight leading-tight"
-            >
-              Online Services, Job Updates &amp; Application Assistance
-            </h1>
-
-            <p className="text-sm sm:text-base text-[#64748B] max-w-2xl mx-auto leading-relaxed mt-1.5 sm:mt-2">
-              Find citizen services, explore recruitment updates and get help with online applications—all in one place.
-            </p>
-          </div>
-
-          {/* Prominent Search Field */}
-          <div className="max-w-2xl mx-auto">
-            <label htmlFor="portal-universal-search" className="sr-only">
-              Search services, jobs, schemes or guides
-            </label>
-            <div className="relative">
-              <Search
-                className="w-5 h-5 text-[#64748B] absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"
-                aria-hidden="true"
-              />
-              <input
-                id="portal-universal-search"
-                type="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search services, jobs, schemes or guides…"
-                className="w-full min-h-[44px] pl-11 pr-20 py-2.5 sm:py-3.5 bg-[#F6F8FC] focus:bg-white border border-[#E2E8F0] focus:border-[#2563EB] rounded-xl text-sm text-[#102A43] placeholder-[#64748B] focus:outline-none focus:ring-3 focus:ring-[#2563EB]/15 transition-all"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#64748B] hover:text-[#102A43] px-2.5 py-1.5 bg-white border border-[#E2E8F0] rounded-lg transition-colors cursor-pointer"
-                >
-                  Clear
-                </button>
-              )}
+        <div className="max-w-7xl mx-auto">
+          {/* DESKTOP LAYOUT (>= 768px): Left Heading + Right 6 Circular Shortcuts in 1 Row */}
+          <div className="hidden md:flex md:items-center md:justify-between md:gap-8">
+            <div className="max-w-sm shrink-0">
+              <h1
+                id="hero-heading"
+                className="text-2xl lg:text-[28px] font-extrabold text-[#102A43] tracking-tight leading-[1.22]"
+              >
+                Everyday services.
+                <span className="block">One simple place.</span>
+              </h1>
+              <p className="text-sm text-[#475569] mt-1.5">
+                Choose a category to get started.
+              </p>
             </div>
 
-            {/* 5 Quick Shortcuts Below Search */}
-            <div className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-2 pt-2.5 text-xs">
-              <span className="text-[#64748B] font-medium mr-0.5">Quick shortcuts:</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setJobOrgFilter('jkssb');
-                  scrollToSection('recruitment-section');
-                }}
-                className="min-h-[36px] px-2.5 py-1.5 bg-[#F6F8FC] hover:bg-blue-50 text-[#102A43] hover:text-[#2563EB] border border-[#E2E8F0] rounded-lg font-medium transition-colors cursor-pointer"
-              >
-                JKSSB
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const panSvc = SERVICES_LIST.find((s) => s.id === 'csc-pan');
-                  if (panSvc) onOpenService(panSvc);
-                }}
-                className="min-h-[36px] px-2.5 py-1.5 bg-[#F6F8FC] hover:bg-blue-50 text-[#102A43] hover:text-[#2563EB] border border-[#E2E8F0] rounded-lg font-medium transition-colors cursor-pointer"
-              >
-                PAN Card
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const domSvc = SERVICES_LIST.find((s) => s.id === 'jk-domicile-cert');
-                  if (domSvc) onOpenService(domSvc);
-                }}
-                className="min-h-[36px] px-2.5 py-1.5 bg-[#F6F8FC] hover:bg-blue-50 text-[#102A43] hover:text-[#2563EB] border border-[#E2E8F0] rounded-lg font-medium transition-colors cursor-pointer"
-              >
-                Domicile
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const schSvc = SERVICES_LIST.find((s) => s.id === 'edu-scholarship');
-                  if (schSvc) onOpenService(schSvc);
-                }}
-                className="min-h-[36px] px-2.5 py-1.5 bg-[#F6F8FC] hover:bg-blue-50 text-[#102A43] hover:text-[#2563EB] border border-[#E2E8F0] rounded-lg font-medium transition-colors cursor-pointer"
-              >
-                Scholarships
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  window.location.hash = '#tools';
-                }}
-                className="min-h-[36px] px-2.5 py-1.5 bg-[#F6F8FC] hover:bg-blue-50 text-[#102A43] hover:text-[#2563EB] border border-[#E2E8F0] rounded-lg font-medium transition-colors cursor-pointer"
-              >
-                Image Tools
-              </button>
+            <div
+              role="navigation"
+              aria-label="Category shortcuts"
+              className="flex items-start justify-end gap-5 lg:gap-7"
+            >
+              {browseCategories.map((cat) => {
+                const CatIcon = cat.Icon;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={cat.onClick}
+                    className="group flex flex-col items-center text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] rounded-xl cursor-pointer min-w-[68px]"
+                  >
+                    <span
+                      style={{
+                        backgroundColor: cat.circleBg,
+                        borderColor: cat.circleBorder,
+                        color: cat.iconColor,
+                      }}
+                      className="w-14 h-14 lg:w-16 lg:h-16 rounded-full border flex items-center justify-center transition-transform group-hover:-translate-y-0.5"
+                    >
+                      <CatIcon className="w-6 h-6 lg:w-7 lg:h-7" aria-hidden="true" />
+                    </span>
+                    <span className="mt-2 text-xs lg:text-[13px] font-semibold text-[#102A43] group-hover:text-[#2563EB] transition-colors whitespace-nowrap">
+                      {cat.label}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Two Main Hero Actions: Explore Services (Primary) & Track Application (Secondary) */}
-          <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
-            <button
-              type="button"
-              onClick={() => scrollToSection('popular-services')}
-              className="min-h-[44px] px-5 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-semibold rounded-xl shadow-2xs transition-colors cursor-pointer inline-flex items-center gap-2"
+          {/* MOBILE LAYOUT (<= 767px): Stacked Heading + 3x2 Circular Shortcut Grid */}
+          <div className="md:hidden">
+            <div className="text-left">
+              <h1 className="text-[20px] font-extrabold text-[#102A43] tracking-tight leading-snug">
+                What do you need today?
+              </h1>
+              <p className="text-[13px] text-[#475569] mt-0.5">
+                Choose a category to begin.
+              </p>
+            </div>
+
+            <div
+              role="navigation"
+              aria-label="Category shortcuts"
+              className="mt-3.5 grid grid-cols-3 gap-x-3 gap-y-3.5"
             >
-              <span>Explore Services</span>
-              <ArrowRight className="w-4 h-4" aria-hidden="true" />
-            </button>
+              {browseCategories.map((cat) => {
+                const CatIcon = cat.Icon;
+                return (
+                  <button
+                    key={`mob-${cat.id}`}
+                    type="button"
+                    onClick={cat.onClick}
+                    className="group min-h-[44px] min-w-[44px] py-0.5 flex flex-col items-center justify-start text-center focus-visible:outline-2 focus-visible:outline-[#2563EB] rounded-xl cursor-pointer"
+                  >
+                    <span
+                      style={{
+                        backgroundColor: cat.circleBg,
+                        borderColor: cat.circleBorder,
+                        color: cat.iconColor,
+                      }}
+                      className="w-[52px] h-[52px] rounded-full border flex items-center justify-center transition-transform active:scale-95"
+                    >
+                      <CatIcon className="w-6 h-6" aria-hidden="true" />
+                    </span>
+                    <span className="mt-1.5 text-[13px] font-semibold text-[#102A43] leading-snug">
+                      {cat.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* COMPACT POPULAR LINKS ROW */}
+          <div className="mt-4 pt-3 border-t border-[#E2E8F0] flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs sm:text-[13px]">
+            <span className="font-semibold text-[#64748B]">Popular services:</span>
 
             <button
               type="button"
               onClick={() => {
-                if (onOpenTrack) onOpenTrack();
-                else window.location.hash = '#track';
+                const panSvc = SERVICES_LIST.find((s) => s.id === 'csc-pan');
+                if (panSvc) onOpenService(panSvc);
               }}
-              className="min-h-[44px] px-5 py-2.5 bg-white hover:bg-[#F6F8FC] text-[#102A43] border border-[#E2E8F0] text-sm font-semibold rounded-xl transition-colors cursor-pointer inline-flex items-center gap-2"
+              className="font-semibold text-[#102A43] hover:text-[#2563EB] inline-flex items-center gap-1 transition-colors cursor-pointer"
             >
-              <FileSearch className="w-4 h-4 text-[#2563EB]" aria-hidden="true" />
-              <span>Track Application</span>
+              <span>PAN card assistance</span>
+              <span aria-hidden="true" className="text-[#2563EB]">
+                →
+              </span>
+            </button>
+
+            <span aria-hidden="true" className="text-[#CBD5E1] hidden sm:inline">
+              ·
+            </span>
+
+            <button
+              type="button"
+              onClick={() => {
+                const domSvc = SERVICES_LIST.find((s) => s.id === 'jk-domicile-cert');
+                if (domSvc) onOpenService(domSvc);
+              }}
+              className="font-semibold text-[#102A43] hover:text-[#2563EB] inline-flex items-center gap-1 transition-colors cursor-pointer"
+            >
+              <span>Domicile guidance</span>
+              <span aria-hidden="true" className="text-[#2563EB]">
+                →
+              </span>
+            </button>
+
+            <span aria-hidden="true" className="text-[#CBD5E1] hidden sm:inline">
+              ·
+            </span>
+
+            <button
+              type="button"
+              onClick={() => {
+                window.location.hash = '#tools';
+              }}
+              className="font-semibold text-[#102A43] hover:text-[#2563EB] inline-flex items-center gap-1 transition-colors cursor-pointer"
+            >
+              <span>Photo &amp; PDF tools</span>
+              <span aria-hidden="true" className="text-[#2563EB]">
+                →
+              </span>
             </button>
           </div>
-        </div>
 
-        {/* Live Search Results Panel */}
-        {searchResults && (
-          <div
-            role="region"
-            aria-label="Search Results"
-            className="mt-6 pt-6 border-t border-[#E2E8F0] max-w-4xl mx-auto space-y-5 text-left"
-          >
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold text-[#102A43]">
-                Search Results for &ldquo;{searchQuery}&rdquo; ({searchResults.total} found)
-              </h2>
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="text-xs font-semibold text-[#2563EB] hover:underline cursor-pointer"
-              >
-                Close Search
-              </button>
-            </div>
-
-            {searchResults.total === 0 ? (
-              <div className="bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl p-6 text-center space-y-2">
-                <p className="text-sm font-semibold text-[#102A43]">
-                  No matching services, jobs, schemes or tools found.
-                </p>
-                <p className="text-xs text-[#64748B]">
-                  Try searching for keywords like &ldquo;PAN Card&rdquo;, &ldquo;Domicile&rdquo;, &ldquo;JKSSB&rdquo;, &ldquo;PM-KISAN&rdquo;, or &ldquo;Compress&rdquo;.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-5">
-                {searchResults.services.length > 0 && (
-                  <div className="space-y-2.5">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
-                      Citizen Services
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                      {searchResults.services.map((svc) => (
-                        <ColourAccentCard
-                          key={svc.id}
-                          categoryType="service"
-                          categoryLabel="CSC Service"
-                          organisation={CATEGORY_LABELS[svc.category] || 'CSC Digital Seva Desk'}
-                          title={svc.name}
-                          summary={svc.description}
-                          footerMeta={svc.price ? `Fee: ${svc.price}` : svc.estimatedTime ? `Est: ${svc.estimatedTime}` : undefined}
-                          actionLabel="View Service →"
-                          onPrimaryClick={() => onOpenService(svc)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {searchResults.jobs.length > 0 && (
-                  <div className="space-y-2.5">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
-                      Jobs &amp; Recruitment Notices
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                      {searchResults.jobs.map((job) => {
-                        const st = computeJobDeadlineStatus(job.lastDate);
-                        const isAdmission =
-                          job.category === 'cluster_univ' ||
-                          job.category === 'exam_forms' ||
-                          job.category === 'admissions' ||
-                          job.category === 'nta';
-                        return (
-                          <ColourAccentCard
-                            key={job.id}
-                            categoryType={isAdmission ? 'admission' : 'job'}
-                            categoryLabel={isAdmission ? 'Admission' : 'Job'}
-                            organisation={getRecruitingOrganisation(job)}
-                            statusBadge={renderStatusBadge(st)}
-                            title={job.title}
-                            summary={job.shortInfo}
-                            footerMeta={job.lastDate ? `Closing: ${job.lastDate}` : job.postDate ? `Published: ${job.postDate}` : undefined}
-                            officialHref={job.officialLink}
-                            officialLabel="Official Link"
-                            actionLabel="View Details →"
-                            onPrimaryClick={() => onOpenJob(job)}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {searchResults.guides.length > 0 && (
-                  <div className="space-y-2.5">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
-                      Scheme &amp; Citizen Guides
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                      {searchResults.guides.map((guide) => {
-                        const isScheme = guide.category === 'Central Scheme';
-                        return (
-                          <ColourAccentCard
-                            key={guide.id}
-                            categoryType={isScheme ? 'scheme' : guide.category === 'Education' ? 'admission' : 'guide'}
-                            categoryLabel={isScheme ? 'Scheme' : guide.category}
-                            organisation={guide.responsibleDepartment || guide.officialPortal}
-                            title={guide.title}
-                            summary={guide.summary}
-                            footerMeta={`${guide.readTime} · ${guide.lastUpdated}`}
-                            officialHref={guide.officialUrl}
-                            officialLabel="Official Portal"
-                            actionLabel={isScheme ? 'Explore Scheme →' : 'Read Guide →'}
-                            onPrimaryClick={() => {
-                              if (onOpenGuide) onOpenGuide(guide.id);
-                              else scrollToSection('knowledge-hub');
-                            }}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {searchResults.tools.length > 0 && (
-                  <div className="space-y-2.5">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
-                      Online Document Tools
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {searchResults.tools.map((tool) => (
-                        <button
-                          key={tool.id}
-                          type="button"
-                          onClick={() => {
-                            window.location.hash = `#tools/${tool.id}`;
-                          }}
-                          className="p-3.5 text-left bg-[#F6F8FC] hover:bg-blue-50/60 border border-[#E2E8F0] hover:border-[#2563EB] rounded-xl transition-colors flex items-center justify-between gap-3 cursor-pointer"
-                        >
-                          <div>
-                            <div className="text-sm font-bold text-[#102A43]">{tool.name}</div>
-                            <p className="text-xs text-[#64748B] line-clamp-1 mt-0.5">
-                              {tool.shortDescription}
-                            </p>
-                          </div>
-                          <ArrowRight className="w-4 h-4 text-[#2563EB] shrink-0" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </section>
-
-      {/* ==================================================================== */}
-      {/* 1. PUBLIC RECRUITMENTS — LATEST RECRUITMENT & EXAM NOTICES */}
-      {/* ==================================================================== */}
-      <section
-        id="recruitment-section"
-        aria-labelledby="recruitment-heading"
-        className="w-full bg-[#F6F8FC] px-3 md:px-0 py-5 md:py-0 space-y-3.5 md:space-y-4 scroll-mt-20"
-      >
-        <div
-          id="sarkari-board"
-          className="flex flex-col sm:flex-row sm:items-end justify-between gap-2.5 border-b border-[#E2E8F0] pb-3 scroll-mt-20 px-1 md:px-0"
-        >
-          <div>
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2563EB] uppercase tracking-wider mb-1">
-              <Briefcase className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Public Recruitments</span>
-            </div>
-            <h2
-              id="recruitment-heading"
-              className="text-xl sm:text-2xl font-bold text-[#102A43] tracking-tight"
-            >
-              Latest Recruitment &amp; Exam Notices
-            </h2>
-            <p className="text-xs sm:text-sm text-[#64748B] mt-1.5">
-              Verified recruitment updates from JKSSB, Indian Army, SSC, Railway RRB, and state universities.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 self-start sm:self-auto">
-            {filteredJobs.length > 6 && (
-              <button
-                type="button"
-                onClick={() => setShowAllJobs((prev) => !prev)}
-                className="text-xs sm:text-sm font-semibold text-[#2563EB] hover:underline inline-flex items-center gap-1 cursor-pointer"
-              >
-                <span>
-                  {showAllJobs ? 'Show Compact List (6)' : `View All Jobs (${filteredJobs.length})`}
-                </span>
-                <ArrowRight className="w-4 h-4" aria-hidden="true" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Filter Controls: Organisation + Status Filter (Open vs All/Closed) */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 px-1 md:px-0">
-          <div
-            role="tablist"
-            aria-label="Filter jobs by organisation"
-            className="flex flex-wrap sm:flex-nowrap items-center gap-x-1.5 gap-y-2 sm:overflow-x-auto text-xs font-medium"
-          >
-            {[
-              { id: 'all', label: 'All Recruitments' },
-              { id: 'latest_mixed', label: 'Latest Updates (All Categories)' },
-              { id: 'jkssb', label: 'JKSSB' },
-              { id: 'army_jobs', label: 'Indian Army' },
-              { id: 'ssc_jobs', label: 'SSC' },
-              { id: 'rrb_jobs', label: 'Railway RRB' },
-              { id: 'universities', label: 'Universities' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={jobOrgFilter === tab.id}
-                onClick={() => {
-                  setJobOrgFilter(tab.id);
-                  setShowAllJobs(false);
-                }}
-                className={`min-h-[38px] px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors cursor-pointer border ${
-                  jobOrgFilter === tab.id
-                    ? 'bg-[#2563EB] text-white border-[#2563EB] font-semibold'
-                    : 'bg-white text-[#102A43] border-[#E2E8F0] hover:bg-[#F6F8FC]'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {jobOrgFilter !== 'latest_mixed' && (
-            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 text-xs">
-              <span className="text-[#64748B] font-medium mr-0.5">Status:</span>
-              {[
-                { id: 'active', label: 'Open & Active' },
-                { id: 'all', label: 'All Notices' },
-                { id: 'closed', label: 'Closed Archive' },
-              ].map((st) => (
+          {/* Toggleable Universal Search Drawer (Opened when Header Search is clicked) */}
+          {(showHeaderSearch || Boolean(searchQuery)) && (
+            <div className="mt-4 pt-4 border-t border-[#E2E8F0] space-y-4">
+              <div className="max-w-2xl relative">
+                <label htmlFor="portal-universal-search" className="sr-only">
+                  Search services, jobs, schemes or guides
+                </label>
+                <Search
+                  className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                  aria-hidden="true"
+                />
+                <input
+                  id="portal-universal-search"
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search services, jobs, schemes or guides…"
+                  className="w-full min-h-[42px] pl-10 pr-20 py-2 bg-[#F6F8FC] focus:bg-white border border-[#E2E8F0] focus:border-[#2563EB] rounded-xl text-sm text-[#102A43] placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 transition-all"
+                />
                 <button
-                  key={st.id}
                   type="button"
                   onClick={() => {
-                    setJobStatusFilter(st.id as 'active' | 'all' | 'closed');
-                    setShowAllJobs(false);
+                    setSearchQuery('');
+                    setShowHeaderSearch(false);
                   }}
-                  className={`min-h-[36px] px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer ${
-                    jobStatusFilter === st.id
-                      ? 'bg-[#102A43] text-white border-[#102A43] font-semibold'
-                      : 'bg-white text-[#64748B] border-[#E2E8F0] hover:text-[#102A43]'
-                  }`}
+                  aria-label="Close search"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#64748B] hover:text-[#102A43] px-2 py-1 bg-white border border-[#E2E8F0] rounded-lg inline-flex items-center gap-1 transition-colors cursor-pointer"
                 >
-                  {st.label}
+                  <X className="w-3.5 h-3.5" />
+                  <span>Close</span>
                 </button>
-              ))}
+              </div>
+
+              {searchResults && (
+                <div
+                  role="region"
+                  aria-label="Search Results"
+                  className="space-y-5 text-left"
+                >
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-bold text-[#102A43]">
+                      Search Results for &ldquo;{searchQuery}&rdquo; ({searchResults.total} found)
+                    </h2>
+                  </div>
+
+                  {searchResults.total === 0 ? (
+                    <div className="bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl p-6 text-center space-y-2">
+                      <p className="text-sm font-semibold text-[#102A43]">
+                        No matching services, jobs, schemes or tools found.
+                      </p>
+                      <p className="text-xs text-[#64748B]">
+                        Try searching for keywords like &ldquo;PAN Card&rdquo;, &ldquo;Domicile&rdquo;, &ldquo;JKSSB&rdquo;, &ldquo;PM-KISAN&rdquo;, or &ldquo;Compress&rdquo;.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-5">
+                      {searchResults.services.length > 0 && (
+                        <div className="space-y-2.5">
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
+                            Citizen Services
+                          </h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                            {searchResults.services.map((svc) => (
+                              <ColourAccentCard
+                                key={svc.id}
+                                categoryType="service"
+                                categoryLabel="CSC E-Service"
+                                organisation={CATEGORY_LABELS[svc.category] || 'CSC Digital Seva Desk'}
+                                title={svc.name}
+                                summary={svc.description}
+                                infoFacts={[
+                                  ...(svc.requirements?.[0]
+                                    ? [
+                                        {
+                                          icon: 'requirement' as const,
+                                          label: 'Requirement',
+                                          value: svc.requirements[0],
+                                        },
+                                      ]
+                                    : []),
+                                  ...(svc.price
+                                    ? [{ icon: 'fee' as const, label: 'Fee', value: svc.price }]
+                                    : []),
+                                ]}
+                                actionLabel="View Service →"
+                                onPrimaryClick={() => onOpenService(svc)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {searchResults.jobs.length > 0 && (
+                        <div className="space-y-2.5">
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
+                            Jobs &amp; Recruitment Notices
+                          </h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                            {searchResults.jobs.map((job) => {
+                              const st = computeJobDeadlineStatus(job.lastDate);
+                              const isAdmission =
+                                job.category === 'cluster_univ' ||
+                                job.category === 'exam_forms' ||
+                                job.category === 'admissions' ||
+                                job.category === 'nta';
+                              const qual = getShortQualification(job.eligibility);
+                              return (
+                                <ColourAccentCard
+                                  key={job.id}
+                                  categoryType={isAdmission ? 'admission' : job.category}
+                                  categoryLabel={isAdmission ? 'Admission / Education' : 'Job / Recruitment'}
+                                  organisation={getRecruitingOrganisation(job)}
+                                  statusBadge={renderStatusBadge(st)}
+                                  title={job.title}
+                                  summary={job.shortInfo}
+                                  infoFacts={[
+                                    ...(qual
+                                      ? [
+                                          {
+                                            icon: 'qualification' as const,
+                                            label: isAdmission ? 'Eligibility' : 'Qualification',
+                                            value: qual,
+                                          },
+                                        ]
+                                      : []),
+                                    ...(job.lastDate
+                                      ? [
+                                          {
+                                            icon: 'calendar' as const,
+                                            label: 'Closing Date',
+                                            value: job.lastDate,
+                                          },
+                                        ]
+                                      : []),
+                                  ]}
+                                  officialHref={job.officialLink}
+                                  actionLabel="View Details →"
+                                  onPrimaryClick={() => onOpenJob(job)}
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {searchResults.guides.length > 0 && (
+                        <div className="space-y-2.5">
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
+                            Scheme &amp; Citizen Guides
+                          </h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                            {searchResults.guides.map((guide) => {
+                              const isScheme = guide.category === 'Central Scheme';
+                              return (
+                                <ColourAccentCard
+                                  key={guide.id}
+                                  categoryType={
+                                    isScheme
+                                      ? 'scheme'
+                                      : guide.category === 'Education'
+                                      ? 'admission'
+                                      : 'guide'
+                                  }
+                                  categoryLabel={isScheme ? 'Government Scheme' : guide.category}
+                                  organisation={guide.responsibleDepartment || guide.officialPortal}
+                                  title={guide.title}
+                                  summary={guide.summary}
+                                  infoFacts={[
+                                    {
+                                      icon: isScheme ? ('benefit' as const) : ('topic' as const),
+                                      label: isScheme ? 'Benefit' : 'Topic',
+                                      value: guide.benefitSummary || guide.category,
+                                    },
+                                    {
+                                      icon: 'clock' as const,
+                                      label: 'Updated',
+                                      value: `${guide.lastUpdated} · ${guide.readTime}`,
+                                    },
+                                  ]}
+                                  officialHref={guide.officialUrl}
+                                  actionLabel={isScheme ? 'Explore Scheme →' : 'Read Guide →'}
+                                  onPrimaryClick={() => {
+                                    if (onOpenGuide) onOpenGuide(guide.id);
+                                    else scrollToSection('knowledge-hub');
+                                  }}
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {searchResults.tools.length > 0 && (
+                        <div className="space-y-2.5">
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
+                            Online Document Tools
+                          </h3>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            {searchResults.tools.map((tool) => (
+                              <button
+                                key={tool.id}
+                                type="button"
+                                onClick={() => {
+                                  window.location.hash = `#tools/${tool.id}`;
+                                }}
+                                className="p-3.5 text-left bg-[#F6F8FC] hover:bg-blue-50/60 border border-[#E2E8F0] hover:border-[#2563EB] rounded-xl transition-colors flex items-center justify-between gap-3 cursor-pointer"
+                              >
+                                <div>
+                                  <div className="text-sm font-bold text-[#102A43]">{tool.name}</div>
+                                  <p className="text-xs text-[#64748B] line-clamp-1 mt-0.5">
+                                    {tool.shortDescription}
+                                  </p>
+                                </div>
+                                <ArrowRight className="w-4 h-4 text-[#2563EB] shrink-0" />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
+      </section>
 
-        {jobOrgFilter === 'latest_mixed' ? (
-          /* ================================================================ */
-          /* MIXED-CONTENT LATEST UPDATES VIEW (Jobs, Admissions, Schemes...) */
-          /* ================================================================ */
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-            {mixedLatestUpdates.map((upd) => (
-              <ColourAccentCard
-                key={upd.id}
-                categoryType={upd.categoryType}
-                categoryLabel={upd.categoryBadge}
-                organisation={upd.organisation}
-                statusBadge={upd.statusBadge}
-                title={upd.title}
-                summary={upd.summaryField}
-                metadataLine={upd.metadataLine}
-                footerMeta={upd.dateOrMeta}
-                officialHref={upd.officialHref}
-                officialLabel="Official Link"
-                actionLabel={upd.actionLabel}
-                onPrimaryClick={upd.onOpen}
-              />
-            ))}
-          </div>
-        ) : (
-          /* ================================================================ */
-          /* RECRUITMENT & ADMISSIONS LISTING VIEW                            */
-          /* ================================================================ */
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-              {displayedJobs.map(
-                ({ item, isAdmission, contentTypeLabel, status, organisation, qualification }) => (
-                  <ColourAccentCard
-                    key={item.id}
-                    id={`home-recruitment-card-${item.id}`}
-                    categoryType={isAdmission ? 'admission' : 'job'}
-                    categoryLabel={contentTypeLabel}
-                    organisation={organisation}
-                    statusBadge={renderStatusBadge(status)}
-                    title={item.title}
-                    summary={item.shortInfo}
-                    metadataLine={
-                      qualification ? (
-                        <span>
-                          <strong className="font-semibold text-[#102A43]">Qualification:</strong>{' '}
-                          {qualification}
-                        </span>
-                      ) : undefined
-                    }
-                    footerMeta={
-                      item.lastDate ? (
-                        <span>
-                          Closing Date:{' '}
-                          <strong className="font-semibold text-[#102A43]">{item.lastDate}</strong>
-                        </span>
-                      ) : item.postDate ? (
-                        <span>Published: {item.postDate}</span>
-                      ) : undefined
-                    }
-                    officialHref={item.officialLink}
-                    officialLabel="Official Link"
-                    actionLabel="View Details →"
-                    onPrimaryClick={() => onOpenJob(item)}
-                  />
-                )
-              )}
+      {/* ==================================================================== */}
+      {/* ALIGNED CONTENT CONTAINER BELOW "BROWSE BY NEED"                     */}
+      {/* ==================================================================== */}
+      <div className="space-y-0 md:space-y-12 pt-0 md:pt-8 w-full max-w-7xl mx-auto px-0 md:px-6">
+        {/* ================================================================== */}
+        {/* 2. PUBLIC RECRUITMENTS — LATEST RECRUITMENT & EXAM NOTICES         */}
+        {/* ================================================================== */}
+        <section
+          id="recruitment-section"
+          aria-labelledby="recruitment-heading"
+          className="w-full bg-[#F6F8FC] px-3 md:px-0 py-5 md:py-0 space-y-3.5 md:space-y-4 scroll-mt-20"
+        >
+          <div
+            id="sarkari-board"
+            className="flex flex-col sm:flex-row sm:items-end justify-between gap-2.5 border-b border-[#E2E8F0] pb-3 scroll-mt-20 px-1 md:px-0"
+          >
+            <div>
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2563EB] uppercase tracking-wider mb-1">
+                <Briefcase className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Public Recruitments</span>
+              </div>
+              <h2
+                id="recruitment-heading"
+                className="text-xl sm:text-2xl font-bold text-[#102A43] tracking-tight"
+              >
+                Latest Recruitment &amp; Exam Notices
+              </h2>
+              <p className="text-xs sm:text-sm text-[#64748B] mt-1.5">
+                Verified recruitment updates from JKSSB, Indian Army, SSC, Railway RRB, and state universities.
+              </p>
             </div>
 
-            {filteredJobs.length > 6 && (
-              <div className="flex justify-center pt-1">
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              {filteredJobs.length > 6 && (
                 <button
                   type="button"
                   onClick={() => setShowAllJobs((prev) => !prev)}
-                  className="min-h-[44px] px-5 py-2.5 bg-white hover:bg-[#F6F8FC] text-[#102A43] border border-[#E2E8F0] rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer inline-flex items-center gap-2"
+                  className="text-xs sm:text-sm font-semibold text-[#2563EB] hover:underline inline-flex items-center gap-1 cursor-pointer"
                 >
                   <span>
-                    {showAllJobs
-                      ? 'Show Fewer Notices'
-                      : `View All ${filteredJobs.length} Recruitment Notices`}
+                    {showAllJobs ? 'Show Compact List (6)' : `View All Jobs (${filteredJobs.length})`}
                   </span>
-                  <ArrowRight className="w-4 h-4 text-[#2563EB]" aria-hidden="true" />
+                  <ArrowRight className="w-4 h-4" aria-hidden="true" />
                 </button>
+              )}
+            </div>
+          </div>
+
+          {/* Filter Controls: Organisation + Status Filter (Open vs All/Closed) */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 px-1 md:px-0">
+            <div
+              role="tablist"
+              aria-label="Filter jobs by organisation"
+              className="flex flex-wrap sm:flex-nowrap items-center gap-x-1.5 gap-y-2 sm:overflow-x-auto text-xs font-medium"
+            >
+              {[
+                { id: 'all', label: 'All Recruitments' },
+                { id: 'latest_mixed', label: 'Latest Updates (All Categories)' },
+                { id: 'jkssb', label: 'JKSSB' },
+                { id: 'army_jobs', label: 'Indian Army' },
+                { id: 'ssc_jobs', label: 'SSC' },
+                { id: 'rrb_jobs', label: 'Railway RRB' },
+                { id: 'universities', label: 'Universities' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={jobOrgFilter === tab.id}
+                  onClick={() => {
+                    setJobOrgFilter(tab.id);
+                    setShowAllJobs(false);
+                  }}
+                  className={`min-h-[38px] px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors cursor-pointer border ${
+                    jobOrgFilter === tab.id
+                      ? 'bg-[#2563EB] text-white border-[#2563EB] font-semibold'
+                      : 'bg-white text-[#102A43] border-[#E2E8F0] hover:bg-[#F6F8FC]'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {jobOrgFilter !== 'latest_mixed' && (
+              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 text-xs">
+                <span className="text-[#64748B] font-medium mr-0.5">Status:</span>
+                {[
+                  { id: 'active', label: 'Open & Active' },
+                  { id: 'all', label: 'All Notices' },
+                  { id: 'closed', label: 'Closed Archive' },
+                ].map((st) => (
+                  <button
+                    key={st.id}
+                    type="button"
+                    onClick={() => {
+                      setJobStatusFilter(st.id as 'active' | 'all' | 'closed');
+                      setShowAllJobs(false);
+                    }}
+                    className={`min-h-[36px] px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer ${
+                      jobStatusFilter === st.id
+                        ? 'bg-[#102A43] text-white border-[#102A43] font-semibold'
+                        : 'bg-white text-[#64748B] border-[#E2E8F0] hover:text-[#102A43]'
+                    }`}
+                  >
+                    {st.label}
+                  </button>
+                ))}
               </div>
             )}
-          </>
-        )}
-      </section>
+          </div>
+
+          {jobOrgFilter === 'latest_mixed' ? (
+            /* ================================================================ */
+            /* MIXED-CONTENT LATEST UPDATES VIEW (Jobs, Admissions, Schemes...) */
+            /* ================================================================ */
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+              {mixedLatestUpdates.map((upd) => (
+                <ColourAccentCard
+                  key={upd.id}
+                  categoryType={upd.categoryType}
+                  categoryLabel={upd.categoryBadge}
+                  organisation={upd.organisation}
+                  statusBadge={upd.statusBadge}
+                  title={upd.title}
+                  summary={upd.summaryField}
+                  infoFacts={upd.infoFacts}
+                  officialHref={upd.officialHref}
+                  actionLabel={upd.actionLabel}
+                  onPrimaryClick={upd.onOpen}
+                />
+              ))}
+            </div>
+          ) : (
+            /* ================================================================ */
+            /* RECRUITMENT & ADMISSIONS LISTING VIEW                            */
+            /* ================================================================ */
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                {displayedJobs.map(
+                  ({ item, isAdmission, status, organisation, qualification }) => {
+                    const facts: PortalCardFact[] = [];
+                    if (qualification) {
+                      facts.push({
+                        icon: 'qualification',
+                        label: isAdmission ? 'Eligibility' : 'Qualification',
+                        value: qualification,
+                      });
+                    }
+                    if (item.lastDate) {
+                      facts.push({
+                        icon: 'calendar',
+                        label: 'Closing Date',
+                        value: item.lastDate,
+                      });
+                    } else if (item.postDate) {
+                      facts.push({
+                        icon: 'calendar',
+                        label: 'Published',
+                        value: item.postDate,
+                      });
+                    }
+
+                    return (
+                      <ColourAccentCard
+                        key={item.id}
+                        id={`home-recruitment-card-${item.id}`}
+                        categoryType={isAdmission ? 'admission' : item.category}
+                        categoryLabel={
+                          isAdmission
+                            ? 'Admission / Education'
+                            : SARKARI_CATEGORIES[item.category]?.label || 'Job / Recruitment'
+                        }
+                        organisation={organisation}
+                        statusBadge={renderStatusBadge(status)}
+                        title={item.title}
+                        summary={item.shortInfo}
+                        infoFacts={facts}
+                        officialHref={item.officialLink}
+                        actionLabel="View Details →"
+                        onPrimaryClick={() => onOpenJob(item)}
+                      />
+                    );
+                  }
+                )}
+              </div>
+
+              {filteredJobs.length > 6 && (
+                <div className="flex justify-center pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowAllJobs((prev) => !prev)}
+                    className="min-h-[44px] px-5 py-2.5 bg-white hover:bg-[#F6F8FC] text-[#102A43] border border-[#E2E8F0] rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer inline-flex items-center gap-2"
+                  >
+                    <span>
+                      {showAllJobs
+                        ? 'Show Fewer Notices'
+                        : `View All ${filteredJobs.length} Recruitment Notices`}
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-[#2563EB]" aria-hidden="true" />
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </section>
 
       {/* ==================================================================== */}
       {/* 2. FAST, SIMPLE & SECURE DOCUMENT TOOLS */}
@@ -1172,38 +1408,32 @@ export default function PortalHomepage({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-          {educationUpdates.map(({ item, status, organisation, qualification }) => (
-            <ColourAccentCard
-              key={item.id}
-              categoryType="admission"
-              categoryLabel="Admission"
-              organisation={organisation}
-              statusBadge={renderStatusBadge(status)}
-              title={item.title}
-              summary={item.shortInfo}
-              metadataLine={
-                qualification ? (
-                  <span>
-                    <strong className="font-semibold text-[#102A43]">Eligibility:</strong>{' '}
-                    {qualification}
-                  </span>
-                ) : undefined
-              }
-              footerMeta={
-                item.lastDate ? (
-                  <span>
-                    Closing: <strong className="font-semibold text-[#102A43]">{item.lastDate}</strong>
-                  </span>
-                ) : item.postDate ? (
-                  <span>Published: {item.postDate}</span>
-                ) : undefined
-              }
-              officialHref={item.officialLink}
-              officialLabel="Official Link"
-              actionLabel="View Details →"
-              onPrimaryClick={() => onOpenJob(item)}
-            />
-          ))}
+          {educationUpdates.map(({ item, status, organisation, qualification }) => {
+            const facts: PortalCardFact[] = [];
+            if (qualification) {
+              facts.push({ icon: 'qualification', label: 'Eligibility', value: qualification });
+            }
+            if (item.lastDate) {
+              facts.push({ icon: 'calendar', label: 'Closing Date', value: item.lastDate });
+            } else if (item.postDate) {
+              facts.push({ icon: 'calendar', label: 'Published', value: item.postDate });
+            }
+            return (
+              <ColourAccentCard
+                key={item.id}
+                categoryType="admission"
+                categoryLabel="Admission / Education"
+                organisation={organisation}
+                statusBadge={renderStatusBadge(status)}
+                title={item.title}
+                summary={item.shortInfo}
+                infoFacts={facts}
+                officialHref={item.officialLink}
+                actionLabel="View Details →"
+                onPrimaryClick={() => onOpenJob(item)}
+              />
+            );
+          })}
         </div>
       </section>
 
@@ -1242,29 +1472,42 @@ export default function PortalHomepage({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-          {popularServices.map((item) => (
-            <ColourAccentCard
-              key={item.title}
-              categoryType="service"
-              categoryLabel="CSC E-Service"
-              organisation={
-                item.service ? CATEGORY_LABELS[item.service.category] : 'CSC Digital Seva Desk'
-              }
-              title={item.title}
-              summary={item.shortDescription}
-              footerMeta={
-                item.service?.price ? (
-                  <span>
-                    Fee: <strong className="font-semibold text-[#102A43]">{item.service.price}</strong>
-                  </span>
-                ) : undefined
-              }
-              actionLabel="View Service →"
-              onPrimaryClick={() => {
-                if (item.service) onOpenService(item.service);
-              }}
-            />
-          ))}
+          {popularServices.map((item) => {
+            const facts: PortalCardFact[] = [];
+            if (item.service?.requirements?.[0]) {
+              facts.push({
+                icon: 'requirement',
+                label: 'Requirement',
+                value: item.service.requirements[0],
+              });
+            }
+            if (item.service?.price) {
+              facts.push({
+                icon: 'fee',
+                label: 'Fee',
+                value: item.service.estimatedTime
+                  ? `${item.service.price} (${item.service.estimatedTime})`
+                  : item.service.price,
+              });
+            }
+            return (
+              <ColourAccentCard
+                key={item.title}
+                categoryType="service"
+                categoryLabel="CSC E-Service"
+                organisation={
+                  item.service ? CATEGORY_LABELS[item.service.category] : 'CSC Digital Seva Desk'
+                }
+                title={item.title}
+                summary={item.shortDescription}
+                infoFacts={facts}
+                actionLabel="View Service →"
+                onPrimaryClick={() => {
+                  if (item.service) onOpenService(item.service);
+                }}
+              />
+            );
+          })}
         </div>
       </section>
 
@@ -1376,9 +1619,11 @@ export default function PortalHomepage({
             organisation="Ministry of Agriculture & Farmers Welfare"
             title="PM Kisan Samman Nidhi (₹6,000/Year)"
             summary="Direct Benefit Transfer of ₹2,000 every four months for eligible landholding farmer families. Requires active e-KYC and Aadhaar-seeded bank account."
-            footerMeta="Benefit: ₹6,000 / year"
+            infoFacts={[
+              { icon: 'benefit', label: 'Benefit', value: '₹6,000 / year (DBT)' },
+              { icon: 'region', label: 'Region', value: 'All India' },
+            ]}
             officialHref="https://pmkisan.gov.in"
-            officialLabel="pmkisan.gov.in"
             actionLabel="Explore Scheme →"
             onPrimaryClick={() => {
               if (onOpenGuide) onOpenGuide('pm-kisan-ekyc-status-guide-2026');
@@ -1392,9 +1637,11 @@ export default function PortalHomepage({
             organisation="National Health Authority (NHA)"
             title="Ayushman Bharat PM-JAY & SEHAT"
             summary="Cashless hospitalisation coverage up to ₹5,00,000 per family per year across empaneled hospitals, including universal coverage for J&K residents."
-            footerMeta="Coverage: Up to ₹5 Lakh"
+            infoFacts={[
+              { icon: 'benefit', label: 'Benefit', value: 'Up to ₹5 Lakh / family' },
+              { icon: 'region', label: 'Region', value: 'J&K SEHAT & All India' },
+            ]}
             officialHref="https://beneficiary.nha.gov.in"
-            officialLabel="nha.gov.in"
             actionLabel="Explore Scheme →"
             onPrimaryClick={() => {
               if (onOpenGuide) onOpenGuide('ayushman-bharat-golden-card-guide-2026');
@@ -1411,9 +1658,11 @@ export default function PortalHomepage({
             organisation="Ministry of Labour & Social Welfare"
             title="e-Shram & Social Welfare Pensions"
             summary="Registration for unorganised sector workers, old-age/widow/disability pension schemes (ISSS), and marriage assistance in Jammu & Kashmir."
-            footerMeta="Social Security & DBT"
+            infoFacts={[
+              { icon: 'benefit', label: 'Benefit', value: 'Social Security & DBT' },
+              { icon: 'region', label: 'Region', value: 'J&K & National Portal' },
+            ]}
             officialHref="https://eshram.gov.in"
-            officialLabel="eshram.gov.in"
             actionLabel="Explore Scheme →"
             onPrimaryClick={() => {
               const eshramSvc = SERVICES_LIST.find((s) => s.id === 'csc-eshram');
@@ -1484,6 +1733,7 @@ export default function PortalHomepage({
           </p>
         </div>
       </section>
+      </div>
     </div>
   );
 }

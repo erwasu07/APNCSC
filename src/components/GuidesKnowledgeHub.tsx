@@ -1092,22 +1092,48 @@ export default function GuidesKnowledgeHub({
                       organisation={article.responsibleDepartment || article.officialPortal}
                       title={article.title}
                       summary={article.summary}
-                      metadataLine={
-                        article.benefitSummary ? (
-                          <span>
-                            <strong className="font-semibold text-[#0F766E]">Benefit:</strong>{' '}
-                            {article.benefitSummary}
-                          </span>
-                        ) : article.applicableRegion ? (
-                          <span>
-                            <strong className="font-semibold text-[#102A43]">Region:</strong>{' '}
-                            {article.applicableRegion}
-                          </span>
-                        ) : undefined
+                      infoFacts={
+                        isScheme
+                          ? [
+                              ...(article.benefitSummary
+                                ? [
+                                    {
+                                      icon: 'benefit' as const,
+                                      label: 'Benefit',
+                                      value: article.benefitSummary,
+                                    },
+                                  ]
+                                : []),
+                              ...(article.applicableRegion
+                                ? [
+                                    {
+                                      icon: 'region' as const,
+                                      label: 'Region',
+                                      value: article.applicableRegion,
+                                    },
+                                  ]
+                                : [
+                                    {
+                                      icon: 'clock' as const,
+                                      label: 'Updated',
+                                      value: article.lastUpdated,
+                                    },
+                                  ]),
+                            ]
+                          : [
+                              {
+                                icon: 'topic' as const,
+                                label: 'Topic',
+                                value: article.category,
+                              },
+                              {
+                                icon: 'clock' as const,
+                                label: 'Updated',
+                                value: `${article.lastUpdated} · ${article.readTime}`,
+                              },
+                            ]
                       }
-                      footerMeta={`${article.readTime} · Updated: ${article.lastUpdated}`}
                       officialHref={article.officialUrl}
-                      officialLabel="Official Portal"
                       actionLabel={isScheme ? 'Explore Scheme →' : 'Read Guide →'}
                       onPrimaryClick={() => {
                         setSelectedArticle(article);

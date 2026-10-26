@@ -304,40 +304,43 @@ export default function ExploreServicesDesk({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-          {displayedServices.map((item) => (
-            <ColourAccentCard
-              key={item.id}
-              id={`eservice-item-${item.id}`}
-              categoryType="service"
-              categoryLabel="CSC E-Service"
-              organisation={CATEGORY_LABELS[item.category]}
-              title={item.name}
-              summary={item.description}
-              metadataLine={
-                item.requirements && item.requirements.length > 0 ? (
-                  <span>
-                    <strong className="font-semibold text-[#102A43]">Key Requirements:</strong>{' '}
-                    {item.requirements.slice(0, 2).join(', ')}
-                    {item.requirements.length > 2 ? ` (+${item.requirements.length - 2} more)` : ''}
-                  </span>
-                ) : undefined
-              }
-              footerMeta={
-                item.price ? (
-                  <span>
-                    Fee: <strong className="font-semibold text-[#102A43]">{item.price}</strong>
-                    {item.estimatedTime ? ` · Est: ${item.estimatedTime}` : ''}
-                  </span>
-                ) : item.estimatedTime ? (
-                  <span>Est: {item.estimatedTime}</span>
-                ) : undefined
-              }
-              secondaryActionLabel="Request Assistance"
-              onSecondaryClick={() => handleApply(item)}
-              actionLabel="View Service →"
-              onPrimaryClick={() => handleOpenService(item)}
-            />
-          ))}
+          {displayedServices.map((item) => {
+            const reqText =
+              item.requirements && item.requirements.length > 0
+                ? `${item.requirements.slice(0, 2).join(', ')}${
+                    item.requirements.length > 2 ? ` (+${item.requirements.length - 2})` : ''
+                  }`
+                : undefined;
+            const feeText = item.price
+              ? item.estimatedTime
+                ? `${item.price} · ${item.estimatedTime}`
+                : item.price
+              : item.estimatedTime;
+
+            return (
+              <ColourAccentCard
+                key={item.id}
+                id={`eservice-item-${item.id}`}
+                categoryType="service"
+                categoryLabel="CSC E-Service"
+                organisation={CATEGORY_LABELS[item.category]}
+                title={item.name}
+                summary={item.description}
+                infoFacts={[
+                  ...(reqText
+                    ? [{ icon: 'requirement' as const, label: 'Requirement', value: reqText }]
+                    : []),
+                  ...(feeText
+                    ? [{ icon: 'fee' as const, label: 'Fee / Time', value: feeText }]
+                    : []),
+                ]}
+                secondaryActionLabel="Request Assistance"
+                onSecondaryClick={() => handleApply(item)}
+                actionLabel="View Service →"
+                onPrimaryClick={() => handleOpenService(item)}
+              />
+            );
+          })}
         </div>
       )}
 

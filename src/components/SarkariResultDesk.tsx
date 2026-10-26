@@ -1330,7 +1330,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                         <ColourAccentCard
                           key={item.id}
                           id={`recruitment-card-${item.id}`}
-                          categoryType={isAdmission ? 'admission' : 'job'}
+                          categoryType={isAdmission ? 'admission' : item.category}
                           categoryLabel={
                             isAdmission
                               ? 'Admission / Exam'
@@ -1339,36 +1339,31 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                           organisation={getOrgName(item)}
                           title={item.title}
                           summary={item.shortInfo}
-                          metadataLine={
-                            item.eligibility || item.totalPosts ? (
-                              <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1">
-                                {item.totalPosts && (
-                                  <span>
-                                    <strong className="font-semibold text-[#102A43]">Vacancies:</strong>{' '}
-                                    {item.totalPosts}
-                                  </span>
-                                )}
-                                {item.eligibility && (
-                                  <span>
-                                    <strong className="font-semibold text-[#102A43]">Eligibility:</strong>{' '}
-                                    {item.eligibility}
-                                  </span>
-                                )}
-                              </span>
-                            ) : undefined
-                          }
-                          footerMeta={
-                            item.lastDate ? (
-                              <span>
-                                Closing Date:{' '}
-                                <strong className="font-semibold text-[#102A43]">{item.lastDate}</strong>
-                              </span>
-                            ) : (
-                              <span>Published: {item.postDate || 'Recent'}</span>
-                            )
-                          }
+                          infoFacts={[
+                            ...(item.eligibility
+                              ? [
+                                  {
+                                    icon: 'qualification' as const,
+                                    label: isAdmission ? 'Eligibility' : 'Qualification',
+                                    value: item.eligibility,
+                                  },
+                                ]
+                              : item.totalPosts
+                              ? [
+                                  {
+                                    icon: 'qualification' as const,
+                                    label: 'Vacancies',
+                                    value: item.totalPosts,
+                                  },
+                                ]
+                              : []),
+                            {
+                              icon: 'calendar' as const,
+                              label: item.lastDate ? 'Closing Date' : 'Published',
+                              value: item.lastDate || item.postDate || 'Recent',
+                            },
+                          ]}
                           officialHref={item.officialLink}
-                          officialLabel="Official Link"
                           actionLabel="View Details →"
                           onPrimaryClick={() => handleItemClick(item)}
                         />

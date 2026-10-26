@@ -280,12 +280,41 @@ export default function Navbar({
           </div>
         </nav>
 
-        {/* Right Actions: Prominent Track Application + Mobile Menu Toggle */}
+        {/* Right Actions: Search + Prominent Track Application + Mobile Menu Toggle */}
         <div className="flex items-center gap-2">
           <button
             type="button"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              setMoreDropdownOpen(false);
+              if (
+                window.location.hash === '#tools' ||
+                window.location.hash.startsWith('#tools/') ||
+                window.location.hash.startsWith('#apply') ||
+                window.location.hash.startsWith('#track') ||
+                window.location.pathname !== '/'
+              ) {
+                if (onHomeClick) onHomeClick();
+                window.location.hash = '';
+                setTimeout(() => {
+                  window.dispatchEvent(new CustomEvent('focus-csc-search'));
+                }, 150);
+              } else {
+                window.dispatchEvent(new CustomEvent('focus-csc-search'));
+              }
+            }}
+            aria-label="Search portal"
+            title="Search services, jobs, schemes or guides"
+            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 bg-[#F6F8FC] hover:bg-slate-200/70 text-[#102A43] border border-[#E2E8F0] text-xs sm:text-sm font-semibold rounded-xl transition-colors cursor-pointer"
+          >
+            <Search className="w-4 h-4 text-[#475569] shrink-0" aria-hidden="true" />
+            <span className="hidden sm:inline">Search</span>
+          </button>
+
+          <button
+            type="button"
             onClick={handleTrackApplication}
-            className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-2xs transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-2xs transition-colors cursor-pointer"
           >
             <FileSearch className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>Track Application</span>

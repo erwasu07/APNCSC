@@ -106,19 +106,24 @@ export default function Services({ onServiceSelect }: ServicesProps) {
                 organisation={CATEGORY_LABELS[service.category]}
                 title={service.name}
                 summary={service.description}
-                metadataLine={
-                  service.requirements.length > 0 ? (
-                    <span>
-                      <strong className="font-semibold text-[#102A43]">Required Docs:</strong>{' '}
-                      {service.requirements.slice(0, 2).join(', ')}
-                    </span>
-                  ) : undefined
-                }
-                footerMeta={
-                  service.price
-                    ? `Fee: ${service.price} · Est: ${service.estimatedTime}`
-                    : `Est: ${service.estimatedTime}`
-                }
+                infoFacts={[
+                  ...(service.requirements.length > 0
+                    ? [
+                        {
+                          icon: 'requirement' as const,
+                          label: 'Requirement',
+                          value: service.requirements.slice(0, 2).join(', '),
+                        },
+                      ]
+                    : []),
+                  {
+                    icon: 'fee' as const,
+                    label: 'Fee / Time',
+                    value: service.price
+                      ? `${service.price} · ${service.estimatedTime}`
+                      : service.estimatedTime,
+                  },
+                ]}
                 actionLabel="View Service →"
                 onPrimaryClick={() => onServiceSelect(service.name)}
               />

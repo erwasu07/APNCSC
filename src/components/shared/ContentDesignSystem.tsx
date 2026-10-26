@@ -8,6 +8,17 @@ import {
   FileSearch,
   CheckCircle2,
   Info,
+  Briefcase,
+  Shield,
+  Train,
+  GraduationCap,
+  HeartHandshake,
+  FileText,
+  BookOpen,
+  Calendar,
+  Clock,
+  Tag,
+  MapPin,
 } from 'lucide-react';
 
 export interface BreadcrumbItem {
@@ -1019,30 +1030,43 @@ export function ContentPageLayout({
                     {safeRelated.map((rel) => {
                       const displayMeta = rel.metaText || rel.meta;
                       const relTheme = getCategoryTheme(rel.categoryLabel);
+                      const iconCfg = getPortalCardIconConfig(
+                        rel.categoryLabel,
+                        rel.categoryLabel,
+                        undefined,
+                        rel.title
+                      );
+                      const RelIcon = iconCfg.Icon;
                       return (
                         <article
                           key={rel.id}
-                          style={{
-                            borderLeft: `4px solid ${relTheme.accent}`,
-                            backgroundImage: `linear-gradient(90deg, ${relTheme.paleTint} 0%, #FFFFFF 36%)`,
-                            backgroundColor: '#FFFFFF',
-                          }}
-                          className="border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-[10px] p-3 transition-colors space-y-1.5"
+                          className="bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-[11px] p-3.5 transition-colors space-y-2.5 shadow-none"
                         >
-                          <div className="flex items-center justify-between gap-2 flex-wrap">
-                            <span
-                              style={{
-                                backgroundColor: relTheme.paleTint,
-                                color: relTheme.badgeText,
-                                borderColor: relTheme.badgeBorder,
-                              }}
-                              className="text-[10px] font-bold px-2 py-0.5 rounded border leading-tight"
-                            >
-                              {rel.categoryLabel}
-                            </span>
-                            {rel.statusNode}
+                          <div className="flex items-start justify-between gap-2.5">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div
+                                style={{
+                                  backgroundColor: iconCfg.bg,
+                                  borderColor: iconCfg.border,
+                                  color: iconCfg.color,
+                                }}
+                                className="w-9 h-9 rounded-lg border flex items-center justify-center shrink-0"
+                              >
+                                <RelIcon className="w-4 h-4" aria-hidden="true" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-xs font-semibold text-[#102A43] leading-snug truncate">
+                                  {rel.categoryLabel}
+                                </div>
+                                <div className="text-[11px] font-medium text-[#64748B] leading-snug">
+                                  {relTheme.defaultBadgeLabel}
+                                </div>
+                              </div>
+                            </div>
+                            {rel.statusNode && <div className="shrink-0">{rel.statusNode}</div>}
                           </div>
-                          <h4 className="text-xs sm:text-[13px] font-bold text-[#102A43] leading-snug">
+
+                          <h4 className="text-sm font-bold text-[#102A43] leading-[1.4]">
                             <button
                               type="button"
                               onClick={rel.onClick}
@@ -1051,20 +1075,21 @@ export function ContentPageLayout({
                               {rel.title}
                             </button>
                           </h4>
-                          <div className="pt-1.5 border-t border-[#E2E8F0] flex items-center justify-between gap-2 text-[11px]">
-                            {displayMeta ? (
-                              <span className="text-[#64748B] tabular-nums truncate">
-                                {displayMeta}
-                              </span>
-                            ) : (
-                              <span />
-                            )}
+
+                          {displayMeta && (
+                            <div className="bg-[#F6F8FC] border border-[#E2E8F0]/80 rounded-lg px-2.5 py-1.5 text-[11px] text-[#475569] flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5 text-[#64748B] shrink-0" aria-hidden="true" />
+                              <span className="truncate font-medium text-[#102A43]">{displayMeta}</span>
+                            </div>
+                          )}
+
+                          <div className="pt-2 border-t border-[#E2E8F0] flex items-center justify-end">
                             <button
                               type="button"
                               onClick={rel.onClick}
-                              className="font-bold text-[#2563EB] hover:underline cursor-pointer shrink-0"
+                              className="min-h-[36px] px-3 py-1.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1"
                             >
-                              {relTheme.defaultActionLabel}
+                              <span>{relTheme.defaultActionLabel}</span>
                             </button>
                           </div>
                         </article>
@@ -1119,14 +1144,14 @@ export function ContentPageLayout({
 
 /**
  * ============================================================================
- * APPROVED COLOUR-ACCENT LISTING CARD SYSTEM
+ * APPROVED OPTION 1 PORTAL LISTING CARD SYSTEM
  * ============================================================================
- * Shared category-to-colour mapping:
- * - Jobs / Recruitment: Accent #2563EB, Pale tint #EFF6FF
- * - Government Schemes: Accent #0D9488, Pale tint #F0FDFA
- * - Admissions / Education: Accent #7C3AED, Pale tint #F5F3FF
- * - Knowledge Hub / Guides: Accent #D97706, Pale tint #FFFBEB
- * - CSC E-SERVICES: Accent #0284C7, Pale tint #F0F9FF
+ * Compact white portal cards (#FFFFFF) on #F6F8FC listing background with:
+ * - Top Row: 40–44px category/organisation icon tile + Organisation name + smaller category label + status badge
+ * - Title: Bold navy #102A43 (17–18px on mobile, line-height 1.4)
+ * - Optional short summary (up to 2 lines, non-repetitive)
+ * - Information Strip: Compact pale-grey band (#F6F8FC) with up to 2 real facts + small icons & labels
+ * - Bottom Action Row: Quiet "Official source ↗" link on left (when available) + prominent #2563EB button on right
  */
 export type ListingCategoryKey =
   | 'job'
@@ -1152,16 +1177,16 @@ export const CATEGORY_COLOUR_THEMES: Record<ListingCategoryKey, CategoryColourTh
     accent: '#2563EB',
     paleTint: '#EFF6FF',
     badgeText: '#1D4ED8',
-    badgeBorder: '#BFDBFE',
+    badgeBorder: '#DBEAFE',
     defaultBadgeLabel: 'Job / Recruitment',
     defaultActionLabel: 'View Details →',
   },
   scheme: {
     key: 'scheme',
-    accent: '#0D9488',
-    paleTint: '#F0FDFA',
-    badgeText: '#0F766E',
-    badgeBorder: '#99F6E4',
+    accent: '#D97706',
+    paleTint: '#FFFBEB',
+    badgeText: '#B45309',
+    badgeBorder: '#FEF3C7',
     defaultBadgeLabel: 'Government Scheme',
     defaultActionLabel: 'Explore Scheme →',
   },
@@ -1170,7 +1195,7 @@ export const CATEGORY_COLOUR_THEMES: Record<ListingCategoryKey, CategoryColourTh
     accent: '#7C3AED',
     paleTint: '#F5F3FF',
     badgeText: '#6D28D9',
-    badgeBorder: '#DDD6FE',
+    badgeBorder: '#EDE9FE',
     defaultBadgeLabel: 'Admission / Education',
     defaultActionLabel: 'View Details →',
   },
@@ -1179,16 +1204,16 @@ export const CATEGORY_COLOUR_THEMES: Record<ListingCategoryKey, CategoryColourTh
     accent: '#D97706',
     paleTint: '#FFFBEB',
     badgeText: '#B45309',
-    badgeBorder: '#FDE68A',
+    badgeBorder: '#FEF3C7',
     defaultBadgeLabel: 'Citizen Guide',
     defaultActionLabel: 'Read Guide →',
   },
   service: {
     key: 'service',
-    accent: '#0284C7',
-    paleTint: '#F0F9FF',
-    badgeText: '#0369A1',
-    badgeBorder: '#BAE6FD',
+    accent: '#2563EB',
+    paleTint: '#EFF6FF',
+    badgeText: '#1D4ED8',
+    badgeBorder: '#DBEAFE',
     defaultBadgeLabel: 'CSC E-Service',
     defaultActionLabel: 'View Service →',
   },
@@ -1290,6 +1315,126 @@ export function getCategoryTheme(rawCategory?: string): CategoryColourTheme {
   return CATEGORY_COLOUR_THEMES[key];
 }
 
+export function getPortalCardIconConfig(
+  categoryType?: string,
+  categoryLabel?: string,
+  organisation?: string,
+  title?: string
+) {
+  const combined = `${categoryType || ''} ${categoryLabel || ''} ${organisation || ''} ${
+    title || ''
+  }`.toLowerCase();
+
+  if (
+    combined.includes('army') ||
+    combined.includes('defence') ||
+    combined.includes('agniveer') ||
+    combined.includes('military')
+  ) {
+    return {
+      Icon: Shield,
+      bg: '#ECFDF5',
+      border: '#D1FAE5',
+      color: '#0D9488',
+    };
+  }
+
+  if (
+    combined.includes('rrb') ||
+    combined.includes('railway') ||
+    combined.includes('rpf') ||
+    combined.includes('ntpc')
+  ) {
+    return {
+      Icon: Train,
+      bg: '#EFF6FF',
+      border: '#DBEAFE',
+      color: '#2563EB',
+    };
+  }
+
+  const key = resolveListingCategoryKey(categoryType || categoryLabel);
+
+  if (key === 'job') {
+    return {
+      Icon: Briefcase,
+      bg: '#EFF6FF',
+      border: '#DBEAFE',
+      color: '#2563EB',
+    };
+  }
+
+  if (key === 'admission') {
+    return {
+      Icon: GraduationCap,
+      bg: '#F5F3FF',
+      border: '#EDE9FE',
+      color: '#7C3AED',
+    };
+  }
+
+  if (key === 'scheme') {
+    return {
+      Icon: HeartHandshake,
+      bg: '#FFFBEB',
+      border: '#FEF3C7',
+      color: '#D97706',
+    };
+  }
+
+  if (key === 'service') {
+    return {
+      Icon: FileText,
+      bg: '#EFF6FF',
+      border: '#DBEAFE',
+      color: '#2563EB',
+    };
+  }
+
+  return {
+    Icon: BookOpen,
+    bg: '#F8FAFC',
+    border: '#E2E8F0',
+    color: '#2563EB',
+  };
+}
+
+export interface PortalCardFact {
+  icon?:
+    | 'qualification'
+    | 'calendar'
+    | 'benefit'
+    | 'region'
+    | 'requirement'
+    | 'fee'
+    | 'topic'
+    | 'clock';
+  label?: string;
+  value: React.ReactNode;
+}
+
+function renderFactIcon(iconType?: PortalCardFact['icon']) {
+  switch (iconType) {
+    case 'qualification':
+      return <GraduationCap className="w-3.5 h-3.5 text-[#64748B] shrink-0 mt-0.5" aria-hidden="true" />;
+    case 'calendar':
+      return <Calendar className="w-3.5 h-3.5 text-[#64748B] shrink-0 mt-0.5" aria-hidden="true" />;
+    case 'benefit':
+      return <HeartHandshake className="w-3.5 h-3.5 text-[#64748B] shrink-0 mt-0.5" aria-hidden="true" />;
+    case 'region':
+      return <MapPin className="w-3.5 h-3.5 text-[#64748B] shrink-0 mt-0.5" aria-hidden="true" />;
+    case 'requirement':
+      return <FileText className="w-3.5 h-3.5 text-[#64748B] shrink-0 mt-0.5" aria-hidden="true" />;
+    case 'fee':
+      return <Tag className="w-3.5 h-3.5 text-[#64748B] shrink-0 mt-0.5" aria-hidden="true" />;
+    case 'topic':
+      return <BookOpen className="w-3.5 h-3.5 text-[#64748B] shrink-0 mt-0.5" aria-hidden="true" />;
+    case 'clock':
+    default:
+      return <Clock className="w-3.5 h-3.5 text-[#64748B] shrink-0 mt-0.5" aria-hidden="true" />;
+  }
+}
+
 export interface ColourAccentCardProps {
   key?: React.Key;
   id?: string;
@@ -1299,17 +1444,19 @@ export interface ColourAccentCardProps {
   statusBadge?: React.ReactNode;
   title: string;
   summary?: string;
-  /** Optional content-specific structured line (e.g. Qualification, Benefit, Fee) */
+  /** Structured up to 2 facts for the pale-grey information strip */
+  infoFacts?: PortalCardFact[];
+  /** Optional content-specific structured line (auto-mapped into info strip if infoFacts not provided) */
   metadataLine?: React.ReactNode;
-  /** Footer left-side metadata (e.g. Closing date, Read time, Department, or Fee) */
+  /** Optional second fact (e.g. Closing date, Read time, or Fee) */
   footerMeta?: React.ReactNode;
   /** Primary action label (defaults to category-appropriate label with arrow) */
   actionLabel?: string;
   onPrimaryClick: () => void;
-  /** Optional official source link on footer */
+  /** Optional official source link on bottom-left */
   officialHref?: string;
   officialLabel?: string;
-  /** Optional secondary action button on footer (e.g. Request Assistance) */
+  /** Optional secondary action button on footer */
   secondaryActionLabel?: string;
   onSecondaryClick?: () => void;
 }
@@ -1322,60 +1469,107 @@ export function ColourAccentCard({
   statusBadge,
   title,
   summary,
+  infoFacts,
   metadataLine,
   footerMeta,
   actionLabel,
   onPrimaryClick,
   officialHref,
-  officialLabel = 'Official Link',
+  officialLabel = 'Official source',
   secondaryActionLabel,
   onSecondaryClick,
 }: ColourAccentCardProps) {
   const theme = getCategoryTheme(categoryType || categoryLabel);
-  const resolvedBadgeLabel = categoryLabel || theme.defaultBadgeLabel;
+  const resolvedCategoryLabel = categoryLabel || theme.defaultBadgeLabel;
+  const resolvedOrganisation = organisation || resolvedCategoryLabel;
+  const resolvedSubCategory = organisation ? resolvedCategoryLabel : theme.defaultBadgeLabel;
+
   const resolvedActionLabel = actionLabel
     ? actionLabel.includes('→')
       ? actionLabel
       : `${actionLabel} →`
     : theme.defaultActionLabel;
 
+  const iconCfg = getPortalCardIconConfig(categoryType, categoryLabel, organisation, title);
+  const CategoryIcon = iconCfg.Icon;
+
+  // Build up to 2 genuine facts for the information strip
+  const resolvedFacts: PortalCardFact[] = React.useMemo(() => {
+    if (Array.isArray(infoFacts) && infoFacts.length > 0) {
+      return infoFacts
+        .filter((f) => f && f.value !== undefined && f.value !== null && f.value !== '')
+        .slice(0, 2);
+    }
+
+    const fallbackFacts: PortalCardFact[] = [];
+    const catKey = theme.key;
+
+    if (metadataLine !== undefined && metadataLine !== null && metadataLine !== '') {
+      const firstIcon: PortalCardFact['icon'] =
+        catKey === 'job' || catKey === 'admission'
+          ? 'qualification'
+          : catKey === 'scheme'
+          ? 'benefit'
+          : catKey === 'service'
+          ? 'requirement'
+          : 'topic';
+      fallbackFacts.push({
+        icon: firstIcon,
+        value: metadataLine,
+      });
+    }
+
+    if (footerMeta !== undefined && footerMeta !== null && footerMeta !== '') {
+      const secondIcon: PortalCardFact['icon'] =
+        catKey === 'job' || catKey === 'admission'
+          ? 'calendar'
+          : catKey === 'service'
+          ? 'fee'
+          : 'clock';
+      fallbackFacts.push({
+        icon: secondIcon,
+        value: footerMeta,
+      });
+    }
+
+    return fallbackFacts.slice(0, 2);
+  }, [infoFacts, metadataLine, footerMeta, theme.key]);
+
   return (
     <article
       id={id}
-      style={{
-        borderLeft: `4px solid ${theme.accent}`,
-        backgroundImage: `linear-gradient(90deg, ${theme.paleTint} 0%, #FFFFFF 34%)`,
-        backgroundColor: '#FFFFFF',
-      }}
-      className="w-full border border-[#E2E8F0] hover:border-[#94A3B8] rounded-[11px] p-[14px] sm:p-4 transition-colors flex flex-col justify-between shadow-none"
+      className="w-full bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-[11px] p-[14px] sm:p-4 transition-colors flex flex-col justify-between shadow-none"
     >
       <div>
-        {/* TOP: Category Badge, Optional Status Badge, and Organisation Beneath */}
-        <div>
-          <div className="flex items-start justify-between gap-2 flex-wrap">
-            <span
+        {/* A. TOP ROW: 40–44px icon tile + Organisation name + smaller category label + status badge */}
+        <div className="flex items-start justify-between gap-2.5">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div
               style={{
-                backgroundColor: theme.paleTint,
-                color: theme.badgeText,
-                borderColor: theme.badgeBorder,
+                backgroundColor: iconCfg.bg,
+                borderColor: iconCfg.border,
+                color: iconCfg.color,
               }}
-              className="inline-flex items-center px-2.5 py-0.5 rounded-md border text-[11px] font-bold tracking-tight leading-snug"
+              className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl border flex items-center justify-center shrink-0"
             >
-              {resolvedBadgeLabel}
-            </span>
+              <CategoryIcon className="w-5 h-5" aria-hidden="true" />
+            </div>
 
-            {statusBadge && <div className="shrink-0">{statusBadge}</div>}
+            <div className="min-w-0">
+              <div className="text-xs sm:text-[13px] font-semibold text-[#102A43] leading-snug break-words">
+                {resolvedOrganisation}
+              </div>
+              <div className="text-[11px] font-medium text-[#64748B] leading-snug mt-0.5">
+                {resolvedSubCategory}
+              </div>
+            </div>
           </div>
 
-          {organisation && (
-            <div className="mt-1.5 text-xs font-medium text-[#475569] leading-snug break-words">
-              {organisation}
-            </div>
-          )}
+          {statusBadge && <div className="shrink-0">{statusBadge}</div>}
         </div>
 
-        {/* TITLE: Bold Navy #102A43, ~17–18px on mobile, line-height 1.4 */}
-        <h3 className="mt-2 text-[17px] sm:text-[18px] font-bold text-[#102A43] leading-[1.4] break-words">
+        {/* B. TITLE: 10px below top row, Bold Navy #102A43, 17–18px on mobile, line-height 1.4 */}
+        <h3 className="mt-2.5 text-[17px] sm:text-[18px] font-bold text-[#102A43] leading-[1.4] break-words">
           <button
             type="button"
             onClick={onPrimaryClick}
@@ -1385,60 +1579,82 @@ export function ColourAccentCard({
           </button>
         </h3>
 
-        {/* SUMMARY: Muted readable text, ~14px on mobile, up to 2 lines */}
+        {/* C. OPTIONAL SHORT SUMMARY: Max 2 lines, only when helpful */}
         {summary && (
-          <p className="mt-2 text-[14px] text-[#475569] leading-[1.45] line-clamp-2 break-words">
+          <p className="mt-1.5 text-[13.5px] sm:text-[14px] text-[#475569] leading-[1.45] line-clamp-2 break-words">
             {summary}
           </p>
         )}
 
-        {/* CONTENT-SPECIFIC METADATA LINE (Qualification / Benefit / Service Fee) */}
-        {metadataLine && (
-          <div className="mt-2 text-xs text-[#334155] leading-snug break-words">
-            {metadataLine}
+        {/* D. INFORMATION STRIP: 8–10px below title/summary, pale-grey band (#F6F8FC) with up to 2 facts */}
+        {resolvedFacts.length > 0 && (
+          <div
+            className={`mt-2.5 bg-[#F6F8FC] border border-[#E2E8F0]/80 rounded-lg px-3 py-2 ${
+              resolvedFacts.length === 2
+                ? 'grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-3 divide-y sm:divide-y-0 sm:divide-x divide-[#E2E8F0]'
+                : 'block'
+            }`}
+          >
+            {resolvedFacts.map((fact, idx) => (
+              <div
+                key={idx}
+                className={`flex items-start gap-2 text-xs text-[#334155] leading-snug min-w-0 ${
+                  resolvedFacts.length === 2 && idx === 1 ? 'pt-1.5 sm:pt-0 sm:pl-3' : ''
+                }`}
+              >
+                {renderFactIcon(fact.icon)}
+                <div className="min-w-0 break-words">
+                  {fact.label ? (
+                    <>
+                      <span className="text-[#64748B] font-medium">{fact.label}: </span>
+                      <span className="font-semibold text-[#102A43]">{fact.value}</span>
+                    </>
+                  ) : (
+                    fact.value
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* FOOTER: Subtle horizontal divider, metadata on left, action link with arrow on right */}
-      <div className="mt-3 pt-2.5 border-t border-[#E2E8F0] flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 text-xs">
-        <div className="text-[#475569] font-medium leading-snug min-w-0 break-words">
-          {footerMeta}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3 ml-auto shrink-0">
-          {officialHref && (
+      {/* E. BOTTOM ACTION ROW: 10–12px below info strip, quiet official source on left, filled #2563EB button on right */}
+      <div className="mt-3 pt-2.5 border-t border-[#E2E8F0] flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-xs">
+        <div className="min-w-0 flex items-center gap-3">
+          {officialHref ? (
             <a
               href={officialHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="min-h-[40px] sm:min-h-[44px] -my-1.5 py-1.5 px-1 text-xs font-medium text-[#475569] hover:text-[#102A43] hover:underline focus-visible:outline-2 focus-visible:outline-[#2563EB] rounded inline-flex items-center gap-1 transition-colors"
+              className="min-h-[38px] py-1.5 text-xs font-medium text-[#64748B] hover:text-[#102A43] hover:underline focus-visible:outline-2 focus-visible:outline-[#2563EB] rounded inline-flex items-center gap-1 transition-colors"
             >
-              <span>{officialLabel}</span>
-              <ExternalLink className="w-3 h-3 shrink-0" aria-hidden="true" />
+              <span>{officialLabel === 'Official Link' || officialLabel === 'Official Portal' ? 'Official source' : officialLabel}</span>
+              <span aria-hidden="true">↗</span>
             </a>
-          )}
-
-          {secondaryActionLabel && onSecondaryClick && (
+          ) : secondaryActionLabel && onSecondaryClick ? (
             <button
               type="button"
               onClick={onSecondaryClick}
-              className="min-h-[40px] sm:min-h-[44px] -my-1.5 py-1.5 px-1 text-xs font-medium text-[#475569] hover:text-[#102A43] hover:underline focus-visible:outline-2 focus-visible:outline-[#2563EB] rounded inline-flex items-center gap-1 transition-colors cursor-pointer"
+              className="min-h-[38px] py-1.5 text-xs font-medium text-[#475569] hover:text-[#102A43] hover:underline focus-visible:outline-2 focus-visible:outline-[#2563EB] rounded inline-flex items-center gap-1 transition-colors cursor-pointer"
             >
               <span>{secondaryActionLabel}</span>
             </button>
+          ) : (
+            <span />
           )}
-
-          <button
-            type="button"
-            onClick={onPrimaryClick}
-            className="min-h-[40px] sm:min-h-[44px] -my-1.5 py-1.5 px-1 text-xs sm:text-[13px] font-bold text-[#2563EB] hover:text-[#1D4ED8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] rounded inline-flex items-center gap-1 transition-colors cursor-pointer"
-          >
-            <span>{resolvedActionLabel}</span>
-          </button>
         </div>
+
+        <button
+          type="button"
+          onClick={onPrimaryClick}
+          className="min-h-[40px] sm:min-h-[42px] px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-[13px] font-semibold rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0 ml-auto"
+        >
+          <span>{resolvedActionLabel}</span>
+        </button>
       </div>
     </article>
   );
 }
+
 
