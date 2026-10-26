@@ -28,6 +28,11 @@ import {
   HeartHandshake,
   LayoutGrid,
   X,
+  Zap,
+  Users,
+  Globe,
+  Monitor,
+  ChevronRight,
 } from 'lucide-react';
 import { SARKARI_DATA, SARKARI_CATEGORIES, SarkariItem } from '../data/sarkariData';
 import { SERVICES_LIST, CATEGORY_LABELS, ServiceItem } from '../servicesData';
@@ -306,36 +311,54 @@ export default function PortalHomepage({
         title: 'PAN Card Services',
         shortDescription: 'New PAN application, corrections, and Aadhaar e-KYC assistance.',
         icon: CreditCard,
+        iconBg: '#EFF6FF',
+        iconBorder: '#DBEAFE',
+        iconColor: '#2563EB',
         service: findSvc('csc-pan', 0),
       },
       {
         title: 'Aadhaar Assistance',
         shortDescription: 'Address updates, demographic corrections, and PVC card requests.',
         icon: Fingerprint,
+        iconBg: '#F5F3FF',
+        iconBorder: '#EDE9FE',
+        iconColor: '#7C3AED',
         service: findSvc('csc-aadhaar', 1),
       },
       {
         title: 'J&K Domicile & Certificates',
         shortDescription: 'Domicile, Income, Caste, RBA, and Revenue certificate applications.',
         icon: FileText,
+        iconBg: '#ECFDF5',
+        iconBorder: '#D1FAE5',
+        iconColor: '#059669',
         service: findSvc('jk-domicile-cert', 5),
       },
       {
         title: 'Job Application Assistance',
         shortDescription: 'Online form filling, photo/signature resizing, and admit card downloads.',
         icon: Briefcase,
+        iconBg: '#FFF7ED',
+        iconBorder: '#FFEDD5',
+        iconColor: '#EA580C',
         service: findSvc('edu-exams', 14),
       },
       {
         title: 'Ayushman Card Assistance',
         shortDescription: 'PM-JAY & SEHAT Golden Card registration and family KYC verification.',
         icon: ShieldCheck,
+        iconBg: '#F0FDFA',
+        iconBorder: '#CCFBF1',
+        iconColor: '#0D9488',
         service: findSvc('csc-ayushman', 3),
       },
       {
         title: 'Passport Application Assistance',
         shortDescription: 'Fresh passport filing, renewal support, and PSK slot booking.',
         icon: Compass,
+        iconBg: '#FFF1F2',
+        iconBorder: '#FFE4E6',
+        iconColor: '#E11D48',
         service: findSvc('csc-passport', 7),
       },
     ];
@@ -1343,9 +1366,209 @@ export default function PortalHomepage({
       <section
         id="tools-preview"
         aria-labelledby="tools-preview-heading"
-        className="w-full bg-white md:bg-transparent border-y border-[#E2E8F0] md:border-0 px-4 py-4 md:p-0 space-y-3.5 md:space-y-4 scroll-mt-20"
+        className="w-full bg-[#F7F9FC] md:bg-transparent border-y border-[#E2E8F0] md:border-0 px-3 py-4 md:p-0 space-y-3.5 md:space-y-4 scroll-mt-20"
       >
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-1 md:border-b md:border-[#E2E8F0] md:pb-3">
+        {/* MOBILE LAYOUT (< 768px): Premium Document Tools Banner + Compact Tool Cards */}
+        <div className="md:hidden space-y-3.5">
+          {/* Premium Document Tools Banner */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white via-[#F5F3FF] to-[#EEF2FF] border border-[#DDD6FE] p-3.5 shadow-[0_4px_14px_rgba(79,70,229,0.06)]">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#4F46E5] uppercase tracking-wider">
+                  <Wrench className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                  <span>ONLINE DOCUMENT SUITE</span>
+                </div>
+                <h2 className="text-[22px] font-extrabold text-[#102A43] tracking-tight leading-[1.18] mt-1">
+                  Fast, Simple &amp; Secure Document Tools
+                </h2>
+                <p className="text-[13px] text-[#475569] leading-[1.38] mt-1">
+                  Resize photos, compress images, convert files, and format PDFs directly in your browser.
+                </p>
+              </div>
+
+              {/* Lightweight Document / PDF SVG Illustration */}
+              <div
+                aria-hidden="true"
+                className="w-14 h-14 rounded-2xl bg-white/90 border border-[#DDD6FE] shadow-2xs flex items-center justify-center shrink-0 mt-0.5"
+              >
+                <svg
+                  viewBox="0 0 56 56"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-11 h-11"
+                >
+                  <rect x="8" y="10" width="26" height="34" rx="4" fill="#EEF2FF" stroke="#4F46E5" strokeWidth="2" />
+                  <path d="M14 18H28M14 23H24M14 28H22" stroke="#4F46E5" strokeWidth="2" strokeLinecap="round" />
+                  <rect x="24" y="20" width="24" height="26" rx="4" fill="#F5F3FF" stroke="#7C3AED" strokeWidth="2" />
+                  <rect x="28" y="25" width="16" height="9" rx="1.5" fill="#DDD6FE" />
+                  <circle cx="32" cy="28.5" r="1.5" fill="#6D28D9" />
+                  <path d="M29 33L33 29.5L36 32L39 29L43 33" stroke="#6D28D9" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M31 40H41" stroke="#7C3AED" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </div>
+            </div>
+
+            {/* 4 Horizontal Tool Benefits Row */}
+            <div className="mt-3 grid grid-cols-4 divide-x divide-[#E0E7FF] bg-white/95 border border-[#E0E7FF] rounded-xl py-2 px-1">
+              <div className="flex flex-col items-center text-center px-1 gap-1">
+                <span className="w-6 h-6 rounded-lg bg-[#FEF3C7] text-[#D97706] flex items-center justify-center">
+                  <Zap className="w-3.5 h-3.5" aria-hidden="true" />
+                </span>
+                <span className="text-[10.5px] font-semibold text-[#102A43] leading-tight">
+                  Free Tools
+                </span>
+              </div>
+
+              <div className="flex flex-col items-center text-center px-1 gap-1">
+                <span className="w-6 h-6 rounded-lg bg-[#D1FAE5] text-[#059669] flex items-center justify-center">
+                  <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
+                </span>
+                <span className="text-[10.5px] font-semibold text-[#102A43] leading-tight">
+                  Privacy
+                </span>
+              </div>
+
+              <div className="flex flex-col items-center text-center px-1 gap-1">
+                <span className="w-6 h-6 rounded-lg bg-[#DBEAFE] text-[#2563EB] flex items-center justify-center">
+                  <Globe className="w-3.5 h-3.5" aria-hidden="true" />
+                </span>
+                <span className="text-[10.5px] font-semibold text-[#102A43] leading-tight">
+                  Browser Based
+                </span>
+              </div>
+
+              <div className="flex flex-col items-center text-center px-1 gap-1">
+                <span className="w-6 h-6 rounded-lg bg-[#EDE9FE] text-[#7C3AED] flex items-center justify-center">
+                  <Monitor className="w-3.5 h-3.5" aria-hidden="true" />
+                </span>
+                <span className="text-[10.5px] font-semibold text-[#102A43] leading-tight">
+                  No App Needed
+                </span>
+              </div>
+            </div>
+
+            {/* View All Tools CTA Button */}
+            <button
+              type="button"
+              onClick={() => {
+                window.location.hash = '#tools';
+              }}
+              className="mt-3 w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#2563EB] via-[#4F46E5] to-[#7C3AED] active:scale-[0.99] text-white text-[13.5px] font-bold shadow-[0_3px_10px_rgba(79,70,229,0.22)] flex items-center justify-center gap-1.5 transition-transform cursor-pointer"
+            >
+              <span>View All Tools ({TOOLS_LIST.length})</span>
+              <span aria-hidden="true">→</span>
+            </button>
+          </div>
+
+          {/* Popular Tools Header Row */}
+          <div className="flex items-center justify-between px-0.5 pt-0.5">
+            <h3 className="text-[16px] font-extrabold text-[#102A43] tracking-tight">
+              Popular Tools
+            </h3>
+            <button
+              type="button"
+              onClick={() => {
+                window.location.hash = '#tools';
+              }}
+              className="min-h-[36px] px-1 text-[13px] font-bold text-[#4F46E5] hover:text-[#2563EB] inline-flex items-center gap-1 cursor-pointer"
+            >
+              <span>See All</span>
+              <span aria-hidden="true">→</span>
+            </button>
+          </div>
+
+          {/* Compact Tool Cards List */}
+          <div className="space-y-2.5">
+            {previewTools.map((tool) => {
+              const ToolIcon = getToolIcon(tool.iconName);
+              const accentMap: Record<
+                string,
+                { bg: string; border: string; icon: string; action: string }
+              > = {
+                'image-compressor': {
+                  bg: '#EFF6FF',
+                  border: '#DBEAFE',
+                  icon: '#2563EB',
+                  action: '#2563EB',
+                },
+                'image-resizer': {
+                  bg: '#ECFDF5',
+                  border: '#D1FAE5',
+                  icon: '#059669',
+                  action: '#059669',
+                },
+                'image-to-pdf': {
+                  bg: '#FFF1F2',
+                  border: '#FFE4E6',
+                  icon: '#E11D48',
+                  action: '#E11D48',
+                },
+                'pdf-to-image': {
+                  bg: '#FFF7ED',
+                  border: '#FFEDD5',
+                  icon: '#EA580C',
+                  action: '#EA580C',
+                },
+              };
+              const accent = accentMap[tool.id] || {
+                bg: '#EFF6FF',
+                border: '#DBEAFE',
+                icon: '#2563EB',
+                action: '#2563EB',
+              };
+
+              return (
+                <button
+                  key={`mob-tool-${tool.id}`}
+                  type="button"
+                  onClick={() => {
+                    window.location.hash = `#tools/${tool.id}`;
+                  }}
+                  className="w-full text-left bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-[15px] p-3.5 shadow-[0_2px_8px_rgba(16,42,67,0.04)] active:scale-[0.99] transition-all flex items-start justify-between gap-3 group cursor-pointer"
+                >
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
+                    <div
+                      style={{
+                        backgroundColor: accent.bg,
+                        borderColor: accent.border,
+                        color: accent.icon,
+                      }}
+                      className="w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 mt-0.5"
+                    >
+                      <ToolIcon className="w-5 h-5" aria-hidden="true" />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-[15px] font-bold text-[#102A43] leading-snug group-hover:text-[#2563EB] transition-colors">
+                        {tool.name}
+                      </h4>
+                      <p className="text-[12.5px] text-[#475569] leading-[1.35] line-clamp-2 mt-0.5">
+                        {tool.shortDescription}
+                      </p>
+                      <span
+                        style={{ color: accent.action }}
+                        className="mt-1.5 inline-flex items-center gap-1 text-[12px] font-bold"
+                      >
+                        <span>Open Tool</span>
+                        <span aria-hidden="true">→</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  <span
+                    aria-hidden="true"
+                    className="w-7 h-7 rounded-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#64748B] group-hover:text-[#2563EB] flex items-center justify-center shrink-0 self-center"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* DESKTOP LAYOUT (>= 768px): Preserved Unchanged */}
+        <div className="hidden md:flex sm:flex-row sm:items-end justify-between gap-2 pb-1 md:border-b md:border-[#E2E8F0] md:pb-3">
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2563EB] uppercase tracking-wider mb-1">
               <Wrench className="w-3.5 h-3.5" aria-hidden="true" />
@@ -1373,7 +1596,7 @@ export default function PortalHomepage({
           </button>
         </div>
 
-        <div className="-mx-4 md:mx-0 divide-y divide-[#E2E8F0] md:divide-y-0 border-t md:border-0 border-[#E2E8F0] bg-white md:bg-transparent grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0 md:gap-4">
+        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-4">
           {previewTools.map((tool) => {
             const ToolIcon = getToolIcon(tool.iconName);
             return (
@@ -1480,9 +1703,189 @@ export default function PortalHomepage({
       <section
         id="popular-services"
         aria-labelledby="popular-services-heading"
-        className="w-full bg-[#F6F8FC] px-3 md:px-0 py-5 md:py-0 space-y-3.5 md:space-y-4 scroll-mt-20"
+        className="w-full bg-[#F7F9FC] md:bg-[#F6F8FC] px-3 md:px-0 py-4 md:py-0 space-y-3.5 md:space-y-4 scroll-mt-20"
       >
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-2.5 border-b border-[#E2E8F0] px-1 md:px-0">
+        {/* MOBILE LAYOUT (< 768px): Compact Premium Service Banner + Compact Service Cards */}
+        <div className="md:hidden space-y-3.5">
+          {/* Compact Service Banner */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white via-[#F4F8FF] to-[#EBF3FF] border border-[#DBEAFE] p-3.5 shadow-[0_4px_14px_rgba(37,99,235,0.06)]">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#2563EB] uppercase tracking-wider">
+                  <ShieldCheck className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                  <span>CITIZEN SERVICE DESK</span>
+                </div>
+                <h2 className="text-[22px] font-extrabold text-[#102A43] tracking-tight leading-[1.18] mt-1">
+                  Essential Citizen E-Services
+                </h2>
+                <p className="text-[13px] text-[#475569] leading-[1.38] mt-1">
+                  Get help with identity, certificates, and important government services quickly and easily.
+                </p>
+              </div>
+
+              {/* Lightweight Citizen Identity & Certificate SVG Illustration */}
+              <div
+                aria-hidden="true"
+                className="w-14 h-14 rounded-2xl bg-white/95 border border-[#DBEAFE] shadow-2xs flex items-center justify-center shrink-0 mt-0.5"
+              >
+                <svg
+                  viewBox="0 0 56 56"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-11 h-11"
+                >
+                  <rect x="6" y="12" width="34" height="24" rx="4" fill="#EFF6FF" stroke="#2563EB" strokeWidth="2" />
+                  <circle cx="15" cy="22" r="4" fill="#BFDBFE" stroke="#2563EB" strokeWidth="1.5" />
+                  <path d="M10.5 30C11.5 27.8 13.2 27 15 27C16.8 27 18.5 27.8 19.5 30" stroke="#2563EB" strokeWidth="1.5" strokeLinecap="round" />
+                  <path d="M23 19H34M23 24H31M23 29H28" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" />
+                  <path
+                    d="M41 25L49 28.5V35.5C49 40.5 45.6 44.8 41 46.5C36.4 44.8 33 40.5 33 35.5V28.5L41 25Z"
+                    fill="#ECFDF5"
+                    stroke="#059669"
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                  />
+                  <path d="M38 35.5L40.2 37.7L44.5 33.2" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+            </div>
+
+            {/* 3 Service Benefits in One Horizontal Row */}
+            <div className="mt-3 grid grid-cols-3 divide-x divide-[#DBEAFE] bg-white/95 border border-[#DBEAFE] rounded-xl py-2 px-1">
+              <div className="flex items-center justify-center gap-1.5 px-1">
+                <span className="w-6 h-6 rounded-lg bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0">
+                  <Zap className="w-3.5 h-3.5" aria-hidden="true" />
+                </span>
+                <span className="text-[11px] font-semibold text-[#102A43] leading-tight">
+                  Quick Assistance
+                </span>
+              </div>
+
+              <div className="flex items-center justify-center gap-1.5 px-1">
+                <span className="w-6 h-6 rounded-lg bg-[#ECFDF5] text-[#059669] flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
+                </span>
+                <span className="text-[11px] font-semibold text-[#102A43] leading-tight">
+                  Verified Guidance
+                </span>
+              </div>
+
+              <div className="flex items-center justify-center gap-1.5 px-1">
+                <span className="w-6 h-6 rounded-lg bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center shrink-0">
+                  <Users className="w-3.5 h-3.5" aria-hidden="true" />
+                </span>
+                <span className="text-[11px] font-semibold text-[#102A43] leading-tight">
+                  CSC Support
+                </span>
+              </div>
+            </div>
+
+            {/* View All Services Button */}
+            <button
+              type="button"
+              onClick={() => scrollToSection('services')}
+              className="mt-3 w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#1D4ED8] via-[#2563EB] to-[#3B82F6] active:scale-[0.99] text-white text-[13.5px] font-bold shadow-[0_3px_10px_rgba(37,99,235,0.22)] flex items-center justify-center gap-1.5 transition-transform cursor-pointer"
+            >
+              <span>View All Services</span>
+              <span aria-hidden="true">→</span>
+            </button>
+          </div>
+
+          {/* Popular Services Sub-Header */}
+          <div className="flex items-center justify-between px-0.5 pt-0.5">
+            <h3 className="text-[16px] font-extrabold text-[#102A43] tracking-tight">
+              Popular Services
+            </h3>
+            <button
+              type="button"
+              onClick={() => scrollToSection('services')}
+              className="min-h-[36px] px-1 text-[13px] font-bold text-[#2563EB] hover:text-[#1D4ED8] inline-flex items-center gap-1 cursor-pointer"
+            >
+              <span>See All</span>
+              <span aria-hidden="true">→</span>
+            </button>
+          </div>
+
+          {/* Compact Service Cards List */}
+          <div className="space-y-2.5">
+            {popularServices.map((item) => {
+              const SvcIcon = item.icon;
+              const reqText = item.service?.requirements?.[0];
+              const feeText = item.service?.price;
+              const timeText = item.service?.estimatedTime;
+
+              return (
+                <button
+                  key={`mob-svc-${item.title}`}
+                  type="button"
+                  onClick={() => {
+                    if (item.service) onOpenService(item.service);
+                  }}
+                  className="w-full text-left bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-[15px] p-3.5 shadow-[0_2px_8px_rgba(16,42,67,0.04)] active:scale-[0.99] transition-all group cursor-pointer block"
+                >
+                  {/* Top Row: Colored Icon + Name & Short Description + Chevron */}
+                  <div className="flex items-start justify-between gap-2.5">
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
+                      <div
+                        style={{
+                          backgroundColor: item.iconBg,
+                          borderColor: item.iconBorder,
+                          color: item.iconColor,
+                        }}
+                        className="w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 mt-0.5"
+                      >
+                        <SvcIcon className="w-5 h-5" aria-hidden="true" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-[15px] font-bold text-[#102A43] leading-snug group-hover:text-[#2563EB] transition-colors">
+                          {item.title}
+                        </h4>
+                        <p className="text-[12.5px] text-[#475569] leading-[1.35] line-clamp-2 mt-0.5">
+                          {item.shortDescription}
+                        </p>
+                      </div>
+                    </div>
+
+                    <span
+                      aria-hidden="true"
+                      className="w-7 h-7 rounded-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#64748B] group-hover:text-[#2563EB] flex items-center justify-center shrink-0 mt-1"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </span>
+                  </div>
+
+                  {/* Bottom Row: Requirement Chip + Fee & Processing Time Chips */}
+                  <div className="mt-2.5 pt-2 border-t border-[#F1F5F9] flex flex-wrap items-center gap-1.5 text-[11px] leading-snug">
+                    {reqText && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F8FAFC] border border-[#E2E8F0] text-[#334155]">
+                        <span className="font-semibold text-[#64748B]">Requirement:</span>
+                        <span className="font-semibold text-[#102A43]">{reqText}</span>
+                      </span>
+                    )}
+
+                    {feeText && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#ECFDF5] border border-[#D1FAE5] text-[#065F46] tabular-nums">
+                        <span className="font-semibold">Fee:</span>
+                        <span className="font-bold">{feeText}</span>
+                      </span>
+                    )}
+
+                    {timeText && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#EFF6FF] border border-[#DBEAFE] text-[#1E40AF] tabular-nums">
+                        <span className="font-semibold">Processing:</span>
+                        <span className="font-semibold">{timeText}</span>
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* DESKTOP LAYOUT (>= 768px): Preserved Unchanged */}
+        <div className="hidden md:flex sm:flex-row sm:items-end justify-between gap-2 pb-2.5 border-b border-[#E2E8F0] px-1 md:px-0">
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0284C7] uppercase tracking-wider mb-1">
               <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
@@ -1508,7 +1911,7 @@ export default function PortalHomepage({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {popularServices.map((item) => {
             const facts: PortalCardFact[] = [];
             if (item.service?.requirements?.[0]) {
