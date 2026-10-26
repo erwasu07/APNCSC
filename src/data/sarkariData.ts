@@ -26,6 +26,11 @@ export interface SarkariItem {
   };
   advertisementNo?: string;
   isNew?: boolean;
+  department?: string;
+  postType?: 'Job' | 'Admission' | 'Result' | 'Scheme' | 'Service' | 'Guide' | string;
+  status?: 'Open' | 'Closed' | 'Result' | 'Informational' | string;
+  thumbnailUrl?: string;
+  thumbnailSpec?: any;
 }
 
 export const SARKARI_CATEGORIES = {

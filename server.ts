@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
+import sharp from 'sharp';
 import { SARKARI_DATA } from './src/data/sarkariData';
 import { SERVICES_LIST } from './src/servicesData';
 import { 
@@ -11,6 +12,16 @@ import {
   generateServiceOgPng, 
   generateServiceOgSvg 
 } from './src/ogImageGenerator';
+import {
+  THUMBNAIL_WIDTH,
+  THUMBNAIL_HEIGHT,
+  ThumbnailInputPayload,
+  ThumbnailSpec,
+  buildDeterministicThumbnailSpec,
+  extractThumbnailSpecWithAI,
+  renderMasterThumbnailBuffer,
+  generatePostThumbnailPng
+} from './src/thumbnailGenerator';
 import { 
   getDb, 
   saveDb, 
@@ -27,7 +38,12 @@ import {
   addGalleryItem, 
   deleteGalleryItem, 
   incrementViews, 
-  getAnalytics 
+  getAnalytics,
+  savePostThumbnailRecord,
+  getPostThumbnailsMap,
+  upsertCustomSarkariPost,
+  getCustomSarkariPosts,
+  deleteCustomSarkariPost
 } from './src/dbServer';
 import {
   persistCustomerApplication,
@@ -35,7 +51,8 @@ import {
   deleteCustomerApplicationFromSupabase,
   findSupabaseApplicationRows,
   getHighestSupabaseTokenSeq,
-  isDeletedApplicationRecord
+  isDeletedApplicationRecord,
+  uploadDocumentBufferToSupabase
 } from './src/lib/supabaseServer';
 
 // Setup environment variables
@@ -1553,6 +1570,385 @@ app.post('/api/admin/restore', authenticateAdmin, (req, res) => {
   }
   saveDb(newData);
   res.json({ success: true, message: 'Database restored successfully from backup.' });
+});
+
+// ============================================================================
+// MASTER REFERENCE THUMBNAIL GENERATOR API (2048 x 677 px) & POST MANAGEMENT
+// ============================================================================
+
+// Helper: Sync custom posts & saved thumbnails from db.json into SARKARI_DATA in memory
+function syncCustomPostsAndThumbnailsInMemory() {
+  try {
+    const customPosts = getCustomSarkariPosts();
+    const thumbnailsMap = getPostThumbnailsMap();
+
+    for (const custom of customPosts) {
+      if (!custom || !custom.id) continue;
+      const existingIdx = SARKARI_DATA.findIndex(i => i.id === custom.id);
+      if (existingIdx >= 0) {
+        SARKARI_DATA[existingIdx] = { ...SARKARI_DATA[existingIdx], ...custom };
+      } else {
+        SARKARI_DATA.unshift(custom);
+      }
+    }
+
+    for (const item of SARKARI_DATA) {
+      const savedThumb = thumbnailsMap[item.id];
+      if (savedThumb && savedThumb.thumbnailUrl) {
+        item.thumbnailUrl = savedThumb.thumbnailUrl;
+        if (savedThumb.spec) {
+          item.thumbnailSpec = savedThumb.spec;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[Thumbnails] Memory sync notice:', err);
+  }
+}
+
+syncCustomPostsAndThumbnailsInMemory();
+
+// 1. Get all saved post thumbnails and custom posts
+app.get('/api/thumbnails/map', (_req: Request, res: Response) => {
+  syncCustomPostsAndThumbnailsInMemory();
+  res.json({
+    success: true,
+    width: THUMBNAIL_WIDTH,
+    height: THUMBNAIL_HEIGHT,
+    aspectRatio: `${THUMBNAIL_WIDTH}:${THUMBNAIL_HEIGHT}`,
+    thumbnails: getPostThumbnailsMap(),
+    customPosts: getCustomSarkariPosts()
+  });
+});
+
+// 2. Serve or dynamically render the 2048x677 Master Reference Thumbnail for any post ID
+app.get(
+  ['/api/thumbnails/post/:id.png', '/api/thumbnails/post/:id.webp', '/api/thumbnails/post/:id'],
+  async (req: Request, res: Response) => {
+    try {
+      syncCustomPostsAndThumbnailsInMemory();
+      const rawId = (req.params.id || '').replace(/\.(png|webp)$/i, '');
+      const format: 'png' | 'webp' =
+        req.path.endsWith('.webp') || req.query.format === 'webp' ? 'webp' : 'png';
+
+      // Check if a local file already exists in /public/thumbnails/<rawId>.<ext> unless force=1
+      const localFilePath = path.join(process.cwd(), 'public', 'thumbnails', `${rawId}.${format}`);
+      if (req.query.force !== '1' && fs.existsSync(localFilePath)) {
+        res.setHeader('Content-Type', format === 'webp' ? 'image/webp' : 'image/png');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        return res.sendFile(localFilePath);
+      }
+
+      const thumbnailsMap = getPostThumbnailsMap();
+      const savedEntry = thumbnailsMap[rawId] as any;
+
+      // Check if saved entry has a custom spec
+      if (savedEntry && savedEntry.spec && !savedEntry.isCustomUpload) {
+        const buffer = await renderMasterThumbnailBuffer(savedEntry.spec, format);
+        res.setHeader('Content-Type', format === 'webp' ? 'image/webp' : 'image/png');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        return res.send(buffer);
+      }
+
+      // Look up in SARKARI_DATA
+      const sarkariItem = SARKARI_DATA.find(i => i.id === rawId);
+      if (sarkariItem) {
+        const spec = buildDeterministicThumbnailSpec({
+          id: sarkariItem.id,
+          title: sarkariItem.title,
+          category: sarkariItem.category,
+          department: sarkariItem.department,
+          postType: sarkariItem.postType,
+          shortInfo: sarkariItem.shortInfo,
+          startDate: sarkariItem.startDate,
+          lastDate: sarkariItem.lastDate,
+          status: sarkariItem.status
+        });
+        const buffer = await renderMasterThumbnailBuffer(spec, format);
+        res.setHeader('Content-Type', format === 'webp' ? 'image/webp' : 'image/png');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        return res.send(buffer);
+      }
+
+      // Look up in SERVICES_LIST
+      const serviceItem = SERVICES_LIST.find(s => s.id === rawId);
+      if (serviceItem) {
+        const spec = buildDeterministicThumbnailSpec({
+          id: serviceItem.id,
+          title: serviceItem.name,
+          category: serviceItem.category,
+          department: 'CSC E-Governance Services India',
+          postType: 'Service',
+          shortInfo: serviceItem.description,
+          status: 'Open'
+        });
+        const buffer = await renderMasterThumbnailBuffer(spec, format);
+        res.setHeader('Content-Type', format === 'webp' ? 'image/webp' : 'image/png');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        return res.send(buffer);
+      }
+
+      // Default fallback 2048x677 banner
+      const fallbackSpec = buildDeterministicThumbnailSpec({
+        title: rawId ? rawId.replace(/-/g, ' ').toUpperCase() : 'JKSSB Class IV Recruitment',
+        category: 'jkssb',
+        postType: 'Job',
+        status: 'Open'
+      });
+      const buffer = await renderMasterThumbnailBuffer(fallbackSpec, format);
+      res.setHeader('Content-Type', format === 'webp' ? 'image/webp' : 'image/png');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      return res.send(buffer);
+    } catch (err: any) {
+      console.error('[Thumbnails] Dynamic post thumbnail generation error:', err);
+      res.status(500).json({ error: err?.message || 'Failed to generate 2048x677 thumbnail' });
+    }
+  }
+);
+
+// 3. Generate / Preview 2048x677 Thumbnail from Post Data (AI + Master Reference Engine)
+app.post('/api/thumbnails/generate', async (req: Request, res: Response) => {
+  try {
+    const body = req.body || {};
+    const format: 'png' | 'webp' = body.format === 'webp' ? 'webp' : 'png';
+    const useAi = body.useAi !== false;
+
+    const input: ThumbnailInputPayload = {
+      id: body.id || body.postId || '',
+      title: body.title || 'JKSSB Class IV Recruitment 2026',
+      category: body.category || 'jkssb',
+      department: body.department || '',
+      postType: body.postType || 'Job',
+      shortInfo: body.shortDescription || body.shortInfo || '',
+      startDate: body.importantDates?.startDate || body.startDate,
+      lastDate: body.importantDates?.lastDate || body.lastDate,
+      status: body.applicationStatus || body.status || 'Open'
+    };
+
+    let spec: ThumbnailSpec;
+    if (body.customSpec && typeof body.customSpec === 'object' && body.useCustomSpec === true) {
+      const baseSpec = useAi
+        ? await extractThumbnailSpecWithAI(input)
+        : buildDeterministicThumbnailSpec(input);
+      const customCta = body.customSpec.ctaButtonText || body.customSpec.ctaText || baseSpec.ctaButtonText;
+      spec = {
+        ...baseSpec,
+        ...body.customSpec,
+        ctaButtonText: customCta,
+        fourIcons:
+          Array.isArray(body.customSpec.fourIcons) && body.customSpec.fourIcons.length === 4
+            ? (body.customSpec.fourIcons.map((ic: any) =>
+                typeof ic === 'string' ? ic : `${ic.line1 || ''} ${ic.line2 || ''}`.trim()
+              ) as [string, string, string, string])
+            : baseSpec.fourIcons
+      };
+    } else {
+      spec = useAi
+        ? await extractThumbnailSpecWithAI(input)
+        : buildDeterministicThumbnailSpec(input);
+    }
+
+    const buffer = await renderMasterThumbnailBuffer(spec, format);
+    const mimeType = format === 'webp' ? 'image/webp' : 'image/png';
+    const dataUrl = `data:${mimeType};base64,${buffer.toString('base64')}`;
+
+    res.json({
+      success: true,
+      width: THUMBNAIL_WIDTH,
+      height: THUMBNAIL_HEIGHT,
+      aspectRatio: `${THUMBNAIL_WIDTH}:${THUMBNAIL_HEIGHT}`,
+      format,
+      spec,
+      dataUrl
+    });
+  } catch (err: any) {
+    console.error('[Thumbnails] Generate error:', err);
+    res.status(500).json({
+      success: false,
+      error: err?.message || 'Failed to generate 2048x677 master reference thumbnail'
+    });
+  }
+});
+
+// 4. Save Generated or Custom Uploaded Thumbnail (Uploads to Supabase Storage + Local Public Dir + Associates with Post)
+app.post('/api/thumbnails/save', async (req: Request, res: Response) => {
+  try {
+    const body = req.body || {};
+    const postId = String(body.postId || body.id || `post-${Date.now()}`)
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-_]/g, '-');
+    const format: 'png' | 'webp' = body.format === 'webp' ? 'webp' : 'png';
+    const isCustomUpload = Boolean(body.isCustomUpload && body.customImageDataUrl);
+
+    let finalBuffer: Buffer;
+    let finalSpec: ThumbnailSpec | undefined = body.spec;
+
+    if (isCustomUpload && typeof body.customImageDataUrl === 'string') {
+      const base64Part = body.customImageDataUrl.includes(',')
+        ? body.customImageDataUrl.split(',')[1]
+        : body.customImageDataUrl;
+      const rawBuf = Buffer.from(base64Part, 'base64');
+      // Normalize any custom upload to exact 2048 x 677 px
+      let pipeline = sharp(rawBuf).resize(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, {
+        fit: 'cover',
+        position: 'center'
+      });
+      finalBuffer =
+        format === 'webp'
+          ? await pipeline.webp({ quality: 95 }).toBuffer()
+          : await pipeline.png({ compressionLevel: 6 }).toBuffer();
+    } else {
+      if (!finalSpec) {
+        const input: ThumbnailInputPayload = {
+          id: postId,
+          title: body.title || 'JKSSB Class IV Recruitment 2026',
+          category: body.category || 'jkssb',
+          department: body.department || '',
+          postType: body.postType || 'Job',
+          shortInfo: body.shortDescription || '',
+          startDate: body.importantDates?.startDate,
+          lastDate: body.importantDates?.lastDate,
+          status: body.applicationStatus || 'Open'
+        };
+        finalSpec = await extractThumbnailSpecWithAI(input);
+      }
+      finalBuffer = await renderMasterThumbnailBuffer(finalSpec, format);
+    }
+
+    // Ensure /public/thumbnails exists and save local high-speed asset
+    const publicThumbDir = path.join(process.cwd(), 'public', 'thumbnails');
+    if (!fs.existsSync(publicThumbDir)) {
+      fs.mkdirSync(publicThumbDir, { recursive: true });
+    }
+    const ext = format === 'webp' ? 'webp' : 'png';
+    const fileName = `${postId}.${ext}`;
+    const localDiskPath = path.join(publicThumbDir, fileName);
+    fs.writeFileSync(localDiskPath, finalBuffer);
+    const localUrl = `/thumbnails/${fileName}?t=${Date.now()}`;
+
+    // Also upload to Supabase Storage ('documents' bucket under 'thumbnails/' folder)
+    const contentType = format === 'webp' ? 'image/webp' : 'image/png';
+    const supaUpload = await uploadDocumentBufferToSupabase(
+      'thumbnails',
+      `${postId}_${THUMBNAIL_WIDTH}x${THUMBNAIL_HEIGHT}.${ext}`,
+      finalBuffer,
+      contentType
+    );
+
+    const effectiveUrl = supaUpload.success && supaUpload.url ? supaUpload.url : localUrl;
+
+    savePostThumbnailRecord(postId, {
+      thumbnailUrl: effectiveUrl,
+      supabaseUrl: supaUpload.url || undefined,
+      localUrl,
+      spec: finalSpec
+    });
+
+    syncCustomPostsAndThumbnailsInMemory();
+
+    res.json({
+      success: true,
+      postId,
+      thumbnailUrl: effectiveUrl,
+      supabaseUrl: supaUpload.url || null,
+      localUrl,
+      width: THUMBNAIL_WIDTH,
+      height: THUMBNAIL_HEIGHT,
+      aspectRatio: `${THUMBNAIL_WIDTH}:${THUMBNAIL_HEIGHT}`,
+      format,
+      spec: finalSpec,
+      isCustomUpload
+    });
+  } catch (err: any) {
+    console.error('[Thumbnails] Save error:', err);
+    res.status(500).json({
+      success: false,
+      error: err?.message || 'Failed to save 2048x677 thumbnail'
+    });
+  }
+});
+
+// 5. Create or Update a Post with its Associated 2048x677 Thumbnail
+app.post('/api/posts', async (req: Request, res: Response) => {
+  try {
+    const body = req.body || {};
+    if (!body.title || !String(body.title).trim()) {
+      return res.status(400).json({ error: 'Post Title is required.' });
+    }
+
+    const slug = String(
+      body.id ||
+        body.title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '')
+          .slice(0, 65)
+    );
+
+    const todayStr = new Date().toLocaleDateString('en-GB'); // DD/MM/YYYY
+
+    const newPost: any = {
+      id: slug,
+      title: String(body.title).trim(),
+      category: body.category || 'jkssb',
+      department: body.department || '',
+      postType: body.postType || 'Job',
+      status: body.applicationStatus || body.status || 'Open',
+      postDate: body.postDate || todayStr,
+      startDate: body.startDate || todayStr,
+      lastDate: body.lastDate || 'Check Notification',
+      advertisementNo: body.advertisementNo || '',
+      shortInfo:
+        body.shortDescription ||
+        body.shortInfo ||
+        `${body.title} official notification, eligibility, important dates, and online application assistance via CSC DOST.`,
+      ageLimit: body.ageLimit || 'As per official notification norms',
+      eligibility: body.eligibility || 'Refer to official notification for qualification details',
+      totalPosts: body.totalPosts || 'Various Posts',
+      officialLink: body.officialLink || 'https://www.india.gov.in',
+      fees: body.fees || {
+        genObc: body.genObcFee || 'As per official notice',
+        scSt: body.scStFee || 'As per official notice'
+      },
+      isNew: true,
+      thumbnailUrl: body.thumbnailUrl || `/api/thumbnails/post/${slug}.png`,
+      thumbnailSpec: body.thumbnailSpec || undefined
+    };
+
+    upsertCustomSarkariPost(newPost);
+
+    if (body.thumbnailUrl || body.thumbnailSpec) {
+      savePostThumbnailRecord(slug, {
+        thumbnailUrl: newPost.thumbnailUrl,
+        spec: body.thumbnailSpec
+      });
+    }
+
+    syncCustomPostsAndThumbnailsInMemory();
+
+    res.json({
+      success: true,
+      post: newPost
+    });
+  } catch (err: any) {
+    console.error('[Posts] Create/Update post error:', err);
+    res.status(500).json({ error: err?.message || 'Failed to save post' });
+  }
+});
+
+app.delete('/api/posts/:id', (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+    deleteCustomSarkariPost(id);
+    const idx = SARKARI_DATA.findIndex(i => i.id === id);
+    if (idx >= 0) {
+      SARKARI_DATA.splice(idx, 1);
+    }
+    res.json({ success: true, id });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || 'Failed to delete post' });
+  }
 });
 
 // Dynamic Open Graph Image Generator Endpoint for WhatsApp / Facebook / Social Share Previews

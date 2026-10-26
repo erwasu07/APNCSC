@@ -77,6 +77,7 @@ import {
   File
 } from 'lucide-react';
 import WhatsAppBroadcaster from './WhatsAppBroadcaster';
+import AdminThumbnailGeneratorStudio from './AdminThumbnailGeneratorStudio';
 
 interface AdminDashboardProps {
   cafeName: string;
@@ -92,6 +93,7 @@ type NavSectionId =
   | 'rejected_apps'
   | 'documents'
   | 'payments'
+  | 'post_thumbnails'
   | 'vle_logs'
   | 'whatsapp_sync'
   | 'reports';
@@ -2066,6 +2068,11 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       subtitle: 'Verified UPI transactions, UTR references, and CSC cash counter collections.',
       breadcrumb: 'Finance / Payments'
     },
+    post_thumbnails: {
+      title: 'Create / Edit Post & AI Thumbnail Generator (2048×677)',
+      subtitle: 'Generate high-resolution 2048 × 677 px thumbnails strictly matching the JKSSB Class IV master reference.',
+      breadcrumb: 'Operations / AI Thumbnail Studio'
+    },
     vle_logs: {
       title: 'VLE Visitor Access Logs',
       subtitle: 'Identity verification records for visitors unlocking CSC VLE station credentials.',
@@ -2211,6 +2218,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   ];
 
   const operationsNavItems: Array<{ id: NavSectionId; label: string; icon: any; count?: number }> = [
+    { id: 'post_thumbnails', label: 'Post & AI Thumbnail (2048×677)', icon: Sparkles },
     { id: 'vle_logs', label: 'VLE Visitor Access Logs', icon: ShieldAlert, count: vleInquiries.length },
     { id: 'whatsapp_sync', label: 'WhatsApp Channel & Sync', icon: Radio },
     { id: 'reports', label: 'Reports & Export', icon: FileSpreadsheet }
@@ -2885,6 +2893,47 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                   </div>
                 );
               })}
+            </section>
+          )}
+
+          {/* Quick Launch Banner for Master Reference AI Thumbnail Generator on Overview */}
+          {activeNav === 'overview' && (
+            <div className="bg-white border-b md:border border-[#E2E8F0] rounded-none md:rounded-2xl p-4 sm:p-5 shadow-none md:shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-[#092556] text-[#FACC15] flex items-center justify-center shrink-0">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-sm font-bold text-[#102A43]">
+                      Create / Edit Post &amp; AI Thumbnail Generator
+                    </h2>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-50 text-[#2563EB] border border-blue-200">
+                      2048 × 677 px Master Design
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#64748B] mt-0.5">
+                    Generate, regenerate, preview, save, or upload 2048 × 677 px post thumbnails matching the JKSSB Class IV master reference.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleSelectNav('post_thumbnails')}
+                className="px-4 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shrink-0 cursor-pointer transition-colors"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Open AI Thumbnail Generator</span>
+              </button>
+            </div>
+          )}
+
+          {/* ================================================================ */}
+          {/* 3B. CREATE / EDIT POST & AI THUMBNAIL GENERATOR (2048 x 677)     */}
+          {/* ================================================================ */}
+          {activeNav === 'post_thumbnails' && (
+            <section aria-label="Create and Edit Post AI Thumbnail Generator">
+              <AdminThumbnailGeneratorStudio />
             </section>
           )}
 

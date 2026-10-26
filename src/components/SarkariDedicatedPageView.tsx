@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { SarkariItem, SARKARI_CATEGORIES, SARKARI_DATA } from '../data/sarkariData';
 import { computeJobDeadlineStatus } from './PortalHomepage';
+import SarkariNotificationBanner from './SarkariNotificationBanner';
 import {
   ContentPageLayout,
   ContentArticleHeader,
@@ -361,6 +362,13 @@ export default function SarkariDedicatedPageView({
             : []),
           { label: 'Source', value: organisationName },
         ]}
+      />
+
+      {/* Master Reference 2048 x 677 px Post Thumbnail Banner */}
+      <SarkariNotificationBanner
+        item={item}
+        className="mb-5"
+        onApply={!isInfoOnlyNotice ? handleRequestAssistance : undefined}
       />
 
       {/* F: Key Information Strip (Flat subtle background band with separators, no rounded cards) */}

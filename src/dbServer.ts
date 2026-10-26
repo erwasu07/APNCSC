@@ -12,6 +12,8 @@ interface DatabaseSchema {
   appointments: Appointment[];
   views: number;
   lastIssuedTokenSeq?: number;
+  customPosts?: any[];
+  postThumbnails?: Record<string, { thumbnailUrl: string; supabaseUrl?: string; localUrl?: string; spec?: any; updatedAt: string }>;
 }
 
 const DEFAULT_DB: DatabaseSchema = {
@@ -40,7 +42,9 @@ const DEFAULT_DB: DatabaseSchema = {
   gallery: [],
   contactRequests: [],
   appointments: [],
-  views: 0
+  views: 0,
+  customPosts: [],
+  postThumbnails: {}
 };
 
 let memoryDb: DatabaseSchema | null = null;
@@ -75,6 +79,8 @@ export function getDb(): DatabaseSchema {
       if (!parsed.contactRequests) parsed.contactRequests = [];
       if (!parsed.announcements) parsed.announcements = [];
       if (!parsed.gallery) parsed.gallery = [];
+      if (!parsed.customPosts) parsed.customPosts = [];
+      if (!parsed.postThumbnails) parsed.postThumbnails = {};
       memoryDb = parsed;
       return parsed;
     }
@@ -340,3 +346,75 @@ export function getAnalytics(): AnalyticsStats {
     monthlyTrends
   };
 }
+
+export function savePostThumbnailRecord(
+  postId: string,
+  entry: { thumbnailUrl: string; supabaseUrl?: string; localUrl?: string; spec?: any }
+) {
+  const db = getDb();
+  if (!db.postThumbnails) db.postThumbnails = {};
+  const updatedAt = new Date().toISOString();
+  db.postThumbnails[postId] = {
+    ...entry,
+    updatedAt,
+  };
+  if (Array.isArray(db.customPosts)) {
+    const idx = db.customPosts.findIndex((p: any) => p && p.id === postId);
+    if (idx !== -1) {
+      db.customPosts[idx] = {
+        ...db.customPosts[idx],
+        thumbnailUrl: entry.thumbnailUrl,
+        thumbnailSpec: entry.spec || db.customPosts[idx].thumbnailSpec,
+      };
+    }
+  }
+  saveDb(db);
+  return db.postThumbnails[postId];
+}
+
+export function getPostThumbnailsMap(): Record<
+  string,
+  { thumbnailUrl: string; supabaseUrl?: string; localUrl?: string; spec?: any; updatedAt: string }
+> {
+  const db = getDb();
+  return db.postThumbnails || {};
+}
+
+export function upsertCustomSarkariPost(post: any) {
+  const db = getDb();
+  if (!Array.isArray(db.customPosts)) db.customPosts = [];
+  const idx = db.customPosts.findIndex((p: any) => p && p.id === post.id);
+  if (idx !== -1) {
+    db.customPosts[idx] = { ...db.customPosts[idx], ...post };
+  } else {
+    db.customPosts.unshift(post);
+  }
+  if (post.thumbnailUrl && post.id) {
+    if (!db.postThumbnails) db.postThumbnails = {};
+    db.postThumbnails[post.id] = {
+      thumbnailUrl: post.thumbnailUrl,
+      spec: post.thumbnailSpec,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+  saveDb(db);
+  return post;
+}
+
+export function getCustomSarkariPosts(): any[] {
+  const db = getDb();
+  return Array.isArray(db.customPosts) ? db.customPosts : [];
+}
+
+export function deleteCustomSarkariPost(postId: string): boolean {
+  const db = getDb();
+  if (!Array.isArray(db.customPosts)) return false;
+  const before = db.customPosts.length;
+  db.customPosts = db.customPosts.filter((p: any) => p && p.id !== postId);
+  if (db.customPosts.length !== before) {
+    saveDb(db);
+    return true;
+  }
+  return false;
+}
+
