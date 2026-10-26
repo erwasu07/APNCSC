@@ -175,9 +175,14 @@ export default function PortalHomepage({
   const [showAllJobs, setShowAllJobs] = useState(false);
   const [showAllEducation, setShowAllEducation] = useState(false);
 
-  // Listen for search focus event from Header and keyboard shortcuts (Ctrl+K, /, Escape)
+  // Listen for search focus and live query events from Header and keyboard shortcuts (Ctrl+K, /, Escape)
   useEffect(() => {
     const handleFocusSearch = () => {
+      const headerInput = document.getElementById('csc-header-search-input') as HTMLInputElement | null;
+      if (headerInput && headerInput.offsetParent !== null) {
+        headerInput.focus();
+        return;
+      }
       setShowHeaderSearch(true);
       setTimeout(() => {
         const el = document.getElementById('portal-universal-search');
@@ -186,6 +191,23 @@ export default function PortalHomepage({
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       }, 60);
+    };
+
+    const handleHeaderSearch = (e: Event) => {
+      const customEvent = e as CustomEvent<{ query?: string; submit?: boolean }>;
+      const q = customEvent.detail?.query ?? '';
+      setSearchQuery(q);
+      if (q.trim()) {
+        setShowHeaderSearch(true);
+        if (customEvent.detail?.submit) {
+          setTimeout(() => {
+            const el = document.getElementById('hero-heading-section');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 50);
+        }
+      } else if (!customEvent.detail?.submit) {
+        setShowHeaderSearch(false);
+      }
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -201,13 +223,16 @@ export default function PortalHomepage({
       } else if (e.key === 'Escape' && (searchQuery || showHeaderSearch)) {
         setSearchQuery('');
         setShowHeaderSearch(false);
+        window.dispatchEvent(new CustomEvent('csc-header-search-clear'));
       }
     };
 
     window.addEventListener('focus-csc-search', handleFocusSearch);
+    window.addEventListener('csc-header-search', handleHeaderSearch);
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('focus-csc-search', handleFocusSearch);
+      window.removeEventListener('csc-header-search', handleHeaderSearch);
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [searchQuery, showHeaderSearch]);
@@ -895,6 +920,7 @@ export default function PortalHomepage({
                   onClick={() => {
                     setSearchQuery('');
                     setShowHeaderSearch(false);
+                    window.dispatchEvent(new CustomEvent('csc-header-search-clear'));
                   }}
                   aria-label="Close search"
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#64748B] hover:text-[#102A43] px-2 py-1 bg-white border border-[#E2E8F0] rounded-lg inline-flex items-center gap-1 transition-colors cursor-pointer"
