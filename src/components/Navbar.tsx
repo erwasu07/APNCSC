@@ -9,6 +9,9 @@ import {
   UsersRound,
   GraduationCap,
   Wrench,
+  Home,
+  Compass,
+  ChevronRight,
 } from 'lucide-react';
 import { LegalTab } from './PrivacyPolicyModal';
 
@@ -25,14 +28,23 @@ export default function Navbar({
   onHomeClick,
 }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileSearchButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
 
+  // Handle Escape key and external search clear events
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && mobileMenuOpen) {
-        setMobileMenuOpen(false);
-        mobileMenuButtonRef.current?.focus();
+      if (event.key === 'Escape') {
+        if (mobileMenuOpen) {
+          setMobileMenuOpen(false);
+          mobileMenuButtonRef.current?.focus();
+        } else if (mobileSearchOpen) {
+          setMobileSearchOpen(false);
+          mobileSearchButtonRef.current?.focus();
+        }
       }
     };
     const handleClearSearch = () => {
@@ -44,10 +56,31 @@ export default function Navbar({
       document.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('csc-header-search-clear', handleClearSearch);
     };
+  }, [mobileMenuOpen, mobileSearchOpen]);
+
+  // Prevent background page scroll while mobile navigation drawer is open
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
   }, [mobileMenuOpen]);
+
+  // Auto-focus mobile search input when opened
+  useEffect(() => {
+    if (mobileSearchOpen) {
+      const timer = setTimeout(() => {
+        mobileSearchInputRef.current?.focus();
+      }, 40);
+      return () => clearTimeout(timer);
+    }
+  }, [mobileSearchOpen]);
 
   const navigateToSection = (sectionId: string) => {
     setMobileMenuOpen(false);
+    setMobileSearchOpen(false);
 
     if (
       window.location.hash === '#tools' ||
@@ -72,16 +105,19 @@ export default function Navbar({
 
   const handleOpenTools = () => {
     setMobileMenuOpen(false);
+    setMobileSearchOpen(false);
     window.location.hash = '#tools';
   };
 
   const handleTrackApplication = () => {
     setMobileMenuOpen(false);
+    setMobileSearchOpen(false);
     window.location.hash = '#track';
   };
 
   const handleLogoClick = () => {
     setMobileMenuOpen(false);
+    setMobileSearchOpen(false);
     if (onHomeClick) {
       onHomeClick();
     } else {
@@ -135,22 +171,24 @@ export default function Navbar({
 
   const handleMobileSearchClick = () => {
     setMobileMenuOpen(false);
-    const needsHomeSwitch =
-      window.location.hash === '#tools' ||
-      window.location.hash.startsWith('#tools/') ||
-      window.location.hash.startsWith('#apply') ||
-      window.location.hash.startsWith('#track') ||
-      window.location.pathname !== '/';
+    setMobileSearchOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        setTimeout(() => {
+          mobileSearchInputRef.current?.focus();
+        }, 40);
+      }
+      return next;
+    });
+  };
 
-    if (needsHomeSwitch) {
-      if (onHomeClick) onHomeClick();
-      window.location.hash = '';
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('focus-csc-search'));
-      }, 150);
-    } else {
-      window.dispatchEvent(new CustomEvent('focus-csc-search'));
+  const handleCloseMobileSearch = () => {
+    setMobileSearchOpen(false);
+    if (searchValue.trim()) {
+      setSearchValue('');
+      dispatchPortalSearch('', false);
     }
+    mobileSearchButtonRef.current?.focus();
   };
 
   const navItems = [
@@ -197,7 +235,7 @@ export default function Navbar({
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white border-b border-[#CFD9E8] shadow-[0_2px_10px_rgba(15,23,42,0.06)]">
+    <header className="sticky top-0 z-50 w-full bg-white border-b border-[#CFD9E8] shadow-[0_3px_12px_rgba(6,69,143,0.12)]">
       {/* ================================================================== */}
       {/* DESKTOP SINGLE-ROW HEADER (>= 1024px)                              */}
       {/* ================================================================== */}
@@ -423,134 +461,380 @@ export default function Navbar({
       </div>
 
       {/* ================================================================== */}
-      {/* MOBILE & TABLET HEADER (< 1024px)                                  */}
+      {/* PREMIUM TWO-ROW MOBILE HEADER (< 1024px)                           */}
       {/* ================================================================== */}
-      <div className="lg:hidden relative w-full bg-gradient-to-r from-[#F8FBFF] via-[#F2F7FE] to-[#E9F2FE] px-3.5 sm:px-5 h-16 flex items-center justify-between gap-2">
-        {/* Mobile Brand Logo + Title */}
-        <button
-          type="button"
-          onClick={handleLogoClick}
-          aria-label={`${cafeName || 'CSC DOST'} - Go to Home`}
-          className="flex items-center gap-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#175CEE] rounded-xl cursor-pointer shrink-0"
-        >
-          <img
-            src="/csc-dost-header-logo.png"
-            alt="CSC DOST Logo"
-            className="w-10 h-10 sm:w-11 sm:h-11 rounded-full shrink-0 object-contain"
-          />
-          <div>
-            <span className="text-lg sm:text-xl font-extrabold tracking-tight leading-none block">
-              <span className="text-[#092442]">CSC</span>{' '}
-              <span className="text-[#175CEE]">DOST</span>
-            </span>
-            <span className="text-[11px] text-[#64748B] font-normal block mt-0.5">
-              Citizen Service Portal
-            </span>
-          </div>
-        </button>
-
-        {/* Mobile Right Controls: Search Icon + Hamburger Menu */}
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleMobileSearchClick}
-            aria-label="Search jobs, schemes, admissions"
-            className="w-10 h-10 rounded-full bg-white hover:bg-[#F8FAFC] text-[#175CEE] border border-[#CBD5E1] shadow-2xs flex items-center justify-center transition-colors cursor-pointer"
+      <div className="lg:hidden relative w-full select-none overflow-hidden">
+        {/* ROW 1 — BRANDING AND ACTIONS WITH CURVED BLUE WAVE BACKGROUND */}
+        <div className="relative w-full h-[68px] sm:h-[74px] overflow-hidden">
+          <svg
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            viewBox="0 0 430 74"
+            preserveAspectRatio="none"
+            aria-hidden="true"
           >
-            <Search className="w-4 h-4 stroke-[2.2]" aria-hidden="true" />
-          </button>
+            <defs>
+              {/* Base Blue Transition Fill connecting seamlessly to Row 2 */}
+              <linearGradient id="cscMobRow1BaseBlue" x1="0" y1="0" x2="430" y2="0" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#0874DC" />
+                <stop offset="35%" stopColor="#0757AF" />
+                <stop offset="70%" stopColor="#06458F" />
+                <stop offset="100%" stopColor="#0874DC" />
+              </linearGradient>
 
-          <button
-            ref={mobileMenuButtonRef}
-            type="button"
-            onClick={() => setMobileMenuOpen((prev) => !prev)}
-            aria-expanded={mobileMenuOpen}
-            aria-controls="mobile-navigation-drawer"
-            aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
-            className="w-10 h-10 rounded-xl bg-[#0557AF] hover:bg-[#024EA0] text-white shadow-2xs flex items-center justify-center transition-colors cursor-pointer"
-          >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-        </div>
-      </div>
+              {/* Left Bright-Blue Curved Wave Accent behind Search Button */}
+              <linearGradient id="cscMobLeftWaveAccent" x1="0" y1="0" x2="135" y2="74" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#1399F8" />
+                <stop offset="55%" stopColor="#0B84F0" />
+                <stop offset="100%" stopColor="#0874DC" />
+              </linearGradient>
 
-      {/* ================================================================== */}
-      {/* MOBILE NAVIGATION MENU DRAWER (< 1024px)                           */}
-      {/* ================================================================== */}
-      {mobileMenuOpen && (
-        <nav
-          id="mobile-navigation-drawer"
-          aria-label="Mobile Navigation"
-          className="lg:hidden bg-gradient-to-b from-[#0455AC] to-[#02448D] text-white border-t border-white/15 px-4 pt-3.5 pb-5 space-y-3 shadow-xl"
-        >
-          {/* Mobile Search Pill inside Menu */}
-          <form
-            onSubmit={handleSearchSubmit}
-            role="search"
-            className="w-full h-11 bg-white rounded-full flex items-center pl-3.5 pr-1 shadow-sm"
-          >
-            <Search className="w-4 h-4 text-[#64748B] shrink-0 mr-2" aria-hidden="true" />
-            <input
-              type="search"
-              value={searchValue}
-              onChange={handleSearchInputChange}
-              placeholder="Search jobs, schemes, admissions..."
-              className="w-full bg-transparent border-none text-xs sm:text-sm text-[#0F172A] placeholder-[#6B7A90] focus:outline-none pr-1.5"
+              {/* Right Soft Light-Blue Curved Wave Accent near Hamburger Button */}
+              <linearGradient id="cscMobRightWaveAccent" x1="310" y1="0" x2="430" y2="74" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#DCEBFE" />
+                <stop offset="55%" stopColor="#C4DDFD" />
+                <stop offset="100%" stopColor="#9EC6FC" />
+              </linearGradient>
+
+              {/* Central Clean White Branding Surface */}
+              <linearGradient id="cscMobCenterWhiteGrad" x1="55" y1="0" x2="375" y2="74" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#FFFFFF" />
+                <stop offset="75%" stopColor="#FAFCFF" />
+                <stop offset="100%" stopColor="#F0F6FE" />
+              </linearGradient>
+            </defs>
+
+            {/* 1. Base Blue Layer (matches Row 2 top border) */}
+            <rect x="0" y="0" width="430" height="74" fill="url(#cscMobRow1BaseBlue)" />
+
+            {/* 2. Left Bright-Blue Curved Wave Accent Behind Search Button */}
+            <path
+              d="M 0,0 L 106,0 C 86,16 76,42 54,60 C 36,71 18,74 0,74 Z"
+              fill="url(#cscMobLeftWaveAccent)"
             />
-            <button
-              type="submit"
-              aria-label="Submit search"
-              className="w-9 h-9 rounded-full bg-[#175CEE] text-white flex items-center justify-center shrink-0"
-            >
-              <Search className="w-4 h-4 stroke-[2.2]" aria-hidden="true" />
-            </button>
-          </form>
 
-          {/* 5 Primary Navigation Links */}
-          <div className="space-y-1">
-            {navItems.map((item) => {
+            {/* 3. Right Soft Light-Blue Curved Wave Accent Near Hamburger Button */}
+            <path
+              d="M 332,0 L 430,0 L 430,72 C 406,72 388,61 372,42 C 358,24 348,8 332,0 Z"
+              fill="url(#cscMobRightWaveAccent)"
+            />
+
+            {/* 4. Bright-Blue Rim Highlight Along Left-to-Bottom Curve */}
+            <path
+              d="M 88,0 L 352,0 C 370,12 384,38 404,58 C 414,67 422,71 430,72 L 430,74 L 0,74 L 0,68 C 22,68 42,58 58,36 C 70,18 78,6 88,0 Z"
+              fill="#1399F8"
+              fillOpacity="0.45"
+            />
+
+            {/* 5. Main Clean White Central Branding Surface with Flowing S-Curves */}
+            <path
+              d="M 78,0 L 358,0 C 374,10 386,34 404,52 C 414,61 422,66 430,68 L 430,0 L 78,0 Z"
+              fill="#E5F0FE"
+              fillOpacity="0.65"
+            />
+            <path
+              d="M 82,0 L 348,0 C 366,12 378,36 396,54 C 408,65 420,69 430,70 L 52,70 C 66,56 72,34 78,14 C 80,7 81,3 82,0 Z"
+              fill="url(#cscMobCenterWhiteGrad)"
+            />
+            {/* Extended White Top-Center-Right Cradle */}
+            <path
+              d="M 66,0 L 392,0 C 406,0 418,6 430,16 L 430,66 C 414,65 398,55 384,38 C 370,21 356,4 336,0 L 66,0 Z"
+              fill="#F4F9FF"
+              fillOpacity="0.85"
+            />
+            <path
+              d="M 72,0 L 374,0 C 392,14 404,42 424,60 C 426,62 428,63 430,64 L 38,68 C 56,56 64,32 70,10 L 72,0 Z"
+              fill="url(#cscMobCenterWhiteGrad)"
+            />
+          </svg>
+
+          {/* Balanced 3-Column Row 1 Content — Guarantees True Viewport Centering for Brand */}
+          <div className="relative z-10 w-full h-full grid grid-cols-[52px_1fr_52px] sm:grid-cols-[60px_1fr_60px] items-center px-2.5 sm:px-4">
+            {/* LEFT: Circular White Search Button */}
+            <div className="flex items-center justify-start">
+              <button
+                ref={mobileSearchButtonRef}
+                type="button"
+                onClick={handleMobileSearchClick}
+                aria-expanded={mobileSearchOpen}
+                aria-controls="csc-mobile-search-panel"
+                aria-label={
+                  mobileSearchOpen
+                    ? 'Close search bar'
+                    : 'Search jobs, schemes, admissions'
+                }
+                className="w-[42px] h-[42px] sm:w-[44px] sm:h-[44px] rounded-full bg-white hover:bg-[#F8FBFF] active:scale-95 text-[#0874DC] border border-[#D5E2F2] shadow-[0_3px_10px_rgba(6,69,143,0.22)] flex items-center justify-center transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#175CEE]"
+              >
+                <Search className="w-[19px] h-[19px] stroke-[2.3]" aria-hidden="true" />
+              </button>
+            </div>
+
+            {/* CENTER: Visually Centered CSC DOST Logo + Brand Name + Subtitle */}
+            <div className="flex items-center justify-center min-w-0 px-1">
+              <button
+                type="button"
+                onClick={handleLogoClick}
+                aria-label={`${cafeName || 'CSC DOST'} - Go to Home`}
+                className="inline-flex items-center justify-center gap-2 sm:gap-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#175CEE] rounded-xl cursor-pointer max-w-full"
+              >
+                <img
+                  src="/csc-dost-header-logo.png"
+                  alt="CSC DOST Logo"
+                  className="w-[42px] h-[42px] sm:w-[46px] sm:h-[46px] rounded-full shrink-0 object-contain drop-shadow-[0_1px_3px_rgba(9,36,66,0.12)]"
+                />
+                <div className="flex flex-col justify-center min-w-0">
+                  <span className="text-[20px] min-[375px]:text-[21px] sm:text-[23px] font-extrabold tracking-[-0.02em] leading-none whitespace-nowrap">
+                    <span className="text-[#092442]">CSC</span>{' '}
+                    <span className="text-[#175CEE]">DOST</span>
+                  </span>
+                  <span className="text-[10.5px] min-[375px]:text-[11px] sm:text-[12px] text-[#475569] font-medium tracking-[-0.01em] leading-tight mt-0.5 whitespace-nowrap">
+                    Citizen Service Portal
+                  </span>
+                </div>
+              </button>
+            </div>
+
+            {/* RIGHT: Blue Rounded Hamburger Menu Button */}
+            <div className="flex items-center justify-end">
+              <button
+                ref={mobileMenuButtonRef}
+                type="button"
+                onClick={() => {
+                  setMobileSearchOpen(false);
+                  setMobileMenuOpen((prev) => !prev);
+                }}
+                aria-expanded={mobileMenuOpen}
+                aria-controls="mobile-navigation-drawer"
+                aria-label={
+                  mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'
+                }
+                className="w-[42px] h-[42px] sm:w-[44px] sm:h-[44px] rounded-[12px] bg-gradient-to-b from-[#0874DC] via-[#0757AF] to-[#06458F] hover:from-[#097CEB] hover:to-[#053B7A] active:scale-95 text-white border border-white/25 shadow-[0_3px_10px_rgba(6,69,143,0.28)] flex items-center justify-center transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#175CEE]"
+              >
+                {mobileMenuOpen ? (
+                  <X className="w-[22px] h-[22px] stroke-[2.3]" aria-hidden="true" />
+                ) : (
+                  <Menu className="w-[22px] h-[22px] stroke-[2.3]" aria-hidden="true" />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* EXPANDABLE MOBILE SEARCH INTERFACE (When Left Search Button is Clicked) */}
+        {mobileSearchOpen && (
+          <div
+            id="csc-mobile-search-panel"
+            className="w-full bg-[#06458F] border-t border-white/15 px-3 py-2.5 shadow-inner"
+          >
+            <form
+              onSubmit={handleSearchSubmit}
+              role="search"
+              className="w-full h-[42px] bg-white rounded-full flex items-center pl-3.5 pr-1 shadow-[0_2px_10px_rgba(4,40,92,0.22)]"
+            >
+              <label htmlFor="csc-mobile-header-search-input" className="sr-only">
+                Search jobs, schemes, admissions...
+              </label>
+              <Search
+                className="w-4 h-4 text-[#0874DC] shrink-0 mr-2"
+                aria-hidden="true"
+              />
+              <input
+                ref={mobileSearchInputRef}
+                id="csc-mobile-header-search-input"
+                type="search"
+                value={searchValue}
+                onChange={handleSearchInputChange}
+                placeholder="Search jobs, schemes, admissions..."
+                className="w-full bg-transparent border-none text-[13px] text-[#0F172A] placeholder-[#64748B] focus:outline-none pr-1"
+              />
+              <button
+                type="submit"
+                aria-label="Submit search"
+                className="h-[34px] px-3 rounded-full bg-[#175CEE] hover:bg-[#124FD1] text-white text-xs font-semibold flex items-center justify-center shrink-0 transition-colors cursor-pointer mr-1"
+              >
+                Search
+              </button>
+              <button
+                type="button"
+                onClick={handleCloseMobileSearch}
+                aria-label="Close search"
+                className="w-[34px] h-[34px] rounded-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#334155] flex items-center justify-center shrink-0 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4 stroke-[2.2]" aria-hidden="true" />
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* ROW 2 — PREMIUM BLUE-GRADIENT 5-ITEM NAVIGATION BAR */}
+        <nav
+          aria-label="Mobile Category Navigation"
+          className="relative w-full bg-gradient-to-r from-[#06458F] via-[#0757AF] to-[#0874DC] border-t border-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)] overflow-x-auto no-scrollbar"
+        >
+          <div className="flex items-stretch justify-between min-w-full">
+            {navItems.map((item, idx) => {
               const IconComponent = item.Icon;
               return (
-                <button
-                  key={`mobile-${item.id}`}
-                  type="button"
-                  onClick={item.onClick}
-                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-white hover:bg-white/10 transition-colors cursor-pointer text-left"
-                >
-                  <IconComponent className="w-5 h-5 text-white/90 stroke-[1.9] shrink-0" aria-hidden="true" />
-                  <span>{item.fullLabel}</span>
-                </button>
+                <React.Fragment key={`mob-row2-${item.id}`}>
+                  <button
+                    type="button"
+                    onClick={item.onClick}
+                    className="flex-1 min-w-[64px] min-h-[62px] sm:min-h-[66px] py-1.5 px-1 flex flex-col items-center justify-center gap-1 text-center text-white hover:bg-white/10 active:bg-white/20 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/80"
+                  >
+                    <IconComponent
+                      className="w-[18px] h-[18px] min-[375px]:w-[19px] min-[375px]:h-[19px] sm:w-[21px] sm:h-[21px] text-white stroke-[1.9] shrink-0"
+                      aria-hidden="true"
+                    />
+                    <span className="text-[10px] min-[360px]:text-[10.5px] min-[390px]:text-[11px] sm:text-[12px] font-medium leading-[1.15] tracking-[-0.01em] text-white">
+                      <span className="block whitespace-nowrap">{item.line1}</span>
+                      <span className="block whitespace-nowrap">{item.line2}</span>
+                    </span>
+                  </button>
+                  {idx < navItems.length - 1 && (
+                    <span
+                      className="self-center h-8 sm:h-9 w-[1px] bg-white/20 shrink-0"
+                      aria-hidden="true"
+                    />
+                  )}
+                </React.Fragment>
               );
             })}
           </div>
+        </nav>
+      </div>
 
-          {/* Mobile Action Buttons: Track Application & Staff Login */}
-          <div className="pt-3 border-t border-white/15 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <button
-              type="button"
-              onClick={handleTrackApplication}
-              className="w-full h-11 px-4 bg-[#175CEE] hover:bg-[#124FD1] text-white rounded-xl font-semibold text-xs sm:text-sm inline-flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
-            >
-              <FileText className="w-4 h-4 shrink-0" aria-hidden="true" />
-              <span>Track Application</span>
-            </button>
+      {/* ================================================================== */}
+      {/* MOBILE NAVIGATION MENU DRAWER + BACKDROP (< 1024px)                */}
+      {/* ================================================================== */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex justify-end">
+          {/* Outside Tap Backdrop */}
+          <div
+            className="fixed inset-0 bg-[#092442]/55 backdrop-blur-[2px] transition-opacity"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
+          />
 
-            {onOpenAdmin && (
+          {/* Slide-Over Mobile Drawer */}
+          <nav
+            id="mobile-navigation-drawer"
+            aria-label="Mobile Navigation Drawer"
+            className="relative z-10 w-[86%] max-w-[340px] h-full bg-gradient-to-b from-[#06458F] via-[#0757AF] to-[#043875] text-white flex flex-col justify-between shadow-2xl border-l border-white/15 overflow-y-auto"
+          >
+            {/* Top Drawer Header + Close Button */}
+            <div>
+              <div className="flex items-center justify-between px-4 py-3.5 bg-white text-[#092442] border-b border-[#D5E2F2]">
+                <div className="flex items-center gap-2.5">
+                  <img
+                    src="/csc-dost-header-logo.png"
+                    alt="CSC DOST Logo"
+                    className="w-9 h-9 rounded-full shrink-0 object-contain"
+                  />
+                  <div>
+                    <span className="text-base font-extrabold tracking-tight leading-none block">
+                      <span className="text-[#092442]">CSC</span>{' '}
+                      <span className="text-[#175CEE]">DOST</span>
+                    </span>
+                    <span className="text-[10.5px] text-[#64748B] font-medium block mt-0.5">
+                      Citizen Service Portal
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    mobileMenuButtonRef.current?.focus();
+                  }}
+                  aria-label="Close navigation menu"
+                  className="w-9 h-9 rounded-xl bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#092442] flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5 stroke-[2.2]" aria-hidden="true" />
+                </button>
+              </div>
+
+              {/* Navigation Links List */}
+              <div className="px-3 py-3 space-y-1">
+                {/* 1. Home */}
+                <button
+                  type="button"
+                  onClick={handleLogoClick}
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[14px] font-medium text-white hover:bg-white/12 active:bg-white/20 transition-colors cursor-pointer text-left"
+                >
+                  <span className="flex items-center gap-3">
+                    <Home className="w-[19px] h-[19px] text-white/90 stroke-[1.9] shrink-0" aria-hidden="true" />
+                    <span>Home</span>
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-white/50" aria-hidden="true" />
+                </button>
+
+                {/* 2–6. Five Primary Service Categories */}
+                {navItems.map((item) => {
+                  const IconComponent = item.Icon;
+                  return (
+                    <button
+                      key={`drawer-${item.id}`}
+                      type="button"
+                      onClick={item.onClick}
+                      className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[14px] font-medium text-white hover:bg-white/12 active:bg-white/20 transition-colors cursor-pointer text-left"
+                    >
+                      <span className="flex items-center gap-3">
+                        <IconComponent
+                          className="w-[19px] h-[19px] text-white/90 stroke-[1.9] shrink-0"
+                          aria-hidden="true"
+                        />
+                        <span>{item.fullLabel}</span>
+                      </span>
+                      <ChevronRight className="w-4 h-4 text-white/50" aria-hidden="true" />
+                    </button>
+                  );
+                })}
+
+                {/* 7. More */}
+                <button
+                  type="button"
+                  onClick={() => navigateToSection('knowledge-hub')}
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[14px] font-medium text-white hover:bg-white/12 active:bg-white/20 transition-colors cursor-pointer text-left"
+                >
+                  <span className="flex items-center gap-3">
+                    <Compass className="w-[19px] h-[19px] text-white/90 stroke-[1.9] shrink-0" aria-hidden="true" />
+                    <span>More</span>
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-white/50" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+
+            {/* Bottom Section: TRACK APPLICATION & STAFF LOGIN */}
+            <div className="p-4 border-t border-white/15 bg-[#04346C]/60 space-y-2.5">
+              {/* TRACK APPLICATION — Blue filled button, white icon & text */}
               <button
                 type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenAdmin();
-                }}
-                className="w-full h-11 px-4 bg-white hover:bg-[#F8FAFC] text-[#0F172A] border border-[#BDCBE0] rounded-xl font-semibold text-xs sm:text-sm inline-flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
+                onClick={handleTrackApplication}
+                className="w-full h-11 px-4 bg-[#175CEE] hover:bg-[#124FD1] active:scale-[0.99] text-white rounded-xl font-bold text-xs tracking-wide uppercase inline-flex items-center justify-center gap-2 shadow-[0_3px_10px_rgba(23,92,238,0.35)] transition-all cursor-pointer"
               >
-                <Lock className="w-4 h-4 text-[#0F172A] shrink-0" aria-hidden="true" />
-                <span>Staff Login</span>
+                <FileText className="w-4 h-4 text-white shrink-0" aria-hidden="true" />
+                <span>TRACK APPLICATION</span>
               </button>
-            )}
-          </div>
-        </nav>
+
+              {/* STAFF LOGIN — White outlined button, navy-blue icon & text */}
+              {onOpenAdmin && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenAdmin();
+                  }}
+                  className="w-full h-11 px-4 bg-white hover:bg-[#F8FAFC] active:scale-[0.99] text-[#092442] border border-[#BDCBE0] rounded-xl font-bold text-xs tracking-wide uppercase inline-flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                >
+                  <Lock className="w-4 h-4 text-[#092442] shrink-0" aria-hidden="true" />
+                  <span>STAFF LOGIN</span>
+                </button>
+              )}
+            </div>
+          </nav>
+        </div>
       )}
     </header>
   );
 }
+
