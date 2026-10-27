@@ -52,7 +52,13 @@ import {
   getWhatsAppPublishHistory,
   addWhatsAppPublishHistoryRecord,
   updateWhatsAppPublishHistoryStatus,
-  clearWhatsAppPublishHistory
+  clearWhatsAppPublishHistory,
+  upsertPushSubscription,
+  deactivatePushSubscription,
+  getActivePushSubscriptions,
+  getPushNotificationHistory,
+  getPushServerSettings,
+  updatePushServerSettings
 } from './src/dbServer';
 import {
   persistCustomerApplication,
@@ -61,8 +67,15 @@ import {
   findSupabaseApplicationRows,
   getHighestSupabaseTokenSeq,
   isDeletedApplicationRecord,
-  uploadDocumentBufferToSupabase
+  uploadDocumentBufferToSupabase,
+  syncPushSubscriptionToSupabase
 } from './src/lib/supabaseServer';
+import {
+  getVapidPublicKey,
+  sendSingleNotification,
+  broadcastPushNotification,
+  initializeVapid
+} from './src/lib/pushServer';
 
 // Setup environment variables
 import dotenv from 'dotenv';
@@ -1606,6 +1619,243 @@ app.post('/api/whatsapp/broadcast', authenticateAdmin, async (req: Request, res:
   }
 });
 
+// ============================================================
+// WEB PUSH NOTIFICATION API ENDPOINTS
+// ============================================================
+
+// 1. Get VAPID Public Key for client PushManager subscription
+app.get('/api/push/vapid-public-key', (_req: Request, res: Response) => {
+  try {
+    const publicKey = getVapidPublicKey();
+    res.json({ success: true, publicKey });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err?.message || 'Failed to retrieve VAPID key' });
+  }
+});
+
+// 2. Get Push Status & Statistics for Admin and Client Center
+app.get('/api/push/status', (_req: Request, res: Response) => {
+  try {
+    const all = getActivePushSubscriptions('all');
+    const jobs = getActivePushSubscriptions('jobs');
+    const schemes = getActivePushSubscriptions('schemes');
+    const exams = getActivePushSubscriptions('exams');
+    const updates = getActivePushSubscriptions('updates');
+    const settings = getPushServerSettings();
+    const history = getPushNotificationHistory();
+
+    res.json({
+      success: true,
+      activeSubscribers: all.length,
+      categories: {
+        all: all.length,
+        jobs: jobs.length,
+        schemes: schemes.length,
+        exams: exams.length,
+        updates: updates.length
+      },
+      settings,
+      recentCount: history.length
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// 3. Register or Update a Web Push Subscription
+app.post('/api/push/subscribe', async (req: Request, res: Response) => {
+  try {
+    const { subscription, preferences, deviceType, userAgent } = req.body || {};
+
+    if (!subscription || !subscription.endpoint || !subscription.keys || !subscription.keys.p256dh || !subscription.keys.auth) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid push subscription payload: endpoint and encryption keys (p256dh, auth) are required.'
+      });
+    }
+
+    const savedRecord = upsertPushSubscription({
+      endpoint: subscription.endpoint,
+      keys: {
+        p256dh: subscription.keys.p256dh,
+        auth: subscription.keys.auth
+      },
+      deviceType: deviceType || 'unknown',
+      userAgent: userAgent || (req.headers['user-agent'] as string) || '',
+      preferences: preferences || { jobs: true, schemes: true, exams: true, updates: true }
+    });
+
+    // Background sync to Supabase table
+    syncPushSubscriptionToSupabase(savedRecord).catch(err => {
+      console.warn('[Push] Background Supabase sync notice:', err);
+    });
+
+    // Optional welcome notification to confirm end-to-end receipt
+    const settings = getPushServerSettings();
+    if (settings.welcomePushEnabled && req.body.sendWelcome) {
+      sendSingleNotification(savedRecord, {
+        title: 'CSC DOST | Alerts Active! 🔔',
+        body: 'You are now connected to receive instant job openings, scheme alerts & KU updates.',
+        url: '/',
+        category: 'updates'
+      }).catch(() => {});
+    }
+
+    return res.status(200).json({
+      success: true,
+      subscriptionId: savedRecord.id,
+      message: 'Push subscription successfully registered and verified.'
+    });
+  } catch (err: any) {
+    console.error('[Push] Subscribe error:', err);
+    return res.status(500).json({
+      success: false,
+      error: err?.message || 'Server failed to register subscription.'
+    });
+  }
+});
+
+// 4. Unsubscribe / Deactivate Web Push Subscription
+app.post('/api/push/unsubscribe', (req: Request, res: Response) => {
+  try {
+    const { endpoint } = req.body || {};
+    if (!endpoint) {
+      return res.status(400).json({ success: false, error: 'Endpoint is required to unsubscribe.' });
+    }
+    const removed = deactivatePushSubscription(endpoint);
+    res.json({ success: true, removed, message: 'Subscription successfully deactivated.' });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// 5. Send Test Notification to a Specific Subscriber or Self
+app.post('/api/push/test', authenticateAdmin, async (req: Request, res: Response) => {
+  try {
+    const { endpoint, title, body, url, postId } = req.body || {};
+    if (!endpoint) {
+      return res.status(400).json({ success: false, error: 'Target subscriber endpoint is required for test send.' });
+    }
+
+    const result = await broadcastPushNotification({
+      title: title || 'CSC DOST | Test Notification 🔔',
+      body: body || 'This is a test notification from CSC DOST Admin Console.',
+      url: url || '/',
+      postId,
+      isTest: true,
+      testEndpoint: endpoint,
+      sentBy: req.body.adminUser || 'Admin Console'
+    });
+
+    if (result.success) {
+      return res.json({
+        success: true,
+        message: 'Test notification accepted by push service.',
+        stats: result.stats,
+        notificationId: result.notificationId
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        error: result.error || 'Failed to deliver test notification.',
+        stats: result.stats
+      });
+    }
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// 6. Broadcast or Category-Targeted Push Notification
+app.post('/api/push/send', authenticateAdmin, async (req: Request, res: Response) => {
+  try {
+    const { title, body, category, url, postId, image, icon, adminUser } = req.body || {};
+
+    if (!title || !body) {
+      return res.status(400).json({ success: false, error: 'Title and body are required to broadcast a push notification.' });
+    }
+
+    const result = await broadcastPushNotification({
+      title: String(title).trim(),
+      body: String(body).trim(),
+      category: category || 'all',
+      url: url || (postId ? `/#post/${postId}` : '/'),
+      postId,
+      image,
+      icon,
+      sentBy: adminUser || 'Admin Broadcast'
+    });
+
+    return res.json({
+      success: true,
+      notificationId: result.notificationId,
+      stats: result.stats,
+      message: `Push broadcast processed: ${result.stats.accepted} accepted, ${result.stats.failed} failed (${result.stats.expiredCleaned} expired cleaned).`
+    });
+  } catch (err: any) {
+    console.error('[Push] Broadcast error:', err);
+    return res.status(500).json({ success: false, error: err?.message || 'Failed to send broadcast push notification.' });
+  }
+});
+
+// 7. Get Push Notification History
+app.get('/api/push/history', (_req: Request, res: Response) => {
+  try {
+    const history = getPushNotificationHistory();
+    res.json({ success: true, history });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// 8. Update Push Server Settings (Auto-publish toggle, etc.)
+app.post('/api/push/settings', authenticateAdmin, (req: Request, res: Response) => {
+  try {
+    const updated = updatePushServerSettings(req.body || {});
+    res.json({ success: true, settings: updated });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
+// 9. In-Website Notification Center Public Feed
+app.get('/api/notifications/center', (_req: Request, res: Response) => {
+  try {
+    const db = getDb();
+    const activeAnnouncements = (db.announcements || []).filter(a => a.active).map(a => ({
+      id: a.id,
+      type: 'announcement' as const,
+      category: 'updates',
+      title: a.title,
+      description: a.content,
+      date: a.date,
+      url: '/#services',
+      badge: 'Announcement'
+    }));
+
+    // Latest 10 Sarkari items from memory
+    const topSarkari = SARKARI_DATA.slice(0, 10).map(item => ({
+      id: item.id,
+      type: 'post' as const,
+      category: item.category === 'exam_forms' ? 'exams' : item.category === 'admissions' ? 'exams' : 'jobs',
+      title: item.title,
+      description: item.shortInfo,
+      date: item.postDate || 'Recent',
+      url: `/#post/${item.id}`,
+      badge: item.category.toUpperCase().replace('_', ' '),
+      thumbnailUrl: item.thumbnailUrl
+    }));
+
+    // Merge and return
+    res.json({
+      success: true,
+      items: [...activeAnnouncements, ...topSarkari]
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err?.message });
+  }
+});
+
 // Admin Authentication: Login
 app.post('/api/admin/login', (req, res) => {
   const { username, password } = req.body;
@@ -2169,6 +2419,23 @@ app.post('/api/posts', async (req: Request, res: Response) => {
     }
 
     syncCustomPostsAndThumbnailsInMemory();
+
+    // Check if auto-publish push is active
+    const pushSettings = getPushServerSettings();
+    if (pushSettings.autoPublishPush && !body.suppressPush) {
+      const pushCategory = newPost.category === 'exam_forms' ? 'exams' : newPost.category === 'admissions' ? 'exams' : 'jobs';
+      broadcastPushNotification({
+        title: `CSC DOST | ${newPost.postType === 'Job' ? 'New Job Alert' : 'New Update'} 🔔`,
+        body: `${newPost.title} — ${newPost.totalPosts || ''} (${newPost.lastDate ? `Last Date: ${newPost.lastDate}` : ''}). Tap to view full details.`,
+        category: pushCategory,
+        url: `/#post/${slug}`,
+        postId: slug,
+        image: newPost.thumbnailUrl,
+        sentBy: 'Auto-Publish on Post Save'
+      }).catch(err => {
+        console.warn('[Push] Auto-publish background notification notice:', err?.message);
+      });
+    }
 
     res.json({
       success: true,

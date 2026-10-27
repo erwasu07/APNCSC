@@ -12,6 +12,7 @@ import {
   Home,
   Compass,
   ChevronRight,
+  Bell,
 } from 'lucide-react';
 import { LegalTab } from './PrivacyPolicyModal';
 
@@ -20,12 +21,16 @@ interface NavbarProps {
   onOpenPrivacyPolicy?: (tab?: LegalTab) => void;
   onOpenAdmin?: () => void;
   onHomeClick?: () => void;
+  onOpenNotificationCenter?: () => void;
+  unreadNotificationCount?: number;
 }
 
 export default function Navbar({
   cafeName,
   onOpenAdmin,
   onHomeClick,
+  onOpenNotificationCenter,
+  unreadNotificationCount = 0,
 }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -414,7 +419,25 @@ export default function Navbar({
           </div>
 
           {/* SECTION 3: RIGHT — ACTION BUTTON SECTION */}
-          <div className="h-full flex items-center justify-end gap-2 xl:gap-3 2xl:gap-4 pl-2 pr-3 xl:pr-4 2xl:pr-5 pt-1">
+          <div className="h-full flex items-center justify-end gap-2 xl:gap-2.5 2xl:gap-3 pl-2 pr-3 xl:pr-4 2xl:pr-5 pt-1">
+            {/* Notification Bell Button */}
+            {onOpenNotificationCenter && (
+              <button
+                type="button"
+                onClick={onOpenNotificationCenter}
+                title="Notifications"
+                aria-label="Open notifications"
+                className="relative h-[38px] w-[38px] xl:h-[44px] xl:w-[44px] 2xl:h-[54px] 2xl:w-[54px] bg-white hover:bg-[#F8FAFC] text-[#0F172A] border border-[#BDCBE0] rounded-[11px] xl:rounded-[13px] shadow-[0_1px_4px_rgba(15,23,42,0.05)] inline-flex items-center justify-center transition-colors cursor-pointer shrink-0"
+              >
+                <Bell className="w-4 h-4 xl:w-[18px] xl:h-[18px] 2xl:w-[20px] 2xl:h-[20px] text-amber-500 fill-amber-400" />
+                {unreadNotificationCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#175CEE] text-white text-[10px] font-black flex items-center justify-center shadow-xs">
+                    {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+                  </span>
+                )}
+              </button>
+            )}
+
             {/* Button 1: Track Application */}
             <button
               type="button"
@@ -754,6 +777,30 @@ export default function Navbar({
 
               {/* Navigation Links List */}
               <div className="px-3 py-3 space-y-1">
+                {/* 0. Notifications */}
+                {onOpenNotificationCenter && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      onOpenNotificationCenter();
+                    }}
+                    className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[14px] font-medium bg-white/10 text-white hover:bg-white/20 active:bg-white/25 transition-colors cursor-pointer text-left mb-1.5"
+                  >
+                    <span className="flex items-center gap-3">
+                      <Bell className="w-[19px] h-[19px] text-amber-400 fill-amber-400 shrink-0" aria-hidden="true" />
+                      <span>Notifications</span>
+                    </span>
+                    {unreadNotificationCount > 0 ? (
+                      <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-[#175CEE] text-white">
+                        {unreadNotificationCount} new
+                      </span>
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-white/50" aria-hidden="true" />
+                    )}
+                  </button>
+                )}
+
                 {/* 1. Home */}
                 <button
                   type="button"

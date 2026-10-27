@@ -662,3 +662,72 @@ export async function persistCustomerApplication(
     };
   }
 }
+
+/**
+ * Syncs a Web Push Subscription record to Supabase table 'push_subscriptions'
+ */
+export async function syncPushSubscriptionToSupabase(record: any): Promise<{ success: boolean; error?: string }> {
+  const supabase = getServerSupabaseClient();
+  if (!supabase) return { success: false, error: 'Supabase client not initialized' };
+
+  try {
+    const { error } = await supabase
+      .from('push_subscriptions')
+      .upsert({
+        id: record.id,
+        endpoint: record.endpoint,
+        p256dh: record.keys?.p256dh,
+        auth: record.keys?.auth,
+        device_type: record.deviceType || 'unknown',
+        user_agent: record.userAgent,
+        preferences: record.preferences,
+        status: record.status || 'active',
+        created_at: record.createdAt,
+        updated_at: record.updatedAt,
+        last_delivery_at: record.lastDeliveryAt
+      }, { onConflict: 'endpoint' });
+
+    if (error) {
+      // Table might not exist yet; log clear info without breaking
+      console.warn('[SupabaseServer] push_subscriptions table sync notice:', error.message);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: any) {
+    console.warn('[SupabaseServer] push_subscriptions sync exception:', err?.message);
+    return { success: false, error: err?.message };
+  }
+}
+
+/**
+ * Syncs a Push Notification broadcast log to Supabase table 'push_notifications_log'
+ */
+export async function syncPushNotificationToSupabase(record: any): Promise<{ success: boolean; error?: string }> {
+  const supabase = getServerSupabaseClient();
+  if (!supabase) return { success: false, error: 'Supabase client not initialized' };
+
+  try {
+    const { error } = await supabase
+      .from('push_notifications_log')
+      .insert({
+        id: record.id,
+        title: record.title,
+        body: record.body,
+        category: record.category,
+        url: record.url,
+        post_id: record.postId,
+        stats: record.stats,
+        sent_at: record.sentAt,
+        sent_by: record.sentBy || 'Admin'
+      });
+
+    if (error) {
+      console.warn('[SupabaseServer] push_notifications_log table sync notice:', error.message);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
+  }
+}
+

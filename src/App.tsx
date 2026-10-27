@@ -25,6 +25,8 @@ const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const Footer = lazy(() => import('./components/Footer'));
 const PrivacyPolicyModal = lazy(() => import('./components/PrivacyPolicyModal'));
 const ToolsHub = lazy(() => import('./components/tools/ToolsHub'));
+const NotificationCenterModal = lazy(() => import('./components/NotificationCenterModal'));
+const NotificationPreferencesModal = lazy(() => import('./components/NotificationPreferencesModal'));
 
 // Lightweight Skeleton Fallback for Section Containers (Prevents Layout Shift)
 function SectionSkeleton({ height = 'min-h-[360px]', title = 'Loading Desk...' }: { height?: string; title?: string }) {
@@ -109,6 +111,33 @@ export default function App() {
 
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
   const [legalModalTab, setLegalModalTab] = useState<PolicyTab>('privacy');
+
+  // Push Notifications & Center Modals State
+  const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState(false);
+  const [isPreferencesModalOpen, setIsPreferencesModalOpen] = useState(false);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState<number>(0);
+
+  const refreshUnreadCount = async () => {
+    try {
+      const res = await fetch('/api/notifications/center');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.items)) {
+          const readSaved = localStorage.getItem('csc_read_notifications');
+          const readSet = new Set(readSaved ? JSON.parse(readSaved) : []);
+          const unread = data.items.filter((i: any) => !readSet.has(i.id)).length;
+          setUnreadNotificationCount(unread);
+        }
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    refreshUnreadCount();
+    const handleOpenPrefs = () => setIsPreferencesModalOpen(true);
+    window.addEventListener('open-push-preferences', handleOpenPrefs);
+    return () => window.removeEventListener('open-push-preferences', handleOpenPrefs);
+  }, []);
 
   // Share modal state
   const [showShareModal, setShowShareModal] = useState(false);
@@ -505,6 +534,11 @@ export default function App() {
           onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
           onOpenAdmin={handleOpenStaffPortal}
           onHomeClick={handleGoHome}
+          onOpenNotificationCenter={() => {
+            setIsNotificationCenterOpen(true);
+            refreshUnreadCount();
+          }}
+          unreadNotificationCount={unreadNotificationCount}
         />
       )}
 
@@ -679,6 +713,34 @@ export default function App() {
       <Suspense fallback={null}>
         <PushNotificationPrompt />
       </Suspense>
+
+      {/* In-Website Notification Center Drawer Modal */}
+      {isNotificationCenterOpen && (
+        <Suspense fallback={null}>
+          <NotificationCenterModal
+            isOpen={isNotificationCenterOpen}
+            onClose={() => {
+              setIsNotificationCenterOpen(false);
+              refreshUnreadCount();
+            }}
+            onOpenPreferences={() => {
+              setIsNotificationCenterOpen(false);
+              setIsPreferencesModalOpen(true);
+            }}
+          />
+        </Suspense>
+      )}
+
+      {/* Web Push Notification Preferences Modal */}
+      {isPreferencesModalOpen && (
+        <Suspense fallback={null}>
+          <NotificationPreferencesModal
+            isOpen={isPreferencesModalOpen}
+            onClose={() => setIsPreferencesModalOpen(false)}
+            onOpenIOSGuide={() => window.dispatchEvent(new CustomEvent('open-push-notification-prompt'))}
+          />
+        </Suspense>
+      )}
 
       {/* Global Share Options Modal */}
       {showShareModal && shareData && (

@@ -14,6 +14,9 @@ interface DatabaseSchema {
   lastIssuedTokenSeq?: number;
   customPosts?: any[];
   postThumbnails?: Record<string, { thumbnailUrl: string; supabaseUrl?: string; localUrl?: string; spec?: any; updatedAt: string }>;
+  pushSubscriptions?: any[];
+  pushNotifications?: any[];
+  pushSettings?: { autoPublishPush: boolean; welcomePushEnabled: boolean };
 }
 
 const DEFAULT_DB: DatabaseSchema = {
@@ -44,7 +47,10 @@ const DEFAULT_DB: DatabaseSchema = {
   appointments: [],
   views: 0,
   customPosts: [],
-  postThumbnails: {}
+  postThumbnails: {},
+  pushSubscriptions: [],
+  pushNotifications: [],
+  pushSettings: { autoPublishPush: false, welcomePushEnabled: true }
 };
 
 let memoryDb: DatabaseSchema | null = null;
@@ -81,6 +87,9 @@ export function getDb(): DatabaseSchema {
       if (!parsed.gallery) parsed.gallery = [];
       if (!parsed.customPosts) parsed.customPosts = [];
       if (!parsed.postThumbnails) parsed.postThumbnails = {};
+      if (!parsed.pushSubscriptions) parsed.pushSubscriptions = [];
+      if (!parsed.pushNotifications) parsed.pushNotifications = [];
+      if (!parsed.pushSettings) parsed.pushSettings = { autoPublishPush: false, welcomePushEnabled: true };
       memoryDb = parsed;
       return parsed;
     }
@@ -575,5 +584,213 @@ export function deleteCustomSarkariPost(postId: string): boolean {
   }
   return false;
 }
+
+// ============================================================
+// WEB PUSH SUBSCRIPTIONS & NOTIFICATIONS
+// ============================================================
+
+export interface PushSubscriptionPreferences {
+  jobs: boolean;
+  schemes: boolean;
+  exams: boolean;
+  updates: boolean;
+}
+
+export interface PushSubscriptionRecord {
+  id: string;
+  endpoint: string;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
+  deviceType: 'android' | 'ios' | 'desktop' | 'unknown';
+  userAgent?: string;
+  preferences: PushSubscriptionPreferences;
+  status: 'active' | 'inactive' | 'expired';
+  createdAt: string;
+  updatedAt: string;
+  lastDeliveryAt?: string;
+  failureCount: number;
+}
+
+export interface PushNotificationRecord {
+  id: string;
+  title: string;
+  body: string;
+  category: 'jobs' | 'schemes' | 'exams' | 'updates' | 'all';
+  url: string;
+  postId?: string;
+  icon?: string;
+  image?: string;
+  sentAt: string;
+  sentBy?: string;
+  stats: {
+    totalTargeted: number;
+    accepted: number;
+    failed: number;
+    expiredCleaned: number;
+  };
+  isTest?: boolean;
+}
+
+export interface PushServerSettings {
+  autoPublishPush: boolean;
+  welcomePushEnabled: boolean;
+}
+
+export function upsertPushSubscription(payload: {
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+  deviceType?: 'android' | 'ios' | 'desktop' | 'unknown';
+  userAgent?: string;
+  preferences?: Partial<PushSubscriptionPreferences>;
+}): PushSubscriptionRecord {
+  const db = getDb();
+  if (!Array.isArray(db.pushSubscriptions)) db.pushSubscriptions = [];
+
+  const nowIso = new Date().toISOString();
+  const existingIdx = db.pushSubscriptions.findIndex(s => s && s.endpoint === payload.endpoint);
+
+  const defaultPreferences: PushSubscriptionPreferences = {
+    jobs: true,
+    schemes: true,
+    exams: true,
+    updates: true,
+    ...(payload.preferences || {})
+  };
+
+  if (existingIdx !== -1) {
+    const existing = db.pushSubscriptions[existingIdx];
+    const updated: PushSubscriptionRecord = {
+      ...existing,
+      keys: payload.keys || existing.keys,
+      deviceType: payload.deviceType || existing.deviceType || 'unknown',
+      userAgent: payload.userAgent || existing.userAgent,
+      preferences: { ...existing.preferences, ...defaultPreferences },
+      status: 'active',
+      failureCount: 0,
+      updatedAt: nowIso
+    };
+    db.pushSubscriptions[existingIdx] = updated;
+    saveDb(db);
+    return updated;
+  }
+
+  const newRecord: PushSubscriptionRecord = {
+    id: `sub_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    endpoint: payload.endpoint,
+    keys: payload.keys,
+    deviceType: payload.deviceType || 'unknown',
+    userAgent: payload.userAgent,
+    preferences: defaultPreferences,
+    status: 'active',
+    createdAt: nowIso,
+    updatedAt: nowIso,
+    failureCount: 0
+  };
+
+  db.pushSubscriptions.push(newRecord);
+  saveDb(db);
+  return newRecord;
+}
+
+export function deactivatePushSubscription(endpoint: string): boolean {
+  const db = getDb();
+  if (!Array.isArray(db.pushSubscriptions)) return false;
+  const idx = db.pushSubscriptions.findIndex(s => s && s.endpoint === endpoint);
+  if (idx !== -1) {
+    db.pushSubscriptions[idx].status = 'inactive';
+    db.pushSubscriptions[idx].updatedAt = new Date().toISOString();
+    saveDb(db);
+    return true;
+  }
+  return false;
+}
+
+export function getActivePushSubscriptions(category?: string): PushSubscriptionRecord[] {
+  const db = getDb();
+  if (!Array.isArray(db.pushSubscriptions)) return [];
+
+  return db.pushSubscriptions.filter(sub => {
+    if (!sub || sub.status !== 'active') return false;
+    if (!category || category === 'all') return true;
+
+    // Filter by subscriber's preference if specified
+    const prefs = sub.preferences || { jobs: true, schemes: true, exams: true, updates: true };
+    if (category === 'jobs' && prefs.jobs !== false) return true;
+    if (category === 'schemes' && prefs.schemes !== false) return true;
+    if (category === 'exams' && prefs.exams !== false) return true;
+    if (category === 'updates' && prefs.updates !== false) return true;
+    return false;
+  });
+}
+
+export function markPushSubscriptionFailure(endpoint: string, isPermanentExpired: boolean): void {
+  const db = getDb();
+  if (!Array.isArray(db.pushSubscriptions)) return;
+  const idx = db.pushSubscriptions.findIndex(s => s && s.endpoint === endpoint);
+  if (idx !== -1) {
+    if (isPermanentExpired) {
+      db.pushSubscriptions[idx].status = 'expired';
+    } else {
+      db.pushSubscriptions[idx].failureCount = (db.pushSubscriptions[idx].failureCount || 0) + 1;
+      if (db.pushSubscriptions[idx].failureCount >= 3) {
+        db.pushSubscriptions[idx].status = 'expired';
+      }
+    }
+    db.pushSubscriptions[idx].updatedAt = new Date().toISOString();
+    saveDb(db);
+  }
+}
+
+export function recordPushDeliverySuccess(endpoint: string): void {
+  const db = getDb();
+  if (!Array.isArray(db.pushSubscriptions)) return;
+  const idx = db.pushSubscriptions.findIndex(s => s && s.endpoint === endpoint);
+  if (idx !== -1) {
+    db.pushSubscriptions[idx].lastDeliveryAt = new Date().toISOString();
+    db.pushSubscriptions[idx].failureCount = 0;
+    saveDb(db);
+  }
+}
+
+export function addPushNotificationRecord(record: Omit<PushNotificationRecord, 'id' | 'sentAt'>): PushNotificationRecord {
+  const db = getDb();
+  if (!Array.isArray(db.pushNotifications)) db.pushNotifications = [];
+
+  const entry: PushNotificationRecord = {
+    ...record,
+    id: `push_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+    sentAt: new Date().toISOString()
+  };
+
+  db.pushNotifications.unshift(entry);
+  if (db.pushNotifications.length > 100) {
+    db.pushNotifications = db.pushNotifications.slice(0, 100);
+  }
+  saveDb(db);
+  return entry;
+}
+
+export function getPushNotificationHistory(): PushNotificationRecord[] {
+  const db = getDb();
+  return Array.isArray(db.pushNotifications) ? db.pushNotifications : [];
+}
+
+export function getPushServerSettings(): PushServerSettings {
+  const db = getDb();
+  return db.pushSettings || { autoPublishPush: false, welcomePushEnabled: true };
+}
+
+export function updatePushServerSettings(settings: Partial<PushServerSettings>): PushServerSettings {
+  const db = getDb();
+  db.pushSettings = {
+    ...(db.pushSettings || { autoPublishPush: false, welcomePushEnabled: true }),
+    ...settings
+  };
+  saveDb(db);
+  return db.pushSettings;
+}
+
 
 
