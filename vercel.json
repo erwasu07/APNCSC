@@ -2,12 +2,16 @@
   "version": 2,
   "functions": {
     "api/index.ts": {
-      "includeFiles": "{public/assets/**,public/thumbnails/**}"
+      "includeFiles": "{server.js,dist/**,index.html,public/**}"
     }
   },
   "rewrites": [
     {
-      "source": "/(post|job|jobs|sarkari|notice|admissions|notification|service)/:path*",
+      "source": "/(post|job|jobs|sarkari|notice|admissions|notification|service|privacy-policy|terms-of-service|disclaimer|about-us|contact-us|refund-policy)/:path*",
+      "destination": "/api"
+    },
+    {
+      "source": "/(sitemap\\.xml|robots\\.txt)",
       "destination": "/api"
     },
     {

@@ -1,7 +1,11 @@
-# robots.txt for https://cscdost.com/
+# robots.txt for https://www.cscdost.com
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /api/
+
+# Canonical Host
+Host: https://www.cscdost.com
 
 # Sitemap
-Sitemap: https://cscdost.com/sitemap.xml
-
+Sitemap: https://www.cscdost.com/sitemap.xml

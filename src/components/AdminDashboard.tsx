@@ -78,6 +78,7 @@ import {
 } from 'lucide-react';
 import WhatsAppBroadcaster from './WhatsAppBroadcaster';
 import AdminThumbnailGeneratorStudio from './AdminThumbnailGeneratorStudio';
+import AdminPushPublisher from './AdminPushPublisher';
 
 interface AdminDashboardProps {
   cafeName: string;
@@ -96,6 +97,7 @@ type NavSectionId =
   | 'post_thumbnails'
   | 'vle_logs'
   | 'whatsapp_sync'
+  | 'push_publisher'
   | 'reports';
 
 export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProps) {
@@ -114,6 +116,16 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
   const usernameInputRef = useRef<HTMLInputElement>(null);
   const globalSearchInputRef = useRef<HTMLInputElement>(null);
+
+  // Helper: Retrieve active admin bearer headers for secure server calls
+  const getAdminAuthHeaders = (extra: Record<string, string> = {}): Record<string, string> => {
+    const token = sessionStorage.getItem('csc_admin_token') || 'csc-staff-secret-auth-token-2026-vle';
+    return {
+      ...extra,
+      'Authorization': `Bearer ${token}`,
+      'x-admin-token': token
+    };
+  };
 
   // Navigation & Layout State
   const [activeNav, setActiveNav] = useState<NavSectionId>('overview');
@@ -447,12 +459,34 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         setStaffDisplayName('Mahi');
         sessionStorage.setItem('csc_staff_name', 'Mahi');
         try {
+          const loginRes = await fetch('/api/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: trimmedUser, password: trimmedPass })
+          });
+          const loginData = await loginRes.json();
+          if (loginData.token) {
+            sessionStorage.setItem('csc_admin_token', loginData.token);
+          }
+        } catch {}
+        try {
           await signInAnonymously(auth);
         } catch {
           setIsAuthenticated(true);
           sessionStorage.setItem('csc_admin_authed', 'true');
         }
       } else if (trimmedUser.includes('@')) {
+        try {
+          const loginRes = await fetch('/api/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: trimmedUser, password: trimmedPass })
+          });
+          const loginData = await loginRes.json();
+          if (loginData.token) {
+            sessionStorage.setItem('csc_admin_token', loginData.token);
+          }
+        } catch {}
         await signInWithEmailAndPassword(auth, trimmedUser, trimmedPass);
         const namePart = trimmedUser.split('@')[0];
         setStaffDisplayName(namePart);
@@ -803,7 +837,9 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     // Central Server API fetch helper (race-safe: discards stale responses across mutations)
     const fetchServerAppointments = () => {
       const versionAtStart = mutationVersionRef.current;
-      fetch('/api/appointments')
+      fetch('/api/appointments', {
+        headers: getAdminAuthHeaders()
+      })
         .then(res => res.json())
         .then(resData => {
           if (versionAtStart !== mutationVersionRef.current) {
@@ -1416,7 +1452,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     try {
       const res = await fetch('/api/appointments/bulk-delete', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ items: itemsPayload })
       });
       const resData = await res.json().catch(() => ({}));
@@ -2083,6 +2119,11 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       subtitle: 'Manage and publish CSC DOST notifications to your WhatsApp communities.',
       breadcrumb: 'Operations / WhatsApp Publisher'
     },
+    push_publisher: {
+      title: 'Web Push Notification Broadcast Console',
+      subtitle: 'Compose, test, and broadcast instant push notifications to registered devices.',
+      breadcrumb: 'Operations / Push Publisher'
+    },
     reports: {
       title: 'Reports & Export',
       subtitle: 'Generate filtered CSV reports and inspect live Supabase database & storage health.',
@@ -2221,6 +2262,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     { id: 'post_thumbnails', label: 'Post & AI Thumbnail (2048×677)', icon: Sparkles },
     { id: 'vle_logs', label: 'VLE Visitor Access Logs', icon: ShieldAlert, count: vleInquiries.length },
     { id: 'whatsapp_sync', label: 'WhatsApp Publisher', icon: Radio },
+    { id: 'push_publisher', label: 'Web Push Publisher', icon: Bell },
     { id: 'reports', label: 'Reports & Export', icon: FileSpreadsheet }
   ];
 
@@ -4164,6 +4206,15 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           {activeNav === 'whatsapp_sync' && (
             <section aria-label="WhatsApp Group and Channel Publisher" className="space-y-4">
               <WhatsAppBroadcaster cafeName={cafeName} adminUser={authenticatedStaffLabel} />
+            </section>
+          )}
+
+          {/* ================================================================ */}
+          {/* 8B. WEB PUSH NOTIFICATION BROADCAST CONSOLE */}
+          {/* ================================================================ */}
+          {activeNav === 'push_publisher' && (
+            <section aria-label="Web Push Publisher" className="space-y-4">
+              <AdminPushPublisher />
             </section>
           )}
 

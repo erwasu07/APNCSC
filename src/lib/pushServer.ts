@@ -14,6 +14,13 @@ import { syncPushNotificationToSupabase } from './supabaseServer';
 
 // Path for persistent VAPID keys fallback
 const VAPID_FILE = path.join(process.cwd(), 'data', 'vapid.json');
+const TMP_VAPID_FILE = '/tmp/vapid.json';
+
+// Production-grade permanent VAPID fallback keypair for CSC DOST
+// (Overrides via process.env.VAPID_PUBLIC_KEY and process.env.VAPID_PRIVATE_KEY are prioritized)
+const STABLE_VAPID_PUBLIC_KEY = 'BIWxr5Hs7YgdviLAArRERb4tMUKSu-6PvSJbIB6_JLtIuemW4knw4LTtRdj8G-MdKa7EpepFB_vOjKLBkTB0pGg';
+const STABLE_VAPID_PRIVATE_KEY = 'OGGSMWlqvau-Tghbf6ajVEzBl_ohTQpI6SsV0kNqTjg';
+const STABLE_VAPID_SUBJECT = 'mailto:support@cscdost.com';
 
 interface VapidConfig {
   publicKey: string;
@@ -28,41 +35,38 @@ export function initializeVapid(): VapidConfig {
 
   let publicKey = (process.env.VAPID_PUBLIC_KEY || '').trim();
   let privateKey = (process.env.VAPID_PRIVATE_KEY || '').trim();
-  const subject = (process.env.VAPID_SUBJECT || 'mailto:support@cscdost.com').trim();
+  const subject = (process.env.VAPID_SUBJECT || STABLE_VAPID_SUBJECT).trim();
 
-  // If environment variables are missing, check or create data/vapid.json
+  // 1. If environment variables are missing, try reading data/vapid.json or /tmp/vapid.json
   if (!publicKey || !privateKey) {
-    try {
-      if (fs.existsSync(VAPID_FILE)) {
-        const fileContent = fs.readFileSync(VAPID_FILE, 'utf-8');
-        const parsed = JSON.parse(fileContent);
-        if (parsed.publicKey && parsed.privateKey) {
-          publicKey = parsed.publicKey;
-          privateKey = parsed.privateKey;
+    const candidatePaths = [VAPID_FILE, TMP_VAPID_FILE];
+    for (const filePath of candidatePaths) {
+      try {
+        if (fs.existsSync(filePath)) {
+          const fileContent = fs.readFileSync(filePath, 'utf-8');
+          const parsed = JSON.parse(fileContent);
+          if (parsed.publicKey && parsed.privateKey) {
+            publicKey = parsed.publicKey;
+            privateKey = parsed.privateKey;
+            break;
+          }
         }
+      } catch (e) {
+        // Read error (e.g. permission or unparseable), continue to next
       }
-    } catch (e) {
-      console.warn('[WebPush] Error reading local vapid.json:', e);
     }
   }
 
-  // If still missing, generate a new pair and save to data/vapid.json
+  // 2. If still missing, use stable compiled fallback keys
   if (!publicKey || !privateKey) {
-    try {
-      console.log('[WebPush] Generating new VAPID keypair for CSC DOST...');
-      const keys = webpush.generateVAPIDKeys();
-      publicKey = keys.publicKey;
-      privateKey = keys.privateKey;
+    publicKey = STABLE_VAPID_PUBLIC_KEY;
+    privateKey = STABLE_VAPID_PRIVATE_KEY;
 
-      const dir = path.dirname(VAPID_FILE);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
-      fs.writeFileSync(VAPID_FILE, JSON.stringify({ publicKey, privateKey, subject, createdAt: new Date().toISOString() }, null, 2));
-      console.log('✅ [WebPush] Generated and stored persistent VAPID keys in data/vapid.json');
-    } catch (genErr) {
-      console.error('[WebPush] Failed to generate/save VAPID keys:', genErr);
-    }
+    // Attempt to persist to /tmp or data directory safely without crashing if read-only
+    try {
+      const targetDir = fs.existsSync(path.dirname(VAPID_FILE)) ? VAPID_FILE : TMP_VAPID_FILE;
+      fs.writeFileSync(targetDir, JSON.stringify({ publicKey, privateKey, subject, createdAt: new Date().toISOString() }, null, 2));
+    } catch {}
   }
 
   try {

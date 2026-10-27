@@ -24,6 +24,9 @@ const NodeInformation = lazy(() => import('./components/NodeInformation'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const Footer = lazy(() => import('./components/Footer'));
 const PrivacyPolicyModal = lazy(() => import('./components/PrivacyPolicyModal'));
+const LegalPageView = lazy(() => import('./components/LegalPageView'));
+import type { LegalPageType } from './components/LegalPageView';
+import { LEGAL_PAGE_CONFIG } from './components/LegalPageView';
 const ToolsHub = lazy(() => import('./components/tools/ToolsHub'));
 const NotificationCenterModal = lazy(() => import('./components/NotificationCenterModal'));
 const NotificationPreferencesModal = lazy(() => import('./components/NotificationPreferencesModal'));
@@ -108,6 +111,8 @@ export default function App() {
   const [trackInitialToken, setTrackInitialToken] = useState<string>('');
   const [isToolsView, setIsToolsView] = useState<boolean>(false);
   const [activeToolId, setActiveToolId] = useState<string | null>(null);
+
+  const [activeLegalPage, setActiveLegalPage] = useState<LegalPageType | null>(null);
 
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
   const [legalModalTab, setLegalModalTab] = useState<PolicyTab>('privacy');
@@ -197,6 +202,31 @@ export default function App() {
       const pathServiceMatch = pathname.match(/^\/service\/([^/?#]+)/i);
       const pathTrackMatch = pathname.match(/^\/track\/([^/?#]+)/i);
       const pathApplyMatch = pathname.startsWith('/apply');
+
+      // Check legal / informational routes (/privacy-policy, /terms-of-service, /disclaimer, /about-us, /contact-us, /refund-policy)
+      const legalMatch = pathname.match(/^\/(privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|about|contact-us|contact|refund-policy|refund)(?:\/)?$/i);
+      if (legalMatch) {
+        let mappedType: LegalPageType = 'privacy';
+        const rawKey = legalMatch[1].toLowerCase();
+        if (rawKey === 'privacy-policy' || rawKey === 'privacy') mappedType = 'privacy';
+        else if (rawKey === 'terms-of-service' || rawKey === 'terms') mappedType = 'terms';
+        else if (rawKey === 'disclaimer') mappedType = 'disclaimer';
+        else if (rawKey === 'about-us' || rawKey === 'about') mappedType = 'about';
+        else if (rawKey === 'contact-us' || rawKey === 'contact') mappedType = 'contact';
+        else if (rawKey === 'refund-policy' || rawKey === 'refund') mappedType = 'refund';
+
+        setActiveLegalPage(mappedType);
+        setIsAdminView(false);
+        setIsApplyView(false);
+        setIsTrackView(false);
+        setIsToolsView(false);
+        setActiveJobPost(null);
+        setActiveServicePost(null);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      } else {
+        setActiveLegalPage(null);
+      }
 
       // 1. Check Apply route
       if (hash.startsWith('#apply') || pathApplyMatch) {
@@ -512,9 +542,10 @@ export default function App() {
     setActiveServicePost(null);
     setIsApplyView(false);
     setIsTrackView(false);
+    setActiveLegalPage(null);
     setSelectedService('');
-    if (window.location.hash) {
-      window.history.replaceState(null, '', window.location.pathname);
+    if (window.location.pathname !== '/' || window.location.hash) {
+      window.history.pushState(null, '', '/');
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -528,7 +559,7 @@ export default function App() {
     <div className="min-h-screen bg-[#F6F8FC] text-[#102A43] flex flex-col justify-between font-sans transition-colors duration-200 w-full max-w-full overflow-x-hidden">
       
       {/* Top Navigation Panel (hidden in Staff Management Console and dedicated Apply/Track pages which use their own compact header) */}
-      {!isAdminView && !isApplyView && !isTrackView && (
+      {!isAdminView && !isApplyView && !isTrackView && !activeLegalPage && (
         <Navbar
           cafeName={settings.cafeName}
           onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
@@ -552,7 +583,19 @@ export default function App() {
             : 'flex-grow w-full max-w-7xl mx-auto px-0 md:px-6 py-0 md:py-6 overflow-x-hidden'
         }
       >
-        {isAdminView ? (
+        {activeLegalPage ? (
+          <Suspense fallback={<PageRouteSkeleton message="Loading Information & Policy..." />}>
+            <LegalPageView
+              pageType={activeLegalPage}
+              onNavigate={(type) => {
+                const cfg = LEGAL_PAGE_CONFIG[type];
+                window.history.pushState(null, '', cfg.path);
+                setActiveLegalPage(type);
+              }}
+              onBackToHome={handleGoHome}
+            />
+          </Suspense>
+        ) : isAdminView ? (
           <Suspense fallback={<PageRouteSkeleton message="Loading CSC Staff Management Console..." />}>
             <AdminDashboard
               cafeName={settings.cafeName}

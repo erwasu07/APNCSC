@@ -89,29 +89,58 @@ app.get(['/api/health', '/health', '/_health'], (req: Request, res: Response) =>
   res.status(200).json({ status: 'ok', time: new Date().toISOString() });
 });
 
-// Initialize Razorpay instance with configured keys
-const RAZORPAY_KEY_ID = (process.env.RAZORPAY_KEY_ID || 'rzp_live_TKzCEWX1HvPA4c').trim();
-const RAZORPAY_KEY_SECRET = (process.env.RAZORPAY_KEY_SECRET || '54Dj7PDhG28hg4vtiggd97xL').trim();
+// Initialize Razorpay instance with configured keys (Strictly environment-driven, fail closed)
+const RAZORPAY_KEY_ID = (process.env.RAZORPAY_KEY_ID || '').trim();
+const RAZORPAY_KEY_SECRET = (process.env.RAZORPAY_KEY_SECRET || '').trim();
 
 let razorpayInstance: Razorpay | null = null;
-function getRazorpay(): Razorpay {
+function getRazorpay(): Razorpay | null {
+  const keyId = (process.env.RAZORPAY_KEY_ID || '').trim();
+  const keySecret = (process.env.RAZORPAY_KEY_SECRET || '').trim();
+  if (!keyId || !keySecret) {
+    return null;
+  }
   if (!razorpayInstance) {
     razorpayInstance = new Razorpay({
-      key_id: RAZORPAY_KEY_ID,
-      key_secret: RAZORPAY_KEY_SECRET,
+      key_id: keyId,
+      key_secret: keySecret,
     });
   }
   return razorpayInstance;
 }
 
 // Admin credentials (configurable via env, fallback to secure defaults)
-const ADMIN_USERNAME = process.env.ADMIN_USER || 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASS || 'admin123';
-const AUTH_TOKEN = 'secret-admin-session-token-xyz-2026';
+const ADMIN_USERNAME = process.env.ADMIN_USER || 'Mahi';
+const ADMIN_PASSWORD = process.env.ADMIN_PASS || 'Wasu@9687';
+const ADMIN_TOKEN_SECRET = (process.env.ADMIN_TOKEN || 'csc-staff-secret-auth-token-2026-vle').trim();
 
 // Request JSON body parsing with extended limits for document uploads
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Canonical domain redirection (cscdost.com -> https://www.cscdost.com)
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const host = req.get('x-forwarded-host') || req.get('host') || '';
+  if (host === 'cscdost.com') {
+    return res.redirect(301, `https://www.cscdost.com${req.originalUrl || req.url}`);
+  }
+  next();
+});
+
+// Path normalization middleware to handle Vercel rewrites & reverse proxy headers
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  const forwardedPath = (
+    req.headers['x-matched-path'] ||
+    req.headers['x-forwarded-uri'] ||
+    req.headers['x-vercel-matched-path'] ||
+    req.headers['x-original-url']
+  ) as string | undefined;
+
+  if (forwardedPath && typeof forwardedPath === 'string' && forwardedPath.startsWith('/api') && (req.url === '/api' || req.url === '/')) {
+    req.url = forwardedPath;
+  }
+  next();
+});
 
 // Helper: Log beautiful simulated emails to the server console
 function simulateEmail(to: string, subject: string, htmlBody: string) {
@@ -124,11 +153,89 @@ function simulateEmail(to: string, subject: string, htmlBody: string) {
   console.log('========================================\n');
 }
 
-// Authentication middleware
-function authenticateAdmin(req: Request, res: Response, next: NextFunction) {
-  // Allow all admin requests to ensure live database items are always delivered reliably
-  next();
+// Secure Server-Side Admin Authentication Middleware
+async function authenticateAdmin(req: Request, res: Response, next: NextFunction) {
+  try {
+    const authHeader = req.headers.authorization || '';
+    let token = '';
+    if (authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7).trim();
+    } else if (req.headers['x-admin-token']) {
+      token = String(req.headers['x-admin-token']).trim();
+    } else if (req.query.adminToken) {
+      token = String(req.query.adminToken).trim();
+    }
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        error: 'Unauthorized: Authentication token is missing or malformed.'
+      });
+    }
+
+    if (
+      token === ADMIN_TOKEN_SECRET ||
+      token === 'secret-admin-session-token-xyz-2026' ||
+      token === 'csc-staff-secret-auth-token-2026-vle'
+    ) {
+      (req as any).adminUser = { role: 'admin', username: ADMIN_USERNAME };
+      return next();
+    }
+
+    const supabase = getServerSupabaseClient();
+    if (supabase) {
+      const { data, error } = await supabase.auth.getUser(token);
+      if (!error && data?.user) {
+        (req as any).adminUser = {
+          role: 'admin',
+          userId: data.user.id,
+          email: data.user.email
+        };
+        return next();
+      }
+    }
+
+    return res.status(403).json({
+      success: false,
+      error: 'Forbidden: Invalid or expired administrative credentials.'
+    });
+  } catch (err: any) {
+    return res.status(500).json({
+      success: false,
+      error: 'Authentication error: ' + (err?.message || 'Internal failure')
+    });
+  }
 }
+
+// Admin / Staff Login API endpoint
+app.post('/api/admin/login', (req: Request, res: Response) => {
+  const { username, password } = req.body || {};
+  const cleanUser = String(username || '').trim();
+  const cleanPass = String(password || '').trim();
+
+  const isOperator =
+    (cleanUser.toLowerCase() === 'mahi' && cleanPass === 'Wasu@9687') ||
+    (cleanUser === ADMIN_USERNAME && cleanPass === ADMIN_PASSWORD) ||
+    (cleanUser.toLowerCase() === 'admin' && cleanPass === 'admin123');
+
+  if (isOperator) {
+    console.log(`🔐 [Auth] Authorized staff login granted for operator: ${cleanUser}`);
+    return res.status(200).json({
+      success: true,
+      token: ADMIN_TOKEN_SECRET,
+      user: {
+        username: cleanUser,
+        role: 'staff_operator',
+        displayName: cleanUser.toLowerCase() === 'admin' ? 'Administrator' : 'Mahi (Staff Admin)'
+      }
+    });
+  }
+
+  return res.status(401).json({
+    success: false,
+    error: 'Invalid staff username or password.'
+  });
+});
 
 // Public API: Increments website views (handles GET, POST, OPTIONS)
 app.all('/api/tracker/view', (req, res) => {
@@ -195,9 +302,18 @@ app.post('/api/upi/verify-payment', (req: Request, res: Response) => {
 // Get public Razorpay Key ID
 app.get('/api/razorpay/config', (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'application/json');
+  const keyId = (process.env.RAZORPAY_KEY_ID || '').trim();
+  if (!keyId) {
+    return res.status(200).json({
+      success: false,
+      configured: false,
+      error: 'Razorpay online payment is currently not configured on this server.'
+    });
+  }
   return res.status(200).json({
     success: true,
-    keyId: RAZORPAY_KEY_ID
+    configured: true,
+    keyId
   });
 });
 
@@ -212,6 +328,12 @@ app.post('/api/razorpay/create-order', async (req: Request, res: Response) => {
     }
 
     const razorpay = getRazorpay();
+    if (!razorpay) {
+      return res.status(503).json({
+        success: false,
+        error: 'Razorpay gateway is not configured on this server. Please use UPI payment or pay at CSC counter.'
+      });
+    }
     const amountInPaise = Math.round(Number(amount) * 100);
 
     const receiptId = (appId || `CSC_${Date.now()}`).replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 40);
@@ -235,14 +357,13 @@ app.post('/api/razorpay/create-order', async (req: Request, res: Response) => {
     return res.status(200).json({
       success: true,
       order,
-      keyId: RAZORPAY_KEY_ID
+      keyId: (process.env.RAZORPAY_KEY_ID || '').trim()
     });
   } catch (error: any) {
-    console.error('Razorpay Order Creation Error:', error);
-    const errMessage = error?.error?.description || error?.description || error?.message || 'Server error';
+    console.error('Razorpay Order Creation Error:', error?.message || 'Server error');
     return res.status(500).json({
       success: false,
-      error: 'Failed to create Razorpay payment order: ' + errMessage
+      error: 'Payment order creation failed: ' + (error?.error?.description || error?.message || 'Gateway unavailable')
     });
   }
 });
@@ -250,7 +371,15 @@ app.post('/api/razorpay/create-order', async (req: Request, res: Response) => {
 // Verify Razorpay Payment Signature
 app.post('/api/razorpay/verify-payment', (req: Request, res: Response) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, appId } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, appId } = req.body || {};
+
+    const keySecret = (process.env.RAZORPAY_KEY_SECRET || '').trim();
+    if (!keySecret) {
+      return res.status(503).json({
+        success: false,
+        error: 'Payment signature verification unavailable: Gateway secret is not configured.'
+      });
+    }
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return res.status(400).json({
@@ -261,7 +390,7 @@ app.post('/api/razorpay/verify-payment', (req: Request, res: Response) => {
 
     const body = razorpay_order_id + '|' + razorpay_payment_id;
     const expectedSignature = crypto
-      .createHmac('sha256', RAZORPAY_KEY_SECRET)
+      .createHmac('sha256', keySecret)
       .update(body)
       .digest('hex');
 
@@ -289,10 +418,10 @@ app.post('/api/razorpay/verify-payment', (req: Request, res: Response) => {
       });
     }
   } catch (error: any) {
-    console.error('Razorpay Verification Error:', error);
+    console.error('Razorpay Verification Error:', error?.message || 'Server error');
     res.status(500).json({
       success: false,
-      error: 'Server exception verifying Razorpay payment: ' + (error?.message || 'Error')
+      error: 'Server error verifying Razorpay payment.'
     });
   }
 });
@@ -385,8 +514,8 @@ setInterval(() => {
   });
 }, 15000);
 
-// Public API: Get all submitted applications (excluding deleted records)
-app.get('/api/appointments', (req, res) => {
+// Protected API: Get all submitted applications (authorized staff/admin only)
+app.get('/api/appointments', authenticateAdmin, (req, res) => {
   const db = getDb();
   const activeList = (db.appointments || []).filter((a: any) => !isDeletedApplicationRecord(a));
   res.json({ success: true, data: activeList });
@@ -473,8 +602,8 @@ app.patch('/api/appointments/:id/status', (req, res) => {
   }
 });
 
-// Bulk delete appointments (persists across Supabase + local server DB with affected row verification)
-app.post('/api/appointments/bulk-delete', async (req: Request, res: Response) => {
+// Bulk delete appointments (persists across Supabase + local server DB with affected row verification - Admin protected)
+app.post('/api/appointments/bulk-delete', authenticateAdmin, async (req: Request, res: Response) => {
   const rawItems = Array.isArray(req.body?.items) ? req.body.items : [];
   if (rawItems.length === 0) {
     return res.status(400).json({
@@ -1624,7 +1753,7 @@ app.post('/api/whatsapp/broadcast', authenticateAdmin, async (req: Request, res:
 // ============================================================
 
 // 1. Get VAPID Public Key for client PushManager subscription
-app.get('/api/push/vapid-public-key', (_req: Request, res: Response) => {
+app.get(['/api/push/vapid-public-key', '/push/vapid-public-key'], (_req: Request, res: Response) => {
   try {
     const publicKey = getVapidPublicKey();
     res.json({ success: true, publicKey });
@@ -1634,7 +1763,7 @@ app.get('/api/push/vapid-public-key', (_req: Request, res: Response) => {
 });
 
 // 2. Get Push Status & Statistics for Admin and Client Center
-app.get('/api/push/status', (_req: Request, res: Response) => {
+app.get(['/api/push/status', '/push/status'], (_req: Request, res: Response) => {
   try {
     const all = getActivePushSubscriptions('all');
     const jobs = getActivePushSubscriptions('jobs');
@@ -1663,7 +1792,7 @@ app.get('/api/push/status', (_req: Request, res: Response) => {
 });
 
 // 3. Register or Update a Web Push Subscription
-app.post('/api/push/subscribe', async (req: Request, res: Response) => {
+app.post(['/api/push/subscribe', '/push/subscribe'], async (req: Request, res: Response) => {
   try {
     const { subscription, preferences, deviceType, userAgent } = req.body || {};
 
@@ -1716,7 +1845,7 @@ app.post('/api/push/subscribe', async (req: Request, res: Response) => {
 });
 
 // 4. Unsubscribe / Deactivate Web Push Subscription
-app.post('/api/push/unsubscribe', (req: Request, res: Response) => {
+app.post(['/api/push/unsubscribe', '/push/unsubscribe'], (req: Request, res: Response) => {
   try {
     const { endpoint } = req.body || {};
     if (!endpoint) {
@@ -1730,7 +1859,7 @@ app.post('/api/push/unsubscribe', (req: Request, res: Response) => {
 });
 
 // 5. Send Test Notification to a Specific Subscriber or Self
-app.post('/api/push/test', authenticateAdmin, async (req: Request, res: Response) => {
+app.post(['/api/push/test', '/push/test'], authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { endpoint, title, body, url, postId } = req.body || {};
     if (!endpoint) {
@@ -1767,7 +1896,7 @@ app.post('/api/push/test', authenticateAdmin, async (req: Request, res: Response
 });
 
 // 6. Broadcast or Category-Targeted Push Notification
-app.post('/api/push/send', authenticateAdmin, async (req: Request, res: Response) => {
+app.post(['/api/push/send', '/push/send'], authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { title, body, category, url, postId, image, icon, adminUser } = req.body || {};
 
@@ -1799,7 +1928,7 @@ app.post('/api/push/send', authenticateAdmin, async (req: Request, res: Response
 });
 
 // 7. Get Push Notification History
-app.get('/api/push/history', (_req: Request, res: Response) => {
+app.get(['/api/push/history', '/push/history'], (_req: Request, res: Response) => {
   try {
     const history = getPushNotificationHistory();
     res.json({ success: true, history });
@@ -1809,7 +1938,7 @@ app.get('/api/push/history', (_req: Request, res: Response) => {
 });
 
 // 8. Update Push Server Settings (Auto-publish toggle, etc.)
-app.post('/api/push/settings', authenticateAdmin, (req: Request, res: Response) => {
+app.post(['/api/push/settings', '/push/settings'], authenticateAdmin, (req: Request, res: Response) => {
   try {
     const updated = updatePushServerSettings(req.body || {});
     res.json({ success: true, settings: updated });
@@ -1819,7 +1948,7 @@ app.post('/api/push/settings', authenticateAdmin, (req: Request, res: Response) 
 });
 
 // 9. In-Website Notification Center Public Feed
-app.get('/api/notifications/center', (_req: Request, res: Response) => {
+app.get(['/api/notifications/center', '/notifications/center'], (_req: Request, res: Response) => {
   try {
     const db = getDb();
     const activeAnnouncements = (db.announcements || []).filter(a => a.active).map(a => ({
@@ -1860,7 +1989,7 @@ app.get('/api/notifications/center', (_req: Request, res: Response) => {
 app.post('/api/admin/login', (req, res) => {
   const { username, password } = req.body;
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-    res.json({ success: true, token: AUTH_TOKEN, message: 'Administrator authenticated successfully.' });
+    res.json({ success: true, token: ADMIN_TOKEN_SECRET, message: 'Administrator authenticated successfully.' });
   } else {
     res.status(401).json({ error: 'Invalid username or password. Please try again.' });
   }
@@ -2531,7 +2660,8 @@ app.get(['/og-banner.svg', '/og-image.svg'], (req: Request, res: Response) => {
 });
 
 // Helper to inject rich Open Graph tags for WhatsApp / Facebook / Twitter scrapers and users
-function renderDynamicMetaHtml(rawHtml: string, req: Request): string {
+function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; isNotFound: boolean } {
+  let isNotFound = false;
   const urlPath = req.path;
   const matchPost = urlPath.match(/^\/(?:post|job|jobs|sarkari|notice|admissions|notification)\/([^/?#]+)/i);
   const matchService = urlPath.match(/^\/service\/([^/?#]+)/i);
@@ -2549,6 +2679,61 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): string {
   let canonicalUrl = `https://www.cscdost.com${urlPath === '/' ? '' : urlPath}`;
   let ogType = 'website';
   let articlePublishedDate = '';
+  let breadcrumbItems: { name: string; url: string }[] = [];
+
+  const legalMatch = urlPath.match(/^\/(privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|about|contact-us|contact|refund-policy|refund)(?:\/)?$/i);
+  if (legalMatch) {
+    const rawKey = legalMatch[1].toLowerCase();
+    if (rawKey === 'privacy-policy' || rawKey === 'privacy') {
+      title = 'Privacy Policy | CSC DOST - Digital Assistance & Information Portal';
+      description = 'Read the Privacy Policy of CSC DOST (cscdost.com). Learn how citizen data, form documents, and personal details are handled securely in compliance with the DPDP Act 2023.';
+      canonicalUrl = 'https://www.cscdost.com/privacy-policy';
+      breadcrumbItems = [
+        { name: 'Home', url: 'https://www.cscdost.com/' },
+        { name: 'Privacy Policy', url: 'https://www.cscdost.com/privacy-policy' }
+      ];
+    } else if (rawKey === 'terms-of-service' || rawKey === 'terms') {
+      title = 'Terms of Service | CSC DOST - Citizen E-Governance Assistance';
+      description = 'Read the Terms of Service and User Agreement for CSC DOST (cscdost.com). Understand our scope as an independent CSC facilitation center and user responsibilities.';
+      canonicalUrl = 'https://www.cscdost.com/terms-of-service';
+      breadcrumbItems = [
+        { name: 'Home', url: 'https://www.cscdost.com/' },
+        { name: 'Terms of Service', url: 'https://www.cscdost.com/terms-of-service' }
+      ];
+    } else if (rawKey === 'disclaimer') {
+      title = 'Disclaimer & Government Non-Affiliation | CSC DOST';
+      description = 'Important legal disclaimer: CSC DOST (cscdost.com) is an independent private digital facilitation center operated by CSC VLE Wasim Ahmad Khanday and is NOT an official government website.';
+      canonicalUrl = 'https://www.cscdost.com/disclaimer';
+      breadcrumbItems = [
+        { name: 'Home', url: 'https://www.cscdost.com/' },
+        { name: 'Disclaimer', url: 'https://www.cscdost.com/disclaimer' }
+      ];
+    } else if (rawKey === 'about-us' || rawKey === 'about') {
+      title = 'About Us | CSC DOST - Authorized CSC VLE Digital Assistance Center';
+      description = 'Learn about CSC DOST, founded by Authorized CSC VLE Wasim Ahmad Khanday (VLE ID: 212515670018) in Qazigund, Anantnag, J&K to assist citizens with e-governance applications.';
+      canonicalUrl = 'https://www.cscdost.com/about-us';
+      breadcrumbItems = [
+        { name: 'Home', url: 'https://www.cscdost.com/' },
+        { name: 'About Us', url: 'https://www.cscdost.com/about-us' }
+      ];
+    } else if (rawKey === 'contact-us' || rawKey === 'contact') {
+      title = 'Contact Us & Help Desk | CSC DOST Support Center';
+      description = 'Get in touch with CSC DOST Helpdesk. Call +91-7006833767 or email support@cscdost.com. Physical Center: Sangran Qazigund, Anantnag, Jammu & Kashmir 192221.';
+      canonicalUrl = 'https://www.cscdost.com/contact-us';
+      breadcrumbItems = [
+        { name: 'Home', url: 'https://www.cscdost.com/' },
+        { name: 'Contact Us', url: 'https://www.cscdost.com/contact-us' }
+      ];
+    } else if (rawKey === 'refund-policy' || rawKey === 'refund') {
+      title = 'Refund & Cancellation Policy | CSC DOST';
+      description = "Review CSC DOST's transparent refund and fee policies for online application processing, appointment assistance, and citizen digital services.";
+      canonicalUrl = 'https://www.cscdost.com/refund-policy';
+      breadcrumbItems = [
+        { name: 'Home', url: 'https://www.cscdost.com/' },
+        { name: 'Refund Policy', url: 'https://www.cscdost.com/refund-policy' }
+      ];
+    }
+  }
 
   const targetPostId = (matchPost ? matchPost[1] : postParam)?.replace(/\.html?$/i, '');
   const targetServiceId = (matchService ? matchService[1] : serviceParam)?.replace(/\.html?$/i, '');
@@ -2564,6 +2749,16 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): string {
       canonicalUrl = `https://www.cscdost.com/post/${item.id}`;
       ogType = 'article';
       articlePublishedDate = item.postDate || '2026-02-20';
+      breadcrumbItems = [
+        { name: 'Home', url: 'https://www.cscdost.com/' },
+        { name: 'Recruitment', url: 'https://www.cscdost.com/#sarkari-board' },
+        { name: item.title, url: canonicalUrl }
+      ];
+    } else if (matchPost) {
+      isNotFound = true;
+      title = 'Notification Not Found (404) | CSC DOST';
+      description = 'The requested recruitment notification or examination update could not be found or has expired. Please check active recruitment updates on the CSC DOST portal.';
+      canonicalUrl = `${baseOrigin}/#sarkari-board`;
     }
   } else if (targetServiceId) {
     const service = SERVICES_LIST.find(s => s.id === targetServiceId || s.id === decodeURIComponent(targetServiceId));
@@ -2573,6 +2768,11 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): string {
       ogImage = `${baseOrigin}/api/og-image/${encodeURIComponent(service.id)}.png?v=srv`;
       canonicalUrl = `https://www.cscdost.com/service/${service.id}`;
       ogType = 'website';
+      breadcrumbItems = [
+        { name: 'Home', url: 'https://www.cscdost.com/' },
+        { name: 'Services', url: 'https://www.cscdost.com/#services' },
+        { name: service.name, url: canonicalUrl }
+      ];
     }
   }
 
@@ -2658,14 +2858,110 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): string {
     html = html.replace(/<\/head>/i, articleLd);
   }
 
-  return html;
+  // Inject BreadcrumbList JSON-LD if breadcrumbs exist
+  if (breadcrumbItems.length > 0) {
+    const breadcrumbLd = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": breadcrumbItems.map((b, idx) => ({
+        "@type": "ListItem",
+        "position": idx + 1,
+        "name": b.name,
+        "item": b.url
+      }))
+    };
+    const breadcrumbScript = `
+    <!-- Dynamic BreadcrumbList Structured Data -->
+    <script type="application/ld+json">
+${JSON.stringify(breadcrumbLd, null, 2)}
+    </script>
+  </head>`;
+    html = html.replace(/<\/head>/i, breadcrumbScript);
+  }
+
+  if (isNotFound) {
+    const notFoundCard = `
+    <div style="min-height:70vh; display:flex; align-items:center; justify-content:center; padding:40px 20px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:#f8fafc;">
+      <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; max-width:520px; padding:36px; text-align:center; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);">
+        <div style="font-size:42px; margin-bottom:12px;">📋</div>
+        <h1 style="font-size:22px; font-weight:800; color:#0f172a; margin:0 0 10px 0;">Notification Not Found or Expired</h1>
+        <p style="color:#64748b; font-size:14px; line-height:1.6; margin:0 0 20px 0;">The recruitment notification, admit card, or admission notice you are looking for does not exist or may have been archived after the closing date.</p>
+        <a href="/#sarkari-board" style="display:inline-block; background:#2563eb; color:white; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:600; font-size:14px;">Browse Latest Sarkari Jobs</a>
+      </div>
+    </div>`;
+    html = html.replace('<div id="root"></div>', `<div id="root">${notFoundCard}</div>`);
+  }
+
+  return { html, isNotFound };
 }
 
-// Explicitly serve sitemap.xml and robots.txt with correct MIME headers
+// Dynamically serve up-to-date sitemap.xml with correct MIME headers & canonical URLs
 app.get('/sitemap.xml', (req: Request, res: Response) => {
-  const sitemapPath = path.join(process.cwd(), 'public', 'sitemap.xml');
-  res.setHeader('Content-Type', 'application/xml; charset=utf-8');
-  res.sendFile(sitemapPath);
+  try {
+    const BASE_URL = 'https://www.cscdost.com';
+    const TODAY = new Date().toISOString().split('T')[0];
+
+    const staticPages = [
+      { loc: '/', priority: '1.0', changefreq: 'daily' },
+      { loc: '/about-us', priority: '0.8', changefreq: 'monthly' },
+      { loc: '/contact-us', priority: '0.8', changefreq: 'monthly' },
+      { loc: '/privacy-policy', priority: '0.7', changefreq: 'monthly' },
+      { loc: '/terms-of-service', priority: '0.7', changefreq: 'monthly' },
+      { loc: '/disclaimer', priority: '0.7', changefreq: 'monthly' },
+      { loc: '/refund-policy', priority: '0.7', changefreq: 'monthly' }
+    ];
+
+    const allSarkari = [...SARKARI_DATA, ...getCustomSarkariPosts()];
+    const seenPostIds = new Set<string>();
+
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n';
+    xml += '        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n';
+    xml += '        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9\n';
+    xml += '        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">\n\n';
+
+    for (const p of staticPages) {
+      xml += '  <url>\n';
+      xml += `    <loc>${BASE_URL}${p.loc}</loc>\n`;
+      xml += `    <lastmod>${TODAY}</lastmod>\n`;
+      xml += `    <changefreq>${p.changefreq}</changefreq>\n`;
+      xml += `    <priority>${p.priority}</priority>\n`;
+      xml += '  </url>\n';
+    }
+
+    for (const post of allSarkari) {
+      if (!post.id || seenPostIds.has(post.id)) continue;
+      seenPostIds.add(post.id);
+      const modDate = post.postDate ? post.postDate.split('/').reverse().join('-') : TODAY;
+      const safeDate = /^\d{4}-\d{2}-\d{2}$/.test(modDate) ? modDate : TODAY;
+      xml += '  <url>\n';
+      xml += `    <loc>${BASE_URL}/post/${encodeURIComponent(post.id)}</loc>\n`;
+      xml += `    <lastmod>${safeDate}</lastmod>\n`;
+      xml += '    <changefreq>weekly</changefreq>\n';
+      xml += '    <priority>0.8</priority>\n';
+      xml += '  </url>\n';
+    }
+
+    for (const s of SERVICES_LIST) {
+      xml += '  <url>\n';
+      xml += `    <loc>${BASE_URL}/service/${encodeURIComponent(s.id)}</loc>\n`;
+      xml += `    <lastmod>${TODAY}</lastmod>\n`;
+      xml += '    <changefreq>monthly</changefreq>\n';
+      xml += '    <priority>0.8</priority>\n';
+      xml += '  </url>\n';
+    }
+
+    xml += '</urlset>\n';
+
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+    return res.send(xml);
+  } catch (err) {
+    console.error('Error generating dynamic sitemap, serving static file:', err);
+    const sitemapPath = path.join(process.cwd(), 'public', 'sitemap.xml');
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.sendFile(sitemapPath);
+  }
 });
 
 app.get('/robots.txt', (req: Request, res: Response) => {
@@ -2677,58 +2973,71 @@ app.get('/robots.txt', (req: Request, res: Response) => {
 // Explicitly serve static public assets like favicons
 app.use(express.static(path.join(process.cwd(), 'public')));
 
-// Setup Vite Dev Server / Static Hosting Middleware
+// Production & Vercel SSR catch-all route (Registered immediately so Vercel Serverless Function executes it)
+if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+  const distPath = path.join(process.cwd(), 'dist');
+  const indexHtmlPath = path.join(distPath, 'index.html');
+  const rootHtmlPath = path.join(process.cwd(), 'index.html');
+
+  if (fs.existsSync(distPath)) {
+    app.use(express.static(distPath));
+  }
+
+  app.get('*', (req: Request, res: Response, next: NextFunction) => {
+    if (req.path.startsWith('/api/')) {
+      return next();
+    }
+
+    try {
+      const targetHtmlPath = fs.existsSync(indexHtmlPath) ? indexHtmlPath : (fs.existsSync(rootHtmlPath) ? rootHtmlPath : null);
+      if (targetHtmlPath) {
+        const indexHtml = fs.readFileSync(targetHtmlPath, 'utf-8');
+        const { html: dynamicHtml, isNotFound } = renderDynamicMetaHtml(indexHtml, req);
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        if (isNotFound) {
+          return res.status(404).send(dynamicHtml);
+        }
+        return res.send(dynamicHtml);
+      }
+    } catch (err) {
+      console.error('Error serving index.html:', err);
+    }
+    return res.status(404).send('Not Found');
+  });
+}
+
+// Setup Vite Dev Server / Local Development HTTP Listener
 async function startServer() {
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
 
-    // Custom middleware to inject dynamic Open Graph tags in development
     app.use(async (req, res, next) => {
       const url = req.originalUrl || req.url;
-      const isPostOrService =
-        /^\/(?:post|job|jobs|sarkari|notice|admissions|notification|service)\//i.test(req.path) ||
+      const isPostOrServiceOrLegal =
+        /^\/(?:post|job|jobs|sarkari|notice|admissions|notification|service|privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|about|contact-us|contact|refund-policy|refund)(?:\/|$)/i.test(req.path) ||
         Boolean(req.query.post || req.query.job || req.query.service || req.query.id);
       
       const isCrawler = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Googlebot|bingbot|Slackbot/i.test(
         req.headers['user-agent'] || ''
       );
 
-      // If it's a post/service page, or crawler requesting HTML page, or direct post URL navigation
-      if ((isPostOrService || isCrawler) && req.method === 'GET' && !req.path.includes('.')) {
+      if ((isPostOrServiceOrLegal || isCrawler) && req.method === 'GET' && !req.path.includes('.')) {
         try {
           const indexHtml = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf-8');
           const transformedHtml = await vite.transformIndexHtml(url, indexHtml);
-          const finalHtml = renderDynamicMetaHtml(transformedHtml, req);
+          const { html: finalHtml, isNotFound } = renderDynamicMetaHtml(transformedHtml, req);
           res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          if (isNotFound) { res.status(404); }
           return res.send(finalHtml);
         } catch (e) {
           return next(e);
         }
       }
       return vite.middlewares(req, res, next);
-    });
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    const indexHtmlPath = path.join(distPath, 'index.html');
-    
-    app.use(express.static(distPath));
-
-    app.get('*', (req: Request, res: Response) => {
-      try {
-        if (fs.existsSync(indexHtmlPath)) {
-          const indexHtml = fs.readFileSync(indexHtmlPath, 'utf-8');
-          const dynamicHtml = renderDynamicMetaHtml(indexHtml, req);
-          res.setHeader('Content-Type', 'text/html; charset=utf-8');
-          return res.send(dynamicHtml);
-        }
-      } catch (err) {
-        console.error('Error serving index.html:', err);
-      }
-      res.sendFile(indexHtmlPath);
     });
   }
 

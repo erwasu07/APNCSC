@@ -17,6 +17,13 @@ interface FooterProps {
   onOpenAdmin?: () => void;
 }
 
+  const navigateTo = (path: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    window.history.pushState(null, '', path);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
 export default function Footer({
   cafeName,
   onOpenPrivacyPolicy,
@@ -155,66 +162,65 @@ export default function Footer({
           {/* Column 3: Guides, Policies & Official Portals (2 cols) */}
           <div className="lg:col-span-2 space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-white">
-              Guides &amp; Policies
+              Policies &amp; Information
             </h3>
             <ul className="space-y-2 text-xs sm:text-sm">
               <li>
-                <button
-                  type="button"
-                  onClick={() => scrollToSection('knowledge-hub')}
-                  className="text-slate-300 hover:text-white transition-colors cursor-pointer"
+                <a
+                  href="/about-us"
+                  onClick={(e) => navigateTo('/about-us', e)}
+                  className="text-slate-300 hover:text-white transition-colors cursor-pointer block"
                 >
-                  Citizen Guides &amp; Blog
-                </button>
+                  About CSC DOST
+                </a>
               </li>
               <li>
-                <button
-                  type="button"
-                  onClick={() => scrollToSection('centre-info')}
-                  className="text-slate-300 hover:text-white transition-colors cursor-pointer"
+                <a
+                  href="/contact-us"
+                  onClick={(e) => navigateTo('/contact-us', e)}
+                  className="text-slate-300 hover:text-white transition-colors cursor-pointer block"
                 >
-                  About Our Centre
-                </button>
+                  Contact Helpdesk
+                </a>
               </li>
               <li>
-                <button
-                  type="button"
-                  onClick={() => scrollToSection('faq-section')}
-                  className="text-slate-300 hover:text-white transition-colors cursor-pointer"
+                <a
+                  href="/privacy-policy"
+                  onClick={(e) => navigateTo('/privacy-policy', e)}
+                  className="text-slate-300 hover:text-white transition-colors cursor-pointer block"
                 >
-                  Frequently Asked Questions
-                </button>
+                  Privacy Policy (DPDP Act)
+                </a>
               </li>
               <li>
-                <button
-                  type="button"
-                  onClick={() => onOpenPrivacyPolicy('privacy')}
-                  className="text-slate-300 hover:text-white transition-colors cursor-pointer"
+                <a
+                  href="/terms-of-service"
+                  onClick={(e) => navigateTo('/terms-of-service', e)}
+                  className="text-slate-300 hover:text-white transition-colors cursor-pointer block"
                 >
-                  Privacy Policy
-                </button>
+                  Terms of Service &amp; Agreement
+                </a>
               </li>
               <li>
-                <button
-                  type="button"
-                  onClick={() => onOpenPrivacyPolicy('terms')}
-                  className="text-slate-300 hover:text-white transition-colors cursor-pointer"
+                <a
+                  href="/disclaimer"
+                  onClick={(e) => navigateTo('/disclaimer', e)}
+                  className="text-slate-300 hover:text-white transition-colors cursor-pointer block"
                 >
-                  Terms of Service
-                </button>
+                  Disclaimer &amp; Non-Affiliation
+                </a>
               </li>
               <li>
-                <button
-                  type="button"
-                  onClick={() => onOpenPrivacyPolicy('disclaimer')}
-                  className="text-slate-300 hover:text-white transition-colors cursor-pointer"
+                <a
+                  href="/refund-policy"
+                  onClick={(e) => navigateTo('/refund-policy', e)}
+                  className="text-slate-300 hover:text-white transition-colors cursor-pointer block"
                 >
-                  Disclaimer &amp; Refund Policy
-                </button>
+                  Refund &amp; Fee Policy
+                </a>
               </li>
             </ul>
           </div>
-
           {/* Column 4: Contact & Helpdesk (3 cols) */}
           <div className="lg:col-span-3 space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-white">
@@ -280,27 +286,34 @@ export default function Footer({
           </p>
 
           <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={() => onOpenPrivacyPolicy('privacy')}
+            <a
+              href="/about-us"
+              onClick={(e) => navigateTo('/about-us', e)}
+              className="hover:text-white transition-colors cursor-pointer"
+            >
+              About
+            </a>
+            <a
+              href="/privacy-policy"
+              onClick={(e) => navigateTo('/privacy-policy', e)}
               className="hover:text-white transition-colors cursor-pointer"
             >
               Privacy
-            </button>
-            <button
-              type="button"
-              onClick={() => onOpenPrivacyPolicy('terms')}
+            </a>
+            <a
+              href="/terms-of-service"
+              onClick={(e) => navigateTo('/terms-of-service', e)}
               className="hover:text-white transition-colors cursor-pointer"
             >
               Terms
-            </button>
-            <button
-              type="button"
-              onClick={() => onOpenPrivacyPolicy('disclaimer')}
+            </a>
+            <a
+              href="/disclaimer"
+              onClick={(e) => navigateTo('/disclaimer', e)}
               className="hover:text-white transition-colors cursor-pointer"
             >
               Disclaimer
-            </button>
+            </a>
             {onOpenAdmin && (
               <button
                 type="button"

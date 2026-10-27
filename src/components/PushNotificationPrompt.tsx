@@ -152,10 +152,10 @@ export default function PushNotificationPrompt() {
 
               <div className="pr-5">
                 <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug">
-                  Get Instant Updates
+                  Never Miss an Important Update
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                  Receive new job alerts, government scheme updates, exam notifications and important announcements directly on your device.
+                  Get instant alerts for government jobs, recruitment notifications, welfare schemes, exam dates and important CSC DOST announcements.
                 </p>
               </div>
             </div>
@@ -168,7 +168,7 @@ export default function PushNotificationPrompt() {
                   <Briefcase className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                  Latest Recruitment Alerts
+                  Recruitment &amp; Job Alerts
                 </div>
               </div>
 

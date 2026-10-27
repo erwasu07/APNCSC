@@ -159,14 +159,24 @@ export async function subscribeToWebPush(
     throw new Error('Could not initialize service worker.');
   }
 
-  // 5. Fetch VAPID public key from backend
-  const keyRes = await fetch('/api/push/vapid-public-key');
-  if (!keyRes.ok) {
-    throw new Error('Failed to retrieve VAPID application server key from server.');
+  // 5. Fetch VAPID public key from backend (with automatic fallback)
+  let keyData: any = null;
+  for (const endpoint of ['/api/push/vapid-public-key', '/push/vapid-public-key']) {
+    try {
+      const res = await fetch(endpoint);
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.success && data.publicKey) {
+          keyData = data;
+          break;
+        }
+      }
+    } catch {}
   }
-  const keyData = await keyRes.json();
-  if (!keyData.success || !keyData.publicKey) {
-    throw new Error('Invalid VAPID public key received.');
+
+  if (!keyData || !keyData.publicKey) {
+    throw new Error('Failed to retrieve VAPID application server key from server.');
   }
 
   const applicationServerKey = urlBase64ToUint8Array(keyData.publicKey);
@@ -186,21 +196,32 @@ export async function subscribeToWebPush(
   }
 
   // 7. Save subscription securely in Supabase / backend database
-  const saveRes = await fetch('/api/push/subscribe', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      subscription: subJson,
-      preferences,
-      deviceType: getDeviceType(),
-      userAgent: navigator.userAgent,
-      sendWelcome: options?.sendWelcome !== false
-    })
-  });
+  let saveData: any = null;
+  let saveOk = false;
+  for (const endpoint of ['/api/push/subscribe', '/push/subscribe']) {
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscription: subJson,
+          preferences,
+          deviceType: getDeviceType(),
+          userAgent: navigator.userAgent,
+          sendWelcome: options?.sendWelcome !== false
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        saveData = data;
+        saveOk = true;
+        break;
+      }
+    } catch {}
+  }
 
-  const saveData = await saveRes.json();
-  if (!saveRes.ok || !saveData.success) {
-    throw new Error(saveData.error || 'Server failed to save push subscription in database.');
+  if (!saveOk || !saveData) {
+    throw new Error('Server failed to save push subscription in database.');
   }
 
   // 8. Update local storage with true confirmed state
@@ -230,11 +251,16 @@ export async function unsubscribeFromWebPush(): Promise<boolean> {
       await subscription.unsubscribe();
 
       // Notify backend to deactivate record
-      fetch('/api/push/unsubscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ endpoint })
-      }).catch(err => console.warn('[WebPush] Backend unsubscribe sync notice:', err));
+      for (const ep of ['/api/push/unsubscribe', '/push/unsubscribe']) {
+        try {
+          const res = await fetch(ep, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ endpoint })
+          });
+          if (res.ok) break;
+        } catch {}
+      }
     }
 
     localStorage.setItem('csc_push_notification_status', 'unsubscribed');

@@ -78,17 +78,46 @@ export async function uploadDocumentBufferToSupabase(
     return { url: '', success: false, error: 'Supabase client not initialized' };
   }
 
+  // 1. Strict File Size Validation (Max 15MB limit)
+  const MAX_FILE_SIZE = 15 * 1024 * 1024;
+  if (!fileBuffer || fileBuffer.length === 0) {
+    return { url: '', success: false, error: 'Uploaded file is empty.' };
+  }
+  if (fileBuffer.length > MAX_FILE_SIZE) {
+    return { url: '', success: false, error: 'File size exceeds maximum allowed limit of 15 MB.' };
+  }
+
+  // 2. Strict File Extension Validation
+  const rawExt = (fileName.includes('.') ? fileName.split('.').pop() || '' : '').toLowerCase().trim();
+  const ALLOWED_EXTENSIONS = new Set(['pdf', 'jpg', 'jpeg', 'png', 'webp']);
+  if (!ALLOWED_EXTENSIONS.has(rawExt)) {
+    return { url: '', success: false, error: 'Invalid file extension. Only PDF, JPG, PNG, and WEBP files are allowed.' };
+  }
+
+  // 3. Magic Number / File Signature Validation (prevents spoofed executables)
+  const isPdf = fileBuffer.length >= 4 && fileBuffer[0] === 0x25 && fileBuffer[1] === 0x50 && fileBuffer[2] === 0x44 && fileBuffer[3] === 0x46; // %PDF
+  const isJpg = fileBuffer.length >= 3 && fileBuffer[0] === 0xFF && fileBuffer[1] === 0xD8 && fileBuffer[2] === 0xFF; // JPEG
+  const isPng = fileBuffer.length >= 8 && fileBuffer[0] === 0x89 && fileBuffer[1] === 0x50 && fileBuffer[2] === 0x4E && fileBuffer[3] === 0x47; // PNG
+  const isWebp = fileBuffer.length >= 12 && fileBuffer.toString('utf-8', 0, 4) === 'RIFF' && fileBuffer.toString('utf-8', 8, 12) === 'WEBP';
+
+  if (!isPdf && !isJpg && !isPng && !isWebp) {
+    return { url: '', success: false, error: 'Corrupt or unverified file signature. Upload rejected for security.' };
+  }
+
+  // Resolve verified MIME type
+  const verifiedMime = isPdf ? 'application/pdf' : isPng ? 'image/png' : isWebp ? 'image/webp' : 'image/jpeg';
+
   try {
-    const extMatch = fileName.includes('.') ? fileName.split('.').pop() : 'bin';
-    const cleanExt = extMatch ? extMatch.toLowerCase() : 'bin';
+    // 4. Secure File Path & Name Sanitization (prevent path traversal / injection)
+    const cleanAppId = appId.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 40);
     const cleanBaseName = fileName.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 30);
-    const uniqueFileName = `${Date.now()}_${cleanBaseName}.${cleanExt}`;
-    const storagePath = `${appId}/${uniqueFileName}`;
+    const uniqueFileName = `${Date.now()}_${cleanBaseName}.${rawExt}`;
+    const storagePath = `${cleanAppId}/${uniqueFileName}`;
 
     const { data, error } = await supabase.storage
       .from('documents')
       .upload(storagePath, fileBuffer, {
-        contentType: contentType || 'application/octet-stream',
+        contentType: verifiedMime,
         cacheControl: '3600',
         upsert: true
       });
@@ -107,7 +136,7 @@ export async function uploadDocumentBufferToSupabase(
       success: true
     };
   } catch (err: any) {
-    console.error(`[SupabaseServer] Storage upload exception for ${fileName}:`, err);
+    console.error(`[SupabaseServer] Storage upload exception for ${fileName}:`, err?.message || String(err));
     return { url: '', success: false, error: err?.message || String(err) };
   }
 }

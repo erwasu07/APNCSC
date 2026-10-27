@@ -252,6 +252,14 @@
       "date": "2026-07-30T12:13:35.420Z"
     }
   ],
-  "views": 554,
-  "lastIssuedTokenSeq": 4645
+  "views": 556,
+  "lastIssuedTokenSeq": 4645,
+  "customPosts": [],
+  "postThumbnails": {},
+  "pushSubscriptions": [],
+  "pushNotifications": [],
+  "pushSettings": {
+    "autoPublishPush": false,
+    "welcomePushEnabled": true
+  }
 }
