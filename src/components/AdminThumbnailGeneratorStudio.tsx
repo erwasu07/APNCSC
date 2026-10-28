@@ -908,7 +908,7 @@ export default function AdminThumbnailGeneratorStudio({
                     <img
                       src={previewSvgDataUrl}
                       alt={title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain block"
                     />
                   </div>
                   <div className="p-3 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700">
@@ -938,7 +938,7 @@ export default function AdminThumbnailGeneratorStudio({
                     <img
                       src={previewSvgDataUrl}
                       alt={title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain block"
                     />
                   </div>
                   <div className="p-2 space-y-0.5">

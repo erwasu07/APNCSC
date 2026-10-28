@@ -625,11 +625,11 @@ export default function AdminPushPublisher() {
 
             {/* Optional Thumbnail Banner */}
             {thumbnailUrl && (
-              <div className="rounded-lg overflow-hidden border border-slate-700 bg-slate-950 mt-2" style={{ aspectRatio: '2048 / 677' }}>
+              <div className="rounded-lg overflow-hidden border border-slate-700 bg-slate-950 mt-2 w-full aspect-[1200/630]">
                 <img
                   src={thumbnailUrl}
                   alt="Notification Banner"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain block"
                 />
               </div>
             )}

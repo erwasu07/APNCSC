@@ -1,6 +1,8 @@
 # robots.txt for https://www.cscdost.com
 User-agent: *
 Allow: /
+Allow: /api/og-image/
+Allow: /api/thumbnails/
 Disallow: /admin
 Disallow: /api/
 

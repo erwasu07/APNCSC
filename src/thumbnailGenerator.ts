@@ -62,6 +62,47 @@ export interface ThumbnailInputPayload {
   customOverrides?: Partial<ThumbnailSpec>;
 }
 
+import { fileURLToPath } from 'url';
+
+// Load and cache embedded TrueType fonts as Base64 for deterministic serverless rasterization (Sharp / librsvg)
+let embeddedFontBase64Bold = '';
+let embeddedFontBase64Regular = '';
+
+try {
+  let currentDir = process.cwd();
+  try {
+    currentDir = typeof __dirname !== 'undefined' ? __dirname : path.dirname(fileURLToPath(import.meta.url));
+  } catch {
+    currentDir = process.cwd();
+  }
+
+  const boldCandidates = [
+    path.join(currentDir, 'assets/fonts/LiberationSans-Bold.ttf'),
+    path.join(process.cwd(), 'src/assets/fonts/LiberationSans-Bold.ttf'),
+    '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf'
+  ];
+  for (const p of boldCandidates) {
+    if (fs.existsSync(p)) {
+      embeddedFontBase64Bold = fs.readFileSync(p).toString('base64');
+      break;
+    }
+  }
+
+  const regularCandidates = [
+    path.join(currentDir, 'assets/fonts/LiberationSans-Regular.ttf'),
+    path.join(process.cwd(), 'src/assets/fonts/LiberationSans-Regular.ttf'),
+    '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf'
+  ];
+  for (const p of regularCandidates) {
+    if (fs.existsSync(p)) {
+      embeddedFontBase64Regular = fs.readFileSync(p).toString('base64');
+      break;
+    }
+  }
+} catch (e) {
+  console.warn('Could not read font files for base64 embedding:', e);
+}
+
 export function escapeXml(unsafe: string): string {
   if (!unsafe) return '';
   return String(unsafe)
@@ -411,6 +452,23 @@ export function buildDeterministicThumbnailSpec(input: ThumbnailInputPayload): T
 
   const howToApplyValue = 'Visit CSC DOST';
 
+  // Only preset verified logo if the category has an official verified vector emblem
+  const hasVerifiedPreset = [
+    'jkssb',
+    'army_jobs',
+    'rrb_jobs',
+    'ssc_jobs',
+    'exam_forms',
+    'admissions',
+    'cluster_univ'
+  ].includes(style);
+
+  const logoOption: 'preset' | 'custom' | 'placeholder' = input.customOverrides?.logoUrl
+    ? 'custom'
+    : hasVerifiedPreset
+    ? 'preset'
+    : 'placeholder';
+
   return {
     category: style,
     orgTitle,
@@ -422,7 +480,7 @@ export function buildDeterministicThumbnailSpec(input: ThumbnailInputPayload): T
     lastDateValue,
     howToApplyLabel: 'How to apply:',
     howToApplyValue,
-    logoOption: 'placeholder',
+    logoOption,
 
     // Legacy fields for backward compatibility
     mainHeadingLeft: orgTitle,
@@ -527,14 +585,8 @@ function getVerifiedLogoVector(category: string, primaryColor: string): string {
       </g>`;
 
     default:
-      // Default clean official placeholder
-      return `<g transform="translate(68, 55)">
-        <rect x="0" y="0" width="98" height="74" rx="10" fill="none" stroke="${primaryColor}" stroke-width="3" />
-        <circle cx="74" cy="24" r="8" fill="${primaryColor}" />
-        <path d="M 12 60 L 38 28 L 56 48 L 68 36 L 86 60 Z" fill="none" stroke="${primaryColor}" stroke-width="3" stroke-linejoin="round" />
-        <text x="50" y="117" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="22" fill="${primaryColor}" text-anchor="middle" letter-spacing="1">OFFICIAL</text>
-        <text x="50" y="147" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="22" fill="${primaryColor}" text-anchor="middle" letter-spacing="1">LOGO</text>
-      </g>`;
+      // Return empty - omit logo box if no verified logo is available
+      return '';
   }
 }
 
@@ -547,10 +599,6 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
   const orgTitle = escapeXml(spec.orgTitle || theme.orgTitle);
   const postBadgeTitle = escapeXml(spec.postBadgeTitle || 'OFFICIAL NOTIFICATION');
 
-  // Dynamic font sizing for org heading & post title
-  const orgFontSize = orgTitle.length > 20 ? 64 : orgTitle.length > 14 ? 76 : 94;
-  const badgeFontSize = postBadgeTitle.length > 24 ? 42 : postBadgeTitle.length > 16 ? 50 : 62;
-
   const elLabel = escapeXml(spec.eligibilityLabel || 'Eligibility:');
   const elValue = escapeXml(spec.eligibilityValue || 'See notification');
 
@@ -560,31 +608,57 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
   const applyLabel = escapeXml(spec.howToApplyLabel || 'How to apply:');
   const applyValue = escapeXml(spec.howToApplyValue || 'Visit CSC DOST');
 
-  // Dynamic calculation of the central role pill banner width
-  const approxTextWidth = postBadgeTitle.length * (badgeFontSize * 0.58);
-  const badgePillWidth = Math.min(820, Math.max(380, Math.round(approxTextWidth + 88)));
-  const badgePillX = Math.round(460 - badgePillWidth / 2);
+  // Check if a genuine verified logo exists (or user uploaded custom logo)
+  const isCustomLogo = Boolean(spec.logoUrl && spec.logoUrl.trim());
+  const verifiedPresetSvg = getVerifiedLogoVector(spec.category, theme.primaryColor);
+  const hasVerifiedPreset = spec.logoOption === 'preset' ? Boolean(verifiedPresetSvg) : Boolean(verifiedPresetSvg && spec.logoOption !== 'placeholder');
+  const hasLogo = isCustomLogo || hasVerifiedPreset;
 
-  // Logo rendering inside the top-right dashed box
   let logoContentSvg = '';
-  if (spec.logoUrl && spec.logoUrl.trim()) {
+  if (isCustomLogo && spec.logoUrl) {
     const safeLogoUrl = escapeXml(spec.logoUrl.trim());
     logoContentSvg = `<image href="${safeLogoUrl}" x="18" y="18" width="198" height="198" preserveAspectRatio="xMidYMid meet" />`;
-  } else if (spec.logoOption === 'preset' || !spec.logoOption) {
-    logoContentSvg = getVerifiedLogoVector(spec.category, theme.primaryColor);
-  } else {
-    // Clean dashed placeholder
-    logoContentSvg = `<g transform="translate(68, 55)">
-      <rect x="0" y="0" width="98" height="74" rx="10" fill="none" stroke="${theme.primaryColor}" stroke-width="3" />
-      <circle cx="74" cy="24" r="8" fill="${theme.primaryColor}" />
-      <path d="M 12 60 L 38 28 L 56 48 L 68 36 L 86 60 Z" fill="none" stroke="${theme.primaryColor}" stroke-width="3" stroke-linejoin="round" />
-      <text x="50" y="117" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="22" fill="${theme.primaryColor}" text-anchor="middle" letter-spacing="1">OFFICIAL</text>
-      <text x="50" y="147" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="22" fill="${theme.primaryColor}" text-anchor="middle" letter-spacing="1">LOGO</text>
-    </g>`;
+  } else if (hasVerifiedPreset) {
+    logoContentSvg = verifiedPresetSvg;
   }
+
+  // Dynamic font sizing & centering based on whether logo is present
+  const centerX = hasLogo ? 460 : 600;
+  const orgFontSize = orgTitle.length > 22 ? 52 : orgTitle.length > 15 ? 60 : orgTitle.length > 10 ? 74 : 92;
+  const badgeFontSize = postBadgeTitle.length > 24 ? 42 : postBadgeTitle.length > 16 ? 50 : 60;
+
+  // Dynamic calculation of the central role pill banner width
+  const approxTextWidth = postBadgeTitle.length * (badgeFontSize * 0.58);
+  const maxPillWidth = hasLogo ? 820 : 980;
+  const badgePillWidth = Math.min(maxPillWidth, Math.max(380, Math.round(approxTextWidth + 88)));
+  const badgePillX = Math.round(centerX - badgePillWidth / 2);
+
+  // Left & right burst ticks coordinates (only show when title is compact enough to avoid colliding)
+  const showTicks = theme.hasTicks && orgTitle.length <= 12;
+  const leftTickBaseX = hasLogo ? 85 : 120;
+  const rightTickBaseX = hasLogo ? 835 : 1080;
 
   return `<svg width="${THUMBNAIL_WIDTH}" height="${THUMBNAIL_HEIGHT}" viewBox="0 0 ${THUMBNAIL_WIDTH} ${THUMBNAIL_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
   <defs>
+    <!-- Embedded TrueType Fonts for 100% Deterministic Serverless Pixel Rendering -->
+    <style>
+      @font-face {
+        font-family: 'Liberation Sans';
+        src: url('data:font/truetype;charset=utf-8;base64,${embeddedFontBase64Bold}') format('truetype');
+        font-weight: 700 900;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: 'Liberation Sans';
+        src: url('data:font/truetype;charset=utf-8;base64,${embeddedFontBase64Regular || embeddedFontBase64Bold}') format('truetype');
+        font-weight: 400 600;
+        font-style: normal;
+      }
+      text {
+        font-family: 'Liberation Sans', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+      }
+    </style>
+
     <!-- Metallic Gold Gradient for Indian Army -->
     <linearGradient id="goldMetallicGrad" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#C59B27" />
@@ -610,32 +684,34 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
   <!-- Clean Pure White Background -->
   <rect width="${THUMBNAIL_WIDTH}" height="${THUMBNAIL_HEIGHT}" fill="#FFFFFF" />
 
-  <!-- TOP RIGHT: OFFICIAL LOGO CONTAINER -->
+  ${hasLogo && logoContentSvg ? `
+  <!-- TOP RIGHT: VERIFIED OFFICIAL LOGO CONTAINER -->
   <g transform="translate(915, 45)">
     <rect x="0" y="0" width="235" height="235" rx="22" fill="#F8FAFC" stroke="${theme.primaryColor}" stroke-width="2.5" stroke-dasharray="7,7" />
     ${logoContentSvg}
   </g>
+  ` : ''}
 
   <!-- TOP LEFT / CENTER: ORGANIZATION HEADING & POST TITLE PILL -->
   <g transform="translate(0, 0)">
     <!-- Radiating burst ticks for JKSSB / RRB / SSC / CUS -->
-    ${theme.hasTicks ? `
+    ${showTicks ? `
     <!-- Left Burst Ticks -->
     <g stroke="${theme.secondaryColor}" stroke-width="7" stroke-linecap="round">
-      <line x1="85" y1="120" x2="60" y2="105" />
-      <line x1="80" y1="145" x2="50" y2="145" />
-      <line x1="85" y1="170" x2="60" y2="185" />
+      <line x1="${leftTickBaseX}" y1="120" x2="${leftTickBaseX - 25}" y2="105" />
+      <line x1="${leftTickBaseX - 5}" y1="145" x2="${leftTickBaseX - 35}" y2="145" />
+      <line x1="${leftTickBaseX}" y1="170" x2="${leftTickBaseX - 25}" y2="185" />
     </g>
-    <!-- Right Burst Ticks (positioned before the logo box) -->
+    <!-- Right Burst Ticks -->
     <g stroke="${theme.secondaryColor}" stroke-width="7" stroke-linecap="round">
-      <line x1="835" y1="120" x2="860" y2="105" />
-      <line x1="840" y1="145" x2="870" y2="145" />
-      <line x1="835" y1="170" x2="860" y2="185" />
+      <line x1="${rightTickBaseX}" y1="120" x2="${rightTickBaseX + 25}" y2="105" />
+      <line x1="${rightTickBaseX + 5}" y1="145" x2="${rightTickBaseX + 35}" y2="145" />
+      <line x1="${rightTickBaseX}" y1="170" x2="${rightTickBaseX + 25}" y2="185" />
     </g>
     ` : ''}
 
     <!-- Organization Name -->
-    <text x="460" y="145" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="${orgFontSize}" fill="${theme.primaryColor}" text-anchor="middle" letter-spacing="-0.5">
+    <text x="${centerX}" y="145" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="${orgFontSize}" fill="${theme.primaryColor}" text-anchor="middle" letter-spacing="-0.5">
       ${orgTitle}
     </text>
 

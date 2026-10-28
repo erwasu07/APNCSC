@@ -103,8 +103,7 @@ export default function SarkariNotificationBanner({
         id={`sarkari-thumbnail-card-${item.id}`}
         data-card-id={item.id}
         onClick={handleCtaClick}
-        className="relative overflow-hidden rounded-xl border border-[#CBD5E1] shadow-xs cursor-pointer group bg-white"
-        style={{ aspectRatio: '2048 / 677' }}
+        className="relative overflow-hidden rounded-xl border border-[#CBD5E1] shadow-xs cursor-pointer group bg-white w-full aspect-[1200/630]"
       >
         {useInlineSvg ? (
           // Inline Standalone SVG: Guaranteed 100% visual fidelity matching Master Reference

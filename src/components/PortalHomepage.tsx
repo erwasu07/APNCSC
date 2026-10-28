@@ -1354,6 +1354,7 @@ export default function PortalHomepage({
                         summary={item.shortInfo}
                         infoFacts={facts}
                         officialHref={item.officialLink}
+                        href={`/post/${item.id}`}
                         actionLabel="View Details →"
                         onPrimaryClick={() => onOpenJob(item)}
                       />
@@ -1711,6 +1712,7 @@ export default function PortalHomepage({
                 summary={item.shortInfo}
                 infoFacts={facts}
                 officialHref={item.officialLink}
+                href={`/post/${item.id}`}
                 actionLabel="View Details →"
                 onPrimaryClick={() => onOpenJob(item)}
               />
@@ -1963,6 +1965,7 @@ export default function PortalHomepage({
                 title={item.title}
                 summary={item.shortDescription}
                 infoFacts={facts}
+                href={item.service ? `/service/${item.service.id}` : undefined}
                 actionLabel="View Service →"
                 onPrimaryClick={() => {
                   if (item.service) onOpenService(item.service);

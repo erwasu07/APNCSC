@@ -190,20 +190,57 @@ export default function App() {
     fetch('/api/tracker/view', { method: 'POST' }).catch(() => {});
 
     const parseRoute = () => {
-      const hash = window.location.hash;
-      const pathname = window.location.pathname;
+      const rawHash = window.location.hash;
+      const rawPathname = window.location.pathname;
       const searchParams = new URLSearchParams(window.location.search);
       const postParam = searchParams.get('post') || searchParams.get('job') || searchParams.get('notice') || searchParams.get('id');
       const serviceParam = searchParams.get('service');
       const trackParam = searchParams.get('track') || searchParams.get('token') || searchParams.get('id');
 
-      // Check direct pathname matches (e.g. /post/xyz, /job/xyz, /sarkari/xyz, /notice/xyz, /admissions/xyz, /service/xyz)
+      // 0. Transparent Migration for Legacy Shared Fragment URLs (e.g. #post/..., #service/..., #apply, etc.)
+      if (rawHash.startsWith('#post/') || rawHash.startsWith('#job/')) {
+        const legacyPostId = rawHash.replace(/^#(post|job)\//, '').split('?')[0];
+        if (legacyPostId) {
+          window.history.replaceState(null, '', `/post/${legacyPostId}`);
+        }
+      } else if (rawHash.startsWith('#service/')) {
+        const legacyServiceId = rawHash.replace(/^#service\//, '').split('?')[0];
+        if (legacyServiceId) {
+          window.history.replaceState(null, '', `/service/${legacyServiceId}`);
+        }
+      } else if (rawHash.startsWith('#apply')) {
+        const query = rawHash.includes('?') ? rawHash.slice(rawHash.indexOf('?')) : '';
+        window.history.replaceState(null, '', `/apply${query}`);
+      } else if (rawHash.startsWith('#track')) {
+        const token = rawHash.replace(/^#track\/?/, '').split('?')[0];
+        window.history.replaceState(null, '', token ? `/track/${token}` : '/track');
+      } else if (rawHash.startsWith('#tools')) {
+        const tool = rawHash.replace(/^#tools\/?/, '').split('?')[0];
+        window.history.replaceState(null, '', tool ? `/tools/${tool}` : '/tools');
+      } else if (rawHash === '#privacy') {
+        window.history.replaceState(null, '', '/privacy-policy');
+      } else if (rawHash === '#terms') {
+        window.history.replaceState(null, '', '/terms-of-service');
+      } else if (rawHash === '#disclaimer') {
+        window.history.replaceState(null, '', '/disclaimer');
+      } else if (rawHash === '#about') {
+        window.history.replaceState(null, '', '/about-us');
+      } else if (rawHash === '#contact') {
+        window.history.replaceState(null, '', '/contact-us');
+      } else if (rawHash === '#refund') {
+        window.history.replaceState(null, '', '/refund-policy');
+      }
+
+      const pathname = window.location.pathname;
+      const hash = window.location.hash;
+
+      // 1. Check direct pathname matches (e.g. /post/xyz, /job/xyz, /service/xyz, /track/xyz, /apply)
       const pathPostMatch = pathname.match(/^\/(?:post|job|jobs|sarkari|notice|admissions|notification)\/([^/?#]+)/i);
       const pathServiceMatch = pathname.match(/^\/service\/([^/?#]+)/i);
-      const pathTrackMatch = pathname.match(/^\/track\/([^/?#]+)/i);
+      const pathTrackMatch = pathname.match(/^\/track(?:\/([^/?#]+))?/i);
       const pathApplyMatch = pathname.startsWith('/apply');
 
-      // Check legal / informational routes (/privacy-policy, /terms-of-service, /disclaimer, /about-us, /contact-us, /refund-policy)
+      // 2. Check legal / informational routes (/privacy-policy, /terms-of-service, /disclaimer, /about-us, /contact-us, /refund-policy)
       const legalMatch = pathname.match(/^\/(privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|about|contact-us|contact|refund-policy|refund)(?:\/)?$/i);
       if (legalMatch) {
         let mappedType: LegalPageType = 'privacy';
@@ -228,7 +265,7 @@ export default function App() {
         setActiveLegalPage(null);
       }
 
-      // 1. Check Apply route
+      // 3. Check Apply route
       if (hash.startsWith('#apply') || pathApplyMatch) {
         const applyQuery = hash.includes('?') ? hash.split('?')[1] : '';
         const applyParams = new URLSearchParams(applyQuery);
@@ -236,6 +273,7 @@ export default function App() {
         setIsApplyView(true);
         setApplyInitialService(svc);
         setIsTrackView(false);
+        setIsToolsView(false);
         setActiveJobPost(null);
         setActiveServicePost(null);
         setIsAdminView(false);
@@ -245,13 +283,14 @@ export default function App() {
         setIsApplyView(false);
       }
 
-      // 2. Check Track route
+      // 4. Check Track route
       if (hash.startsWith('#track') || pathTrackMatch) {
         const cleanHash = hash.replace(/^#track\/?/, '');
         const trackToken = (pathTrackMatch ? pathTrackMatch[1] : null) || cleanHash.split('?')[0] || trackParam || '';
         setIsTrackView(true);
         setTrackInitialToken(trackToken);
         setIsApplyView(false);
+        setIsToolsView(false);
         setActiveJobPost(null);
         setActiveServicePost(null);
         setIsAdminView(false);
@@ -261,7 +300,7 @@ export default function App() {
         setIsTrackView(false);
       }
 
-      // 2.5 Check Tools route (/tools, /tools/:toolId, #tools, #tools/:toolId)
+      // 5. Check Tools route (/tools, /tools/:toolId, #tools, #tools/:toolId)
       const pathToolsMatch = pathname.match(/^\/tools(?:\/([^/?#]+))?/i);
       if (hash.startsWith('#tools') || pathToolsMatch) {
         let toolParam = null;
@@ -283,15 +322,17 @@ export default function App() {
         setIsToolsView(false);
       }
 
-      // 3. Check Service route
+      // 6. Check Service route
       if (pathServiceMatch) {
-        const matchService = SERVICES_LIST.find(s => s.id === pathServiceMatch[1]);
+        const serviceId = decodeURIComponent(pathServiceMatch[1]);
+        const matchService = SERVICES_LIST.find(s => s.id === serviceId);
         if (matchService) {
           setActiveServicePost(matchService);
           setActiveJobPost(null);
           setIsAdminView(false);
           setIsApplyView(false);
           setIsTrackView(false);
+          setIsToolsView(false);
           window.scrollTo({ top: 0, behavior: 'smooth' });
           return;
         }
@@ -305,36 +346,23 @@ export default function App() {
           setIsAdminView(false);
           setIsApplyView(false);
           setIsTrackView(false);
+          setIsToolsView(false);
           window.scrollTo({ top: 0, behavior: 'smooth' });
           return;
         }
       }
 
-      if (hash.startsWith('#service/')) {
-        const serviceId = hash.replace(/^#service\//, '');
-        const matchService = SERVICES_LIST.find(s => s.id === serviceId);
-        if (matchService) {
-          setActiveServicePost(matchService);
-          setActiveJobPost(null);
-          setIsAdminView(false);
-          setIsApplyView(false);
-          setIsTrackView(false);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          return;
-        }
-      } else {
-        setActiveServicePost(null);
-      }
-
-      // 4. Check Job/Post route
+      // 7. Check Job/Post route
       if (pathPostMatch) {
-        const match = SARKARI_DATA.find(i => i.id === pathPostMatch[1]);
+        const postId = decodeURIComponent(pathPostMatch[1]);
+        const match = SARKARI_DATA.find(i => i.id === postId);
         if (match) {
           setActiveJobPost(match);
           setActiveServicePost(null);
           setIsAdminView(false);
           setIsApplyView(false);
           setIsTrackView(false);
+          setIsToolsView(false);
           window.scrollTo({ top: 0, behavior: 'smooth' });
           return;
         }
@@ -348,29 +376,14 @@ export default function App() {
           setIsAdminView(false);
           setIsApplyView(false);
           setIsTrackView(false);
+          setIsToolsView(false);
           window.scrollTo({ top: 0, behavior: 'smooth' });
           return;
         }
       }
 
-      if (hash.startsWith('#post/') || hash.startsWith('#job/')) {
-        const postId = hash.replace(/^#(post|job)\//, '');
-        const match = SARKARI_DATA.find(i => i.id === postId);
-        if (match) {
-          setActiveJobPost(match);
-          setActiveServicePost(null);
-          setIsAdminView(false);
-          setIsApplyView(false);
-          setIsTrackView(false);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          return;
-        }
-      } else {
-        setActiveJobPost(null);
-      }
-
-      // 5. Check Admin / Staff or Legal Modals
-      if (hash === '#admin' || hash === '#staff') {
+      // 8. Check Admin / Staff or Legal Modals
+      if (hash === '#admin' || hash === '#staff' || pathname === '/admin') {
         setIsAdminView(true);
       } else if (hash === '#privacy') {
         openLegalModal('privacy');
@@ -401,15 +414,14 @@ export default function App() {
     setActiveServicePost(null);
     setIsApplyView(false);
     setIsTrackView(false);
-    window.location.hash = `#post/${item.id}`;
+    setIsToolsView(false);
+    window.history.pushState(null, '', `/post/${item.id}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCloseJobPage = () => {
     setActiveJobPost(null);
-    if (window.location.hash.startsWith('#post/') || window.location.hash.startsWith('#job/')) {
-      window.history.pushState(null, '', window.location.pathname);
-    }
+    window.history.pushState(null, '', '/');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -418,15 +430,14 @@ export default function App() {
     setActiveJobPost(null);
     setIsApplyView(false);
     setIsTrackView(false);
-    window.location.hash = `#service/${item.id}`;
+    setIsToolsView(false);
+    window.history.pushState(null, '', `/service/${item.id}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCloseServicePage = () => {
     setActiveServicePost(null);
-    if (window.location.hash.startsWith('#service/')) {
-      window.history.pushState(null, '', window.location.pathname);
-    }
+    window.history.pushState(null, '', '/');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -435,22 +446,18 @@ export default function App() {
     setApplyInitialService(serviceName || '');
     setIsApplyView(true);
     setIsTrackView(false);
+    setIsToolsView(false);
     setActiveJobPost(null);
     setActiveServicePost(null);
     setIsAdminView(false);
-    if (serviceName) {
-      window.location.hash = `#apply?service=${encodeURIComponent(serviceName)}`;
-    } else {
-      window.location.hash = '#apply';
-    }
+    const targetUrl = serviceName ? `/apply?service=${encodeURIComponent(serviceName)}` : '/apply';
+    window.history.pushState(null, '', targetUrl);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCloseApplyPage = () => {
     setIsApplyView(false);
-    if (window.location.hash.startsWith('#apply')) {
-      window.history.pushState(null, '', window.location.pathname);
-    }
+    window.history.pushState(null, '', '/');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -458,22 +465,18 @@ export default function App() {
     setTrackInitialToken(tokenId || '');
     setIsTrackView(true);
     setIsApplyView(false);
+    setIsToolsView(false);
     setActiveJobPost(null);
     setActiveServicePost(null);
     setIsAdminView(false);
-    if (tokenId) {
-      window.location.hash = `#track/${encodeURIComponent(tokenId)}`;
-    } else {
-      window.location.hash = '#track';
-    }
+    const targetUrl = tokenId ? `/track/${encodeURIComponent(tokenId)}` : '/track';
+    window.history.pushState(null, '', targetUrl);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCloseTrackPage = () => {
     setIsTrackView(false);
-    if (window.location.hash.startsWith('#track')) {
-      window.history.pushState(null, '', window.location.pathname);
-    }
+    window.history.pushState(null, '', '/');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 

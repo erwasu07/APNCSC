@@ -391,7 +391,17 @@ export function buildDeterministicThumbnailSpec(input: ThumbnailInputPayload): T
     lastDateValue,
     howToApplyLabel: 'How to apply:',
     howToApplyValue: 'Visit CSC DOST',
-    logoOption: 'placeholder',
+    logoOption: [
+      'jkssb',
+      'army_jobs',
+      'rrb_jobs',
+      'ssc_jobs',
+      'exam_forms',
+      'admissions',
+      'cluster_univ'
+    ].includes(style)
+      ? 'preset'
+      : 'placeholder',
 
     // Legacy fields
     mainHeadingLeft: orgTitle,
@@ -432,14 +442,44 @@ function getVerifiedLogoVector(category: string, primaryColor: string): string {
         <rect x="85" y="124" width="30" height="8" rx="2" fill="#0047BA" />
         <text x="100" y="185" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="16" fill="#0047BA" text-anchor="middle" letter-spacing="1">JKSSB</text>
       </g>`;
-    default:
-      return `<g transform="translate(68, 55)">
-        <rect x="0" y="0" width="98" height="74" rx="10" fill="none" stroke="${primaryColor}" stroke-width="3" />
-        <circle cx="74" cy="24" r="8" fill="${primaryColor}" />
-        <path d="M 12 60 L 38 28 L 56 48 L 68 36 L 86 60 Z" fill="none" stroke="${primaryColor}" stroke-width="3" stroke-linejoin="round" />
-        <text x="50" y="117" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="22" fill="${primaryColor}" text-anchor="middle" letter-spacing="1">OFFICIAL</text>
-        <text x="50" y="147" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="22" fill="${primaryColor}" text-anchor="middle" letter-spacing="1">LOGO</text>
+    case 'rrb_jobs':
+      return `<g transform="translate(18, 15)">
+        <circle cx="100" cy="95" r="75" fill="#0B2545" fill-opacity="0.06" stroke="#0B2545" stroke-width="2" />
+        <rect x="74" y="62" width="52" height="58" rx="8" fill="#0B2545" stroke="#FF6A00" stroke-width="2.5" />
+        <circle cx="100" cy="80" r="10" fill="#FF6A00" />
+        <circle cx="85" cy="106" r="4" fill="#FFFFFF" />
+        <circle cx="115" cy="106" r="4" fill="#FFFFFF" />
+        <path d="M 68 126 L 132 126" stroke="#0B2545" stroke-width="4" stroke-linecap="round" />
+        <line x1="80" y1="126" x2="72" y2="136" stroke="#0B2545" stroke-width="3" />
+        <line x1="120" y1="126" x2="128" y2="136" stroke="#0B2545" stroke-width="3" />
+        <text x="100" y="185" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="14" fill="#0B2545" text-anchor="middle" letter-spacing="1">INDIAN RAILWAYS</text>
       </g>`;
+    case 'ssc_jobs':
+      return `<g transform="translate(18, 15)">
+        <circle cx="100" cy="95" r="75" fill="#0A2540" fill-opacity="0.06" stroke="#0A2540" stroke-width="2" />
+        <circle cx="100" cy="95" r="62" fill="none" stroke="#008080" stroke-width="2" />
+        <rect x="90" y="65" width="20" height="42" rx="3" fill="#0A2540" />
+        <polygon points="100,52 104,60 114,60 106,66 109,76 100,70 91,76 94,66 86,60 96,60" fill="#008080" />
+        <rect x="80" y="112" width="40" height="8" rx="2" fill="#0A2540" />
+        <text x="100" y="185" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="16" fill="#0A2540" text-anchor="middle" letter-spacing="1">SSC</text>
+      </g>`;
+    case 'exam_forms':
+    case 'admissions':
+      return `<g transform="translate(18, 15)">
+        <circle cx="100" cy="95" r="75" fill="#0B2545" fill-opacity="0.06" stroke="#0B2545" stroke-width="2" />
+        <path d="M 100 55 C 90 70, 70 75, 76 95 C 80 102, 88 98, 92 110 C 95 116, 98 128, 100 132 C 102 128, 105 116, 108 110 C 112 98, 120 102, 124 95 C 130 75, 110 70, 100 55 Z" fill="#028090" />
+        <circle cx="100" cy="92" r="6" fill="#FFFFFF" />
+        <text x="100" y="185" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="13" fill="#0B2545" text-anchor="middle" letter-spacing="0.5">KASHMIR UNIV</text>
+      </g>`;
+    case 'cluster_univ':
+      return `<g transform="translate(18, 15)">
+        <circle cx="100" cy="95" r="75" fill="#0047BA" fill-opacity="0.06" stroke="#0047BA" stroke-width="2" />
+        <path d="M 72 85 Q 100 95, 100 115 Q 100 95, 128 85 L 128 108 Q 100 118, 100 132 Q 100 118, 72 108 Z" fill="#0047BA" />
+        <path d="M 80 72 L 120 72 L 100 56 Z" fill="#FF7900" />
+        <text x="100" y="185" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="14" fill="#0047BA" text-anchor="middle" letter-spacing="1">CUS SRINAGAR</text>
+      </g>`;
+    default:
+      return '';
   }
 }
 
@@ -447,9 +487,6 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
   const theme = CATEGORY_THEMES[spec.category] || CATEGORY_THEMES.default;
   const orgTitle = escapeXml(spec.orgTitle || theme.orgTitle);
   const postBadgeTitle = escapeXml(spec.postBadgeTitle || 'OFFICIAL NOTIFICATION');
-
-  const orgFontSize = orgTitle.length > 20 ? 64 : orgTitle.length > 14 ? 76 : 94;
-  const badgeFontSize = postBadgeTitle.length > 24 ? 42 : postBadgeTitle.length > 16 ? 50 : 62;
 
   const elLabel = escapeXml(spec.eligibilityLabel || 'Eligibility:');
   const elValue = escapeXml(spec.eligibilityValue || 'See notification');
@@ -460,25 +497,31 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
   const applyLabel = escapeXml(spec.howToApplyLabel || 'How to apply:');
   const applyValue = escapeXml(spec.howToApplyValue || 'Visit CSC DOST');
 
-  const approxTextWidth = postBadgeTitle.length * (badgeFontSize * 0.58);
-  const badgePillWidth = Math.min(820, Math.max(380, Math.round(approxTextWidth + 88)));
-  const badgePillX = Math.round(460 - badgePillWidth / 2);
+  const isCustomLogo = Boolean(spec.logoUrl && spec.logoUrl.trim());
+  const verifiedPresetSvg = getVerifiedLogoVector(spec.category, theme.primaryColor);
+  const hasVerifiedPreset = spec.logoOption === 'preset' ? Boolean(verifiedPresetSvg) : Boolean(verifiedPresetSvg && spec.logoOption !== 'placeholder');
+  const hasLogo = isCustomLogo || hasVerifiedPreset;
 
   let logoContentSvg = '';
-  if (spec.logoUrl && spec.logoUrl.trim()) {
+  if (isCustomLogo && spec.logoUrl) {
     const safeLogoUrl = escapeXml(spec.logoUrl.trim());
     logoContentSvg = `<image href="${safeLogoUrl}" x="18" y="18" width="198" height="198" preserveAspectRatio="xMidYMid meet" />`;
-  } else if (spec.logoOption === 'preset' || !spec.logoOption) {
-    logoContentSvg = getVerifiedLogoVector(spec.category, theme.primaryColor);
-  } else {
-    logoContentSvg = `<g transform="translate(68, 55)">
-      <rect x="0" y="0" width="98" height="74" rx="10" fill="none" stroke="${theme.primaryColor}" stroke-width="3" />
-      <circle cx="74" cy="24" r="8" fill="${theme.primaryColor}" />
-      <path d="M 12 60 L 38 28 L 56 48 L 68 36 L 86 60 Z" fill="none" stroke="${theme.primaryColor}" stroke-width="3" stroke-linejoin="round" />
-      <text x="50" y="117" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="22" fill="${theme.primaryColor}" text-anchor="middle" letter-spacing="1">OFFICIAL</text>
-      <text x="50" y="147" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="22" fill="${theme.primaryColor}" text-anchor="middle" letter-spacing="1">LOGO</text>
-    </g>`;
+  } else if (hasVerifiedPreset) {
+    logoContentSvg = verifiedPresetSvg;
   }
+
+  const centerX = hasLogo ? 460 : 600;
+  const orgFontSize = orgTitle.length > 22 ? 52 : orgTitle.length > 15 ? 60 : orgTitle.length > 10 ? 74 : 92;
+  const badgeFontSize = postBadgeTitle.length > 24 ? 42 : postBadgeTitle.length > 16 ? 50 : 60;
+
+  const approxTextWidth = postBadgeTitle.length * (badgeFontSize * 0.58);
+  const maxPillWidth = hasLogo ? 820 : 980;
+  const badgePillWidth = Math.min(maxPillWidth, Math.max(380, Math.round(approxTextWidth + 88)));
+  const badgePillX = Math.round(centerX - badgePillWidth / 2);
+
+  const showTicks = theme.hasTicks && orgTitle.length <= 12;
+  const leftTickBaseX = hasLogo ? 85 : 120;
+  const rightTickBaseX = hasLogo ? 835 : 1080;
 
   return `<svg width="${THUMBNAIL_WIDTH}" height="${THUMBNAIL_HEIGHT}" viewBox="0 0 ${THUMBNAIL_WIDTH} ${THUMBNAIL_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -504,28 +547,30 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
 
   <rect width="${THUMBNAIL_WIDTH}" height="${THUMBNAIL_HEIGHT}" fill="#FFFFFF" />
 
-  <!-- TOP RIGHT: OFFICIAL LOGO CONTAINER -->
+  ${hasLogo && logoContentSvg ? `
+  <!-- TOP RIGHT: VERIFIED OFFICIAL LOGO CONTAINER -->
   <g transform="translate(915, 45)">
     <rect x="0" y="0" width="235" height="235" rx="22" fill="#F8FAFC" stroke="${theme.primaryColor}" stroke-width="2.5" stroke-dasharray="7,7" />
     ${logoContentSvg}
   </g>
+  ` : ''}
 
   <!-- TOP LEFT / CENTER: ORGANIZATION HEADING & POST TITLE PILL -->
   <g transform="translate(0, 0)">
-    ${theme.hasTicks ? `
+    ${showTicks ? `
     <g stroke="${theme.secondaryColor}" stroke-width="7" stroke-linecap="round">
-      <line x1="85" y1="120" x2="60" y2="105" />
-      <line x1="80" y1="145" x2="50" y2="145" />
-      <line x1="85" y1="170" x2="60" y2="185" />
+      <line x1="${leftTickBaseX}" y1="120" x2="${leftTickBaseX - 25}" y2="105" />
+      <line x1="${leftTickBaseX - 5}" y1="145" x2="${leftTickBaseX - 35}" y2="145" />
+      <line x1="${leftTickBaseX}" y1="170" x2="${leftTickBaseX - 25}" y2="185" />
     </g>
     <g stroke="${theme.secondaryColor}" stroke-width="7" stroke-linecap="round">
-      <line x1="835" y1="120" x2="860" y2="105" />
-      <line x1="840" y1="145" x2="870" y2="145" />
-      <line x1="835" y1="170" x2="860" y2="185" />
+      <line x1="${rightTickBaseX}" y1="120" x2="${rightTickBaseX + 25}" y2="105" />
+      <line x1="${rightTickBaseX + 5}" y1="145" x2="${rightTickBaseX + 35}" y2="145" />
+      <line x1="${rightTickBaseX}" y1="170" x2="${rightTickBaseX + 25}" y2="185" />
     </g>
     ` : ''}
 
-    <text x="460" y="145" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="${orgFontSize}" fill="${theme.primaryColor}" text-anchor="middle" letter-spacing="-0.5">
+    <text x="${centerX}" y="145" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="${orgFontSize}" fill="${theme.primaryColor}" text-anchor="middle" letter-spacing="-0.5">
       ${orgTitle}
     </text>
 

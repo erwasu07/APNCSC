@@ -1087,14 +1087,13 @@ export function ContentPageLayout({
                           {(rel.thumbnailUrl || rel.id) && (
                             <div
                               onClick={rel.onClick}
-                              className="overflow-hidden rounded-lg border border-[#E2E8F0] hover:border-[#CBD5E1] bg-slate-50 cursor-pointer"
-                              style={{ aspectRatio: '2048 / 677' }}
+                              className="overflow-hidden rounded-lg border border-[#E2E8F0] hover:border-[#CBD5E1] bg-slate-50 cursor-pointer w-full aspect-[1200/630]"
                             >
                               <img
                                 src={rel.thumbnailUrl || `/thumbnails/${rel.id}.png`}
                                 alt={rel.title}
                                 loading="lazy"
-                                className="w-full h-full object-cover block"
+                                className="w-full h-full object-contain block"
                                 onError={(e) => {
                                   const target = e.currentTarget;
                                   if (!target.dataset.triedApi) {
@@ -1495,6 +1494,8 @@ export interface ColourAccentCardProps {
   /** Primary action label (defaults to category-appropriate label with arrow) */
   actionLabel?: string;
   onPrimaryClick: () => void;
+  /** Optional canonical URL path for real semantic <a> navigation and crawlers */
+  href?: string;
   /** Optional featured post thumbnail URL (2048x677 aspect ratio) */
   thumbnailUrl?: string;
   /** Optional official source link on bottom-left */
@@ -1518,6 +1519,7 @@ export function ColourAccentCard({
   footerMeta,
   actionLabel,
   onPrimaryClick,
+  href,
   thumbnailUrl,
   officialHref,
   officialLabel = 'Official source',
@@ -1614,39 +1616,83 @@ export function ColourAccentCard({
         </div>
 
         {/* Optional 2048x677 Master Post Thumbnail */}
+        {/* TOP POST THUMBNAIL (Standard 1200x630 Social Aspect Ratio) */}
         {thumbnailUrl && (
-          <div
-            onClick={onPrimaryClick}
-            className="mt-2.5 overflow-hidden rounded-lg border border-[#E2E8F0] hover:border-[#CBD5E1] bg-slate-50 cursor-pointer transition-transform duration-150 hover:scale-[1.005]"
-            style={{ aspectRatio: '2048 / 677' }}
-          >
-            <img
-              src={thumbnailUrl}
-              alt={title}
-              loading="lazy"
-              className="w-full h-full object-cover block"
-              onError={(e) => {
-                const target = e.currentTarget;
-                if (!target.dataset.triedFallback && id) {
-                  target.dataset.triedFallback = '1';
-                  target.src = `/thumbnails/${id}.png`;
-                } else {
-                  target.style.display = 'none';
+          href ? (
+            <a
+              href={href}
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                  e.preventDefault();
+                  onPrimaryClick();
                 }
               }}
-            />
-          </div>
+              className="mt-2.5 overflow-hidden rounded-lg border border-[#E2E8F0] hover:border-[#CBD5E1] bg-slate-50 block transition-transform duration-150 hover:scale-[1.005] w-full aspect-[1200/630]"
+            >
+              <img
+                src={thumbnailUrl}
+                alt={title}
+                loading="lazy"
+                className="w-full h-full object-contain block"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.dataset.triedFallback && id) {
+                    target.dataset.triedFallback = '1';
+                    target.src = `/thumbnails/${id}.png`;
+                  } else {
+                    target.style.display = 'none';
+                  }
+                }}
+              />
+            </a>
+          ) : (
+            <div
+              onClick={onPrimaryClick}
+              className="mt-2.5 overflow-hidden rounded-lg border border-[#E2E8F0] hover:border-[#CBD5E1] bg-slate-50 cursor-pointer transition-transform duration-150 hover:scale-[1.005] w-full aspect-[1200/630]"
+            >
+              <img
+                src={thumbnailUrl}
+                alt={title}
+                loading="lazy"
+                className="w-full h-full object-contain block"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.dataset.triedFallback && id) {
+                    target.dataset.triedFallback = '1';
+                    target.src = `/thumbnails/${id}.png`;
+                  } else {
+                    target.style.display = 'none';
+                  }
+                }}
+              />
+            </div>
+          )
         )}
 
         {/* B. TITLE: 10px below top row, Bold Navy #102A43, 17–18px on mobile, line-height 1.4 */}
         <h3 className="mt-2.5 text-[17px] sm:text-[18px] font-bold text-[#102A43] leading-[1.4] break-words">
-          <button
-            type="button"
-            onClick={onPrimaryClick}
-            className="text-left text-[#102A43] hover:text-[#2563EB] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] rounded transition-colors cursor-pointer w-full"
-          >
-            {title}
-          </button>
+          {href ? (
+            <a
+              href={href}
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                  e.preventDefault();
+                  onPrimaryClick();
+                }
+              }}
+              className="text-left text-[#102A43] hover:text-[#2563EB] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] rounded transition-colors block w-full"
+            >
+              {title}
+            </a>
+          ) : (
+            <button
+              type="button"
+              onClick={onPrimaryClick}
+              className="text-left text-[#102A43] hover:text-[#2563EB] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] rounded transition-colors cursor-pointer w-full"
+            >
+              {title}
+            </button>
+          )}
         </h3>
 
         {/* C. OPTIONAL SHORT SUMMARY: Max 2 lines, only when helpful */}
@@ -1715,13 +1761,28 @@ export function ColourAccentCard({
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={onPrimaryClick}
-          className="min-h-[40px] sm:min-h-[42px] px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-[13px] font-semibold rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0 ml-auto"
-        >
-          <span>{resolvedActionLabel}</span>
-        </button>
+        {href ? (
+          <a
+            href={href}
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                e.preventDefault();
+                onPrimaryClick();
+              }
+            }}
+            className="min-h-[40px] sm:min-h-[42px] px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-[13px] font-semibold rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] inline-flex items-center justify-center gap-1.5 transition-colors shrink-0 ml-auto no-underline"
+          >
+            <span>{resolvedActionLabel}</span>
+          </a>
+        ) : (
+          <button
+            type="button"
+            onClick={onPrimaryClick}
+            className="min-h-[40px] sm:min-h-[42px] px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-[13px] font-semibold rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0 ml-auto"
+          >
+            <span>{resolvedActionLabel}</span>
+          </button>
+        )}
       </div>
     </article>
   );

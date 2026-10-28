@@ -7,7 +7,19 @@
   },
   "rewrites": [
     {
-      "source": "/(post|job|jobs|sarkari|notice|admissions|notification|service|privacy-policy|terms-of-service|disclaimer|about-us|contact-us|refund-policy)/:path*",
+      "source": "/",
+      "destination": "/api"
+    },
+    {
+      "source": "/(post|job|jobs|sarkari|notice|admissions|notification|service)/:path*",
+      "destination": "/api"
+    },
+    {
+      "source": "/(privacy-policy|terms-of-service|disclaimer|about-us|contact-us|refund-policy)",
+      "destination": "/api"
+    },
+    {
+      "source": "/(privacy-policy|terms-of-service|disclaimer|about-us|contact-us|refund-policy)/:path*",
       "destination": "/api"
     },
     {

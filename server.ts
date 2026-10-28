@@ -24,6 +24,13 @@ import {
   renderStandaloneMasterThumbnailSvg,
   generatePostThumbnailPng
 } from './src/thumbnailGenerator';
+import {
+  renderPostSubstantiveHtml,
+  renderServiceSubstantiveHtml,
+  renderLegalPageSubstantiveHtml,
+  renderHomepageSubstantiveHtml,
+  renderNotFoundSubstantiveHtml
+} from './src/serverContentRenderer';
 import { 
   getDb, 
   saveDb, 
@@ -2681,9 +2688,12 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
   let articlePublishedDate = '';
   let breadcrumbItems: { name: string; url: string }[] = [];
 
+  let substantiveBodyHtml = '';
+
   const legalMatch = urlPath.match(/^\/(privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|about|contact-us|contact|refund-policy|refund)(?:\/)?$/i);
   if (legalMatch) {
     const rawKey = legalMatch[1].toLowerCase();
+    substantiveBodyHtml = renderLegalPageSubstantiveHtml(rawKey);
     if (rawKey === 'privacy-policy' || rawKey === 'privacy') {
       title = 'Privacy Policy | CSC DOST - Digital Assistance & Information Portal';
       description = 'Read the Privacy Policy of CSC DOST (cscdost.com). Learn how citizen data, form documents, and personal details are handled securely in compliance with the DPDP Act 2023.';
@@ -2754,11 +2764,13 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
         { name: 'Recruitment', url: 'https://www.cscdost.com/#sarkari-board' },
         { name: item.title, url: canonicalUrl }
       ];
+      substantiveBodyHtml = renderPostSubstantiveHtml(item);
     } else if (matchPost) {
       isNotFound = true;
       title = 'Notification Not Found (404) | CSC DOST';
       description = 'The requested recruitment notification or examination update could not be found or has expired. Please check active recruitment updates on the CSC DOST portal.';
       canonicalUrl = `${baseOrigin}/#sarkari-board`;
+      substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
     }
   } else if (targetServiceId) {
     const service = SERVICES_LIST.find(s => s.id === targetServiceId || s.id === decodeURIComponent(targetServiceId));
@@ -2773,7 +2785,17 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
         { name: 'Services', url: 'https://www.cscdost.com/#services' },
         { name: service.name, url: canonicalUrl }
       ];
+      substantiveBodyHtml = renderServiceSubstantiveHtml(service);
+    } else if (matchService) {
+      isNotFound = true;
+      title = 'Service Not Found (404) | CSC DOST';
+      description = 'The requested citizen service could not be found. Please check our complete service directory on the CSC DOST portal.';
+      canonicalUrl = `${baseOrigin}/#services`;
+      substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
     }
+  } else if (urlPath === '/') {
+    const allSarkari = [...SARKARI_DATA, ...getCustomSarkariPosts()];
+    substantiveBodyHtml = renderHomepageSubstantiveHtml(allSarkari, SERVICES_LIST);
   }
 
   // Escape HTML / XML special characters
@@ -2879,17 +2901,12 @@ ${JSON.stringify(breadcrumbLd, null, 2)}
     html = html.replace(/<\/head>/i, breadcrumbScript);
   }
 
-  if (isNotFound) {
-    const notFoundCard = `
-    <div style="min-height:70vh; display:flex; align-items:center; justify-content:center; padding:40px 20px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:#f8fafc;">
-      <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; max-width:520px; padding:36px; text-align:center; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);">
-        <div style="font-size:42px; margin-bottom:12px;">📋</div>
-        <h1 style="font-size:22px; font-weight:800; color:#0f172a; margin:0 0 10px 0;">Notification Not Found or Expired</h1>
-        <p style="color:#64748b; font-size:14px; line-height:1.6; margin:0 0 20px 0;">The recruitment notification, admit card, or admission notice you are looking for does not exist or may have been archived after the closing date.</p>
-        <a href="/#sarkari-board" style="display:inline-block; background:#2563eb; color:white; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:600; font-size:14px;">Browse Latest Sarkari Jobs</a>
-      </div>
-    </div>`;
-    html = html.replace('<div id="root"></div>', `<div id="root">${notFoundCard}</div>`);
+  if (isNotFound && !substantiveBodyHtml) {
+    substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
+  }
+
+  if (substantiveBodyHtml) {
+    html = html.replace('<div id="root"></div>', `<div id="root">${substantiveBodyHtml}</div>`);
   }
 
   return { html, isNotFound };
@@ -3018,6 +3035,7 @@ async function startServer() {
     app.use(async (req, res, next) => {
       const url = req.originalUrl || req.url;
       const isPostOrServiceOrLegal =
+        req.path === '/' ||
         /^\/(?:post|job|jobs|sarkari|notice|admissions|notification|service|privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|about|contact-us|contact|refund-policy|refund)(?:\/|$)/i.test(req.path) ||
         Boolean(req.query.post || req.query.job || req.query.service || req.query.id);
       

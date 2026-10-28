@@ -135,26 +135,22 @@ export default function Footer({
                 </button>
               </li>
               <li>
-                <button
-                  type="button"
-                  onClick={() => {
-                    window.location.hash = '#tools';
-                  }}
-                  className="text-slate-300 hover:text-white transition-colors cursor-pointer"
+                <a
+                  href="/tools"
+                  onClick={(e) => navigateTo('/tools', e)}
+                  className="text-slate-300 hover:text-white transition-colors cursor-pointer block"
                 >
                   Online Document Tools
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  type="button"
-                  onClick={() => {
-                    window.location.hash = '#track';
-                  }}
-                  className="text-slate-300 hover:text-white transition-colors cursor-pointer"
+                <a
+                  href="/track"
+                  onClick={(e) => navigateTo('/track', e)}
+                  className="text-slate-300 hover:text-white transition-colors cursor-pointer block"
                 >
                   Track Application Status
-                </button>
+                </a>
               </li>
             </ul>
           </div>
