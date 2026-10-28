@@ -23,6 +23,83 @@ var SARKARI_CATEGORIES = {
   army_jobs: { label: "Indian Army Jobs", color: "border-red-700 text-red-800 bg-red-50 dark:bg-red-950/40" }
 };
 var SARKARI_DATA = [
+  {
+    "id": "ku-bed-2year-distance-admissions-2026",
+    "title": "University of Kashmir 2-Year B.Ed. (Session 2026-28) Distance Mode Online Admission & Counselling Notice",
+    "category": "admissions",
+    "postDate": "27/10/2026",
+    "startDate": "27/10/2026",
+    "lastDate": "15/11/2026",
+    "advertisementNo": "Admission Notification No. 18 of 2026 (B.Ed. Distance)",
+    "shortInfo": "Directorate of Distance Education (DDOE), University of Kashmir has invited online applications and counselling preferences for admission to 2-Year B.Ed. Programme for Session 2026-28. Candidates with minimum 50% aggregate marks in Bachelor or Master degree can apply online at kashmiruniversity.net.",
+    "ageLimit": "No upper age limit for Distance B.Ed admission",
+    "eligibility": "Graduation (Bachelor Degree) or Post Graduation with at least 50% marks for General/OM and 45% marks for Reserved Categories from a recognized University.",
+    "totalPosts": "Available Seats in DDOE & Affiliated Private B.Ed Colleges",
+    "officialLink": "https://www.kashmiruniversity.net",
+    "fees": {
+      "genObc": "\u20B9500/- Online Application Processing & Counselling Fee",
+      "scSt": "\u20B9500/- Online Application Processing & Counselling Fee"
+    },
+    "isNew": true
+  },
+  {
+    "id": "cus-btech-7th-8th-sem-exam-form-2026",
+    "title": "Cluster University Srinagar B.Tech 7th & 8th Semester (Regular / Backlog) Online Examination Form Notice 2026",
+    "category": "cluster_univ",
+    "postDate": "26/10/2026",
+    "startDate": "27/10/2026",
+    "lastDate": "08/11/2026",
+    "advertisementNo": "Exam Notice No. CUS/Exam/BTech/2026/412",
+    "shortInfo": "Cluster University Srinagar has issued an urgent notification for submission of online examination forms for B.Tech Engineering 7th and 8th Semester (Regular Batch and Previous Backlog Batches). Eligible engineering students must submit forms and verify course subjects online via cusrinagar.edu.in.",
+    "ageLimit": "As per University Examination Statutes",
+    "eligibility": "Enrolled candidates of B.Tech Engineering courses in GCET Safapora / affiliated engineering constituent colleges with requisite attendance.",
+    "totalPosts": "Engineering Examination Session 2026",
+    "officialLink": "https://cusrinagar.edu.in",
+    "fees": {
+      "genObc": "\u20B91,275/- per semester (or prescribed fee per backlog paper)",
+      "scSt": "\u20B91,275/- per semester"
+    },
+    "isNew": true
+  },
+  {
+    "id": "army-rvc-captain-entry-2026",
+    "title": "Indian Army Remount Veterinary Corps (RVC) Captain Entry Scheme 2026 (Short Service Commission)",
+    "category": "army_jobs",
+    "postDate": "26/10/2026",
+    "startDate": "22/10/2026",
+    "lastDate": "18/11/2026",
+    "advertisementNo": "RVC/SSC/2026 Direct Entry Notice",
+    "shortInfo": "Join Indian Army invites applications from qualified male and female veterinary graduates for grant of Short Service Commission (SSC) in the Remount Veterinary Corps (RVC) as Captain. Selected candidates receive handsome military pay and allowances under Pay Level 10B with Military Service Pay.",
+    "ageLimit": "21 to 32 Years (Candidate must not be born earlier than 19 Nov 1994 and not later than 18 Nov 2005)",
+    "eligibility": "BVSc / BVSc & AH degree from any recognized Indian University or its equivalent foreign qualification included in the First or Second Schedule to the IVC Act.",
+    "totalPosts": "Various Commissioned Officer Posts",
+    "officialLink": "https://joinindianarmy.nic.in",
+    "fees": {
+      "genObc": "\u20B90/- (No Application Fee)",
+      "scSt": "\u20B90/- (Exempted)"
+    },
+    "isNew": true
+  },
+  // 🏛️ JKSSB OFFICIAL PORTAL UPDATE (27 OCTOBER 2026)
+  {
+    id: "jkssb-advt-11-of-2026-je-civil-pwd",
+    title: "JKSSB Advt 11 of 2026: Recruitment for 458 Junior Engineer (Civil) Posts in Public Works (R&B) Department",
+    category: "jkssb",
+    postDate: "27/10/2026",
+    startDate: "30/11/2026",
+    lastDate: "29/12/2026",
+    advertisementNo: "Advt No. 11 of 2026",
+    shortInfo: "Jammu and Kashmir Services Selection Board (JKSSB) has released Advertisement Notification No. 11 of 2026 inviting online applications for 458 posts of Junior Engineer (Civil) in the Public Works (R&B) Department. Eligible candidates holding a 3-year Diploma or Degree in Civil Engineering can apply online through the official portal jkssb.nic.in.",
+    ageLimit: "Open Merit (OM): 40 Years | SC / ST / RBA / ALC/IB / EWS / PSP: 43 Years | PWD: 42 Years | Ex-Servicemen: 48 Years (as on 01/01/2026)",
+    eligibility: "03 Years Diploma in Civil Engineering from Government recognized Institute/Indian University or Degree in Civil Engineering or AMIE Section (A&B) India.",
+    totalPosts: "458 Posts (UT Cadre)",
+    officialLink: "https://jkssb.nic.in",
+    fees: {
+      genObc: "\u20B9550/- (Rupees Five Hundred Fifty Only)",
+      scSt: "\u20B9450/- (For SC, ST, PWD & EWS Candidates)"
+    },
+    isNew: true
+  },
   // 🇮🇳 DAILY OFFICIAL PORTAL UPDATES (25 OCTOBER 2026)
   {
     id: "army-tes-57-course-2026",
@@ -8737,8 +8814,36 @@ app.get("/robots.txt", (req, res) => {
   res.sendFile(robotsPath);
 });
 app.use(express.static(path5.join(process.cwd(), "public")));
+if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+  const distPath = path5.join(process.cwd(), "dist");
+  const indexHtmlPath = path5.join(distPath, "index.html");
+  const rootHtmlPath = path5.join(process.cwd(), "index.html");
+  if (fs4.existsSync(distPath)) {
+    app.use(express.static(distPath));
+  }
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api/")) {
+      return next();
+    }
+    try {
+      const targetHtmlPath = fs4.existsSync(indexHtmlPath) ? indexHtmlPath : fs4.existsSync(rootHtmlPath) ? rootHtmlPath : null;
+      if (targetHtmlPath) {
+        const indexHtml = fs4.readFileSync(targetHtmlPath, "utf-8");
+        const { html: dynamicHtml, isNotFound } = renderDynamicMetaHtml(indexHtml, req);
+        res.setHeader("Content-Type", "text/html; charset=utf-8");
+        if (isNotFound) {
+          return res.status(404).send(dynamicHtml);
+        }
+        return res.send(dynamicHtml);
+      }
+    } catch (err) {
+      console.error("Error serving index.html:", err);
+    }
+    return res.status(404).send("Not Found");
+  });
+}
 async function startServer() {
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -8765,34 +8870,6 @@ async function startServer() {
         }
       }
       return vite.middlewares(req, res, next);
-    });
-  }
-  if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
-    const distPath = path5.join(process.cwd(), "dist");
-    const indexHtmlPath = path5.join(distPath, "index.html");
-    const rootHtmlPath = path5.join(process.cwd(), "index.html");
-    if (fs4.existsSync(distPath)) {
-      app.use(express.static(distPath));
-    }
-    app.get("*", (req, res, next) => {
-      if (req.path.startsWith("/api/")) {
-        return next();
-      }
-      try {
-        const targetHtmlPath = fs4.existsSync(indexHtmlPath) ? indexHtmlPath : fs4.existsSync(rootHtmlPath) ? rootHtmlPath : null;
-        if (targetHtmlPath) {
-          const indexHtml = fs4.readFileSync(targetHtmlPath, "utf-8");
-          const { html: dynamicHtml, isNotFound } = renderDynamicMetaHtml(indexHtml, req);
-          res.setHeader("Content-Type", "text/html; charset=utf-8");
-          if (isNotFound) {
-            return res.status(404).send(dynamicHtml);
-          }
-          return res.send(dynamicHtml);
-        }
-      } catch (err) {
-        console.error("Error serving index.html:", err);
-      }
-      return res.status(404).send("Not Found");
     });
   }
   if (!process.env.VERCEL) {
