@@ -2259,7 +2259,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   ];
 
   const operationsNavItems: Array<{ id: NavSectionId; label: string; icon: any; count?: number }> = [
-    { id: 'post_thumbnails', label: 'Post & AI Thumbnail (2048×677)', icon: Sparkles },
+    { id: 'post_thumbnails', label: 'Thumbnail & Social Preview', icon: Sparkles },
     { id: 'vle_logs', label: 'VLE Visitor Access Logs', icon: ShieldAlert, count: vleInquiries.length },
     { id: 'whatsapp_sync', label: 'WhatsApp Publisher', icon: Radio },
     { id: 'push_publisher', label: 'Web Push Publisher', icon: Bell },
@@ -2955,7 +2955,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                     </span>
                   </div>
                   <p className="text-xs text-[#64748B] mt-0.5">
-                    Generate, regenerate, preview, save, or upload 2048 × 677 px post thumbnails matching the JKSSB Class IV master reference.
+                    Generate, preview, customize, and save automatic post-specific 1200 × 630 px thumbnails and live Facebook/WhatsApp social cards.
                   </p>
                 </div>
               </div>
@@ -2965,13 +2965,13 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                 className="px-4 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shrink-0 cursor-pointer transition-colors"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Open AI Thumbnail Generator</span>
+                <span>Thumbnail &amp; Social Preview Studio</span>
               </button>
             </div>
           )}
 
           {/* ================================================================ */}
-          {/* 3B. CREATE / EDIT POST & AI THUMBNAIL GENERATOR (2048 x 677)     */}
+          {/* 3B. THUMBNAIL & SOCIAL PREVIEW STUDIO (1200 x 630)               */}
           {/* ================================================================ */}
           {activeNav === 'post_thumbnails' && (
             <section aria-label="Create and Edit Post AI Thumbnail Generator">

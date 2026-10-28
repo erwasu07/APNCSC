@@ -18,86 +18,106 @@ import {
   Check,
   Copy,
   Sliders,
-  Layers
+  Layers,
+  Share2,
+  ExternalLink,
+  Image as ImageIcon
 } from 'lucide-react';
-
-type SarkariCategory = SarkariItem['category'];
-
-export interface ThumbnailBannerSpec {
-  mainHeadingLeft: string;
-  redBadgeText: string;
-  secondHeading: string;
-  yellowBannerPrefix: string;
-  yellowBannerHighlight: string;
-  fourIcons: [string, string, string, string] | any;
-  laptopTitle: string;
-  laptopSubtitle: string;
-  footerLine1: string;
-  footerLine2: string;
-  ctaButtonText?: 'APPLY NOW' | 'CHECK RESULT' | 'READ DETAILS';
-  ctaText?: 'APPLY NOW' | 'CHECK RESULT' | 'READ DETAILS';
-  postType?: 'Job' | 'Admission' | 'Result' | 'Scheme' | 'Service' | 'Guide';
-}
+import {
+  ThumbnailSpec,
+  CATEGORY_THEMES,
+  CategoryThemeConfig,
+  SupportedCategoryStyle,
+  buildDeterministicThumbnailSpec,
+  renderStandaloneMasterThumbnailSvg,
+  extractSpecificPostRole,
+  THUMBNAIL_WIDTH,
+  THUMBNAIL_HEIGHT
+} from '../utils/thumbnailSpecHelper';
 
 interface AdminThumbnailGeneratorStudioProps {
   initialPostId?: string;
-  onThumbnailSaved?: (postId: string, thumbnailUrl: string, spec?: ThumbnailBannerSpec) => void;
+  onThumbnailSaved?: (postId: string, thumbnailUrl: string, spec?: ThumbnailSpec) => void;
 }
 
-const TEST_PRESETS = [
+const APPROVED_PRESETS = [
   {
-    key: 'test-jkssb-class-iv',
-    badge: 'Test Case 1 • Recruitment',
+    key: 'jkssb-class-iv',
+    badge: 'JKSSB Approved Style',
     id: 'jkssb-class-iv-recruitment-2026',
     title: 'JKSSB Class IV Online Form 2026 – Apply Online for UT & District Cadre Posts',
-    category: 'jkssb' as SarkariCategory,
+    category: 'jkssb',
     department: 'J&K Services Selection Board (JKSSB)',
-    postType: 'Job' as const,
-    shortDescription:
-      'Jammu and Kashmir Services Selection Board (JKSSB) invites online applications for Class IV recruitment across UT, Divisional, and District Cadre posts. Get easy and reliable CSC form filling, document upload, and fee payment assistance.',
-    postDate: '18/05/2026',
-    startDate: '20/05/2026',
-    lastDate: '25/06/2026',
-    totalPosts: '3,200 Posts',
-    advertisementNo: '04 of 2026',
-    applicationStatus: 'Open' as const,
-    pregeneratedUrl: '/thumbnails/test-jkssb-class-iv.png'
+    orgTitle: 'JKSSB',
+    postBadgeTitle: 'CLASS IV',
+    eligibilityValue: '10th / 12th Pass',
+    lastDateValue: '25/06/2026',
+    howToApplyValue: 'Visit CSC DOST'
   },
   {
-    key: 'test-ignou-admission',
-    badge: 'Test Case 2 • Admission',
-    id: 'ignou-admission-2026-july-session',
-    title: 'IGNOU Admission 2026 – Online Registration for UG, PG, Diploma & Certificate Programmes',
-    category: 'admissions' as SarkariCategory,
-    department: 'Indira Gandhi National Open University (IGNOU)',
-    postType: 'Admission' as const,
-    shortDescription:
-      'Indira Gandhi National Open University (IGNOU) has started fresh admission registration for Undergraduate, Postgraduate, Diploma, and Certificate programmes. Apply through CSC DOST for course selection, document upload, and registration receipt.',
-    postDate: '15/05/2026',
-    startDate: '15/05/2026',
-    lastDate: '30/06/2026',
-    totalPosts: 'UG / PG / Diploma Seats',
-    advertisementNo: 'IGNOU-ADM-2026',
-    applicationStatus: 'Open' as const,
-    pregeneratedUrl: '/thumbnails/test-ignou-admission.png'
+    key: 'army-tes-57',
+    badge: 'Indian Army Approved Style',
+    id: 'army-tes-57-course-2026',
+    title: 'Indian Army 10+2 Technical Entry Scheme (TES-57 Course)',
+    category: 'army_jobs',
+    department: 'Join Indian Army (joinindianarmy.nic.in)',
+    orgTitle: 'INDIAN ARMY',
+    postBadgeTitle: 'TES-57 (10+2)',
+    eligibilityValue: '10+2 with PCM (60%)',
+    lastDateValue: '13/06/2026',
+    howToApplyValue: 'Visit CSC DOST'
   },
   {
-    key: 'test-jkbose-result',
-    badge: 'Test Case 3 • Result',
-    id: 'jkbose-class-10-result-2026',
-    title: 'JKBOSE Class 10th Annual Regular Result 2026 – Check Roll Number & Name Wise Marks',
-    category: 'results' as SarkariCategory,
-    department: 'J&K Board of School Education (JKBOSE)',
-    postType: 'Result' as const,
-    shortDescription:
-      'Jammu and Kashmir Board of School Education (JKBOSE) has declared the Class 10th (Matriculation) Annual Regular Examination Result. Check marksheet status, roll number lookup, and download your digital scorecard.',
-    postDate: '19/05/2026',
-    startDate: '19/05/2026',
-    lastDate: 'Declared / Active',
-    totalPosts: 'Annual Regular Batch',
-    advertisementNo: 'JKBOSE-X-2026',
-    applicationStatus: 'Result' as const,
-    pregeneratedUrl: '/thumbnails/test-jkbose-class-10-result.png'
+    key: 'rrb-ntpc',
+    badge: 'Railways / RRB Approved Style',
+    id: 'rrb-ntpc-undergraduate-cen-07-2026',
+    title: 'RRB NTPC Undergraduate (CEN 07/2026) – Online Application',
+    category: 'rrb_jobs',
+    department: 'Railway Recruitment Boards (RRB)',
+    orgTitle: 'RAILWAY / RRB',
+    postBadgeTitle: 'NTPC (UG) CEN 07/2026',
+    eligibilityValue: '12th Pass with Typing',
+    lastDateValue: '20/07/2026',
+    howToApplyValue: 'Visit CSC DOST'
+  },
+  {
+    key: 'ssc-chsl',
+    badge: 'SSC Approved Style',
+    id: 'ssc-chsl-10-plus-2-exam-2026-tier1',
+    title: 'SSC Combined Higher Secondary (10+2) Level Examination 2026 Tier-1',
+    category: 'ssc_jobs',
+    department: 'Staff Selection Commission (SSC)',
+    orgTitle: 'STAFF SELECTION COMM.',
+    postBadgeTitle: 'CHSL (10+2)',
+    eligibilityValue: '12th Pass Any Stream',
+    lastDateValue: '08/07/2026',
+    howToApplyValue: 'Visit CSC DOST'
+  },
+  {
+    key: 'ku-exam-forms',
+    badge: 'Kashmir University Approved Style',
+    id: 'ku-bg-1st-2nd-sem-exam-form-2026',
+    title: 'University of Kashmir BG 1st & 2nd Semester Examination Form Notification',
+    category: 'exam_forms',
+    department: 'University of Kashmir (kashmiruniversity.net)',
+    orgTitle: 'KASHMIR UNIVERSITY',
+    postBadgeTitle: 'BG 1ST & 2ND SEM',
+    eligibilityValue: 'Registered UG Students',
+    lastDateValue: '30/06/2026',
+    howToApplyValue: 'Visit CSC DOST'
+  },
+  {
+    key: 'cus-cluster-univ',
+    badge: 'Cluster University Approved Style',
+    id: 'cus-bed-supplementary-4th-sem-exam-dyd-2026',
+    title: 'Cluster University Srinagar B.Ed Supplementary 4th Sem Exam DYD 2026',
+    category: 'cluster_univ',
+    department: 'Cluster University Srinagar (cusrinagar.edu.in)',
+    orgTitle: 'CLUSTER UNIVERSITY',
+    postBadgeTitle: 'B.ED 4TH SEM (DYD)',
+    eligibilityValue: 'B.Ed Enrolled Candidates',
+    lastDateValue: '15/06/2026',
+    howToApplyValue: 'Visit CSC DOST'
   }
 ];
 
@@ -107,279 +127,220 @@ export default function AdminThumbnailGeneratorStudio({
 }: AdminThumbnailGeneratorStudioProps) {
   const [mode, setMode] = useState<'edit' | 'create'>('edit');
   const [postsList, setPostsList] = useState<SarkariItem[]>(() => [...SARKARI_DATA]);
-  const [savedThumbnailsMap, setSavedThumbnailsMap] = useState<Record<string, any>>({});
   const [postSearchQuery, setPostSearchQuery] = useState('');
 
   // Selected or New Post Data Fields
-  const [postId, setPostId] = useState<string>(initialPostId || SARKARI_DATA[0]?.id || 'jkssb-class-iv-recruitment-2026');
+  const [postId, setPostId] = useState<string>(
+    initialPostId || SARKARI_DATA[0]?.id || 'jkssb-class-iv-recruitment-2026'
+  );
   const [title, setTitle] = useState<string>('');
-  const [category, setCategory] = useState<SarkariCategory>('jkssb');
+  const [category, setCategory] = useState<string>('jkssb');
   const [department, setDepartment] = useState<string>('J&K Services Selection Board (JKSSB)');
-  const [postType, setPostType] = useState<'Job' | 'Admission' | 'Result' | 'Scheme' | 'Service' | 'Guide'>('Job');
   const [shortDescription, setShortDescription] = useState<string>('');
-  const [postDate, setPostDate] = useState<string>('');
-  const [startDate, setStartDate] = useState<string>('');
   const [lastDate, setLastDate] = useState<string>('');
-  const [totalPosts, setTotalPosts] = useState<string>('');
-  const [advertisementNo, setAdvertisementNo] = useState<string>('');
+  const [eligibility, setEligibility] = useState<string>('');
   const [officialLink, setOfficialLink] = useState<string>('');
-  const [applicationStatus, setApplicationStatus] = useState<'Open' | 'Result' | 'Informational' | 'Closed'>('Open');
 
-  // Thumbnail Generator State
-  const [format, setFormat] = useState<'png' | 'webp'>('png');
-  const [useAiExtraction, setUseAiExtraction] = useState<boolean>(true);
-  const [previewDataUrl, setPreviewDataUrl] = useState<string>('/thumbnails/test-jkssb-class-iv.png');
-  const [savedThumbnailUrl, setSavedThumbnailUrl] = useState<string | null>(null);
-  const [currentSpec, setCurrentSpec] = useState<ThumbnailBannerSpec | null>(null);
-  const [showSpecEditor, setShowSpecEditor] = useState<boolean>(false);
-  const [showReferenceComparison, setShowReferenceComparison] = useState<boolean>(false);
-  const [showFullPreviewModal, setShowFullPreviewModal] = useState<boolean>(false);
+  // 1200x630 Specification Overrides
+  const [styleOverride, setStyleOverride] = useState<SupportedCategoryStyle | 'auto'>('auto');
+  const [orgTitle, setOrgTitle] = useState<string>('JKSSB');
+  const [postBadgeTitle, setPostBadgeTitle] = useState<string>('CLASS IV');
+  const [eligibilityLabel, setEligibilityLabel] = useState<string>('Eligibility:');
+  const [eligibilityValue, setEligibilityValue] = useState<string>('See notification');
+  const [lastDateLabel, setLastDateLabel] = useState<string>('Last date:');
+  const [lastDateValue, setLastDateValue] = useState<string>('Check website');
+  const [howToApplyLabel, setHowToApplyLabel] = useState<string>('How to apply:');
+  const [howToApplyValue, setHowToApplyValue] = useState<string>('Visit CSC DOST');
+  const [logoOption, setLogoOption] = useState<'preset' | 'custom' | 'placeholder'>('preset');
+  const [customLogoUrl, setCustomLogoUrl] = useState<string>('');
+
+  // Custom Full Thumbnail Upload
   const [isCustomUploaded, setIsCustomUploaded] = useState<boolean>(false);
+  const [customImageDataUrl, setCustomImageDataUrl] = useState<string | null>(null);
 
-  // Loading & Feedback States
+  // Preview Tabs: 'thumbnail' | 'facebook' | 'whatsapp'
+  const [previewTab, setPreviewTab] = useState<'thumbnail' | 'facebook' | 'whatsapp'>('thumbnail');
+
+  // Loading & Feedback
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [isSavingThumbnail, setIsSavingThumbnail] = useState<boolean>(false);
-  const [isSavingPost, setIsSavingPost] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<{
     type: 'success' | 'error' | 'info';
     text: string;
   } | null>(null);
-  const [copiedUrl, setCopiedUrl] = useState<boolean>(false);
+  const [copiedLink, setCopiedLink] = useState<boolean>(false);
 
   const customFileInputRef = useRef<HTMLInputElement>(null);
+  const logoFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch saved thumbnails map & custom posts from server on mount
-  const fetchSavedThumbnailsAndPosts = async () => {
-    try {
-      const res = await fetch('/api/thumbnails/map');
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data.thumbnails) {
-        setSavedThumbnailsMap(data.thumbnails);
-      }
-      if (Array.isArray(data.customPosts) && data.customPosts.length > 0) {
-        const merged = [...SARKARI_DATA];
-        for (const cp of data.customPosts) {
-          const idx = merged.findIndex(item => item.id === cp.id);
-          if (idx >= 0) {
-            merged[idx] = { ...merged[idx], ...cp };
-          } else {
-            merged.unshift(cp);
-          }
-        }
-        setPostsList(merged);
-      }
-    } catch (err) {
-      console.warn('[ThumbnailStudio] Failed to load thumbnail map:', err);
+  // Active Category Style Calculation
+  const effectiveCategoryStyle: SupportedCategoryStyle = useMemo(() => {
+    if (styleOverride !== 'auto') {
+      return styleOverride;
     }
-  };
+    const catLower = (category || '').toLowerCase();
+    const titleUpper = (title || '').toUpperCase();
+    if (catLower === 'jkssb' || titleUpper.includes('JKSSB')) return 'jkssb';
+    if (catLower === 'army_jobs' || titleUpper.includes('ARMY') || titleUpper.includes('AGNIVEER')) return 'army_jobs';
+    if (catLower === 'rrb_jobs' || titleUpper.includes('RRB') || titleUpper.includes('RAILWAY')) return 'rrb_jobs';
+    if (catLower === 'ssc_jobs' || titleUpper.includes('SSC')) return 'ssc_jobs';
+    if (catLower === 'cluster_univ' || titleUpper.includes('CLUSTER')) return 'cluster_univ';
+    if (catLower === 'exam_forms' || titleUpper.includes('KASHMIR UNIVERSITY') || titleUpper.includes('EXAM FORM')) return 'exam_forms';
+    if (catLower === 'admissions' || titleUpper.includes('ADMISSION')) return 'admissions';
+    return 'default';
+  }, [category, title, styleOverride]);
 
+  // Construct active 1200x630 Spec
+  const activeSpec: ThumbnailSpec = useMemo(() => {
+    return {
+      category: effectiveCategoryStyle,
+      orgTitle: orgTitle.trim() || CATEGORY_THEMES[effectiveCategoryStyle]?.orgTitle || 'CSC DOST',
+      postBadgeTitle: postBadgeTitle.trim() || 'OFFICIAL NOTIFICATION',
+      eligibilityLabel,
+      eligibilityValue: eligibilityValue.trim() || 'See notification',
+      lastDateLabel,
+      lastDateValue: lastDateValue.trim() || 'Check website',
+      howToApplyLabel,
+      howToApplyValue: howToApplyValue.trim() || 'Visit CSC DOST',
+      logoOption,
+      logoUrl: logoOption === 'custom' ? customLogoUrl : undefined,
+      customThumbnailUrl: isCustomUploaded && customImageDataUrl ? customImageDataUrl : undefined
+    };
+  }, [
+    effectiveCategoryStyle,
+    orgTitle,
+    postBadgeTitle,
+    eligibilityLabel,
+    eligibilityValue,
+    lastDateLabel,
+    lastDateValue,
+    howToApplyLabel,
+    howToApplyValue,
+    logoOption,
+    customLogoUrl,
+    isCustomUploaded,
+    customImageDataUrl
+  ]);
+
+  // Realtime Rendered Vector SVG String
+  const previewSvg = useMemo(() => {
+    return renderStandaloneMasterThumbnailSvg(activeSpec);
+  }, [activeSpec]);
+
+  // SVG Data URL for previewing
+  const previewSvgDataUrl = useMemo(() => {
+    if (isCustomUploaded && customImageDataUrl) {
+      return customImageDataUrl;
+    }
+    return `data:image/svg+xml;utf8,${encodeURIComponent(previewSvg)}`;
+  }, [previewSvg, isCustomUploaded, customImageDataUrl]);
+
+  // Fetch posts list on mount
   useEffect(() => {
-    fetchSavedThumbnailsAndPosts();
+    fetch('/api/sarkari-posts')
+      .then(r => r.json())
+      .then(d => {
+        if (d && Array.isArray(d.posts) && d.posts.length > 0) {
+          setPostsList(d.posts);
+        }
+      })
+      .catch(() => {});
   }, []);
 
-  // Infer department & postType from a SarkariItem
-  const populateFromSarkariItem = (item: SarkariItem) => {
-    setPostId(item.id);
-    setTitle(item.title);
-    setCategory(item.category);
-    setShortDescription(item.shortInfo || '');
-    setPostDate(item.postDate || '');
-    setStartDate(item.startDate || '');
-    setLastDate(item.lastDate || '');
-    setTotalPosts(item.totalPosts || '');
-    setAdvertisementNo(item.advertisementNo || '');
-    setOfficialLink(item.officialLink || '');
+  // When a post is chosen, populate all fields
+  const loadPostDetails = (targetId: string) => {
+    const post = postsList.find(p => p.id === targetId) || SARKARI_DATA.find(p => p.id === targetId);
+    if (!post) return;
+
+    setPostId(post.id);
+    setTitle(post.title);
+    setCategory(post.category);
+    setDepartment(post.department || '');
+    setShortDescription(post.shortInfo || '');
+    setLastDate(post.lastDate || '');
+    setEligibility(post.eligibility || '');
+    setOfficialLink(post.officialLink || '');
+
+    // Extract deterministic spec
+    const spec = buildDeterministicThumbnailSpec({
+      id: post.id,
+      title: post.title,
+      category: post.category,
+      department: post.department,
+      shortInfo: post.shortInfo,
+      lastDate: post.lastDate,
+      eligibility: post.eligibility
+    });
+
+    setStyleOverride('auto');
+    setOrgTitle(spec.orgTitle);
+    setPostBadgeTitle(spec.postBadgeTitle);
+    setEligibilityValue(spec.eligibilityValue);
+    setLastDateValue(spec.lastDateValue);
+    setHowToApplyValue(spec.howToApplyValue);
     setIsCustomUploaded(false);
-
-    // Department inference
-    if (item.department) {
-      setDepartment(item.department);
-    } else if (item.category === 'jkssb') {
-      setDepartment('J&K Services Selection Board (JKSSB)');
-    } else if (item.category === 'ssc_jobs') {
-      setDepartment('Staff Selection Commission (SSC)');
-    } else if (item.category === 'rrb_jobs') {
-      setDepartment('Railway Recruitment Boards (RRB)');
-    } else if (item.category === 'army_jobs') {
-      setDepartment('Indian Army (joinindianarmy.nic.in)');
-    } else if (item.category === 'cluster_univ') {
-      setDepartment('Cluster University Srinagar (CUS)');
-    } else if (item.category === 'admissions' || item.category === 'exam_forms') {
-      setDepartment(
-        item.title.toUpperCase().includes('IGNOU')
-          ? 'Indira Gandhi National Open University (IGNOU)'
-          : 'University of Kashmir / Academic Portal'
-      );
-    } else if (item.category === 'nta') {
-      setDepartment('National Testing Agency (NTA)');
-    } else {
-      setDepartment(SARKARI_CATEGORIES[item.category]?.label || 'Official Recruiting Authority');
-    }
-
-    // Post Type inference
-    if (item.postType) {
-      setPostType(item.postType as any);
-    } else if (item.category === 'results' || item.category === 'answer_keys') {
-      setPostType('Result');
-      setApplicationStatus('Result');
-    } else if (item.category === 'admissions' || item.category === 'cluster_univ') {
-      setPostType('Admission');
-      setApplicationStatus('Open');
-    } else if (item.category === 'syllabus') {
-      setPostType('Guide');
-      setApplicationStatus('Informational');
-    } else {
-      setPostType('Job');
-      setApplicationStatus('Open');
-    }
-
-    const saved = savedThumbnailsMap[item.id];
-    if (saved && saved.thumbnailUrl) {
-      setSavedThumbnailUrl(saved.thumbnailUrl);
-      setPreviewDataUrl(saved.thumbnailUrl);
-      if (saved.spec) setCurrentSpec(saved.spec);
-    } else if (item.thumbnailUrl) {
-      setSavedThumbnailUrl(item.thumbnailUrl);
-      setPreviewDataUrl(item.thumbnailUrl);
-    } else {
-      setSavedThumbnailUrl(`/api/thumbnails/post/${item.id}.png`);
-      setPreviewDataUrl(`/api/thumbnails/post/${item.id}.png?t=${Date.now()}`);
-    }
+    setCustomImageDataUrl(null);
   };
 
-  // Load initial post on mount
   useEffect(() => {
-    const targetId = initialPostId || SARKARI_DATA[0]?.id;
-    const found = postsList.find(p => p.id === targetId) || postsList[0];
-    if (found) {
-      populateFromSarkariItem(found);
+    if (postId) {
+      loadPostDetails(postId);
     }
-  }, [initialPostId]);
+  }, [postId]);
 
-  const filteredPosts = useMemo(() => {
-    const q = postSearchQuery.trim().toLowerCase();
-    if (!q) return postsList;
-    return postsList.filter(
-      p =>
-        p.title.toLowerCase().includes(q) ||
-        p.id.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q) ||
-        (p.advertisementNo || '').toLowerCase().includes(q)
-    );
-  }, [postsList, postSearchQuery]);
-
-  // ACTION 1 & 2: Generate / Regenerate 2048x677 Thumbnail
-  const handleGenerateThumbnail = async (useCustomOverrides = false, overridePayload?: any) => {
+  // ACTION: Regenerate Thumbnail from current post inputs
+  const handleRegenerate = () => {
     setIsGenerating(true);
     setStatusMessage(null);
-    setIsCustomUploaded(false);
 
     try {
-      const payload = overridePayload || {
+      const spec = buildDeterministicThumbnailSpec({
         id: postId,
-        title: title || 'JKSSB Class IV Recruitment 2026',
+        title,
         category,
         department,
-        postType,
-        shortDescription,
-        importantDates: {
-          postDate,
-          startDate,
-          lastDate
-        },
-        applicationStatus,
-        totalPosts,
-        advertisementNo,
-        format,
-        useAi: useAiExtraction,
-        useCustomSpec: useCustomOverrides && Boolean(currentSpec),
-        customSpec: useCustomOverrides ? currentSpec : undefined
-      };
-
-      const res = await fetch('/api/thumbnails/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        shortInfo: shortDescription,
+        lastDate,
+        eligibility
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to generate thumbnail');
-      }
-
-      setPreviewDataUrl(data.dataUrl);
-      if (data.spec) {
-        setCurrentSpec(data.spec);
-      }
+      setOrgTitle(spec.orgTitle);
+      setPostBadgeTitle(spec.postBadgeTitle);
+      setEligibilityValue(spec.eligibilityValue);
+      setLastDateValue(spec.lastDateValue);
+      setHowToApplyValue(spec.howToApplyValue);
+      setIsCustomUploaded(false);
+      setCustomImageDataUrl(null);
 
       setStatusMessage({
         type: 'success',
-        text: `Generated 2048 × 677 px (${data.format.toUpperCase()}) thumbnail matching the JKSSB Class IV Master Reference.`
+        text: 'Regenerated fresh 1200 × 630 px thumbnail layout from post details.'
       });
     } catch (err: any) {
       setStatusMessage({
         type: 'error',
-        text: err?.message || 'Error generating 2048×677 thumbnail.'
+        text: err?.message || 'Failed to regenerate thumbnail.'
       });
     } finally {
-      setIsGenerating(false);
+      setTimeout(() => setIsGenerating(false), 200);
     }
   };
 
-  // Load one of the 3 mandatory test cases immediately
-  const handleLoadTestPreset = async (preset: (typeof TEST_PRESETS)[number]) => {
-    setMode('edit');
-    setPostId(preset.id);
-    setTitle(preset.title);
-    setCategory(preset.category);
-    setDepartment(preset.department);
-    setPostType(preset.postType);
-    setShortDescription(preset.shortDescription);
-    setPostDate(preset.postDate);
-    setStartDate(preset.startDate);
-    setLastDate(preset.lastDate);
-    setTotalPosts(preset.totalPosts);
-    setAdvertisementNo(preset.advertisementNo);
-    setApplicationStatus(preset.applicationStatus);
-    setIsCustomUploaded(false);
-    setPreviewDataUrl(`${preset.pregeneratedUrl}?t=${Date.now()}`);
-
-    await handleGenerateThumbnail(false, {
-      id: preset.id,
-      title: preset.title,
-      category: preset.category,
-      department: preset.department,
-      postType: preset.postType,
-      shortDescription: preset.shortDescription,
-      importantDates: {
-        postDate: preset.postDate,
-        startDate: preset.startDate,
-        lastDate: preset.lastDate
-      },
-      applicationStatus: preset.applicationStatus,
-      totalPosts: preset.totalPosts,
-      advertisementNo: preset.advertisementNo,
-      format,
-      useAi: false
-    });
-  };
-
-  // ACTION 4: Save Thumbnail (Uploads to Supabase Storage + Associates with Post)
+  // ACTION: Save Thumbnail to Server and Post Record
   const handleSaveThumbnail = async () => {
     if (!title.trim()) {
       setStatusMessage({
         type: 'error',
-        text: 'Please enter a Post Title before saving the thumbnail.'
+        text: 'Please enter a notification title before saving.'
       });
       return;
     }
 
-    setIsSavingThumbnail(true);
+    setIsSaving(true);
     setStatusMessage(null);
 
     try {
-      const effectivePostId =
+      const effectiveId =
         postId.trim() ||
         title
           .toLowerCase()
@@ -391,18 +352,15 @@ export default function AdminThumbnailGeneratorStudio({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          postId: effectivePostId,
+          postId: effectiveId,
           title,
-          category,
+          category: effectiveCategoryStyle,
           department,
-          postType,
           shortDescription,
-          importantDates: { postDate, startDate, lastDate },
-          applicationStatus,
-          format,
-          spec: currentSpec,
+          importantDates: { lastDate },
+          spec: activeSpec,
           isCustomUpload: isCustomUploaded,
-          customImageDataUrl: isCustomUploaded ? previewDataUrl : undefined
+          customImageDataUrl: isCustomUploaded ? customImageDataUrl : undefined
         })
       });
 
@@ -411,930 +369,611 @@ export default function AdminThumbnailGeneratorStudio({
         throw new Error(data.error || 'Failed to save thumbnail');
       }
 
-      setPostId(data.postId);
-      setSavedThumbnailUrl(data.thumbnailUrl);
-      await fetchSavedThumbnailsAndPosts();
-
-      if (onThumbnailSaved) {
-        onThumbnailSaved(data.postId, data.thumbnailUrl, data.spec);
-      }
-
       setStatusMessage({
         type: 'success',
-        text: `Saved 2048 × 677 px thumbnail to Supabase Storage & linked to post "${effectivePostId}".`
+        text: `Successfully saved dedicated 1200 × 630 thumbnail for "${effectiveId}". Social cards are now live!`
       });
+
+      if (onThumbnailSaved) {
+        onThumbnailSaved(effectiveId, data.thumbnailUrl, activeSpec);
+      }
     } catch (err: any) {
       setStatusMessage({
         type: 'error',
         text: err?.message || 'Failed to save thumbnail.'
       });
     } finally {
-      setIsSavingThumbnail(false);
+      setIsSaving(false);
     }
   };
 
-  // ACTION 5: Upload Custom Thumbnail (Normalizes to 2048 x 677 px)
-  const handleCustomThumbnailUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // ACTION: Handle custom full thumbnail file upload
+  const handleCustomUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = () => {
-      const resultUrl = String(reader.result || '');
-      const img = new Image();
-      img.onload = () => {
-        // Resize / normalize on client canvas to exact 2048 x 677 so preview is immediate
-        const canvas = document.createElement('canvas');
-        canvas.width = 2048;
-        canvas.height = 677;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.fillStyle = '#092556';
-          ctx.fillRect(0, 0, 2048, 677);
-          const scale = Math.max(2048 / img.width, 677 / img.height);
-          const drawW = img.width * scale;
-          const drawH = img.height * scale;
-          const drawX = (2048 - drawW) / 2;
-          const drawY = (677 - drawH) / 2;
-          ctx.drawImage(img, drawX, drawY, drawW, drawH);
-          const normalizedDataUrl = canvas.toDataURL(
-            format === 'webp' ? 'image/webp' : 'image/png',
-            0.95
-          );
-          setPreviewDataUrl(normalizedDataUrl);
-          setIsCustomUploaded(true);
-          setStatusMessage({
-            type: 'info',
-            text: `Custom image "${file.name}" loaded and normalized to exact 2048 × 677 px. Click "Save Thumbnail" to store in Supabase.`
-          });
-        }
-      };
-      img.src = resultUrl;
+      const dataUrl = String(reader.result || '');
+      setIsCustomUploaded(true);
+      setCustomImageDataUrl(dataUrl);
+      setStatusMessage({
+        type: 'info',
+        text: 'Loaded custom thumbnail image. Click "Save Thumbnail" to apply.'
+      });
     };
     reader.readAsDataURL(file);
-    e.target.value = '';
   };
 
-  // Save / Publish Full Post + Associated 2048x677 Thumbnail
-  const handleSavePostWithThumbnail = async () => {
-    if (!title.trim()) {
-      setStatusMessage({ type: 'error', text: 'Post Title is required.' });
-      return;
-    }
+  // ACTION: Handle custom logo upload
+  const handleCustomLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    setIsSavingPost(true);
-    setStatusMessage(null);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result || '');
+      setLogoOption('custom');
+      setCustomLogoUrl(dataUrl);
+    };
+    reader.readAsDataURL(file);
+  };
 
+  // Download 1200x630 PNG directly
+  const handleDownloadPng = async () => {
     try {
-      const effectiveSlug =
-        postId.trim() ||
-        title
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-|-$/g, '')
-          .slice(0, 60);
+      const img = new Image();
+      img.src = previewSvgDataUrl;
+      await new Promise(res => (img.onload = res));
 
-      // 1. Save thumbnail first so the post gets a permanent 2048x677 URL
-      const thumbRes = await fetch('/api/thumbnails/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          postId: effectiveSlug,
-          title,
-          category,
-          department,
-          postType,
-          shortDescription,
-          importantDates: { postDate, startDate, lastDate },
-          applicationStatus,
-          format,
-          spec: currentSpec,
-          isCustomUpload: isCustomUploaded,
-          customImageDataUrl: isCustomUploaded ? previewDataUrl : undefined
-        })
-      });
-      const thumbData = await thumbRes.json();
-      const finalThumbUrl =
-        thumbData?.thumbnailUrl || `/api/thumbnails/post/${effectiveSlug}.png`;
-
-      // 2. Save post record
-      const postRes = await fetch('/api/posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: effectiveSlug,
-          title,
-          category,
-          department,
-          postType,
-          applicationStatus,
-          shortDescription,
-          postDate,
-          startDate,
-          lastDate,
-          totalPosts,
-          advertisementNo,
-          officialLink,
-          thumbnailUrl: finalThumbUrl,
-          thumbnailSpec: currentSpec
-        })
-      });
-
-      const postData = await postRes.json();
-      if (!postRes.ok || !postData.success) {
-        throw new Error(postData.error || 'Failed to save post');
+      const canvas = document.createElement('canvas');
+      canvas.width = THUMBNAIL_WIDTH;
+      canvas.height = THUMBNAIL_HEIGHT;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT);
+        ctx.drawImage(img, 0, 0, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT);
+        const pngUrl = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = pngUrl;
+        a.download = `${postId || 'csc-dost-thumbnail'}-1200x630.png`;
+        a.click();
       }
-
-      setPostId(effectiveSlug);
-      setSavedThumbnailUrl(finalThumbUrl);
-      await fetchSavedThumbnailsAndPosts();
-
-      setStatusMessage({
-        type: 'success',
-        text: `Post "${title}" and its 2048 × 677 px thumbnail have been saved and published.`
-      });
-    } catch (err: any) {
-      setStatusMessage({
-        type: 'error',
-        text: err?.message || 'Failed to save post and thumbnail.'
-      });
-    } finally {
-      setIsSavingPost(false);
+    } catch (err) {
+      console.error('Download error:', err);
     }
   };
 
-  // Download 2048x677 Thumbnail directly
-  const handleDownloadThumbnail = () => {
-    const a = document.createElement('a');
-    a.href = previewDataUrl;
-    const cleanId = (postId || 'csc-dost-thumbnail').replace(/[^a-z0-9-_]/gi, '-');
-    a.download = `${cleanId}-2048x677.${format}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  };
+  const shareUrl = `https://www.cscdost.com/post/${postId}`;
+  const ogImageUrl = `https://www.cscdost.com/api/og-image/${encodeURIComponent(postId)}.png`;
 
-  // Start Creating a Blank New Post
-  const handleStartNewPost = () => {
-    const todayStr = new Date().toLocaleDateString('en-GB');
-    setMode('create');
-    setPostId(`csc-post-${Date.now().toString().slice(-5)}`);
-    setTitle('');
-    setCategory('jkssb');
-    setDepartment('J&K Services Selection Board (JKSSB)');
-    setPostType('Job');
-    setShortDescription('');
-    setPostDate(todayStr);
-    setStartDate(todayStr);
-    setLastDate('30/06/2026');
-    setTotalPosts('Various Posts');
-    setAdvertisementNo('');
-    setOfficialLink('https://jkssb.nic.in');
-    setApplicationStatus('Open');
-    setSavedThumbnailUrl(null);
-    setIsCustomUploaded(false);
+  const copyShareLink = () => {
+    navigator.clipboard.writeText(shareUrl);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
   };
 
   return (
-    <div className="space-y-5">
-      {/* ==================================================================== */}
-      {/* TOP HEADER BAR & 3 MANDATORY TEST CASE PRESETS                       */}
-      {/* ==================================================================== */}
-      <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-start gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-[#092556] text-white flex items-center justify-center shrink-0 shadow-xs">
-              <Sparkles className="w-5 h-5 text-[#FACC15]" />
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6 shadow-sm space-y-6">
+      {/* HEADER BAR */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm">
+              <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-base font-bold text-[#102A43]">
-                  CSC DOST — Master Reference AI Thumbnail Generator &amp; Post Studio
-                </h2>
-                <span className="px-2.5 py-0.5 rounded-md text-[11px] font-mono font-bold bg-blue-50 text-[#2563EB] border border-blue-200">
-                  2048 × 677 px (3.025:1)
-                </span>
-                <span className="px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-50 text-[#16A34A] border border-emerald-200">
-                  JKSSB Class IV Master Layout Locked
-                </span>
-              </div>
-              <p className="text-xs text-[#64748B] mt-1">
-                Every generated thumbnail strictly follows the approved JKSSB Class IV master design reference at exact 2048 × 677 resolution.
+              <h2 className="text-lg font-black text-slate-900 dark:text-white">
+                Thumbnail &amp; Social Preview Studio
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Automatic post-specific 1200 × 630 px thumbnails matching approved category graphics
               </p>
             </div>
           </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => setMode('edit')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${
-                mode === 'edit'
-                  ? 'bg-[#2563EB] text-white border-[#2563EB]'
-                  : 'bg-[#F6F8FC] text-[#102A43] border-[#E2E8F0] hover:bg-slate-100'
-              }`}
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>Edit Existing Post ({postsList.length})</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleStartNewPost}
-              className={`px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${
-                mode === 'create'
-                  ? 'bg-[#2563EB] text-white border-[#2563EB]'
-                  : 'bg-[#F6F8FC] text-[#102A43] border-[#E2E8F0] hover:bg-slate-100'
-              }`}
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Create New Post</span>
-            </button>
-          </div>
         </div>
 
-        {/* Verified Master Reference Test Cases Strip */}
-        <div className="pt-3 border-t border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
-            Verified 2048×677 Test Cases:
-          </span>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 flex-1 max-w-3xl">
-            {TEST_PRESETS.map(preset => {
-              const isSelected = postId === preset.id;
-              return (
-                <button
-                  key={preset.key}
-                  type="button"
-                  onClick={() => handleLoadTestPreset(preset)}
-                  className={`px-3 py-2 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between gap-2 ${
-                    isSelected
-                      ? 'bg-[#092556] text-white border-[#092556] shadow-xs'
-                      : 'bg-[#F6F8FC] hover:bg-blue-50/60 text-[#102A43] border-[#E2E8F0]'
-                  }`}
-                >
-                  <div className="min-w-0">
-                    <div
-                      className={`text-[10px] font-semibold uppercase tracking-wider ${
-                        isSelected ? 'text-[#FACC15]' : 'text-[#2563EB]'
-                      }`}
-                    >
-                      {preset.badge}
-                    </div>
-                    <div className="text-xs font-bold truncate">{preset.title.split('–')[0].trim()}</div>
-                  </div>
-                  <Sparkles className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-[#FACC15]' : 'text-[#64748B]'}`} />
-                </button>
-              );
-            })}
-          </div>
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={handleRegenerate}
+            disabled={isGenerating}
+            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isGenerating ? 'animate-spin' : ''}`} />
+            <span>Regenerate</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDownloadPng}
+            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Download PNG</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSaveThumbnail}
+            disabled={isSaving}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+          >
+            {isSaving ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Save className="w-3.5 h-3.5" />
+            )}
+            <span>Save Thumbnail to Post</span>
+          </button>
         </div>
       </div>
 
-      {/* Status Alert Banner */}
+      {/* FEEDBACK STATUS MESSAGE */}
       {statusMessage && (
         <div
-          className={`p-3.5 rounded-xl border text-xs font-semibold flex items-center justify-between gap-3 ${
+          className={`p-3.5 rounded-xl text-xs font-semibold flex items-center gap-2.5 ${
             statusMessage.type === 'success'
-              ? 'bg-emerald-50 border-emerald-200 text-[#16A34A]'
+              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300'
               : statusMessage.type === 'error'
-              ? 'bg-red-50 border-red-200 text-[#DC2626]'
-              : 'bg-blue-50 border-blue-200 text-[#2563EB]'
+              ? 'bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300'
+              : 'bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300'
           }`}
         >
-          <div className="flex items-center gap-2">
-            {statusMessage.type === 'error' ? (
-              <AlertCircle className="w-4 h-4 shrink-0" />
-            ) : (
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
-            )}
-            <span>{statusMessage.text}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setStatusMessage(null)}
-            className="p-1 hover:bg-black/5 rounded-lg cursor-pointer"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
+          {statusMessage.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+          ) : (
+            <AlertCircle className="w-4 h-4 shrink-0" />
+          )}
+          <span>{statusMessage.text}</span>
         </div>
       )}
 
-      {/* ==================================================================== */}
-      {/* MAIN 2-COLUMN WORKSPACE: POST INPUT FORM (LEFT) + THUMBNAIL STUDIO   */}
-      {/* ==================================================================== */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
-        {/* LEFT COLUMN (5 cols): Post Selector + Automatic Post Data Form */}
-        <div className="xl:col-span-5 bg-white border border-[#E2E8F0] rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4">
-          {mode === 'edit' && (
-            <div className="space-y-2 pb-4 border-b border-[#E2E8F0]">
-              <label className="block text-xs font-bold text-[#102A43]">
-                Select Existing Post to Edit / Generate Thumbnail
-              </label>
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={postSearchQuery}
-                  onChange={e => setPostSearchQuery(e.target.value)}
-                  placeholder="Search post by title, category, or advt no..."
-                  className="w-full pl-8 pr-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs text-[#102A43] focus:outline-none focus:bg-white focus:border-[#2563EB]"
-                />
+      {/* QUICK PRESET SELECTOR (APPROVED DEMO STYLES) */}
+      <div className="space-y-2">
+        <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+          Load Approved Reference Presets:
+        </label>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          {APPROVED_PRESETS.map(p => (
+            <button
+              key={p.key}
+              type="button"
+              onClick={() => {
+                setPostId(p.id);
+                setTitle(p.title);
+                setCategory(p.category);
+                setDepartment(p.department);
+                setOrgTitle(p.orgTitle);
+                setPostBadgeTitle(p.postBadgeTitle);
+                setEligibilityValue(p.eligibilityValue);
+                setLastDateValue(p.lastDateValue);
+                setHowToApplyValue(p.howToApplyValue);
+                setStyleOverride('auto');
+                setIsCustomUploaded(false);
+                setCustomImageDataUrl(null);
+              }}
+              className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                postId === p.id
+                  ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/30 text-blue-900 dark:text-blue-200'
+                  : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 text-slate-700 dark:text-slate-300'
+              }`}
+            >
+              <div className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                {p.category.replace('_', ' ')}
               </div>
+              <div className="text-xs font-bold truncate mt-0.5">{p.postBadgeTitle}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* MAIN TWO-COLUMN STUDIO LAYOUT */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2">
+        {/* LEFT COLUMN: CONTROLS & POST METADATA */}
+        <div className="lg:col-span-5 space-y-4">
+          {/* Post Selection or Creation Toggle */}
+          <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-900 dark:text-white">Active Post</span>
+              <div className="flex items-center gap-1 bg-slate-200 dark:bg-slate-700 p-0.5 rounded-lg text-[11px] font-bold">
+                <button
+                  type="button"
+                  onClick={() => setMode('edit')}
+                  className={`px-2 py-0.5 rounded-md cursor-pointer ${
+                    mode === 'edit' ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-xs' : 'text-slate-600 dark:text-slate-400'
+                  }`}
+                >
+                  Select Existing
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('create');
+                    setPostId(`post-${Date.now()}`);
+                    setTitle('New Job Notification 2026');
+                    setOrgTitle('JKSSB');
+                    setPostBadgeTitle('NEW POSTS');
+                  }}
+                  className={`px-2 py-0.5 rounded-md cursor-pointer ${
+                    mode === 'create' ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-xs' : 'text-slate-600 dark:text-slate-400'
+                  }`}
+                >
+                  Create New
+                </button>
+              </div>
+            </div>
+
+            {mode === 'edit' && (
               <select
-                aria-label="Select Post"
                 value={postId}
-                onChange={e => {
-                  const found = postsList.find(p => p.id === e.target.value);
-                  if (found) populateFromSarkariItem(found);
-                }}
-                className="w-full px-3 py-2.5 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-semibold text-[#102A43] focus:outline-none focus:border-[#2563EB] cursor-pointer"
+                onChange={e => loadPostDetails(e.target.value)}
+                className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-900 dark:text-white"
               >
-                {filteredPosts.map(p => (
+                {postsList.map(p => (
                   <option key={p.id} value={p.id}>
-                    [{SARKARI_CATEGORIES[p.category]?.label || p.category}] {p.title}
+                    [{p.category}] {p.title.slice(0, 50)}...
                   </option>
                 ))}
               </select>
-            </div>
-          )}
+            )}
 
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#102A43] flex items-center gap-1.5">
-              <FileText className="w-3.5 h-3.5 text-[#2563EB]" />
-              <span>{mode === 'create' ? 'New Post Data Input' : 'Post Data Input (Auto-Read)'}</span>
-            </h3>
-            <span className="text-[11px] font-mono text-[#64748B]">ID: {postId}</span>
-          </div>
-
-          <div className="space-y-3">
-            {/* 1. Post Title */}
+            {/* Post Title */}
             <div>
-              <label className="block text-[11px] font-semibold text-[#102A43] mb-1">
-                1. Post Title *
+              <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
+                Notification Full Title
               </label>
-              <input
-                type="text"
+              <textarea
                 value={title}
                 onChange={e => setTitle(e.target.value)}
-                placeholder="e.g., JKSSB Class IV Recruitment 2026 – Apply Online"
-                className="w-full px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-semibold text-[#102A43] focus:outline-none focus:bg-white focus:border-[#2563EB]"
+                rows={2}
+                className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-900 dark:text-white resize-none"
               />
             </div>
+          </div>
 
-            {/* 2. Category & 3. Post Type */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Category & Visual Theme Selection */}
+          <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-900 dark:text-white">Category &amp; Style Theme</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200 rounded-full">
+                Active: {CATEGORY_THEMES[effectiveCategoryStyle]?.name}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-[11px] font-semibold text-[#102A43] mb-1">
-                  2. Category
+                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
+                  Post Category
                 </label>
                 <select
                   value={category}
-                  onChange={e => setCategory(e.target.value as SarkariCategory)}
-                  className="w-full px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-semibold text-[#102A43] focus:outline-none focus:border-[#2563EB]"
+                  onChange={e => {
+                    const newCat = e.target.value;
+                    setCategory(newCat);
+                    const def = CATEGORY_THEMES[newCat];
+                    if (def) {
+                      setOrgTitle(def.orgTitle);
+                    }
+                  }}
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold"
                 >
-                  {Object.entries(SARKARI_CATEGORIES).map(([key, val]) => (
-                    <option key={key} value={key}>
-                      {val.label}
+                  {Object.entries(SARKARI_CATEGORIES).map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v.label}
                     </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-[#102A43] mb-1">
-                  3. Post Type
+                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
+                  Manual Style Override
                 </label>
                 <select
-                  value={postType}
-                  onChange={e => setPostType(e.target.value as any)}
-                  className="w-full px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-semibold text-[#102A43] focus:outline-none focus:border-[#2563EB]"
+                  value={styleOverride}
+                  onChange={e => setStyleOverride(e.target.value as any)}
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold"
                 >
-                  <option value="Job">Job / Recruitment</option>
-                  <option value="Admission">Admission / University</option>
-                  <option value="Result">Result / Marks / Answer Key</option>
-                  <option value="Scheme">Government Scheme</option>
-                  <option value="Service">CSC E-Service</option>
-                  <option value="Guide">Knowledge Hub / Guide</option>
+                  <option value="auto">Auto (from Category)</option>
+                  <option value="jkssb">JKSSB (Blue &amp; Orange)</option>
+                  <option value="army_jobs">Indian Army (Green &amp; Gold)</option>
+                  <option value="rrb_jobs">Railways / RRB (Navy &amp; Orange)</option>
+                  <option value="ssc_jobs">SSC (Navy &amp; Teal)</option>
+                  <option value="exam_forms">Kashmir Univ (Navy &amp; Teal)</option>
+                  <option value="cluster_univ">Cluster Univ (Blue &amp; Orange)</option>
+                  <option value="default">CSC DOST Default</option>
                 </select>
               </div>
             </div>
+          </div>
 
-            {/* 4. Department / Organization & 5. Application Status */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Thumbnail Headline & Role Customization */}
+          <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
+            <span className="text-xs font-bold text-slate-900 dark:text-white block">
+              Thumbnail Text &amp; Badge Customization
+            </span>
+
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-[11px] font-semibold text-[#102A43] mb-1">
-                  4. Department / Organization
+                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
+                  Headline (Org Name)
                 </label>
                 <input
                   type="text"
-                  value={department}
-                  onChange={e => setDepartment(e.target.value)}
-                  placeholder="e.g., J&K Services Selection Board (JKSSB)"
-                  className="w-full px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs text-[#102A43] focus:outline-none focus:bg-white focus:border-[#2563EB]"
+                  value={orgTitle}
+                  onChange={e => setOrgTitle(e.target.value)}
+                  placeholder="e.g. JKSSB"
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-900 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-[#102A43] mb-1">
-                  5. Application Status (Controls Red CTA)
-                </label>
-                <select
-                  value={applicationStatus}
-                  onChange={e => setApplicationStatus(e.target.value as any)}
-                  className="w-full px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs font-semibold text-[#102A43] focus:outline-none focus:border-[#2563EB]"
-                >
-                  <option value="Open">Active Application → CTA: APPLY NOW</option>
-                  <option value="Result">Result Post → CTA: CHECK RESULT</option>
-                  <option value="Informational">Informational Post → CTA: READ DETAILS</option>
-                  <option value="Closed">Closed Post → CTA: READ DETAILS</option>
-                </select>
-              </div>
-            </div>
-
-            {/* 6. Short Description */}
-            <div>
-              <label className="block text-[11px] font-semibold text-[#102A43] mb-1">
-                6. Short Description
-              </label>
-              <textarea
-                rows={3}
-                value={shortDescription}
-                onChange={e => setShortDescription(e.target.value)}
-                placeholder="Concise 2-3 sentence summary of the notification..."
-                className="w-full px-3 py-2 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl text-xs text-[#102A43] focus:outline-none focus:bg-white focus:border-[#2563EB]"
-              />
-            </div>
-
-            {/* 7. Important Dates & Posts */}
-            <div className="grid grid-cols-3 gap-2.5">
-              <div>
-                <label className="block text-[10px] font-semibold text-[#64748B] mb-1">
-                  Start Date
+                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
+                  Post Role Pill Banner
                 </label>
                 <input
                   type="text"
-                  value={startDate}
-                  onChange={e => setStartDate(e.target.value)}
-                  placeholder="DD/MM/YYYY"
-                  className="w-full px-2.5 py-1.5 bg-[#F6F8FC] border border-[#E2E8F0] rounded-lg text-xs text-[#102A43]"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-semibold text-[#64748B] mb-1">
-                  Last Date
-                </label>
-                <input
-                  type="text"
-                  value={lastDate}
-                  onChange={e => setLastDate(e.target.value)}
-                  placeholder="DD/MM/YYYY"
-                  className="w-full px-2.5 py-1.5 bg-[#F6F8FC] border border-[#E2E8F0] rounded-lg text-xs text-[#102A43]"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-semibold text-[#64748B] mb-1">
-                  Total Posts / Seats
-                </label>
-                <input
-                  type="text"
-                  value={totalPosts}
-                  onChange={e => setTotalPosts(e.target.value)}
-                  placeholder="e.g. 3200 Posts"
-                  className="w-full px-2.5 py-1.5 bg-[#F6F8FC] border border-[#E2E8F0] rounded-lg text-xs text-[#102A43]"
+                  value={postBadgeTitle}
+                  onChange={e => setPostBadgeTitle(e.target.value)}
+                  placeholder="e.g. CLASS IV"
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-black text-slate-900 dark:text-white"
                 />
               </div>
             </div>
 
-            {/* Save Post + Thumbnail Button */}
-            <div className="pt-2 border-t border-[#E2E8F0] flex items-center justify-between gap-3">
-              <label className="inline-flex items-center gap-2 text-xs font-medium text-[#102A43] cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={useAiExtraction}
-                  onChange={e => setUseAiExtraction(e.target.checked)}
-                  className="rounded border-[#CBD5E1] text-[#2563EB] focus:ring-[#2563EB]"
-                />
-                <span>Smart AI Title Summarizer</span>
-              </label>
+            {/* 3 Information Cards Inputs */}
+            <div className="space-y-2 pt-1">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 block mb-0.5">Card 1 Value</label>
+                  <input
+                    type="text"
+                    value={eligibilityValue}
+                    onChange={e => setEligibilityValue(e.target.value)}
+                    placeholder="e.g. 10th / 12th Pass"
+                    className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 block mb-0.5">Card 2 Value (Last date)</label>
+                  <input
+                    type="text"
+                    value={lastDateValue}
+                    onChange={e => setLastDateValue(e.target.value)}
+                    placeholder="e.g. 25/06/2026"
+                    className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
 
-              <button
-                type="button"
-                onClick={handleSavePostWithThumbnail}
-                disabled={isSavingPost}
-                className="px-4 py-2.5 bg-[#102A43] hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+          {/* Logo & Custom Image Upload Options */}
+          <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
+            <span className="text-xs font-bold text-slate-900 dark:text-white block">
+              Organisation Logo &amp; Custom Upload
+            </span>
+
+            <div className="flex items-center gap-2">
+              <select
+                value={logoOption}
+                onChange={e => setLogoOption(e.target.value as any)}
+                className="w-1/2 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium"
               >
-                {isSavingPost ? (
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                )}
-                <span>{mode === 'create' ? 'Publish Post & Thumbnail' : 'Update Post & Thumbnail'}</span>
-              </button>
+                <option value="preset">Verified Org Emblem</option>
+                <option value="placeholder">Clean Official Logo Frame</option>
+                <option value="custom">Upload Custom Logo</option>
+              </select>
+
+              {logoOption === 'custom' && (
+                <div>
+                  <input
+                    type="file"
+                    ref={logoFileInputRef}
+                    accept="image/*"
+                    onChange={handleCustomLogoUpload}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => logoFileInputRef.current?.click()}
+                    className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-semibold cursor-pointer"
+                  >
+                    Select Logo File
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Custom Full Thumbnail Upload */}
+            <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
+              <input
+                type="file"
+                ref={customFileInputRef}
+                accept="image/*"
+                onChange={handleCustomUpload}
+                className="hidden"
+              />
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  {isCustomUploaded ? 'Custom Image Active' : 'Upload custom 1200x630 image'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => customFileInputRef.current?.click()}
+                  className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Choose Image</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* RIGHT COLUMN (7 cols): 2048x677 Preview Canvas + 5 Action Buttons + Optional Banner Text Customizer */}
-        <div className="xl:col-span-7 bg-white border border-[#E2E8F0] rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4">
-          {/* Top Bar of Preview Panel */}
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#102A43]">
-                Live Master Reference Preview
-              </span>
-              <span className="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-slate-100 text-[#102A43]">
-                2048 × 677 px
-              </span>
-              {isCustomUploaded && (
-                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                  Custom Uploaded (Normalized 2048×677)
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2">
-              {/* Format Toggle: PNG / WebP */}
-              <div className="inline-flex rounded-lg border border-[#E2E8F0] bg-[#F6F8FC] p-0.5 text-[11px] font-semibold">
-                <button
-                  type="button"
-                  onClick={() => setFormat('png')}
-                  className={`px-2.5 py-1 rounded-md cursor-pointer transition-colors ${
-                    format === 'png' ? 'bg-white text-[#2563EB] shadow-2xs' : 'text-[#64748B]'
-                  }`}
-                >
-                  PNG
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormat('webp')}
-                  className={`px-2.5 py-1 rounded-md cursor-pointer transition-colors ${
-                    format === 'webp' ? 'bg-white text-[#2563EB] shadow-2xs' : 'text-[#64748B]'
-                  }`}
-                >
-                  WebP
-                </button>
-              </div>
-
+        {/* RIGHT COLUMN: INTERACTIVE PREVIEW TABS */}
+        <div className="lg:col-span-7 space-y-4">
+          {/* Tab Navigation */}
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
               <button
                 type="button"
-                onClick={() => setShowReferenceComparison(prev => !prev)}
-                className="px-2.5 py-1.5 rounded-lg border border-[#E2E8F0] bg-[#F6F8FC] hover:bg-slate-100 text-[11px] font-semibold text-[#102A43] flex items-center gap-1 cursor-pointer"
+                onClick={() => setPreviewTab('thumbnail')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  previewTab === 'thumbnail'
+                    ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
               >
-                <Layers className="w-3.5 h-3.5 text-[#2563EB]" />
-                <span>{showReferenceComparison ? 'Hide Master Reference' : 'Compare Master Reference'}</span>
+                <ImageIcon className="w-3.5 h-3.5" />
+                <span>1200 × 630 Thumbnail</span>
               </button>
 
               <button
                 type="button"
-                onClick={handleDownloadThumbnail}
-                className="px-2.5 py-1.5 rounded-lg border border-[#E2E8F0] bg-[#F6F8FC] hover:bg-slate-100 text-[11px] font-semibold text-[#102A43] flex items-center gap-1 cursor-pointer"
-                title="Download 2048x677 image file"
+                onClick={() => setPreviewTab('facebook')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  previewTab === 'facebook'
+                    ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
               >
-                <Download className="w-3.5 h-3.5 text-[#2563EB]" />
-                <span>Download</span>
+                <span>Facebook Preview</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPreviewTab('whatsapp')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  previewTab === 'whatsapp'
+                    ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <span>WhatsApp Preview</span>
               </button>
             </div>
-          </div>
-
-          {/* 2048 x 677 Aspect-Ratio Locked Preview Frame */}
-          <div className="relative rounded-xl overflow-hidden border-2 border-[#E2E8F0] bg-[#092556] shadow-sm group">
-            <div className="w-full" style={{ aspectRatio: '2048 / 677' }}>
-              <img
-                src={previewDataUrl}
-                alt={`2048x677 Thumbnail Preview for ${title}`}
-                className="w-full h-full object-contain block select-none"
-              />
-            </div>
-
-            {isGenerating && (
-              <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs flex flex-col items-center justify-center text-white gap-2">
-                <RefreshCw className="w-7 h-7 animate-spin text-[#FACC15]" />
-                <span className="text-xs font-bold tracking-wide">
-                  Rendering 2048 × 677 px Master Reference Thumbnail...
-                </span>
-              </div>
-            )}
 
             <button
               type="button"
-              onClick={() => setShowFullPreviewModal(true)}
-              className="absolute bottom-3 right-3 px-3 py-1.5 rounded-lg bg-slate-950/75 hover:bg-slate-950 text-white text-xs font-semibold flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity cursor-pointer"
+              onClick={copyShareLink}
+              className="px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:text-blue-600 flex items-center gap-1 cursor-pointer"
             >
-              <Maximize2 className="w-3.5 h-3.5" />
-              <span>Inspect Full 2048×677 Resolution</span>
+              {copiedLink ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+              <span>{copiedLink ? 'Copied Link' : 'Copy Post URL'}</span>
             </button>
           </div>
 
-          {/* Optional Side-by-Side Comparison with Uploaded JKSSB Class IV Master Reference */}
-          {showReferenceComparison && (
-            <div className="p-3 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl space-y-2">
-              <div className="flex items-center justify-between text-[11px] font-bold text-[#64748B]">
-                <span>UPLOADED MASTER DESIGN REFERENCE (JKSSB CLASS IV)</span>
-                <span>2048 × 677 RATIO</span>
-              </div>
-              <div className="rounded-lg overflow-hidden border border-[#CBD5E1]" style={{ aspectRatio: '2048 / 677' }}>
+          {/* TAB 1: THUMBNAIL HIGH-RESOLUTION VIEW */}
+          {previewTab === 'thumbnail' && (
+            <div className="space-y-3">
+              <div className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-md bg-white">
                 <img
-                  src="/assets/aistudio/JKSSB_Class_IV_CSC_Application_Assistance_60a01722.png"
-                  alt="Uploaded Master Design Reference"
-                  className="w-full h-full object-fill block"
+                  src={previewSvgDataUrl}
+                  alt={title}
+                  className="w-full aspect-[1200/630] object-contain block bg-white"
                 />
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-1">
+                <span>Exact Resolution: 1200 × 630 pixels (Aspect Ratio: 1.91 : 1)</span>
+                <span className="font-semibold text-blue-600 dark:text-blue-400">
+                  Target: /api/og-image/{encodeURIComponent(postId)}.png
+                </span>
               </div>
             </div>
           )}
 
-          {/* ================================================================ */}
-          {/* ALL 5 MANDATORY ADMIN PANEL THUMBNAIL ACTION BUTTONS             */}
-          {/* ================================================================ */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-1">
-            {/* 1. Generate Thumbnail */}
-            <button
-              type="button"
-              onClick={() => handleGenerateThumbnail(false)}
-              disabled={isGenerating}
-              className="py-2.5 px-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-            >
-              <Sparkles className="w-3.5 h-3.5 shrink-0" />
-              <span>Generate Thumbnail</span>
-            </button>
+          {/* TAB 2: FACEBOOK SHARE CARD MOCKUP */}
+          {previewTab === 'facebook' && (
+            <div className="bg-slate-100 dark:bg-slate-950 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 flex justify-center">
+              <div className="w-full max-w-[500px] bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 font-sans">
+                {/* Facebook Post Author Header */}
+                <div className="p-3 flex items-center gap-2.5 border-b border-slate-100 dark:border-slate-800">
+                  <div className="w-9 h-9 rounded-full bg-blue-600 text-white font-black text-xs flex items-center justify-center">
+                    CSC
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-white">CSC DOST</div>
+                    <div className="text-[10px] text-slate-400">Just now • 🌐 Public</div>
+                  </div>
+                </div>
 
-            {/* 2. Regenerate Thumbnail */}
-            <button
-              type="button"
-              onClick={() => handleGenerateThumbnail(showSpecEditor)}
-              disabled={isGenerating}
-              className="py-2.5 px-3 rounded-xl bg-[#102A43] hover:bg-slate-800 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${isGenerating ? 'animate-spin' : ''}`} />
-              <span>Regenerate Thumbnail</span>
-            </button>
-
-            {/* 3. Preview Thumbnail */}
-            <button
-              type="button"
-              onClick={() => setShowFullPreviewModal(true)}
-              className="py-2.5 px-3 rounded-xl bg-[#F6F8FC] hover:bg-slate-100 text-[#102A43] border border-[#E2E8F0] text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <Eye className="w-3.5 h-3.5 text-[#2563EB] shrink-0" />
-              <span>Preview Thumbnail</span>
-            </button>
-
-            {/* 4. Save Thumbnail */}
-            <button
-              type="button"
-              onClick={handleSaveThumbnail}
-              disabled={isSavingThumbnail || isGenerating}
-              className="py-2.5 px-3 rounded-xl bg-[#16A34A] hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-            >
-              {isSavingThumbnail ? (
-                <RefreshCw className="w-3.5 h-3.5 animate-spin shrink-0" />
-              ) : (
-                <Save className="w-3.5 h-3.5 shrink-0" />
-              )}
-              <span>Save Thumbnail</span>
-            </button>
-
-            {/* 5. Upload Custom Thumbnail */}
-            <button
-              type="button"
-              onClick={() => customFileInputRef.current?.click()}
-              className="col-span-2 sm:col-span-1 py-2.5 px-3 rounded-xl bg-[#F6F8FC] hover:bg-slate-100 text-[#102A43] border border-[#E2E8F0] text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <Upload className="w-3.5 h-3.5 text-[#2563EB] shrink-0" />
-              <span>Upload Custom Thumbnail</span>
-            </button>
-            <input
-              ref={customFileInputRef}
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={handleCustomThumbnailUpload}
-              className="hidden"
-            />
-          </div>
-
-          {/* Saved Thumbnail URL & Fine-Tune Banner Text Accordion */}
-          <div className="pt-3 border-t border-[#E2E8F0] flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-[11px] font-semibold text-[#64748B]">Associated Post Thumbnail URL:</span>
-              <code className="text-[11px] font-mono bg-[#F6F8FC] border border-[#E2E8F0] px-2 py-0.5 rounded text-[#102A43] truncate max-w-[260px] sm:max-w-[340px]">
-                {savedThumbnailUrl || `/api/thumbnails/post/${postId}.png`}
-              </code>
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText(
-                    window.location.origin + (savedThumbnailUrl || `/api/thumbnails/post/${postId}.png`)
-                  );
-                  setCopiedUrl(true);
-                  setTimeout(() => setCopiedUrl(false), 2000);
-                }}
-                className="p-1 text-[#64748B] hover:text-[#2563EB] rounded cursor-pointer"
-                title="Copy full thumbnail URL"
-              >
-                {copiedUrl ? <Check className="w-3.5 h-3.5 text-[#16A34A]" /> : <Copy className="w-3.5 h-3.5" />}
-              </button>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setShowSpecEditor(prev => !prev)}
-              className="text-xs font-semibold text-[#2563EB] hover:underline flex items-center gap-1 cursor-pointer"
-            >
-              <Sliders className="w-3.5 h-3.5" />
-              <span>{showSpecEditor ? 'Hide Banner Text Overrides' : 'Customize Extracted Banner Text'}</span>
-            </button>
-          </div>
-
-          {/* Optional Fine-Tune Banner Copy Drawer */}
-          {showSpecEditor && currentSpec && (
-            <div className="p-4 bg-[#F6F8FC] border border-[#E2E8F0] rounded-xl space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#102A43]">
-                  Fine-Tune Master Template Text Zones (Exact Layout Preserved)
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleGenerateThumbnail(true)}
-                  className="px-3 py-1 bg-[#2563EB] text-white rounded-lg text-xs font-semibold cursor-pointer"
-                >
-                  Apply Text Changes to Preview
-                </button>
+                {/* Shared Link Card */}
+                <div className="cursor-pointer border-t border-slate-100 dark:border-slate-800">
+                  <div className="w-full aspect-[1200/630] bg-slate-50 dark:bg-slate-950 overflow-hidden">
+                    <img
+                      src={previewSvgDataUrl}
+                      alt={title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700">
+                    <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                      WWW.CSCDOST.COM
+                    </div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1 mt-0.5">
+                      {title || 'Recruitment & University Update | CSC DOST'}
+                    </div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5">
+                      {shortDescription ||
+                        `Apply online for ${title}. Last date: ${lastDateValue}. Easy online application assistance.`}
+                    </div>
+                  </div>
+                </div>
               </div>
+            </div>
+          )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                <div>
-                  <label className="block text-[10px] font-semibold text-[#64748B] mb-1">
-                    Navy Dept Heading (Left)
-                  </label>
-                  <input
-                    type="text"
-                    value={currentSpec.mainHeadingLeft}
-                    onChange={e =>
-                      setCurrentSpec({ ...currentSpec, mainHeadingLeft: e.target.value.toUpperCase() })
-                    }
-                    className="w-full px-2.5 py-1.5 bg-white border border-[#E2E8F0] rounded-lg text-xs font-bold text-[#102A43]"
-                  />
+          {/* TAB 3: WHATSAPP SHARE CHAT BUBBLE MOCKUP */}
+          {previewTab === 'whatsapp' && (
+            <div className="bg-[#E5DDD5] dark:bg-[#0B141A] p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 flex justify-center">
+              <div className="w-full max-w-[420px] bg-white dark:bg-[#1F2C34] rounded-2xl overflow-hidden shadow-lg border border-slate-200/60 dark:border-slate-700">
+                {/* WhatsApp Link Preview Card */}
+                <div className="bg-slate-100 dark:bg-[#111B21] p-2 rounded-t-2xl">
+                  <div className="rounded-xl overflow-hidden aspect-[1200/630] bg-white shadow-xs">
+                    <img
+                      src={previewSvgDataUrl}
+                      alt={title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-2 space-y-0.5">
+                    <div className="text-xs font-bold text-slate-900 dark:text-white line-clamp-2">
+                      {title}
+                    </div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                      cscdost.com/post/{postId}
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-[10px] font-semibold text-[#64748B] mb-1">
-                    Red Category Badge
-                  </label>
-                  <input
-                    type="text"
-                    value={currentSpec.redBadgeText}
-                    onChange={e =>
-                      setCurrentSpec({ ...currentSpec, redBadgeText: e.target.value.toUpperCase() })
-                    }
-                    className="w-full px-2.5 py-1.5 bg-white border border-[#E2E8F0] rounded-lg text-xs font-bold text-[#D91B1B]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-semibold text-[#64748B] mb-1">
-                    Second Large Headline
-                  </label>
-                  <input
-                    type="text"
-                    value={currentSpec.secondHeading}
-                    onChange={e =>
-                      setCurrentSpec({ ...currentSpec, secondHeading: e.target.value.toUpperCase() })
-                    }
-                    className="w-full px-2.5 py-1.5 bg-white border border-[#E2E8F0] rounded-lg text-xs font-bold text-[#102A43]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-semibold text-[#64748B] mb-1">
-                    Yellow Banner Bold Highlight
-                  </label>
-                  <input
-                    type="text"
-                    value={currentSpec.yellowBannerHighlight}
-                    onChange={e =>
-                      setCurrentSpec({ ...currentSpec, yellowBannerHighlight: e.target.value })
-                    }
-                    className="w-full px-2.5 py-1.5 bg-white border border-[#E2E8F0] rounded-lg text-xs font-semibold text-[#102A43]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-semibold text-[#64748B] mb-1">
-                    Laptop Screen Title
-                  </label>
-                  <input
-                    type="text"
-                    value={currentSpec.laptopTitle}
-                    onChange={e =>
-                      setCurrentSpec({ ...currentSpec, laptopTitle: e.target.value.toUpperCase() })
-                    }
-                    className="w-full px-2.5 py-1.5 bg-white border border-[#E2E8F0] rounded-lg text-xs font-bold text-[#102A43]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-semibold text-[#64748B] mb-1">
-                    Bottom Red CTA Button
-                  </label>
-                  <select
-                    value={currentSpec.ctaButtonText || currentSpec.ctaText || 'APPLY NOW'}
-                    onChange={e =>
-                      setCurrentSpec({
-                        ...currentSpec,
-                        ctaButtonText: e.target.value as any,
-                        ctaText: e.target.value as any
-                      })
-                    }
-                    className="w-full px-2.5 py-1.5 bg-white border border-[#E2E8F0] rounded-lg text-xs font-bold text-[#D91B1B]"
-                  >
-                    <option value="APPLY NOW">APPLY NOW</option>
-                    <option value="CHECK RESULT">CHECK RESULT</option>
-                    <option value="READ DETAILS">READ DETAILS</option>
-                  </select>
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="block text-[10px] font-semibold text-[#64748B] mb-1">
-                    Footer Supporting Text (Line 2)
-                  </label>
-                  <input
-                    type="text"
-                    value={currentSpec.footerLine2}
-                    onChange={e =>
-                      setCurrentSpec({ ...currentSpec, footerLine2: e.target.value })
-                    }
-                    className="w-full px-2.5 py-1.5 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#102A43]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-semibold text-[#64748B] mb-1">
-                    Laptop Screen Subtitle
-                  </label>
-                  <input
-                    type="text"
-                    value={currentSpec.laptopSubtitle}
-                    onChange={e =>
-                      setCurrentSpec({ ...currentSpec, laptopSubtitle: e.target.value })
-                    }
-                    className="w-full px-2.5 py-1.5 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#102A43]"
-                  />
+                {/* WhatsApp Message Body */}
+                <div className="p-3 text-xs text-slate-800 dark:text-slate-200 space-y-1.5 font-sans leading-relaxed">
+                  <div className="font-bold text-[#00A884]">📢 OFFICIAL UPDATE • CSC DOST</div>
+                  <div>
+                    <strong>{title}</strong>
+                  </div>
+                  <div className="text-[11px] text-slate-600 dark:text-slate-300">
+                    ⚡ <strong>Eligibility:</strong> {eligibilityValue}
+                    <br />
+                    📅 <strong>Last Date:</strong> {lastDateValue}
+                    <br />
+                    📝 <strong>How to apply:</strong> Visit CSC DOST
+                  </div>
+                  <div className="text-blue-600 dark:text-blue-400 underline pt-1 font-semibold">
+                    {shareUrl}
+                  </div>
+                  <div className="text-[10px] text-slate-400 text-right pt-1">10:42 AM ✓✓</div>
                 </div>
               </div>
             </div>
           )}
         </div>
       </div>
-
-      {/* ==================================================================== */}
-      {/* FULL-RESOLUTION 2048 x 677 LIGHTBOX MODAL                            */}
-      {/* ==================================================================== */}
-      {showFullPreviewModal && (
-        <div
-          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4"
-          onClick={() => setShowFullPreviewModal(false)}
-        >
-          <div
-            className="bg-white rounded-2xl max-w-6xl w-full p-4 sm:p-6 space-y-4 shadow-2xl border border-[#E2E8F0]"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h3 className="text-sm sm:text-base font-bold text-[#102A43]">
-                  2048 × 677 px High-Resolution Master Thumbnail Preview
-                </h3>
-                <p className="text-xs text-[#64748B]">
-                  Aspect Ratio: 2048:677 (3.025:1) • Format: {format.toUpperCase()} • Post: {title}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleDownloadThumbnail}
-                  className="px-3 py-1.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download 2048×677 {format.toUpperCase()}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowFullPreviewModal(false)}
-                  className="p-2 rounded-xl bg-[#F6F8FC] hover:bg-slate-200 text-[#102A43] cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            <div className="rounded-xl overflow-hidden border border-[#CBD5E1] bg-[#092556]" style={{ aspectRatio: '2048 / 677' }}>
-              <img
-                src={previewDataUrl}
-                alt="Full 2048x677 Thumbnail Preview"
-                className="w-full h-full object-contain block"
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
