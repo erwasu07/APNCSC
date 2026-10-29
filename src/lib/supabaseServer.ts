@@ -760,3 +760,156 @@ export async function syncPushNotificationToSupabase(record: any): Promise<{ suc
   }
 }
 
+/**
+ * Updates application payment status in Supabase `applications` table.
+ * Updates both explicit columns and the `payload` JSON object atomically.
+ */
+export async function updateSupabasePaymentRecord(
+  identifier: string,
+  paymentData: {
+    paymentMethod?: string;
+    paymentStatus?: string;
+    amountPaid?: number;
+    amountDue?: number;
+    gatewayTxnId?: string;
+    payuMihpayid?: string;
+    payuBankRef?: string;
+    paidAt?: string;
+    offlineReceiptNo?: string;
+    offlineCollectedBy?: string;
+    offlineCollectedAt?: string;
+  }
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = getServerSupabaseClient();
+  if (!supabase) return { success: false, error: 'Supabase client not initialized' };
+
+  try {
+    const lookup = await findSupabaseApplicationRows(identifier);
+    if (!lookup.rows || lookup.rows.length === 0) {
+      return { success: false, error: `Application "${identifier}" not found in Supabase.` };
+    }
+
+    const targetRow = lookup.rows[0];
+    const targetUuid = String(targetRow.id);
+    const existingPayload = targetRow.payload && typeof targetRow.payload === 'object' ? targetRow.payload : {};
+
+    const updatedPayload = {
+      ...existingPayload,
+      paymentMethod: paymentData.paymentMethod || existingPayload.paymentMethod,
+      paymentStatus: paymentData.paymentStatus || existingPayload.paymentStatus,
+      amountPaid: paymentData.amountPaid !== undefined ? paymentData.amountPaid : existingPayload.amountPaid,
+      amountDue: paymentData.amountDue !== undefined ? paymentData.amountDue : existingPayload.amountDue,
+      gatewayTxnId: paymentData.gatewayTxnId || existingPayload.gatewayTxnId,
+      payuMihpayid: paymentData.payuMihpayid || existingPayload.payuMihpayid,
+      payuBankRef: paymentData.payuBankRef || existingPayload.payuBankRef,
+      paidAt: paymentData.paidAt || existingPayload.paidAt,
+      offlineReceiptNo: paymentData.offlineReceiptNo || existingPayload.offlineReceiptNo,
+      offlineCollectedBy: paymentData.offlineCollectedBy || existingPayload.offlineCollectedBy,
+      offlineCollectedAt: paymentData.offlineCollectedAt || existingPayload.offlineCollectedAt,
+      updatedAt: new Date().toISOString()
+    };
+
+    // Prepare update object with standard columns and payload
+    const updateObj: any = {
+      payload: updatedPayload
+    };
+
+    if (paymentData.paymentMethod) updateObj.payment_mode = paymentData.paymentMethod;
+    if (paymentData.paymentStatus === 'paid' && paymentData.amountPaid) {
+      updateObj.utr_number = paymentData.gatewayTxnId || paymentData.payuMihpayid || 'PAID';
+    }
+
+    // Try updating with explicit payment columns if available in database schema
+    try {
+      const { error: fullUpdateErr } = await supabase
+        .from('applications')
+        .update({
+          ...updateObj,
+          payment_method: paymentData.paymentMethod,
+          payment_status: paymentData.paymentStatus,
+          amount_paid: paymentData.amountPaid,
+          amount_due: paymentData.amountDue,
+          gateway_txnid: paymentData.gatewayTxnId,
+          payu_mihpayid: paymentData.payuMihpayid,
+          payu_bank_ref: paymentData.payuBankRef,
+          paid_at: paymentData.paidAt,
+          offline_receipt_no: paymentData.offlineReceiptNo,
+          offline_collected_by: paymentData.offlineCollectedBy,
+          offline_collected_at: paymentData.offlineCollectedAt
+        })
+        .eq('id', targetUuid);
+
+      if (!fullUpdateErr) {
+        return { success: true };
+      }
+    } catch {
+      // Fallback below
+    }
+
+    // Resilient fallback: update payload and standard columns
+    const { error: fallbackErr } = await supabase
+      .from('applications')
+      .update(updateObj)
+      .eq('id', targetUuid);
+
+    if (fallbackErr) {
+      return { success: false, error: fallbackErr.message };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || String(err) };
+  }
+}
+
+/**
+ * Persists a transaction audit record into Supabase `payment_transactions` table.
+ */
+export async function recordSupabasePaymentTransaction(txn: any): Promise<{ success: boolean; error?: string }> {
+  const supabase = getServerSupabaseClient();
+  if (!supabase) return { success: false, error: 'Supabase client not initialized' };
+
+  try {
+    const { error } = await supabase
+      .from('payment_transactions')
+      .upsert({
+        txnid: txn.txnid,
+        token_id: txn.tokenId || txn.token_id || txn.appId,
+        application_id: txn.applicationId || txn.appId,
+        customer_name: txn.customerName || txn.customer_name || 'Customer',
+        customer_phone: txn.customerPhone || txn.customer_phone || '',
+        customer_email: txn.customerEmail || txn.customer_email || '',
+        service_name: txn.serviceName || txn.service_name || '',
+        payment_method: txn.paymentMethod || txn.payment_method || 'online_payu',
+        gateway: 'payu',
+        govt_fee: txn.govtFee || 0,
+        csc_fee: txn.cscFee || 70,
+        delivery_fee: txn.deliveryFee || 0,
+        total_amount: txn.totalAmount || txn.amount || 0,
+        currency: 'INR',
+        status: txn.status || 'initiated',
+        payu_mihpayid: txn.payuMihpayid || txn.mihpayid,
+        bank_ref_num: txn.bankRefNum || txn.bank_ref_num,
+        payment_mode: txn.paymentMode || txn.mode,
+        hash_verified: Boolean(txn.hashVerified),
+        api_verified: Boolean(txn.apiVerified),
+        error_message: txn.errorMessage || txn.error,
+        request_payload: txn.requestPayload,
+        response_payload: txn.responsePayload,
+        verification_payload: txn.verificationPayload,
+        created_at: txn.createdAt || new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'txnid' });
+
+    if (error) {
+      console.warn('[SupabaseServer] payment_transactions insert notice:', error.message);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: any) {
+    console.warn('[SupabaseServer] payment_transactions exception:', err?.message);
+    return { success: false, error: err?.message };
+  }
+}
+
+

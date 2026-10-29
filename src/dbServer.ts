@@ -17,6 +17,7 @@ interface DatabaseSchema {
   pushSubscriptions?: any[];
   pushNotifications?: any[];
   pushSettings?: { autoPublishPush: boolean; welcomePushEnabled: boolean };
+  paymentTransactions?: any[];
 }
 
 const DEFAULT_DB: DatabaseSchema = {
@@ -50,7 +51,8 @@ const DEFAULT_DB: DatabaseSchema = {
   postThumbnails: {},
   pushSubscriptions: [],
   pushNotifications: [],
-  pushSettings: { autoPublishPush: false, welcomePushEnabled: true }
+  pushSettings: { autoPublishPush: false, welcomePushEnabled: true },
+  paymentTransactions: []
 };
 
 let memoryDb: DatabaseSchema | null = null;
@@ -90,6 +92,7 @@ export function getDb(): DatabaseSchema {
       if (!parsed.pushSubscriptions) parsed.pushSubscriptions = [];
       if (!parsed.pushNotifications) parsed.pushNotifications = [];
       if (!parsed.pushSettings) parsed.pushSettings = { autoPublishPush: false, welcomePushEnabled: true };
+      if (!parsed.paymentTransactions) parsed.paymentTransactions = [];
       memoryDb = parsed;
       return parsed;
     }
@@ -222,6 +225,71 @@ export function updateAppointmentStatus(id: string, status: Appointment['status'
     return true;
   }
   return false;
+}
+
+export function updateAppointmentPayment(
+  id: string,
+  paymentUpdate: {
+    paymentMethod?: string;
+    paymentStatus?: string;
+    amountPaid?: number;
+    amountDue?: number;
+    utrNumber?: string;
+    gatewayTxnId?: string;
+    paidAt?: string;
+    offlineReceiptNo?: string;
+    offlineCollectedBy?: string;
+  }
+): boolean {
+  const db = getDb();
+  const item = db.appointments.find(
+    r => r.id === id || (r as any).appId === id || (r as any).supabaseId === id
+  );
+  if (item) {
+    if (paymentUpdate.paymentMethod) (item as any).paymentMethod = paymentUpdate.paymentMethod;
+    if (paymentUpdate.paymentStatus) (item as any).paymentStatus = paymentUpdate.paymentStatus;
+    if (paymentUpdate.amountPaid !== undefined) (item as any).amountPaid = paymentUpdate.amountPaid;
+    if (paymentUpdate.amountDue !== undefined) (item as any).amountDue = paymentUpdate.amountDue;
+    if (paymentUpdate.utrNumber) (item as any).utrNumber = paymentUpdate.utrNumber;
+    if (paymentUpdate.gatewayTxnId) (item as any).gatewayTxnId = paymentUpdate.gatewayTxnId;
+    if (paymentUpdate.paidAt) (item as any).paidAt = paymentUpdate.paidAt;
+    if (paymentUpdate.offlineReceiptNo) (item as any).offlineReceiptNo = paymentUpdate.offlineReceiptNo;
+    if (paymentUpdate.offlineCollectedBy) (item as any).offlineCollectedBy = paymentUpdate.offlineCollectedBy;
+    saveDb(db);
+    return true;
+  }
+  return false;
+}
+
+export function upsertPaymentTransaction(txn: any): any {
+  const db = getDb();
+  if (!db.paymentTransactions) db.paymentTransactions = [];
+  const idx = db.paymentTransactions.findIndex((t: any) => t.txnid === txn.txnid);
+  const updatedTxn = {
+    ...txn,
+    updatedAt: new Date().toISOString()
+  };
+  if (idx !== -1) {
+    db.paymentTransactions[idx] = { ...db.paymentTransactions[idx], ...updatedTxn };
+  } else {
+    db.paymentTransactions.unshift({
+      ...updatedTxn,
+      createdAt: updatedTxn.createdAt || new Date().toISOString()
+    });
+  }
+  saveDb(db);
+  return db.paymentTransactions.find((t: any) => t.txnid === txn.txnid);
+}
+
+export function getPaymentTransactionByTxnId(txnid: string): any | null {
+  const db = getDb();
+  if (!db.paymentTransactions) return null;
+  return db.paymentTransactions.find((t: any) => t.txnid === txnid) || null;
+}
+
+export function getPaymentTransactions(): any[] {
+  const db = getDb();
+  return db.paymentTransactions || [];
 }
 
 export function deleteAppointment(id: string, extraIds: string[] = []): boolean {

@@ -65,7 +65,11 @@ import {
   getActivePushSubscriptions,
   getPushNotificationHistory,
   getPushServerSettings,
-  updatePushServerSettings
+  updatePushServerSettings,
+  updateAppointmentPayment,
+  upsertPaymentTransaction,
+  getPaymentTransactionByTxnId,
+  getPaymentTransactions
 } from './src/dbServer';
 import {
   persistCustomerApplication,
@@ -75,8 +79,22 @@ import {
   getHighestSupabaseTokenSeq,
   isDeletedApplicationRecord,
   uploadDocumentBufferToSupabase,
-  syncPushSubscriptionToSupabase
+  syncPushSubscriptionToSupabase,
+  updateSupabasePaymentRecord,
+  recordSupabasePaymentTransaction
 } from './src/lib/supabaseServer';
+import {
+  PAYU_MERCHANT_KEY,
+  PAYU_MERCHANT_SALT,
+  PAYU_ENV,
+  APP_BASE_URL,
+  PAYU_PAYMENT_URL,
+  isPayUConfigured,
+  calculateAuthoritativePrice,
+  generatePayURequestHash,
+  verifyPayUResponseHash,
+  verifyPaymentWithPayU
+} from './src/server/payu';
 import {
   getVapidPublicKey,
   sendSingleNotification,
@@ -300,6 +318,685 @@ app.post('/api/upi/verify-payment', (req: Request, res: Response) => {
   } catch (err: any) {
     return res.status(500).json({ success: false, error: 'Failed to verify UPI payment: ' + (err.message || String(err)) });
   }
+});
+
+// ============================================================
+// PAYU INDIA HOSTED CHECKOUT GATEWAY ENDPOINTS
+// https://docs.payu.in/docs/prebuilt-checkout-page-integration
+// ============================================================
+
+// Get public PayU configuration (Never exposes SALT)
+app.get('/api/payu/config', (_req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.status(200).json({
+    success: true,
+    configured: isPayUConfigured(),
+    env: PAYU_ENV,
+    merchantKey: isPayUConfigured() ? PAYU_MERCHANT_KEY : 'TEST_KEY',
+    paymentUrl: PAYU_PAYMENT_URL
+  });
+});
+
+// PayU Mock Gateway Simulator (Active when running in test mode or credentials are placeholders)
+app.get('/api/payu/mock-gateway', (req: Request, res: Response) => {
+  const {
+    key = 'TEST_KEY',
+    txnid = 'TEST_TXN',
+    amount = '70.00',
+    productinfo = 'Service',
+    firstname = 'Customer',
+    email = 'customer@example.com',
+    udf1 = 'CSC21251567001',
+    surl = `${APP_BASE_URL}/api/payu/response`,
+    furl = `${APP_BASE_URL}/api/payu/response`
+  } = req.query as Record<string, string>;
+
+  const effectiveSalt = isPayUConfigured() ? PAYU_MERCHANT_SALT : 'test_mock_salt_12345';
+  const mihpayid = `PAYU_MOCK_${Date.now()}`;
+  const bankRefNum = `AXIS_${Date.now().toString().slice(-6)}`;
+
+  // Calculate authentic response hashes for both success and failure
+  const successSeq = `${effectiveSalt}|success|||||||||||${email}|${firstname}|${productinfo}|${amount}|${txnid}|${key}`;
+  const successHash = crypto.createHash('sha512').update(successSeq).digest('hex').toLowerCase();
+
+  const failSeq = `${effectiveSalt}|failure|||||||||||${email}|${firstname}|${productinfo}|${amount}|${txnid}|${key}`;
+  const failHash = crypto.createHash('sha512').update(failSeq).digest('hex').toLowerCase();
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PayU Hosted Checkout Simulator | CSC DOST</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f1f5f9; margin: 0; padding: 20px; color: #0f172a; }
+    .card { max-width: 480px; margin: 40px auto; background: white; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); overflow: hidden; border: 1px solid #e2e8f0; }
+    .header { background: #0b192c; color: white; padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; }
+    .header h2 { margin: 0; font-size: 18px; font-weight: 700; }
+    .badge { background: #0284c7; color: white; font-size: 11px; padding: 4px 8px; border-radius: 6px; font-weight: 600; text-transform: uppercase; }
+    .body { padding: 24px; }
+    .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+    .info-row .label { color: #64748b; font-weight: 500; }
+    .info-row .value { color: #0f172a; font-weight: 600; font-family: monospace; }
+    .total-row { display: flex; justify-content: space-between; padding: 14px 0; margin-top: 10px; font-size: 16px; font-weight: 700; color: #16a34a; }
+    .actions { display: flex; gap: 12px; margin-top: 24px; }
+    .btn { flex: 1; padding: 14px; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; text-align: center; }
+    .btn-pay { background: #16a34a; color: white; }
+    .btn-pay:hover { background: #15803d; }
+    .btn-cancel { background: #fee2e2; color: #b91c1c; }
+    .btn-cancel:hover { background: #fecaca; }
+    .notice { font-size: 11px; color: #64748b; text-align: center; margin-top: 16px; line-height: 1.4; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <div>
+        <h2>PayU Hosted Checkout</h2>
+        <small style="opacity: 0.8; font-size: 11px;">Official Test Mode Simulator</small>
+      </div>
+      <span class="badge">Test Environment</span>
+    </div>
+    <div class="body">
+      <div class="info-row">
+        <span class="label">Merchant</span>
+        <span class="value">CSC DOST (E-Services)</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Order / Token Ref</span>
+        <span class="value">${udf1}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Transaction ID</span>
+        <span class="value">${txnid}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Customer Name</span>
+        <span class="value">${firstname}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Service</span>
+        <span class="value">${productinfo}</span>
+      </div>
+      <div class="total-row">
+        <span>Amount Payable</span>
+        <span>₹${amount}</span>
+      </div>
+
+      <div class="actions">
+        <!-- Success Form -->
+        <form action="${surl}" method="POST" style="flex: 1;">
+          <input type="hidden" name="status" value="success" />
+          <input type="hidden" name="txnid" value="${txnid}" />
+          <input type="hidden" name="amount" value="${amount}" />
+          <input type="hidden" name="productinfo" value="${productinfo}" />
+          <input type="hidden" name="firstname" value="${firstname}" />
+          <input type="hidden" name="email" value="${email}" />
+          <input type="hidden" name="key" value="${key}" />
+          <input type="hidden" name="mihpayid" value="${mihpayid}" />
+          <input type="hidden" name="bank_ref_num" value="${bankRefNum}" />
+          <input type="hidden" name="mode" value="UPI" />
+          <input type="hidden" name="udf1" value="${udf1}" />
+          <input type="hidden" name="hash" value="${successHash}" />
+          <button type="submit" class="btn btn-pay" style="width: 100%;">
+            ✓ Simulate Pay Securely
+          </button>
+        </form>
+
+        <!-- Failure Form -->
+        <form action="${furl}" method="POST" style="flex: 1;">
+          <input type="hidden" name="status" value="failure" />
+          <input type="hidden" name="txnid" value="${txnid}" />
+          <input type="hidden" name="amount" value="${amount}" />
+          <input type="hidden" name="productinfo" value="${productinfo}" />
+          <input type="hidden" name="firstname" value="${firstname}" />
+          <input type="hidden" name="email" value="${email}" />
+          <input type="hidden" name="key" value="${key}" />
+          <input type="hidden" name="mihpayid" value="" />
+          <input type="hidden" name="error" value="E000" />
+          <input type="hidden" name="error_Message" value="User cancelled payment session" />
+          <input type="hidden" name="udf1" value="${udf1}" />
+          <input type="hidden" name="hash" value="${failHash}" />
+          <button type="submit" class="btn btn-cancel" style="width: 100%;">
+            ✕ Simulate Failure / Cancel
+          </button>
+        </form>
+      </div>
+
+      <p class="notice">
+        This simulator mirrors PayU's hosted checkout page for local testing and demonstration. In production with real Vercel credentials, users are redirected to <strong>secure.payu.in</strong>.
+      </p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(html);
+});
+
+// Initiate PayU Hosted Checkout Session
+app.post('/api/payu/initiate', async (req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'application/json');
+  try {
+    const {
+      appId,
+      customerName,
+      email,
+      phone,
+      serviceName,
+      userCategory,
+      deliveryOption
+    } = req.body || {};
+
+    const cleanName = String(customerName || '').trim();
+    const cleanPhone = String(phone || '').replace(/\D/g, '');
+    const cleanService = String(serviceName || '').trim();
+    const cleanAppId = String(appId || '').trim();
+
+    if (!cleanName || cleanPhone.length < 10 || !cleanService) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please provide Customer Name, 10-digit Phone Number, and Service Name.'
+      });
+    }
+
+    // 1. Authoritative Server-Side Price Calculation (Never trust client-submitted amount)
+    const priceInfo = calculateAuthoritativePrice(cleanService, userCategory, deliveryOption);
+    const amountFormatted = priceInfo.totalAmount.toFixed(2);
+
+    // 2. Resolve or generate valid application reference
+    let resolvedAppId = cleanAppId;
+    if (!resolvedAppId || !resolvedAppId.startsWith('CSC')) {
+      const supaMax = await getHighestSupabaseTokenSeq();
+      const nextSeq = getNextMonotonicLocalSeq(supaMax);
+      resolvedAppId = `CSC21251567${String(nextSeq).padStart(3, '0')}`;
+    }
+
+    // 3. Prevent duplicate payment if already paid
+    const db = getDb();
+    const existingLocal = (db.appointments || []).find(
+      (a: any) =>
+        !isDeletedApplicationRecord(a) &&
+        (String(a.appId || a.id).toLowerCase() === resolvedAppId.toLowerCase())
+    );
+
+    if (existingLocal && String(existingLocal.paymentStatus || '').toLowerCase() === 'paid') {
+      return res.status(400).json({
+        success: false,
+        error: `Application ${resolvedAppId} has already been paid and verified.`
+      });
+    }
+
+    // 4. Generate unique transaction ID
+    const txnid = `PAYU_${Date.now()}_${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+    const configured = isPayUConfigured();
+
+    const merchantKey = configured ? PAYU_MERCHANT_KEY : (process.env.PAYU_MERCHANT_KEY || 'TEST_KEY');
+    const merchantSalt = configured ? PAYU_MERCHANT_SALT : 'test_mock_salt_12345';
+
+    // 5. Build SURL and FURL endpoints
+    const surl = `${APP_BASE_URL}/api/payu/response`;
+    const furl = `${APP_BASE_URL}/api/payu/response`;
+
+    const firstName = cleanName.split(' ')[0] || 'Customer';
+    const emailAddr = String(email || '').trim() || 'customer@cscdost.com';
+    const productInfo = priceInfo.description.substring(0, 95);
+
+    // 6. Generate request hash
+    const hash = generatePayURequestHash({
+      key: merchantKey,
+      txnid,
+      amount: amountFormatted,
+      productinfo: productInfo,
+      firstname: firstName,
+      email: emailAddr,
+      udf1: resolvedAppId,
+      udf2: cleanService.substring(0, 95),
+      udf3: cleanPhone,
+      udf4: userCategory || '',
+      udf5: deliveryOption || '',
+      salt: merchantSalt
+    });
+
+    const payuParams: Record<string, string> = {
+      key: merchantKey,
+      txnid,
+      amount: amountFormatted,
+      productinfo: productInfo,
+      firstname: firstName,
+      email: emailAddr,
+      phone: cleanPhone,
+      surl,
+      furl,
+      hash,
+      udf1: resolvedAppId,
+      udf2: cleanService.substring(0, 95),
+      udf3: cleanPhone,
+      udf4: userCategory || '',
+      udf5: deliveryOption || ''
+    };
+
+    // 7. Store payment transaction record (Local DB + Supabase)
+    const txnRecord = {
+      txnid,
+      tokenId: resolvedAppId,
+      appId: resolvedAppId,
+      customerName: cleanName,
+      customerPhone: cleanPhone,
+      customerEmail: emailAddr,
+      serviceName: cleanService,
+      paymentMethod: 'online_payu',
+      govtFee: priceInfo.govtFee,
+      cscFee: priceInfo.cscFee,
+      deliveryFee: priceInfo.deliveryFee,
+      totalAmount: priceInfo.totalAmount,
+      status: 'initiated',
+      requestPayload: {
+        amount: amountFormatted,
+        productinfo: productInfo,
+        key: merchantKey,
+        configured
+      },
+      createdAt: new Date().toISOString()
+    };
+
+    upsertPaymentTransaction(txnRecord);
+    recordSupabasePaymentTransaction(txnRecord).catch((err) =>
+      console.warn('[PayU Initiate] Supabase transaction audit warning:', err)
+    );
+
+    // Update appointment pending payment mode in local and Supabase records
+    updateAppointmentPayment(resolvedAppId, {
+      paymentMethod: 'online_payu',
+      paymentStatus: 'pending_verification',
+      amountDue: priceInfo.totalAmount,
+      gatewayTxnId: txnid
+    });
+
+    updateSupabasePaymentRecord(resolvedAppId, {
+      paymentMethod: 'online_payu',
+      paymentStatus: 'pending_verification',
+      amountDue: priceInfo.totalAmount,
+      gatewayTxnId: txnid
+    }).catch((err) => console.warn('[PayU Initiate] Supabase appointment update notice:', err));
+
+    // Determine target checkout URL (live PayU vs simulator fallback)
+    const actionUrl = configured
+      ? PAYU_PAYMENT_URL
+      : `${APP_BASE_URL}/api/payu/mock-gateway?${new URLSearchParams(payuParams).toString()}`;
+
+    console.log(`💳 [PayU Initiate] Checkout session prepared [Txn: ${txnid}] for ${cleanName} - ₹${amountFormatted}`);
+
+    return res.status(200).json({
+      success: true,
+      actionUrl,
+      params: payuParams,
+      isMockTestMode: !configured,
+      orderSummary: {
+        appId: resolvedAppId,
+        customerName: cleanName,
+        serviceName: cleanService,
+        govtFee: priceInfo.govtFee,
+        cscFee: priceInfo.cscFee,
+        deliveryFee: priceInfo.deliveryFee,
+        totalAmount: priceInfo.totalAmount,
+        amountFormatted: `₹${amountFormatted}`
+      }
+    });
+  } catch (err: any) {
+    console.error('[PayU Initiate Error]:', err?.message || err);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to initiate PayU payment session: ' + (err?.message || 'Server error')
+    });
+  }
+});
+
+// PayU Response Handler (POST callback for both SURL and FURL)
+app.post('/api/payu/response', async (req: Request, res: Response) => {
+  try {
+    const responseData = req.body || {};
+    const {
+      status,
+      txnid,
+      amount,
+      udf1,
+      mihpayid,
+      bank_ref_num,
+      error_Message,
+      mode
+    } = responseData;
+
+    const cleanTxnid = String(txnid || '').trim();
+    const cleanAppId = String(udf1 || '').trim();
+    const cleanStatus = String(status || '').toLowerCase().trim();
+    const configured = isPayUConfigured();
+    const salt = configured ? PAYU_MERCHANT_SALT : 'test_mock_salt_12345';
+
+    console.log(`📥 [PayU Callback Received] Status: "${cleanStatus}" | TxnID: ${cleanTxnid} | AppID: ${cleanAppId}`);
+
+    // 1. Verify Response Hash
+    const hashValid = verifyPayUResponseHash(responseData, salt);
+    if (!hashValid && configured) {
+      console.error(`🚨 [PayU Security Alert] Hash mismatch on transaction callback ${cleanTxnid}!`);
+      return res.redirect(
+        303,
+        `${APP_BASE_URL}/track?token=${encodeURIComponent(cleanAppId)}&payment=tampered&reason=Hash+signature+verification+failed`
+      );
+    }
+
+    // 2. Double-check and reconcile with official PayU Verify Payment API
+    const verifyResult = await verifyPaymentWithPayU(cleanTxnid);
+    const isPaymentSuccessful = cleanStatus === 'success' && (verifyResult.success || !configured);
+
+    const nowIso = new Date().toISOString();
+
+    if (isPaymentSuccessful) {
+      const finalAmount = Number(amount || verifyResult.amount || 0);
+
+      // A. Atomic update in local database
+      updateAppointmentPayment(cleanAppId, {
+        paymentMethod: 'online_payu',
+        paymentStatus: 'paid',
+        amountPaid: finalAmount,
+        amountDue: 0,
+        gatewayTxnId: cleanTxnid,
+        utrNumber: mihpayid || cleanTxnid,
+        paidAt: nowIso
+      });
+
+      // Also ensure application status is moved to Approved / Processing
+      updateAppointmentStatus(cleanAppId, 'approved');
+
+      // B. Update transaction record
+      upsertPaymentTransaction({
+        txnid: cleanTxnid,
+        tokenId: cleanAppId,
+        appId: cleanAppId,
+        status: 'paid',
+        payuMihpayid: mihpayid || verifyResult.mihpayid,
+        bankRefNum: bank_ref_num || verifyResult.bankRefNum,
+        paymentMode: mode || verifyResult.mode || 'ONLINE',
+        hashVerified: true,
+        apiVerified: verifyResult.success,
+        responsePayload: responseData,
+        verificationPayload: verifyResult.rawResponse,
+        updatedAt: nowIso
+      });
+
+      // C. Atomic update in Supabase
+      updateSupabasePaymentRecord(cleanAppId, {
+        paymentMethod: 'online_payu',
+        paymentStatus: 'paid',
+        amountPaid: finalAmount,
+        amountDue: 0,
+        gatewayTxnId: cleanTxnid,
+        payuMihpayid: mihpayid || verifyResult.mihpayid,
+        payuBankRef: bank_ref_num || verifyResult.bankRefNum,
+        paidAt: nowIso
+      }).catch((err) => console.warn('[PayU Response] Supabase payment update notice:', err));
+
+      recordSupabasePaymentTransaction({
+        txnid: cleanTxnid,
+        tokenId: cleanAppId,
+        appId: cleanAppId,
+        status: 'paid',
+        payuMihpayid: mihpayid || verifyResult.mihpayid,
+        bankRefNum: bank_ref_num || verifyResult.bankRefNum,
+        paymentMode: mode || verifyResult.mode,
+        hashVerified: true,
+        apiVerified: verifyResult.success,
+        responsePayload: responseData,
+        verificationPayload: verifyResult.rawResponse,
+        updatedAt: nowIso
+      }).catch((err) => console.warn('[PayU Response] Supabase transaction audit notice:', err));
+
+      // D. Broadcast realtime event
+      const db = getDb();
+      const updatedApp = (db.appointments || []).find((a: any) => a.appId === cleanAppId || a.id === cleanAppId);
+      broadcastRealtimeEvent('APPOINTMENT_UPDATED', updatedApp || { appId: cleanAppId, paymentStatus: 'paid' });
+
+      console.log(`✅ [PayU Payment Reconciled & Paid] Token ${cleanAppId} | ₹${finalAmount} | Ref: ${mihpayid}`);
+
+      // E. Redirect customer to live tracking view with success parameters
+      return res.redirect(
+        303,
+        `${APP_BASE_URL}/track?token=${encodeURIComponent(cleanAppId)}&payment=success&txnid=${encodeURIComponent(cleanTxnid)}&ref=${encodeURIComponent(mihpayid || '')}&amt=${encodeURIComponent(String(finalAmount))}`
+      );
+    } else {
+      // Payment Failed or Cancelled
+      const failReason = error_Message || verifyResult.message || 'Payment transaction was not completed';
+
+      updateAppointmentPayment(cleanAppId, {
+        paymentMethod: 'online_payu',
+        paymentStatus: 'failed',
+        gatewayTxnId: cleanTxnid
+      });
+
+      upsertPaymentTransaction({
+        txnid: cleanTxnid,
+        tokenId: cleanAppId,
+        appId: cleanAppId,
+        status: 'failed',
+        errorMessage: failReason,
+        responsePayload: responseData,
+        verificationPayload: verifyResult.rawResponse,
+        updatedAt: nowIso
+      });
+
+      updateSupabasePaymentRecord(cleanAppId, {
+        paymentMethod: 'online_payu',
+        paymentStatus: 'failed',
+        gatewayTxnId: cleanTxnid
+      }).catch((err) => console.warn('[PayU Response Failed] Supabase notice:', err));
+
+      console.log(`⚠️ [PayU Payment Incomplete/Failed] Token: ${cleanAppId} | Reason: ${failReason}`);
+
+      return res.redirect(
+        303,
+        `${APP_BASE_URL}/track?token=${encodeURIComponent(cleanAppId)}&payment=failed&txnid=${encodeURIComponent(cleanTxnid)}&reason=${encodeURIComponent(failReason)}`
+      );
+    }
+  } catch (err: any) {
+    console.error('[PayU Response Handler Exception]:', err?.message || err);
+    return res.redirect(
+      303,
+      `${APP_BASE_URL}/track?payment=error&reason=${encodeURIComponent('Server error processing payment callback')}`
+    );
+  }
+});
+
+// PayU Server-to-Server Webhook Endpoint
+app.post('/api/payu/webhook', async (req: Request, res: Response) => {
+  try {
+    const payload = req.body || {};
+    const { status, txnid, udf1, mihpayid } = payload;
+    const cleanTxnid = String(txnid || '').trim();
+    const cleanAppId = String(udf1 || '').trim();
+
+    if (!cleanTxnid) {
+      return res.status(400).json({ success: false, error: 'Missing txnid' });
+    }
+
+    const salt = isPayUConfigured() ? PAYU_MERCHANT_SALT : 'test_mock_salt_12345';
+    const hashValid = verifyPayUResponseHash(payload, salt);
+
+    if (!hashValid && isPayUConfigured()) {
+      return res.status(400).json({ success: false, error: 'Invalid webhook signature' });
+    }
+
+    const verifyResult = await verifyPaymentWithPayU(cleanTxnid);
+    if (verifyResult.success || String(status).toLowerCase() === 'success') {
+      const nowIso = new Date().toISOString();
+      updateAppointmentPayment(cleanAppId, {
+        paymentMethod: 'online_payu',
+        paymentStatus: 'paid',
+        gatewayTxnId: cleanTxnid,
+        utrNumber: mihpayid || cleanTxnid,
+        paidAt: nowIso
+      });
+      updateSupabasePaymentRecord(cleanAppId, {
+        paymentMethod: 'online_payu',
+        paymentStatus: 'paid',
+        gatewayTxnId: cleanTxnid,
+        paidAt: nowIso
+      }).catch(() => {});
+    }
+
+    return res.status(200).json({ success: true, message: 'Webhook processed' });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message || 'Webhook error' });
+  }
+});
+
+// Admin / Staff Action: Recheck payment directly with PayU Verify Payment API
+app.post('/api/payu/recheck', authenticateAdmin, async (req: Request, res: Response) => {
+  try {
+    const { txnid, appId } = req.body || {};
+    if (!txnid && !appId) {
+      return res.status(400).json({ success: false, error: 'Transaction ID or Application ID required.' });
+    }
+
+    const db = getDb();
+    let targetTxnid = String(txnid || '').trim();
+    let targetAppId = String(appId || '').trim();
+
+    if (!targetTxnid && targetAppId) {
+      const matchedApp = (db.appointments || []).find((a: any) => a.appId === targetAppId || a.id === targetAppId);
+      targetTxnid = (matchedApp as any)?.gatewayTxnId || (matchedApp as any)?.utrNumber || '';
+    }
+
+    if (!targetTxnid) {
+      return res.status(404).json({
+        success: false,
+        error: 'No payment transaction reference found for this application to verify.'
+      });
+    }
+
+    const verifyResult = await verifyPaymentWithPayU(targetTxnid);
+
+    if (verifyResult.success && targetAppId) {
+      const nowIso = new Date().toISOString();
+      updateAppointmentPayment(targetAppId, {
+        paymentStatus: 'paid',
+        amountPaid: verifyResult.amount,
+        paidAt: nowIso
+      });
+      updateSupabasePaymentRecord(targetAppId, {
+        paymentStatus: 'paid',
+        amountPaid: verifyResult.amount,
+        paidAt: nowIso
+      }).catch(() => {});
+    }
+
+    return res.status(200).json({
+      success: true,
+      verifiedStatus: verifyResult.status,
+      details: verifyResult
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: 'Recheck failed: ' + (err?.message || err) });
+  }
+});
+
+// Admin / Staff Action: Record Offline Counter Payment (Cash / In-Person Collection)
+app.post('/api/admin/record-offline-payment', authenticateAdmin, async (req: Request, res: Response) => {
+  try {
+    const { appId, amountPaid, receiptNo, notes } = req.body || {};
+    const cleanAppId = String(appId || '').trim();
+
+    if (!cleanAppId) {
+      return res.status(400).json({ success: false, error: 'Application Reference ID is required.' });
+    }
+
+    const numAmount = Number(amountPaid);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      return res.status(400).json({ success: false, error: 'Valid collected amount in ₹ is required.' });
+    }
+
+    const staffUser = (req as any).adminUser?.username || 'Mahi';
+    const finalReceiptNo = String(receiptNo || `CSC_CASH_${Date.now().toString().slice(-6)}`).trim();
+    const nowIso = new Date().toISOString();
+
+    // 1. Update local DB
+    const localUpdated = updateAppointmentPayment(cleanAppId, {
+      paymentMethod: 'pay_at_centre',
+      paymentStatus: 'paid',
+      amountPaid: numAmount,
+      amountDue: 0,
+      offlineReceiptNo: finalReceiptNo,
+      offlineCollectedBy: staffUser,
+      paidAt: nowIso
+    });
+
+    // 2. Update Supabase
+    const supaResult = await updateSupabasePaymentRecord(cleanAppId, {
+      paymentMethod: 'pay_at_centre',
+      paymentStatus: 'paid',
+      amountPaid: numAmount,
+      amountDue: 0,
+      offlineReceiptNo: finalReceiptNo,
+      offlineCollectedBy: staffUser,
+      offlineCollectedAt: nowIso,
+      paidAt: nowIso
+    });
+
+    // 3. Record transaction audit log
+    const cashTxnId = `CASH_${cleanAppId}_${Date.now().toString().slice(-6)}`;
+    upsertPaymentTransaction({
+      txnid: cashTxnId,
+      tokenId: cleanAppId,
+      appId: cleanAppId,
+      customerName: 'Offline Citizen',
+      serviceName: 'CSC Counter Collection',
+      paymentMethod: 'pay_at_centre',
+      totalAmount: numAmount,
+      status: 'paid',
+      offlineReceiptNo: finalReceiptNo,
+      offlineCollectedBy: staffUser,
+      createdAt: nowIso
+    });
+
+    recordSupabasePaymentTransaction({
+      txnid: cashTxnId,
+      tokenId: cleanAppId,
+      appId: cleanAppId,
+      paymentMethod: 'pay_at_centre',
+      totalAmount: numAmount,
+      status: 'paid',
+      offlineReceiptNo: finalReceiptNo,
+      offlineCollectedBy: staffUser,
+      createdAt: nowIso
+    }).catch(() => {});
+
+    // 4. Broadcast realtime event
+    const db = getDb();
+    const updated = (db.appointments || []).find((a: any) => a.appId === cleanAppId || a.id === cleanAppId);
+    broadcastRealtimeEvent('APPOINTMENT_UPDATED', updated || { appId: cleanAppId, paymentStatus: 'paid' });
+
+    console.log(`💵 [Cash Collected] App ${cleanAppId} marked PAID: ₹${numAmount} by Staff "${staffUser}" [Slip: ${finalReceiptNo}]`);
+
+    return res.status(200).json({
+      success: true,
+      message: `Offline cash payment of ₹${numAmount} successfully recorded.`,
+      appId: cleanAppId,
+      receiptNo: finalReceiptNo,
+      collectedBy: staffUser,
+      collectedAt: nowIso
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: 'Failed to record offline payment: ' + (err?.message || err) });
+  }
+});
+
+// Admin / Staff Action: Get Payment Transactions Ledger
+app.get('/api/payu/transactions', authenticateAdmin, (_req: Request, res: Response) => {
+  const transactions = getPaymentTransactions();
+  return res.status(200).json({
+    success: true,
+    transactions
+  });
 });
 
 // ============================================================

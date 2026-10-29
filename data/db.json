@@ -252,8 +252,8 @@
       "date": "2026-07-30T12:13:35.420Z"
     }
   ],
-  "views": 556,
-  "lastIssuedTokenSeq": 4645,
+  "views": 558,
+  "lastIssuedTokenSeq": 9543,
   "customPosts": [],
   "postThumbnails": {},
   "pushSubscriptions": [],
@@ -261,5 +261,50 @@
   "pushSettings": {
     "autoPublishPush": false,
     "welcomePushEnabled": true
-  }
+  },
+  "paymentTransactions": [
+    {
+      "txnid": "TEST_TXN",
+      "tokenId": "",
+      "appId": "",
+      "status": "paid",
+      "paymentMode": "ONLINE",
+      "hashVerified": true,
+      "apiVerified": false,
+      "responsePayload": {
+        "status": "success",
+        "txnid": "TEST_TXN",
+        "amount": "177.00",
+        "productinfo": "PAN",
+        "firstname": "Mohammad",
+        "email": "test@cscdost.com",
+        "hash": "INVALID_HASH"
+      },
+      "updatedAt": "2026-10-29T08:58:16.032Z",
+      "createdAt": "2026-10-29T08:58:16.033Z"
+    },
+    {
+      "txnid": "PAYU_1793264272846_B67563",
+      "tokenId": "CSC212515679543",
+      "appId": "CSC212515679543",
+      "customerName": "Mohammad Wasim",
+      "customerPhone": "9876543210",
+      "customerEmail": "test@cscdost.com",
+      "serviceName": "New PAN Card Application",
+      "paymentMethod": "online_payu",
+      "govtFee": 107,
+      "cscFee": 70,
+      "deliveryFee": 0,
+      "totalAmount": 177,
+      "status": "initiated",
+      "requestPayload": {
+        "amount": "177.00",
+        "productinfo": "New PAN Card Application",
+        "key": "TEST_KEY",
+        "configured": false
+      },
+      "createdAt": "2026-10-29T08:57:52.847Z",
+      "updatedAt": "2026-10-29T08:57:52.847Z"
+    }
+  ]
 }

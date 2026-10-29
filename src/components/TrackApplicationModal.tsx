@@ -291,6 +291,25 @@ export default function TrackApplicationModal({
                   <dt className="text-[#64748B]">Current status</dt>
                   <dd className="font-semibold text-[#2563EB]">{liveData.statusLabel}</dd>
                 </div>
+                <div className="py-2.5 flex justify-between gap-2">
+                  <dt className="text-[#64748B]">Payment</dt>
+                  <dd className="text-right">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${
+                      liveData.paymentStatus?.toLowerCase() === 'paid'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : liveData.paymentStatus?.toLowerCase() === 'not required'
+                        ? 'bg-slate-100 text-slate-700'
+                        : 'bg-amber-100 text-amber-800'
+                    }`}>
+                      {liveData.paymentStatus || 'Unpaid'}
+                    </span>
+                    {liveData.totalAmount ? (
+                      <span className="font-mono font-bold text-xs ml-1.5 text-[#102A43]">
+                        ₹{liveData.totalAmount}
+                      </span>
+                    ) : null}
+                  </dd>
+                </div>
                 {liveData.appliedDate && (
                   <div className="py-2.5 flex justify-between gap-2">
                     <dt className="text-[#64748B]">Submission date</dt>

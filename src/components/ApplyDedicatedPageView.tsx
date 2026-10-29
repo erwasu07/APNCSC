@@ -15,7 +15,11 @@ import {
   ChevronUp,
   FileText,
   ArrowRight,
-  RefreshCw
+  RefreshCw,
+  CreditCard,
+  Building2,
+  ShieldCheck,
+  IndianRupee
 } from 'lucide-react';
 import { SARKARI_DATA, SarkariItem } from '../data/sarkariData';
 import { SERVICES_LIST, ServiceItem } from '../servicesData';
@@ -95,6 +99,8 @@ export default function ApplyDedicatedPageView({
   const [isFormSubmitted, setIsFormSubmitted] = useState<boolean>(false);
   const [submissionReceipt, setSubmissionReceipt] = useState<any>(null);
   const [copiedToken, setCopiedToken] = useState<boolean>(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'online_payu' | 'pay_at_centre'>('online_payu');
+  const [payuInitiating, setPayuInitiating] = useState<boolean>(false);
 
   // Stable idempotency token for the current submission attempt to prevent duplicates on retry
   const pendingSubmissionIdRef = useRef<string | null>(null);
@@ -634,6 +640,59 @@ export default function ApplyDedicatedPageView({
     }
   };
 
+  // Online PayU trigger from receipt view for users who originally chose Pay at Centre
+  const handlePayOnlineFromReceipt = async () => {
+    if (!submissionReceipt?.appId || payuInitiating) return;
+    setPayuInitiating(true);
+    try {
+      const sName =
+        submissionReceipt.selectedService ||
+        (formData.selectedService === 'other'
+          ? formData.customServiceText.trim() || 'Custom Service'
+          : formData.selectedService) ||
+        'CSC Service';
+      const payuRes = await fetch('/api/payu/initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          applicationId: submissionReceipt.appId,
+          serviceId: formData.selectedService || 'general',
+          serviceName: sName,
+          customerName: submissionReceipt.customerName,
+          email:
+            submissionReceipt.emailAddress && submissionReceipt.emailAddress !== 'N/A'
+              ? submissionReceipt.emailAddress
+              : `${submissionReceipt.phoneNumber}@cscdost.com`,
+          phone: submissionReceipt.phoneNumber,
+          deliveryType: formData.deliveryOption
+        })
+      });
+      const payuData = await payuRes.json();
+      if (payuData.success && payuData.actionUrl && payuData.params) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = payuData.actionUrl;
+        Object.entries(payuData.params).forEach(([k, v]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = k;
+          input.value = String(v);
+          form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
+        return;
+      } else {
+        alert(payuData.error || 'Failed to initiate PayU checkout.');
+      }
+    } catch (err: any) {
+      console.error('Error initiating PayU:', err);
+      alert('Error connecting to PayU gateway.');
+    } finally {
+      setPayuInitiating(false);
+    }
+  };
+
   // Final submission handler (only invoked on Step 3 Submit Assistance Request)
   const handleFinalFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -690,6 +749,19 @@ export default function ApplyDedicatedPageView({
         dataUrl: f.dataUrl
       }));
 
+      const isOnline = selectedPaymentMethod === 'online_payu' && computedPriceDetails.totalAmount > 0;
+      const paymentModeLabel = isOnline
+        ? 'online_payu'
+        : isPhysicalDeliveryService
+        ? 'Pay at Centre / Cash on Delivery'
+        : 'Pay Later at CSC Centre (Offline)';
+
+      const paymentStatusInitial = computedPriceDetails.isFree
+        ? 'not_required'
+        : isOnline
+        ? 'pending_verification'
+        : 'unpaid';
+
       const submitPayload = {
         appId: idempotentToken,
         idempotencyKey: idempotentToken,
@@ -699,9 +771,10 @@ export default function ApplyDedicatedPageView({
         dateOfBirth: formData.dateOfBirth || 'N/A',
         selectedService: selectedServiceClean,
         userCategory: userCategoryClean,
-        paymentMode: 'Pay at CSC Desk Upon Completion (No Advance Online Payment)',
+        paymentMode: paymentModeLabel,
+        paymentStatus: paymentStatusInitial,
         utrNumber: 'N/A',
-        totalAmount: 0,
+        totalAmount: computedPriceDetails.totalAmount,
         message: formData.additionalDetails.trim() || 'None',
         mandatoryDocName:
           uploadedFiles[0]?.name || 'Identity / Supporting Document Attached',
@@ -749,9 +822,9 @@ export default function ApplyDedicatedPageView({
             emailAddress: formData.emailAddress.trim(),
             selectedService: selectedServiceClean,
             userCategory: userCategoryClean,
-            paymentMode: 'Pay at CSC Desk Upon Completion',
+            paymentMode: paymentModeLabel,
             utrNumber: 'N/A',
-            totalAmount: 0,
+            totalAmount: computedPriceDetails.totalAmount,
             status: 'Pending',
             dateOfBirth: formData.dateOfBirth,
             message: formData.additionalDetails.trim(),
@@ -799,12 +872,21 @@ export default function ApplyDedicatedPageView({
         dateOfBirth: formData.dateOfBirth || 'N/A',
         selectedService: selectedServiceClean,
         userCategory: userCategoryClean,
-        paymentMode: 'Pay at CSC Desk Upon Completion (No Advance Online Payment)',
+        paymentMode: isOnline ? 'online_payu' : 'pay_at_centre',
+        paymentMethodLabel: isOnline
+          ? 'PayU Online Hosted Gateway'
+          : isPhysicalDeliveryService
+          ? 'Pay at Centre / Cash on Delivery'
+          : 'Pay Later at CSC Centre',
         utrNumber: 'N/A',
-        paymentStatus: 'Pay at CSC Desk upon completion',
-        portalFee: 0,
-        applicationFee: 0,
-        totalAmount: 0,
+        paymentStatus: computedPriceDetails.isFree
+          ? 'Not Required'
+          : isOnline
+          ? 'Pending Verification'
+          : 'Unpaid (Pay at CSC Centre)',
+        govtFee: computedPriceDetails.govtFee,
+        cscFee: computedPriceDetails.cscFee,
+        totalAmount: computedPriceDetails.totalAmount,
         mandatoryDocName:
           uploadedFiles[0]?.name || 'Identity / Supporting Document Attached',
         uploadedDocuments: uploadedDocsList,
@@ -850,6 +932,71 @@ export default function ApplyDedicatedPageView({
       } catch {}
 
       // Secondary Firestore sync (non-blocking)
+      try {
+        Promise.all([
+          setDoc(doc(db, 'applications', confirmedAppId), {
+            ...verifiedReceipt,
+            documents: savedData?.document_urls || []
+          }, { merge: true }),
+          setDoc(doc(db, 'appointments', confirmedAppId), {
+            ...verifiedReceipt,
+            documents: savedData?.document_urls || []
+          }, { merge: true })
+        ]).catch(() => {});
+      } catch {}
+
+      // If user chose PayU Online payment, initiate PayU Hosted Checkout redirect
+      if (isOnline) {
+        setPayuInitiating(true);
+        try {
+          const payuRes = await fetch('/api/payu/initiate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              appId: confirmedAppId,
+              customerName: formData.customerName.trim(),
+              email: (formData.emailAddress || '').trim() || 'customer@cscdost.com',
+              phone: formData.phoneNumber.trim(),
+              serviceName: selectedServiceClean,
+              userCategory: userCategoryClean
+            })
+          });
+
+          const payuData = await payuRes.json();
+          if (payuRes.ok && payuData.success && payuData.actionUrl && payuData.params) {
+            // Create a standard auto-submitting POST form for PayU Hosted Checkout
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = payuData.actionUrl;
+            form.style.display = 'none';
+
+            Object.entries(payuData.params).forEach(([key, val]) => {
+              const input = document.createElement('input');
+              input.type = 'hidden';
+              input.name = key;
+              input.value = String(val);
+              form.appendChild(input);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+            return;
+          } else {
+            console.warn('PayU initiate response notice:', payuData.error);
+            setStepBannerError(
+              payuData.error ||
+                'PayU gateway session could not be established. Your application reference is preserved—you may pay at the counter or complete payment anytime from tracking.'
+            );
+          }
+        } catch (payuErr: any) {
+          console.warn('PayU checkout redirect error:', payuErr);
+          setStepBannerError(
+            'Your application is safely registered, but the payment gateway was unreachable. You can pay at the counter or complete payment later using your application reference.'
+          );
+        } finally {
+          setPayuInitiating(false);
+        }
+      }
       try {
         Promise.all([
           setDoc(doc(db, 'applications', confirmedAppId), {
@@ -909,6 +1056,57 @@ export default function ApplyDedicatedPageView({
       return splitServiceFeeBreakdown(currentServiceItem.price);
     }
     return {};
+  }, [currentSarkariItem, currentServiceItem, formData.userCategory]);
+
+  const isPhysicalDeliveryService = useMemo(() => {
+    const s = (formData.selectedService || '').toLowerCase();
+    return (
+      s.includes('pvc') ||
+      s.includes('smart card') ||
+      s.includes('card printing') ||
+      s.includes('printout') ||
+      s.includes('delivery') ||
+      s.includes('plastic card')
+    );
+  }, [formData.selectedService]);
+
+  const computedPriceDetails = useMemo(() => {
+    let govtFee = 0;
+    let cscFee = 70;
+    let isFree = false;
+
+    if (currentSarkariItem && currentSarkariItem.fees) {
+      const feeText =
+        formData.userCategory === 'scSt'
+          ? currentSarkariItem.fees.scSt
+          : currentSarkariItem.fees.genObc;
+      const digits = String(feeText || '').match(/(\d+)/);
+      govtFee = digits ? parseInt(digits[1], 10) : 0;
+      if (String(feeText || '').toLowerCase().includes('free') || feeText === '0' || feeText === '₹0') {
+        govtFee = 0;
+      }
+    } else if (currentServiceItem && currentServiceItem.price) {
+      const priceLower = currentServiceItem.price.toLowerCase();
+      if (priceLower.includes('free') && !priceLower.includes('+')) {
+        isFree = true;
+        cscFee = 0;
+      }
+      const numMatches = currentServiceItem.price.match(/₹\s*(\d+)/g);
+      if (numMatches && numMatches.length >= 2) {
+        govtFee = parseInt(numMatches[0].replace(/[^\d]/g, ''), 10) || 0;
+        cscFee = parseInt(numMatches[1].replace(/[^\d]/g, ''), 10) || 70;
+      } else if (numMatches && numMatches.length === 1) {
+        const val = parseInt(numMatches[0].replace(/[^\d]/g, ''), 10) || 70;
+        if (priceLower.includes('govt')) {
+          govtFee = val;
+        } else {
+          cscFee = val;
+        }
+      }
+    }
+
+    const totalAmount = isFree ? 0 : Math.max(0, govtFee + cscFee);
+    return { govtFee, cscFee, totalAmount, isFree };
   }, [currentSarkariItem, currentServiceItem, formData.userCategory]);
 
   return (
@@ -1810,49 +2008,121 @@ export default function ApplyDedicatedPageView({
                     </ul>
                   </div>
 
-                  {/* Review Group 3: Payment Method & Applicable Charges */}
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-bold text-[#102A43]">
-                      Payment &amp; applicable charges
-                    </h3>
+                  {/* Review Group 3: Select Payment Method & Itemised Summary */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-bold text-[#102A43]">
+                        Payment Option
+                      </h3>
+                      <span className="text-xs text-[#64748B]">
+                        Choose how to pay
+                      </span>
+                    </div>
 
-                    <dl className="divide-y divide-[#E2E8F0] border-t border-b border-[#E2E8F0] text-sm">
-                      <div className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                        <dt className="text-[#64748B]">Payment method</dt>
-                        <dd className="font-semibold text-[#102A43] sm:text-right">
-                          Pay at CSC Desk upon completion (No advance payment)
-                        </dd>
-                      </div>
-
-                      {serviceFeeBreakdown.govtCharge && (
-                        <div className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                          <dt className="text-[#64748B]">Government / portal fee</dt>
-                          <dd className="text-[#334155] sm:text-right max-w-md">
-                            {serviceFeeBreakdown.govtCharge}
-                          </dd>
-                        </div>
-                      )}
-
-                      {serviceFeeBreakdown.cscCharge && (
-                        <div className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                          <dt className="text-[#64748B]">CSC assistance charge</dt>
-                          <dd className="text-[#334155] sm:text-right">
-                            {serviceFeeBreakdown.cscCharge}
-                          </dd>
-                        </div>
-                      )}
-
-                      {!serviceFeeBreakdown.govtCharge &&
-                        !serviceFeeBreakdown.cscCharge &&
-                        serviceFeeBreakdown.rawPrice && (
-                          <div className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                            <dt className="text-[#64748B]">Configured fee</dt>
-                            <dd className="text-[#334155] sm:text-right">
-                              {serviceFeeBreakdown.rawPrice}
-                            </dd>
+                    {/* Dual Payment Options Radio Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Option 1: Pay Online via PayU */}
+                      <label
+                        className={`relative p-3.5 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
+                          selectedPaymentMethod === 'online_payu'
+                            ? 'border-[#2563EB] bg-[#EFF6FF]'
+                            : 'border-[#E2E8F0] bg-white hover:border-[#CBD5E1]'
+                        }`}
+                      >
+                        <div className="flex items-start gap-2.5">
+                          <input
+                            type="radio"
+                            name="checkoutPaymentMethod"
+                            value="online_payu"
+                            checked={selectedPaymentMethod === 'online_payu'}
+                            onChange={() => setSelectedPaymentMethod('online_payu')}
+                            className="mt-1 w-4 h-4 text-[#2563EB] border-[#CBD5E1] focus:ring-[#2563EB]"
+                          />
+                          <div className="min-w-0">
+                            <span className="text-xs font-bold text-[#102A43] flex items-center gap-1.5">
+                              <CreditCard className="w-3.5 h-3.5 text-[#2563EB]" />
+                              <span>Pay Online (PayU)</span>
+                            </span>
+                            <p className="text-[11px] text-[#475569] mt-0.5 leading-relaxed">
+                              UPI, Cards, Net Banking &amp; QR via PayU Hosted Gateway. Instant receipt.
+                            </p>
                           </div>
-                        )}
-                    </dl>
+                        </div>
+                        <div className="mt-3 pt-2 border-t border-[#DBEAFE] flex items-center justify-between text-xs font-semibold">
+                          <span className="text-[#2563EB]">Instant Confirmation</span>
+                          <span className="font-mono font-bold text-[#102A43]">
+                            ₹{computedPriceDetails.totalAmount}
+                          </span>
+                        </div>
+                      </label>
+
+                      {/* Option 2: Pay Later / Pay at Centre */}
+                      <label
+                        className={`relative p-3.5 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
+                          selectedPaymentMethod === 'pay_at_centre'
+                            ? 'border-[#2563EB] bg-[#EFF6FF]'
+                            : 'border-[#E2E8F0] bg-white hover:border-[#CBD5E1]'
+                        }`}
+                      >
+                        <div className="flex items-start gap-2.5">
+                          <input
+                            type="radio"
+                            name="checkoutPaymentMethod"
+                            value="pay_at_centre"
+                            checked={selectedPaymentMethod === 'pay_at_centre'}
+                            onChange={() => setSelectedPaymentMethod('pay_at_centre')}
+                            className="mt-1 w-4 h-4 text-[#2563EB] border-[#CBD5E1] focus:ring-[#2563EB]"
+                          />
+                          <div className="min-w-0">
+                            <span className="text-xs font-bold text-[#102A43] flex items-center gap-1.5">
+                              <Building2 className="w-3.5 h-3.5 text-[#16A34A]" />
+                              <span>
+                                {isPhysicalDeliveryService
+                                  ? 'Pay at Centre / Cash on Delivery'
+                                  : 'Pay Later at Centre'}
+                              </span>
+                            </span>
+                            <p className="text-[11px] text-[#475569] mt-0.5 leading-relaxed">
+                              Submit application now. Pay offline at the counter upon visit or document collection.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-3 pt-2 border-t border-[#E2E8F0] flex items-center justify-between text-xs font-semibold">
+                          <span className="text-[#64748B]">Pay on Counter Visit</span>
+                          <span className="text-xs text-[#D97706] font-medium">Unpaid at Filing</span>
+                        </div>
+                      </label>
+                    </div>
+
+                    {/* Itemised Fee Breakdown Box */}
+                    <div className="mt-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-3.5 space-y-2">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">
+                        Itemised Price Summary
+                      </span>
+                      <dl className="divide-y divide-[#E2E8F0] text-xs">
+                        <div className="py-1.5 flex items-center justify-between">
+                          <dt className="text-[#475569]">Official Department / Portal Fee</dt>
+                          <dd className="font-mono font-medium text-[#102A43]">
+                            {computedPriceDetails.govtFee > 0 ? `₹${computedPriceDetails.govtFee}` : 'Free / Direct Filing'}
+                          </dd>
+                        </div>
+                        <div className="py-1.5 flex items-center justify-between">
+                          <dt className="text-[#475569]">CSC DOST Portal &amp; Assistance Charge</dt>
+                          <dd className="font-mono font-medium text-[#102A43]">
+                            ₹{computedPriceDetails.cscFee}
+                          </dd>
+                        </div>
+                        <div className="pt-2 flex items-center justify-between text-sm font-bold text-[#102A43]">
+                          <dt>Total Amount</dt>
+                          <dd className="font-mono text-[#16A34A] text-base">
+                            ₹{computedPriceDetails.totalAmount}
+                          </dd>
+                        </div>
+                      </dl>
+                      <p className="text-[11px] text-[#64748B] pt-1">
+                        CSC DOST service charges are separate from any government statutory fee.
+                      </p>
+                    </div>
                   </div>
 
                   {/* Consent & Disclaimer Checkbox */}
@@ -1880,7 +2150,7 @@ export default function ApplyDedicatedPageView({
                     <button
                       type="button"
                       onClick={() => navigateToStep(2)}
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || payuInitiating}
                       className="min-h-[44px] px-5 py-2.5 bg-white hover:bg-[#F8FAFC] text-[#102A43] border border-[#CBD5E1] text-sm font-semibold rounded-lg transition-colors cursor-pointer inline-flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       <ArrowLeft className="w-4 h-4" aria-hidden="true" />
@@ -1889,19 +2159,28 @@ export default function ApplyDedicatedPageView({
 
                     <button
                       type="submit"
-                      disabled={isSubmitting || Boolean(processingSlotId)}
+                      disabled={isSubmitting || payuInitiating || Boolean(processingSlotId)}
                       id="submit-application-btn"
                       className="min-h-[44px] px-6 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer inline-flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2"
                     >
-                      {isSubmitting ? (
+                      {isSubmitting || payuInitiating ? (
                         <>
                           <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
-                          <span>Submitting request...</span>
+                          <span>
+                            {selectedPaymentMethod === 'online_payu'
+                              ? 'Connecting PayU Gateway...'
+                              : 'Submitting request...'}
+                          </span>
+                        </>
+                      ) : selectedPaymentMethod === 'online_payu' && computedPriceDetails.totalAmount > 0 ? (
+                        <>
+                          <ShieldCheck className="w-4 h-4 text-emerald-300" aria-hidden="true" />
+                          <span>Pay Securely via PayU (₹{computedPriceDetails.totalAmount}) →</span>
                         </>
                       ) : (
                         <>
                           <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
-                          <span>Submit Assistance Request</span>
+                          <span>Submit Application (Pay at Centre) →</span>
                         </>
                       )}
                     </button>
@@ -2010,12 +2289,68 @@ export default function ApplyDedicatedPageView({
                 </div>
 
                 <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                  <dt className="text-[#64748B]">Payment terms</dt>
-                  <dd className="text-[#334155] font-medium sm:text-right">
-                    Pay at CSC Desk upon completion
+                  <dt className="text-[#64748B]">Payment method</dt>
+                  <dd className="font-medium text-[#102A43] sm:text-right">
+                    {submissionReceipt?.paymentMethodLabel || 'Pay Later at CSC Centre'}
+                  </dd>
+                </div>
+
+                <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                  <dt className="text-[#64748B]">Payment status</dt>
+                  <dd className="sm:text-right">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                      submissionReceipt?.paymentStatus?.toLowerCase().includes('paid')
+                        ? 'bg-green-100 text-green-800'
+                        : submissionReceipt?.paymentStatus?.toLowerCase().includes('not required')
+                        ? 'bg-slate-100 text-slate-700'
+                        : 'bg-amber-100 text-amber-800'
+                    }`}>
+                      {submissionReceipt?.paymentStatus || 'Unpaid (Pay at CSC Centre)'}
+                    </span>
+                  </dd>
+                </div>
+
+                <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                  <dt className="text-[#64748B]">Total assistance amount</dt>
+                  <dd className="font-mono font-bold text-base text-[#102A43] sm:text-right">
+                    {submissionReceipt?.totalAmount && submissionReceipt.totalAmount > 0
+                      ? `₹${submissionReceipt.totalAmount}`
+                      : 'Free / Direct Filing'}
                   </dd>
                 </div>
               </dl>
+
+              {/* Pay Online Now action for offline/unpaid requests */}
+              {submissionReceipt?.totalAmount && submissionReceipt.totalAmount > 0 && submissionReceipt.paymentMode === 'pay_at_centre' && (
+                <div className="mt-4 p-4 rounded-xl bg-blue-50/70 border border-blue-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-bold text-blue-950">
+                      Want to complete your payment online now?
+                    </p>
+                    <p className="text-xs text-blue-800 mt-0.5">
+                      You selected Pay at Centre (₹{submissionReceipt.totalAmount}), but you can also pay digitally right now via PayU Hosted Checkout.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handlePayOnlineFromReceipt}
+                    disabled={payuInitiating}
+                    className="min-h-[40px] px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold rounded-lg shrink-0 inline-flex items-center gap-2 transition cursor-pointer shadow-sm"
+                  >
+                    {payuInitiating ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Opening Gateway...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="w-3.5 h-3.5" />
+                        <span>Pay Online via PayU (₹{submissionReceipt.totalAmount})</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
 
               {/* Next Steps & Mandatory Disclaimer */}
               <div className="pt-3 space-y-2 text-xs sm:text-sm text-[#475569]">
@@ -2023,6 +2358,11 @@ export default function ApplyDedicatedPageView({
                 <ul className="list-disc list-inside space-y-1">
                   <li>
                     A CSC DOST operator will verify your attached documents and details.
+                  </li>
+                  <li>
+                    {submissionReceipt?.paymentMode === 'pay_at_centre' && submissionReceipt?.totalAmount && submissionReceipt.totalAmount > 0
+                      ? `Payment of ₹${submissionReceipt.totalAmount} will be collected at the counter or cash on delivery upon document completion.`
+                      : 'Online payment status will be updated immediately upon confirmation from the payment gateway.'}
                   </li>
                   <li>
                     If any OTP or clarification is required during official portal filing, the operator will contact you on your mobile number.

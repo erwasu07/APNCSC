@@ -205,6 +205,13 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     testedAt?: string;
   } | null>(null);
 
+  // PayU Gateway Recheck & Counter Cash Recording States
+  const [recheckingPayU, setRecheckingPayU] = useState<boolean>(false);
+  const [offlinePaymentModalOpen, setOfflinePaymentModalOpen] = useState<boolean>(false);
+  const [offlineReceiptInput, setOfflineReceiptInput] = useState<string>('');
+  const [offlineAmountInput, setOfflineAmountInput] = useState<number>(0);
+  const [recordingOffline, setRecordingOffline] = useState<boolean>(false);
+
   // References to keep data maps in sync across all providers
   const serverApiMapRef = useRef<Map<string, any>>(new Map());
   const firestoreAppsMapRef = useRef<Map<string, any>>(new Map());
@@ -1718,12 +1725,102 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     }
   };
 
+  // PayU Gateway Recheck Handler
+  const handleRecheckPayU = async (app: any) => {
+    const txnid = app.gatewayTxnId || app.gateway_txnid || app.txnid || app.appId || app.id;
+    setRecheckingPayU(true);
+    try {
+      const res = await fetch('/api/payu/recheck', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAdminAuthHeaders() },
+        body: JSON.stringify({ txnid, applicationId: app.appId || app.id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setActionSuccess(`PayU Gateway Status: ${data.message || 'Payment status updated'}`);
+        setTimeout(() => setActionSuccess(null), 4000);
+        if (data.status === 'paid') {
+          setApplications(prev =>
+            prev.map(a =>
+              (a.appId === app.appId || a.id === app.id)
+                ? { ...a, paymentStatus: 'paid', payment_status: 'paid', payuMihpayid: data.mihpayid }
+                : a
+            )
+          );
+        }
+      } else {
+        alert(`PayU Response: ${data.error || 'Payment not completed or not found'}`);
+      }
+    } catch (err: any) {
+      alert(`Error checking PayU: ${err.message || 'Network error'}`);
+    } finally {
+      setRecheckingPayU(false);
+    }
+  };
+
+  // Record Counter Cash Payment Handler
+  const handleRecordOfflinePayment = async () => {
+    if (!selectedDrawerApp) return;
+    setRecordingOffline(true);
+    try {
+      const targetAmount = offlineAmountInput > 0 ? offlineAmountInput : (selectedDrawerApp.totalAmount || 70);
+      const targetReceipt = offlineReceiptInput.trim() || `REC-${Date.now().toString().slice(-6)}`;
+      const res = await fetch('/api/admin/record-offline-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAdminAuthHeaders() },
+        body: JSON.stringify({
+          applicationId: selectedDrawerApp.appId || selectedDrawerApp.id,
+          amountPaid: targetAmount,
+          receiptNo: targetReceipt,
+          collectedBy: staffDisplayName || 'Mahi'
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setActionSuccess(`Recorded counter payment of ₹${targetAmount} (Receipt: ${targetReceipt})`);
+        setTimeout(() => setActionSuccess(null), 4000);
+        setOfflinePaymentModalOpen(false);
+        setApplications(prev =>
+          prev.map(a =>
+            (a.appId === selectedDrawerApp.appId || a.id === selectedDrawerApp.id)
+              ? {
+                  ...a,
+                  paymentStatus: 'paid',
+                  payment_status: 'paid',
+                  paymentMode: 'cash',
+                  payment_mode: 'cash',
+                  amountPaid: targetAmount,
+                  offlineReceiptNo: targetReceipt,
+                  offlineCollectedBy: staffDisplayName || 'Mahi',
+                  offlineCollectedAt: new Date().toISOString()
+                }
+              : a
+          )
+        );
+      } else {
+        alert(`Error: ${data.error || 'Failed to record payment'}`);
+      }
+    } catch (err: any) {
+      alert(`Error: ${err.message || 'Network error'}`);
+    } finally {
+      setRecordingOffline(false);
+    }
+  };
+
   // Classification Helpers
   const isOnlinePayment = (app: any): boolean => {
-    const mode = (app.paymentMode || app.payment_mode || '').toLowerCase();
+    const mode = (app.paymentMode || app.payment_mode || app.payment_method || '').toLowerCase();
     const st = (app.status || '').toLowerCase();
     const utr = (app.utrNumber || app.utr_number || '').trim();
-    return mode === 'online' || mode === 'upi' || st.includes('online') || st.includes('upi') || (utr !== '' && utr !== 'N/A' && utr !== 'none');
+    return (
+      mode.includes('online') ||
+      mode.includes('payu') ||
+      mode === 'upi' ||
+      st.includes('online') ||
+      st.includes('upi') ||
+      (utr !== '' && utr !== 'N/A' && utr !== 'none') ||
+      Boolean(app.gatewayTxnId || app.gateway_txnid || app.payuMihpayid || app.payu_mihpayid)
+    );
   };
 
   const getAppCategoryStatus = (app: any): 'pending' | 'approved' | 'completed' | 'rejected' => {
@@ -1739,6 +1836,36 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     const catStatus = getAppCategoryStatus(app);
     const utr = (app.utrNumber || app.utr_number || '').trim();
     const hasUtr = utr !== '' && utr !== 'N/A' && utr !== 'none';
+    const explicitStatus = String(app.payment_status || app.paymentStatus || '').toLowerCase();
+
+    if (explicitStatus === 'paid' || explicitStatus.includes('success')) {
+      const isPayU = Boolean(
+        app.gatewayTxnId ||
+        app.gateway_txnid ||
+        app.payuMihpayid ||
+        app.payu_mihpayid ||
+        (app.paymentMode || '').includes('payu')
+      );
+      return {
+        label: isPayU ? 'PayU Paid' : app.offlineReceiptNo || app.offline_receipt_no ? 'Cash Collected' : 'Paid',
+        colorClass: 'bg-emerald-50 text-[#16A34A] border-emerald-200',
+        isVerifiedRevenue: true
+      };
+    }
+    if (explicitStatus === 'failed') {
+      return {
+        label: 'Payment Failed',
+        colorClass: 'bg-red-50 text-[#DC2626] border-red-200',
+        isVerifiedRevenue: false
+      };
+    }
+    if (explicitStatus === 'not_required') {
+      return {
+        label: 'Not Required',
+        colorClass: 'bg-slate-100 text-[#64748B] border-slate-200',
+        isVerifiedRevenue: false
+      };
+    }
 
     if (catStatus === 'rejected') {
       return {
@@ -1750,7 +1877,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     if (online) {
       if (hasUtr || catStatus === 'completed' || catStatus === 'approved') {
         return {
-          label: 'UPI Paid',
+          label: 'UPI / Online Paid',
           colorClass: 'bg-emerald-50 text-[#16A34A] border-emerald-200',
           isVerifiedRevenue: true
         };
@@ -1762,7 +1889,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       };
     }
     // Cash Counter
-    if (catStatus === 'completed') {
+    if (catStatus === 'completed' || app.offlineReceiptNo || app.offline_receipt_no) {
       return {
         label: 'Cash Collected',
         colorClass: 'bg-emerald-50 text-[#16A34A] border-emerald-200',
@@ -4517,25 +4644,87 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                     <div>
                       <span className="text-[11px] font-medium text-[#64748B] block">Payment Method</span>
                       <span className="font-bold text-[#111827] mt-0.5 block">
-                        {isOnlinePayment(selectedDrawerApp) ? 'UPI Online' : 'Cash Counter'}
+                        {(selectedDrawerApp.paymentMode || '').includes('payu')
+                          ? 'PayU Hosted Checkout'
+                          : isOnlinePayment(selectedDrawerApp)
+                          ? 'UPI Online'
+                          : 'Cash / Pay at Centre'}
                       </span>
                     </div>
 
                     <div>
                       <span className="text-[11px] font-medium text-[#64748B] block">Fee Amount</span>
                       <span className="font-mono font-bold text-[#16A34A] text-sm mt-0.5 block">
-                        ₹{Number(selectedDrawerApp.totalAmount || 0).toLocaleString('en-IN')}
+                        ₹{Number(selectedDrawerApp.totalAmount || selectedDrawerApp.amountDue || 0).toLocaleString('en-IN')}
                       </span>
                     </div>
 
                     <div className="col-span-2 sm:col-span-1">
-                      <span className="text-[11px] font-medium text-[#64748B] block">UTR / Reference No.</span>
+                      <span className="text-[11px] font-medium text-[#64748B] block">UTR / Gateway Ref</span>
                       <span className="font-mono font-semibold text-[#111827] mt-0.5 block break-all">
-                        {selectedDrawerApp.utrNumber && selectedDrawerApp.utrNumber !== 'N/A'
-                          ? selectedDrawerApp.utrNumber
-                          : 'Not Applicable'}
+                        {selectedDrawerApp.gatewayTxnId ||
+                         selectedDrawerApp.gateway_txnid ||
+                         (selectedDrawerApp.utrNumber && selectedDrawerApp.utrNumber !== 'N/A'
+                           ? selectedDrawerApp.utrNumber
+                           : 'None')}
                       </span>
                     </div>
+
+                    {/* PayU mihpayid if available */}
+                    {(selectedDrawerApp.payuMihpayid || selectedDrawerApp.payu_mihpayid) && (
+                      <div className="col-span-2 sm:col-span-3 pt-1 border-t border-[#E2E8F0] flex items-center justify-between">
+                        <span className="text-[11px] text-[#64748B]">PayU Mihpayid:</span>
+                        <span className="font-mono font-semibold text-xs text-[#111827]">
+                          {selectedDrawerApp.payuMihpayid || selectedDrawerApp.payu_mihpayid}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Offline Cash Collection details if collected at counter */}
+                    {(selectedDrawerApp.offlineReceiptNo || selectedDrawerApp.offline_receipt_no) && (
+                      <div className="col-span-2 sm:col-span-3 pt-1 border-t border-[#E2E8F0] space-y-0.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-[#64748B]">Counter Cash Receipt:</span>
+                          <span className="font-mono font-bold text-[#16A34A]">
+                            {selectedDrawerApp.offlineReceiptNo || selectedDrawerApp.offline_receipt_no}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-[#64748B] flex items-center justify-between">
+                          <span>Collected by {selectedDrawerApp.offlineCollectedBy || selectedDrawerApp.offline_collected_by || 'Staff'}</span>
+                          <span>{formatShortDate(selectedDrawerApp.offlineCollectedAt || selectedDrawerApp.offline_collected_at)}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Payment Operator Actions */}
+                  <div className="pt-2 border-t border-[#E2E8F0] flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={recheckingPayU}
+                      onClick={() => handleRecheckPayU(selectedDrawerApp)}
+                      className="px-3 py-1.5 bg-[#F6F8FC] hover:bg-blue-50 text-[#2563EB] border border-[#CBD5E1] rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${recheckingPayU ? 'animate-spin' : ''}`} />
+                      <span>{recheckingPayU ? 'Verifying with PayU...' : 'Recheck with PayU'}</span>
+                    </button>
+
+                    {getPaymentStatusInfo(selectedDrawerApp).label !== 'Cash Collected' &&
+                     getPaymentStatusInfo(selectedDrawerApp).label !== 'PayU Paid' &&
+                     getPaymentStatusInfo(selectedDrawerApp).label !== 'Paid' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOfflineAmountInput(Number(selectedDrawerApp.totalAmount || 70));
+                          setOfflineReceiptInput(`REC-${Date.now().toString().slice(-6)}`);
+                          setOfflinePaymentModalOpen(true);
+                        }}
+                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+                      >
+                        <IndianRupee className="w-3.5 h-3.5" />
+                        <span>Record Cash Collection</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -5200,6 +5389,125 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 11. RECORD OFFLINE CASH PAYMENT MODAL */}
+      {offlinePaymentModalOpen && selectedDrawerApp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="record-offline-modal-title"
+            className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-[#CBD5E1] overflow-hidden animate-fade-in"
+          >
+            <div className="px-6 py-4 bg-[#111C3D] text-white flex items-center justify-between">
+              <div>
+                <h2 id="record-offline-modal-title" className="text-sm font-bold flex items-center gap-2">
+                  <IndianRupee className="w-4 h-4 text-emerald-400" />
+                  <span>Record Counter Cash Payment</span>
+                </h2>
+                <p className="text-[11px] text-slate-300 font-mono mt-0.5">
+                  App ID: {selectedDrawerApp.appId || selectedDrawerApp.id}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOfflinePaymentModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleRecordOfflinePayment();
+              }}
+              className="p-6 space-y-4 text-xs"
+            >
+              <div>
+                <label className="block font-semibold text-[#111827] mb-1">
+                  Applicant Name
+                </label>
+                <input
+                  type="text"
+                  disabled
+                  value={selectedDrawerApp.name || selectedDrawerApp.customerName || 'N/A'}
+                  className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-lg text-slate-600 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-[#111827] mb-1">
+                  Amount Collected (₹ INR) *
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  required
+                  value={offlineAmountInput}
+                  onChange={(e) => setOfflineAmountInput(Number(e.target.value))}
+                  className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg font-mono font-bold text-sm text-[#111827] focus:outline-none focus:border-[#2563EB]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-[#111827] mb-1">
+                  Counter Receipt / Slip No. *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={offlineReceiptInput}
+                  onChange={(e) => setOfflineReceiptInput(e.target.value)}
+                  placeholder="e.g. REC-123456"
+                  className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg font-mono text-xs text-[#111827] focus:outline-none focus:border-[#2563EB]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-[#111827] mb-1">
+                  Collected By (Staff Operator)
+                </label>
+                <input
+                  type="text"
+                  disabled
+                  value={staffDisplayName || 'Mahi'}
+                  className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-lg text-slate-600 font-medium"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setOfflinePaymentModalOpen(false)}
+                  className="px-4 py-2 bg-white border border-[#CBD5E1] text-[#475569] font-semibold rounded-lg hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={recordingOffline || !offlineReceiptInput.trim()}
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold rounded-lg cursor-pointer flex items-center gap-1.5 shadow-sm"
+                >
+                  {recordingOffline ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Recording...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Confirm &amp; Mark Paid</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

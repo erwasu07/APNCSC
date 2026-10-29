@@ -36,6 +36,12 @@ export interface Appointment {
   dateOfBirth?: string;
   userCategory?: string;
   paymentMode?: string;
+  paymentStatus?: string;
+  amountDue?: number;
+  amountPaid?: number;
+  gatewayTxnId?: string;
+  payuMihpayid?: string;
+  offlineReceiptNo?: string;
   utrNumber?: string;
   totalAmount?: number;
   documents?: UploadedDocument[];

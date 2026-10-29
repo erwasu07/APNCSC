@@ -14,7 +14,9 @@ import {
   Check,
   Download,
   Phone,
-  FileText
+  FileText,
+  CreditCard,
+  ShieldCheck
 } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { doc, onSnapshot, getDoc } from 'firebase/firestore';
@@ -32,6 +34,7 @@ export interface TrackingData {
   appId: string;
   applicantName?: string;
   maskedPhone?: string;
+  rawPhone?: string;
   serviceName?: string;
   rawStatus: string;
   statusLabel: string;
@@ -40,8 +43,14 @@ export interface TrackingData {
   lastUpdated?: string;
   userCategory?: string;
   paymentMode?: string;
+  paymentMethodLabel?: string;
   paymentStatus?: string;
   totalAmount?: number | string;
+  amountDue?: number;
+  amountPaid?: number;
+  gatewayTxnId?: string;
+  payuMihpayid?: string;
+  offlineReceiptNo?: string;
   workflowSteps: WorkflowStep[];
   hasExplicitHistory: boolean;
   operatorRemark?: string;
@@ -210,20 +219,53 @@ export function mapApplicationToTrackingData(rawApp: any, fallbackToken: string)
     workflowSteps = isRejected ? [step1, step2] : [step1, step2, step3];
   }
 
-  const rawPaymentMode = rawApp.paymentMode || rawApp.payment_mode || rawApp.payload?.paymentMode;
-  const rawPaymentStatus = rawApp.paymentStatus || rawApp.payload?.paymentStatus;
+  const rawPaymentMode =
+    rawApp.payment_method ||
+    rawApp.paymentMethod ||
+    rawApp.paymentMode ||
+    rawApp.payment_mode ||
+    rawApp.payload?.paymentMode;
+  const rawPaymentStatus =
+    rawApp.payment_status ||
+    rawApp.paymentStatus ||
+    rawApp.payload?.paymentStatus;
 
-  let paymentDisplay: string | undefined;
-  if (rawPaymentStatus && String(rawPaymentStatus).trim() !== 'N/A') {
-    paymentDisplay = String(rawPaymentStatus).trim();
-  } else if (rawPaymentMode && String(rawPaymentMode).trim() !== 'N/A') {
+  let paymentMethodLabel = 'Pay at CSC Centre (Cash)';
+  if (rawPaymentMode) {
     const pmLower = String(rawPaymentMode).toLowerCase();
-    if (pmLower === 'cash' || pmLower.includes('desk') || pmLower.includes('completion')) {
-      paymentDisplay = 'Pay at CSC Desk upon completion';
+    if (pmLower.includes('payu') || pmLower.includes('online')) {
+      paymentMethodLabel = 'PayU Hosted Checkout (Online)';
+    } else if (pmLower.includes('delivery')) {
+      paymentMethodLabel = 'Pay at Centre / Cash on Delivery';
+    } else if (pmLower.includes('upi')) {
+      paymentMethodLabel = 'Online UPI Payment';
+    } else if (pmLower === 'cash' || pmLower.includes('desk') || pmLower.includes('completion')) {
+      paymentMethodLabel = 'Pay at CSC Desk upon completion';
     } else {
-      paymentDisplay = String(rawPaymentMode);
+      paymentMethodLabel = String(rawPaymentMode);
     }
   }
+
+  let paymentDisplay = 'Unpaid';
+  if (rawPaymentStatus && String(rawPaymentStatus).trim() !== 'N/A') {
+    const psLower = String(rawPaymentStatus).toLowerCase();
+    if (psLower === 'paid' || psLower.includes('success')) {
+      paymentDisplay = 'Paid';
+    } else if (psLower.includes('pending') || psLower.includes('verif')) {
+      paymentDisplay = 'Pending Verification';
+    } else if (psLower.includes('fail')) {
+      paymentDisplay = 'Failed';
+    } else if (psLower.includes('not_req') || psLower.includes('free')) {
+      paymentDisplay = 'Not Required';
+    } else {
+      paymentDisplay = String(rawPaymentStatus);
+    }
+  }
+
+  const rawPhone = String(rawApp.phoneNumber || rawApp.whatsapp_number || rawApp.phone || '');
+  const gatewayTxnId = String(rawApp.gateway_txnid || rawApp.gatewayTxnId || rawApp.txnid || '');
+  const payuMihpayid = String(rawApp.payu_mihpayid || rawApp.payuMihpayid || rawApp.mihpayid || '');
+  const offlineReceiptNo = String(rawApp.offline_receipt_no || rawApp.offlineReceiptNo || '');
 
   const operatorRemark =
     typeof rawApp.vleRemark === 'string'
@@ -239,9 +281,8 @@ export function mapApplicationToTrackingData(rawApp: any, fallbackToken: string)
     applicantName: maskApplicantName(
       rawApp.customerName || rawApp.full_name || rawApp.applicantName || rawApp.name
     ),
-    maskedPhone: maskPhoneNumber(
-      rawApp.phoneNumber || rawApp.whatsapp_number || rawApp.phone
-    ),
+    maskedPhone: maskPhoneNumber(rawPhone),
+    rawPhone: rawPhone.trim() || undefined,
     serviceName: String(
       rawApp.selectedService || rawApp.service_selected || rawApp.service || 'CSC Assistance Request'
     ),
@@ -253,11 +294,19 @@ export function mapApplicationToTrackingData(rawApp: any, fallbackToken: string)
     userCategory:
       rawApp.userCategory || rawApp.user_category || rawApp.payload?.userCategory || undefined,
     paymentMode: rawPaymentMode ? String(rawPaymentMode) : undefined,
+    paymentMethodLabel,
     paymentStatus: paymentDisplay,
     totalAmount:
       rawApp.totalAmount !== undefined && Number(rawApp.totalAmount) > 0
         ? Number(rawApp.totalAmount)
+        : rawApp.amount_due !== undefined && Number(rawApp.amount_due) > 0
+        ? Number(rawApp.amount_due)
         : undefined,
+    amountDue: rawApp.amount_due ? Number(rawApp.amount_due) : undefined,
+    amountPaid: rawApp.amount_paid ? Number(rawApp.amount_paid) : undefined,
+    gatewayTxnId: gatewayTxnId || undefined,
+    payuMihpayid: payuMihpayid || undefined,
+    offlineReceiptNo: offlineReceiptNo || undefined,
     workflowSteps,
     hasExplicitHistory,
     operatorRemark,
@@ -283,8 +332,113 @@ export default function TrackDedicatedPageView({
   const [recentTokens, setRecentTokens] = useState<string[]>([]);
   const [copiedToken, setCopiedToken] = useState<boolean>(false);
   const [retryCount, setRetryCount] = useState<number>(0);
+  const [payuInitiating, setPayuInitiating] = useState<boolean>(false);
+  const [paymentBanner, setPaymentBanner] = useState<{
+    status: 'success' | 'failed' | 'tampered';
+    message: string;
+    ref?: string;
+    txnid?: string;
+    amount?: string;
+  } | null>(null);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Check URL parameters for PayU callback redirects
+  useEffect(() => {
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      let hashQuery = '';
+      if (window.location.hash.includes('?')) {
+        hashQuery = window.location.hash.split('?')[1];
+      }
+      const hashParams = new URLSearchParams(hashQuery);
+
+      const payment = searchParams.get('payment') || hashParams.get('payment');
+      const ref = searchParams.get('ref') || hashParams.get('ref') || '';
+      const txnid = searchParams.get('txnid') || hashParams.get('txnid') || '';
+      const amt = searchParams.get('amt') || hashParams.get('amt') || '';
+      const reason = searchParams.get('reason') || hashParams.get('reason') || '';
+
+      if (payment === 'success') {
+        setPaymentBanner({
+          status: 'success',
+          message: `Payment of ₹${amt || ''} completed successfully via PayU Hosted Gateway. Reference: ${txnid}`,
+          ref,
+          txnid,
+          amount: amt
+        });
+        if (ref) {
+          setSearchInput(ref);
+          setActiveToken(ref);
+        }
+      } else if (payment === 'failed') {
+        setPaymentBanner({
+          status: 'failed',
+          message: `Online payment was not completed (${reason || 'Transaction failed or cancelled'}). Your application remains registered as Unpaid. You can try paying online below or pay at the CSC Centre.`,
+          ref,
+          txnid,
+          amount: amt
+        });
+        if (ref) {
+          setSearchInput(ref);
+          setActiveToken(ref);
+        }
+      } else if (payment === 'tampered') {
+        setPaymentBanner({
+          status: 'tampered',
+          message: 'Security notice: Response signature verification failed. Please contact CSC DOST support with your transaction reference.',
+          ref,
+          txnid
+        });
+        if (ref) {
+          setSearchInput(ref);
+          setActiveToken(ref);
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing payment URL params:', e);
+    }
+  }, []);
+
+  const handlePayOnlineForTrackedApp = async () => {
+    if (!liveData?.appId || payuInitiating) return;
+    setPayuInitiating(true);
+    try {
+      const payuRes = await fetch('/api/payu/initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          applicationId: liveData.appId,
+          serviceName: liveData.serviceName,
+          customerName: liveData.applicantName || 'Applicant',
+          phone: liveData.rawPhone || '',
+          email: `${liveData.rawPhone || 'applicant'}@cscdost.com`
+        })
+      });
+      const payuData = await payuRes.json();
+      if (payuData.success && payuData.actionUrl && payuData.params) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = payuData.actionUrl;
+        Object.entries(payuData.params).forEach(([k, v]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = k;
+          input.value = String(v);
+          form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
+        return;
+      } else {
+        alert(payuData.error || 'Failed to initiate PayU checkout.');
+      }
+    } catch (err: any) {
+      alert('Error connecting to PayU gateway: ' + (err?.message || 'Network error'));
+    } finally {
+      setPayuInitiating(false);
+    }
+  };
 
   const handleStartNewRequest = (serviceName?: string) => {
     const fn = onApplyNew || onNavigateApply;
@@ -530,6 +684,54 @@ export default function TrackDedicatedPageView({
 
       {/* Main Content Area — Full-width open sections on mobile, comfortable centered width on desktop */}
       <div className="max-w-3xl mx-auto">
+        {/* PayU Payment Notification Banner */}
+        {paymentBanner && (
+          <div
+            className={`m-4 p-4 rounded-xl border flex items-start gap-3 shadow-sm ${
+              paymentBanner.status === 'success'
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-950'
+                : paymentBanner.status === 'tampered'
+                ? 'bg-red-50 border-red-200 text-red-950'
+                : 'bg-amber-50 border-amber-200 text-amber-950'
+            }`}
+          >
+            <div className="shrink-0 mt-0.5">
+              {paymentBanner.status === 'success' ? (
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+              ) : (
+                <AlertCircle
+                  className={`w-5 h-5 ${
+                    paymentBanner.status === 'tampered' ? 'text-red-600' : 'text-amber-600'
+                  }`}
+                />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-sm font-bold">
+                {paymentBanner.status === 'success'
+                  ? 'Payment Confirmed'
+                  : paymentBanner.status === 'tampered'
+                  ? 'Security Verification Notice'
+                  : 'Payment Pending / Failed'}
+              </h2>
+              <p className="text-xs mt-0.5 leading-relaxed">{paymentBanner.message}</p>
+              {paymentBanner.txnid && (
+                <p className="text-[11px] font-mono mt-1 opacity-80">
+                  Transaction ID: {paymentBanner.txnid}
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setPaymentBanner(null)}
+              className="text-xs p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
+              aria-label="Dismiss banner"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
         {/* Page Heading & Search Section */}
         <section
           aria-labelledby="track-page-heading"
@@ -867,17 +1069,104 @@ export default function TrackDedicatedPageView({
                     </div>
                   )}
 
-                  {/* Payment Status (only where supported/recorded) */}
-                  {liveData.paymentStatus && (
+                  {/* Selected Payment Method */}
+                  <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <dt className="text-[#64748B] font-medium">Payment method</dt>
+                    <dd className="font-medium text-[#102A43] sm:text-right">
+                      {liveData.paymentMethodLabel || 'Pay at CSC Centre (Cash)'}
+                    </dd>
+                  </div>
+
+                  {/* Payment Status with Distinct Badge */}
+                  <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <dt className="text-[#64748B] font-medium">Payment status</dt>
+                    <dd className="sm:text-right">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                          liveData.paymentStatus?.toLowerCase() === 'paid'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : liveData.paymentStatus?.toLowerCase() === 'not required'
+                            ? 'bg-slate-100 text-slate-700'
+                            : liveData.paymentStatus?.toLowerCase().includes('pending')
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}
+                      >
+                        {liveData.paymentStatus || 'Unpaid'}
+                      </span>
+                    </dd>
+                  </div>
+
+                  {/* Total / Amount Details */}
+                  {liveData.totalAmount !== undefined && (
                     <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                      <dt className="text-[#64748B] font-medium">Payment status</dt>
-                      <dd className="text-[#334155] font-medium sm:text-right">
-                        {liveData.paymentStatus}
-                        {liveData.totalAmount ? ` (₹${liveData.totalAmount})` : ''}
+                      <dt className="text-[#64748B] font-medium">Assistance amount</dt>
+                      <dd className="font-mono font-bold text-base text-[#102A43] sm:text-right">
+                        {liveData.totalAmount > 0 ? `₹${liveData.totalAmount}` : 'Free / Direct Filing'}
+                        {liveData.amountPaid && liveData.amountPaid > 0 && liveData.paymentStatus?.toLowerCase() === 'paid'
+                          ? ` (Paid ₹${liveData.amountPaid})`
+                          : ''}
+                      </dd>
+                    </div>
+                  )}
+
+                  {/* Gateway Reference (if paid online) */}
+                  {liveData.gatewayTxnId && (
+                    <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                      <dt className="text-[#64748B] font-medium">Gateway Txn ID</dt>
+                      <dd className="font-mono text-xs text-[#334155] sm:text-right select-all">
+                        {liveData.gatewayTxnId}
+                        {liveData.payuMihpayid ? ` (PayU: ${liveData.payuMihpayid})` : ''}
+                      </dd>
+                    </div>
+                  )}
+
+                  {/* Offline Receipt No (if collected at centre) */}
+                  {liveData.offlineReceiptNo && (
+                    <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                      <dt className="text-[#64748B] font-medium">Counter receipt no.</dt>
+                      <dd className="font-mono text-xs font-semibold text-[#102A43] sm:text-right">
+                        {liveData.offlineReceiptNo}
                       </dd>
                     </div>
                   )}
                 </dl>
+
+                {/* Online PayU Payment CTA for unpaid applications */}
+                {liveData.paymentStatus?.toLowerCase() !== 'paid' &&
+                  liveData.paymentStatus?.toLowerCase() !== 'not required' &&
+                  liveData.totalAmount &&
+                  Number(liveData.totalAmount) > 0 && (
+                    <div className="mt-4 p-4 rounded-xl bg-blue-50/70 border border-blue-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-bold text-blue-950 flex items-center gap-1.5">
+                          <CreditCard className="w-4 h-4 text-blue-600" />
+                          <span>Complete Online Payment</span>
+                        </p>
+                        <p className="text-xs text-blue-800 mt-0.5">
+                          Amount due: <strong className="font-mono">₹{liveData.totalAmount}</strong>. Pay securely now via PayU Hosted Checkout using UPI, Debit/Credit Card, or NetBanking.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handlePayOnlineForTrackedApp}
+                        disabled={payuInitiating}
+                        className="min-h-[40px] px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold rounded-lg shrink-0 inline-flex items-center gap-2 transition cursor-pointer shadow-sm"
+                      >
+                        {payuInitiating ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            <span>Connecting PayU...</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShieldCheck className="w-4 h-4 text-emerald-300" />
+                            <span>Pay ₹{liveData.totalAmount} Online Now</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
               </section>
 
               {/* Vertical Progress Timeline */}

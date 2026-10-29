@@ -1,0 +1,6 @@
+{
+  "summary":  "Comprehensive architectural and implementation plan for integrating PayU India Hosted Checkout into CSC DOST (cscdost.com), offering dual payment options (PayU Online and Pay at Centre/Offline) across all service checkouts, server-side hash generation and response verification, status reconciliation with the PayU Verify Payment API, tracking page checkout for unpaid offline orders, and authorized staff offline collection and verification tools.",
+  "updatedAt":  "2026-10-29T07:53:07.601929485Z",
+  "requestFeedback":  true,
+  "userFacing":  true
+}
