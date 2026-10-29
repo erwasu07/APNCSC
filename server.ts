@@ -3354,7 +3354,10 @@ app.get(['/api/og-image/:id.png', '/api/og-image/:id.webp', '/api/og-image/:id.s
     return res.send(png);
   } catch (err) {
     console.error('OG Image Generation Error:', err);
-    res.status(500).sendFile(path.join(process.cwd(), 'public', 'og-banner.png'));
+    const fallbackPath = path.join(process.cwd(), 'public', 'og-banner.png');
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    return res.status(200).sendFile(fallbackPath);
   }
 });
 

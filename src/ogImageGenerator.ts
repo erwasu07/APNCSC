@@ -255,20 +255,28 @@ export async function generateSocialPreviewPng(item: Partial<SarkariItem> | null
       .toBuffer();
   }
 
-  const spec = buildDeterministicThumbnailSpec({
-    id: item.id,
-    title: item.title || 'CSC DOST – Citizen Recruitment & Government Services Portal',
-    category: item.category,
-    department: item.department,
-    postType: item.postType,
-    shortInfo: item.shortInfo,
-    startDate: item.startDate,
-    lastDate: item.lastDate,
-    eligibility: item.eligibility,
-    status: item.status
-  });
+  try {
+    const spec = buildDeterministicThumbnailSpec({
+      id: item.id,
+      title: item.title || 'CSC DOST – Citizen Recruitment & Government Services Portal',
+      category: item.category,
+      department: item.department,
+      postType: item.postType,
+      shortInfo: item.shortInfo,
+      startDate: item.startDate,
+      lastDate: item.lastDate,
+      eligibility: item.eligibility,
+      status: item.status
+    });
 
-  return renderMasterThumbnailBuffer(spec, 'png');
+    return await renderMasterThumbnailBuffer(spec, 'png');
+  } catch (err) {
+    console.warn('[SocialPreview] Falling back to portal banner PNG:', err);
+    const fallbackSvg = generatePortalOgBannerSvg();
+    return sharp(Buffer.from(fallbackSvg))
+      .png({ quality: 95, compressionLevel: 9 })
+      .toBuffer();
+  }
 }
 
 /**

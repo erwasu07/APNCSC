@@ -570,13 +570,13 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
     </g>
     ` : ''}
 
-    <text x="${centerX}" y="145" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="${orgFontSize}" fill="${theme.primaryColor}" text-anchor="middle" letter-spacing="-0.5">
+    <text x="${centerX}" y="145" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="900" font-size="${orgFontSize}" fill="${theme.primaryColor}" text-anchor="middle" letter-spacing="-0.5">
       ${orgTitle}
     </text>
 
     <g transform="translate(${badgePillX}, 180)" filter="url(#softShadow)">
       <rect x="0" y="0" width="${badgePillWidth}" height="92" rx="26" fill="${theme.pillBg}" stroke="${theme.isPillGradient ? '#B3861B' : 'none'}" stroke-width="${theme.isPillGradient ? 1.5 : 0}" />
-      <text x="${badgePillWidth / 2}" y="65" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="${badgeFontSize}" fill="${theme.pillText}" text-anchor="middle" letter-spacing="0.5">
+      <text x="${badgePillWidth / 2}" y="65" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="900" font-size="${badgeFontSize}" fill="${theme.pillText}" text-anchor="middle" letter-spacing="0.5">
         ${postBadgeTitle}
       </text>
     </g>
@@ -594,10 +594,10 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
       <line x1="9" y1="19" x2="15" y2="19" />
     </g>
     <line x1="102" y1="28" x2="102" y2="92" stroke="${theme.card1Border}" stroke-width="1.5" />
-    <text x="118" y="48" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="800" font-size="20" fill="${theme.primaryColor}">
+    <text x="118" y="48" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="800" font-size="20" fill="${theme.primaryColor}">
       ${elLabel}
     </text>
-    <text x="118" y="80" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="700" font-size="18" fill="#1E293B">
+    <text x="118" y="80" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="700" font-size="18" fill="#1E293B">
       ${elValue.length > 20 ? elValue.slice(0, 18) + '...' : elValue}
     </text>
   </g>
@@ -613,10 +613,10 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
       <line x1="19" y1="2" x2="19" y2="6" />
     </g>
     <line x1="102" y1="28" x2="102" y2="92" stroke="${theme.card2Border}" stroke-width="1.5" />
-    <text x="118" y="48" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="800" font-size="20" fill="${theme.secondaryColor}">
+    <text x="118" y="48" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="800" font-size="20" fill="${theme.secondaryColor}">
       ${dateLabel}
     </text>
-    <text x="118" y="80" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="700" font-size="18" fill="#1E293B">
+    <text x="118" y="80" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="700" font-size="18" fill="#1E293B">
       ${dateValue.length > 20 ? dateValue.slice(0, 18) + '...' : dateValue}
     </text>
   </g>
@@ -629,10 +629,10 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
       <path d="M 6 4 L 20 18 L 13 19 L 17 26 L 14 28 L 10 20 L 6 24 Z" fill="#FFFFFF" />
     </g>
     <line x1="102" y1="28" x2="102" y2="92" stroke="${theme.card3Border}" stroke-width="1.5" />
-    <text x="118" y="48" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="800" font-size="20" fill="${theme.primaryColor}">
+    <text x="118" y="48" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="800" font-size="20" fill="${theme.primaryColor}">
       ${applyLabel}
     </text>
-    <text x="118" y="80" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="700" font-size="18" fill="#1E293B">
+    <text x="118" y="80" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="700" font-size="18" fill="#1E293B">
       ${applyValue.length > 20 ? applyValue.slice(0, 18) + '...' : applyValue}
     </text>
   </g>
@@ -645,7 +645,7 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
   <g transform="translate(375, 532)" filter="url(#brandPillShadow)">
     <rect x="0" y="0" width="450" height="58" rx="29" fill="${theme.bottomPillBg}" stroke="#FFFFFF" stroke-width="2" />
     <line x1="35" y1="29" x2="105" y2="29" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" />
-    <text x="225" y="39" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="26" fill="#FFFFFF" text-anchor="middle" letter-spacing="0.8">
+    <text x="225" y="39" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="900" font-size="26" fill="#FFFFFF" text-anchor="middle" letter-spacing="0.8">
       cscdost.com
     </text>
     <line x1="345" y1="29" x2="415" y2="29" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" />

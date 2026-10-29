@@ -3,6 +3,7 @@ import path from 'path';
 import sharp from 'sharp';
 import { GoogleGenAI, Type } from '@google/genai';
 import { SarkariItem, SARKARI_CATEGORIES } from './data/sarkariData';
+import { fileURLToPath } from 'url';
 
 export const THUMBNAIL_WIDTH = 1200;
 export const THUMBNAIL_HEIGHT = 630;
@@ -62,41 +63,43 @@ export interface ThumbnailInputPayload {
   customOverrides?: Partial<ThumbnailSpec>;
 }
 
-import { fileURLToPath } from 'url';
+import { LIBERATION_SANS_BOLD_BASE64, LIBERATION_SANS_REGULAR_BASE64 } from './assets/embeddedFonts';
 
-// Load and cache embedded TrueType fonts as Base64 for deterministic serverless rasterization (Sharp / librsvg)
-let embeddedFontBase64Bold = '';
-let embeddedFontBase64Regular = '';
+// Deterministic embedded TrueType fonts for serverless, edge, Vercel, and Sharp rendering
+let embeddedFontBase64Bold = LIBERATION_SANS_BOLD_BASE64 || '';
+let embeddedFontBase64Regular = LIBERATION_SANS_REGULAR_BASE64 || '';
 
 try {
-  let currentDir = process.cwd();
-  try {
-    currentDir = typeof __dirname !== 'undefined' ? __dirname : path.dirname(fileURLToPath(import.meta.url));
-  } catch {
-    currentDir = process.cwd();
-  }
-
-  const boldCandidates = [
-    path.join(currentDir, 'assets/fonts/LiberationSans-Bold.ttf'),
-    path.join(process.cwd(), 'src/assets/fonts/LiberationSans-Bold.ttf'),
-    '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf'
-  ];
-  for (const p of boldCandidates) {
-    if (fs.existsSync(p)) {
-      embeddedFontBase64Bold = fs.readFileSync(p).toString('base64');
-      break;
+  if (!embeddedFontBase64Bold || !embeddedFontBase64Regular) {
+    let currentDir = process.cwd();
+    try {
+      currentDir = typeof __dirname !== 'undefined' ? __dirname : path.dirname(fileURLToPath(import.meta.url));
+    } catch {
+      currentDir = process.cwd();
     }
-  }
 
-  const regularCandidates = [
-    path.join(currentDir, 'assets/fonts/LiberationSans-Regular.ttf'),
-    path.join(process.cwd(), 'src/assets/fonts/LiberationSans-Regular.ttf'),
-    '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf'
-  ];
-  for (const p of regularCandidates) {
-    if (fs.existsSync(p)) {
-      embeddedFontBase64Regular = fs.readFileSync(p).toString('base64');
-      break;
+    const boldCandidates = [
+      path.join(currentDir, 'assets/fonts/LiberationSans-Bold.ttf'),
+      path.join(process.cwd(), 'src/assets/fonts/LiberationSans-Bold.ttf'),
+      '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf'
+    ];
+    for (const p of boldCandidates) {
+      if (fs.existsSync(p)) {
+        embeddedFontBase64Bold = fs.readFileSync(p).toString('base64');
+        break;
+      }
+    }
+
+    const regularCandidates = [
+      path.join(currentDir, 'assets/fonts/LiberationSans-Regular.ttf'),
+      path.join(process.cwd(), 'src/assets/fonts/LiberationSans-Regular.ttf'),
+      '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf'
+    ];
+    for (const p of regularCandidates) {
+      if (fs.existsSync(p)) {
+        embeddedFontBase64Regular = fs.readFileSync(p).toString('base64');
+        break;
+      }
     }
   }
 } catch (e) {
@@ -642,20 +645,24 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
   <defs>
     <!-- Embedded TrueType Fonts for 100% Deterministic Serverless Pixel Rendering -->
     <style>
+      ${embeddedFontBase64Bold ? `
       @font-face {
         font-family: 'Liberation Sans';
         src: url('data:font/truetype;charset=utf-8;base64,${embeddedFontBase64Bold}') format('truetype');
         font-weight: 700 900;
         font-style: normal;
       }
+      ` : ''}
+      ${embeddedFontBase64Regular ? `
       @font-face {
         font-family: 'Liberation Sans';
-        src: url('data:font/truetype;charset=utf-8;base64,${embeddedFontBase64Regular || embeddedFontBase64Bold}') format('truetype');
+        src: url('data:font/truetype;charset=utf-8;base64,${embeddedFontBase64Regular}') format('truetype');
         font-weight: 400 600;
         font-style: normal;
       }
+      ` : ''}
       text {
-        font-family: 'Liberation Sans', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+        font-family: 'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif;
       }
     </style>
 
@@ -711,14 +718,14 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
     ` : ''}
 
     <!-- Organization Name -->
-    <text x="${centerX}" y="145" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="${orgFontSize}" fill="${theme.primaryColor}" text-anchor="middle" letter-spacing="-0.5">
+    <text x="${centerX}" y="145" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="900" font-size="${orgFontSize}" fill="${theme.primaryColor}" text-anchor="middle" letter-spacing="-0.5">
       ${orgTitle}
     </text>
 
     <!-- Post Title / Role Pill Banner -->
     <g transform="translate(${badgePillX}, 180)" filter="url(#softShadow)">
       <rect x="0" y="0" width="${badgePillWidth}" height="92" rx="26" fill="${theme.pillBg}" stroke="${theme.isPillGradient ? '#B3861B' : 'none'}" stroke-width="${theme.isPillGradient ? 1.5 : 0}" />
-      <text x="${badgePillWidth / 2}" y="65" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="${badgeFontSize}" fill="${theme.pillText}" text-anchor="middle" letter-spacing="0.5">
+      <text x="${badgePillWidth / 2}" y="65" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="900" font-size="${badgeFontSize}" fill="${theme.pillText}" text-anchor="middle" letter-spacing="0.5">
         ${postBadgeTitle}
       </text>
     </g>
@@ -740,10 +747,10 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
     <!-- Vertical Separator Line -->
     <line x1="102" y1="28" x2="102" y2="92" stroke="${theme.card1Border}" stroke-width="1.5" />
     <!-- Text Labels -->
-    <text x="118" y="48" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="800" font-size="20" fill="${theme.primaryColor}">
+    <text x="118" y="48" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="800" font-size="20" fill="${theme.primaryColor}">
       ${elLabel}
     </text>
-    <text x="118" y="80" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="700" font-size="18" fill="#1E293B">
+    <text x="118" y="80" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="700" font-size="18" fill="#1E293B">
       ${elValue.length > 20 ? elValue.slice(0, 18) + '...' : elValue}
     </text>
   </g>
@@ -763,10 +770,10 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
     <!-- Vertical Separator Line -->
     <line x1="102" y1="28" x2="102" y2="92" stroke="${theme.card2Border}" stroke-width="1.5" />
     <!-- Text Labels -->
-    <text x="118" y="48" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="800" font-size="20" fill="${theme.secondaryColor}">
+    <text x="118" y="48" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="800" font-size="20" fill="${theme.secondaryColor}">
       ${dateLabel}
     </text>
-    <text x="118" y="80" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="700" font-size="18" fill="#1E293B">
+    <text x="118" y="80" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="700" font-size="18" fill="#1E293B">
       ${dateValue.length > 20 ? dateValue.slice(0, 18) + '...' : dateValue}
     </text>
   </g>
@@ -783,10 +790,10 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
     <!-- Vertical Separator Line -->
     <line x1="102" y1="28" x2="102" y2="92" stroke="${theme.card3Border}" stroke-width="1.5" />
     <!-- Text Labels -->
-    <text x="118" y="48" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="800" font-size="20" fill="${theme.primaryColor}">
+    <text x="118" y="48" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="800" font-size="20" fill="${theme.primaryColor}">
       ${applyLabel}
     </text>
-    <text x="118" y="80" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="700" font-size="18" fill="#1E293B">
+    <text x="118" y="80" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="700" font-size="18" fill="#1E293B">
       ${applyValue.length > 20 ? applyValue.slice(0, 18) + '...' : applyValue}
     </text>
   </g>
@@ -805,7 +812,7 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
     <line x1="35" y1="29" x2="105" y2="29" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" />
     
     <!-- Centered Brand Domain -->
-    <text x="225" y="39" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="26" fill="#FFFFFF" text-anchor="middle" letter-spacing="0.8">
+    <text x="225" y="39" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="900" font-size="26" fill="#FFFFFF" text-anchor="middle" letter-spacing="0.8">
       cscdost.com
     </text>
 
