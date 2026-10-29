@@ -1,9 +1,9 @@
 // server.ts
 import express from "express";
-import path3 from "path";
-import fs3 from "fs";
+import path4 from "path";
+import fs4 from "fs";
 import Razorpay from "razorpay";
-import crypto from "crypto";
+import crypto2 from "crypto";
 import sharp3 from "sharp";
 
 // src/data/sarkariData.ts
@@ -3615,10 +3615,47 @@ var SERVICES_LIST = [
 import sharp2 from "sharp";
 
 // src/thumbnailGenerator.ts
+import fs from "fs";
+import path from "path";
 import sharp from "sharp";
 import { GoogleGenAI, Type } from "@google/genai";
+import { fileURLToPath } from "url";
 var THUMBNAIL_WIDTH = 1200;
 var THUMBNAIL_HEIGHT = 630;
+var embeddedFontBase64Bold = "";
+var embeddedFontBase64Regular = "";
+try {
+  let currentDir = process.cwd();
+  try {
+    currentDir = typeof __dirname !== "undefined" ? __dirname : path.dirname(fileURLToPath(import.meta.url));
+  } catch {
+    currentDir = process.cwd();
+  }
+  const boldCandidates = [
+    path.join(currentDir, "assets/fonts/LiberationSans-Bold.ttf"),
+    path.join(process.cwd(), "src/assets/fonts/LiberationSans-Bold.ttf"),
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf"
+  ];
+  for (const p of boldCandidates) {
+    if (fs.existsSync(p)) {
+      embeddedFontBase64Bold = fs.readFileSync(p).toString("base64");
+      break;
+    }
+  }
+  const regularCandidates = [
+    path.join(currentDir, "assets/fonts/LiberationSans-Regular.ttf"),
+    path.join(process.cwd(), "src/assets/fonts/LiberationSans-Regular.ttf"),
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf"
+  ];
+  for (const p of regularCandidates) {
+    if (fs.existsSync(p)) {
+      embeddedFontBase64Regular = fs.readFileSync(p).toString("base64");
+      break;
+    }
+  }
+} catch (e) {
+  console.warn("Could not read font files for base64 embedding:", e);
+}
 function escapeXml(unsafe) {
   if (!unsafe) return "";
   return String(unsafe).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
@@ -3893,6 +3930,16 @@ function buildDeterministicThumbnailSpec(input) {
     lastDateValue = "Closed / Archive";
   }
   const howToApplyValue = "Visit CSC DOST";
+  const hasVerifiedPreset = [
+    "jkssb",
+    "army_jobs",
+    "rrb_jobs",
+    "ssc_jobs",
+    "exam_forms",
+    "admissions",
+    "cluster_univ"
+  ].includes(style);
+  const logoOption = input.customOverrides?.logoUrl ? "custom" : hasVerifiedPreset ? "preset" : "placeholder";
   return {
     category: style,
     orgTitle,
@@ -3904,7 +3951,7 @@ function buildDeterministicThumbnailSpec(input) {
     lastDateValue,
     howToApplyLabel: "How to apply:",
     howToApplyValue,
-    logoOption: "placeholder",
+    logoOption,
     // Legacy fields for backward compatibility
     mainHeadingLeft: orgTitle,
     redBadgeText: postBadgeTitle,
@@ -3991,47 +4038,61 @@ function getVerifiedLogoVector(category, primaryColor) {
         <text x="100" y="185" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="14" fill="#0047BA" text-anchor="middle" letter-spacing="1">CUS SRINAGAR</text>
       </g>`;
     default:
-      return `<g transform="translate(68, 55)">
-        <rect x="0" y="0" width="98" height="74" rx="10" fill="none" stroke="${primaryColor}" stroke-width="3" />
-        <circle cx="74" cy="24" r="8" fill="${primaryColor}" />
-        <path d="M 12 60 L 38 28 L 56 48 L 68 36 L 86 60 Z" fill="none" stroke="${primaryColor}" stroke-width="3" stroke-linejoin="round" />
-        <text x="50" y="117" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="22" fill="${primaryColor}" text-anchor="middle" letter-spacing="1">OFFICIAL</text>
-        <text x="50" y="147" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="22" fill="${primaryColor}" text-anchor="middle" letter-spacing="1">LOGO</text>
-      </g>`;
+      return "";
   }
 }
 function renderStandaloneMasterThumbnailSvg(spec) {
   const theme = CATEGORY_THEMES[spec.category] || CATEGORY_THEMES.default;
   const orgTitle = escapeXml(spec.orgTitle || theme.orgTitle);
   const postBadgeTitle = escapeXml(spec.postBadgeTitle || "OFFICIAL NOTIFICATION");
-  const orgFontSize = orgTitle.length > 20 ? 64 : orgTitle.length > 14 ? 76 : 94;
-  const badgeFontSize = postBadgeTitle.length > 24 ? 42 : postBadgeTitle.length > 16 ? 50 : 62;
   const elLabel = escapeXml(spec.eligibilityLabel || "Eligibility:");
   const elValue = escapeXml(spec.eligibilityValue || "See notification");
   const dateLabel = escapeXml(spec.lastDateLabel || "Last date:");
   const dateValue = escapeXml(spec.lastDateValue || "Check website");
   const applyLabel = escapeXml(spec.howToApplyLabel || "How to apply:");
   const applyValue = escapeXml(spec.howToApplyValue || "Visit CSC DOST");
-  const approxTextWidth = postBadgeTitle.length * (badgeFontSize * 0.58);
-  const badgePillWidth = Math.min(820, Math.max(380, Math.round(approxTextWidth + 88)));
-  const badgePillX = Math.round(460 - badgePillWidth / 2);
+  const isCustomLogo = Boolean(spec.logoUrl && spec.logoUrl.trim());
+  const verifiedPresetSvg = getVerifiedLogoVector(spec.category, theme.primaryColor);
+  const hasVerifiedPreset = spec.logoOption === "preset" ? Boolean(verifiedPresetSvg) : Boolean(verifiedPresetSvg && spec.logoOption !== "placeholder");
+  const hasLogo = isCustomLogo || hasVerifiedPreset;
   let logoContentSvg = "";
-  if (spec.logoUrl && spec.logoUrl.trim()) {
+  if (isCustomLogo && spec.logoUrl) {
     const safeLogoUrl = escapeXml(spec.logoUrl.trim());
     logoContentSvg = `<image href="${safeLogoUrl}" x="18" y="18" width="198" height="198" preserveAspectRatio="xMidYMid meet" />`;
-  } else if (spec.logoOption === "preset" || !spec.logoOption) {
-    logoContentSvg = getVerifiedLogoVector(spec.category, theme.primaryColor);
-  } else {
-    logoContentSvg = `<g transform="translate(68, 55)">
-      <rect x="0" y="0" width="98" height="74" rx="10" fill="none" stroke="${theme.primaryColor}" stroke-width="3" />
-      <circle cx="74" cy="24" r="8" fill="${theme.primaryColor}" />
-      <path d="M 12 60 L 38 28 L 56 48 L 68 36 L 86 60 Z" fill="none" stroke="${theme.primaryColor}" stroke-width="3" stroke-linejoin="round" />
-      <text x="50" y="117" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="22" fill="${theme.primaryColor}" text-anchor="middle" letter-spacing="1">OFFICIAL</text>
-      <text x="50" y="147" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="22" fill="${theme.primaryColor}" text-anchor="middle" letter-spacing="1">LOGO</text>
-    </g>`;
+  } else if (hasVerifiedPreset) {
+    logoContentSvg = verifiedPresetSvg;
   }
+  const centerX = hasLogo ? 460 : 600;
+  const orgFontSize = orgTitle.length > 22 ? 52 : orgTitle.length > 15 ? 60 : orgTitle.length > 10 ? 74 : 92;
+  const badgeFontSize = postBadgeTitle.length > 24 ? 42 : postBadgeTitle.length > 16 ? 50 : 60;
+  const approxTextWidth = postBadgeTitle.length * (badgeFontSize * 0.58);
+  const maxPillWidth = hasLogo ? 820 : 980;
+  const badgePillWidth = Math.min(maxPillWidth, Math.max(380, Math.round(approxTextWidth + 88)));
+  const badgePillX = Math.round(centerX - badgePillWidth / 2);
+  const showTicks = theme.hasTicks && orgTitle.length <= 12;
+  const leftTickBaseX = hasLogo ? 85 : 120;
+  const rightTickBaseX = hasLogo ? 835 : 1080;
   return `<svg width="${THUMBNAIL_WIDTH}" height="${THUMBNAIL_HEIGHT}" viewBox="0 0 ${THUMBNAIL_WIDTH} ${THUMBNAIL_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
   <defs>
+    <!-- Embedded TrueType Fonts for 100% Deterministic Serverless Pixel Rendering -->
+    <style>
+      @font-face {
+        font-family: 'Liberation Sans';
+        src: url('data:font/truetype;charset=utf-8;base64,${embeddedFontBase64Bold}') format('truetype');
+        font-weight: 700 900;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: 'Liberation Sans';
+        src: url('data:font/truetype;charset=utf-8;base64,${embeddedFontBase64Regular || embeddedFontBase64Bold}') format('truetype');
+        font-weight: 400 600;
+        font-style: normal;
+      }
+      text {
+        font-family: 'Liberation Sans', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+      }
+    </style>
+
     <!-- Metallic Gold Gradient for Indian Army -->
     <linearGradient id="goldMetallicGrad" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#C59B27" />
@@ -4057,32 +4118,34 @@ function renderStandaloneMasterThumbnailSvg(spec) {
   <!-- Clean Pure White Background -->
   <rect width="${THUMBNAIL_WIDTH}" height="${THUMBNAIL_HEIGHT}" fill="#FFFFFF" />
 
-  <!-- TOP RIGHT: OFFICIAL LOGO CONTAINER -->
+  ${hasLogo && logoContentSvg ? `
+  <!-- TOP RIGHT: VERIFIED OFFICIAL LOGO CONTAINER -->
   <g transform="translate(915, 45)">
     <rect x="0" y="0" width="235" height="235" rx="22" fill="#F8FAFC" stroke="${theme.primaryColor}" stroke-width="2.5" stroke-dasharray="7,7" />
     ${logoContentSvg}
   </g>
+  ` : ""}
 
   <!-- TOP LEFT / CENTER: ORGANIZATION HEADING & POST TITLE PILL -->
   <g transform="translate(0, 0)">
     <!-- Radiating burst ticks for JKSSB / RRB / SSC / CUS -->
-    ${theme.hasTicks ? `
+    ${showTicks ? `
     <!-- Left Burst Ticks -->
     <g stroke="${theme.secondaryColor}" stroke-width="7" stroke-linecap="round">
-      <line x1="85" y1="120" x2="60" y2="105" />
-      <line x1="80" y1="145" x2="50" y2="145" />
-      <line x1="85" y1="170" x2="60" y2="185" />
+      <line x1="${leftTickBaseX}" y1="120" x2="${leftTickBaseX - 25}" y2="105" />
+      <line x1="${leftTickBaseX - 5}" y1="145" x2="${leftTickBaseX - 35}" y2="145" />
+      <line x1="${leftTickBaseX}" y1="170" x2="${leftTickBaseX - 25}" y2="185" />
     </g>
-    <!-- Right Burst Ticks (positioned before the logo box) -->
+    <!-- Right Burst Ticks -->
     <g stroke="${theme.secondaryColor}" stroke-width="7" stroke-linecap="round">
-      <line x1="835" y1="120" x2="860" y2="105" />
-      <line x1="840" y1="145" x2="870" y2="145" />
-      <line x1="835" y1="170" x2="860" y2="185" />
+      <line x1="${rightTickBaseX}" y1="120" x2="${rightTickBaseX + 25}" y2="105" />
+      <line x1="${rightTickBaseX + 5}" y1="145" x2="${rightTickBaseX + 35}" y2="145" />
+      <line x1="${rightTickBaseX}" y1="170" x2="${rightTickBaseX + 25}" y2="185" />
     </g>
     ` : ""}
 
     <!-- Organization Name -->
-    <text x="460" y="145" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="${orgFontSize}" fill="${theme.primaryColor}" text-anchor="middle" letter-spacing="-0.5">
+    <text x="${centerX}" y="145" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="${orgFontSize}" fill="${theme.primaryColor}" text-anchor="middle" letter-spacing="-0.5">
       ${orgTitle}
     </text>
 
@@ -4281,33 +4344,212 @@ function wrapText(text, maxCharsPerLine = 48, maxLines = 3) {
   }
   return lines;
 }
+function generatePortalOgBannerSvg() {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#071328"/>
+      <stop offset="50%" stop-color="#0b1b38"/>
+      <stop offset="100%" stop-color="#08142b"/>
+    </linearGradient>
+
+    <!-- Card Background Gradient -->
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#142447" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#0d1830" stop-opacity="0.95"/>
+    </linearGradient>
+
+    <!-- Tricolor Gradients -->
+    <linearGradient id="saffronGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF9933"/>
+      <stop offset="100%" stop-color="#E65100"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22C55E"/>
+      <stop offset="100%" stop-color="#15803D"/>
+    </linearGradient>
+
+    <!-- Soft Drop Shadows -->
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+
+  <!-- Subtle Ambient Glow Orbs -->
+  <circle cx="600" cy="240" r="320" fill="#2563eb" opacity="0.12"/>
+  <circle cx="150" cy="450" r="220" fill="#f59e0b" opacity="0.08"/>
+  <circle cx="1050" cy="450" r="220" fill="#10b981" opacity="0.08"/>
+
+  <!-- Top Tricolor Accent Bar -->
+  <rect x="0" y="0" width="400" height="6" fill="#FF9933"/>
+  <rect x="400" y="0" width="400" height="6" fill="#FFFFFF"/>
+  <rect x="800" y="0" width="400" height="6" fill="#138808"/>
+
+  <!-- Geometric Grid Accent Lines -->
+  <g stroke="#3b82f6" stroke-opacity="0.08" stroke-width="1">
+    <line x1="0" y1="100" x2="1200" y2="100"/>
+    <line x1="0" y1="200" x2="1200" y2="200"/>
+    <line x1="0" y1="300" x2="1200" y2="300"/>
+    <line x1="0" y1="400" x2="1200" y2="400"/>
+    <line x1="0" y1="500" x2="1200" y2="500"/>
+    <line x1="200" y1="0" x2="200" y2="630"/>
+    <line x1="400" y1="0" x2="400" y2="630"/>
+    <line x1="600" y1="0" x2="600" y2="630"/>
+    <line x1="800" y1="0" x2="800" y2="630"/>
+    <line x1="1000" y1="0" x2="1000" y2="630"/>
+  </g>
+
+  <!-- TOP HEADER BADGE (Centered) -->
+  <g transform="translate(600, 48)">
+    <rect x="-290" y="-18" width="580" height="36" rx="18" fill="#172554" stroke="#3b82f6" stroke-width="1.2" opacity="0.95"/>
+    <circle cx="-264" cy="0" r="5" fill="#22c55e"/>
+    <text x="-248" y="5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif" font-weight="700" font-size="13" fill="#93c5fd" letter-spacing="1">
+      AUTHORIZED DIGITAL PORTAL \u2022 CSC VLE ID: 212515670018
+    </text>
+  </g>
+
+  <!-- CENTER HERO BRAND BLOCK (WhatsApp Square Crop Safe Zone) -->
+  <g transform="translate(600, 160)">
+    <!-- CSC Digital India Emblem Vector -->
+    <g transform="translate(0, 0)">
+      <circle cx="0" cy="0" r="56" fill="#1e3a8a" opacity="0.4"/>
+      <circle cx="0" cy="0" r="52" fill="#ffffff"/>
+      <!-- Saffron Swash -->
+      <path d="M -22 -32 A 40 40 0 0 1 42 -22" fill="none" stroke="url(#saffronGrad)" stroke-width="7" stroke-linecap="round"/>
+      <!-- Green Swash -->
+      <path d="M 40 22 A 40 40 0 0 1 -24 32" fill="none" stroke="url(#greenGrad)" stroke-width="7" stroke-linecap="round"/>
+      <!-- Inner Globe Grid -->
+      <circle cx="0" cy="0" r="24" fill="none" stroke="#000080" stroke-width="2.5"/>
+      <ellipse cx="0" cy="0" rx="24" ry="11" fill="none" stroke="#000080" stroke-width="1.8"/>
+      <ellipse cx="0" cy="0" rx="11" ry="24" fill="none" stroke="#000080" stroke-width="1.8"/>
+      <!-- Golden Verified Badge -->
+      <circle cx="36" cy="36" r="14" fill="#f59e0b" stroke="#ffffff" stroke-width="2.5"/>
+      <path d="M 31 36 L 35 40 L 42 32" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <!-- Main Brand Title -->
+    <text x="0" y="105" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif" font-weight="900" font-size="78" fill="#ffffff" letter-spacing="-1">
+      CSC DOST
+    </text>
+
+    <!-- Subtitle / Tagline -->
+    <text x="0" y="145" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif" font-weight="700" font-size="22" fill="#93c5fd" letter-spacing="0.5">
+      Government Services, Schemes &amp; Recruitment Simplified
+    </text>
+
+    <!-- Web URL Pill -->
+    <g transform="translate(0, 185)">
+      <rect x="-170" y="-18" width="340" height="36" rx="18" fill="#0f172a" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="0" y="5" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif" font-weight="800" font-size="17" fill="#fbbf24" letter-spacing="1.5">
+        \u{1F310} WWW.CSCDOST.COM
+      </text>
+    </g>
+  </g>
+
+  <!-- 3 FEATURE CARDS (Recruitment, Services, University) -->
+  <g transform="translate(70, 425)" filter="url(#cardShadow)">
+    <rect x="0" y="0" width="320" height="125" rx="16" fill="url(#cardGrad)" stroke="#1e40af" stroke-width="1.5"/>
+    <rect x="18" y="16" width="38" height="38" rx="10" fill="#1e3a8a"/>
+    <text x="37" y="42" text-anchor="middle" font-size="20">\u{1F4CB}</text>
+    <text x="68" y="34" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="15" fill="#ffffff">
+      Sarkari Jobs &amp; Exams
+    </text>
+    <text x="68" y="50" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="12" fill="#60a5fa">
+      Daily Verified Gazettes
+    </text>
+    <line x1="18" y1="68" x2="302" y2="68" stroke="#1e3a8a" stroke-width="1"/>
+    <text x="18" y="90" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="13" fill="#e2e8f0">
+      JKSSB \u2022 Indian Army \u2022 SSC \u2022 RRB
+    </text>
+    <text x="18" y="108" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="500" font-size="11" fill="#94a3b8">
+      Admit Cards \u2022 Syllabi \u2022 Answer Keys
+    </text>
+  </g>
+
+  <g transform="translate(440, 425)" filter="url(#cardShadow)">
+    <rect x="0" y="0" width="320" height="125" rx="16" fill="url(#cardGrad)" stroke="#059669" stroke-width="1.5"/>
+    <rect x="18" y="16" width="38" height="38" rx="10" fill="#065f46"/>
+    <text x="37" y="42" text-anchor="middle" font-size="20">\u{1F3DB}\uFE0F</text>
+    <text x="68" y="34" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="15" fill="#ffffff">
+      Citizen Digital Services
+    </text>
+    <text x="68" y="50" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="12" fill="#34d399">
+      Online Counter Assistance
+    </text>
+    <line x1="18" y1="68" x2="302" y2="68" stroke="#047857" stroke-width="1"/>
+    <text x="18" y="90" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="13" fill="#e2e8f0">
+      Aadhaar \u2022 PAN \u2022 Ayushman \u2022 KISAN
+    </text>
+    <text x="18" y="108" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="500" font-size="11" fill="#94a3b8">
+      Domicile \u2022 E-Tickets \u2022 Certificates
+    </text>
+  </g>
+
+  <g transform="translate(810, 425)" filter="url(#cardShadow)">
+    <rect x="0" y="0" width="320" height="125" rx="16" fill="url(#cardGrad)" stroke="#d97706" stroke-width="1.5"/>
+    <rect x="18" y="16" width="38" height="38" rx="10" fill="#92400e"/>
+    <text x="37" y="42" text-anchor="middle" font-size="20">\u{1F393}</text>
+    <text x="68" y="34" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="15" fill="#ffffff">
+      University Desk
+    </text>
+    <text x="68" y="50" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="12" fill="#fbbf24">
+      KU &amp; Cluster Univ Srinagar
+    </text>
+    <line x1="18" y1="68" x2="302" y2="68" stroke="#b45309" stroke-width="1"/>
+    <text x="18" y="90" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="13" fill="#e2e8f0">
+      Admissions \u2022 Exam Forms \u2022 Results
+    </text>
+    <text x="18" y="108" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="500" font-size="11" fill="#94a3b8">
+      Direct Link Portals &amp; Step Guides
+    </text>
+  </g>
+
+  <!-- BOTTOM ACCREDITATION BAR -->
+  <g transform="translate(600, 595)">
+    <text x="0" y="0" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="12" fill="#64748b" letter-spacing="0.5">
+      Operated by Wasim Ahmad Khanday (CSC VLE) \u2022 Sangran Qazigund, Anantnag, J&amp;K 192221 \u2022 Official Helpline: +91 70068 33767
+    </text>
+  </g>
+</svg>`;
+}
 function generateOgSvg(item) {
+  if (!item || !item.id) {
+    return generatePortalOgBannerSvg();
+  }
   const spec = buildDeterministicThumbnailSpec({
-    id: item?.id,
-    title: item?.title || "CSC DOST \u2013 Citizen Recruitment & Government Services Portal",
-    category: item?.category,
-    department: item?.department,
-    postType: item?.postType,
-    shortInfo: item?.shortInfo,
-    startDate: item?.startDate,
-    lastDate: item?.lastDate,
-    eligibility: item?.eligibility,
-    status: item?.status
+    id: item.id,
+    title: item.title || "CSC DOST \u2013 Citizen Recruitment & Government Services Portal",
+    category: item.category,
+    department: item.department,
+    postType: item.postType,
+    shortInfo: item.shortInfo,
+    startDate: item.startDate,
+    lastDate: item.lastDate,
+    eligibility: item.eligibility,
+    status: item.status
   });
   return renderStandaloneMasterThumbnailSvg(spec);
 }
 async function generateSocialPreviewPng(item) {
+  if (!item || !item.id) {
+    const svg = generatePortalOgBannerSvg();
+    return sharp2(Buffer.from(svg)).png({ quality: 95, compressionLevel: 9 }).toBuffer();
+  }
   const spec = buildDeterministicThumbnailSpec({
-    id: item?.id,
-    title: item?.title || "CSC DOST \u2013 Citizen Recruitment & Government Services Portal",
-    category: item?.category,
-    department: item?.department,
-    postType: item?.postType,
-    shortInfo: item?.shortInfo,
-    startDate: item?.startDate,
-    lastDate: item?.lastDate,
-    eligibility: item?.eligibility,
-    status: item?.status
+    id: item.id,
+    title: item.title || "CSC DOST \u2013 Citizen Recruitment & Government Services Portal",
+    category: item.category,
+    department: item.department,
+    postType: item.postType,
+    shortInfo: item.shortInfo,
+    startDate: item.startDate,
+    lastDate: item.lastDate,
+    eligibility: item.eligibility,
+    status: item.status
   });
   return renderMasterThumbnailBuffer(spec, "png");
 }
@@ -4395,10 +4637,723 @@ async function generateServiceOgPng(service) {
   return sharp2(Buffer.from(svgString)).png({ quality: 90, compressionLevel: 8 }).toBuffer();
 }
 
+// src/serverContentRenderer.ts
+function escapeHtml(str) {
+  if (str === null || str === void 0) return "";
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+function renderPostSubstantiveHtml(item) {
+  const safeTitle = escapeHtml(item.title);
+  const safeCategory = escapeHtml(item.category?.replace(/_/g, " ").toUpperCase() || "RECRUITMENT NOTICE");
+  const safePostDate = escapeHtml(item.postDate || "Recent");
+  const safeStartDate = escapeHtml(item.startDate || "Open");
+  const safeLastDate = escapeHtml(item.lastDate || "Check Notification");
+  const safeAdvtNo = escapeHtml(item.advertisementNo || "Refer to Gazette");
+  const safeTotalPosts = escapeHtml(item.totalPosts || "Open / As per rules");
+  const safeAgeLimit = escapeHtml(item.ageLimit || "As per official rules");
+  const safeEligibility = escapeHtml(item.eligibility || "Refer to official recruitment gazette");
+  const safeShortInfo = escapeHtml(item.shortInfo || "Comprehensive recruitment notification details, eligibility, important dates, and official application instructions.");
+  const safeGenObc = escapeHtml(item.fees?.genObc || "Refer to notification");
+  const safeScSt = escapeHtml(item.fees?.scSt || "Refer to notification");
+  const safeOfficialLink = escapeHtml(item.officialLink || "https://www.cscdost.com");
+  return `
+  <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
+      <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+      <span style="margin:0 6px;">/</span>
+      <a href="/#sarkari-board" style="color:#2563eb; text-decoration:none;">Recruitment Updates</a>
+      <span style="margin:0 6px;">/</span>
+      <span style="color:#0f172a; font-weight:600;">${safeTitle}</span>
+    </nav>
+
+    <!-- Government Transparency Notice -->
+    <aside style="background:#fffbeb; border-left:4px solid #f59e0b; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:13px; color:#92400e;">
+      <strong>Official Transparency Notice:</strong> CSC DOST (cscdost.com) is an independent private digital facilitation center operated by authorized CSC VLE Wasim Ahmad Khanday (VLE ID: 212515670018). We are <strong>not</strong> an official government recruitment board. All notifications are linked directly to official government portals.
+    </aside>
+
+    <!-- Article Header -->
+    <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:24px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:18px; margin-bottom:20px;">
+        <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:10px;">
+          ${safeCategory}
+        </span>
+        <h1 style="font-size:26px; line-height:1.3; font-weight:800; color:#0f172a; margin:0 0 12px 0;">
+          ${safeTitle}
+        </h1>
+        <div style="font-size:13px; color:#64748b; display:flex; flex-wrap:wrap; gap:16px;">
+          <span><strong>Post Date:</strong> ${safePostDate}</span>
+          <span><strong>Advt No:</strong> ${safeAdvtNo}</span>
+          <span><strong>Last Date to Apply:</strong> <strong style="color:#b91c1c;">${safeLastDate}</strong></span>
+        </div>
+      </header>
+
+      <!-- Short Summary -->
+      <section style="margin-bottom:24px;">
+        <h2 style="font-size:18px; font-weight:700; color:#1e293b; margin:0 0 8px 0;">Notification Summary</h2>
+        <p style="font-size:15px; color:#334155; line-height:1.7; margin:0;">
+          ${safeShortInfo}
+        </p>
+      </section>
+
+      <!-- Key Dates & Application Fees Table -->
+      <section style="margin-bottom:24px; display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
+          <h3 style="font-size:15px; font-weight:700; color:#0f172a; margin:0 0 10px 0;">\u{1F4C5} Important Dates</h3>
+          <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#334155; line-height:1.8;">
+            <li><strong>Notification Released:</strong> ${safePostDate}</li>
+            <li><strong>Online Application Start:</strong> ${safeStartDate}</li>
+            <li><strong>Last Date to Apply Online:</strong> <span style="color:#b91c1c; font-weight:700;">${safeLastDate}</span></li>
+            <li><strong>Exam / Admit Card:</strong> Check official portal for schedule</li>
+          </ul>
+        </div>
+
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
+          <h3 style="font-size:15px; font-weight:700; color:#0f172a; margin:0 0 10px 0;">\u{1F4B3} Application Fee</h3>
+          <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#334155; line-height:1.8;">
+            <li><strong>General / OBC / EWS:</strong> ${safeGenObc}</li>
+            <li><strong>SC / ST / PwD / Female:</strong> ${safeScSt}</li>
+            <li><strong>Payment Mode:</strong> Net Banking, Debit/Credit Card, UPI through Official Gateway</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Eligibility, Age Limit & Vacancies -->
+      <section style="margin-bottom:24px;">
+        <h2 style="font-size:18px; font-weight:700; color:#1e293b; margin:0 0 12px 0;">Eligibility Criteria &amp; Vacancy Details</h2>
+        <table style="width:100%; border-collapse:collapse; font-size:14px; text-align:left; border:1px solid #e2e8f0;">
+          <tbody>
+            <tr style="border-bottom:1px solid #e2e8f0;">
+              <th style="padding:10px 14px; background:#f1f5f9; width:30%; font-weight:600; color:#1e293b;">Total Vacancies</th>
+              <td style="padding:10px 14px; color:#0f172a; font-weight:600;">${safeTotalPosts}</td>
+            </tr>
+            <tr style="border-bottom:1px solid #e2e8f0;">
+              <th style="padding:10px 14px; background:#f1f5f9; font-weight:600; color:#1e293b;">Age Limit</th>
+              <td style="padding:10px 14px; color:#334155;">${safeAgeLimit} (Age relaxation applicable as per government norms)</td>
+            </tr>
+            <tr style="border-bottom:1px solid #e2e8f0;">
+              <th style="padding:10px 14px; background:#f1f5f9; font-weight:600; color:#1e293b;">Educational Qualification</th>
+              <td style="padding:10px 14px; color:#334155;">${safeEligibility}</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Step-by-Step Instructions -->
+      <section style="margin-bottom:28px;">
+        <h2 style="font-size:18px; font-weight:700; color:#1e293b; margin:0 0 10px 0;">How to Apply Online</h2>
+        <ol style="padding-left:20px; font-size:14px; color:#334155; line-height:1.8; margin:0;">
+          <li>Review the complete official advertisement brochure to verify your educational eligibility and age requirements.</li>
+          <li>Prepare scanned copies of your Matriculation (10th) mark sheet, identity proof (Aadhaar / Voter ID), passport photograph, and signature in accordance with board specifications.</li>
+          <li>Visit the official recruiting website or authority link provided below.</li>
+          <li>Complete one-time registration (OTR) or applicant login using valid mobile number and email.</li>
+          <li>Fill in academic credentials, examination center preferences, and communication address accurately.</li>
+          <li>Submit mandatory application fees via the secured payment gateway before the closing date: <strong>${safeLastDate}</strong>.</li>
+          <li>Download and print the final application confirmation receipt for your records and examination entry.</li>
+        </ol>
+      </section>
+
+      <!-- Official Links Action Section -->
+      <section style="background:#f1f5f9; border-radius:10px; padding:18px; display:flex; flex-wrap:wrap; items-center; justify-content:space-between; gap:12px;">
+        <div>
+          <div style="font-weight:700; font-size:15px; color:#0f172a;">Official Board Portal &amp; Direct Links</div>
+          <div style="font-size:13px; color:#64748b;">Verify official notification details directly on the government portal.</div>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <a href="${safeOfficialLink}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#2563eb; color:#ffffff; font-weight:600; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
+            Official Portal / Gazette \u2197
+          </a>
+          <a href="/apply" style="display:inline-block; background:#ffffff; color:#0f172a; border:1px solid #cbd5e1; font-weight:600; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
+            Assisted Application Desk
+          </a>
+        </div>
+      </section>
+    </article>
+
+    <!-- Footer Disclaimers -->
+    <footer style="margin-top:30px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
+      <p>Published by CSC DOST | Operator: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) | Sangran Qazigund, Anantnag, J&amp;K 192221</p>
+      <p>
+        <a href="/privacy-policy" style="color:#2563eb; text-decoration:none;">Privacy Policy</a> \u2022
+        <a href="/terms-of-service" style="color:#2563eb; text-decoration:none;">Terms of Service</a> \u2022
+        <a href="/disclaimer" style="color:#2563eb; text-decoration:none;">Disclaimer</a> \u2022
+        <a href="/contact-us" style="color:#2563eb; text-decoration:none;">Contact Helpdesk</a>
+      </p>
+    </footer>
+  </main>
+  `;
+}
+function renderServiceSubstantiveHtml(service) {
+  const safeName = escapeHtml(service.name);
+  const safeDescription = escapeHtml(service.description);
+  const safePrice = escapeHtml(service.price);
+  const safeTime = escapeHtml(service.estimatedTime);
+  const safeCategory = escapeHtml(service.category);
+  const safeOfficialUrl = "https://digitalseva.csc.gov.in";
+  const safeDocs = Array.isArray(service.requirements) ? service.requirements : [];
+  return `
+  <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
+    <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
+      <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+      <span style="margin:0 6px;">/</span>
+      <a href="/#services" style="color:#2563eb; text-decoration:none;">Citizen Services</a>
+      <span style="margin:0 6px;">/</span>
+      <span style="color:#0f172a; font-weight:600;">${safeName}</span>
+    </nav>
+
+    <aside style="background:#fffbeb; border-left:4px solid #f59e0b; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:13px; color:#92400e;">
+      <strong>Citizen Transparency Notice:</strong> CSC DOST operates as an authorized Village Level Entrepreneur (VLE ID: 212515670018) under the Digital India Common Services Center framework to provide assisted e-governance service filing and document preparation.
+    </aside>
+
+    <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:24px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:18px; margin-bottom:20px;">
+        <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:10px;">
+          ${safeCategory}
+        </span>
+        <h1 style="font-size:26px; line-height:1.3; font-weight:800; color:#0f172a; margin:0 0 12px 0;">
+          ${safeName} Application &amp; Assistance
+        </h1>
+        <p style="font-size:15px; color:#475569; margin:0;">
+          ${safeDescription}
+        </p>
+      </header>
+
+      <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:16px; margin-bottom:24px;">
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
+          <div style="font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase;">Official Fee</div>
+          <div style="font-size:20px; font-weight:800; color:#15803d; margin-top:4px;">${safePrice}</div>
+        </div>
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
+          <div style="font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase;">Estimated Processing Time</div>
+          <div style="font-size:20px; font-weight:800; color:#1e293b; margin-top:4px;">${safeTime}</div>
+        </div>
+      </section>
+
+      <section style="margin-bottom:24px;">
+        <h2 style="font-size:18px; font-weight:700; color:#1e293b; margin:0 0 12px 0;">Required Documents</h2>
+        <ul style="padding-left:20px; font-size:14px; color:#334155; line-height:1.8; margin:0;">
+          ${safeDocs.map((doc) => `<li>${escapeHtml(doc)}</li>`).join("")}
+        </ul>
+      </section>
+
+      <section style="background:#f1f5f9; border-radius:10px; padding:18px; display:flex; flex-wrap:wrap; items-center; justify-content:space-between; gap:12px;">
+        <div>
+          <div style="font-weight:700; font-size:15px; color:#0f172a;">Apply Online or Direct Portal</div>
+          <div style="font-size:13px; color:#64748b;">Submit your application through our assisted counter or visit the official department portal.</div>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <a href="/apply?service=${encodeURIComponent(service.name)}" style="display:inline-block; background:#2563eb; color:#ffffff; font-weight:600; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
+            Apply Online with CSC DOST
+          </a>
+          <a href="${safeOfficialUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#ffffff; color:#0f172a; border:1px solid #cbd5e1; font-weight:600; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
+            Official Department Portal \u2197
+          </a>
+        </div>
+      </section>
+    </article>
+
+    <footer style="margin-top:30px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
+      <p>CSC DOST | Operator: Wasim Ahmad Khanday (VLE ID: 212515670018) | Sangran Qazigund, Anantnag, J&amp;K 192221</p>
+      <p>
+        <a href="/privacy-policy" style="color:#2563eb; text-decoration:none;">Privacy Policy</a> \u2022
+        <a href="/terms-of-service" style="color:#2563eb; text-decoration:none;">Terms of Service</a> \u2022
+        <a href="/disclaimer" style="color:#2563eb; text-decoration:none;">Disclaimer</a> \u2022
+        <a href="/contact-us" style="color:#2563eb; text-decoration:none;">Contact Helpdesk</a>
+      </p>
+    </footer>
+  </main>
+  `;
+}
+function renderLegalPageSubstantiveHtml(pageType) {
+  const norm = pageType.toLowerCase();
+  if (norm.includes("privacy")) {
+    return `
+    <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.7;">
+      <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
+        <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+        <span style="margin:0 6px;">/</span>
+        <span style="color:#0f172a; font-weight:600;">Privacy Policy</span>
+      </nav>
+
+      <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:28px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <header style="border-bottom:1px solid #e2e8f0; padding-bottom:18px; margin-bottom:20px;">
+          <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
+            Legal Compliance &amp; DPDP Act 2023
+          </span>
+          <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Privacy Policy</h1>
+          <p style="font-size:13px; color:#64748b; margin:0;">Effective Date: February 2026 \u2022 Last Reviewed &amp; Updated: October 2026</p>
+        </header>
+
+        <section style="font-size:15px; color:#334155; space-y:16px;">
+          <p>
+            At <strong>CSC DOST</strong> (accessible from <code>https://www.cscdost.com</code>), the privacy and digital security of our visitors and applicants is of paramount importance. This Privacy Policy document outlines the types of personal information that is collected and recorded by CSC DOST and how we use, safeguard, and disclose it in strict accordance with the <strong>Digital Personal Data Protection (DPDP) Act, 2023</strong> and the <strong>Information Technology Act, 2000</strong>.
+          </p>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">1. Scope and Applicability</h2>
+          <p>
+            This policy applies to all visitors, applicants, and registered users of our website, web push notifications, and physical facilitation counter. By utilizing our services or accessing our site, you consent to the data practices described herein.
+          </p>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">2. Information We Collect</h2>
+          <ul style="padding-left:20px; margin:0 0 16px 0; line-height:1.8;">
+            <li><strong>Informational Visitors:</strong> We collect standard, anonymous server log files (IP addresses, browser type, referring pages, date/time stamps) strictly for aggregate security analytics and system health monitoring.</li>
+            <li><strong>Assisted Form Applicants:</strong> When you voluntarily submit an application assistance request, we collect only necessary personal data: Full Name, Father's Name, Date of Birth, Gender, Mobile Number, Email Address, and uploaded proof documents (e.g. Matriculation diploma, Domicile certificate, Photograph, Signature).</li>
+            <li><strong>Web Push Subscribers:</strong> If you grant browser notification permissions, we store your anonymous cryptographic Web Push subscription endpoint and keys to deliver official job notifications and exam alerts. No identity data is associated with push tokens.</li>
+            <li><strong>Payment Information:</strong> Online fee transactions are processed directly by <strong>Razorpay (PCI-DSS Level 1 compliant gateway)</strong>. CSC DOST does <strong>not</strong> collect, store, or view your debit/credit card numbers, CVVs, net-banking passwords, or UPI PINs.</li>
+          </ul>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">3. Purpose and Legal Basis for Processing</h2>
+          <p>We process citizen information exclusively for:</p>
+          <ul style="padding-left:20px; margin:0 0 16px 0; line-height:1.8;">
+            <li>Assisting you in submitting your form to the designated official government portal (e.g., JKSSB, SSC, University of Kashmir).</li>
+            <li>Providing real-time application status updates and payment receipts via SMS, WhatsApp, and Web Push notifications.</li>
+            <li>Complying with mandatory record-keeping requirements under the CSC e-Governance Services India scheme.</li>
+            <li>Preventing fraudulent submissions, spam, and cyber threats.</li>
+          </ul>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">4. Client-Side Document Tools Data Isolation</h2>
+          <p>
+            Our browser-based document resizing, signature joining, and PDF generation tools operate <strong>entirely inside your local web browser</strong> via HTML5 Canvas and WebAssembly. Your photos, signatures, and certificates are never uploaded to our servers when utilizing these offline utilities.
+          </p>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">5. Third-Party Advertising &amp; Google AdSense</h2>
+          <p>
+            We use Google AdSense (Publisher ID: <code>ca-pub-3600904217061779</code>) to serve contextual and interest-based advertisements that support our free educational articles and recruitment bulletins. Google uses cookies, including the DoubleClick DART cookie, to serve ads to users based on their visits to this and other websites on the Internet.
+          </p>
+          <p>
+            Users may opt out of personalized advertising by visiting <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" style="color:#2563eb;">Google Ads Settings</a> or through the <a href="https://aboutads.info" target="_blank" rel="noopener noreferrer" style="color:#2563eb;">Network Advertising Initiative Opt-Out Page</a>.
+          </p>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">6. Data Retention and Erasure</h2>
+          <p>
+            Application records and uploaded documents are retained securely for a period of up to 180 days after application processing to permit verification and candidate support, after which they are systematically purged from our encrypted storage. Citizens may request immediate deletion of their personal records by emailing <strong>support@cscdost.com</strong> with their tracking token.
+          </p>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">7. Grievance Redressal Officer</h2>
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
+            <p style="margin:0 0 6px 0;"><strong>Data Grievance Officer:</strong> Wasim Ahmad Khanday</p>
+            <p style="margin:0 0 6px 0;"><strong>Designation:</strong> Lead VLE &amp; Operator, CSC DOST (VLE ID: 212515670018)</p>
+            <p style="margin:0 0 6px 0;"><strong>Email:</strong> <a href="mailto:support@cscdost.com" style="color:#2563eb;">support@cscdost.com</a> / <a href="mailto:wasimkhanday@gmail.com" style="color:#2563eb;">wasimkhanday@gmail.com</a></p>
+            <p style="margin:0;"><strong>Physical Office:</strong> Sangran Qazigund, District Anantnag, Jammu &amp; Kashmir 192221</p>
+          </div>
+        </section>
+      </article>
+
+      <footer style="margin-top:30px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
+        <p>CSC DOST (cscdost.com) | Authorized CSC VLE ID: 212515670018 | Sangran Qazigund, Anantnag, J&amp;K</p>
+      </footer>
+    </main>
+    `;
+  }
+  if (norm.includes("disclaimer")) {
+    return `
+    <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.7;">
+      <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
+        <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+        <span style="margin:0 6px;">/</span>
+        <span style="color:#0f172a; font-weight:600;">Disclaimer</span>
+      </nav>
+
+      <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:28px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <header style="border-bottom:1px solid #e2e8f0; padding-bottom:18px; margin-bottom:20px;">
+          <span style="display:inline-block; background:#fef3c7; color:#92400e; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
+            Legal Disclaimer &amp; Non-Affiliation
+          </span>
+          <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Disclaimer &amp; Government Non-Affiliation</h1>
+          <p style="font-size:13px; color:#64748b; margin:0;">Effective Date: February 2026 \u2022 Last Reviewed &amp; Updated: October 2026</p>
+        </header>
+
+        <section style="font-size:15px; color:#334155; space-y:16px;">
+          <div style="background:#fffbeb; border:1px solid #fef3c7; border-left:4px solid #f59e0b; padding:16px; border-radius:0 8px 8px 0; margin-bottom:20px;">
+            <p style="margin:0; font-weight:700; color:#92400e; font-size:16px;">Independent Digital Facilitation Notice</p>
+            <p style="margin:8px 0 0 0; color:#78350f; font-size:14px; line-height:1.6;">
+              CSC DOST (<code>www.cscdost.com</code>) is an independent private digital facilitation center operated by CSC Village Level Entrepreneur (VLE) Wasim Ahmad Khanday (VLE ID: 212515670018). We are <strong>NOT</strong> an official government website and we do not represent any government department, recruitment agency, or university.
+            </p>
+          </div>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">1. Informational &amp; Facilitation Scope</h2>
+          <p>
+            All information provided on CSC DOST regarding government recruitment (JKSSB, SSC, RRB, Indian Army), university admissions (University of Kashmir, Cluster University Srinagar), and central schemes (PM-KISAN, Ayushman Bharat PM-JAY) is published strictly for educational guidance and citizen awareness.
+          </p>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">2. Primary Sources &amp; Verification</h2>
+          <p>
+            We strongly advise all candidates and citizens to cross-verify notification details, dates, fee amounts, and eligibility requirements directly from official government gazettes and recruitment boards (<code style="background:#f1f5f9; padding:2px 6px; border-radius:4px;">.gov.in / .nic.in</code>) before applying or remitting any payment.
+          </p>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">3. External Hyperlinks</h2>
+          <p>
+            CSC DOST contains links to third-party government and organizational websites. We do not exercise editorial or administrative control over external portals, nor do we assume liability for their content, availability, or operational changes.
+          </p>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">4. Contact &amp; Questions</h2>
+          <p>
+            If you have questions regarding this disclaimer, please contact us at <a href="mailto:support@cscdost.com" style="color:#2563eb;">support@cscdost.com</a> or phone: <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a>. Physical Office: Sangran Qazigund, District Anantnag, Jammu &amp; Kashmir 192221.
+          </p>
+        </section>
+      </article>
+
+      <footer style="margin-top:30px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
+        <p>CSC DOST (cscdost.com) | Authorized CSC VLE ID: 212515670018 | Sangran Qazigund, Anantnag, J&amp;K</p>
+      </footer>
+    </main>
+    `;
+  }
+  if (norm.includes("terms")) {
+    return `
+    <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.7;">
+      <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
+        <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+        <span style="margin:0 6px;">/</span>
+        <span style="color:#0f172a; font-weight:600;">Terms of Service</span>
+      </nav>
+
+      <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:28px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <header style="border-bottom:1px solid #e2e8f0; padding-bottom:18px; margin-bottom:20px;">
+          <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
+            Citizen Agreement
+          </span>
+          <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Terms of Service &amp; User Agreement</h1>
+          <p style="font-size:13px; color:#64748b; margin:0;">Effective Date: February 2026 \u2022 Last Reviewed &amp; Updated: October 2026</p>
+        </header>
+
+        <section style="font-size:15px; color:#334155; space-y:16px;">
+          <p>
+            These Terms of Service govern your access to and use of <strong>CSC DOST</strong> (<code>www.cscdost.com</code>) and services rendered at our physical CSC facilitation desk in Sangran Qazigund, J&amp;K.
+          </p>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">1. Nature of Services</h2>
+          <p>
+            CSC DOST offers citizen assistance for online application filling, document preparation, and government scheme enrollment. We charge nominal facilitation fees strictly for clerical, printing, and digital data-entry assistance in accordance with CSC e-Governance norms.
+          </p>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">2. Applicant Responsibility</h2>
+          <p>
+            Applicants are solely responsible for ensuring the accuracy and authenticity of personal details, dates of birth, educational certificates, and category claims submitted through our assistance portal. CSC DOST is not liable for rejections arising from incorrect information provided by the candidate.
+          </p>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">3. Payments &amp; Gateway</h2>
+          <p>
+            All electronic payments are processed securely via Razorpay. Official government exam fees are paid directly to designated recruitment boards. Facilitation charges are clearly itemized on payment receipts.
+          </p>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">4. Legal Jurisdiction</h2>
+          <p>
+            Any dispute arising out of or in connection with services provided by CSC DOST shall be subject to the exclusive jurisdiction of the competent courts in District Anantnag, Jammu &amp; Kashmir.
+          </p>
+        </section>
+      </article>
+
+      <footer style="margin-top:30px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
+        <p>CSC DOST (cscdost.com) | Authorized CSC VLE ID: 212515670018 | Sangran Qazigund, Anantnag, J&amp;K</p>
+      </footer>
+    </main>
+    `;
+  }
+  if (norm.includes("about")) {
+    return `
+    <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.7;">
+      <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
+        <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+        <span style="margin:0 6px;">/</span>
+        <span style="color:#0f172a; font-weight:600;">About Us</span>
+      </nav>
+
+      <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:28px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <header style="border-bottom:1px solid #e2e8f0; padding-bottom:18px; margin-bottom:20px;">
+          <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
+            Operator Profile &amp; Mission
+          </span>
+          <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">About CSC DOST (cscdost.com)</h1>
+          <p style="font-size:13px; color:#64748b; margin:0;">Published by Authorized CSC VLE Wasim Ahmad Khanday \u2022 Verified &amp; Active</p>
+        </header>
+
+        <section style="font-size:15px; color:#334155; space-y:16px;">
+          <p>
+            Welcome to <strong>CSC DOST</strong> (operating digitally at <code>www.cscdost.com</code>), an independent citizen assistance, e-governance facilitation, and informational guidance platform.
+          </p>
+          <p>
+            CSC DOST was established to bridge the digital divide between rural/semi-urban citizens and modern digital e-governance systems. Millions of candidates and families across Jammu &amp; Kashmir and India face technical barriers, complex form-filling requirements, strict image compression criteria, and unfamiliar payment gateways when applying for recruitments, competitive examinations, scholarship schemes, or welfare programs. CSC DOST offers verified guides, step-by-step assistance, and direct links to official authorities.
+          </p>
+
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:18px; margin:20px 0;">
+            <h2 style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 10px 0;">Certified CSC Entrepreneur Details</h2>
+            <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#334155; line-height:1.9;">
+              <li><strong>Lead Operator:</strong> Wasim Ahmad Khanday</li>
+              <li><strong>Authorized CSC VLE ID:</strong> 212515670018</li>
+              <li><strong>MSME Udyam Registration:</strong> UDYAM-JK-01-0041957</li>
+              <li><strong>Physical Facilitation Center:</strong> Sangran Qazigund, District Anantnag, Jammu &amp; Kashmir (PIN: 192221)</li>
+              <li><strong>Helpline Contact:</strong> +91 70068 33767 / +91 96821 32895</li>
+              <li><strong>Support Email:</strong> support@cscdost.com</li>
+            </ul>
+          </div>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">Core Services Provided</h2>
+          <ul style="padding-left:20px; margin:0 0 16px 0; line-height:1.8;">
+            <li><strong>Recruitment Bulletin &amp; Sarkari Results:</strong> Daily verified updates on Indian Army, RRB Railways, SSC Staff Selection Commission, JKSSB, Kashmir University admissions, and Cluster University Srinagar notices.</li>
+            <li><strong>Citizen E-Governance Guidance:</strong> Educational walkthroughs for PAN card registration, Aadhaar address correction, Ayushman Bharat PM-JAY Golden Card issuance, PM-KISAN e-KYC, and state domicile certificates.</li>
+            <li><strong>Browser-Based Document Tools:</strong> Free client-side image resizers, photo signature joiners, and document optimizers designed to meet exact government pixel and kilobyte specifications without sending files to private external servers.</li>
+            <li><strong>Assisted Application Desk:</strong> Optional citizen facilitation where applicants who cannot complete complex online forms can book physical or virtual assistance from our certified VLE center.</li>
+          </ul>
+        </section>
+      </article>
+
+      <footer style="margin-top:30px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
+        <p>CSC DOST (cscdost.com) | Authorized CSC VLE ID: 212515670018 | Sangran Qazigund, Anantnag, J&amp;K</p>
+      </footer>
+    </main>
+    `;
+  }
+  if (norm.includes("contact")) {
+    return `
+    <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.7;">
+      <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
+        <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+        <span style="margin:0 6px;">/</span>
+        <span style="color:#0f172a; font-weight:600;">Contact Us</span>
+      </nav>
+
+      <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:28px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <header style="border-bottom:1px solid #e2e8f0; padding-bottom:18px; margin-bottom:20px;">
+          <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
+            Helpdesk &amp; Citizen Support
+          </span>
+          <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Contact Us &amp; Physical Center Details</h1>
+          <p style="font-size:13px; color:#64748b; margin:0;">We are available to assist citizens with technical questions, application tracking, and grievances.</p>
+        </header>
+
+        <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin:20px 0;">
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:18px;">
+            <h2 style="font-size:16px; font-weight:700; color:#0f172a; margin:0 0 10px 0;">\u{1F3E2} Physical Facilitation Desk</h2>
+            <p style="font-size:14px; color:#334155; line-height:1.8; margin:0;">
+              <strong>Address:</strong> CSC DOST Facilitation Desk, Sangran Qazigund, District Anantnag, Jammu &amp; Kashmir, PIN: 192221, India<br/>
+              <strong>CSC VLE ID:</strong> 212515670018<br/>
+              <strong>Operator:</strong> Wasim Ahmad Khanday<br/>
+              <strong>Working Hours:</strong> Mon \u2013 Sat: 9:00 AM \u2013 7:00 PM IST (Closed Sundays)
+            </p>
+          </div>
+
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:18px;">
+            <h2 style="font-size:16px; font-weight:700; color:#0f172a; margin:0 0 10px 0;">\u{1F4DE} Electronic Helpdesk</h2>
+            <p style="font-size:14px; color:#334155; line-height:1.8; margin:0;">
+              <strong>Helpline / Phone:</strong> <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a><br/>
+              <strong>Alternate Contact:</strong> +91 96821 32895<br/>
+              <strong>Support Email:</strong> <a href="mailto:support@cscdost.com" style="color:#2563eb;">support@cscdost.com</a><br/>
+              <strong>Grievance Officer:</strong> Wasim Ahmad Khanday (<a href="mailto:wasimkhanday@gmail.com" style="color:#2563eb;">wasimkhanday@gmail.com</a>)<br/>
+              <strong>Tracking Desk:</strong> <a href="/track" style="color:#2563eb;">cscdost.com/track</a>
+            </p>
+          </div>
+        </section>
+      </article>
+
+      <footer style="margin-top:30px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
+        <p>CSC DOST (cscdost.com) | Authorized CSC VLE ID: 212515670018 | Sangran Qazigund, Anantnag, J&amp;K</p>
+      </footer>
+    </main>
+    `;
+  }
+  return `
+  <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.7;">
+    <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
+      <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+      <span style="margin:0 6px;">/</span>
+      <span style="color:#0f172a; font-weight:600;">Refund Policy</span>
+    </nav>
+
+    <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:28px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:18px; margin-bottom:20px;">
+        <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
+          Fee Policy
+        </span>
+        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Refund &amp; Cancellation Policy</h1>
+        <p style="font-size:13px; color:#64748b; margin:0;">Effective Date: February 2026 \u2022 Last Reviewed: October 2026</p>
+      </header>
+
+      <section style="font-size:15px; color:#334155; space-y:16px;">
+        <p>
+          At <strong>CSC DOST</strong>, we strive to deliver transparent, reliable digital facilitation and e-governance application assistance.
+        </p>
+        <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">1. Facilitation Fees</h2>
+        <p>
+          Facilitation fees paid for clerical form-filling and application assistance are refundable if the assistance request is cancelled prior to form submission on the government portal. Once an application is officially filed and an application number is generated on the government system, facilitation charges become non-refundable.
+        </p>
+        <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">2. Government Examination &amp; Portal Fees</h2>
+        <p>
+          Official fees remitted directly to recruitment boards (JKSSB, SSC, UPSC, RRB) or government authorities are governed strictly by each respective department's policies and are generally non-refundable once remitted.
+        </p>
+        <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">3. Refund Processing</h2>
+        <p>
+          Approved refunds will be processed to the original payment source within 5-7 business days via our payment gateway (Razorpay). For inquiries, email <a href="mailto:support@cscdost.com" style="color:#2563eb;">support@cscdost.com</a> with your transaction token.
+        </p>
+      </section>
+    </article>
+
+    <footer style="margin-top:30px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
+      <p>CSC DOST (cscdost.com) | Authorized CSC VLE ID: 212515670018 | Sangran Qazigund, Anantnag, J&amp;K</p>
+    </footer>
+  </main>
+  `;
+}
+function renderHomepageSubstantiveHtml(posts, services) {
+  const topPosts = posts.slice(0, 15);
+  const topServices = services.slice(0, 8);
+  return `
+  <main class="ssr-homepage-wrapper" style="max-width:1100px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
+    <!-- Hero Banner -->
+    <header style="background:linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color:#ffffff; border-radius:16px; padding:32px 24px; margin-bottom:28px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);">
+      <div style="font-size:13px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#93c5fd; margin-bottom:8px;">
+        Authorized CSC Village Level Entrepreneur \u2022 VLE ID: 212515670018
+      </div>
+      <h1 style="font-size:32px; font-weight:800; line-height:1.2; margin:0 0 12px 0;">
+        CSC DOST \u2013 Independent Digital Assistance &amp; Citizen Information Portal
+      </h1>
+      <p style="font-size:16px; color:#e0e7ff; max-width:800px; line-height:1.6; margin:0 0 20px 0;">
+        Fast, verified recruitment updates (JKSSB, Indian Army, SSC, RRB), central scheme guides (PM-KISAN, Ayushman Bharat PM-JAY, Aadhaar, PAN card), and free citizen document preparation tools.
+      </p>
+      <div style="display:flex; flex-wrap:wrap; gap:12px; font-size:14px;">
+        <a href="#sarkari-board" style="background:#ffffff; color:#1e3a8a; font-weight:700; padding:10px 20px; border-radius:8px; text-decoration:none;">
+          Browse Latest Jobs
+        </a>
+        <a href="/tools" style="background:rgba(255,255,255,0.15); color:#ffffff; font-weight:600; padding:10px 20px; border-radius:8px; text-decoration:none; border:1px solid rgba(255,255,255,0.3);">
+          Online Document Tools
+        </a>
+        <a href="/track" style="background:rgba(255,255,255,0.15); color:#ffffff; font-weight:600; padding:10px 20px; border-radius:8px; text-decoration:none; border:1px solid rgba(255,255,255,0.3);">
+          Track Application
+        </a>
+      </div>
+    </header>
+
+    <!-- Government Transparency Notice -->
+    <aside style="background:#fffbeb; border-left:4px solid #f59e0b; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:28px; font-size:13px; color:#92400e;">
+      <strong>Official Transparency Notice:</strong> CSC DOST (cscdost.com) is an independent private digital facilitation center operated by CSC VLE Wasim Ahmad Khanday in Sangran Qazigund, Anantnag, J&amp;K. We are <strong>NOT</strong> an official government website. Official portals end with <code style="background:#fef3c7; padding:2px 4px; border-radius:3px;">.gov.in</code> or <code style="background:#fef3c7; padding:2px 4px; border-radius:3px;">.nic.in</code>.
+    </aside>
+
+    <!-- Latest Recruitment Notifications -->
+    <section id="sarkari-board" style="margin-bottom:36px;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px;">
+        <h2 style="font-size:22px; font-weight:800; color:#0f172a; margin:0;">
+          Latest Sarkari Jobs &amp; Notifications
+        </h2>
+        <span style="font-size:13px; color:#64748b;">Updated Daily</span>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:16px;">
+        ${topPosts.map((post) => `
+          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:16px; display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-size:11px; font-weight:700; color:#2563eb; background:#eff6ff; padding:3px 8px; border-radius:4px; text-transform:uppercase;">
+                  ${escapeHtml(post.category?.replace(/_/g, " "))}
+                </span>
+                <span style="font-size:12px; color:#b91c1c; font-weight:600;">Last Date: ${escapeHtml(post.lastDate)}</span>
+              </div>
+              <h3 style="font-size:16px; font-weight:700; line-height:1.35; margin:0 0 8px 0;">
+                <a href="/post/${escapeHtml(post.id)}" style="color:#0f172a; text-decoration:none;">
+                  ${escapeHtml(post.title)}
+                </a>
+              </h3>
+              <p style="font-size:13px; color:#475569; line-height:1.5; margin:0 0 12px 0;">
+                ${escapeHtml((post.shortInfo || "").slice(0, 110))}...
+              </p>
+            </div>
+            <div style="border-top:1px solid #f1f5f9; padding-top:10px; display:flex; justify-content:space-between; align-items:center; font-size:12px;">
+              <span style="color:#64748b;">Posts: <strong>${escapeHtml(post.totalPosts || "Open")}</strong></span>
+              <a href="/post/${escapeHtml(post.id)}" style="color:#2563eb; font-weight:600; text-decoration:none;">
+                View Details &amp; Apply \u2192
+              </a>
+            </div>
+          </article>
+        `).join("")}
+      </div>
+    </section>
+
+    <!-- Core Citizen Services -->
+    <section id="services" style="margin-bottom:36px;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px;">
+        <h2 style="font-size:22px; font-weight:800; color:#0f172a; margin:0;">
+          Citizen E-Governance Services
+        </h2>
+        <span style="font-size:13px; color:#64748b;">Assisted Digital Counter</span>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:14px;">
+        ${topServices.map((service) => `
+          <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:16px;">
+            <div style="font-size:11px; font-weight:600; color:#15803d; text-transform:uppercase; margin-bottom:4px;">${escapeHtml(service.category)}</div>
+            <h3 style="font-size:15px; font-weight:700; color:#0f172a; margin:0 0 6px 0;">
+              <a href="/service/${escapeHtml(service.id)}" style="color:#0f172a; text-decoration:none;">${escapeHtml(service.name)}</a>
+            </h3>
+            <p style="font-size:12px; color:#64748b; line-height:1.4; margin:0 0 10px 0;">${escapeHtml(service.description.slice(0, 85))}...</p>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px;">
+              <span style="font-weight:700; color:#0f172a;">${escapeHtml(service.price)}</span>
+              <a href="/service/${escapeHtml(service.id)}" style="color:#2563eb; font-weight:600; text-decoration:none;">View Service \u2192</a>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </section>
+
+    <!-- Frequently Asked Questions -->
+    <section style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:24px; margin-bottom:36px;">
+      <h2 style="font-size:20px; font-weight:800; color:#0f172a; margin:0 0 16px 0;">Frequently Asked Questions</h2>
+      <div style="space-y:14px;">
+        <div style="margin-bottom:14px;">
+          <h3 style="font-size:15px; font-weight:700; color:#1e293b; margin:0 0 4px 0;">What is CSC DOST?</h3>
+          <p style="font-size:14px; color:#475569; margin:0;">
+            CSC DOST (cscdost.com) is an independent citizen assistance portal and information desk operated by authorized CSC Village Level Entrepreneur Wasim Ahmad Khanday in Sangran Qazigund, Anantnag, Jammu &amp; Kashmir.
+          </p>
+        </div>
+        <div>
+          <h3 style="font-size:15px; font-weight:700; color:#1e293b; margin:0 0 4px 0;">Is CSC DOST an official government website?</h3>
+          <p style="font-size:14px; color:#475569; margin:0;">
+            No. CSC DOST is a private digital facilitation center and information portal. We are NOT an official government website. Official government portals include csc.gov.in, digitalseva.csc.gov.in, and jkssb.nic.in.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer Links -->
+    <footer style="border-top:1px solid #e2e8f0; padding-top:20px; text-align:center; font-size:13px; color:#64748b; line-height:1.8;">
+      <p style="margin:0 0 8px 0;">
+        <a href="/about-us" style="color:#2563eb; text-decoration:none; margin:0 8px;">About Us</a> |
+        <a href="/contact-us" style="color:#2563eb; text-decoration:none; margin:0 8px;">Contact Helpdesk</a> |
+        <a href="/privacy-policy" style="color:#2563eb; text-decoration:none; margin:0 8px;">Privacy Policy (DPDP Act)</a> |
+        <a href="/terms-of-service" style="color:#2563eb; text-decoration:none; margin:0 8px;">Terms of Service</a> |
+        <a href="/disclaimer" style="color:#2563eb; text-decoration:none; margin:0 8px;">Disclaimer</a> |
+        <a href="/refund-policy" style="color:#2563eb; text-decoration:none; margin:0 8px;">Refund Policy</a>
+      </p>
+      <p style="margin:0; font-size:12px;">\xA9 2026 CSC DOST \u2022 Operator: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) \u2022 Sangran Qazigund, Anantnag, J&amp;K 192221</p>
+    </footer>
+  </main>
+  `;
+}
+function renderNotFoundSubstantiveHtml(requestedPath) {
+  const safePath = escapeHtml(requestedPath);
+  return `
+  <main class="ssr-not-found-wrapper" style="min-height:70vh; display:flex; align-items:center; justify-content:center; padding:40px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; background:#f8fafc;">
+    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; max-width:540px; padding:36px; text-align:center; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);">
+      <div style="font-size:48px; margin-bottom:12px;">\u{1F4CB}</div>
+      <h1 style="font-size:24px; font-weight:800; color:#0f172a; margin:0 0 10px 0;">Page or Notification Not Found (404)</h1>
+      <p style="color:#64748b; font-size:14px; line-height:1.6; margin:0 0 20px 0;">
+        The requested address <code style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:13px; color:#0f172a;">${safePath}</code> does not exist or may have expired after the recruitment closing date.
+      </p>
+      <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+        <a href="/" style="display:inline-block; background:#2563eb; color:#ffffff; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:600; font-size:14px;">
+          Return to Homepage
+        </a>
+        <a href="/#sarkari-board" style="display:inline-block; background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:600; font-size:14px;">
+          Latest Sarkari Jobs
+        </a>
+      </div>
+    </div>
+  </main>
+  `;
+}
+
 // src/dbServer.ts
-import fs from "fs";
-import path from "path";
-var DB_PATH = path.join(process.cwd(), "data", "db.json");
+import fs2 from "fs";
+import path2 from "path";
+var DB_PATH = path2.join(process.cwd(), "data", "db.json");
 var DEFAULT_DB = {
   settings: {
     cafeName: "CSC DOST",
@@ -4430,18 +5385,19 @@ var DEFAULT_DB = {
   postThumbnails: {},
   pushSubscriptions: [],
   pushNotifications: [],
-  pushSettings: { autoPublishPush: false, welcomePushEnabled: true }
+  pushSettings: { autoPublishPush: false, welcomePushEnabled: true },
+  paymentTransactions: []
 };
 var memoryDb = null;
 function initDb() {
   if (memoryDb) return;
   try {
-    const dir = path.dirname(DB_PATH);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    const dir = path2.dirname(DB_PATH);
+    if (!fs2.existsSync(dir)) {
+      fs2.mkdirSync(dir, { recursive: true });
     }
-    if (!fs.existsSync(DB_PATH)) {
-      fs.writeFileSync(DB_PATH, JSON.stringify(DEFAULT_DB, null, 2), "utf-8");
+    if (!fs2.existsSync(DB_PATH)) {
+      fs2.writeFileSync(DB_PATH, JSON.stringify(DEFAULT_DB, null, 2), "utf-8");
       memoryDb = JSON.parse(JSON.stringify(DEFAULT_DB));
     }
   } catch (err) {
@@ -4454,8 +5410,8 @@ function initDb() {
 function getDb() {
   initDb();
   try {
-    if (fs.existsSync(DB_PATH)) {
-      const content = fs.readFileSync(DB_PATH, "utf-8");
+    if (fs2.existsSync(DB_PATH)) {
+      const content = fs2.readFileSync(DB_PATH, "utf-8");
       const parsed = JSON.parse(content);
       if (!parsed.appointments) parsed.appointments = [];
       if (!parsed.contactRequests) parsed.contactRequests = [];
@@ -4466,6 +5422,7 @@ function getDb() {
       if (!parsed.pushSubscriptions) parsed.pushSubscriptions = [];
       if (!parsed.pushNotifications) parsed.pushNotifications = [];
       if (!parsed.pushSettings) parsed.pushSettings = { autoPublishPush: false, welcomePushEnabled: true };
+      if (!parsed.paymentTransactions) parsed.paymentTransactions = [];
       memoryDb = parsed;
       return parsed;
     }
@@ -4482,8 +5439,8 @@ function saveDb(data) {
   try {
     initDb();
     const tempPath = `${DB_PATH}.tmp`;
-    fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), "utf-8");
-    fs.renameSync(tempPath, DB_PATH);
+    fs2.writeFileSync(tempPath, JSON.stringify(data, null, 2), "utf-8");
+    fs2.renameSync(tempPath, DB_PATH);
   } catch (err) {
     console.warn("Disk save warning (state safely saved in memory):", err);
   }
@@ -4578,6 +5535,49 @@ function updateAppointmentStatus(id, status) {
     return true;
   }
   return false;
+}
+function updateAppointmentPayment(id, paymentUpdate) {
+  const db = getDb();
+  const item = db.appointments.find(
+    (r) => r.id === id || r.appId === id || r.supabaseId === id
+  );
+  if (item) {
+    if (paymentUpdate.paymentMethod) item.paymentMethod = paymentUpdate.paymentMethod;
+    if (paymentUpdate.paymentStatus) item.paymentStatus = paymentUpdate.paymentStatus;
+    if (paymentUpdate.amountPaid !== void 0) item.amountPaid = paymentUpdate.amountPaid;
+    if (paymentUpdate.amountDue !== void 0) item.amountDue = paymentUpdate.amountDue;
+    if (paymentUpdate.utrNumber) item.utrNumber = paymentUpdate.utrNumber;
+    if (paymentUpdate.gatewayTxnId) item.gatewayTxnId = paymentUpdate.gatewayTxnId;
+    if (paymentUpdate.paidAt) item.paidAt = paymentUpdate.paidAt;
+    if (paymentUpdate.offlineReceiptNo) item.offlineReceiptNo = paymentUpdate.offlineReceiptNo;
+    if (paymentUpdate.offlineCollectedBy) item.offlineCollectedBy = paymentUpdate.offlineCollectedBy;
+    saveDb(db);
+    return true;
+  }
+  return false;
+}
+function upsertPaymentTransaction(txn) {
+  const db = getDb();
+  if (!db.paymentTransactions) db.paymentTransactions = [];
+  const idx = db.paymentTransactions.findIndex((t) => t.txnid === txn.txnid);
+  const updatedTxn = {
+    ...txn,
+    updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+  };
+  if (idx !== -1) {
+    db.paymentTransactions[idx] = { ...db.paymentTransactions[idx], ...updatedTxn };
+  } else {
+    db.paymentTransactions.unshift({
+      ...updatedTxn,
+      createdAt: updatedTxn.createdAt || (/* @__PURE__ */ new Date()).toISOString()
+    });
+  }
+  saveDb(db);
+  return db.paymentTransactions.find((t) => t.txnid === txn.txnid);
+}
+function getPaymentTransactions() {
+  const db = getDb();
+  return db.paymentTransactions || [];
 }
 function deleteAppointment(id, extraIds = []) {
   const db = getDb();
@@ -5472,12 +6472,333 @@ async function syncPushNotificationToSupabase(record) {
     return { success: false, error: err?.message };
   }
 }
+async function updateSupabasePaymentRecord(identifier, paymentData) {
+  const supabase = getServerSupabaseClient();
+  if (!supabase) return { success: false, error: "Supabase client not initialized" };
+  try {
+    const lookup = await findSupabaseApplicationRows(identifier);
+    if (!lookup.rows || lookup.rows.length === 0) {
+      return { success: false, error: `Application "${identifier}" not found in Supabase.` };
+    }
+    const targetRow = lookup.rows[0];
+    const targetUuid = String(targetRow.id);
+    const existingPayload = targetRow.payload && typeof targetRow.payload === "object" ? targetRow.payload : {};
+    const updatedPayload = {
+      ...existingPayload,
+      paymentMethod: paymentData.paymentMethod || existingPayload.paymentMethod,
+      paymentStatus: paymentData.paymentStatus || existingPayload.paymentStatus,
+      amountPaid: paymentData.amountPaid !== void 0 ? paymentData.amountPaid : existingPayload.amountPaid,
+      amountDue: paymentData.amountDue !== void 0 ? paymentData.amountDue : existingPayload.amountDue,
+      gatewayTxnId: paymentData.gatewayTxnId || existingPayload.gatewayTxnId,
+      payuMihpayid: paymentData.payuMihpayid || existingPayload.payuMihpayid,
+      payuBankRef: paymentData.payuBankRef || existingPayload.payuBankRef,
+      paidAt: paymentData.paidAt || existingPayload.paidAt,
+      offlineReceiptNo: paymentData.offlineReceiptNo || existingPayload.offlineReceiptNo,
+      offlineCollectedBy: paymentData.offlineCollectedBy || existingPayload.offlineCollectedBy,
+      offlineCollectedAt: paymentData.offlineCollectedAt || existingPayload.offlineCollectedAt,
+      updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    const updateObj = {
+      payload: updatedPayload
+    };
+    if (paymentData.paymentMethod) updateObj.payment_mode = paymentData.paymentMethod;
+    if (paymentData.paymentStatus === "paid" && paymentData.amountPaid) {
+      updateObj.utr_number = paymentData.gatewayTxnId || paymentData.payuMihpayid || "PAID";
+    }
+    try {
+      const { error: fullUpdateErr } = await supabase.from("applications").update({
+        ...updateObj,
+        payment_method: paymentData.paymentMethod,
+        payment_status: paymentData.paymentStatus,
+        amount_paid: paymentData.amountPaid,
+        amount_due: paymentData.amountDue,
+        gateway_txnid: paymentData.gatewayTxnId,
+        payu_mihpayid: paymentData.payuMihpayid,
+        payu_bank_ref: paymentData.payuBankRef,
+        paid_at: paymentData.paidAt,
+        offline_receipt_no: paymentData.offlineReceiptNo,
+        offline_collected_by: paymentData.offlineCollectedBy,
+        offline_collected_at: paymentData.offlineCollectedAt
+      }).eq("id", targetUuid);
+      if (!fullUpdateErr) {
+        return { success: true };
+      }
+    } catch {
+    }
+    const { error: fallbackErr } = await supabase.from("applications").update(updateObj).eq("id", targetUuid);
+    if (fallbackErr) {
+      return { success: false, error: fallbackErr.message };
+    }
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err?.message || String(err) };
+  }
+}
+async function recordSupabasePaymentTransaction(txn) {
+  const supabase = getServerSupabaseClient();
+  if (!supabase) return { success: false, error: "Supabase client not initialized" };
+  try {
+    const { error } = await supabase.from("payment_transactions").upsert({
+      txnid: txn.txnid,
+      token_id: txn.tokenId || txn.token_id || txn.appId,
+      application_id: txn.applicationId || txn.appId,
+      customer_name: txn.customerName || txn.customer_name || "Customer",
+      customer_phone: txn.customerPhone || txn.customer_phone || "",
+      customer_email: txn.customerEmail || txn.customer_email || "",
+      service_name: txn.serviceName || txn.service_name || "",
+      payment_method: txn.paymentMethod || txn.payment_method || "online_payu",
+      gateway: "payu",
+      govt_fee: txn.govtFee || 0,
+      csc_fee: txn.cscFee || 70,
+      delivery_fee: txn.deliveryFee || 0,
+      total_amount: txn.totalAmount || txn.amount || 0,
+      currency: "INR",
+      status: txn.status || "initiated",
+      payu_mihpayid: txn.payuMihpayid || txn.mihpayid,
+      bank_ref_num: txn.bankRefNum || txn.bank_ref_num,
+      payment_mode: txn.paymentMode || txn.mode,
+      hash_verified: Boolean(txn.hashVerified),
+      api_verified: Boolean(txn.apiVerified),
+      error_message: txn.errorMessage || txn.error,
+      request_payload: txn.requestPayload,
+      response_payload: txn.responsePayload,
+      verification_payload: txn.verificationPayload,
+      created_at: txn.createdAt || (/* @__PURE__ */ new Date()).toISOString(),
+      updated_at: (/* @__PURE__ */ new Date()).toISOString()
+    }, { onConflict: "txnid" });
+    if (error) {
+      console.warn("[SupabaseServer] payment_transactions insert notice:", error.message);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err) {
+    console.warn("[SupabaseServer] payment_transactions exception:", err?.message);
+    return { success: false, error: err?.message };
+  }
+}
+
+// src/server/payu.ts
+import crypto from "crypto";
+function getPayUMerchantKey() {
+  return (process.env.PAYU_MERCHANT_KEY || process.env.PAYU_KEY || "").trim();
+}
+function getPayUMerchantSalt() {
+  return (process.env.PAYU_MERCHANT_SALT || process.env.PAYU_SALT || "").trim();
+}
+function getPayUEnv() {
+  return (process.env.PAYU_ENV || "test").toLowerCase().trim();
+}
+function getAppBaseUrl() {
+  return (process.env.APP_BASE_URL || "https://www.cscdost.com").replace(/\/+$/, "");
+}
+function getPayUPaymentUrl() {
+  const env = getPayUEnv();
+  return env === "production" || env === "prod" || env === "live" ? "https://secure.payu.in/_payment" : "https://test.payu.in/_payment";
+}
+function getPayUVerifyUrl() {
+  const env = getPayUEnv();
+  return env === "production" || env === "prod" || env === "live" ? "https://info.payu.in/merchant/postservice?form=2" : "https://test.payu.in/merchant/postservice?form=2";
+}
+var PAYU_MERCHANT_KEY = getPayUMerchantKey();
+var PAYU_MERCHANT_SALT = getPayUMerchantSalt();
+var PAYU_ENV = getPayUEnv();
+var APP_BASE_URL = getAppBaseUrl();
+var PAYU_PAYMENT_URL = getPayUPaymentUrl();
+var PAYU_VERIFY_URL = getPayUVerifyUrl();
+function isPayUConfigured() {
+  const key = getPayUMerchantKey();
+  const salt = getPayUMerchantSalt();
+  const isPlaceholder = (val) => !val || val.includes("<") || val.includes(">") || val.includes("placeholder") || val === "YOUR_KEY_HERE";
+  return Boolean(key && salt && !isPlaceholder(key) && !isPlaceholder(salt));
+}
+function calculateAuthoritativePrice(serviceNameOrId, userCategory, deliveryOption) {
+  const cleanTarget = (serviceNameOrId || "").toLowerCase().trim();
+  let govtFee = 0;
+  let cscFee = 70;
+  let deliveryFee = 0;
+  if (deliveryOption === "speed_post") {
+    deliveryFee = 50;
+  }
+  const matchedService = SERVICES_LIST.find(
+    (s) => s.id.toLowerCase() === cleanTarget || s.name.toLowerCase() === cleanTarget || cleanTarget.includes(s.name.toLowerCase()) || s.name.toLowerCase().includes(cleanTarget)
+  );
+  if (matchedService) {
+    const priceStr = matchedService.price || "";
+    const numMatches = priceStr.match(/₹\s*(\d+)/g);
+    if (numMatches && numMatches.length > 0) {
+      const parsedNums = numMatches.map((m) => parseInt(m.replace(/[^\d]/g, ""), 10)).filter((n) => !isNaN(n));
+      if (parsedNums.length >= 2) {
+        govtFee = parsedNums[0];
+        cscFee = parsedNums[1];
+      } else if (parsedNums.length === 1) {
+        if (priceStr.toLowerCase().includes("govt")) {
+          govtFee = parsedNums[0];
+        } else {
+          cscFee = parsedNums[0];
+        }
+      }
+    }
+    return {
+      govtFee,
+      cscFee,
+      deliveryFee,
+      totalAmount: Math.max(1, govtFee + cscFee + deliveryFee),
+      description: matchedService.name
+    };
+  }
+  const matchedJob = SARKARI_DATA.find(
+    (item) => item.id.toLowerCase() === cleanTarget || item.title.toLowerCase() === cleanTarget || cleanTarget.includes(item.title.toLowerCase())
+  );
+  if (matchedJob && matchedJob.fees) {
+    const isReserved = userCategory && (userCategory.toLowerCase().includes("sc") || userCategory.toLowerCase().includes("st") || userCategory.toLowerCase().includes("female"));
+    const rawFee = isReserved ? matchedJob.fees.scSt : matchedJob.fees.genObc;
+    const matchDigits = String(rawFee || "").match(/(\d+)/);
+    if (matchDigits) {
+      govtFee = parseInt(matchDigits[1], 10);
+    }
+    return {
+      govtFee,
+      cscFee: 70,
+      deliveryFee,
+      totalAmount: Math.max(1, govtFee + 70 + deliveryFee),
+      description: matchedJob.title
+    };
+  }
+  return {
+    govtFee: 0,
+    cscFee: 70,
+    deliveryFee,
+    totalAmount: Math.max(1, 70 + deliveryFee),
+    description: serviceNameOrId || "CSC DOST E-Governance Service"
+  };
+}
+function generatePayURequestHash(params) {
+  const {
+    key,
+    txnid,
+    amount,
+    productinfo,
+    firstname,
+    email,
+    udf1 = "",
+    udf2 = "",
+    udf3 = "",
+    udf4 = "",
+    udf5 = "",
+    salt
+  } = params;
+  const hashString = `${key}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|${udf1}|${udf2}|${udf3}|${udf4}|${udf5}||||||${salt}`;
+  return crypto.createHash("sha512").update(hashString).digest("hex").toLowerCase();
+}
+function verifyPayUResponseHash(responseParams, salt) {
+  const {
+    key = "",
+    txnid = "",
+    amount = "",
+    productinfo = "",
+    firstname = "",
+    email = "",
+    status = "",
+    hash = "",
+    additionalCharges,
+    udf1 = "",
+    udf2 = "",
+    udf3 = "",
+    udf4 = "",
+    udf5 = ""
+  } = responseParams;
+  if (!hash || !salt) {
+    return false;
+  }
+  let hashSequence = "";
+  if (additionalCharges && String(additionalCharges).trim().length > 0) {
+    hashSequence = `${additionalCharges}|${salt}|${status}||||||${udf5}|${udf4}|${udf3}|${udf2}|${udf1}|${email}|${firstname}|${productinfo}|${amount}|${txnid}|${key}`;
+  } else {
+    hashSequence = `${salt}|${status}||||||${udf5}|${udf4}|${udf3}|${udf2}|${udf1}|${email}|${firstname}|${productinfo}|${amount}|${txnid}|${key}`;
+  }
+  const calculatedHash = crypto.createHash("sha512").update(hashSequence).digest("hex").toLowerCase();
+  return calculatedHash === String(hash).toLowerCase().trim();
+}
+async function verifyPaymentWithPayU(txnid) {
+  const key = getPayUMerchantKey();
+  const salt = getPayUMerchantSalt();
+  const verifyUrl = getPayUVerifyUrl();
+  if (!isPayUConfigured()) {
+    if (txnid.startsWith("MOCK_") || txnid.startsWith("TEST_PAYU_")) {
+      return {
+        success: true,
+        status: "success",
+        mihpayid: `PAYU_MOCK_${Date.now()}`,
+        bankRefNum: `AXIS_${Date.now().toString().slice(-6)}`,
+        amount: 70,
+        mode: "UPI",
+        message: "Mock verification completed (Test Mode)"
+      };
+    }
+    return {
+      success: false,
+      status: "error",
+      message: "PayU credentials are not configured in production environment."
+    };
+  }
+  try {
+    const hashString = `${key}|verify_payment|${txnid}|${salt}`;
+    const hash = crypto.createHash("sha512").update(hashString).digest("hex").toLowerCase();
+    const bodyParams = new URLSearchParams();
+    bodyParams.append("key", key);
+    bodyParams.append("command", "verify_payment");
+    bodyParams.append("var1", txnid);
+    bodyParams.append("hash", hash);
+    const response = await fetch(verifyUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: bodyParams.toString()
+    });
+    if (!response.ok) {
+      return {
+        success: false,
+        status: "error",
+        message: `PayU Verify API HTTP ${response.status}`
+      };
+    }
+    const data = await response.json();
+    if (data && data.status === 1 && data.transaction_details && data.transaction_details[txnid]) {
+      const details = data.transaction_details[txnid];
+      const txnStatus = String(details.status || "").toLowerCase();
+      return {
+        success: txnStatus === "success",
+        status: txnStatus === "success" ? "success" : txnStatus === "pending" ? "pending" : "failure",
+        mihpayid: details.mihpayid,
+        bankRefNum: details.bank_ref_num,
+        amount: Number(details.amt || details.transaction_amount || 0),
+        mode: details.mode,
+        message: details.error_Message || details.msg || "Transaction verified with PayU gateway",
+        rawResponse: details
+      };
+    }
+    return {
+      success: false,
+      status: "not_found",
+      message: data.msg || "Transaction details not found on PayU",
+      rawResponse: data
+    };
+  } catch (err) {
+    console.error("[PayU] verifyPaymentWithPayU exception:", err?.message || err);
+    return {
+      success: false,
+      status: "error",
+      message: err?.message || "Network error verifying payment with PayU"
+    };
+  }
+}
 
 // src/lib/pushServer.ts
-import fs2 from "fs";
-import path2 from "path";
+import fs3 from "fs";
+import path3 from "path";
 import webpush from "web-push";
-var VAPID_FILE = path2.join(process.cwd(), "data", "vapid.json");
+var VAPID_FILE = path3.join(process.cwd(), "data", "vapid.json");
 var TMP_VAPID_FILE = "/tmp/vapid.json";
 var STABLE_VAPID_PUBLIC_KEY = "BIWxr5Hs7YgdviLAArRERb4tMUKSu-6PvSJbIB6_JLtIuemW4knw4LTtRdj8G-MdKa7EpepFB_vOjKLBkTB0pGg";
 var STABLE_VAPID_PRIVATE_KEY = "OGGSMWlqvau-Tghbf6ajVEzBl_ohTQpI6SsV0kNqTjg";
@@ -5492,8 +6813,8 @@ function initializeVapid() {
     const candidatePaths = [VAPID_FILE, TMP_VAPID_FILE];
     for (const filePath of candidatePaths) {
       try {
-        if (fs2.existsSync(filePath)) {
-          const fileContent = fs2.readFileSync(filePath, "utf-8");
+        if (fs3.existsSync(filePath)) {
+          const fileContent = fs3.readFileSync(filePath, "utf-8");
           const parsed = JSON.parse(fileContent);
           if (parsed.publicKey && parsed.privateKey) {
             publicKey = parsed.publicKey;
@@ -5509,8 +6830,8 @@ function initializeVapid() {
     publicKey = STABLE_VAPID_PUBLIC_KEY;
     privateKey = STABLE_VAPID_PRIVATE_KEY;
     try {
-      const targetDir = fs2.existsSync(path2.dirname(VAPID_FILE)) ? VAPID_FILE : TMP_VAPID_FILE;
-      fs2.writeFileSync(targetDir, JSON.stringify({ publicKey, privateKey, subject, createdAt: (/* @__PURE__ */ new Date()).toISOString() }, null, 2));
+      const targetDir = fs3.existsSync(path3.dirname(VAPID_FILE)) ? VAPID_FILE : TMP_VAPID_FILE;
+      fs3.writeFileSync(targetDir, JSON.stringify({ publicKey, privateKey, subject, createdAt: (/* @__PURE__ */ new Date()).toISOString() }, null, 2));
     } catch {
     }
   }
@@ -5844,6 +7165,578 @@ app.post("/api/upi/verify-payment", (req, res) => {
     return res.status(500).json({ success: false, error: "Failed to verify UPI payment: " + (err.message || String(err)) });
   }
 });
+app.get("/api/payu/config", (_req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.status(200).json({
+    success: true,
+    configured: isPayUConfigured(),
+    env: getPayUEnv(),
+    merchantKey: isPayUConfigured() ? getPayUMerchantKey() : "TEST_KEY",
+    paymentUrl: getPayUPaymentUrl()
+  });
+});
+app.all("/api/payu/mock-gateway", (req, res) => {
+  const mergedParams = {
+    ...req.query || {},
+    ...req.body || {}
+  };
+  const key = mergedParams.key || "TEST_KEY";
+  const txnid = mergedParams.txnid || "TEST_TXN";
+  const amount = mergedParams.amount || "70.00";
+  const productinfo = mergedParams.productinfo || "Service";
+  const firstname = mergedParams.firstname || "Customer";
+  const email = mergedParams.email || "customer@example.com";
+  const udf1 = mergedParams.udf1 || "CSC21251567001";
+  const surl = mergedParams.surl || `${getAppBaseUrl()}/api/payu/response`;
+  const furl = mergedParams.furl || `${getAppBaseUrl()}/api/payu/response`;
+  const effectiveSalt = isPayUConfigured() ? getPayUMerchantSalt() : "test_mock_salt_12345";
+  const mihpayid = `PAYU_MOCK_${Date.now()}`;
+  const bankRefNum = `AXIS_${Date.now().toString().slice(-6)}`;
+  const successSeq = `${effectiveSalt}|success|||||||||||${email}|${firstname}|${productinfo}|${amount}|${txnid}|${key}`;
+  const successHash = crypto2.createHash("sha512").update(successSeq).digest("hex").toLowerCase();
+  const failSeq = `${effectiveSalt}|failure|||||||||||${email}|${firstname}|${productinfo}|${amount}|${txnid}|${key}`;
+  const failHash = crypto2.createHash("sha512").update(failSeq).digest("hex").toLowerCase();
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PayU Hosted Checkout Simulator | CSC DOST</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f1f5f9; margin: 0; padding: 20px; color: #0f172a; }
+    .card { max-width: 480px; margin: 40px auto; background: white; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); overflow: hidden; border: 1px solid #e2e8f0; }
+    .header { background: #0b192c; color: white; padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; }
+    .header h2 { margin: 0; font-size: 18px; font-weight: 700; }
+    .badge { background: #0284c7; color: white; font-size: 11px; padding: 4px 8px; border-radius: 6px; font-weight: 600; text-transform: uppercase; }
+    .body { padding: 24px; }
+    .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+    .info-row .label { color: #64748b; font-weight: 500; }
+    .info-row .value { color: #0f172a; font-weight: 600; font-family: monospace; }
+    .total-row { display: flex; justify-content: space-between; padding: 14px 0; margin-top: 10px; font-size: 16px; font-weight: 700; color: #16a34a; }
+    .actions { display: flex; gap: 12px; margin-top: 24px; }
+    .btn { flex: 1; padding: 14px; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; text-align: center; }
+    .btn-pay { background: #16a34a; color: white; }
+    .btn-pay:hover { background: #15803d; }
+    .btn-cancel { background: #fee2e2; color: #b91c1c; }
+    .btn-cancel:hover { background: #fecaca; }
+    .notice { font-size: 11px; color: #64748b; text-align: center; margin-top: 16px; line-height: 1.4; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <div>
+        <h2>PayU Hosted Checkout</h2>
+        <small style="opacity: 0.8; font-size: 11px;">Official Test Mode Simulator</small>
+      </div>
+      <span class="badge">Test Environment</span>
+    </div>
+    <div class="body">
+      <div class="info-row">
+        <span class="label">Merchant</span>
+        <span class="value">CSC DOST (E-Services)</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Order / Token Ref</span>
+        <span class="value">${udf1}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Transaction ID</span>
+        <span class="value">${txnid}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Customer Name</span>
+        <span class="value">${firstname}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Service</span>
+        <span class="value">${productinfo}</span>
+      </div>
+      <div class="total-row">
+        <span>Amount Payable</span>
+        <span>\u20B9${amount}</span>
+      </div>
+
+      <div class="actions">
+        <!-- Success Form -->
+        <form action="${surl}" method="POST" style="flex: 1;">
+          <input type="hidden" name="status" value="success" />
+          <input type="hidden" name="txnid" value="${txnid}" />
+          <input type="hidden" name="amount" value="${amount}" />
+          <input type="hidden" name="productinfo" value="${productinfo}" />
+          <input type="hidden" name="firstname" value="${firstname}" />
+          <input type="hidden" name="email" value="${email}" />
+          <input type="hidden" name="key" value="${key}" />
+          <input type="hidden" name="mihpayid" value="${mihpayid}" />
+          <input type="hidden" name="bank_ref_num" value="${bankRefNum}" />
+          <input type="hidden" name="mode" value="UPI" />
+          <input type="hidden" name="udf1" value="${udf1}" />
+          <input type="hidden" name="hash" value="${successHash}" />
+          <button type="submit" class="btn btn-pay" style="width: 100%;">
+            \u2713 Simulate Pay Securely
+          </button>
+        </form>
+
+        <!-- Failure Form -->
+        <form action="${furl}" method="POST" style="flex: 1;">
+          <input type="hidden" name="status" value="failure" />
+          <input type="hidden" name="txnid" value="${txnid}" />
+          <input type="hidden" name="amount" value="${amount}" />
+          <input type="hidden" name="productinfo" value="${productinfo}" />
+          <input type="hidden" name="firstname" value="${firstname}" />
+          <input type="hidden" name="email" value="${email}" />
+          <input type="hidden" name="key" value="${key}" />
+          <input type="hidden" name="mihpayid" value="" />
+          <input type="hidden" name="error" value="E000" />
+          <input type="hidden" name="error_Message" value="User cancelled payment session" />
+          <input type="hidden" name="udf1" value="${udf1}" />
+          <input type="hidden" name="hash" value="${failHash}" />
+          <button type="submit" class="btn btn-cancel" style="width: 100%;">
+            \u2715 Simulate Failure / Cancel
+          </button>
+        </form>
+      </div>
+
+      <p class="notice">
+        This simulator mirrors PayU's hosted checkout page for local testing and demonstration. In production with real Vercel credentials, users are redirected to <strong>secure.payu.in</strong>.
+      </p>
+    </div>
+  </div>
+</body>
+</html>`;
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send(html);
+});
+app.post("/api/payu/initiate", async (req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  try {
+    const {
+      appId,
+      customerName,
+      email,
+      phone,
+      serviceName,
+      userCategory,
+      deliveryOption
+    } = req.body || {};
+    const cleanName = String(customerName || "").trim();
+    const cleanPhone = String(phone || "").replace(/\D/g, "");
+    const cleanService = String(serviceName || "").trim();
+    const cleanAppId = String(appId || "").trim();
+    if (!cleanName || cleanPhone.length < 10 || !cleanService) {
+      return res.status(400).json({
+        success: false,
+        error: "Please provide Customer Name, 10-digit Phone Number, and Service Name."
+      });
+    }
+    const priceInfo = calculateAuthoritativePrice(cleanService, userCategory, deliveryOption);
+    const amountFormatted = priceInfo.totalAmount.toFixed(2);
+    let resolvedAppId = cleanAppId;
+    if (!resolvedAppId || !resolvedAppId.startsWith("CSC")) {
+      const supaMax = await getHighestSupabaseTokenSeq();
+      const nextSeq = getNextMonotonicLocalSeq(supaMax);
+      resolvedAppId = `CSC21251567${String(nextSeq).padStart(3, "0")}`;
+    }
+    const db = getDb();
+    const existingLocal = (db.appointments || []).find(
+      (a) => !isDeletedApplicationRecord(a) && String(a.appId || a.id).toLowerCase() === resolvedAppId.toLowerCase()
+    );
+    if (existingLocal && String(existingLocal.paymentStatus || "").toLowerCase() === "paid") {
+      return res.status(400).json({
+        success: false,
+        error: `Application ${resolvedAppId} has already been paid and verified.`
+      });
+    }
+    const txnid = `PAYU_${Date.now()}_${crypto2.randomBytes(3).toString("hex").toUpperCase()}`;
+    const configured = isPayUConfigured();
+    const merchantKey = configured ? getPayUMerchantKey() : process.env.PAYU_MERCHANT_KEY || "TEST_KEY";
+    const merchantSalt = configured ? getPayUMerchantSalt() : "test_mock_salt_12345";
+    const surl = `${getAppBaseUrl()}/api/payu/response`;
+    const furl = `${getAppBaseUrl()}/api/payu/response`;
+    const firstName = cleanName.split(" ")[0] || "Customer";
+    const emailAddr = String(email || "").trim() || "customer@cscdost.com";
+    const productInfo = priceInfo.description.substring(0, 95);
+    const hash = generatePayURequestHash({
+      key: merchantKey,
+      txnid,
+      amount: amountFormatted,
+      productinfo: productInfo,
+      firstname: firstName,
+      email: emailAddr,
+      udf1: resolvedAppId,
+      udf2: cleanService.substring(0, 95),
+      udf3: cleanPhone,
+      udf4: userCategory || "",
+      udf5: deliveryOption || "",
+      salt: merchantSalt
+    });
+    const payuParams = {
+      key: merchantKey,
+      txnid,
+      amount: amountFormatted,
+      productinfo: productInfo,
+      firstname: firstName,
+      email: emailAddr,
+      phone: cleanPhone,
+      surl,
+      furl,
+      hash,
+      udf1: resolvedAppId,
+      udf2: cleanService.substring(0, 95),
+      udf3: cleanPhone,
+      udf4: userCategory || "",
+      udf5: deliveryOption || ""
+    };
+    const txnRecord = {
+      txnid,
+      tokenId: resolvedAppId,
+      appId: resolvedAppId,
+      customerName: cleanName,
+      customerPhone: cleanPhone,
+      customerEmail: emailAddr,
+      serviceName: cleanService,
+      paymentMethod: "online_payu",
+      govtFee: priceInfo.govtFee,
+      cscFee: priceInfo.cscFee,
+      deliveryFee: priceInfo.deliveryFee,
+      totalAmount: priceInfo.totalAmount,
+      status: "initiated",
+      requestPayload: {
+        amount: amountFormatted,
+        productinfo: productInfo,
+        key: merchantKey,
+        configured
+      },
+      createdAt: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    upsertPaymentTransaction(txnRecord);
+    recordSupabasePaymentTransaction(txnRecord).catch(
+      (err) => console.warn("[PayU Initiate] Supabase transaction audit warning:", err)
+    );
+    updateAppointmentPayment(resolvedAppId, {
+      paymentMethod: "online_payu",
+      paymentStatus: "pending_verification",
+      amountDue: priceInfo.totalAmount,
+      gatewayTxnId: txnid
+    });
+    updateSupabasePaymentRecord(resolvedAppId, {
+      paymentMethod: "online_payu",
+      paymentStatus: "pending_verification",
+      amountDue: priceInfo.totalAmount,
+      gatewayTxnId: txnid
+    }).catch((err) => console.warn("[PayU Initiate] Supabase appointment update notice:", err));
+    const actionUrl = configured ? getPayUPaymentUrl() : `${getAppBaseUrl()}/api/payu/mock-gateway`;
+    console.log(`\u{1F4B3} [PayU Initiate] Checkout session prepared [Txn: ${txnid}] for ${cleanName} - \u20B9${amountFormatted}`);
+    return res.status(200).json({
+      success: true,
+      actionUrl,
+      params: payuParams,
+      isMockTestMode: !configured,
+      orderSummary: {
+        appId: resolvedAppId,
+        customerName: cleanName,
+        serviceName: cleanService,
+        govtFee: priceInfo.govtFee,
+        cscFee: priceInfo.cscFee,
+        deliveryFee: priceInfo.deliveryFee,
+        totalAmount: priceInfo.totalAmount,
+        amountFormatted: `\u20B9${amountFormatted}`
+      }
+    });
+  } catch (err) {
+    console.error("[PayU Initiate Error]:", err?.message || err);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to initiate PayU payment session: " + (err?.message || "Server error")
+    });
+  }
+});
+app.post("/api/payu/response", async (req, res) => {
+  try {
+    const responseData = req.body || {};
+    const {
+      status,
+      txnid,
+      amount,
+      udf1,
+      mihpayid,
+      bank_ref_num,
+      error_Message,
+      mode
+    } = responseData;
+    const cleanTxnid = String(txnid || "").trim();
+    const cleanAppId = String(udf1 || "").trim();
+    const cleanStatus = String(status || "").toLowerCase().trim();
+    const configured = isPayUConfigured();
+    const salt = configured ? getPayUMerchantSalt() : "test_mock_salt_12345";
+    console.log(`\u{1F4E5} [PayU Callback Received] Status: "${cleanStatus}" | TxnID: ${cleanTxnid} | AppID: ${cleanAppId}`);
+    const hashValid = verifyPayUResponseHash(responseData, salt);
+    if (!hashValid && configured) {
+      console.error(`\u{1F6A8} [PayU Security Alert] Hash mismatch on transaction callback ${cleanTxnid}!`);
+      return res.redirect(
+        303,
+        `${getAppBaseUrl()}/track?token=${encodeURIComponent(cleanAppId)}&payment=tampered&reason=Hash+signature+verification+failed`
+      );
+    }
+    const verifyResult = await verifyPaymentWithPayU(cleanTxnid);
+    const isPaymentSuccessful = cleanStatus === "success" && (verifyResult.success || !configured);
+    const nowIso = (/* @__PURE__ */ new Date()).toISOString();
+    if (isPaymentSuccessful) {
+      const finalAmount = Number(amount || verifyResult.amount || 0);
+      updateAppointmentPayment(cleanAppId, {
+        paymentMethod: "online_payu",
+        paymentStatus: "paid",
+        amountPaid: finalAmount,
+        amountDue: 0,
+        gatewayTxnId: cleanTxnid,
+        utrNumber: mihpayid || cleanTxnid,
+        paidAt: nowIso
+      });
+      updateAppointmentStatus(cleanAppId, "approved");
+      upsertPaymentTransaction({
+        txnid: cleanTxnid,
+        tokenId: cleanAppId,
+        appId: cleanAppId,
+        status: "paid",
+        payuMihpayid: mihpayid || verifyResult.mihpayid,
+        bankRefNum: bank_ref_num || verifyResult.bankRefNum,
+        paymentMode: mode || verifyResult.mode || "ONLINE",
+        hashVerified: true,
+        apiVerified: verifyResult.success,
+        responsePayload: responseData,
+        verificationPayload: verifyResult.rawResponse,
+        updatedAt: nowIso
+      });
+      updateSupabasePaymentRecord(cleanAppId, {
+        paymentMethod: "online_payu",
+        paymentStatus: "paid",
+        amountPaid: finalAmount,
+        amountDue: 0,
+        gatewayTxnId: cleanTxnid,
+        payuMihpayid: mihpayid || verifyResult.mihpayid,
+        payuBankRef: bank_ref_num || verifyResult.bankRefNum,
+        paidAt: nowIso
+      }).catch((err) => console.warn("[PayU Response] Supabase payment update notice:", err));
+      recordSupabasePaymentTransaction({
+        txnid: cleanTxnid,
+        tokenId: cleanAppId,
+        appId: cleanAppId,
+        status: "paid",
+        payuMihpayid: mihpayid || verifyResult.mihpayid,
+        bankRefNum: bank_ref_num || verifyResult.bankRefNum,
+        paymentMode: mode || verifyResult.mode,
+        hashVerified: true,
+        apiVerified: verifyResult.success,
+        responsePayload: responseData,
+        verificationPayload: verifyResult.rawResponse,
+        updatedAt: nowIso
+      }).catch((err) => console.warn("[PayU Response] Supabase transaction audit notice:", err));
+      const db = getDb();
+      const updatedApp = (db.appointments || []).find((a) => a.appId === cleanAppId || a.id === cleanAppId);
+      broadcastRealtimeEvent("APPOINTMENT_UPDATED", updatedApp || { appId: cleanAppId, paymentStatus: "paid" });
+      console.log(`\u2705 [PayU Payment Reconciled & Paid] Token ${cleanAppId} | \u20B9${finalAmount} | Ref: ${mihpayid}`);
+      return res.redirect(
+        303,
+        `${getAppBaseUrl()}/track?token=${encodeURIComponent(cleanAppId)}&payment=success&txnid=${encodeURIComponent(cleanTxnid)}&ref=${encodeURIComponent(mihpayid || "")}&amt=${encodeURIComponent(String(finalAmount))}`
+      );
+    } else {
+      const failReason = error_Message || verifyResult.message || "Payment transaction was not completed";
+      updateAppointmentPayment(cleanAppId, {
+        paymentMethod: "online_payu",
+        paymentStatus: "failed",
+        gatewayTxnId: cleanTxnid
+      });
+      upsertPaymentTransaction({
+        txnid: cleanTxnid,
+        tokenId: cleanAppId,
+        appId: cleanAppId,
+        status: "failed",
+        errorMessage: failReason,
+        responsePayload: responseData,
+        verificationPayload: verifyResult.rawResponse,
+        updatedAt: nowIso
+      });
+      updateSupabasePaymentRecord(cleanAppId, {
+        paymentMethod: "online_payu",
+        paymentStatus: "failed",
+        gatewayTxnId: cleanTxnid
+      }).catch((err) => console.warn("[PayU Response Failed] Supabase notice:", err));
+      console.log(`\u26A0\uFE0F [PayU Payment Incomplete/Failed] Token: ${cleanAppId} | Reason: ${failReason}`);
+      return res.redirect(
+        303,
+        `${getAppBaseUrl()}/track?token=${encodeURIComponent(cleanAppId)}&payment=failed&txnid=${encodeURIComponent(cleanTxnid)}&reason=${encodeURIComponent(failReason)}`
+      );
+    }
+  } catch (err) {
+    console.error("[PayU Response Handler Exception]:", err?.message || err);
+    return res.redirect(
+      303,
+      `${getAppBaseUrl()}/track?payment=error&reason=${encodeURIComponent("Server error processing payment callback")}`
+    );
+  }
+});
+app.post("/api/payu/webhook", async (req, res) => {
+  try {
+    const payload = req.body || {};
+    const { status, txnid, udf1, mihpayid } = payload;
+    const cleanTxnid = String(txnid || "").trim();
+    const cleanAppId = String(udf1 || "").trim();
+    if (!cleanTxnid) {
+      return res.status(400).json({ success: false, error: "Missing txnid" });
+    }
+    const salt = isPayUConfigured() ? getPayUMerchantSalt() : "test_mock_salt_12345";
+    const hashValid = verifyPayUResponseHash(payload, salt);
+    if (!hashValid && isPayUConfigured()) {
+      return res.status(400).json({ success: false, error: "Invalid webhook signature" });
+    }
+    const verifyResult = await verifyPaymentWithPayU(cleanTxnid);
+    if (verifyResult.success || String(status).toLowerCase() === "success") {
+      const nowIso = (/* @__PURE__ */ new Date()).toISOString();
+      updateAppointmentPayment(cleanAppId, {
+        paymentMethod: "online_payu",
+        paymentStatus: "paid",
+        gatewayTxnId: cleanTxnid,
+        utrNumber: mihpayid || cleanTxnid,
+        paidAt: nowIso
+      });
+      updateSupabasePaymentRecord(cleanAppId, {
+        paymentMethod: "online_payu",
+        paymentStatus: "paid",
+        gatewayTxnId: cleanTxnid,
+        paidAt: nowIso
+      }).catch(() => {
+      });
+    }
+    return res.status(200).json({ success: true, message: "Webhook processed" });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err?.message || "Webhook error" });
+  }
+});
+app.post("/api/payu/recheck", authenticateAdmin, async (req, res) => {
+  try {
+    const { txnid, appId } = req.body || {};
+    if (!txnid && !appId) {
+      return res.status(400).json({ success: false, error: "Transaction ID or Application ID required." });
+    }
+    const db = getDb();
+    let targetTxnid = String(txnid || "").trim();
+    let targetAppId = String(appId || "").trim();
+    if (!targetTxnid && targetAppId) {
+      const matchedApp = (db.appointments || []).find((a) => a.appId === targetAppId || a.id === targetAppId);
+      targetTxnid = matchedApp?.gatewayTxnId || matchedApp?.utrNumber || "";
+    }
+    if (!targetTxnid) {
+      return res.status(404).json({
+        success: false,
+        error: "No payment transaction reference found for this application to verify."
+      });
+    }
+    const verifyResult = await verifyPaymentWithPayU(targetTxnid);
+    if (verifyResult.success && targetAppId) {
+      const nowIso = (/* @__PURE__ */ new Date()).toISOString();
+      updateAppointmentPayment(targetAppId, {
+        paymentStatus: "paid",
+        amountPaid: verifyResult.amount,
+        paidAt: nowIso
+      });
+      updateSupabasePaymentRecord(targetAppId, {
+        paymentStatus: "paid",
+        amountPaid: verifyResult.amount,
+        paidAt: nowIso
+      }).catch(() => {
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      verifiedStatus: verifyResult.status,
+      details: verifyResult
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: "Recheck failed: " + (err?.message || err) });
+  }
+});
+app.post("/api/admin/record-offline-payment", authenticateAdmin, async (req, res) => {
+  try {
+    const { appId, amountPaid, receiptNo, notes } = req.body || {};
+    const cleanAppId = String(appId || "").trim();
+    if (!cleanAppId) {
+      return res.status(400).json({ success: false, error: "Application Reference ID is required." });
+    }
+    const numAmount = Number(amountPaid);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      return res.status(400).json({ success: false, error: "Valid collected amount in \u20B9 is required." });
+    }
+    const staffUser = req.adminUser?.username || "Mahi";
+    const finalReceiptNo = String(receiptNo || `CSC_CASH_${Date.now().toString().slice(-6)}`).trim();
+    const nowIso = (/* @__PURE__ */ new Date()).toISOString();
+    const localUpdated = updateAppointmentPayment(cleanAppId, {
+      paymentMethod: "pay_at_centre",
+      paymentStatus: "paid",
+      amountPaid: numAmount,
+      amountDue: 0,
+      offlineReceiptNo: finalReceiptNo,
+      offlineCollectedBy: staffUser,
+      paidAt: nowIso
+    });
+    const supaResult = await updateSupabasePaymentRecord(cleanAppId, {
+      paymentMethod: "pay_at_centre",
+      paymentStatus: "paid",
+      amountPaid: numAmount,
+      amountDue: 0,
+      offlineReceiptNo: finalReceiptNo,
+      offlineCollectedBy: staffUser,
+      offlineCollectedAt: nowIso,
+      paidAt: nowIso
+    });
+    const cashTxnId = `CASH_${cleanAppId}_${Date.now().toString().slice(-6)}`;
+    upsertPaymentTransaction({
+      txnid: cashTxnId,
+      tokenId: cleanAppId,
+      appId: cleanAppId,
+      customerName: "Offline Citizen",
+      serviceName: "CSC Counter Collection",
+      paymentMethod: "pay_at_centre",
+      totalAmount: numAmount,
+      status: "paid",
+      offlineReceiptNo: finalReceiptNo,
+      offlineCollectedBy: staffUser,
+      createdAt: nowIso
+    });
+    recordSupabasePaymentTransaction({
+      txnid: cashTxnId,
+      tokenId: cleanAppId,
+      appId: cleanAppId,
+      paymentMethod: "pay_at_centre",
+      totalAmount: numAmount,
+      status: "paid",
+      offlineReceiptNo: finalReceiptNo,
+      offlineCollectedBy: staffUser,
+      createdAt: nowIso
+    }).catch(() => {
+    });
+    const db = getDb();
+    const updated = (db.appointments || []).find((a) => a.appId === cleanAppId || a.id === cleanAppId);
+    broadcastRealtimeEvent("APPOINTMENT_UPDATED", updated || { appId: cleanAppId, paymentStatus: "paid" });
+    console.log(`\u{1F4B5} [Cash Collected] App ${cleanAppId} marked PAID: \u20B9${numAmount} by Staff "${staffUser}" [Slip: ${finalReceiptNo}]`);
+    return res.status(200).json({
+      success: true,
+      message: `Offline cash payment of \u20B9${numAmount} successfully recorded.`,
+      appId: cleanAppId,
+      receiptNo: finalReceiptNo,
+      collectedBy: staffUser,
+      collectedAt: nowIso
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: "Failed to record offline payment: " + (err?.message || err) });
+  }
+});
+app.get("/api/payu/transactions", authenticateAdmin, (_req, res) => {
+  const transactions = getPaymentTransactions();
+  return res.status(200).json({
+    success: true,
+    transactions
+  });
+});
 app.get("/api/razorpay/config", (req, res) => {
   res.setHeader("Content-Type", "application/json");
   const keyId = (process.env.RAZORPAY_KEY_ID || "").trim();
@@ -5919,7 +7812,7 @@ app.post("/api/razorpay/verify-payment", (req, res) => {
       });
     }
     const body = razorpay_order_id + "|" + razorpay_payment_id;
-    const expectedSignature = crypto.createHmac("sha256", keySecret).update(body).digest("hex");
+    const expectedSignature = crypto2.createHmac("sha256", keySecret).update(body).digest("hex");
     const isAuthentic = expectedSignature === razorpay_signature;
     if (isAuthentic) {
       console.log(`\u2705 Razorpay Payment Verified [Payment ID: ${razorpay_payment_id}] for Order ${razorpay_order_id}`);
@@ -7485,8 +9378,8 @@ app.get(
       const isWebp = req.path.endsWith(".webp") || req.query.format === "webp";
       const format = isSvg ? "svg" : isWebp ? "webp" : "png";
       if (!isSvg) {
-        const localFilePath = path3.join(process.cwd(), "public", "thumbnails", `${rawId}.${format}`);
-        if (req.query.force !== "1" && fs3.existsSync(localFilePath)) {
+        const localFilePath = path4.join(process.cwd(), "public", "thumbnails", `${rawId}.${format}`);
+        if (req.query.force !== "1" && fs4.existsSync(localFilePath)) {
           res.setHeader("Content-Type", format === "webp" ? "image/webp" : "image/png");
           res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=604800");
           return res.sendFile(localFilePath);
@@ -7640,14 +9533,14 @@ app.post("/api/thumbnails/save", async (req, res) => {
       }
       finalBuffer = await renderMasterThumbnailBuffer(finalSpec, format);
     }
-    const publicThumbDir = path3.join(process.cwd(), "public", "thumbnails");
-    if (!fs3.existsSync(publicThumbDir)) {
-      fs3.mkdirSync(publicThumbDir, { recursive: true });
+    const publicThumbDir = path4.join(process.cwd(), "public", "thumbnails");
+    if (!fs4.existsSync(publicThumbDir)) {
+      fs4.mkdirSync(publicThumbDir, { recursive: true });
     }
     const ext = format === "webp" ? "webp" : "png";
     const fileName = `${postId}.${ext}`;
-    const localDiskPath = path3.join(publicThumbDir, fileName);
-    fs3.writeFileSync(localDiskPath, finalBuffer);
+    const localDiskPath = path4.join(publicThumbDir, fileName);
+    fs4.writeFileSync(localDiskPath, finalBuffer);
     const localUrl = `/thumbnails/${fileName}?t=${Date.now()}`;
     const contentType = format === "webp" ? "image/webp" : "image/png";
     const supaUpload = await uploadDocumentBufferToSupabase(
@@ -7807,20 +9700,32 @@ app.get(["/api/og-image/:id.png", "/api/og-image/:id.webp", "/api/og-image/:id.s
     return res.send(png);
   } catch (err) {
     console.error("OG Image Generation Error:", err);
-    res.status(500).sendFile(path3.join(process.cwd(), "public", "og-banner.png"));
+    res.status(500).sendFile(path4.join(process.cwd(), "public", "og-banner.png"));
   }
 });
-app.get(["/og-banner.png", "/og-image.png"], (req, res) => {
-  const bannerPath = path3.join(process.cwd(), "public", "og-banner.png");
+app.get(["/og-banner.png", "/og-image.png"], async (req, res) => {
+  const bannerPath = path4.join(process.cwd(), "public", "og-banner.png");
+  if (fs4.existsSync(bannerPath)) {
+    res.setHeader("Content-Type", "image/png");
+    res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=604800");
+    return res.sendFile(bannerPath);
+  }
+  const png = await generateSocialPreviewPng(null);
   res.setHeader("Content-Type", "image/png");
   res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=604800");
-  res.sendFile(bannerPath);
+  return res.send(png);
 });
 app.get(["/og-banner.svg", "/og-image.svg"], (req, res) => {
-  const bannerPath = path3.join(process.cwd(), "public", "og-banner.svg");
+  const bannerPath = path4.join(process.cwd(), "public", "og-banner.svg");
+  if (fs4.existsSync(bannerPath)) {
+    res.setHeader("Content-Type", "image/svg+xml");
+    res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=604800");
+    return res.sendFile(bannerPath);
+  }
+  const svg = generateOgSvg(null);
   res.setHeader("Content-Type", "image/svg+xml");
   res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=604800");
-  res.sendFile(bannerPath);
+  return res.send(svg);
 });
 function renderDynamicMetaHtml(rawHtml, req) {
   let isNotFound = false;
@@ -7834,14 +9739,16 @@ function renderDynamicMetaHtml(rawHtml, req) {
   const baseOrigin = isLocal ? `http://${host}` : host.includes(".run.app") ? `https://${host}` : "https://www.cscdost.com";
   let title = "CSC DOST \u2013 Guide to Government Services, Schemes & Recruitment";
   let description = "CSC DOST is an independent citizen assistance and information portal. Explore recruitment updates, government schemes, Aadhaar, PAN card, and direct official links.";
-  let ogImage = `${baseOrigin}/og-banner.png`;
+  let ogImage = `${baseOrigin}/og-banner.png?v=2026`;
   let canonicalUrl = `https://www.cscdost.com${urlPath === "/" ? "" : urlPath}`;
   let ogType = "website";
   let articlePublishedDate = "";
   let breadcrumbItems = [];
+  let substantiveBodyHtml = "";
   const legalMatch = urlPath.match(/^\/(privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|about|contact-us|contact|refund-policy|refund)(?:\/)?$/i);
   if (legalMatch) {
     const rawKey = legalMatch[1].toLowerCase();
+    substantiveBodyHtml = renderLegalPageSubstantiveHtml(rawKey);
     if (rawKey === "privacy-policy" || rawKey === "privacy") {
       title = "Privacy Policy | CSC DOST - Digital Assistance & Information Portal";
       description = "Read the Privacy Policy of CSC DOST (cscdost.com). Learn how citizen data, form documents, and personal details are handled securely in compliance with the DPDP Act 2023.";
@@ -7910,11 +9817,13 @@ function renderDynamicMetaHtml(rawHtml, req) {
         { name: "Recruitment", url: "https://www.cscdost.com/#sarkari-board" },
         { name: item.title, url: canonicalUrl }
       ];
+      substantiveBodyHtml = renderPostSubstantiveHtml(item);
     } else if (matchPost) {
       isNotFound = true;
       title = "Notification Not Found (404) | CSC DOST";
       description = "The requested recruitment notification or examination update could not be found or has expired. Please check active recruitment updates on the CSC DOST portal.";
       canonicalUrl = `${baseOrigin}/#sarkari-board`;
+      substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
     }
   } else if (targetServiceId) {
     const service = SERVICES_LIST.find((s) => s.id === targetServiceId || s.id === decodeURIComponent(targetServiceId));
@@ -7929,7 +9838,17 @@ function renderDynamicMetaHtml(rawHtml, req) {
         { name: "Services", url: "https://www.cscdost.com/#services" },
         { name: service.name, url: canonicalUrl }
       ];
+      substantiveBodyHtml = renderServiceSubstantiveHtml(service);
+    } else if (matchService) {
+      isNotFound = true;
+      title = "Service Not Found (404) | CSC DOST";
+      description = "The requested citizen service could not be found. Please check our complete service directory on the CSC DOST portal.";
+      canonicalUrl = `${baseOrigin}/#services`;
+      substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
     }
+  } else if (urlPath === "/") {
+    const allSarkari = [...SARKARI_DATA, ...getCustomSarkariPosts()];
+    substantiveBodyHtml = renderHomepageSubstantiveHtml(allSarkari, SERVICES_LIST);
   }
   const escAttr = (s) => String(s || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const escText = (s) => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -8000,17 +9919,11 @@ ${JSON.stringify(breadcrumbLd, null, 2)}
   </head>`;
     html = html.replace(/<\/head>/i, breadcrumbScript);
   }
-  if (isNotFound) {
-    const notFoundCard = `
-    <div style="min-height:70vh; display:flex; align-items:center; justify-content:center; padding:40px 20px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:#f8fafc;">
-      <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; max-width:520px; padding:36px; text-align:center; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);">
-        <div style="font-size:42px; margin-bottom:12px;">\u{1F4CB}</div>
-        <h1 style="font-size:22px; font-weight:800; color:#0f172a; margin:0 0 10px 0;">Notification Not Found or Expired</h1>
-        <p style="color:#64748b; font-size:14px; line-height:1.6; margin:0 0 20px 0;">The recruitment notification, admit card, or admission notice you are looking for does not exist or may have been archived after the closing date.</p>
-        <a href="/#sarkari-board" style="display:inline-block; background:#2563eb; color:white; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:600; font-size:14px;">Browse Latest Sarkari Jobs</a>
-      </div>
-    </div>`;
-    html = html.replace('<div id="root"></div>', `<div id="root">${notFoundCard}</div>`);
+  if (isNotFound && !substantiveBodyHtml) {
+    substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
+  }
+  if (substantiveBodyHtml) {
+    html = html.replace('<div id="root"></div>', `<div id="root">${substantiveBodyHtml}</div>`);
   }
   return { html, isNotFound };
 }
@@ -8076,22 +9989,22 @@ app.get("/sitemap.xml", (req, res) => {
     return res.send(xml);
   } catch (err) {
     console.error("Error generating dynamic sitemap, serving static file:", err);
-    const sitemapPath = path3.join(process.cwd(), "public", "sitemap.xml");
+    const sitemapPath = path4.join(process.cwd(), "public", "sitemap.xml");
     res.setHeader("Content-Type", "application/xml; charset=utf-8");
     res.sendFile(sitemapPath);
   }
 });
 app.get("/robots.txt", (req, res) => {
-  const robotsPath = path3.join(process.cwd(), "public", "robots.txt");
+  const robotsPath = path4.join(process.cwd(), "public", "robots.txt");
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
   res.sendFile(robotsPath);
 });
-app.use(express.static(path3.join(process.cwd(), "public")));
+app.use(express.static(path4.join(process.cwd(), "public")));
 if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
-  const distPath = path3.join(process.cwd(), "dist");
-  const indexHtmlPath = path3.join(distPath, "index.html");
-  const rootHtmlPath = path3.join(process.cwd(), "index.html");
-  if (fs3.existsSync(distPath)) {
+  const distPath = path4.join(process.cwd(), "dist");
+  const indexHtmlPath = path4.join(distPath, "index.html");
+  const rootHtmlPath = path4.join(process.cwd(), "index.html");
+  if (fs4.existsSync(distPath)) {
     app.use(express.static(distPath));
   }
   app.get("*", (req, res, next) => {
@@ -8099,9 +10012,9 @@ if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
       return next();
     }
     try {
-      const targetHtmlPath = fs3.existsSync(indexHtmlPath) ? indexHtmlPath : fs3.existsSync(rootHtmlPath) ? rootHtmlPath : null;
+      const targetHtmlPath = fs4.existsSync(indexHtmlPath) ? indexHtmlPath : fs4.existsSync(rootHtmlPath) ? rootHtmlPath : null;
       if (targetHtmlPath) {
-        const indexHtml = fs3.readFileSync(targetHtmlPath, "utf-8");
+        const indexHtml = fs4.readFileSync(targetHtmlPath, "utf-8");
         const { html: dynamicHtml, isNotFound } = renderDynamicMetaHtml(indexHtml, req);
         res.setHeader("Content-Type", "text/html; charset=utf-8");
         if (isNotFound) {
@@ -8124,13 +10037,13 @@ async function startServer() {
     });
     app.use(async (req, res, next) => {
       const url = req.originalUrl || req.url;
-      const isPostOrServiceOrLegal = /^\/(?:post|job|jobs|sarkari|notice|admissions|notification|service|privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|about|contact-us|contact|refund-policy|refund)(?:\/|$)/i.test(req.path) || Boolean(req.query.post || req.query.job || req.query.service || req.query.id);
+      const isPostOrServiceOrLegal = req.path === "/" || /^\/(?:post|job|jobs|sarkari|notice|admissions|notification|service|privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|about|contact-us|contact|refund-policy|refund)(?:\/|$)/i.test(req.path) || Boolean(req.query.post || req.query.job || req.query.service || req.query.id);
       const isCrawler = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Googlebot|bingbot|Slackbot/i.test(
         req.headers["user-agent"] || ""
       );
       if ((isPostOrServiceOrLegal || isCrawler) && req.method === "GET" && !req.path.includes(".")) {
         try {
-          const indexHtml = fs3.readFileSync(path3.join(process.cwd(), "index.html"), "utf-8");
+          const indexHtml = fs4.readFileSync(path4.join(process.cwd(), "index.html"), "utf-8");
           const transformedHtml = await vite.transformIndexHtml(url, indexHtml);
           const { html: finalHtml, isNotFound } = renderDynamicMetaHtml(transformedHtml, req);
           res.setHeader("Content-Type", "text/html; charset=utf-8");

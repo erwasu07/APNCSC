@@ -89,6 +89,12 @@ import {
   PAYU_ENV,
   APP_BASE_URL,
   PAYU_PAYMENT_URL,
+  getPayUMerchantKey,
+  getPayUMerchantSalt,
+  getPayUEnv,
+  getAppBaseUrl,
+  getPayUPaymentUrl,
+  getPayUVerifyUrl,
   isPayUConfigured,
   calculateAuthoritativePrice,
   generatePayURequestHash,
@@ -331,27 +337,31 @@ app.get('/api/payu/config', (_req: Request, res: Response) => {
   res.status(200).json({
     success: true,
     configured: isPayUConfigured(),
-    env: PAYU_ENV,
-    merchantKey: isPayUConfigured() ? PAYU_MERCHANT_KEY : 'TEST_KEY',
-    paymentUrl: PAYU_PAYMENT_URL
+    env: getPayUEnv(),
+    merchantKey: isPayUConfigured() ? getPayUMerchantKey() : 'TEST_KEY',
+    paymentUrl: getPayUPaymentUrl()
   });
 });
 
 // PayU Mock Gateway Simulator (Active when running in test mode or credentials are placeholders)
-app.get('/api/payu/mock-gateway', (req: Request, res: Response) => {
-  const {
-    key = 'TEST_KEY',
-    txnid = 'TEST_TXN',
-    amount = '70.00',
-    productinfo = 'Service',
-    firstname = 'Customer',
-    email = 'customer@example.com',
-    udf1 = 'CSC21251567001',
-    surl = `${APP_BASE_URL}/api/payu/response`,
-    furl = `${APP_BASE_URL}/api/payu/response`
-  } = req.query as Record<string, string>;
+// Supports both POST (form submit from checkout) and GET (direct link / testing)
+app.all('/api/payu/mock-gateway', (req: Request, res: Response) => {
+  const mergedParams = {
+    ...((req.query || {}) as Record<string, string>),
+    ...((req.body || {}) as Record<string, string>)
+  };
 
-  const effectiveSalt = isPayUConfigured() ? PAYU_MERCHANT_SALT : 'test_mock_salt_12345';
+  const key = mergedParams.key || 'TEST_KEY';
+  const txnid = mergedParams.txnid || 'TEST_TXN';
+  const amount = mergedParams.amount || '70.00';
+  const productinfo = mergedParams.productinfo || 'Service';
+  const firstname = mergedParams.firstname || 'Customer';
+  const email = mergedParams.email || 'customer@example.com';
+  const udf1 = mergedParams.udf1 || 'CSC21251567001';
+  const surl = mergedParams.surl || `${getAppBaseUrl()}/api/payu/response`;
+  const furl = mergedParams.furl || `${getAppBaseUrl()}/api/payu/response`;
+
+  const effectiveSalt = isPayUConfigured() ? getPayUMerchantSalt() : 'test_mock_salt_12345';
   const mihpayid = `PAYU_MOCK_${Date.now()}`;
   const bankRefNum = `AXIS_${Date.now().toString().slice(-6)}`;
 
@@ -532,12 +542,12 @@ app.post('/api/payu/initiate', async (req: Request, res: Response) => {
     const txnid = `PAYU_${Date.now()}_${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
     const configured = isPayUConfigured();
 
-    const merchantKey = configured ? PAYU_MERCHANT_KEY : (process.env.PAYU_MERCHANT_KEY || 'TEST_KEY');
-    const merchantSalt = configured ? PAYU_MERCHANT_SALT : 'test_mock_salt_12345';
+    const merchantKey = configured ? getPayUMerchantKey() : (process.env.PAYU_MERCHANT_KEY || 'TEST_KEY');
+    const merchantSalt = configured ? getPayUMerchantSalt() : 'test_mock_salt_12345';
 
     // 5. Build SURL and FURL endpoints
-    const surl = `${APP_BASE_URL}/api/payu/response`;
-    const furl = `${APP_BASE_URL}/api/payu/response`;
+    const surl = `${getAppBaseUrl()}/api/payu/response`;
+    const furl = `${getAppBaseUrl()}/api/payu/response`;
 
     const firstName = cleanName.split(' ')[0] || 'Customer';
     const emailAddr = String(email || '').trim() || 'customer@cscdost.com';
@@ -623,8 +633,8 @@ app.post('/api/payu/initiate', async (req: Request, res: Response) => {
 
     // Determine target checkout URL (live PayU vs simulator fallback)
     const actionUrl = configured
-      ? PAYU_PAYMENT_URL
-      : `${APP_BASE_URL}/api/payu/mock-gateway?${new URLSearchParams(payuParams).toString()}`;
+      ? getPayUPaymentUrl()
+      : `${getAppBaseUrl()}/api/payu/mock-gateway`;
 
     console.log(`💳 [PayU Initiate] Checkout session prepared [Txn: ${txnid}] for ${cleanName} - ₹${amountFormatted}`);
 
@@ -672,7 +682,7 @@ app.post('/api/payu/response', async (req: Request, res: Response) => {
     const cleanAppId = String(udf1 || '').trim();
     const cleanStatus = String(status || '').toLowerCase().trim();
     const configured = isPayUConfigured();
-    const salt = configured ? PAYU_MERCHANT_SALT : 'test_mock_salt_12345';
+    const salt = configured ? getPayUMerchantSalt() : 'test_mock_salt_12345';
 
     console.log(`📥 [PayU Callback Received] Status: "${cleanStatus}" | TxnID: ${cleanTxnid} | AppID: ${cleanAppId}`);
 
@@ -682,7 +692,7 @@ app.post('/api/payu/response', async (req: Request, res: Response) => {
       console.error(`🚨 [PayU Security Alert] Hash mismatch on transaction callback ${cleanTxnid}!`);
       return res.redirect(
         303,
-        `${APP_BASE_URL}/track?token=${encodeURIComponent(cleanAppId)}&payment=tampered&reason=Hash+signature+verification+failed`
+        `${getAppBaseUrl()}/track?token=${encodeURIComponent(cleanAppId)}&payment=tampered&reason=Hash+signature+verification+failed`
       );
     }
 
@@ -762,7 +772,7 @@ app.post('/api/payu/response', async (req: Request, res: Response) => {
       // E. Redirect customer to live tracking view with success parameters
       return res.redirect(
         303,
-        `${APP_BASE_URL}/track?token=${encodeURIComponent(cleanAppId)}&payment=success&txnid=${encodeURIComponent(cleanTxnid)}&ref=${encodeURIComponent(mihpayid || '')}&amt=${encodeURIComponent(String(finalAmount))}`
+        `${getAppBaseUrl()}/track?token=${encodeURIComponent(cleanAppId)}&payment=success&txnid=${encodeURIComponent(cleanTxnid)}&ref=${encodeURIComponent(mihpayid || '')}&amt=${encodeURIComponent(String(finalAmount))}`
       );
     } else {
       // Payment Failed or Cancelled
@@ -795,14 +805,14 @@ app.post('/api/payu/response', async (req: Request, res: Response) => {
 
       return res.redirect(
         303,
-        `${APP_BASE_URL}/track?token=${encodeURIComponent(cleanAppId)}&payment=failed&txnid=${encodeURIComponent(cleanTxnid)}&reason=${encodeURIComponent(failReason)}`
+        `${getAppBaseUrl()}/track?token=${encodeURIComponent(cleanAppId)}&payment=failed&txnid=${encodeURIComponent(cleanTxnid)}&reason=${encodeURIComponent(failReason)}`
       );
     }
   } catch (err: any) {
     console.error('[PayU Response Handler Exception]:', err?.message || err);
     return res.redirect(
       303,
-      `${APP_BASE_URL}/track?payment=error&reason=${encodeURIComponent('Server error processing payment callback')}`
+      `${getAppBaseUrl()}/track?payment=error&reason=${encodeURIComponent('Server error processing payment callback')}`
     );
   }
 });
@@ -819,7 +829,7 @@ app.post('/api/payu/webhook', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: 'Missing txnid' });
     }
 
-    const salt = isPayUConfigured() ? PAYU_MERCHANT_SALT : 'test_mock_salt_12345';
+    const salt = isPayUConfigured() ? getPayUMerchantSalt() : 'test_mock_salt_12345';
     const hashValid = verifyPayUResponseHash(payload, salt);
 
     if (!hashValid && isPayUConfigured()) {
@@ -3348,19 +3358,31 @@ app.get(['/api/og-image/:id.png', '/api/og-image/:id.webp', '/api/og-image/:id.s
   }
 });
 
-// Explicitly serve static og banners with caching
-app.get(['/og-banner.png', '/og-image.png'], (req: Request, res: Response) => {
+// Explicitly serve static og banners with caching (Supports query versions like ?v=2026)
+app.get(['/og-banner.png', '/og-image.png'], async (req: Request, res: Response) => {
   const bannerPath = path.join(process.cwd(), 'public', 'og-banner.png');
+  if (fs.existsSync(bannerPath)) {
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+    return res.sendFile(bannerPath);
+  }
+  const png = await generateSocialPreviewPng(null);
   res.setHeader('Content-Type', 'image/png');
   res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
-  res.sendFile(bannerPath);
+  return res.send(png);
 });
 
 app.get(['/og-banner.svg', '/og-image.svg'], (req: Request, res: Response) => {
   const bannerPath = path.join(process.cwd(), 'public', 'og-banner.svg');
+  if (fs.existsSync(bannerPath)) {
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+    return res.sendFile(bannerPath);
+  }
+  const svg = generateOgSvg(null);
   res.setHeader('Content-Type', 'image/svg+xml');
   res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
-  res.sendFile(bannerPath);
+  return res.send(svg);
 });
 
 // Helper to inject rich Open Graph tags for WhatsApp / Facebook / Twitter scrapers and users
@@ -3379,7 +3401,7 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
 
   let title = 'CSC DOST – Guide to Government Services, Schemes & Recruitment';
   let description = 'CSC DOST is an independent citizen assistance and information portal. Explore recruitment updates, government schemes, Aadhaar, PAN card, and direct official links.';
-  let ogImage = `${baseOrigin}/og-banner.png`;
+  let ogImage = `${baseOrigin}/og-banner.png?v=2026`;
   let canonicalUrl = `https://www.cscdost.com${urlPath === '/' ? '' : urlPath}`;
   let ogType = 'website';
   let articlePublishedDate = '';

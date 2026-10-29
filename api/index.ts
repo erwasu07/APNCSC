@@ -9,7 +9,13 @@ export default function handler(req: any, res: any) {
     req.headers['x-original-url'];
 
   if (typeof matchedPath === 'string' && matchedPath.length > 0) {
-    if (req.url === '/api' || req.url === '/api/' || req.url === '/' || !req.url) {
+    if (
+      req.url === '/api' ||
+      req.url === '/api/' ||
+      req.url.startsWith('/api?') ||
+      req.url === '/' ||
+      !req.url
+    ) {
       req.url = matchedPath;
     }
   }

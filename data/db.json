@@ -264,6 +264,29 @@
   },
   "paymentTransactions": [
     {
+      "txnid": "PAYU_1793269322499_1C6607",
+      "tokenId": "CSC2026TEST01",
+      "appId": "CSC2026TEST01",
+      "customerName": "Wasim Ahmad",
+      "customerPhone": "9682570000",
+      "customerEmail": "customer@cscdost.com",
+      "serviceName": "PAN Card New Application",
+      "paymentMethod": "online_payu",
+      "govtFee": 0,
+      "cscFee": 70,
+      "deliveryFee": 0,
+      "totalAmount": 70,
+      "status": "initiated",
+      "requestPayload": {
+        "amount": "70.00",
+        "productinfo": "PAN Card New Application",
+        "key": "q3akQz",
+        "configured": true
+      },
+      "createdAt": "2026-10-29T10:22:02.500Z",
+      "updatedAt": "2026-10-29T10:22:02.500Z"
+    },
+    {
       "txnid": "TEST_TXN",
       "tokenId": "",
       "appId": "",

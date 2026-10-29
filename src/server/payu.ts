@@ -2,37 +2,66 @@ import crypto from 'crypto';
 import { SERVICES_LIST } from '../servicesData';
 import { SARKARI_DATA } from '../data/sarkariData';
 
-// PayU Configuration (Strictly server-side environment variables, fail-closed)
-export const PAYU_MERCHANT_KEY = (process.env.PAYU_MERCHANT_KEY || '').trim();
-export const PAYU_MERCHANT_SALT = (process.env.PAYU_MERCHANT_SALT || '').trim();
-export const PAYU_ENV = (process.env.PAYU_ENV || 'test').toLowerCase().trim();
-export const APP_BASE_URL = (process.env.APP_BASE_URL || 'https://www.cscdost.com').replace(/\/+$/, '');
+// Dynamic getters for environment variables (ensures runtime access in Vercel Serverless / Node)
+export function getPayUMerchantKey(): string {
+  return (
+    process.env.PAYU_MERCHANT_KEY ||
+    process.env.PAYU_KEY ||
+    ''
+  ).trim();
+}
 
-// Gateway Endpoints per PayU India Pre-built Checkout Documentation
-// https://docs.payu.in/docs/prebuilt-checkout-page-integration
-export const PAYU_PAYMENT_URL =
-  PAYU_ENV === 'production'
+export function getPayUMerchantSalt(): string {
+  return (
+    process.env.PAYU_MERCHANT_SALT ||
+    process.env.PAYU_SALT ||
+    ''
+  ).trim();
+}
+
+export function getPayUEnv(): string {
+  return (process.env.PAYU_ENV || 'test').toLowerCase().trim();
+}
+
+export function getAppBaseUrl(): string {
+  return (process.env.APP_BASE_URL || 'https://www.cscdost.com').replace(/\/+$/, '');
+}
+
+export function getPayUPaymentUrl(): string {
+  const env = getPayUEnv();
+  return env === 'production' || env === 'prod' || env === 'live'
     ? 'https://secure.payu.in/_payment'
     : 'https://test.payu.in/_payment';
+}
 
-export const PAYU_VERIFY_URL =
-  PAYU_ENV === 'production'
+export function getPayUVerifyUrl(): string {
+  const env = getPayUEnv();
+  return env === 'production' || env === 'prod' || env === 'live'
     ? 'https://info.payu.in/merchant/postservice?form=2'
     : 'https://test.payu.in/merchant/postservice?form=2';
+}
+
+// Export constants for backward compatibility
+export const PAYU_MERCHANT_KEY = getPayUMerchantKey();
+export const PAYU_MERCHANT_SALT = getPayUMerchantSalt();
+export const PAYU_ENV = getPayUEnv();
+export const APP_BASE_URL = getAppBaseUrl();
+export const PAYU_PAYMENT_URL = getPayUPaymentUrl();
+export const PAYU_VERIFY_URL = getPayUVerifyUrl();
 
 /**
  * Returns true if PayU credentials are provided with non-placeholder values
  */
 export function isPayUConfigured(): boolean {
-  const key = (process.env.PAYU_MERCHANT_KEY || '').trim();
-  const salt = (process.env.PAYU_MERCHANT_SALT || '').trim();
+  const key = getPayUMerchantKey();
+  const salt = getPayUMerchantSalt();
 
   const isPlaceholder = (val: string) =>
     !val ||
     val.includes('<') ||
     val.includes('>') ||
     val.includes('placeholder') ||
-    val.toLowerCase() === 'test';
+    val === 'YOUR_KEY_HERE';
 
   return Boolean(key && salt && !isPlaceholder(key) && !isPlaceholder(salt));
 }
@@ -263,8 +292,9 @@ export async function verifyPaymentWithPayU(txnid: string): Promise<{
   message?: string;
   rawResponse?: any;
 }> {
-  const key = PAYU_MERCHANT_KEY;
-  const salt = PAYU_MERCHANT_SALT;
+  const key = getPayUMerchantKey();
+  const salt = getPayUMerchantSalt();
+  const verifyUrl = getPayUVerifyUrl();
 
   if (!isPayUConfigured()) {
     // If running in development/test with placeholders, handle simulated test records
@@ -297,7 +327,7 @@ export async function verifyPaymentWithPayU(txnid: string): Promise<{
     bodyParams.append('var1', txnid);
     bodyParams.append('hash', hash);
 
-    const response = await fetch(PAYU_VERIFY_URL, {
+    const response = await fetch(verifyUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
