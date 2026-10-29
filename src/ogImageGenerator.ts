@@ -9,6 +9,7 @@ import {
   buildDeterministicThumbnailSpec,
   ThumbnailSpec
 } from './thumbnailGenerator';
+import { renderVectorText } from './utils/vectorText';
 
 // Helper to escape XML special characters
 function escapeXml(unsafe: string): string {
@@ -110,9 +111,7 @@ export function generatePortalOgBannerSvg(): string {
   <g transform="translate(600, 48)">
     <rect x="-290" y="-18" width="580" height="36" rx="18" fill="#172554" stroke="#3b82f6" stroke-width="1.2" opacity="0.95"/>
     <circle cx="-264" cy="0" r="5" fill="#22c55e"/>
-    <text x="-248" y="5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif" font-weight="700" font-size="13" fill="#93c5fd" letter-spacing="1">
-      AUTHORIZED DIGITAL PORTAL • CSC VLE ID: 212515670018
-    </text>
+    ${renderVectorText('AUTHORIZED DIGITAL PORTAL • CSC VLE ID: 212515670018', -248, 5, 13, '#93c5fd', { anchor: 'start', weight: 'bold', letterSpacing: 1 })}
   </g>
 
   <!-- CENTER HERO BRAND BLOCK (WhatsApp Square Crop Safe Zone) -->
@@ -134,22 +133,16 @@ export function generatePortalOgBannerSvg(): string {
       <path d="M 31 36 L 35 40 L 42 32" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
     </g>
 
-    <!-- Main Brand Title -->
-    <text x="0" y="105" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif" font-weight="900" font-size="78" fill="#ffffff" letter-spacing="-1">
-      CSC DOST
-    </text>
+    <!-- Main Brand Title as Pure Vector Path -->
+    ${renderVectorText('CSC DOST', 0, 105, 78, '#ffffff', { anchor: 'middle', weight: 'bold', letterSpacing: -1 })}
 
-    <!-- Subtitle / Tagline -->
-    <text x="0" y="145" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif" font-weight="700" font-size="22" fill="#93c5fd" letter-spacing="0.5">
-      Government Services, Schemes &amp; Recruitment Simplified
-    </text>
+    <!-- Subtitle / Tagline as Pure Vector Path -->
+    ${renderVectorText('Government Services, Schemes & Recruitment Simplified', 0, 145, 22, '#93c5fd', { anchor: 'middle', weight: 'bold', letterSpacing: 0.5 })}
 
-    <!-- Web URL Pill -->
+    <!-- Web URL Pill with Pure Vector Path -->
     <g transform="translate(0, 185)">
       <rect x="-170" y="-18" width="340" height="36" rx="18" fill="#0f172a" stroke="#f59e0b" stroke-width="1.5"/>
-      <text x="0" y="5" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif" font-weight="800" font-size="17" fill="#fbbf24" letter-spacing="1.5">
-        🌐 WWW.CSCDOST.COM
-      </text>
+      ${renderVectorText('WWW.CSCDOST.COM', 0, 5, 17, '#fbbf24', { anchor: 'middle', weight: 'bold', letterSpacing: 1.5 })}
     </g>
   </g>
 
@@ -158,64 +151,38 @@ export function generatePortalOgBannerSvg(): string {
     <rect x="0" y="0" width="320" height="125" rx="16" fill="url(#cardGrad)" stroke="#1e40af" stroke-width="1.5"/>
     <rect x="18" y="16" width="38" height="38" rx="10" fill="#1e3a8a"/>
     <text x="37" y="42" text-anchor="middle" font-size="20">📋</text>
-    <text x="68" y="34" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="15" fill="#ffffff">
-      Sarkari Jobs &amp; Exams
-    </text>
-    <text x="68" y="50" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="12" fill="#60a5fa">
-      Daily Verified Gazettes
-    </text>
+    ${renderVectorText('Sarkari Jobs & Exams', 68, 34, 15, '#ffffff', { weight: 'bold' })}
+    ${renderVectorText('Daily Verified Gazettes', 68, 50, 12, '#60a5fa', { weight: 'bold' })}
     <line x1="18" y1="68" x2="302" y2="68" stroke="#1e3a8a" stroke-width="1"/>
-    <text x="18" y="90" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="13" fill="#e2e8f0">
-      JKSSB • Indian Army • SSC • RRB
-    </text>
-    <text x="18" y="108" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="500" font-size="11" fill="#94a3b8">
-      Admit Cards • Syllabi • Answer Keys
-    </text>
+    ${renderVectorText('JKSSB • Indian Army • SSC • RRB', 18, 90, 13, '#e2e8f0', { weight: 'bold' })}
+    ${renderVectorText('Admit Cards • Syllabi • Answer Keys', 18, 108, 11, '#94a3b8', { weight: 'regular' })}
   </g>
 
   <g transform="translate(440, 425)" filter="url(#cardShadow)">
     <rect x="0" y="0" width="320" height="125" rx="16" fill="url(#cardGrad)" stroke="#059669" stroke-width="1.5"/>
     <rect x="18" y="16" width="38" height="38" rx="10" fill="#065f46"/>
     <text x="37" y="42" text-anchor="middle" font-size="20">🏛️</text>
-    <text x="68" y="34" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="15" fill="#ffffff">
-      Citizen Digital Services
-    </text>
-    <text x="68" y="50" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="12" fill="#34d399">
-      Online Counter Assistance
-    </text>
+    ${renderVectorText('Citizen Digital Services', 68, 34, 15, '#ffffff', { weight: 'bold' })}
+    ${renderVectorText('Online Counter Assistance', 68, 50, 12, '#34d399', { weight: 'bold' })}
     <line x1="18" y1="68" x2="302" y2="68" stroke="#047857" stroke-width="1"/>
-    <text x="18" y="90" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="13" fill="#e2e8f0">
-      Aadhaar • PAN • Ayushman • KISAN
-    </text>
-    <text x="18" y="108" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="500" font-size="11" fill="#94a3b8">
-      Domicile • E-Tickets • Certificates
-    </text>
+    ${renderVectorText('Aadhaar • PAN • Ayushman • KISAN', 18, 90, 13, '#e2e8f0', { weight: 'bold' })}
+    ${renderVectorText('Domicile • E-Tickets • Certificates', 18, 108, 11, '#94a3b8', { weight: 'regular' })}
   </g>
 
   <g transform="translate(810, 425)" filter="url(#cardShadow)">
     <rect x="0" y="0" width="320" height="125" rx="16" fill="url(#cardGrad)" stroke="#d97706" stroke-width="1.5"/>
     <rect x="18" y="16" width="38" height="38" rx="10" fill="#92400e"/>
     <text x="37" y="42" text-anchor="middle" font-size="20">🎓</text>
-    <text x="68" y="34" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="15" fill="#ffffff">
-      University Desk
-    </text>
-    <text x="68" y="50" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="12" fill="#fbbf24">
-      KU &amp; Cluster Univ Srinagar
-    </text>
+    ${renderVectorText('University Desk', 68, 34, 15, '#ffffff', { weight: 'bold' })}
+    ${renderVectorText('KU & Cluster Univ Srinagar', 68, 50, 12, '#fbbf24', { weight: 'bold' })}
     <line x1="18" y1="68" x2="302" y2="68" stroke="#b45309" stroke-width="1"/>
-    <text x="18" y="90" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="13" fill="#e2e8f0">
-      Admissions • Exam Forms • Results
-    </text>
-    <text x="18" y="108" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="500" font-size="11" fill="#94a3b8">
-      Direct Link Portals &amp; Step Guides
-    </text>
+    ${renderVectorText('Admissions • Exam Forms • Results', 18, 90, 13, '#e2e8f0', { weight: 'bold' })}
+    ${renderVectorText('Direct Link Portals & Step Guides', 18, 108, 11, '#94a3b8', { weight: 'regular' })}
   </g>
 
   <!-- BOTTOM ACCREDITATION BAR -->
   <g transform="translate(600, 595)">
-    <text x="0" y="0" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="12" fill="#64748b" letter-spacing="0.5">
-      Operated by Wasim Ahmad Khanday (CSC VLE) • Sangran Qazigund, Anantnag, J&amp;K 192221 • Official Helpline: +91 70068 33767
-    </text>
+    ${renderVectorText('Operated by Wasim Ahmad Khanday (CSC VLE) • Sangran Qazigund, Anantnag, J&K 192221 • Official Helpline: +91 70068 33767', 0, 0, 12, '#64748b', { anchor: 'middle', weight: 'bold', letterSpacing: 0.5 })}
   </g>
 </svg>`;
 }
@@ -319,53 +286,41 @@ export function generateServiceOgSvg(service: ServiceItem): string {
   <!-- TOP HEADER -->
   <g transform="translate(65, 50)">
     <circle cx="55" cy="55" r="50" fill="#0F172A" stroke="#F59E0B" stroke-width="4" filter="url(#dropShadow)" />
-    <text x="55" y="44" font-family="'Liberation Sans', Arial, sans-serif" font-weight="900" font-size="16" fill="#FDE047" text-anchor="middle">CSC DOST</text>
-    <text x="55" y="64" font-family="'Liberation Sans', Arial, sans-serif" font-weight="900" font-size="20" fill="#FFFFFF" text-anchor="middle">SERVICES</text>
+    ${renderVectorText('CSC DOST', 55, 44, 16, '#FDE047', { anchor: 'middle', weight: 'bold' })}
+    ${renderVectorText('SERVICES', 55, 64, 20, '#FFFFFF', { anchor: 'middle', weight: 'bold' })}
   </g>
 
   <g transform="translate(195, 48)" filter="url(#dropShadow)">
     <rect x="0" y="0" width="620" height="62" rx="14" fill="#0284C7" stroke="#38BDF8" stroke-width="2" />
-    <text x="310" y="40" font-family="'Liberation Sans', Arial, sans-serif" font-weight="900" font-size="28" fill="#FFFFFF" text-anchor="middle">
-      ONLINE CITIZEN E-SERVICES
-    </text>
+    ${renderVectorText('ONLINE CITIZEN E-SERVICES', 310, 40, 28, '#FFFFFF', { anchor: 'middle', weight: 'bold' })}
   </g>
 
   <!-- CONTENT -->
   <g transform="translate(65, 140)">
     <rect x="0" y="0" width="1070" height="370" rx="20" fill="#FFFFFF" fill-opacity="0.05" stroke="#334155" stroke-width="2" />
     
-    <text x="40" y="70" font-family="'Liberation Sans', Arial, sans-serif" font-weight="900" font-size="42" fill="#FFFFFF" filter="url(#dropShadow)">
-      ${escapedName}
-    </text>
+    ${renderVectorText(service.name.slice(0, 42), 40, 70, 40, '#FFFFFF', { weight: 'bold' })}
 
-    ${descLines.map((l, idx) => `
-      <text x="40" y="${130 + idx * 35}" font-family="'Liberation Sans', Arial, sans-serif" font-weight="500" font-size="22" fill="#94A3B8">
-        ${l}
-      </text>
-    `).join('')}
+    ${descLines.map((l, idx) => renderVectorText(l, 40, 130 + idx * 35, 22, '#94A3B8', { weight: 'regular' })).join('\n    ')}
 
     <g transform="translate(40, 240)">
       <rect x="0" y="0" width="300" height="90" rx="12" fill="#14532D" stroke="#22C55E" stroke-width="2" />
-      <text x="20" y="32" font-family="'Liberation Sans', Arial, sans-serif" font-weight="700" font-size="14" fill="#BBF7D0">ESTIMATED FEE</text>
-      <text x="20" y="68" font-family="'Liberation Sans', Arial, sans-serif" font-weight="900" font-size="28" fill="#FFFFFF">${escapedPrice}</text>
+      ${renderVectorText('ESTIMATED FEE', 20, 32, 14, '#BBF7D0', { weight: 'bold' })}
+      ${renderVectorText(service.price, 20, 68, 28, '#FFFFFF', { weight: 'bold' })}
     </g>
 
     <g transform="translate(370, 240)">
       <rect x="0" y="0" width="300" height="90" rx="12" fill="#1E3A8A" stroke="#3B82F6" stroke-width="2" />
-      <text x="20" y="32" font-family="'Liberation Sans', Arial, sans-serif" font-weight="700" font-size="14" fill="#BFDBFE">PROCESSING TIME</text>
-      <text x="20" y="68" font-family="'Liberation Sans', Arial, sans-serif" font-weight="900" font-size="28" fill="#FFFFFF">${escapedTime}</text>
+      ${renderVectorText('PROCESSING TIME', 20, 32, 14, '#BFDBFE', { weight: 'bold' })}
+      ${renderVectorText(service.estimatedTime, 20, 68, 28, '#FFFFFF', { weight: 'bold' })}
     </g>
   </g>
 
   <!-- FOOTER -->
   <g transform="translate(65, 530)">
     <rect x="0" y="0" width="1070" height="55" rx="12" fill="#020617" stroke="#F59E0B" stroke-width="2" />
-    <text x="30" y="35" font-family="'Liberation Sans', Arial, sans-serif" font-weight="900" font-size="20" fill="#FDE047">
-      cscdost.com • Authorized Common Service Center
-    </text>
-    <text x="1040" y="35" font-family="'Liberation Sans', Arial, sans-serif" font-weight="800" font-size="18" fill="#FFFFFF" text-anchor="end">
-      Apply &amp; Upload Documents Online
-    </text>
+    ${renderVectorText('cscdost.com • Authorized Common Service Center', 30, 35, 20, '#FDE047', { weight: 'bold' })}
+    ${renderVectorText('Apply & Upload Documents Online', 1040, 35, 18, '#FFFFFF', { anchor: 'end', weight: 'bold' })}
   </g>
 </svg>`;
 }

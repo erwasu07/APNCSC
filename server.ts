@@ -3404,7 +3404,7 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
 
   let title = 'CSC DOST – Guide to Government Services, Schemes & Recruitment';
   let description = 'CSC DOST is an independent citizen assistance and information portal. Explore recruitment updates, government schemes, Aadhaar, PAN card, and direct official links.';
-  let ogImage = `${baseOrigin}/og-banner.png?v=2026`;
+  let ogImage = `${baseOrigin}/og-banner.png?v=2026_v3`;
   let canonicalUrl = `https://www.cscdost.com${urlPath === '/' ? '' : urlPath}`;
   let ogType = 'website';
   let articlePublishedDate = '';
@@ -3477,7 +3477,7 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       title = `${item.title} | CSC DOST`;
       description = item.shortInfo || `Apply online for ${item.title}. Last Date: ${item.lastDate || 'Check Notification'}. Vacancies: ${item.totalPosts || 'Open'}. Official updates & application assistance at cscdost.com.`;
       const dateVersion = (item.lastDate || item.postDate || '2026').replace(/[^0-9]/g, '') || '2026';
-      ogImage = `${baseOrigin}/api/og-image/${encodeURIComponent(item.id)}.png?v=${dateVersion}`;
+      ogImage = `${baseOrigin}/api/og-image/${encodeURIComponent(item.id)}.png?v=${dateVersion}_v3`;
       canonicalUrl = `https://www.cscdost.com/post/${item.id}`;
       ogType = 'article';
       articlePublishedDate = item.postDate || '2026-02-20';
@@ -3499,7 +3499,7 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
     if (service) {
       title = `${service.name} Online Application | CSC DOST`;
       description = `${service.description} Processing time: ${service.estimatedTime}. Official fee: ${service.price}. Fast & reliable application assistance at cscdost.com.`;
-      ogImage = `${baseOrigin}/api/og-image/${encodeURIComponent(service.id)}.png?v=srv`;
+      ogImage = `${baseOrigin}/api/og-image/${encodeURIComponent(service.id)}.png?v=srv_v3`;
       canonicalUrl = `https://www.cscdost.com/service/${service.id}`;
       ogType = 'website';
       breadcrumbItems = [

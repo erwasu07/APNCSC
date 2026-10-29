@@ -4,6 +4,7 @@ import sharp from 'sharp';
 import { GoogleGenAI, Type } from '@google/genai';
 import { SarkariItem, SARKARI_CATEGORIES } from './data/sarkariData';
 import { fileURLToPath } from 'url';
+import { renderVectorText, measureVectorTextWidth } from './utils/vectorText';
 
 export const THUMBNAIL_WIDTH = 1200;
 export const THUMBNAIL_HEIGHT = 630;
@@ -522,7 +523,7 @@ function getVerifiedLogoVector(category: string, primaryColor: string): string {
         <!-- Central Shield -->
         <path d="M 82 70 L 118 70 L 118 100 Q 118 122, 100 130 Q 82 122, 82 100 Z" fill="#1E4620" stroke="#C89B2B" stroke-width="2.5" />
         <circle cx="100" cy="90" r="10" fill="#F3DF79" />
-        <text x="100" y="185" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="14" fill="#1E4620" text-anchor="middle" letter-spacing="1">INDIAN ARMY</text>
+        ${renderVectorText('INDIAN ARMY', 100, 185, 14, '#1E4620', { anchor: 'middle', weight: 'bold', letterSpacing: 1 })}
       </g>`;
 
     case 'jkssb':
@@ -536,7 +537,7 @@ function getVerifiedLogoVector(category: string, primaryColor: string): string {
         <path d="M 60 92 L 80 92 L 70 72 Z" fill="#FF6A00" />
         <path d="M 120 92 L 140 92 L 130 72 Z" fill="#FF6A00" />
         <rect x="85" y="124" width="30" height="8" rx="2" fill="#0047BA" />
-        <text x="100" y="185" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="16" fill="#0047BA" text-anchor="middle" letter-spacing="1">JKSSB</text>
+        ${renderVectorText('JKSSB', 100, 185, 16, '#0047BA', { anchor: 'middle', weight: 'bold', letterSpacing: 1 })}
       </g>`;
 
     case 'rrb_jobs':
@@ -551,7 +552,7 @@ function getVerifiedLogoVector(category: string, primaryColor: string): string {
         <path d="M 68 126 L 132 126" stroke="#0B2545" stroke-width="4" stroke-linecap="round" />
         <line x1="80" y1="126" x2="72" y2="136" stroke="#0B2545" stroke-width="3" />
         <line x1="120" y1="126" x2="128" y2="136" stroke="#0B2545" stroke-width="3" />
-        <text x="100" y="185" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="14" fill="#0B2545" text-anchor="middle" letter-spacing="1">INDIAN RAILWAYS</text>
+        ${renderVectorText('INDIAN RAILWAYS', 100, 185, 14, '#0B2545', { anchor: 'middle', weight: 'bold', letterSpacing: 1 })}
       </g>`;
 
     case 'ssc_jobs':
@@ -563,7 +564,7 @@ function getVerifiedLogoVector(category: string, primaryColor: string): string {
         <rect x="90" y="65" width="20" height="42" rx="3" fill="#0A2540" />
         <polygon points="100,52 104,60 114,60 106,66 109,76 100,70 91,76 94,66 86,60 96,60" fill="#008080" />
         <rect x="80" y="112" width="40" height="8" rx="2" fill="#0A2540" />
-        <text x="100" y="185" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="16" fill="#0A2540" text-anchor="middle" letter-spacing="1">SSC</text>
+        ${renderVectorText('SSC', 100, 185, 16, '#0A2540', { anchor: 'middle', weight: 'bold', letterSpacing: 1 })}
       </g>`;
 
     case 'exam_forms':
@@ -574,7 +575,7 @@ function getVerifiedLogoVector(category: string, primaryColor: string): string {
         <!-- Chinar leaf shape -->
         <path d="M 100 55 C 90 70, 70 75, 76 95 C 80 102, 88 98, 92 110 C 95 116, 98 128, 100 132 C 102 128, 105 116, 108 110 C 112 98, 120 102, 124 95 C 130 75, 110 70, 100 55 Z" fill="#028090" />
         <circle cx="100" cy="92" r="6" fill="#FFFFFF" />
-        <text x="100" y="185" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="13" fill="#0B2545" text-anchor="middle" letter-spacing="0.5">KASHMIR UNIV</text>
+        ${renderVectorText('KASHMIR UNIV', 100, 185, 13, '#0B2545', { anchor: 'middle', weight: 'bold', letterSpacing: 0.5 })}
       </g>`;
 
     case 'cluster_univ':
@@ -584,7 +585,7 @@ function getVerifiedLogoVector(category: string, primaryColor: string): string {
         <!-- Open book + shikara -->
         <path d="M 72 85 Q 100 95, 100 115 Q 100 95, 128 85 L 128 108 Q 100 118, 100 132 Q 100 118, 72 108 Z" fill="#0047BA" />
         <path d="M 80 72 L 120 72 L 100 56 Z" fill="#FF7900" />
-        <text x="100" y="185" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="14" fill="#0047BA" text-anchor="middle" letter-spacing="1">CUS SRINAGAR</text>
+        ${renderVectorText('CUS SRINAGAR', 100, 185, 14, '#0047BA', { anchor: 'middle', weight: 'bold', letterSpacing: 1 })}
       </g>`;
 
     default:
@@ -596,20 +597,25 @@ function getVerifiedLogoVector(category: string, primaryColor: string): string {
 /**
  * Generates the 1200 x 630 Master Social Preview SVG strictly matching
  * the approved reference images provided by the user.
+ * ALL text strings are compiled into pure SVG vector paths, guaranteeing
+ * zero tofu glyphs (▯▯▯▯) across all cloud hosting runtimes.
  */
 export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string {
   const theme = CATEGORY_THEMES[spec.category] || CATEGORY_THEMES.default;
-  const orgTitle = escapeXml(spec.orgTitle || theme.orgTitle);
-  const postBadgeTitle = escapeXml(spec.postBadgeTitle || 'OFFICIAL NOTIFICATION');
+  const rawOrgTitle = (spec.orgTitle || theme.orgTitle).trim();
+  const rawPostBadgeTitle = (spec.postBadgeTitle || 'OFFICIAL NOTIFICATION').trim();
 
-  const elLabel = escapeXml(spec.eligibilityLabel || 'Eligibility:');
-  const elValue = escapeXml(spec.eligibilityValue || 'See notification');
+  const rawElLabel = (spec.eligibilityLabel || 'Eligibility:').trim();
+  const rawElValue = (spec.eligibilityValue || 'See notification').trim();
+  const elValueClean = rawElValue.length > 20 ? rawElValue.slice(0, 18) + '...' : rawElValue;
 
-  const dateLabel = escapeXml(spec.lastDateLabel || 'Last date:');
-  const dateValue = escapeXml(spec.lastDateValue || 'Check website');
+  const rawDateLabel = (spec.lastDateLabel || 'Last date:').trim();
+  const rawDateValue = (spec.lastDateValue || 'Check website').trim();
+  const dateValueClean = rawDateValue.length > 20 ? rawDateValue.slice(0, 18) + '...' : rawDateValue;
 
-  const applyLabel = escapeXml(spec.howToApplyLabel || 'How to apply:');
-  const applyValue = escapeXml(spec.howToApplyValue || 'Visit CSC DOST');
+  const rawApplyLabel = (spec.howToApplyLabel || 'How to apply:').trim();
+  const rawApplyValue = (spec.howToApplyValue || 'Visit CSC DOST').trim();
+  const applyValueClean = rawApplyValue.length > 20 ? rawApplyValue.slice(0, 18) + '...' : rawApplyValue;
 
   // Check if a genuine verified logo exists (or user uploaded custom logo)
   const isCustomLogo = Boolean(spec.logoUrl && spec.logoUrl.trim());
@@ -627,45 +633,22 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
 
   // Dynamic font sizing & centering based on whether logo is present
   const centerX = hasLogo ? 460 : 600;
-  const orgFontSize = orgTitle.length > 22 ? 52 : orgTitle.length > 15 ? 60 : orgTitle.length > 10 ? 74 : 92;
-  const badgeFontSize = postBadgeTitle.length > 24 ? 42 : postBadgeTitle.length > 16 ? 50 : 60;
+  const orgFontSize = rawOrgTitle.length > 22 ? 52 : rawOrgTitle.length > 15 ? 60 : rawOrgTitle.length > 10 ? 74 : 92;
+  const badgeFontSize = rawPostBadgeTitle.length > 24 ? 42 : rawPostBadgeTitle.length > 16 ? 50 : 60;
 
-  // Dynamic calculation of the central role pill banner width
-  const approxTextWidth = postBadgeTitle.length * (badgeFontSize * 0.58);
+  // Dynamic precise calculation of the central role pill banner width
+  const measuredWidth = measureVectorTextWidth(rawPostBadgeTitle, badgeFontSize, { weight: 'bold' });
   const maxPillWidth = hasLogo ? 820 : 980;
-  const badgePillWidth = Math.min(maxPillWidth, Math.max(380, Math.round(approxTextWidth + 88)));
+  const badgePillWidth = Math.min(maxPillWidth, Math.max(380, Math.round(measuredWidth + 88)));
   const badgePillX = Math.round(centerX - badgePillWidth / 2);
 
   // Left & right burst ticks coordinates (only show when title is compact enough to avoid colliding)
-  const showTicks = theme.hasTicks && orgTitle.length <= 12;
+  const showTicks = theme.hasTicks && rawOrgTitle.length <= 12;
   const leftTickBaseX = hasLogo ? 85 : 120;
   const rightTickBaseX = hasLogo ? 835 : 1080;
 
   return `<svg width="${THUMBNAIL_WIDTH}" height="${THUMBNAIL_HEIGHT}" viewBox="0 0 ${THUMBNAIL_WIDTH} ${THUMBNAIL_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- Embedded TrueType Fonts for 100% Deterministic Serverless Pixel Rendering -->
-    <style>
-      ${embeddedFontBase64Bold ? `
-      @font-face {
-        font-family: 'Liberation Sans';
-        src: url('data:font/truetype;charset=utf-8;base64,${embeddedFontBase64Bold}') format('truetype');
-        font-weight: 700 900;
-        font-style: normal;
-      }
-      ` : ''}
-      ${embeddedFontBase64Regular ? `
-      @font-face {
-        font-family: 'Liberation Sans';
-        src: url('data:font/truetype;charset=utf-8;base64,${embeddedFontBase64Regular}') format('truetype');
-        font-weight: 400 600;
-        font-style: normal;
-      }
-      ` : ''}
-      text {
-        font-family: 'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif;
-      }
-    </style>
-
     <!-- Metallic Gold Gradient for Indian Army -->
     <linearGradient id="goldMetallicGrad" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#C59B27" />
@@ -717,17 +700,13 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
     </g>
     ` : ''}
 
-    <!-- Organization Name -->
-    <text x="${centerX}" y="145" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="900" font-size="${orgFontSize}" fill="${theme.primaryColor}" text-anchor="middle" letter-spacing="-0.5">
-      ${orgTitle}
-    </text>
+    <!-- Organization Name as Pure Vector Path -->
+    ${renderVectorText(rawOrgTitle, centerX, 145, orgFontSize, theme.primaryColor, { anchor: 'middle', weight: 'bold' })}
 
-    <!-- Post Title / Role Pill Banner -->
+    <!-- Post Title / Role Pill Banner with Pure Vector Path -->
     <g transform="translate(${badgePillX}, 180)" filter="url(#softShadow)">
       <rect x="0" y="0" width="${badgePillWidth}" height="92" rx="26" fill="${theme.pillBg}" stroke="${theme.isPillGradient ? '#B3861B' : 'none'}" stroke-width="${theme.isPillGradient ? 1.5 : 0}" />
-      <text x="${badgePillWidth / 2}" y="65" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="900" font-size="${badgeFontSize}" fill="${theme.pillText}" text-anchor="middle" letter-spacing="0.5">
-        ${postBadgeTitle}
-      </text>
+      ${renderVectorText(rawPostBadgeTitle, badgePillWidth / 2, 65, badgeFontSize, theme.pillText, { anchor: 'middle', weight: 'bold' })}
     </g>
   </g>
 
@@ -746,13 +725,9 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
     </g>
     <!-- Vertical Separator Line -->
     <line x1="102" y1="28" x2="102" y2="92" stroke="${theme.card1Border}" stroke-width="1.5" />
-    <!-- Text Labels -->
-    <text x="118" y="48" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="800" font-size="20" fill="${theme.primaryColor}">
-      ${elLabel}
-    </text>
-    <text x="118" y="80" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="700" font-size="18" fill="#1E293B">
-      ${elValue.length > 20 ? elValue.slice(0, 18) + '...' : elValue}
-    </text>
+    <!-- Text Labels as Pure Vector Paths -->
+    ${renderVectorText(rawElLabel, 118, 48, 20, theme.primaryColor, { anchor: 'start', weight: 'bold' })}
+    ${renderVectorText(elValueClean, 118, 80, 18, '#1E293B', { anchor: 'start', weight: 'bold' })}
   </g>
 
   <!-- CARD 2: LAST DATE -->
@@ -769,13 +744,9 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
     </g>
     <!-- Vertical Separator Line -->
     <line x1="102" y1="28" x2="102" y2="92" stroke="${theme.card2Border}" stroke-width="1.5" />
-    <!-- Text Labels -->
-    <text x="118" y="48" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="800" font-size="20" fill="${theme.secondaryColor}">
-      ${dateLabel}
-    </text>
-    <text x="118" y="80" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="700" font-size="18" fill="#1E293B">
-      ${dateValue.length > 20 ? dateValue.slice(0, 18) + '...' : dateValue}
-    </text>
+    <!-- Text Labels as Pure Vector Paths -->
+    ${renderVectorText(rawDateLabel, 118, 48, 20, theme.secondaryColor, { anchor: 'start', weight: 'bold' })}
+    ${renderVectorText(dateValueClean, 118, 80, 18, '#1E293B', { anchor: 'start', weight: 'bold' })}
   </g>
 
   <!-- CARD 3: HOW TO APPLY -->
@@ -789,13 +760,9 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
     </g>
     <!-- Vertical Separator Line -->
     <line x1="102" y1="28" x2="102" y2="92" stroke="${theme.card3Border}" stroke-width="1.5" />
-    <!-- Text Labels -->
-    <text x="118" y="48" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="800" font-size="20" fill="${theme.primaryColor}">
-      ${applyLabel}
-    </text>
-    <text x="118" y="80" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="700" font-size="18" fill="#1E293B">
-      ${applyValue.length > 20 ? applyValue.slice(0, 18) + '...' : applyValue}
-    </text>
+    <!-- Text Labels as Pure Vector Paths -->
+    ${renderVectorText(rawApplyLabel, 118, 48, 20, theme.primaryColor, { anchor: 'start', weight: 'bold' })}
+    ${renderVectorText(applyValueClean, 118, 80, 18, '#1E293B', { anchor: 'start', weight: 'bold' })}
   </g>
 
   <!-- BOTTOM LAYER: DUAL WAVING RIBBONS -->
@@ -811,10 +778,8 @@ export function renderStandaloneMasterThumbnailSvg(spec: ThumbnailSpec): string 
     <!-- Left Accent Dash -->
     <line x1="35" y1="29" x2="105" y2="29" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" />
     
-    <!-- Centered Brand Domain -->
-    <text x="225" y="39" font-family="'Liberation Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif" font-weight="900" font-size="26" fill="#FFFFFF" text-anchor="middle" letter-spacing="0.8">
-      cscdost.com
-    </text>
+    <!-- Centered Brand Domain as Pure Vector Path -->
+    ${renderVectorText('cscdost.com', 225, 39, 26, '#FFFFFF', { anchor: 'middle', weight: 'bold', letterSpacing: 0.8 })}
 
     <!-- Right Accent Dash -->
     <line x1="345" y1="29" x2="415" y2="29" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" />
