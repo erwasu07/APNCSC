@@ -40,69 +40,23 @@ import { GUIDE_ARTICLES } from './GuidesKnowledgeHub';
 import { TOOLS_LIST } from './tools/toolsData';
 import CitizenToolsDesk from './CitizenToolsDesk';
 import { ColourAccentCard, PortalCardFact } from './shared/ContentDesignSystem';
+import {
+  computeSarkariStatus,
+  computeJobDeadlineStatus,
+  SarkariStatusResult,
+  JobDeadlineStatus,
+} from '../utils/sarkariStatus';
 
-interface PortalHomepageProps {
+export type { JobDeadlineStatus };
+export { computeJobDeadlineStatus };
+
+export interface PortalHomepageProps {
   onOpenJob: (item: SarkariItem) => void;
   onOpenService: (item: ServiceItem) => void;
   onApplyService: (serviceName: string) => void;
   onOpenGuide?: (guideId: string) => void;
   onOpenTrack?: () => void;
   onOpenLegal?: (tab: 'privacy' | 'terms' | 'disclaimer') => void;
-}
-
-export type JobDeadlineStatus = {
-  code: 'open' | 'closing_soon' | 'closed' | 'check_notice';
-  label: 'Open' | 'Closing Soon' | 'Closed' | 'Check Notice';
-  daysRemaining: number | null;
-};
-
-/**
- * Computes deadline status strictly from item.lastDate (DD/MM/YYYY) against Asia/Kolkata current date.
- * Date-only deadlines are treated as inclusive of the closing date (through 23:59:59 IST).
- */
-export function computeJobDeadlineStatus(lastDateStr?: string): JobDeadlineStatus {
-  if (!lastDateStr || typeof lastDateStr !== 'string') {
-    return { code: 'check_notice', label: 'Check Notice', daysRemaining: null };
-  }
-
-  // Extract first DD/MM/YYYY or DD-MM-YYYY pattern if present
-  const match = lastDateStr.trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-  if (!match) {
-    return { code: 'check_notice', label: 'Check Notice', daysRemaining: null };
-  }
-
-  const day = parseInt(match[1], 10);
-  const month = parseInt(match[2], 10);
-  const year = parseInt(match[3], 10);
-
-  if (month < 1 || month > 12 || day < 1 || day > 31 || year < 2000 || year > 2100) {
-    return { code: 'check_notice', label: 'Check Notice', daysRemaining: null };
-  }
-
-  // Get today's YYYY-MM-DD in Asia/Kolkata timezone
-  const formatter = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Kolkata',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
-  const parts = formatter.formatToParts(new Date());
-  const curYear = parseInt(parts.find((p) => p.type === 'year')?.value || '2026', 10);
-  const curMonth = parseInt(parts.find((p) => p.type === 'month')?.value || '1', 10);
-  const curDay = parseInt(parts.find((p) => p.type === 'day')?.value || '1', 10);
-
-  const todayUtcMs = Date.UTC(curYear, curMonth - 1, curDay);
-  const deadlineUtcMs = Date.UTC(year, month - 1, day);
-
-  const diffDays = Math.floor((deadlineUtcMs - todayUtcMs) / (1000 * 60 * 60 * 24));
-
-  if (diffDays < 0) {
-    return { code: 'closed', label: 'Closed', daysRemaining: diffDays };
-  }
-  if (diffDays <= 7) {
-    return { code: 'closing_soon', label: 'Closing Soon', daysRemaining: diffDays };
-  }
-  return { code: 'open', label: 'Open', daysRemaining: diffDays };
 }
 
 function getRecruitingOrganisation(item: SarkariItem): string {
@@ -134,7 +88,58 @@ function getShortQualification(eligibility?: string): string | null {
   return `${cleaned.slice(0, 66).trim()}…`;
 }
 
-function renderStatusBadge(status: JobDeadlineStatus) {
+function renderStatusBadge(status: JobDeadlineStatus, computed?: SarkariStatusResult) {
+  if (computed) {
+    if (computed.applicationStatus === 'cancelled') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-[#E11D48] border border-rose-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#E11D48]" aria-hidden="true" />
+          <span>Cancelled</span>
+        </span>
+      );
+    }
+    if (computed.applicationStatus === 'upcoming') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-[#2563EB] border border-blue-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB]" aria-hidden="true" />
+          <span>Upcoming</span>
+        </span>
+      );
+    }
+    if (computed.verificationStatus === 'needs_verification') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-[#D97706] border border-amber-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#D97706]" aria-hidden="true" />
+          <span>Needs Verification</span>
+        </span>
+      );
+    }
+    if (computed.applicationStatus === 'closed') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-[#64748B] border border-slate-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#64748B]" aria-hidden="true" />
+          <span>Closed</span>
+        </span>
+      );
+    }
+    if (computed.daysRemaining !== null && computed.daysRemaining <= 7) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]" aria-hidden="true" />
+          <span>Closing Soon ({computed.daysRemaining}d)</span>
+        </span>
+      );
+    }
+    if (computed.applicationStatus === 'open') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-[#16A34A] border border-emerald-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" aria-hidden="true" />
+          <span>Open</span>
+        </span>
+      );
+    }
+  }
+
   if (status.code === 'open') {
     return (
       <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-[#16A34A] border border-emerald-200">
@@ -372,11 +377,13 @@ export default function PortalHomepage({
         item.category === 'exam_forms' ||
         item.category === 'admissions' ||
         item.category === 'nta';
+      const computed = computeSarkariStatus(item);
       return {
         item,
         isAdmission,
         contentTypeLabel: isAdmission ? ('Admission' as const) : ('Job' as const),
-        status: computeJobDeadlineStatus(item.lastDate),
+        status: computeJobDeadlineStatus(item.lastDate, item),
+        computed,
         organisation: getRecruitingOrganisation(item),
         qualification: getShortQualification(item.eligibility),
       };
@@ -407,7 +414,7 @@ export default function PortalHomepage({
           title: j.item.title,
           summaryField: j.item.shortInfo,
           infoFacts: facts,
-          statusBadge: renderStatusBadge(j.status),
+          statusBadge: renderStatusBadge(j.status, j.computed),
           officialHref: j.item.officialLink,
           actionLabel: 'View Details →',
           thumbnailUrl: j.item.thumbnailUrl || `/thumbnails/${j.item.id}.png`,
@@ -437,7 +444,7 @@ export default function PortalHomepage({
           title: j.item.title,
           summaryField: j.item.shortInfo,
           infoFacts: facts,
-          statusBadge: renderStatusBadge(j.status),
+          statusBadge: renderStatusBadge(j.status, j.computed),
           officialHref: j.item.officialLink,
           actionLabel: 'View Details →',
           thumbnailUrl: j.item.thumbnailUrl || `/thumbnails/${j.item.id}.png`,
@@ -554,12 +561,12 @@ export default function PortalHomepage({
       return item.category === jobOrgFilter;
     });
 
-    const statusFiltered = orgFiltered.filter(({ status }) => {
+    const statusFiltered = orgFiltered.filter(({ computed }) => {
       if (jobStatusFilter === 'active') {
-        return status.code === 'open' || status.code === 'closing_soon' || status.code === 'check_notice';
+        return computed.applicationStatus === 'open';
       }
       if (jobStatusFilter === 'closed') {
-        return status.code === 'closed';
+        return computed.applicationStatus === 'closed' || computed.applicationStatus === 'cancelled';
       }
       return true;
     });
@@ -570,8 +577,10 @@ export default function PortalHomepage({
     const priorityMap: Record<JobDeadlineStatus['code'], number> = {
       closing_soon: 1,
       open: 2,
-      check_notice: 3,
-      closed: 4,
+      upcoming: 3,
+      check_notice: 4,
+      closed: 5,
+      cancelled: 6,
     };
 
     return [...listToSort].sort((a, b) => {
@@ -1314,7 +1323,7 @@ export default function PortalHomepage({
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                 {displayedJobs.map(
-                  ({ item, isAdmission, status, organisation, qualification }) => {
+                  ({ item, isAdmission, status, computed, organisation, qualification }) => {
                     const facts: PortalCardFact[] = [];
                     if (qualification) {
                       facts.push({
@@ -1349,7 +1358,7 @@ export default function PortalHomepage({
                             : SARKARI_CATEGORIES[item.category]?.label || 'Job / Recruitment'
                         }
                         organisation={organisation}
-                        statusBadge={renderStatusBadge(status)}
+                        statusBadge={renderStatusBadge(status, computed)}
                         title={item.title}
                         summary={item.shortInfo}
                         infoFacts={facts}

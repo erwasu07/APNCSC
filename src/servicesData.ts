@@ -61,12 +61,13 @@ export const SERVICES_LIST: ServiceItem[] = [
   },
   {
     id: 'csc-pmkisan',
-    name: 'PM Kisan Registration & e-KYC',
+    name: 'PM Kisan Registration, e-KYC & 24th Installment Cash Withdrawal',
     category: 'csc',
-    description: 'Apply for farmer registration under PM Kisan Samman Nidhi Yojana and mandatory e-KYC updates.',
-    requirements: ['Aadhaar Card', 'Land Registry Copy (Khatauni)', 'Bank Passbook Copy'],
-    estimatedTime: 'Same Day',
-    price: '₹15 (Govt Fee) + ₹70 (CSC Charge)'
+    description: 'PM-KISAN Utsav Diwas (24th Installment): All farmers are requested to visit their nearest CSC Centre on 30th October 2026 at 10:00 AM to withdraw their PM-KISAN installment via DigiPay AePS & Micro ATM (avoid long bank queues) and watch the live webcast of Hon’ble Prime Minister Shri Narendra Modi. Fresh registrations and biometric e-KYC also available.',
+    requirements: ['Aadhaar Card or ATM Card', 'Bank Account / Passbook', 'Land Registry Copy (Khatauni)'],
+    estimatedTime: 'Instant Cash Withdrawal / Same Day e-KYC',
+    price: '₹0 (Free Cash Withdrawal via AePS) / ₹15 (Govt e-KYC) + ₹70 (CSC Charge)',
+    popular: true
   },
   {
     id: 'csc-eshram',

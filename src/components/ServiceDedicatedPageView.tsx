@@ -17,6 +17,7 @@ import {
   SectionNavItem,
   RelatedContentItem,
 } from './shared/ContentDesignSystem';
+import WhatsAppChannelPopup, { WhatsAppChannelInPostCard } from './shared/WhatsAppChannelPopup';
 
 interface ServiceDedicatedPageViewProps {
   service: ServiceItem;
@@ -302,6 +303,9 @@ export default function ServiceDedicatedPageView({
         onSelectSection={scrollToSection}
       />
 
+      {/* WhatsApp Channel Alert Card */}
+      <WhatsAppChannelInPostCard postTitle={service.name} />
+
       {/* I: Main Content Sections */}
 
       {/* 1. SERVICE OVERVIEW */}
@@ -490,6 +494,9 @@ export default function ServiceDedicatedPageView({
         assistanceButtonLabel="Request Assistance"
         onRequestAssistance={handleRequestAssistance}
       />
+
+      {/* WhatsApp Channel Popup Modal & Floating Badge */}
+      <WhatsAppChannelPopup postTitle={service.name} />
     </ContentPageLayout>
   );
 }

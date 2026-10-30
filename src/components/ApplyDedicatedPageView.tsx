@@ -27,6 +27,7 @@ import { UploadedDocument } from '../types';
 import { db } from '../lib/firebase';
 import { submitApplicationToSupabase } from '../lib/supabase';
 import { doc, setDoc } from 'firebase/firestore';
+import { computeSarkariStatus } from '../utils/sarkariStatus';
 
 interface ApplyDedicatedPageViewProps {
   initialService?: string;
@@ -275,6 +276,10 @@ export default function ApplyDedicatedPageView({
     );
   }, [formData.selectedService]);
 
+  const currentSarkariStatus = useMemo(() => {
+    return currentSarkariItem ? computeSarkariStatus(currentSarkariItem) : null;
+  }, [currentSarkariItem]);
+
   const currentServiceItem: ServiceItem | undefined = useMemo(() => {
     if (!formData.selectedService || formData.selectedService === 'other' || currentSarkariItem) {
       return undefined;
@@ -393,6 +398,19 @@ export default function ApplyDedicatedPageView({
       setTimeout(() => {
         firstInvalidRef?.current?.focus();
       }, 30);
+      return false;
+    }
+
+    if (currentSarkariItem && currentSarkariStatus && !currentSarkariStatus.canApplyOnline) {
+      setStepBannerError(
+        currentSarkariStatus.isClosed
+          ? `Applications for "${currentSarkariItem.title}" officially concluded on ${currentSarkariItem.lastDate}. Assisted application requests cannot be accepted for closed cycles.`
+          : currentSarkariStatus.isUpcoming
+          ? `Applications for "${currentSarkariItem.title}" commence on ${currentSarkariItem.startDate}. Please check back when the official window opens.`
+          : currentSarkariStatus.isCancelled
+          ? `This recruitment notice has been formally cancelled by the authority.`
+          : `Applications are currently unavailable or pending verification for this notice.`
+      );
       return false;
     }
 
@@ -1288,6 +1306,29 @@ export default function ApplyDedicatedPageView({
                       </button>
                     </div>
 
+                    {/* Applications Closed / Concluded Warning Alert */}
+                    {currentSarkariStatus && !currentSarkariStatus.canApplyOnline && (
+                      <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-900 space-y-1">
+                        <div className="font-bold flex items-center gap-1.5 text-rose-700">
+                          <AlertCircle className="w-4 h-4 shrink-0" />
+                          <span>
+                            {currentSarkariStatus.isClosed
+                              ? 'Applications Closed for this Notification'
+                              : currentSarkariStatus.isUpcoming
+                              ? 'Upcoming Application Window'
+                              : currentSarkariStatus.isCancelled
+                              ? 'Notification Cancelled'
+                              : 'Applications Inactive'}
+                          </span>
+                        </div>
+                        <p className="leading-relaxed text-rose-800">
+                          {currentSarkariStatus.closingTimeNote ||
+                            `The online application window officially closed on ${currentSarkariItem?.lastDate}. Assisted application filing cannot be processed for concluded cycles.`}
+                          {' '}Please click &ldquo;Change&rdquo; above to select an active service or recruitment.
+                        </p>
+                      </div>
+                    )}
+
                     {/* Optional View Notification Link / Expandable Summary (Never repeats full article) */}
                     {(currentSarkariItem || currentServiceItem) && (
                       <div className="pt-1 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
@@ -1402,10 +1443,17 @@ export default function ApplyDedicatedPageView({
                             className="w-full min-h-[44px] px-3 py-2.5 bg-white border border-[#CBD5E1] rounded-lg text-xs sm:text-sm font-medium text-[#102A43] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 cursor-pointer"
                           >
                             <option value="">-- Choose a notification or service --</option>
-                            <optgroup label="Latest Recruitment, Exam & Admission Notices">
-                              {SARKARI_DATA.map((item) => (
+                            <optgroup label="Active Recruitment & Admission Notices (Open for Application)">
+                              {SARKARI_DATA.filter((item) => computeSarkariStatus(item).canApplyOnline).map((item) => (
                                 <option key={item.id} value={item.title}>
-                                  {item.title}
+                                  {item.title} (Open till {item.lastDate})
+                                </option>
+                              ))}
+                            </optgroup>
+                            <optgroup label="Concluded / Historical Notices (Applications Closed)">
+                              {SARKARI_DATA.filter((item) => !computeSarkariStatus(item).canApplyOnline).map((item) => (
+                                <option key={item.id} value={item.title}>
+                                  {item.title} [Applications Closed]
                                 </option>
                               ))}
                             </optgroup>
@@ -1712,9 +1760,18 @@ export default function ApplyDedicatedPageView({
                         type="button"
                         onClick={handleContinueFromStep1}
                         id="step-1-continue-btn"
-                        className="w-full sm:w-auto min-h-[44px] px-6 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer inline-flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2"
+                        disabled={Boolean(currentSarkariStatus && !currentSarkariStatus.canApplyOnline)}
+                        className={`w-full sm:w-auto min-h-[44px] px-6 py-2.5 text-sm font-semibold rounded-lg transition-colors inline-flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2 ${
+                          currentSarkariStatus && !currentSarkariStatus.canApplyOnline
+                            ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                            : 'bg-[#2563EB] hover:bg-[#1D4ED8] text-white cursor-pointer'
+                        }`}
                       >
-                        <span>Continue to Documents</span>
+                        <span>
+                          {currentSarkariStatus && !currentSarkariStatus.canApplyOnline
+                            ? 'Applications Closed'
+                            : 'Continue to Documents'}
+                        </span>
                         <ArrowRight className="w-4 h-4" aria-hidden="true" />
                       </button>
                     </div>

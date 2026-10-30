@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { SarkariItem, SARKARI_CATEGORIES, SARKARI_DATA } from '../data/sarkariData';
-import { computeJobDeadlineStatus } from './PortalHomepage';
+import { computeSarkariStatus, ComputedSarkariStatus } from '../utils/sarkariStatus';
 import SarkariNotificationBanner from './SarkariNotificationBanner';
 import { buildWhatsAppNotification } from '../utils/whatsappFormatter';
+import { AlertCircle, Clock, CheckCircle2, XCircle, FileText, ExternalLink, ShieldCheck } from 'lucide-react';
 import {
   ContentPageLayout,
   ContentArticleHeader,
@@ -19,6 +20,7 @@ import {
   SectionNavItem,
   RelatedContentItem,
 } from './shared/ContentDesignSystem';
+import WhatsAppChannelPopup, { WhatsAppChannelInPostCard } from './shared/WhatsAppChannelPopup';
 
 interface SarkariDedicatedPageViewProps {
   item: SarkariItem;
@@ -100,18 +102,14 @@ export default function SarkariDedicatedPageView({
     return /\.pdf($|\?)/i.test(officialPortalUrl);
   }, [officialPortalUrl]);
 
-  const deadlineStatus = useMemo(() => {
-    return computeJobDeadlineStatus(item.lastDate);
-  }, [item.lastDate]);
+  const statusInfo: ComputedSarkariStatus = useMemo(() => {
+    return computeSarkariStatus(item);
+  }, [item]);
 
-  const statusTone: KeyInfoFact['tone'] =
-    deadlineStatus.code === 'open'
-      ? 'emerald'
-      : deadlineStatus.code === 'closing_soon'
-      ? 'amber'
-      : deadlineStatus.code === 'closed'
-      ? 'slate'
-      : 'blue';
+  const canApplyOnline = statusInfo.canApplyOnline;
+  const isClosed = statusInfo.applicationStatus === 'closed';
+  const isUpcoming = statusInfo.applicationStatus === 'upcoming';
+  const isCancelled = statusInfo.applicationStatus === 'cancelled';
 
   // Extract Academic Session if present in title or shortInfo for Admissions/Education
   const extractedSession = useMemo(() => {
@@ -142,7 +140,7 @@ export default function SarkariDedicatedPageView({
         },
         {
           label: 'Academic Session',
-          value: extractedSession,
+          value: extractedSession || item.session,
           tone: 'default',
         },
         {
@@ -153,12 +151,12 @@ export default function SarkariDedicatedPageView({
         {
           label: 'Closing Date',
           value: item.lastDate,
-          tone: deadlineStatus.code === 'closing_soon' ? 'rose' : 'default',
+          tone: statusInfo.isClosingSoon ? 'rose' : 'default',
         },
         {
           label: 'Admission / Exam Status',
-          value: isInfoOnlyNotice ? 'Published' : deadlineStatus.label,
-          tone: statusTone,
+          value: statusInfo.badgeLabel,
+          tone: statusInfo.badgeTone,
         },
       ];
     }
@@ -182,12 +180,12 @@ export default function SarkariDedicatedPageView({
       {
         label: 'Application Closing Date',
         value: item.lastDate,
-        tone: deadlineStatus.code === 'closing_soon' ? 'rose' : 'default',
+        tone: statusInfo.isClosingSoon ? 'rose' : 'default',
       },
       {
         label: 'Application Status',
-        value: isInfoOnlyNotice ? 'Published' : deadlineStatus.label,
-        tone: statusTone,
+        value: statusInfo.badgeLabel,
+        tone: statusInfo.badgeTone,
       },
     ];
   }, [
@@ -197,10 +195,9 @@ export default function SarkariDedicatedPageView({
     item.category,
     item.totalPosts,
     item.lastDate,
+    item.session,
     extractedSession,
-    deadlineStatus,
-    isInfoOnlyNotice,
-    statusTone,
+    statusInfo,
   ]);
 
   // Section Navigation tailored by Content Type
@@ -307,7 +304,7 @@ export default function SarkariDedicatedPageView({
       relatedTitle={isAdmissionOrEdu ? 'Related Academic Notices' : 'Related Recruitment Notices'}
       relatedItems={relatedItems}
       sidebarCta={
-        !isInfoOnlyNotice
+        canApplyOnline
           ? {
               badge: isAdmissionOrEdu ? 'Admission Desk Support' : 'Application Support',
               title: isAdmissionOrEdu
@@ -318,17 +315,44 @@ export default function SarkariDedicatedPageView({
               buttonLabel: primaryAssistanceLabel,
               onAction: handleRequestAssistance,
             }
-          : undefined
+          : {
+              badge: isClosed
+                ? 'Applications Closed'
+                : isUpcoming
+                ? 'Upcoming Notice'
+                : isCancelled
+                ? 'Notice Cancelled'
+                : 'Notice Archived',
+              title: isClosed
+                ? 'Application Window Concluded'
+                : isUpcoming
+                ? 'Application Window Not Yet Open'
+                : isCancelled
+                ? 'Recruitment Cancelled'
+                : 'Notice Information',
+              description:
+                statusInfo.closingTimeNote ||
+                (isClosed
+                  ? 'The official submission window for this recruitment has ended. CSC DOST cannot accept assisted applications for closed notices.'
+                  : 'Online applications will open on the announced date.'),
+              buttonLabel: 'Official Authority Portal',
+              onAction: () => window.open(officialPortalUrl, '_blank', 'noopener,noreferrer'),
+            }
       }
       mobileStickyAction={
-        !isInfoOnlyNotice
+        canApplyOnline
           ? {
               primaryLabel: primaryAssistanceLabel,
               onPrimaryClick: handleRequestAssistance,
               secondaryLabel: isDirectPdfUrl ? 'Official PDF' : 'Official Portal',
               secondaryHref: officialPortalUrl,
             }
-          : undefined
+          : {
+              primaryLabel: isDirectPdfUrl ? 'Official PDF' : 'Official Portal',
+              onPrimaryClick: () => window.open(officialPortalUrl, '_blank', 'noopener,noreferrer'),
+              secondaryLabel: 'Back to Notices',
+              onSecondaryClick: onBack,
+            }
       }
       schemaJson={{
         '@context': 'https://schema.org',
@@ -348,6 +372,69 @@ export default function SarkariDedicatedPageView({
         },
       }}
     >
+      {/* Explicit Authoritative Status Notice Banner */}
+      {isClosed && (
+        <div className="mb-5 p-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-slate-500 shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <div className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <span>Applications Closed</span>
+              <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
+                Archived Notification
+              </span>
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+              {statusInfo.closingTimeNote || `The online application deadline concluded on ${item.lastDate}.`} Online application assistance is disabled for this recruitment. All official links and archived details remain accessible for your reference.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {isUpcoming && (
+        <div className="mb-5 p-4 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50 dark:bg-blue-950/40 flex items-start gap-3">
+          <Clock className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <div className="text-sm font-bold text-blue-950 dark:text-blue-100 flex items-center gap-2">
+              <span>Upcoming Application Window</span>
+              <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200">
+                Starts {item.startDate}
+              </span>
+            </div>
+            <p className="text-xs text-blue-800 dark:text-blue-200 mt-1 leading-relaxed">
+              Online applications are scheduled to commence on <strong>{item.startDate}</strong>. Assisted registration and form preparation will become available once the official portal opens.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {isCancelled && (
+        <div className="mb-5 p-4 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 flex items-start gap-3">
+          <XCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <div className="text-sm font-bold text-rose-950 dark:text-rose-100">
+              Notification Cancelled
+            </div>
+            <p className="text-xs text-rose-800 dark:text-rose-200 mt-1 leading-relaxed">
+              This notification has been formally cancelled or withdrawn by the issuing authority. Applications are closed.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {statusInfo.verificationStatus === 'needs_verification' && (
+        <div className="mb-5 p-4 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/40 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <div className="text-sm font-bold text-amber-950 dark:text-amber-100">
+              Needs Authoritative Verification
+            </div>
+            <p className="text-xs text-amber-800 dark:text-amber-200 mt-1 leading-relaxed">
+              {statusInfo.closingTimeNote || 'This post is under editorial review and pending corroboration with the latest official gazette/portal.'} Assisted applications are suspended.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* A–E: Category/Organisation Label, Single H1, Concise Intro, and Metadata */}
       <ContentArticleHeader
         categoryLabel={organisationName}
@@ -363,6 +450,12 @@ export default function SarkariDedicatedPageView({
           ...(item.lastDate
             ? [{ label: 'Closing Date', value: item.lastDate, emphasize: true }]
             : []),
+          { label: 'Closing Time', value: item.closingTime || 'Inclusive through 23:59 IST' },
+          { label: 'Last Verified', value: item.verification?.lastVerified || '30/10/2026 IST' },
+          {
+            label: 'Verification',
+            value: item.verification?.verificationStatus === 'needs_verification' ? 'Needs Verification' : 'Verified (Official Portal)',
+          },
           { label: 'Source', value: organisationName },
         ]}
       />
@@ -371,7 +464,7 @@ export default function SarkariDedicatedPageView({
       <SarkariNotificationBanner
         item={item}
         className="mb-5"
-        onApply={!isInfoOnlyNotice ? handleRequestAssistance : undefined}
+        onApply={canApplyOnline ? handleRequestAssistance : undefined}
       />
 
       {/* F: Key Information Strip (Flat subtle background band with separators, no rounded cards) */}
@@ -380,7 +473,7 @@ export default function SarkariDedicatedPageView({
       {/* G: Clear Primary Actions */}
       <PrimaryActionBar
         primaryAction={
-          !isInfoOnlyNotice
+          canApplyOnline
             ? {
                 label: primaryAssistanceLabel,
                 onClick: handleRequestAssistance,
@@ -392,11 +485,23 @@ export default function SarkariDedicatedPageView({
             label: officialButtonLabel,
             href: officialPortalUrl,
           },
+          ...(item.verification?.officialNotificationUrl && item.verification.officialNotificationUrl !== officialPortalUrl
+            ? [
+                {
+                  label: 'Official Notification PDF',
+                  href: item.verification.officialNotificationUrl,
+                },
+              ]
+            : []),
         ]}
         onTrackApplication={() => {
           window.location.hash = '#track';
         }}
-        assistanceDisclaimer="CSC DOST provides independent document preparation and form-filling assistance. You may also apply directly on the official authority portal above."
+        assistanceDisclaimer={
+          canApplyOnline
+            ? 'CSC DOST provides independent document preparation and form-filling assistance. You may also apply directly on the official authority portal above.'
+            : 'Applications for this notification are closed. CSC DOST cannot accept assisted submissions for concluded cycles.'
+        }
       />
 
       {/* H: Compact Navigation to Page Sections (Sticky on Mobile) */}
@@ -405,6 +510,9 @@ export default function SarkariDedicatedPageView({
         activeSectionId={activeSectionId}
         onSelectSection={scrollToSection}
       />
+
+      {/* WhatsApp Channel Alert Card */}
+      <WhatsAppChannelInPostCard postTitle={item.title} />
 
       {/* I: Main Content Sections */}
 
@@ -448,11 +556,11 @@ export default function SarkariDedicatedPageView({
             },
             {
               label: 'Current Status',
-              value: isInfoOnlyNotice ? 'Published — Check Official Notice' : deadlineStatus.label,
+              value: isInfoOnlyNotice ? 'Published — Check Official Notice' : statusInfo.badgeLabel,
               tone:
-                deadlineStatus.code === 'open'
+                statusInfo.applicationStatus === 'open'
                   ? 'emerald'
-                  : deadlineStatus.code === 'closing_soon'
+                  : statusInfo.isClosingSoon
                   ? 'rose'
                   : 'default',
               boldValue: true,
@@ -750,9 +858,13 @@ export default function SarkariDedicatedPageView({
             ? 'CSC DOST Admission & Examination Form Desk'
             : 'CSC DOST Online Application Assistance Desk'
         }
-        assistanceDescription="Prefer assisted filing? Submit your documents through CSC DOST and our operator will resize your photo/signature, prepare your online form, and share your confirmation receipt."
+        assistanceDescription={
+          canApplyOnline
+            ? "Prefer assisted filing? Submit your documents through CSC DOST and our operator will resize your photo/signature, prepare your online form, and share your confirmation receipt."
+            : "The official application window has closed. CSC DOST assisted filing is disabled for this recruitment."
+        }
         assistanceButtonLabel={primaryAssistanceLabel}
-        onRequestAssistance={!isInfoOnlyNotice ? handleRequestAssistance : undefined}
+        onRequestAssistance={canApplyOnline ? handleRequestAssistance : undefined}
       />
 
       {/* 11. FREQUENTLY ASKED QUESTIONS */}
@@ -805,6 +917,9 @@ export default function SarkariDedicatedPageView({
           </div>
         </div>
       </ContentSection>
+
+      {/* WhatsApp Channel Popup Modal & Floating Badge */}
+      <WhatsAppChannelPopup postTitle={item.title} />
     </ContentPageLayout>
   );
 }
