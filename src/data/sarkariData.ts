@@ -97,6 +97,126 @@ export const SARKARI_CATEGORIES = {
 };
 
 export const SARKARI_DATA: SarkariItem[] = [
+  // 🇮🇳 STAFF SELECTION COMMISSION (SSC) CPO SI PET/PST RESULT & PAPER-II NOTICE (30 OCTOBER 2026)
+  {
+    id: 'ssc-cpo-pet-pst-result-paper-2-exam-date-2026',
+    title: 'SSC Sub-Inspector in Delhi Police & CAPFs Exam 2026: PET/PST Result Declared & Paper-II Exam Date Announced',
+    category: 'ssc_jobs',
+    postDate: '30/10/2026',
+    startDate: '30/10/2026',
+    lastDate: '28/11/2026',
+    closingTime: '17:00 IST',
+    advertisementNo: 'F. No. 08/01/2025-C-1/2 (SI in Delhi Police & CAPFs)',
+    recruitmentYear: '2026',
+    shortInfo: 'Staff Selection Commission (SSC) has officially declared the Physical Endurance Test (PET) and Physical Standard Test (PST) results for Sub-Inspector in Delhi Police and Central Armed Police Forces (CAPFs) Examination. A total of 10,676 candidates have qualified for Paper-II, which is scheduled to be conducted on 28th November 2026 in Computer-Based Examination mode.',
+    ageLimit: '20 to 25 Years (As per original recruitment rules)',
+    eligibility: 'Candidates who qualified both Paper-I and PET/PST stages of Sub-Inspector in Delhi Police & CAPFs Examination.',
+    totalPosts: '10,676 Qualified Candidates for Paper-II (4,187 Total Vacancies)',
+    officialLink: 'https://ssc.gov.in',
+    officialNotificationUrl: 'https://ssc.gov.in',
+    officialApplicationUrl: 'https://ssc.gov.in',
+    fees: {
+      genObc: '₹0/- (Exempted - Result & Exam Schedule Notice)',
+      scSt: '₹0/- (Exempted)'
+    },
+    stage: 'examination',
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verifiedAt: '2026-11-01T10:15:00+05:30',
+      officialNotificationUrl: 'https://ssc.gov.in',
+      officialApplicationUrl: 'https://ssc.gov.in',
+      advertisementNo: 'F. No. 08/01/2025-C-1/2',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '30/10/2026',
+      verifiedClosingDate: '28/11/2026',
+      closingTime: '17:00 IST',
+      correctionHistory: [
+        'Verified PET/PST results and Paper-II Computer-Based Examination schedule on ssc.gov.in.'
+      ]
+    },
+    isNew: true
+  },
+  // 🎓 KASHMIR UNIVERSITY FACULTY SCREENING & DEFICIENCY NOTICE (30 OCTOBER 2026)
+  {
+    id: 'ku-faculty-recruitment-advt-17-api-score-objection-2026',
+    title: 'University of Kashmir Assistant Professor Recruitment (Advt No. 17 of 2026) Provisional API Scores & Deficiency Notice',
+    category: 'exam_forms',
+    postDate: '30/10/2026',
+    startDate: '30/10/2026',
+    lastDate: '10/11/2026',
+    closingTime: '16:00 IST',
+    advertisementNo: 'Advertisement Notice No. 17 of 2026 (Dated: 06.08.2026)',
+    recruitmentYear: '2026',
+    shortInfo: 'University of Kashmir (Recruitment Wing) has published the provisional screening lists and claimed Academic Performance Indicator (API) scores for Assistant Professor positions under Advt Notice No. 17 of 2026 across departments including Law, Education, History, Persian, Home Science, and Iqbal Institute. Candidates with deficiencies or objections must submit documentary clarification by 10th November 2026.',
+    ageLimit: 'As per UGC Regulations 2018 and University Statutes',
+    eligibility: 'Applicants who applied for Assistant Professor positions under Advt Notice 17 of 2026 with Master Degree (minimum 55% marks) and NET/SET or Ph.D.',
+    totalPosts: 'Assistant Professor & Equivalent Posts across Campuses',
+    officialLink: 'https://www.kashmiruniversity.net',
+    officialNotificationUrl: 'https://www.kashmiruniversity.net',
+    officialApplicationUrl: 'https://www.kashmiruniversity.net',
+    fees: {
+      genObc: '₹0/- (Deficiency Clearance / Screening Verification)',
+      scSt: '₹0/- (Exempted)'
+    },
+    stage: 'recruitment',
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verifiedAt: '2026-11-01T10:15:00+05:30',
+      officialNotificationUrl: 'https://www.kashmiruniversity.net',
+      officialApplicationUrl: 'https://www.kashmiruniversity.net',
+      advertisementNo: 'Advertisement Notice No. 17 of 2026',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '30/10/2026',
+      verifiedClosingDate: '10/11/2026',
+      closingTime: '16:00 IST',
+      correctionHistory: [
+        'Verified provisional API scores, department-wise screening lists, and deficiency notice on kashmiruniversity.net.'
+      ]
+    },
+    isNew: true
+  },
+  // 🏛️ CLUSTER UNIVERSITY SRINAGAR B.ED 4TH SEM SUPPLEMENTARY EXAM (31 OCTOBER 2026)
+  {
+    id: 'cus-bed-4th-sem-supplementary-exam-2026',
+    title: 'Cluster University Srinagar B.Ed 4th Semester Supplementary Examination Form & Date Sheet Notice (Batch 2024)',
+    category: 'cluster_univ',
+    postDate: '31/10/2026',
+    startDate: '31/10/2026',
+    lastDate: '12/11/2026',
+    closingTime: '16:30 IST',
+    advertisementNo: 'CUS/Exam/B.Ed-4thSem-Suppl/2026/942',
+    recruitmentYear: '2026',
+    shortInfo: 'Cluster University of Srinagar Controller of Examinations has notified the online examination form submission schedule and date sheet for B.Ed 4th Semester Supplementary / Backlog candidates (Batch 2024). Eligible enrolled teacher-trainees must submit online examination forms through cusrinagar.edu.in.',
+    ageLimit: 'N/A (Enrolled B.Ed Students)',
+    eligibility: 'Students of constituent colleges enrolled in 2-Year B.Ed Programme (Batch 2024) with backlogs or supplementary status in 4th Semester.',
+    totalPosts: 'B.Ed 4th Semester Supplementary Candidates',
+    officialLink: 'https://www.cusrinagar.edu.in',
+    officialNotificationUrl: 'https://www.cusrinagar.edu.in',
+    officialApplicationUrl: 'https://www.cusrinagar.edu.in',
+    fees: {
+      genObc: '₹1,200/- per semester examination fee',
+      scSt: '₹1,200/- per semester examination fee'
+    },
+    stage: 'exam_form',
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verifiedAt: '2026-11-01T10:15:00+05:30',
+      officialNotificationUrl: 'https://www.cusrinagar.edu.in',
+      officialApplicationUrl: 'https://www.cusrinagar.edu.in',
+      advertisementNo: 'CUS/Exam/B.Ed-4thSem-Suppl/2026/942',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '31/10/2026',
+      verifiedClosingDate: '12/11/2026',
+      closingTime: '16:30 IST',
+      correctionHistory: [
+        'Verified B.Ed 4th Semester Supplementary examination notice and form schedule on cusrinagar.edu.in examination notifications.'
+      ]
+    },
+    isNew: true
+  },
   // 🚆 RAILWAY RECRUITMENT BOARDS (RRB) NOTIFICATION (CEN 08/2026)
   {
     id: 'rrb-station-master-cen-08-2026',
@@ -425,7 +545,7 @@ export const SARKARI_DATA: SarkariItem[] = [
     lastDate: '30/10/2026',
     closingTime: '15:00 IST',
     advertisementNo: 'TGC-145 Course (Commencing July 2027)',
-    shortInfo: 'Join Indian Army invites online applications from unmarried male Engineering graduates for the 145th Technical Graduate Course (TGC-145) commencing in July 2027 at Indian Military Academy (IMA) Dehradun for grant of Permanent Commission. The online registration portal concludes today at 15:00 hrs.',
+    shortInfo: 'Join Indian Army invited online applications from unmarried male Engineering graduates for the 145th Technical Graduate Course (TGC-145) commencing in July 2027 at Indian Military Academy (IMA) Dehradun for grant of Permanent Commission. The online registration portal officially concluded on 30th October 2026 at 15:00 hrs.',
     ageLimit: '20 to 27 Years as on 01 July 2027 (Candidates must have been born between 02 July 2000 and 01 July 2007, both dates inclusive)',
     eligibility: 'Passed the requisite Engineering Degree course or in the final year of Engineering Degree course from a recognized University / AICTE institution.',
     totalPosts: '30 Commissioned Officer Posts',
@@ -439,7 +559,7 @@ export const SARKARI_DATA: SarkariItem[] = [
     verificationStatus: 'verified',
     verification: {
       status: 'verified',
-      verifiedAt: '2026-10-30T06:30:00+05:30',
+      verifiedAt: '2026-11-01T10:15:00+05:30',
       officialNotificationUrl: 'https://joinindianarmy.nic.in',
       officialApplicationUrl: 'https://joinindianarmy.nic.in',
       advertisementNo: 'TGC-145 Course (Commencing July 2027)',
@@ -448,7 +568,7 @@ export const SARKARI_DATA: SarkariItem[] = [
       verifiedClosingDate: '30/10/2026',
       closingTime: '15:00 IST',
       correctionHistory: [
-        'Verified closing notice from joinindianarmy.nic.in officer recruitment portal.'
+        'Verified closing on 30/10/2026 at 15:00 IST on joinindianarmy.nic.in officer recruitment portal.'
       ]
     },
     isNew: true
@@ -738,12 +858,31 @@ export const SARKARI_DATA: SarkariItem[] = [
     title: 'JKSSB Advt 09 of 2026: Mega Recruitment for 2,863 Class-IV (MTS) & Sanitation Worker Posts (UT, Divisional & District Cadres)',
     category: 'jkssb',
     postDate: '01/09/2026',
-    startDate: '05/10/2026',
-    lastDate: '03/11/2026',
+    startDate: '14/10/2026',
+    lastDate: '12/11/2026',
+    closingTime: '23:59 IST',
     advertisementNo: 'Advertisement Notification No. 09 of 2026 (Dated: 01.09.2026)',
-    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) notifies a mega direct recruitment drive for 2,863 Class-IV (MTS) and Sanitation Worker vacancies in Pay Level SL1 (₹14,800 - ₹47,100) under General Administration Department across UT Cadre (105 Posts), Divisional Cadre Jammu (1093 Posts), Divisional Cadre Kashmir (897 Posts), and 20 District Cadres (768 Posts). Major departments include PW(R&B) (1420 Posts), Floriculture (199 Posts), Estates (158 Posts), Animal/Sheep Husbandry, Higher Education, Transport, Culture, and Agriculture/Horticulture. Special weightage allocated for Home District/Division domicile, families with no Govt job, widows/divorced/orphan candidates, and 5+ years casual workers as per S.O. 184 of 2020.',
+    recruitmentYear: '2026',
+    stage: 'recruitment',
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verifiedAt: '2026-11-01T10:15:00+05:30',
+      officialNotificationUrl: 'https://www.jkssb.nic.in',
+      officialApplicationUrl: 'https://www.jkssb.nic.in',
+      advertisementNo: 'Advt No. 09 of 2026',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '14/10/2026',
+      verifiedClosingDate: '12/11/2026',
+      closingTime: '23:59 IST',
+      amendmentUrls: ['https://www.jkssb.nic.in'],
+      correctionHistory: [
+        'Verified Corrigendum Notice on jkssb.nic.in: Online application window rescheduled to 14/10/2026 through 12/11/2026 (23:59 IST).'
+      ]
+    },
+    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) notifies a mega direct recruitment drive for 2,863 Class-IV (MTS) and Sanitation Worker vacancies in Pay Level SL1 (₹14,800 - ₹47,100) under General Administration Department across UT Cadre (105 Posts), Divisional Cadre Jammu (1093 Posts), Divisional Cadre Kashmir (897 Posts), and 20 District Cadres (768 Posts). As per official corrigendum, the online application window is active from 14.10.2026 to 12.11.2026.',
     ageLimit: 'Open Merit (OM): 40 Years (Not born before 01.01.1986 / after 01.01.2008) | SC / ST-1 / ST-2 / RBA / ALC-IB / EWS / OBC: 43 Years | PwBD: 42 Years | Ex-Servicemen: 48 Years | Casual Workers: 5 Years Upper Age Relaxation',
-    eligibility: 'Class-IV (MTS): Minimum Matric (10th) & Maximum 10+2 (Higher Secondary) as per S.O. 184 of 2020 & SRO 99 of 2008. Sanitation Worker: Minimum 8th Pass & Maximum 10+2 as per S.O. 132 of 2022. (Important: Higher qualifications above 10+2 are not eligible as per extant recruitment rules). Valid J&K Domicile Certificate required on or before 03.11.2026.',
+    eligibility: 'Class-IV (MTS): Minimum Matric (10th) & Maximum 10+2 (Higher Secondary) as per S.O. 184 of 2020 & SRO 99 of 2008. Sanitation Worker: Minimum 8th Pass & Maximum 10+2 as per S.O. 132 of 2022. (Important: Higher qualifications above 10+2 are not eligible as per extant recruitment rules). Valid J&K Domicile Certificate required on or before 12.11.2026.',
     totalPosts: '2,863 Vacancies (UT: 105 | Div Jammu: 1093 | Div Kashmir: 897 | District Cadres: 768)',
     officialLink: 'https://www.jkssb.nic.in',
     fees: {
@@ -1601,6 +1740,22 @@ export const SARKARI_DATA: SarkariItem[] = [
     fees: {
       genObc: '₹500 (Online Admission Processing Fee)',
       scSt: '₹500 (Online Admission Processing Fee)'
+    },
+    stage: 'admission',
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verifiedAt: '2026-11-01T10:15:00+05:30',
+      officialNotificationUrl: 'https://www.cusrinagar.edu.in',
+      officialApplicationUrl: 'https://www.cusrinagar.edu.in',
+      advertisementNo: 'CUS/Adm/UG-PG-SF/2026/894',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '16/08/2026',
+      verifiedClosingDate: '28/08/2026',
+      closingTime: '16:30 IST',
+      correctionHistory: [
+        'Formally concluded. Cluster University Srinagar officially notified the complete closure of Lateral Entry and PG admissions for Session 2026-27.'
+      ]
     },
     isNew: true
   },
