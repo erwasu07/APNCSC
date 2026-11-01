@@ -220,6 +220,17 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
   const mutationVersionRef = useRef<number>(0);
   const updateCombinedAppsRef = useRef<(() => void) | null>(null);
 
+  // Helper to read client-side permanent deleted IDs blacklist
+  const getClientDeletedIdsSet = (): Set<string> => {
+    try {
+      const raw = JSON.parse(localStorage.getItem('csc_deleted_application_ids') || '[]');
+      if (Array.isArray(raw)) {
+        return new Set(raw.map((s: any) => String(s).trim().toLowerCase()));
+      }
+    } catch {}
+    return new Set<string>();
+  };
+
   // Helper to purge deleted application records from all in-memory maps and localStorage caches
   const removeRecordsFromAllMapsAndStorage = (rawIdentifiers: Array<string | undefined | null>) => {
     const targetSet = new Set(
@@ -228,6 +239,15 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         .map(v => v.trim().toLowerCase())
     );
     if (targetSet.size === 0) return;
+
+    // Permanently record all target identifiers in localStorage blacklist
+    try {
+      const existing = getClientDeletedIdsSet();
+      targetSet.forEach(id => existing.add(id));
+      localStorage.setItem('csc_deleted_application_ids', JSON.stringify(Array.from(existing)));
+    } catch (e) {
+      console.warn('Could not persist deleted application IDs blacklist:', e);
+    }
 
     const matchesTarget = (entry: any, mapKey?: string): boolean => {
       if (mapKey && targetSet.has(String(mapKey).trim().toLowerCase())) return true;
@@ -637,8 +657,24 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         } catch {}
       }
 
+      const clientDeletedSet = getClientDeletedIdsSet();
+
       sourceEntries.forEach((app: any) => {
         if (!app || isDeletedApplicationRecord(app)) return;
+
+        const candidateKeys = [
+          app.id,
+          app.appId,
+          app.token_id,
+          app.token,
+          app.tokenNo,
+          app.supabaseId,
+          app.payload?.appId,
+          app.payload?.token,
+          app.id ? `CSC-${String(app.id).slice(0, 8)}` : ''
+        ].filter(Boolean).map(c => String(c).trim().toLowerCase());
+
+        if (candidateKeys.some(k => clientDeletedSet.has(k))) return;
 
         const resolvedTokenId =
           app.token_id ||
@@ -650,7 +686,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           (app.id && String(app.id).length < 25 ? app.id : `CSC-${String(app.id).slice(0, 8)}`);
 
         const canonicalKey = String(resolvedTokenId || app.id || '').trim();
-        if (!canonicalKey) return;
+        if (!canonicalKey || clientDeletedSet.has(canonicalKey.toLowerCase())) return;
 
         const existing = map.get(canonicalKey) || {};
         if (isDeletedApplicationRecord(existing)) return;
@@ -852,12 +888,24 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           if (versionAtStart !== mutationVersionRef.current) {
             return; // Discard stale in-flight response that started before a deletion
           }
+          if (Array.isArray(resData?.deletedIds) && resData.deletedIds.length > 0) {
+            try {
+              const existing = getClientDeletedIdsSet();
+              resData.deletedIds.forEach((id: string) => existing.add(id.toLowerCase()));
+              localStorage.setItem('csc_deleted_application_ids', JSON.stringify(Array.from(existing)));
+            } catch {}
+          }
           const list = resData?.data || resData || [];
           if (Array.isArray(list)) {
+            const delSet = getClientDeletedIdsSet();
             serverApiMapRef.current.clear();
             list.forEach((item: any) => {
               if (!item || isDeletedApplicationRecord(item)) return;
               const key = item.appId || item.id || item.token;
+              const cleanKey = String(key || '').trim().toLowerCase();
+              const cleanId = String(item.id || '').trim().toLowerCase();
+              const cleanAppId = String(item.appId || '').trim().toLowerCase();
+              if (delSet.has(cleanKey) || delSet.has(cleanId) || delSet.has(cleanAppId)) return;
               if (key) {
                 serverApiMapRef.current.set(String(key), item);
               }
@@ -891,7 +939,15 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
         } else {
           setSupabaseSyncError(null);
           supabaseMapRef.current.clear();
-          const activeRows = (res.data || []).filter((row: any) => !isDeletedApplicationRecord(row));
+          const delSet = getClientDeletedIdsSet();
+          const activeRows = (res.data || []).filter((row: any) => {
+            if (isDeletedApplicationRecord(row)) return false;
+            const rowId = String(row.id || '').toLowerCase().trim();
+            const tokId = String(row.token_id || '').toLowerCase().trim();
+            const payloadId = String(row.payload?.appId || row.payload?.token || '').toLowerCase().trim();
+            if (delSet.has(rowId) || delSet.has(tokId) || delSet.has(payloadId)) return false;
+            return true;
+          });
           activeRows.forEach((row: any) => {
             const key =
               row.token_id ||
@@ -1328,7 +1384,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       const qs = supabaseUuid ? `?supabaseId=${encodeURIComponent(supabaseUuid)}` : '';
       const res = await fetch(`/api/appointments/${encodeURIComponent(appId)}${qs}`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' }
+        headers: getAdminAuthHeaders({ 'Content-Type': 'application/json' })
       });
       const resData = await res.json().catch(() => ({}));
 

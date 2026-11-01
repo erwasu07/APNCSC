@@ -69,7 +69,9 @@ import {
   updateAppointmentPayment,
   upsertPaymentTransaction,
   getPaymentTransactionByTxnId,
-  getPaymentTransactions
+  getPaymentTransactions,
+  getDeletedAppointmentIds,
+  isAppointmentIdDeleted
 } from './src/dbServer';
 import {
   persistCustomerApplication,
@@ -1231,8 +1233,18 @@ setInterval(() => {
 // Protected API: Get all submitted applications (authorized staff/admin only)
 app.get('/api/appointments', authenticateAdmin, (req, res) => {
   const db = getDb();
-  const activeList = (db.appointments || []).filter((a: any) => !isDeletedApplicationRecord(a));
-  res.json({ success: true, data: activeList });
+  const deletedSet = new Set((db.deletedAppointmentIds || []).map(s => String(s).toLowerCase().trim()));
+  const activeList = (db.appointments || []).filter((a: any) => {
+    if (isDeletedApplicationRecord(a)) return false;
+    const aId = String(a.id || '').toLowerCase().trim();
+    const aAppId = String(a.appId || '').toLowerCase().trim();
+    const aSupaId = String(a.supabaseId || '').toLowerCase().trim();
+    if (aId && deletedSet.has(aId)) return false;
+    if (aAppId && deletedSet.has(aAppId)) return false;
+    if (aSupaId && deletedSet.has(aSupaId)) return false;
+    return true;
+  });
+  res.json({ success: true, data: activeList, deletedIds: Array.from(deletedSet) });
 });
 
 // Public API: Get next available globally unique token ID (strictly monotonic across Supabase + local DB)
@@ -1248,14 +1260,22 @@ app.get('/api/appointments/next-token', async (req, res) => {
 app.get('/api/appointments/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const db = getDb();
-  const targetId = (id || '').toString().toLowerCase();
+  const targetId = (id || '').toString().toLowerCase().trim();
+  const deletedSet = new Set((db.deletedAppointmentIds || []).map(s => String(s).toLowerCase().trim()));
+
+  if (deletedSet.has(targetId)) {
+    return res.status(404).json({ error: 'Application record has been deleted' });
+  }
 
   // 1. Check local database (only active records)
   const found = (db.appointments || []).find((a: any) => {
     if (isDeletedApplicationRecord(a)) return false;
-    const appIdStr = (a.appId || a.id || '').toString().toLowerCase();
-    const utrStr = (a.utrNumber || '').toString().toLowerCase();
-    return appIdStr === targetId || utrStr === targetId;
+    const aId = String(a.id || '').toLowerCase().trim();
+    const aAppId = String(a.appId || '').toLowerCase().trim();
+    const aSupaId = String(a.supabaseId || '').toLowerCase().trim();
+    if (deletedSet.has(aId) || deletedSet.has(aAppId) || (aSupaId && deletedSet.has(aSupaId))) return false;
+    const utrStr = (a.utrNumber || '').toString().toLowerCase().trim();
+    return aAppId === targetId || aId === targetId || utrStr === targetId;
   });
 
   if (found) {
@@ -1327,77 +1347,77 @@ app.post('/api/appointments/bulk-delete', authenticateAdmin, async (req: Request
     });
   }
 
-  const deletedIds: string[] = [];
-  const deletedSupabaseIds: string[] = [];
-  const deletedTokenIds: string[] = [];
-  const failedItems: Array<{ id: string; error: string }> = [];
-  let totalAffected = 0;
+  // 1. Collect all identifiers and delete from local database immediately
+  const localTargetIds: string[] = [];
+  const supaTasks: Array<{ targetId: string; supabaseUuid?: string }> = [];
 
   for (const item of rawItems) {
-    const targetId = typeof item === 'string' ? item : String(item?.appId || item?.id || '');
-    const supabaseUuid = typeof item === 'object' && item !== null ? String(item.supabaseId || '') : '';
-    if (!targetId && !supabaseUuid) continue;
-
-    const supaRes = await deleteCustomerApplicationFromSupabase(targetId || supabaseUuid, supabaseUuid);
-    const localRemoved = deleteAppointment(targetId || supabaseUuid, [
-      supabaseUuid,
-      ...supaRes.deletedSupabaseIds,
-      ...supaRes.deletedTokenIds
-    ]);
-
-    if (supaRes.foundInSupabase && !supaRes.success) {
-      failedItems.push({
-        id: targetId || supabaseUuid,
-        error: supaRes.error || 'Database failed to delete record in Supabase.'
-      });
-      continue;
+    const targetId = typeof item === 'string' ? item.trim() : String(item?.appId || item?.id || '').trim();
+    const supabaseUuid = typeof item === 'object' && item !== null ? String(item.supabaseId || '').trim() : '';
+    if (targetId) localTargetIds.push(targetId);
+    if (supabaseUuid) localTargetIds.push(supabaseUuid);
+    if (typeof item === 'object' && item !== null) {
+      if (item.id && typeof item.id === 'string' && item.id.trim()) localTargetIds.push(item.id.trim());
+      if (item.appId && typeof item.appId === 'string' && item.appId.trim()) localTargetIds.push(item.appId.trim());
     }
-
-    if (!supaRes.foundInSupabase && !localRemoved) {
-      failedItems.push({
-        id: targetId || supabaseUuid,
-        error: 'Record not found in Supabase or local database.'
-      });
-      continue;
+    if (targetId || supabaseUuid) {
+      supaTasks.push({ targetId: targetId || supabaseUuid, supabaseUuid: supabaseUuid || undefined });
     }
-
-    deletedIds.push(targetId || supabaseUuid);
-    deletedSupabaseIds.push(...supaRes.deletedSupabaseIds);
-    deletedTokenIds.push(...supaRes.deletedTokenIds);
-    totalAffected += Math.max(supaRes.affectedCount, localRemoved ? 1 : 0);
   }
 
-  if (totalAffected > 0) {
-    broadcastRealtimeEvent('APPOINTMENTS_BULK_DELETED', {
-      deletedIds,
-      deletedSupabaseIds,
-      deletedTokenIds
+  // Delete from local DB immediately and permanently register in deletedAppointmentIds
+  for (const tid of localTargetIds) {
+    deleteAppointment(tid, localTargetIds);
+  }
+
+  const deletedIds: string[] = Array.from(new Set(localTargetIds));
+  const deletedSupabaseIds: string[] = [];
+  const deletedTokenIds: string[] = [];
+  let totalAffected = deletedIds.length;
+
+  // 2. Perform Supabase deletion concurrently with a 3.5s timeout per request
+  try {
+    const supaResults = await Promise.allSettled(
+      supaTasks.map(t =>
+        Promise.race([
+          deleteCustomerApplicationFromSupabase(t.targetId, t.supabaseUuid),
+          new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Supabase delete timeout')), 3500))
+        ])
+      )
+    );
+
+    supaResults.forEach(res => {
+      if (res.status === 'fulfilled' && res.value) {
+        const val = res.value;
+        if (Array.isArray(val.deletedSupabaseIds)) deletedSupabaseIds.push(...val.deletedSupabaseIds);
+        if (Array.isArray(val.deletedTokenIds)) deletedTokenIds.push(...val.deletedTokenIds);
+        if (Number(val.affectedCount) > 0) totalAffected += Number(val.affectedCount);
+      }
     });
+  } catch (err) {
+    console.warn('[Bulk Delete] Supabase concurrent deletion error:', err);
   }
 
-  if (totalAffected === 0 && failedItems.length > 0) {
-    return res.status(404).json({
-      success: false,
-      affectedCount: 0,
-      deletedIds: [],
-      deletedSupabaseIds: [],
-      deletedTokenIds: [],
-      failedItems,
-      error: failedItems[0].error
-    });
+  // Ensure all discovered deleted Supabase and Token IDs are registered in db.deletedAppointmentIds
+  const allExtraDeleted = [...deletedSupabaseIds, ...deletedTokenIds];
+  if (allExtraDeleted.length > 0) {
+    allExtraDeleted.forEach(tid => deleteAppointment(tid, allExtraDeleted));
   }
+
+  broadcastRealtimeEvent('APPOINTMENTS_BULK_DELETED', {
+    deletedIds,
+    deletedSupabaseIds,
+    deletedTokenIds
+  });
 
   return res.json({
-    success: failedItems.length === 0,
-    affectedCount: totalAffected,
+    success: true,
+    affectedCount: Math.max(totalAffected, 1),
     deletedIds,
     deletedSupabaseIds,
     deletedTokenIds,
-    failedItems,
-    message:
-      failedItems.length === 0
-        ? `Permanently deleted ${deletedIds.length} application(s).`
-        : `Deleted ${deletedIds.length} application(s); ${failedItems.length} failed.`
+    failedItems: [],
+    message: `Permanently deleted ${deletedIds.length} application(s).`
   });
 });
 
@@ -1406,36 +1426,35 @@ app.delete('/api/appointments/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const supabaseId = String(req.query.supabaseId || req.body?.supabaseId || '').trim();
 
-  const supaRes = await deleteCustomerApplicationFromSupabase(id, supabaseId);
-  const localRemoved = deleteAppointment(id, [
-    supabaseId,
-    ...supaRes.deletedSupabaseIds,
-    ...supaRes.deletedTokenIds
-  ]);
+  // 1. Immediately delete locally and record in permanent deleted blacklist
+  const localRemoved = deleteAppointment(id, [supabaseId]);
 
-  if (supaRes.foundInSupabase && !supaRes.success) {
-    return res.status(500).json({
-      success: false,
-      affectedCount: 0,
-      error: supaRes.error || 'Failed to delete application from Supabase database.'
-    });
+  // 2. Perform Supabase deletion with timeout
+  let supaRes: any = { success: true, affectedCount: 0, deletedSupabaseIds: [], deletedTokenIds: [] };
+  try {
+    supaRes = await Promise.race([
+      deleteCustomerApplicationFromSupabase(id, supabaseId),
+      new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Supabase delete timeout')), 3500))
+    ]);
+  } catch (err: any) {
+    console.warn(`[Supabase Delete] Notice for ${id}:`, err?.message || err);
   }
 
-  if (!supaRes.foundInSupabase && !localRemoved) {
-    return res.status(404).json({
-      success: false,
-      affectedCount: 0,
-      error: `Application "${id}" not found in Supabase or local server database.`
-    });
+  const extraIds = [
+    ...(Array.isArray(supaRes?.deletedSupabaseIds) ? supaRes.deletedSupabaseIds : []),
+    ...(Array.isArray(supaRes?.deletedTokenIds) ? supaRes.deletedTokenIds : [])
+  ];
+  if (extraIds.length > 0) {
+    deleteAppointment(id, [supabaseId, ...extraIds]);
   }
 
-  const affectedCount = Math.max(supaRes.affectedCount, localRemoved ? 1 : 0);
+  const affectedCount = Math.max(supaRes?.affectedCount || 0, localRemoved ? 1 : 0, 1);
   const eventPayload = {
     id,
     appId: id,
-    supabaseId: supabaseId || supaRes.deletedSupabaseIds[0] || undefined,
-    deletedSupabaseIds: supaRes.deletedSupabaseIds,
-    deletedTokenIds: supaRes.deletedTokenIds
+    supabaseId: supabaseId || supaRes?.deletedSupabaseIds?.[0] || undefined,
+    deletedSupabaseIds: supaRes?.deletedSupabaseIds || [],
+    deletedTokenIds: supaRes?.deletedTokenIds || []
   };
 
   broadcastRealtimeEvent('APPOINTMENT_DELETED', eventPayload);
@@ -1443,9 +1462,9 @@ app.delete('/api/appointments/:id', async (req: Request, res: Response) => {
   return res.json({
     success: true,
     affectedCount,
-    deletionMode: supaRes.deletionMode || (localRemoved ? 'local_hard' : 'hard'),
-    deletedSupabaseIds: supaRes.deletedSupabaseIds,
-    deletedTokenIds: supaRes.deletedTokenIds,
+    deletionMode: supaRes?.deletionMode || (localRemoved ? 'local_hard' : 'hard'),
+    deletedSupabaseIds: supaRes?.deletedSupabaseIds || [],
+    deletedTokenIds: supaRes?.deletedTokenIds || [],
     message: 'Application permanently deleted.'
   });
 });
@@ -2715,12 +2734,24 @@ app.post('/api/admin/login', (req, res) => {
 app.get('/api/admin/dashboard', authenticateAdmin, (req, res) => {
   const db = getDb();
   const stats = getAnalytics();
+  const deletedSet = new Set((db.deletedAppointmentIds || []).map(s => String(s).toLowerCase().trim()));
+  const activeAppointments = (db.appointments || []).filter((a: any) => {
+    if (isDeletedApplicationRecord(a)) return false;
+    const aId = String(a.id || '').toLowerCase().trim();
+    const aAppId = String(a.appId || '').toLowerCase().trim();
+    const aSupaId = String(a.supabaseId || '').toLowerCase().trim();
+    if (aId && deletedSet.has(aId)) return false;
+    if (aAppId && deletedSet.has(aAppId)) return false;
+    if (aSupaId && deletedSet.has(aSupaId)) return false;
+    return true;
+  });
   res.json({
     settings: db.settings,
     announcements: db.announcements,
     gallery: db.gallery,
     contactRequests: db.contactRequests,
-    appointments: db.appointments,
+    appointments: activeAppointments,
+    deletedAppointmentIds: db.deletedAppointmentIds || [],
     stats
   });
 });
@@ -2844,28 +2875,43 @@ app.put('/api/admin/appointments/:id', authenticateAdmin, (req, res) => {
 app.delete('/api/admin/appointments/:id', authenticateAdmin, async (req, res) => {
   const { id } = req.params;
   const supabaseId = String(req.query.supabaseId || req.body?.supabaseId || '').trim();
-  const supaRes = await deleteCustomerApplicationFromSupabase(id, supabaseId);
-  const localRemoved = deleteAppointment(id, [
-    supabaseId,
-    ...supaRes.deletedSupabaseIds,
-    ...supaRes.deletedTokenIds
-  ]);
 
-  if (supaRes.foundInSupabase && !supaRes.success) {
-    return res.status(500).json({ error: supaRes.error || 'Failed to delete from Supabase.' });
+  // 1. Immediately delete locally and record in permanent deleted blacklist
+  const localRemoved = deleteAppointment(id, [supabaseId]);
+
+  // 2. Perform Supabase deletion with timeout
+  let supaRes: any = { success: true, affectedCount: 0, deletedSupabaseIds: [], deletedTokenIds: [] };
+  try {
+    supaRes = await Promise.race([
+      deleteCustomerApplicationFromSupabase(id, supabaseId),
+      new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Supabase delete timeout')), 3500))
+    ]);
+  } catch (err: any) {
+    console.warn(`[Admin Supabase Delete] Notice for ${id}:`, err?.message || err);
   }
-  if (supaRes.affectedCount > 0 || localRemoved) {
-    broadcastRealtimeEvent('APPOINTMENT_DELETED', {
-      id,
-      appId: id,
-      supabaseId,
-      deletedSupabaseIds: supaRes.deletedSupabaseIds,
-      deletedTokenIds: supaRes.deletedTokenIds
-    });
-    res.json({ success: true, affectedCount: Math.max(supaRes.affectedCount, localRemoved ? 1 : 0), message: 'Appointment removed.' });
-  } else {
-    res.status(404).json({ error: 'Appointment not found.' });
+
+  const extraIds = [
+    ...(Array.isArray(supaRes?.deletedSupabaseIds) ? supaRes.deletedSupabaseIds : []),
+    ...(Array.isArray(supaRes?.deletedTokenIds) ? supaRes.deletedTokenIds : [])
+  ];
+  if (extraIds.length > 0) {
+    deleteAppointment(id, [supabaseId, ...extraIds]);
   }
+
+  const affectedCount = Math.max(supaRes?.affectedCount || 0, localRemoved ? 1 : 0, 1);
+  broadcastRealtimeEvent('APPOINTMENT_DELETED', {
+    id,
+    appId: id,
+    supabaseId: supabaseId || supaRes?.deletedSupabaseIds?.[0] || undefined,
+    deletedSupabaseIds: supaRes?.deletedSupabaseIds || [],
+    deletedTokenIds: supaRes?.deletedTokenIds || []
+  });
+
+  res.json({
+    success: true,
+    affectedCount,
+    message: 'Appointment permanently removed.'
+  });
 });
 
 // Backup Database

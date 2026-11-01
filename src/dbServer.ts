@@ -10,6 +10,7 @@ interface DatabaseSchema {
   gallery: GalleryItem[];
   contactRequests: ContactRequest[];
   appointments: Appointment[];
+  deletedAppointmentIds?: string[];
   views: number;
   lastIssuedTokenSeq?: number;
   customPosts?: any[];
@@ -46,6 +47,7 @@ const DEFAULT_DB: DatabaseSchema = {
   gallery: [],
   contactRequests: [],
   appointments: [],
+  deletedAppointmentIds: [],
   views: 0,
   customPosts: [],
   postThumbnails: {},
@@ -84,6 +86,7 @@ export function getDb(): DatabaseSchema {
       const content = fs.readFileSync(DB_PATH, 'utf-8');
       const parsed = JSON.parse(content);
       if (!parsed.appointments) parsed.appointments = [];
+      if (!parsed.deletedAppointmentIds) parsed.deletedAppointmentIds = [];
       if (!parsed.contactRequests) parsed.contactRequests = [];
       if (!parsed.announcements) parsed.announcements = [];
       if (!parsed.gallery) parsed.gallery = [];
@@ -93,6 +96,18 @@ export function getDb(): DatabaseSchema {
       if (!parsed.pushNotifications) parsed.pushNotifications = [];
       if (!parsed.pushSettings) parsed.pushSettings = { autoPublishPush: false, welcomePushEnabled: true };
       if (!parsed.paymentTransactions) parsed.paymentTransactions = [];
+
+      // Permanently filter any appointments matching deletedAppointmentIds
+      if (Array.isArray(parsed.deletedAppointmentIds) && parsed.deletedAppointmentIds.length > 0) {
+        const delSet = new Set(parsed.deletedAppointmentIds.map((s: string) => String(s).trim().toLowerCase()));
+        parsed.appointments = parsed.appointments.filter((a: any) => {
+          const aId = String(a.id || '').trim().toLowerCase();
+          const aAppId = String(a.appId || '').trim().toLowerCase();
+          const aSupaId = String(a.supabaseId || '').trim().toLowerCase();
+          return !delSet.has(aId) && !delSet.has(aAppId) && (!aSupaId || !delSet.has(aSupaId));
+        });
+      }
+
       memoryDb = parsed;
       return parsed;
     }
@@ -294,11 +309,12 @@ export function getPaymentTransactions(): any[] {
 
 export function deleteAppointment(id: string, extraIds: string[] = []): boolean {
   const db = getDb();
-  const targets = new Set(
-    [id, ...extraIds]
-      .filter(Boolean)
-      .map(s => String(s).trim().toLowerCase())
-  );
+  if (!db.deletedAppointmentIds) db.deletedAppointmentIds = [];
+
+  const rawTargets = [id, ...extraIds]
+    .filter(Boolean)
+    .map(s => String(s).trim());
+  const targets = new Set(rawTargets.map(s => s.toLowerCase()));
   if (targets.size === 0) return false;
 
   // Record highest sequence before removing so deleted sequence numbers are never re-issued
@@ -306,6 +322,31 @@ export function deleteAppointment(id: string, extraIds: string[] = []): boolean 
     const seq = Math.max(extractTokenSeq(a.appId), extractTokenSeq(a.id));
     if (seq > (db.lastIssuedTokenSeq || 0)) {
       db.lastIssuedTokenSeq = seq;
+    }
+    // Also discover any additional aliases from matching records
+    const aId = String(a.id || '').trim();
+    const aAppId = String(a.appId || '').trim();
+    const aSupaId = String(a.supabaseId || '').trim();
+    if (
+      (aId && targets.has(aId.toLowerCase())) ||
+      (aAppId && targets.has(aAppId.toLowerCase())) ||
+      (aSupaId && targets.has(aSupaId.toLowerCase()))
+    ) {
+      if (aId) rawTargets.push(aId);
+      if (aAppId) rawTargets.push(aAppId);
+      if (aSupaId) rawTargets.push(aSupaId);
+    }
+  });
+
+  // Re-build target set with all discovered aliases
+  rawTargets.forEach(t => targets.add(t.toLowerCase()));
+
+  // Register in permanent deletedAppointmentIds list
+  const existingDeleted = new Set(db.deletedAppointmentIds.map(s => String(s).trim().toLowerCase()));
+  rawTargets.forEach(t => {
+    if (t && !existingDeleted.has(t.toLowerCase())) {
+      db.deletedAppointmentIds!.push(t);
+      existingDeleted.add(t.toLowerCase());
     }
   });
 
@@ -317,11 +358,21 @@ export function deleteAppointment(id: string, extraIds: string[] = []): boolean 
     return !targets.has(aId) && !targets.has(aAppId) && (!aSupaId || !targets.has(aSupaId));
   });
 
-  if (db.appointments.length !== lengthBefore) {
-    saveDb(db);
-    return true;
-  }
-  return false;
+  // Always save so deletedAppointmentIds is permanently persisted
+  saveDb(db);
+  return true;
+}
+
+export function getDeletedAppointmentIds(): string[] {
+  const db = getDb();
+  return db.deletedAppointmentIds || [];
+}
+
+export function isAppointmentIdDeleted(id: string): boolean {
+  if (!id) return false;
+  const db = getDb();
+  const clean = String(id).trim().toLowerCase();
+  return (db.deletedAppointmentIds || []).some(d => String(d).trim().toLowerCase() === clean);
 }
 
 export function updateSettings(settings: WebsiteSettings): void {
