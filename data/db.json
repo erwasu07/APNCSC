@@ -167,5 +167,34 @@
     "CSC_BULK_TEST_2",
     "b5bf5701-d826-4091-a4c1-31c8fc6e5800",
     "c5da4fb9-289e-48b4-ba77-c99403c449ba"
+  ],
+  "whatsappPublisherConfig": {
+    "channelUrl": "",
+    "channelName": "CSC DOST Official WhatsApp Channel",
+    "groupInviteUrl": "https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI",
+    "groupName": "CSC DOST Community Group",
+    "testRecipientPhone": "917006833767",
+    "officialGroupId": "120363025492817293@g.us",
+    "templateName": "csc_sarkari_job_alert",
+    "templateLanguage": "en_US",
+    "defaultDestination": "test_recipient",
+    "updatedAt": "2026-11-01T13:30:08.669Z"
+  },
+  "whatsappPublishHistory": [
+    {
+      "id": "wapub-1793539825801-hguv",
+      "postId": "test-verification-msg",
+      "title": "Meta WhatsApp API Test Verification",
+      "category": "test",
+      "destination": "Test Recipient (+91 70068 ***67)",
+      "destinationId": "test_recipient",
+      "sharingMethod": "Official WhatsApp Cloud API",
+      "dateTime": "01/11/2026, 01:30 PM",
+      "isoTimestamp": "2026-11-01T13:30:25.783Z",
+      "status": "Not configured",
+      "adminUser": "Mahi",
+      "canonicalUrl": "https://www.cscdost.com",
+      "errorDetails": "Missing WHATSAPP_CLOUD_API_TOKEN or WHATSAPP_PHONE_NUMBER_ID in server environment variables."
+    }
   ]
 }

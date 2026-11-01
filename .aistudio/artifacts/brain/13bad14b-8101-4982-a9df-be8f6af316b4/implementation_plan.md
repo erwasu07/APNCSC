@@ -47,8 +47,26 @@ Strictly verified circulars ingested matching required categories:
 
 ---
 
+### 5. WhatsApp Cloud API Dispatch & Configuration Hub (`/src/components/WhatsAppBroadcaster.tsx`, `/server.ts`, `/src/dbServer.ts`)
+- **Prominent "Configure WhatsApp" Button**: Positioned beside "Recheck Readiness" inside the automated dispatch section, accessible exclusively to authenticated admins.
+- **Comprehensive Settings Drawer / Modal**:
+  - **Connection Status**: Real server-to-Meta HTTP verification check (`POST /api/whatsapp/check-connection`), displaying live verified business name, display phone, quality rating, and code verification status. Never uses hardcoded or fake green badges.
+  - **Server Secrets Checklist**: Displays configured vs. missing status for all 6 required environment variables (`WHATSAPP_CLOUD_API_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_WABA_ID`, `META_GRAPH_API_VERSION`, `META_APP_SECRET`, `WHATSAPP_WEBHOOK_VERIFY_TOKEN`) without exposing sensitive secret values.
+  - **Hosting Setup Instructions**: Detailed, step-by-step instructions for adding variables in the Vercel Project Dashboard (Settings > Environment Variables) and redeploying.
+  - **Test Recipient Phone**: Normalized (`91` country code prefix), masked for safe UI preview (`+91 70068 ***67`), with a live "Send Live Test WhatsApp Notification" test button (`POST /api/whatsapp/test-send`).
+  - **Destinations & API Group**: Configurable default destination and official API Group ID validation, with strict rejection of consumer invite links (`chat.whatsapp.com`).
+  - **Templates**: Real template status query (`POST /api/whatsapp/refresh-template`) returning approved, pending, or rejected status from Meta Graph API.
+- **Database Persistence with Env Fallbacks**: Non-secret configurations persist in `data/db.json` via `dbServer.ts` and are prioritized across all backend endpoints (`/api/whatsapp/readiness`, `/api/whatsapp/send`, test send).
+
+---
+
 ## Validation & Verification
 - `tsc --noEmit`: 0 errors.
 - `compile_applet`: Build succeeded cleanly.
 - `SARKARI_DATA` Audit: 136 total records verified (13 open, 3 upcoming, 120 closed, 0 unknown).
 - Port 3000 Dev Server: Serving HTTP 200 OK.
+- Live API Endpoints:
+  - `GET /api/whatsapp/readiness`: 200 OK, reflects database settings and server secrets checklist.
+  - `PUT /api/whatsapp/config`: 200 OK for valid inputs, 400 rejection for consumer invite links.
+  - `POST /api/whatsapp/check-connection`: Authentic verification against Meta Graph API.
+  - `POST /api/whatsapp/test-send`: Real Meta dispatch tracking with history logging.

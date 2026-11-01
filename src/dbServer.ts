@@ -577,6 +577,11 @@ export interface WhatsAppPublisherConfig {
   groupName: string;
   updatedAt?: string;
   updatedBy?: string;
+  testRecipientPhone?: string;
+  officialGroupId?: string;
+  templateName?: string;
+  templateLanguage?: string;
+  defaultDestination?: string;
 }
 
 const DEFAULT_WHATSAPP_CONFIG: WhatsAppPublisherConfig = {
@@ -584,7 +589,38 @@ const DEFAULT_WHATSAPP_CONFIG: WhatsAppPublisherConfig = {
   channelName: 'CSC DOST Official WhatsApp Channel',
   groupInviteUrl: 'https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI',
   groupName: 'CSC DOST Community Group',
+  testRecipientPhone: '',
+  officialGroupId: '',
+  templateName: '',
+  templateLanguage: 'en_US',
+  defaultDestination: 'test_recipient',
 };
+
+export function normalizePhoneNumber(raw: string): string {
+  if (!raw) return '';
+  const digits = String(raw).replace(/\D/g, '');
+  if (digits.length === 10) {
+    return `91${digits}`;
+  }
+  if (digits.length === 11 && digits.startsWith('0')) {
+    return `91${digits.slice(1)}`;
+  }
+  return digits;
+}
+
+export function maskPhoneNumber(phone?: string): string {
+  if (!phone) return 'Not Configured';
+  const clean = String(phone).replace(/\D/g, '');
+  if (clean.length < 5) return clean || 'Not Configured';
+  if (clean.length === 12 && clean.startsWith('91')) {
+    const p1 = clean.slice(0, 7);
+    const p2 = clean.slice(-2);
+    return `+${p1.slice(0, 2)} ${p1.slice(2)} ***${p2}`;
+  }
+  const prefix = clean.slice(0, Math.max(1, clean.length - 4));
+  const suffix = clean.slice(-2);
+  return `+${prefix} ***${suffix}`;
+}
 
 export function getWhatsAppPublisherConfig(): WhatsAppPublisherConfig {
   const db = getDb() as any;

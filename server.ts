@@ -58,6 +58,8 @@ import {
   saveWhatsAppPublisherConfig,
   getWhatsAppPublishHistory,
   addWhatsAppPublishHistoryRecord,
+  normalizePhoneNumber,
+  maskPhoneNumber,
   updateWhatsAppPublishHistoryStatus,
   updateWhatsAppPublishHistoryByProviderMessageId,
   getWhatsAppHistoryByIdempotencyKey,
@@ -2050,15 +2052,6 @@ function getMetaGraphApiVersion(): string {
   return 'v18.0';
 }
 
-// Helper: Mask phone numbers for safe display
-function maskPhoneNumber(phone: string): string {
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length <= 4) return digits;
-  const last4 = digits.slice(-4);
-  const stars = '*'.repeat(Math.max(digits.length - 4, 3));
-  return `+${stars}${last4}`;
-}
-
 // Idempotency guard to prevent duplicate automated submissions within 60 seconds
 const recentAutomatedSubmissions = new Map<string, number>();
 
@@ -2095,17 +2088,20 @@ app.get(['/api/whatsapp/readiness', '/api/whatsapp/diagnostics'], authenticateAd
   const wabaId = (process.env.WHATSAPP_WABA_ID || '').trim();
   const appSecret = (process.env.META_APP_SECRET || '').trim();
   const webhookVerifyToken = (process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || '').trim();
-  const officialGroupId = (process.env.WHATSAPP_OFFICIAL_GROUP_ID || '').trim();
-  const testRecipientPhone = (process.env.WHATSAPP_TEST_RECIPIENT_PHONE || '').replace(/\D/g, '');
-  const templateName = (process.env.WHATSAPP_POST_TEMPLATE_NAME || '').trim();
   const graphVersion = getMetaGraphApiVersion();
   const webhookUrl = `${getAppBaseUrl()}/api/whatsapp/webhook`;
 
-  const cloudApiReady = Boolean(cloudApiToken && phoneNumberId);
-  const officialGroupsApiReady = Boolean(cloudApiReady && officialGroupId);
-  const testRecipientReady = Boolean(cloudApiReady && testRecipientPhone);
-
+  // Database-backed non-secret configuration with fallback to environment variables
   const config = getWhatsAppPublisherConfig();
+  const effectiveOfficialGroupId = (config.officialGroupId || process.env.WHATSAPP_OFFICIAL_GROUP_ID || '').trim();
+  const effectiveTestPhone = normalizePhoneNumber(config.testRecipientPhone || process.env.WHATSAPP_TEST_RECIPIENT_PHONE || '');
+  const effectiveTemplateName = (config.templateName || process.env.WHATSAPP_POST_TEMPLATE_NAME || '').trim();
+  const effectiveTemplateLanguage = (config.templateLanguage || process.env.WHATSAPP_TEMPLATE_LANGUAGE || 'en_US').trim();
+  const effectiveDefaultDestination = (config.defaultDestination || 'test_recipient').trim();
+
+  const cloudApiReady = Boolean(cloudApiToken && phoneNumberId);
+  const officialGroupsApiReady = Boolean(cloudApiReady && effectiveOfficialGroupId);
+  const testRecipientReady = Boolean(cloudApiReady && effectiveTestPhone);
 
   // Inspect registered appointments/contacts for opted-in phone numbers
   const db = getDb();
@@ -2146,11 +2142,11 @@ app.get(['/api/whatsapp/readiness', '/api/whatsapp/diagnostics'], authenticateAd
       type: 'group_api',
       ready: officialGroupsApiReady,
       supportedDirectSend: true,
-      statusLabel: officialGroupsApiReady ? 'Ready for API Send' : officialGroupId ? 'Missing Cloud API Credentials' : 'Group ID Not Configured',
-      targetHint: officialGroupId ? `Group ID: ${officialGroupId}` : undefined,
-      reason: officialGroupId
-        ? (cloudApiReady ? `Official API group (${officialGroupId}) verified.` : 'Missing WHATSAPP_CLOUD_API_TOKEN or WHATSAPP_PHONE_NUMBER_ID.')
-        : 'Set WHATSAPP_OFFICIAL_GROUP_ID in server environment to enable direct API group delivery.'
+      statusLabel: officialGroupsApiReady ? 'Ready for API Send' : effectiveOfficialGroupId ? 'Missing Cloud API Credentials' : 'Group ID Missing',
+      targetHint: effectiveOfficialGroupId ? `Group ID: ${effectiveOfficialGroupId}` : undefined,
+      reason: effectiveOfficialGroupId
+        ? (cloudApiReady ? `Official API group (${effectiveOfficialGroupId}) configured.` : 'Missing WHATSAPP_CLOUD_API_TOKEN or WHATSAPP_PHONE_NUMBER_ID.')
+        : 'Configure Official API Group ID in WhatsApp Settings.'
     },
     {
       id: 'test_recipient',
@@ -2158,11 +2154,11 @@ app.get(['/api/whatsapp/readiness', '/api/whatsapp/diagnostics'], authenticateAd
       type: 'individual_test',
       ready: testRecipientReady,
       supportedDirectSend: true,
-      statusLabel: testRecipientReady ? 'Ready for Test Send' : testRecipientPhone ? 'Missing Cloud API Credentials' : 'Phone Not Configured',
-      targetHint: testRecipientPhone ? maskPhoneNumber(testRecipientPhone) : undefined,
-      reason: testRecipientPhone
-        ? (cloudApiReady ? `Authorized test recipient configured (${maskPhoneNumber(testRecipientPhone)}).` : 'Missing WHATSAPP_CLOUD_API_TOKEN or WHATSAPP_PHONE_NUMBER_ID.')
-        : 'Set WHATSAPP_TEST_RECIPIENT_PHONE in server environment to test direct delivery.'
+      statusLabel: testRecipientReady ? 'Ready for Test Send' : effectiveTestPhone ? 'Missing Cloud API Credentials' : 'Phone Not Configured',
+      targetHint: effectiveTestPhone ? maskPhoneNumber(effectiveTestPhone) : undefined,
+      reason: effectiveTestPhone
+        ? (cloudApiReady ? `Authorized test recipient configured (${maskPhoneNumber(effectiveTestPhone)}).` : 'Missing WHATSAPP_CLOUD_API_TOKEN or WHATSAPP_PHONE_NUMBER_ID.')
+        : 'Configure Test Recipient Phone Number in WhatsApp Settings.'
     },
     {
       id: 'subscribers',
@@ -2178,6 +2174,65 @@ app.get(['/api/whatsapp/readiness', '/api/whatsapp/diagnostics'], authenticateAd
     }
   ];
 
+  // Secrets Checklist: inspects actual server environment variables without returning secret values
+  const serverSecretsChecklist = [
+    {
+      key: 'WHATSAPP_CLOUD_API_TOKEN',
+      label: 'Meta WhatsApp Cloud API Access Token',
+      description: 'Permanent System User token or developer token from Meta Business Manager.',
+      configured: Boolean(cloudApiToken),
+      required: true
+    },
+    {
+      key: 'WHATSAPP_PHONE_NUMBER_ID',
+      label: 'WhatsApp Phone Number ID',
+      description: 'Found under WhatsApp > API Setup in Meta Developer Dashboard (not the display phone number).',
+      configured: Boolean(phoneNumberId),
+      required: true
+    },
+    {
+      key: 'WHATSAPP_WABA_ID',
+      label: 'WhatsApp Business Account (WABA) ID',
+      description: 'Required for message template lookup, template verification, and business asset management.',
+      configured: Boolean(wabaId),
+      required: false
+    },
+    {
+      key: 'META_GRAPH_API_VERSION',
+      label: 'Meta Graph API Version',
+      description: `Active version: ${graphVersion}. Configurable via environment variable (default: v18.0).`,
+      configured: Boolean(process.env.META_GRAPH_API_VERSION),
+      effectiveValue: graphVersion,
+      required: false
+    },
+    {
+      key: 'META_APP_SECRET',
+      label: 'Meta App Secret',
+      description: 'Used to cryptographically verify incoming delivery receipt webhooks (HMAC SHA-256).',
+      configured: Boolean(appSecret),
+      required: false
+    },
+    {
+      key: 'WHATSAPP_WEBHOOK_VERIFY_TOKEN',
+      label: 'Webhook Verification Token',
+      description: 'Secret challenge string matched when configuring Webhook in Meta App Dashboard.',
+      configured: Boolean(webhookVerifyToken),
+      required: false
+    }
+  ];
+
+  const hostingInstructions = {
+    platform: 'Vercel / Cloud Hosting',
+    steps: [
+      'Open your Vercel Project Dashboard.',
+      'Navigate to Settings > Environment Variables.',
+      'Add each missing secret (WHATSAPP_CLOUD_API_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_WABA_ID, META_APP_SECRET, WHATSAPP_WEBHOOK_VERIFY_TOKEN).',
+      'Ensure "Production", "Preview", and "Development" environments are selected.',
+      'Go to Deployments and trigger a "Redeploy" so the runtime loads the new environment variables.'
+    ],
+    note: 'Important: Clicking "Save Settings" in the admin panel saves non-secret preferences (test phone, template name, group ID) to the portal database. It does NOT modify hosting environment variables in Vercel. Secret tokens must always be configured in your hosting dashboard.'
+  };
+
   return res.json({
     success: true,
     checkedAt: new Date().toISOString(),
@@ -2189,19 +2244,27 @@ app.get(['/api/whatsapp/readiness', '/api/whatsapp/diagnostics'], authenticateAd
     wabaIdConfigured: Boolean(wabaId),
     appSecretConfigured: Boolean(appSecret),
     webhookVerifyTokenConfigured: Boolean(webhookVerifyToken),
-    officialGroupIdConfigured: Boolean(officialGroupId),
-    testRecipientPhoneConfigured: Boolean(testRecipientPhone),
-    templateConfigured: Boolean(templateName),
-    templateName: templateName || undefined,
+    officialGroupIdConfigured: Boolean(effectiveOfficialGroupId),
+    testRecipientPhoneConfigured: Boolean(effectiveTestPhone),
+    effectiveTestPhoneMasked: effectiveTestPhone ? maskPhoneNumber(effectiveTestPhone) : 'Not Configured',
+    templateConfigured: Boolean(effectiveTemplateName),
+    templateName: effectiveTemplateName || undefined,
+    templateLanguage: effectiveTemplateLanguage,
+    defaultDestination: effectiveDefaultDestination,
     graphApiVersion: graphVersion,
     webhookUrl,
     destinations,
+    serverSecretsChecklist,
+    hostingInstructions,
+    savedConfig: config,
     diagnostics: {
       cloudApiReady,
       cloudApiTokenConfigured: Boolean(cloudApiToken),
       phoneNumberIdConfigured: Boolean(phoneNumberId),
       officialGroupsApiReady,
-      officialGroupIdConfigured: Boolean(officialGroupId),
+      officialGroupIdConfigured: Boolean(effectiveOfficialGroupId),
+      testRecipientReady,
+      testRecipientPhoneConfigured: Boolean(effectiveTestPhone),
       automatedChannelApiSupported: false,
       webhookUrlConfigured: Boolean(webhookVerifyToken),
       legacyAutoPostDiagnosis: {
@@ -2213,23 +2276,34 @@ app.get(['/api/whatsapp/readiness', '/api/whatsapp/diagnostics'], authenticateAd
         supportedChannelWorkflow:
           'Use "Copy Channel Notification" + "Open My WhatsApp Channel" to paste and publish directly in your WhatsApp Channel.',
         officialApiSupport: officialGroupsApiReady
-          ? 'Official Meta Cloud API + API-Managed Group ID detected on server.'
-          : 'No official API-managed Group credentials (WHATSAPP_CLOUD_API_TOKEN + WHATSAPP_PHONE_NUMBER_ID + WHATSAPP_OFFICIAL_GROUP_ID) are configured on the server.'
+          ? 'Official Meta Cloud API + API-Managed Group ID configured.'
+          : 'No official API-managed Group credentials detected. Configure your Group ID in WhatsApp Settings.'
       }
     }
   });
 });
 
-// 2. Get & Save WhatsApp Channel / Group Publisher Configuration
-app.get('/api/whatsapp/config', authenticateAdmin, (_req: Request, res: Response) => {
+// 2. Get & Save WhatsApp Channel / Group / API Publisher Configuration
+app.get(['/api/whatsapp/config', '/api/whatsapp/settings'], authenticateAdmin, (_req: Request, res: Response) => {
   return res.json({
     success: true,
     config: getWhatsAppPublisherConfig()
   });
 });
 
-app.put('/api/whatsapp/config', authenticateAdmin, (req: Request, res: Response) => {
-  const { channelUrl, channelName, groupInviteUrl, groupName, updatedBy } = req.body || {};
+app.put(['/api/whatsapp/config', '/api/whatsapp/settings'], authenticateAdmin, (req: Request, res: Response) => {
+  const {
+    channelUrl,
+    channelName,
+    groupInviteUrl,
+    groupName,
+    testRecipientPhone,
+    officialGroupId,
+    templateName,
+    templateLanguage,
+    defaultDestination,
+    updatedBy
+  } = req.body || {};
 
   const cleanChannelUrl = typeof channelUrl === 'string' ? channelUrl.trim() : undefined;
   const cleanGroupUrl = typeof groupInviteUrl === 'string' ? groupInviteUrl.trim() : undefined;
@@ -2237,32 +2311,336 @@ app.put('/api/whatsapp/config', authenticateAdmin, (req: Request, res: Response)
   if (cleanChannelUrl !== undefined && !isValidWhatsAppChannelUrl(cleanChannelUrl)) {
     return res.status(400).json({
       success: false,
-      error:
-        'Invalid WhatsApp Channel URL. Please enter a valid https://whatsapp.com/channel/... link.'
+      error: 'Invalid WhatsApp Channel URL. Please enter a valid https://whatsapp.com/channel/... link.'
     });
   }
 
   if (cleanGroupUrl !== undefined && !isValidWhatsAppGroupInviteUrl(cleanGroupUrl)) {
     return res.status(400).json({
       success: false,
-      error:
-        'Invalid WhatsApp Group Invite URL. Please enter a valid https://chat.whatsapp.com/... link.'
+      error: 'Invalid WhatsApp Group Invite URL. Please enter a valid https://chat.whatsapp.com/... link.'
     });
   }
+
+  // Group ID Validation: Strictly reject invite links (chat.whatsapp.com)
+  let cleanGroupId: string | undefined = undefined;
+  if (officialGroupId !== undefined) {
+    const rawGroupId = String(officialGroupId).trim();
+    if (rawGroupId) {
+      if (rawGroupId.toLowerCase().includes('chat.whatsapp.com') || rawGroupId.toLowerCase().includes('whatsapp.com')) {
+        return res.status(400).json({
+          success: false,
+          error:
+            'A group invite link (https://chat.whatsapp.com/...) cannot be used as an API Group ID. Group invite URLs are consumer join links. Official API Group IDs are numeric or alphanumeric identifiers issued by Meta WhatsApp Business API.'
+        });
+      }
+      cleanGroupId = rawGroupId;
+    } else {
+      cleanGroupId = '';
+    }
+  }
+
+  // Test Phone Validation & Normalization
+  let cleanTestPhone: string | undefined = undefined;
+  if (testRecipientPhone !== undefined) {
+    const rawPhone = String(testRecipientPhone).trim();
+    if (rawPhone) {
+      const normalized = normalizePhoneNumber(rawPhone);
+      if (normalized.length < 10) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid phone number format. Please enter a valid 10-digit mobile number with or without country code.'
+        });
+      }
+      cleanTestPhone = normalized;
+    } else {
+      cleanTestPhone = '';
+    }
+  }
+
+  // Default destination validation
+  const validDestinations = new Set(['test_recipient', 'group_api', 'subscribers', 'channel_manual', 'group_manual']);
+  const cleanDefaultDest =
+    defaultDestination && validDestinations.has(String(defaultDestination).trim())
+      ? String(defaultDestination).trim()
+      : undefined;
 
   const saved = saveWhatsAppPublisherConfig({
     ...(cleanChannelUrl !== undefined ? { channelUrl: cleanChannelUrl } : {}),
     ...(typeof channelName === 'string' ? { channelName: channelName.trim() || 'CSC DOST Official WhatsApp Channel' } : {}),
     ...(cleanGroupUrl !== undefined ? { groupInviteUrl: cleanGroupUrl } : {}),
     ...(typeof groupName === 'string' ? { groupName: groupName.trim() || 'CSC DOST Community Group' } : {}),
+    ...(cleanTestPhone !== undefined ? { testRecipientPhone: cleanTestPhone } : {}),
+    ...(cleanGroupId !== undefined ? { officialGroupId: cleanGroupId } : {}),
+    ...(typeof templateName === 'string' ? { templateName: templateName.trim() } : {}),
+    ...(typeof templateLanguage === 'string' ? { templateLanguage: templateLanguage.trim() || 'en_US' } : {}),
+    ...(cleanDefaultDest !== undefined ? { defaultDestination: cleanDefaultDest } : {}),
     ...(typeof updatedBy === 'string' ? { updatedBy: updatedBy.trim() } : {})
   });
 
   return res.json({
     success: true,
     config: saved,
-    message: 'WhatsApp Publisher destination settings saved.'
+    message: 'WhatsApp Publisher configuration saved successfully.'
   });
+});
+
+// 2b. Live Meta Graph API Connection Check
+app.post('/api/whatsapp/check-connection', authenticateAdmin, async (_req: Request, res: Response) => {
+  const cloudToken = (process.env.WHATSAPP_CLOUD_API_TOKEN || '').trim();
+  const phoneNumberId = (process.env.WHATSAPP_PHONE_NUMBER_ID || '').trim();
+  const graphVersion = getMetaGraphApiVersion();
+
+  if (!cloudToken || !phoneNumberId) {
+    return res.status(400).json({
+      success: false,
+      connected: false,
+      error:
+        'Cannot test connection: WHATSAPP_CLOUD_API_TOKEN or WHATSAPP_PHONE_NUMBER_ID is not configured in server environment variables. Please add these in your hosting dashboard (Vercel) and redeploy.'
+    });
+  }
+
+  const checkUrl = `https://graph.facebook.com/${graphVersion}/${encodeURIComponent(phoneNumberId)}?fields=verified_name,display_phone_number,quality_rating,code_verification_status`;
+
+  try {
+    const metaRes = await fetch(checkUrl, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${cloudToken}`
+      },
+      signal: AbortSignal.timeout(8000)
+    });
+
+    const metaData = await metaRes.json().catch(() => ({}));
+
+    if (!metaRes.ok) {
+      const errMsg = sanitizeMetaErrorMessage(metaData?.error?.message || `Meta Graph API responded with status ${metaRes.status}`);
+      return res.status(502).json({
+        success: false,
+        connected: false,
+        error: errMsg,
+        metaErrorType: metaData?.error?.type,
+        metaErrorCode: metaData?.error?.code
+      });
+    }
+
+    return res.json({
+      success: true,
+      connected: true,
+      graphApiVersion: graphVersion,
+      phoneNumberId,
+      verifiedName: metaData.verified_name || 'Verified Meta Account',
+      displayPhoneNumber: metaData.display_phone_number || 'Registered Phone',
+      qualityRating: metaData.quality_rating || 'UNKNOWN',
+      codeVerificationStatus: metaData.code_verification_status || 'VERIFIED',
+      message: 'Successfully connected and verified against Meta WhatsApp Graph API!'
+    });
+  } catch (err: any) {
+    return res.status(502).json({
+      success: false,
+      connected: false,
+      error: sanitizeMetaErrorMessage(err?.message || 'Network timeout or failure reaching Meta Graph API.')
+    });
+  }
+});
+
+// 2c. Refresh Message Template Approval Status from Meta Graph API
+app.post('/api/whatsapp/refresh-template', authenticateAdmin, async (_req: Request, res: Response) => {
+  const cloudToken = (process.env.WHATSAPP_CLOUD_API_TOKEN || '').trim();
+  const phoneNumberId = (process.env.WHATSAPP_PHONE_NUMBER_ID || '').trim();
+  const wabaId = (process.env.WHATSAPP_WABA_ID || '').trim();
+  const graphVersion = getMetaGraphApiVersion();
+  const config = getWhatsAppPublisherConfig();
+  const templateName = (config.templateName || process.env.WHATSAPP_POST_TEMPLATE_NAME || '').trim();
+  const templateLanguage = (config.templateLanguage || process.env.WHATSAPP_TEMPLATE_LANGUAGE || 'en_US').trim();
+
+  if (!templateName) {
+    return res.status(400).json({
+      success: false,
+      error: 'No template name configured. Please enter a template name in WhatsApp Settings > Templates tab.'
+    });
+  }
+
+  if (!cloudToken || (!wabaId && !phoneNumberId)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Missing WHATSAPP_CLOUD_API_TOKEN or WHATSAPP_WABA_ID in server environment variables to query Meta templates.'
+    });
+  }
+
+  const queryTarget = wabaId || phoneNumberId;
+  const templateUrl = `https://graph.facebook.com/${graphVersion}/${encodeURIComponent(queryTarget)}/message_templates?name=${encodeURIComponent(templateName)}`;
+
+  try {
+    const metaRes = await fetch(templateUrl, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${cloudToken}`
+      },
+      signal: AbortSignal.timeout(8000)
+    });
+
+    const metaData = await metaRes.json().catch(() => ({}));
+
+    if (!metaRes.ok) {
+      const errMsg = sanitizeMetaErrorMessage(metaData?.error?.message || `Meta API error ${metaRes.status}`);
+      return res.status(502).json({
+        success: false,
+        error: errMsg
+      });
+    }
+
+    const templates = Array.isArray(metaData?.data) ? metaData.data : [];
+    const matched = templates.find((t: any) => t.name === templateName && (!templateLanguage || t.language === templateLanguage)) || templates[0];
+
+    if (!matched) {
+      return res.status(404).json({
+        success: false,
+        error: `Template "${templateName}" not found in Meta Business Account (WABA: ${queryTarget}). Check the template name spelling or verify it in Meta WhatsApp Manager.`
+      });
+    }
+
+    return res.json({
+      success: true,
+      templateName: matched.name,
+      status: matched.status,
+      category: matched.category,
+      language: matched.language,
+      id: matched.id,
+      components: matched.components,
+      message: `Template "${matched.name}" status: ${matched.status} on Meta WhatsApp Platform.`
+    });
+  } catch (err: any) {
+    return res.status(502).json({
+      success: false,
+      error: sanitizeMetaErrorMessage(err?.message || 'Failed to reach Meta Graph API.')
+    });
+  }
+});
+
+// 2d. Send Test Message via Meta WhatsApp Cloud API
+app.post('/api/whatsapp/test-send', authenticateAdmin, async (req: Request, res: Response) => {
+  const cloudToken = (process.env.WHATSAPP_CLOUD_API_TOKEN || '').trim();
+  const phoneNumberId = (process.env.WHATSAPP_PHONE_NUMBER_ID || '').trim();
+  const graphVersion = getMetaGraphApiVersion();
+  const config = getWhatsAppPublisherConfig();
+  const adminUser = (req as any).adminUser?.username || 'Authorized Staff';
+
+  const testRecipientPhone = normalizePhoneNumber(config.testRecipientPhone || process.env.WHATSAPP_TEST_RECIPIENT_PHONE || '');
+
+  if (!testRecipientPhone) {
+    return res.status(400).json({
+      success: false,
+      status: 'Not configured',
+      error: 'No test recipient phone number is configured. Please enter your mobile number in the WhatsApp Settings drawer and click Save.'
+    });
+  }
+
+  if (!cloudToken || !phoneNumberId) {
+    const failedEntry = addWhatsAppPublishHistoryRecord({
+      postId: 'test-verification-msg',
+      destinationId: 'test_recipient',
+      title: 'Meta WhatsApp API Test Verification',
+      category: 'test',
+      destination: `Test Recipient (${maskPhoneNumber(testRecipientPhone)})`,
+      sharingMethod: 'Official WhatsApp Cloud API',
+      status: 'Not configured',
+      adminUser,
+      canonicalUrl: 'https://www.cscdost.com',
+      errorDetails: 'Missing WHATSAPP_CLOUD_API_TOKEN or WHATSAPP_PHONE_NUMBER_ID in server environment variables.'
+    });
+
+    return res.status(400).json({
+      success: false,
+      status: 'Not configured',
+      error: 'Meta WhatsApp Cloud API credentials (WHATSAPP_CLOUD_API_TOKEN and WHATSAPP_PHONE_NUMBER_ID) are not configured in server environment variables.',
+      entry: failedEntry,
+      history: getWhatsAppPublishHistory()
+    });
+  }
+
+  const istTimestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true });
+  const testMessage = `🔔 *CSC DOST Portal — WhatsApp API Test*\n\nThis is a live test notification from CSC DOST (www.cscdost.com) to verify your Meta WhatsApp Cloud API integration.\n\n📅 *Dispatched At:* ${istTimestamp} (IST)\n👤 *Triggered By:* ${adminUser}\n📱 *Test Recipient:* +${testRecipientPhone}\n\n✅ If you received this message, your WhatsApp Cloud API dispatch credentials and test recipient configuration are 100% operational!`;
+
+  const metaApiUrl = `https://graph.facebook.com/${graphVersion}/${encodeURIComponent(phoneNumberId)}/messages`;
+  const messagePayload = {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: testRecipientPhone,
+    type: 'text',
+    text: {
+      preview_url: true,
+      body: testMessage
+    }
+  };
+
+  try {
+    const metaRes = await fetch(metaApiUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${cloudToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(messagePayload),
+      signal: AbortSignal.timeout(10000)
+    });
+
+    const metaData = await metaRes.json().catch(() => ({}));
+
+    if (!metaRes.ok) {
+      const errMsg = sanitizeMetaErrorMessage(metaData?.error?.message || `Meta Cloud API error ${metaRes.status}`);
+      const failedEntry = addWhatsAppPublishHistoryRecord({
+        postId: 'test-verification-msg',
+        destinationId: 'test_recipient',
+        title: 'Meta WhatsApp API Test Verification',
+        category: 'test',
+        destination: `Test Recipient (${maskPhoneNumber(testRecipientPhone)})`,
+        sharingMethod: 'Official WhatsApp Cloud API',
+        status: 'Failed',
+        adminUser,
+        canonicalUrl: 'https://www.cscdost.com',
+        errorDetails: errMsg
+      });
+
+      return res.status(502).json({
+        success: false,
+        status: 'Failed',
+        error: errMsg,
+        entry: failedEntry,
+        history: getWhatsAppPublishHistory()
+      });
+    }
+
+    const messageId = metaData?.messages?.[0]?.id;
+    const entry = addWhatsAppPublishHistoryRecord({
+      postId: 'test-verification-msg',
+      destinationId: 'test_recipient',
+      title: 'Meta WhatsApp API Test Verification',
+      category: 'test',
+      destination: `Test Recipient (${maskPhoneNumber(testRecipientPhone)})`,
+      sharingMethod: 'Official WhatsApp Cloud API',
+      status: 'Accepted',
+      adminUser,
+      canonicalUrl: 'https://www.cscdost.com',
+      providerMessageId: String(messageId || '')
+    });
+
+    return res.json({
+      success: true,
+      status: 'Accepted',
+      messageId,
+      entry,
+      history: getWhatsAppPublishHistory(),
+      message: `Test notification successfully accepted by Meta for recipient +${testRecipientPhone}. Delivery confirmation will be tracked via Webhook.`
+    });
+  } catch (err: any) {
+    const errMsg = sanitizeMetaErrorMessage(err?.message || 'Network error reaching Meta Cloud API');
+    return res.status(502).json({
+      success: false,
+      status: 'Failed',
+      error: errMsg
+    });
+  }
 });
 
 // 3. Get, Record, Confirm & Clear Publishing History
@@ -2566,10 +2944,11 @@ app.post('/api/whatsapp/send', authenticateAdmin, async (req: Request, res: Resp
     const canonicalUrl = notificationPayload.canonicalUrl;
 
     // D. Destination Verification & Routing
+    const config = getWhatsAppPublisherConfig();
     const cloudToken = (process.env.WHATSAPP_CLOUD_API_TOKEN || '').trim();
     const phoneNumberId = (process.env.WHATSAPP_PHONE_NUMBER_ID || '').trim();
-    const officialGroupId = (process.env.WHATSAPP_OFFICIAL_GROUP_ID || '').trim();
-    const testRecipientPhone = (process.env.WHATSAPP_TEST_RECIPIENT_PHONE || '').replace(/\D/g, '').trim();
+    const officialGroupId = (config.officialGroupId || process.env.WHATSAPP_OFFICIAL_GROUP_ID || '').trim();
+    const testRecipientPhone = normalizePhoneNumber(config.testRecipientPhone || process.env.WHATSAPP_TEST_RECIPIENT_PHONE || '');
     const graphVersion = getMetaGraphApiVersion();
 
     let targetRecipientType: 'group' | 'individual' = 'group';
@@ -2589,7 +2968,7 @@ app.post('/api/whatsapp/send', authenticateAdmin, async (req: Request, res: Resp
           success: false,
           status: 'Not configured',
           error:
-            'WHATSAPP_OFFICIAL_GROUP_ID is not configured in the server environment. Please set this variable with your official API-managed WhatsApp group ID.'
+            'Official API Group ID is not configured. Please configure your API Group ID in the WhatsApp Settings drawer (or set WHATSAPP_OFFICIAL_GROUP_ID in server environment variables).'
         });
       }
       targetRecipientType = 'group';
@@ -2601,7 +2980,7 @@ app.post('/api/whatsapp/send', authenticateAdmin, async (req: Request, res: Resp
           success: false,
           status: 'Not configured',
           error:
-            'WHATSAPP_TEST_RECIPIENT_PHONE is not configured in the server environment. Please configure your authorized mobile number (with country code) to test live WhatsApp delivery.'
+            'Authorized test recipient phone is not configured. Please enter your mobile number in the WhatsApp Settings drawer (or set WHATSAPP_TEST_RECIPIENT_PHONE in server environment variables).'
         });
       }
       targetRecipientType = 'individual';
