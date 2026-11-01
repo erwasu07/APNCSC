@@ -536,22 +536,6 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     }
   };
 
-  const handleQuickFirebaseAuth = async () => {
-    setLoginError(null);
-    setAuthLoading(true);
-    try {
-      await signInAnonymously(auth);
-    } catch (err: any) {
-      console.error('Staff auth notice:', err);
-    } finally {
-      setStaffDisplayName('Mahi');
-      sessionStorage.setItem('csc_staff_name', 'Mahi');
-      setIsAuthenticated(true);
-      sessionStorage.setItem('csc_admin_authed', 'true');
-      setAuthLoading(false);
-    }
-  };
-
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -2389,25 +2373,6 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
               <span>{authLoading ? 'Authenticating...' : 'Sign In to Staff Console'}</span>
             </button>
           </form>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-[#E2E8F0]" />
-            </div>
-            <div className="relative flex justify-center text-[11px]">
-              <span className="bg-white px-2.5 text-[#64748B] font-medium">Or Operator Session</span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleQuickFirebaseAuth}
-            disabled={authLoading}
-            className="w-full py-2.5 px-4 bg-[#F6F8FC] hover:bg-slate-100 text-[#111827] font-semibold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer border border-[#E2E8F0]"
-          >
-            <ShieldCheck className="w-4 h-4 text-[#16A34A]" />
-            <span>One-Click Authorized Staff Access</span>
-          </button>
 
           {onClose && (
             <button
