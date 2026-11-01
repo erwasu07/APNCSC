@@ -539,16 +539,23 @@ export type WhatsAppPublishStatus =
   | 'Opened in WhatsApp'
   | 'Manually Confirmed'
   | 'Submitted to Provider'
+  | 'Accepted'
+  | 'Accepted by WhatsApp'
   | 'Sent'
   | 'Delivered'
-  | 'Failed';
+  | 'Read'
+  | 'Failed'
+  | 'Not configured'
+  | 'Unsupported or access not verified';
 
 export interface WhatsAppPublishHistoryRecord {
   id: string;
+  idempotencyKey?: string;
   postId: string;
   title: string;
   category: string;
   destination: string;
+  destinationId?: string;
   sharingMethod: string;
   dateTime: string;
   isoTimestamp: string;
@@ -559,6 +566,8 @@ export interface WhatsAppPublishHistoryRecord {
   confirmedBy?: string;
   providerMessageId?: string;
   errorDetails?: string;
+  deliveryTimestamp?: string;
+  messageRevision?: string;
 }
 
 export interface WhatsAppPublisherConfig {
@@ -605,9 +614,19 @@ export function getWhatsAppPublishHistory(): WhatsAppPublishHistoryRecord[] {
   return Array.isArray(db.whatsappPublishHistory) ? db.whatsappPublishHistory : [];
 }
 
+export function getWhatsAppHistoryByIdempotencyKey(key: string): WhatsAppPublishHistoryRecord | null {
+  if (!key) return null;
+  const db = getDb() as any;
+  if (!Array.isArray(db.whatsappPublishHistory)) return null;
+  const cleanKey = String(key).trim();
+  return db.whatsappPublishHistory.find((r: any) => r && r.idempotencyKey === cleanKey) || null;
+}
+
 export function addWhatsAppPublishHistoryRecord(
   record: Omit<WhatsAppPublishHistoryRecord, 'id' | 'dateTime' | 'isoTimestamp'> & {
     id?: string;
+    idempotencyKey?: string;
+    destinationId?: string;
     dateTime?: string;
     isoTimestamp?: string;
   }
@@ -616,6 +635,16 @@ export function addWhatsAppPublishHistoryRecord(
   if (!Array.isArray(db.whatsappPublishHistory)) {
     db.whatsappPublishHistory = [];
   }
+
+  // Idempotency check: if a record with this key already exists, return it
+  if (record.idempotencyKey) {
+    const cleanKey = String(record.idempotencyKey).trim();
+    const existing = db.whatsappPublishHistory.find((r: any) => r && r.idempotencyKey === cleanKey);
+    if (existing) {
+      return existing;
+    }
+  }
+
   const now = new Date();
   const datePart = now.toLocaleDateString('en-GB');
   const timePart = now.toLocaleTimeString('en-US', {
@@ -626,10 +655,12 @@ export function addWhatsAppPublishHistoryRecord(
 
   const entry: WhatsAppPublishHistoryRecord = {
     id: record.id || `wapub-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    idempotencyKey: record.idempotencyKey ? String(record.idempotencyKey).trim() : undefined,
     postId: record.postId || '',
     title: record.title || 'CSC DOST Notification',
     category: record.category || 'job',
     destination: record.destination || 'WhatsApp Group',
+    destinationId: record.destinationId,
     sharingMethod: record.sharingMethod || 'WhatsApp Share Link',
     dateTime: record.dateTime || `${datePart}, ${timePart}`,
     isoTimestamp: record.isoTimestamp || now.toISOString(),
@@ -640,14 +671,53 @@ export function addWhatsAppPublishHistoryRecord(
     confirmedBy: record.confirmedBy,
     providerMessageId: record.providerMessageId,
     errorDetails: record.errorDetails,
+    messageRevision: record.messageRevision,
   };
 
   db.whatsappPublishHistory.unshift(entry);
-  if (db.whatsappPublishHistory.length > 100) {
-    db.whatsappPublishHistory = db.whatsappPublishHistory.slice(0, 100);
+  if (db.whatsappPublishHistory.length > 150) {
+    db.whatsappPublishHistory = db.whatsappPublishHistory.slice(0, 150);
   }
   saveDb(db);
   return entry;
+}
+
+export function updateWhatsAppPublishHistoryByProviderMessageId(
+  providerMessageId: string,
+  status: WhatsAppPublishStatus,
+  deliveryTimestampOrExtra?: string | Partial<WhatsAppPublishHistoryRecord>,
+  errorDetails?: string
+): WhatsAppPublishHistoryRecord | null {
+  if (!providerMessageId) return null;
+  const db = getDb() as any;
+  if (!Array.isArray(db.whatsappPublishHistory)) return null;
+  const cleanId = String(providerMessageId).trim();
+  const idx = db.whatsappPublishHistory.findIndex(
+    (item: any) => item && (item.providerMessageId === cleanId || item.id === cleanId)
+  );
+  if (idx === -1) return null;
+
+  const nowIso = new Date().toISOString();
+  const extraObj: Partial<WhatsAppPublishHistoryRecord> =
+    typeof deliveryTimestampOrExtra === 'string'
+      ? {
+          deliveryTimestamp: deliveryTimestampOrExtra,
+          errorDetails: errorDetails || undefined,
+        }
+      : deliveryTimestampOrExtra || {};
+
+  db.whatsappPublishHistory[idx] = {
+    ...db.whatsappPublishHistory[idx],
+    ...extraObj,
+    status,
+    deliveryTimestamp:
+      extraObj.deliveryTimestamp ||
+      (status === 'Delivered' || status === 'Read'
+        ? nowIso
+        : db.whatsappPublishHistory[idx].deliveryTimestamp),
+  };
+  saveDb(db);
+  return db.whatsappPublishHistory[idx];
 }
 
 export function updateWhatsAppPublishHistoryStatus(

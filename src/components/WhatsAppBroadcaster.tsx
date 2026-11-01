@@ -48,9 +48,14 @@ export type WhatsAppPublishStatus =
   | 'Opened in WhatsApp'
   | 'Manually Confirmed'
   | 'Submitted to Provider'
+  | 'Accepted'
+  | 'Accepted by WhatsApp'
   | 'Sent'
   | 'Delivered'
-  | 'Failed';
+  | 'Read'
+  | 'Failed'
+  | 'Not configured'
+  | 'Unsupported or access not verified';
 
 export interface WhatsAppPublishHistoryEntry {
   id: string;
@@ -68,16 +73,37 @@ export interface WhatsAppPublishHistoryEntry {
   confirmedBy?: string;
   providerMessageId?: string;
   errorDetails?: string;
+  idempotencyKey?: string;
+  destinationId?: string;
+  deliveryTimestamp?: string;
+  messageRevision?: number;
 }
 
-interface ServerDiagnostics {
+export interface DestinationCapability {
+  id: string;
+  name: string;
+  type: string;
+  ready: boolean;
+  supportedDirectSend: boolean;
+  statusLabel: string;
+  reason: string;
+  targetHint?: string;
+  subscriberCount?: number;
+}
+
+export interface ServerDiagnostics {
   cloudApiReady: boolean;
   cloudApiTokenConfigured: boolean;
   phoneNumberIdConfigured: boolean;
   officialGroupsApiReady: boolean;
   officialGroupIdConfigured: boolean;
+  testRecipientReady?: boolean;
+  testRecipientPhoneConfigured?: boolean;
   automatedChannelApiSupported: boolean;
   webhookUrlConfigured: boolean;
+  destinations?: DestinationCapability[];
+  graphApiVersion?: string;
+  webhookUrl?: string;
   legacyAutoPostDiagnosis?: {
     status: string;
     summary: string;
@@ -155,9 +181,28 @@ export default function WhatsAppBroadcaster({
   const [savingDestinationConfig, setSavingDestinationConfig] = useState(false);
   const [useWhatsAppWebLink, setUseWhatsAppWebLink] = useState(false);
 
-  // Official API Diagnostics
+  // Official API Diagnostics & Direct Sending State
   const [diagnostics, setDiagnostics] = useState<ServerDiagnostics | null>(null);
+  const [serverDestinations, setServerDestinations] = useState<DestinationCapability[]>([]);
+  const [selectedDestinationId, setSelectedDestinationId] = useState<string>('test_recipient');
   const [isSubmittingOfficialApi, setIsSubmittingOfficialApi] = useState(false);
+  const [isCheckingReadiness, setIsCheckingReadiness] = useState(false);
+  const [sendState, setSendState] = useState<
+    | 'idle'
+    | 'checking'
+    | 'ready'
+    | 'sending'
+    | 'accepted'
+    | 'delivered'
+    | 'failed'
+    | 'not_configured'
+    | 'unsupported'
+  >('idle');
+  const [sendResultMessage, setSendResultMessage] = useState<string>('');
+  const [lastDispatchedMessageId, setLastDispatchedMessageId] = useState<string | null>(null);
+  const [currentIdempotencyKey, setCurrentIdempotencyKey] = useState<string>(() => {
+    return `idemp_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+  });
 
   // Feedback & Copy states
   const [copiedGroupMsg, setCopiedGroupMsg] = useState(false);
@@ -302,11 +347,14 @@ export default function WhatsAppBroadcaster({
       const finalPosts = Array.from(mergedMap.values());
       setAllPosts(finalPosts);
 
-      // 3. Apply server diagnostics
+      // 3. Apply server diagnostics and readiness destinations
       if (diagRes && diagRes.ok) {
         const diagJson = await diagRes.json().catch(() => null);
-        if (diagJson?.diagnostics) {
-          setDiagnostics(diagJson.diagnostics);
+        if (diagJson) {
+          setDiagnostics(diagJson.diagnostics || diagJson);
+          if (Array.isArray(diagJson.destinations)) {
+            setServerDestinations(diagJson.destinations);
+          }
         }
       }
 
@@ -351,6 +399,27 @@ export default function WhatsAppBroadcaster({
     }
   };
 
+  // Dedicated readiness check function for the UI "Recheck Connection" button
+  const checkReadiness = async () => {
+    setIsCheckingReadiness(true);
+    setSendState('checking');
+    try {
+      const res = await fetch('/api/whatsapp/readiness');
+      if (res.ok) {
+        const data = await res.json();
+        setDiagnostics(data.diagnostics || data);
+        if (Array.isArray(data.destinations)) {
+          setServerDestinations(data.destinations);
+        }
+        setSendState('idle');
+      }
+    } catch (err) {
+      console.warn('Failed to recheck readiness:', err);
+    } finally {
+      setIsCheckingReadiness(false);
+    }
+  };
+
   useEffect(() => {
     if (SARKARI_DATA.length > 0) {
       // Default to first Indian Army or top notification
@@ -360,6 +429,65 @@ export default function WhatsAppBroadcaster({
     }
     fetchPublisherState();
   }, []);
+
+  // Realtime Server-Sent Events listener for live Meta Webhook delivery status updates
+  useEffect(() => {
+    let es: EventSource | null = null;
+    try {
+      es = new EventSource('/api/realtime/stream');
+      es.onmessage = (e) => {
+        try {
+          const payload = JSON.parse(e.data);
+          if (payload?.type === 'WHATSAPP_STATUS_UPDATED') {
+            const data = payload.payload || payload;
+            if (Array.isArray(data.history)) {
+              setPublishHistory(data.history);
+            } else if (data.entry) {
+              setPublishHistory((prev) => [
+                data.entry,
+                ...prev.filter(
+                  (p) =>
+                    p.id !== data.entry.id &&
+                    (!p.providerMessageId || p.providerMessageId !== data.entry.providerMessageId)
+                ),
+              ]);
+            }
+
+            if (data.providerMessageId && data.providerMessageId === lastDispatchedMessageId) {
+              if (data.status === 'Delivered') {
+                setSendState('delivered');
+                setSendResultMessage(
+                  `Delivered! Recipient device verified delivery via Meta Webhook at ${new Date(
+                    data.deliveryTimestamp || Date.now()
+                  ).toLocaleTimeString()}`
+                );
+              } else if (data.status === 'Read') {
+                setSendState('delivered');
+                setSendResultMessage(
+                  `Read! Recipient read notification at ${new Date(
+                    data.deliveryTimestamp || Date.now()
+                  ).toLocaleTimeString()}`
+                );
+              } else if (data.status === 'Failed') {
+                setSendState('failed');
+                setSendResultMessage(
+                  `Delivery failed: ${data.errorDetails || 'Meta callback reported delivery failure.'}`
+                );
+              }
+            }
+          }
+        } catch {
+          // Ignore non-json or heartbeat events
+        }
+      };
+    } catch (err) {
+      console.warn('Realtime SSE stream unavailable:', err);
+    }
+
+    return () => {
+      if (es) es.close();
+    };
+  }, [lastDispatchedMessageId]);
 
   // Currently selected post object
   const activeSelectedItem = useMemo(() => {
@@ -811,68 +939,113 @@ export default function WhatsAppBroadcaster({
   };
 
   // ============================================================================
-  // DESTINATION 3 HANDLER: OFFICIAL WHATSAPP CLOUD API (IF CONFIGURED)
+  // DESTINATION HANDLER: OFFICIAL WHATSAPP CLOUD API DIRECT DISPATCH
   // ============================================================================
-  const handleOfficialApiGroupPublish = async () => {
-    if (!diagnostics?.officialGroupsApiReady) {
+  const handleSendToWhatsApp = async () => {
+    if (!activeSelectedItem) {
+      setStatusFeedback({
+        type: 'error',
+        title: 'No Post Selected',
+        message: 'Please select a published post from Section A before sending.',
+      });
+      return;
+    }
+
+    if (
+      selectedDestinationId === 'channel_manual' ||
+      selectedDestinationId === 'group_manual'
+    ) {
       setStatusFeedback({
         type: 'warning',
-        title: 'Official API-Managed Group Not Configured',
+        title: 'Automated Dispatch Unsupported for This Destination',
         message:
-          'Automated Group API delivery requires server-side WHATSAPP_CLOUD_API_TOKEN, WHATSAPP_PHONE_NUMBER_ID, and an API-managed WHATSAPP_OFFICIAL_GROUP_ID. Use "Share on WhatsApp" above to post to your existing WhatsApp Groups.',
+          'Meta Graph API does not provide a public automated messaging endpoint for WhatsApp Channels (whatsapp.com/channel/...) or consumer group invite links (chat.whatsapp.com/...). Please use the manual "Open My WhatsApp Channel" or "Share on WhatsApp" action buttons below.',
       });
       return;
     }
 
     setIsSubmittingOfficialApi(true);
+    setSendState('sending');
+    setSendResultMessage('Submitting notification to Meta WhatsApp Cloud API...');
+
+    const idempotencyKey =
+      currentIdempotencyKey ||
+      `send_${activeSelectedItem.id}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
     try {
-      const res = await fetch('/api/whatsapp/broadcast', {
+      const res = await fetch('/api/whatsapp/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          postId: activeSelectedItem?.id || '',
-          title: currentNotificationPayload.shortTitle || customTitle,
-          category: formatCategoryType,
-          messageText: currentFormattedMessage,
-          postUrl: singleCanonicalUrl,
-          destination: 'Official API-Managed Group',
-          adminUser,
+          postId: activeSelectedItem.id,
+          destinationId: selectedDestinationId,
+          idempotencyKey,
+          force: false,
         }),
       });
 
       const data = await res.json().catch(() => ({}));
+
       if (Array.isArray(data.history)) {
         setPublishHistory(data.history);
         localStorage.setItem('csc_whatsapp_publish_history', JSON.stringify(data.history));
+      } else if (data.entry) {
+        setPublishHistory((prev) => [
+          data.entry,
+          ...prev.filter((p) => p.id !== data.entry.id),
+        ]);
       }
 
       if (res.ok && data.success) {
+        setSendState('accepted');
+        setLastDispatchedMessageId(data.providerMessageId || null);
+        setSendResultMessage(
+          data.message ||
+            `Accepted by WhatsApp Cloud API (Message ID: ${data.providerMessageId}). Awaiting webhook delivery verification.`
+        );
         setStatusFeedback({
           type: 'success',
-          title: `Official API Response: ${data.status || 'Sent'}`,
+          title: 'Accepted by WhatsApp',
           message:
             data.message ||
-            'Notification dispatched via official WhatsApp Business Platform API.',
+            `Accepted by WhatsApp Cloud API for delivery (Message ID: ${data.providerMessageId}). Status will update to Delivered when recipient device receives it.`,
         });
+        // Generate new key for subsequent send
+        setCurrentIdempotencyKey(
+          `send_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
+        );
       } else {
+        const errStatus = data.status || 'Failed';
+        if (errStatus === 'Not configured') {
+          setSendState('not_configured');
+        } else if (errStatus === 'Unsupported or access not verified') {
+          setSendState('unsupported');
+        } else {
+          setSendState('failed');
+        }
+        setSendResultMessage(data.error || 'Failed to dispatch via WhatsApp Cloud API');
         setStatusFeedback({
           type: 'error',
-          title: `API Dispatch ${data.status || 'Failed'}`,
+          title: `WhatsApp Dispatch ${errStatus}`,
           message:
-            data.error ||
-            'The provider rejected or could not complete automated API delivery.',
+            data.error || 'The provider rejected or could not complete automated delivery.',
         });
       }
     } catch (err: any) {
+      setSendState('failed');
+      setSendResultMessage(err?.message || 'Network error reaching server API endpoint');
       setStatusFeedback({
         type: 'error',
-        title: 'API Connection Failed',
-        message: err?.message || 'Could not reach server API endpoint.',
+        title: 'Connection Failed',
+        message: err?.message || 'Could not reach server WhatsApp API endpoint.',
       });
     } finally {
       setIsSubmittingOfficialApi(false);
     }
   };
+
+  // Backwards-compatible alias
+  const handleOfficialApiGroupPublish = handleSendToWhatsApp;
 
   const handleClearHistory = async () => {
     setPublishHistory([]);
@@ -883,7 +1056,7 @@ export default function WhatsAppBroadcaster({
     } catch {}
   };
 
-  // Status Badge Renderer (strictly uses the 7 required statuses)
+  // Status Badge Renderer (strictly maps real verified statuses)
   const renderPublishStatusBadge = (entry: WhatsAppPublishHistoryEntry) => {
     switch (entry.status) {
       case 'Prepared':
@@ -908,7 +1081,7 @@ export default function WhatsAppBroadcaster({
               Manually Confirmed
             </span>
             <span className="text-[10px] text-slate-500 font-mono mt-0.5 pl-1">
-              Admin-confirmed (not API-verified)
+              Admin-confirmed (manual share)
             </span>
           </div>
         );
@@ -919,6 +1092,19 @@ export default function WhatsAppBroadcaster({
             Submitted to Provider
           </span>
         );
+      case 'Accepted':
+      case 'Accepted by WhatsApp':
+        return (
+          <div className="inline-flex flex-col items-start">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-900 border border-amber-300">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+              Accepted by WhatsApp
+            </span>
+            <span className="text-[10px] text-amber-700 font-mono mt-0.5 pl-1">
+              Awaiting Webhook Callback
+            </span>
+          </div>
+        );
       case 'Sent':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200">
@@ -928,9 +1114,33 @@ export default function WhatsAppBroadcaster({
         );
       case 'Delivered':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-900 border border-emerald-400">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
-            Delivered (Callback Verified)
+          <div className="inline-flex flex-col items-start">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-900 border border-emerald-400">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+              Delivered
+            </span>
+            <span className="text-[10px] text-emerald-700 font-mono mt-0.5 pl-1">
+              Webhook Confirmed
+            </span>
+          </div>
+        );
+      case 'Read':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-sky-100 text-sky-900 border border-sky-300">
+            <CheckCircle2 className="w-3.5 h-3.5 text-sky-700" />
+            Read by Recipient
+          </span>
+        );
+      case 'Not configured':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-300">
+            Not Configured
+          </span>
+        );
+      case 'Unsupported or access not verified':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-orange-50 text-orange-800 border border-orange-300">
+            Unsupported via API
           </span>
         );
       case 'Failed':
@@ -1947,59 +2157,231 @@ export default function WhatsAppBroadcaster({
         </div>
 
         {/* ================================================================== */}
-        {/* OPTIONAL OFFICIAL WHATSAPP BUSINESS PLATFORM API BAR               */}
+        {/* AUTOMATED "SEND TO WHATSAPP" DIRECT DISPATCH CONTROL HUB           */}
         {/* ================================================================== */}
-        <div className="p-3.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
-          <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-bold text-[#092442]">
-                Official WhatsApp Business Platform API Status:
-              </span>
-              <span
-                className={`px-2 py-0.5 rounded-full text-[10.5px] font-semibold border ${
-                  diagnostics?.officialGroupsApiReady
-                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                    : 'bg-slate-100 text-slate-700 border-slate-300'
-                }`}
-              >
-                {diagnostics?.officialGroupsApiReady
-                  ? '● Official Cloud API + Group ID Configured'
-                  : '○ Official Group API Not Configured (Manual Group & Channel Active)'}
-              </span>
-              <span className="px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-                Channel Auto-API: Not Supported by Meta Graph API
-              </span>
+        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#F8FAFC] to-[#F1F5F9] border border-[#CBD5E1] shadow-2xs space-y-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-[#E2E8F0] pb-3.5">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#16A34A] animate-pulse" />
+                <h4 className="text-base font-extrabold text-[#092442] flex items-center gap-2">
+                  <Send className="w-4 h-4 text-[#0874DC]" />
+                  Official Automated "Send to WhatsApp" Dispatch
+                </h4>
+                <span className="px-2 py-0.5 rounded text-[10.5px] font-bold uppercase bg-blue-50 text-[#0757AF] border border-blue-200">
+                  Meta Cloud API
+                </span>
+              </div>
+              <p className="text-xs text-[#475569] mt-0.5">
+                Send the active notification directly via the server-authenticated Meta WhatsApp Business Cloud API.
+              </p>
             </div>
-            <p className="text-[11.5px] text-[#475569]">
-              Automated API delivery is enabled only when valid server-side Meta Cloud API
-              credentials (<code className="font-mono">WHATSAPP_CLOUD_API_TOKEN</code>,{' '}
-              <code className="font-mono">WHATSAPP_PHONE_NUMBER_ID</code>, and{' '}
-              <code className="font-mono">WHATSAPP_OFFICIAL_GROUP_ID</code>) are verified. No API
-              tokens are stored in the browser.
-            </p>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={checkReadiness}
+                disabled={isCheckingReadiness}
+                className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-[#0F172A] border border-[#CBD5E1] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-60"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-[#0874DC] ${isCheckingReadiness ? 'animate-spin' : ''}`} />
+                <span>{isCheckingReadiness ? 'Checking Connection...' : 'Recheck Readiness'}</span>
+              </button>
+            </div>
           </div>
 
-          <div className="shrink-0">
-            <button
-              type="button"
-              disabled={!diagnostics?.officialGroupsApiReady || isSubmittingOfficialApi}
-              onClick={handleOfficialApiGroupPublish}
-              title={
-                diagnostics?.officialGroupsApiReady
-                  ? 'Send via Official Meta WhatsApp Cloud API'
-                  : 'Disabled: Configure official Meta Cloud API credentials on the server to enable API-managed group dispatch'
-              }
-              className="px-3.5 py-2 rounded-xl bg-[#175CEE] hover:bg-[#124FD1] disabled:bg-slate-200 disabled:text-slate-500 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed"
-            >
-              <Send className="w-3.5 h-3.5" />
-              <span>
-                {isSubmittingOfficialApi
-                  ? 'Submitting to Cloud API...'
-                  : diagnostics?.officialGroupsApiReady
-                  ? 'Send via Official Cloud API'
-                  : 'Automated API Disabled (Use Manual Share Above)'}
+          {/* Destination Selector Radio Grid */}
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-[#092442]">
+              Select Configured Destination:
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+              {/* Option 1: Authorized Test / Staff Phone */}
+              <button
+                type="button"
+                onClick={() => setSelectedDestinationId('test_recipient')}
+                className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                  selectedDestinationId === 'test_recipient'
+                    ? 'bg-white border-[#0874DC] ring-2 ring-[#0874DC]/20 shadow-xs'
+                    : 'bg-white/70 border-[#E2E8F0] hover:bg-white'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-1 mb-1">
+                  <span className="font-bold text-xs text-[#092442] flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-blue-600" />
+                    Authorized Test Phone
+                  </span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
+                      diagnostics?.testRecipientReady
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                        : 'bg-slate-100 text-slate-600 border-slate-300'
+                    }`}
+                  >
+                    {diagnostics?.testRecipientReady ? '● Ready for API' : '○ Not Configured'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#64748B] line-clamp-2">
+                  Direct dispatch to authorized staff tester (set via <code className="font-mono text-[10px]">WHATSAPP_TEST_RECIPIENT_PHONE</code>).
+                </p>
+              </button>
+
+              {/* Option 2: API-Managed Group */}
+              <button
+                type="button"
+                onClick={() => setSelectedDestinationId('group_api')}
+                className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                  selectedDestinationId === 'group_api'
+                    ? 'bg-white border-[#0874DC] ring-2 ring-[#0874DC]/20 shadow-xs'
+                    : 'bg-white/70 border-[#E2E8F0] hover:bg-white'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-1 mb-1">
+                  <span className="font-bold text-xs text-[#092442] flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                    API-Managed Group
+                  </span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
+                      diagnostics?.officialGroupsApiReady
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                        : 'bg-slate-100 text-slate-600 border-slate-300'
+                    }`}
+                  >
+                    {diagnostics?.officialGroupsApiReady ? '● Ready for API' : '○ Group ID Missing'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#64748B] line-clamp-2">
+                  Official Meta API-managed group destination (requires official Groups API access + <code className="font-mono text-[10px]">WHATSAPP_OFFICIAL_GROUP_ID</code>).
+                </p>
+              </button>
+
+              {/* Option 3: Opted-In Citizen Contacts */}
+              <button
+                type="button"
+                onClick={() => setSelectedDestinationId('subscribers')}
+                className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                  selectedDestinationId === 'subscribers'
+                    ? 'bg-white border-[#0874DC] ring-2 ring-[#0874DC]/20 shadow-xs'
+                    : 'bg-white/70 border-[#E2E8F0] hover:bg-white'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-1 mb-1">
+                  <span className="font-bold text-xs text-[#092442] flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-purple-600" />
+                    Opted-In Contacts
+                  </span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
+                      diagnostics?.cloudApiReady
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                        : 'bg-slate-100 text-slate-600 border-slate-300'
+                    }`}
+                  >
+                    {diagnostics?.cloudApiReady ? '● Cloud API Ready' : '○ API Missing'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#64748B] line-clamp-2">
+                  Send to registered citizen mobile numbers using approved Meta Cloud API templates.
+                </p>
+              </button>
+            </div>
+          </div>
+
+          {/* Limitation Callout when Channel or Consumer Group is considered */}
+          <div className="p-3 rounded-xl bg-amber-50/80 border border-amber-200 text-amber-900 text-xs flex items-start gap-2.5">
+            <Info className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <span className="font-bold block">
+                Official Meta Cloud API Limitations for Channels and Consumer Invite Groups:
               </span>
-            </button>
+              <p className="text-[11.5px] leading-relaxed text-amber-800">
+                1. <strong>WhatsApp Channels (whatsapp.com/channel/...)</strong>: Meta does NOT provide an automated public Cloud API endpoint for publishing to WhatsApp Channels. Use the dedicated <strong>"Open My WhatsApp Channel"</strong> + <strong>"Copy Channel Notification"</strong> workflow above.
+                <br />
+                2. <strong>Consumer Invite Links (chat.whatsapp.com/...)</strong>: Invite links are join URLs, not API messaging IDs. Use the <strong>"Share on WhatsApp"</strong> workflow above.
+              </p>
+            </div>
+          </div>
+
+          {/* Action Row with Real Sending State */}
+          <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-0.5">
+              <span className="text-[11px] text-[#64748B] block">
+                Selected Post to Broadcast:
+              </span>
+              <span className="text-xs font-bold text-[#092442] block truncate max-w-[420px]">
+                {activeSelectedItem?.title || 'No notification selected'}
+              </span>
+              {sendResultMessage && (
+                <span className="text-[11px] font-mono text-[#0874DC] block">
+                  {sendResultMessage}
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2.5 shrink-0">
+              <button
+                type="button"
+                disabled={
+                  isSubmittingOfficialApi ||
+                  sendState === 'sending' ||
+                  (selectedDestinationId === 'test_recipient' && !diagnostics?.testRecipientReady) ||
+                  (selectedDestinationId === 'group_api' && !diagnostics?.officialGroupsApiReady) ||
+                  (selectedDestinationId === 'subscribers' && !diagnostics?.cloudApiReady)
+                }
+                onClick={handleSendToWhatsApp}
+                className={`py-2.5 px-5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer disabled:cursor-not-allowed ${
+                  sendState === 'delivered'
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                    : sendState === 'accepted'
+                    ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                    : sendState === 'sending'
+                    ? 'bg-blue-600 text-white opacity-80'
+                    : (selectedDestinationId === 'test_recipient' && diagnostics?.testRecipientReady) ||
+                      (selectedDestinationId === 'group_api' && diagnostics?.officialGroupsApiReady) ||
+                      (selectedDestinationId === 'subscribers' && diagnostics?.cloudApiReady)
+                    ? 'bg-[#16A34A] hover:bg-emerald-700 text-white shadow-emerald-600/20'
+                    : 'bg-slate-200 text-slate-500'
+                }`}
+              >
+                {sendState === 'sending' ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
+                    <span>Sending to WhatsApp...</span>
+                  </>
+                ) : sendState === 'delivered' ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    <span>Delivered (Webhook Confirmed)</span>
+                  </>
+                ) : sendState === 'accepted' ? (
+                  <>
+                    <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                    <span>Accepted by WhatsApp</span>
+                  </>
+                ) : (selectedDestinationId === 'test_recipient' && !diagnostics?.testRecipientReady) ? (
+                  <>
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>Not Configured (Phone Missing)</span>
+                  </>
+                ) : (selectedDestinationId === 'group_api' && !diagnostics?.officialGroupsApiReady) ? (
+                  <>
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>Not Configured (Group ID Missing)</span>
+                  </>
+                ) : (selectedDestinationId === 'subscribers' && !diagnostics?.cloudApiReady) ? (
+                  <>
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>Not Configured (API Missing)</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 shrink-0" />
+                    <span>Send to WhatsApp</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -2015,7 +2397,7 @@ export default function WhatsAppBroadcaster({
             </span>
             <h3 className="text-sm sm:text-base font-bold text-[#092442] flex items-center gap-2">
               <Clock className="w-4 h-4 text-[#0874DC]" />
-              <span>Publishing History</span>
+              <span>Publishing &amp; Delivery History</span>
             </h3>
           </div>
 
@@ -2041,8 +2423,7 @@ export default function WhatsAppBroadcaster({
             <FileText className="w-7 h-7 text-[#64748B] mx-auto" />
             <p className="text-xs font-bold text-[#092442]">No Publishing Activity Recorded Yet</p>
             <p className="text-xs text-[#64748B]">
-              When you copy a notification, open WhatsApp Groups, or open your WhatsApp Channel,
-              each step and its confirmation status will appear here.
+              When you send notifications via Meta Cloud API or use manual sharing, each event and verified delivery receipt appears here.
             </p>
           </div>
         ) : (
@@ -2052,10 +2433,11 @@ export default function WhatsAppBroadcaster({
                 <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-[11px] font-bold uppercase tracking-wider text-[#475569]">
                   <th className="py-3 px-3.5">Notification Title</th>
                   <th className="py-3 px-3.5">Destination</th>
-                  <th className="py-3 px-3.5">Sharing Method</th>
+                  <th className="py-3 px-3.5">Method</th>
                   <th className="py-3 px-3.5">Date &amp; Time</th>
-                  <th className="py-3 px-3.5">Status</th>
-                  <th className="py-3 px-3.5">Admin User</th>
+                  <th className="py-3 px-3.5">Delivery Status</th>
+                  <th className="py-3 px-3.5">Message ID (WAMID)</th>
+                  <th className="py-3 px-3.5">Admin / Staff</th>
                   <th className="py-3 px-3.5 text-right">Action</th>
                 </tr>
               </thead>
@@ -2065,7 +2447,7 @@ export default function WhatsAppBroadcaster({
                     entry.status === 'Prepared' || entry.status === 'Opened in WhatsApp';
                   return (
                     <tr key={entry.id} className="hover:bg-[#F8FAFC] transition-colors">
-                      <td className="py-3 px-3.5 max-w-[260px]">
+                      <td className="py-3 px-3.5 max-w-[240px]">
                         <span className="font-bold text-[#092442] block truncate">
                           {entry.title}
                         </span>
@@ -2085,10 +2467,32 @@ export default function WhatsAppBroadcaster({
                         {entry.sharingMethod}
                       </td>
                       <td className="py-3 px-3.5 font-mono text-[11px] text-[#475569] whitespace-nowrap">
-                        {entry.dateTime}
+                        {entry.deliveryTimestamp
+                          ? new Date(entry.deliveryTimestamp).toLocaleTimeString('en-IN', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit',
+                              day: '2-digit',
+                              month: 'short',
+                            })
+                          : entry.dateTime}
                       </td>
                       <td className="py-3 px-3.5 whitespace-nowrap">
                         {renderPublishStatusBadge(entry)}
+                      </td>
+                      <td className="py-3 px-3.5 font-mono text-[11px] text-[#475569] whitespace-nowrap max-w-[160px] truncate">
+                        {entry.providerMessageId ? (
+                          <span
+                            title={entry.providerMessageId}
+                            className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200"
+                          >
+                            {entry.providerMessageId.length > 20
+                              ? `${entry.providerMessageId.slice(0, 10)}...${entry.providerMessageId.slice(-8)}`
+                              : entry.providerMessageId}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
                       </td>
                       <td className="py-3 px-3.5 font-medium text-[#1E293B] whitespace-nowrap">
                         {entry.adminUser}
@@ -2106,6 +2510,11 @@ export default function WhatsAppBroadcaster({
                         ) : entry.status === 'Manually Confirmed' ? (
                           <span className="text-[11px] font-mono text-emerald-700 font-semibold">
                             ✓ Confirmed {entry.confirmedAt ? `(${entry.confirmedAt})` : ''}
+                          </span>
+                        ) : entry.status === 'Delivered' || entry.status === 'Accepted' ? (
+                          <span className="text-[11px] font-mono text-emerald-700 font-semibold flex items-center justify-end gap-1">
+                            <ShieldCheck className="w-3.5 h-3.5" />
+                            API Verified
                           </span>
                         ) : (
                           <span className="text-[11px] text-[#94A3B8]">—</span>
