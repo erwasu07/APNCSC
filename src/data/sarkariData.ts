@@ -97,6 +97,110 @@ export const SARKARI_CATEGORIES = {
 };
 
 export const SARKARI_DATA: SarkariItem[] = [
+  // 🇮🇳 STAFF SELECTION COMMISSION (SSC) NOVEMBER 2026 EXAMINATIONS SCHEDULE
+  {
+    id: 'ssc-examination-schedule-cgept-dept-steno-cpo-nov-2026',
+    title: 'SSC Important Notice: Schedule of Computer Based & Skill Examinations for November 2026 (CGEPT, Departmental Typing/Steno & SI Paper-II)',
+    category: 'ssc_jobs',
+    postDate: '02/11/2026',
+    startDate: '17/11/2026',
+    lastDate: '28/11/2026',
+    closingTime: '18:00 IST',
+    advertisementNo: 'F. No. HQ-C1101/9/2026-C1/1 (Exam Schedule Nov 2026)',
+    recruitmentYear: '2026',
+    shortInfo: 'Staff Selection Commission (SSC) has officially issued the schedule of Computer-Based & Skill Tests for November 2026: Coast Guard Enrolled Persons Test (CGEPT) Batches 01/2027 & 02/2027 on 17–18 November 2026; Annual Departmental Typing Test & Stenographer Skill Test 2025 on 20–21 November 2026; and Sub-Inspector in Delhi Police & CAPFs Examination (Paper-II) on 28 November 2026.',
+    ageLimit: 'As per respective examination notices and service rules',
+    eligibility: 'Candidates enrolled for Coast Guard CGEPT, eligible departmental candidates, and candidates qualified in Paper-I & PET/PST for SI Delhi Police/CAPFs.',
+    totalPosts: 'Schedule for Multiple Central & Coast Guard Cadres',
+    officialLink: 'https://ssc.gov.in',
+    officialNotificationUrl: 'https://ssc.gov.in',
+    officialApplicationUrl: 'https://ssc.gov.in',
+    fees: {
+      genObc: '₹0/- (Examination Schedule Notice)',
+      scSt: '₹0/- (Exempted)'
+    },
+    stage: 'examination',
+    status: 'Informational',
+    isNew: true
+  },
+  // 🏛️ JKSSB HEALTH EDUCATOR PROVISIONAL ANSWER KEY & OBJECTION WINDOW
+  {
+    id: 'jkssb-health-educator-provisional-answer-key-exam-01-nov-2026',
+    title: 'JKSSB Health Educator Written Exam 2026: Provisional Answer Key & Objection Submission Window Announced',
+    category: 'jkssb',
+    postDate: '01/11/2026',
+    startDate: '02/11/2026',
+    lastDate: '05/11/2026',
+    closingTime: '17:00 IST',
+    advertisementNo: 'Advt No. 07 of 2025 (Item No. 137) | Notice No. JKSSB-COE0EXAM(UT)/03/2026-03(7909564)',
+    recruitmentYear: '2026',
+    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) has officially released the Provisional Answer Keys (Series A, B, C, D) for the OMR-based written examination held on 01.11.2026 for the post of Health Educator (Health and Medical Education Department). Candidates may submit offline objections with documentary proof and ₹200 fee per question at JKSSB Central Offices in Jammu or Srinagar by 05.11.2026.',
+    ageLimit: 'Not Applicable (Provisional Answer Key Stage)',
+    eligibility: 'Candidates who appeared in the OMR written examination conducted on 01.11.2026 for Health Educator posts.',
+    totalPosts: 'Health Educator (Health & Medical Education Department)',
+    officialLink: 'https://jkssb.nic.in',
+    officialNotificationUrl: 'https://jkssb.nic.in',
+    officialApplicationUrl: 'https://jkssb.nic.in',
+    fees: {
+      genObc: '₹200/- per question challenged (Demand Draft, refundable if upheld)',
+      scSt: '₹200/- per question challenged'
+    },
+    stage: 'answer_key',
+    status: 'Open',
+    isNew: true
+  },
+  // 🎓 CLUSTER UNIVERSITY SRINAGAR PG & PH.D REGISTRATION RETURNS
+  {
+    id: 'cus-registration-returns-pg-phd-programmes-nov-2026',
+    title: 'Cluster University Srinagar: Online Submission of Registration Returns for PG & Ph.D Programmes (Batch 2026 & 2025)',
+    category: 'cluster_univ',
+    postDate: '02/11/2026',
+    startDate: '03/11/2026',
+    lastDate: '18/11/2026',
+    closingTime: '23:59 IST',
+    advertisementNo: 'Notice No. CUS/Adm/Reg-Returns/PG-PhD/2026 (Dated: 02.11.2026)',
+    session: '2026-27',
+    shortInfo: 'Cluster University of Srinagar (CUS) has officially opened the online portal for submitting Registration Returns for 1st Semester students of 2-Year PG Programme (Batch 2026), 3rd Semester students of 1-Year PG Programme (Batch 2026), 3rd Semester of 2-Year PG Programme (Batch 2025), and 1st Year Ph.D Programme (Batch 2026) from 03.11.2026 to 18.11.2026.',
+    ageLimit: 'As per University Admission Guidelines',
+    eligibility: 'Enrolled students admitted to 2-Year PG, 1-Year PG, and Ph.D programmes across constituent colleges and university departments.',
+    totalPosts: 'University Academic Registration',
+    officialLink: 'https://cusrinagar.edu.in',
+    officialNotificationUrl: 'https://cusrinagar.edu.in',
+    officialApplicationUrl: 'https://cusrinagar.edu.in',
+    fees: {
+      genObc: 'As prescribed by University for Registration Return submission',
+      scSt: 'As prescribed by University'
+    },
+    stage: 'admission',
+    status: 'Open',
+    isNew: true
+  },
+  // 📚 UNIVERSITY OF KASHMIR B.ED 3RD & 4TH SEM REVISED DATE SHEET
+  {
+    id: 'ku-bed-3rd-4th-sem-revised-datesheet-nov-2026',
+    title: 'University of Kashmir: Revised Date Sheet for B.Ed 3rd & 4th Semester (Batch 2024) Session November 2026 Released',
+    category: 'exam_forms',
+    postDate: '01/11/2026',
+    startDate: '01/11/2026',
+    lastDate: '25/11/2026',
+    closingTime: '14:00 IST',
+    advertisementNo: 'Notice No. F(Revised-Datesheet-B.Ed-3rd-4th-Sem)KU/2026 (Dated: 01.11.2026)',
+    session: '2024-26',
+    shortInfo: 'University of Kashmir has officially issued the revised examination date sheet for regular candidates of B.Ed. 3rd & 4th Semester (Batch-2024) enrolled through Directorate of Distance Education, PG Department of Education, South Campus, and Affiliated Private B.Ed. Colleges for the examination session November 2026.',
+    ageLimit: 'Not Applicable (Semester Examination)',
+    eligibility: 'Regular enrolled candidates of B.Ed 3rd & 4th Semester (Batch 2024) who have submitted examination forms.',
+    totalPosts: 'B.Ed Examination Session November 2026',
+    officialLink: 'https://kashmiruniversity.net',
+    officialNotificationUrl: 'https://uok.edu.in',
+    officialApplicationUrl: 'https://uok.edu.in',
+    fees: {
+      genObc: '₹0/- (Date Sheet Notification)',
+      scSt: '₹0/- (Exempted)'
+    },
+    stage: 'examination',
+    status: 'Informational',
+    isNew: true
+  },
   // 🇮🇳 STAFF SELECTION COMMISSION (SSC) CPO SI PET/PST RESULT & PAPER-II NOTICE (30 OCTOBER 2026)
   {
     id: 'ssc-cpo-pet-pst-result-paper-2-exam-date-2026',
