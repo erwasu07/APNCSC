@@ -120,6 +120,111 @@ export const SARKARI_CATEGORIES = {
 };
 
 export const SARKARI_DATA: SarkariItem[] = [
+  // 🎓 UNIVERSITY OF KASHMIR FYUGP ADMISSIONS CLOSURE NOTICE (Dated: 05.11.2026)
+  {
+    id: 'ku-admission-closure-fyugp-nep2020-pvt-colleges-2026',
+    title: 'University of Kashmir: Admission Closure Notice for FYUGP NEP-2020 at Private Affiliated Colleges',
+    category: 'admissions',
+    postDate: '05/11/2026',
+    startDate: '05/11/2026',
+    lastDate: '05/11/2026',
+    advertisementNo: 'Notification No. F(Adm-Closure-FYUGP-Pvt)DAA/KU/2026',
+    shortInfo: 'Dean Academic Affairs, University of Kashmir has issued an authoritative notification regarding the formal closure of admissions to the Four-Year Undergraduate Programme (FYUGP) under NEP 2020 for the academic session 2026–27 in all private affiliated colleges across the Kashmir division. Principals of affiliated colleges have been instructed to finalize enrollment and complete registration formalities strictly.',
+    ageLimit: 'As per FYUGP NEP-2020 University Statutes',
+    eligibility: 'Affiliated Private Degree Colleges and enrolled FYUGP Semester 1st/2nd students under NEP-2020.',
+    totalPosts: 'FYUGP Institutional Admission Closure',
+    officialLink: 'https://kashmiruniversity.net',
+    fees: {
+      genObc: 'Not Applicable (Institutional Admission Closure Notice)',
+      scSt: 'Not Applicable'
+    },
+    isNew: true
+  },
+
+  // 🇮🇳 STAFF SELECTION COMMISSION (SSC) CGL TIER-1 TENTATIVE ANSWER KEY & OBJECTIONS (Dated: 04.11.2026)
+  {
+    id: 'ssc-cgl-tier-1-tentative-answer-key-objection-notice-2026',
+    title: 'SSC CGL Tier-1 Examination 2026: Tentative Answer Key, Response Sheets & Objection Window Notice',
+    category: 'ssc_jobs',
+    postDate: '04/11/2026',
+    startDate: '04/11/2026',
+    lastDate: '07/11/2026',
+    advertisementNo: 'Notice: Combined Graduate Level Examination (Tier-I) 2026 (F.No. HQ-C1101/AnswerKey/2026)',
+    shortInfo: 'Staff Selection Commission (SSC) has uploaded the Tentative Answer Keys along with candidates’ Response Sheets for the Combined Graduate Level Examination (Tier-I), 2026. Candidates can check their question papers and submit online representations or challenges through the official commission website from 4th November to 7th November 2026 (up to 9:00 PM).',
+    ageLimit: 'Not Applicable (Answer Key & Challenge Window)',
+    eligibility: 'All candidates who appeared in the SSC Combined Graduate Level (Tier-I) Computer Based Examination 2026.',
+    totalPosts: '17,727 Posts Tier-I Exam Key & Response Sheets',
+    officialLink: 'https://ssc.gov.in',
+    fees: {
+      genObc: '₹50 per question/answer challenged',
+      scSt: '₹50 per question/answer challenged'
+    },
+    isNew: true
+  },
+
+  // 🏛️ JKSSB ACCOUNTS ASSISTANT (FINANCE DEPT) WRITTEN EXAM & ADMIT CARD NOTICE (Dated: 04.11.2026)
+  {
+    id: 'jkssb-accounts-assistant-finance-exam-date-admit-card-2026',
+    title: 'JKSSB Accounts Assistant (Finance Dept) Written Exam Date & Admit Card Notice 2026',
+    category: 'jkssb',
+    postDate: '04/11/2026',
+    startDate: '11/11/2026',
+    lastDate: '15/11/2026',
+    advertisementNo: 'Notification No. 10 of 2025 (Item No. 271) | Notice No. JKSSB-COE0EXAM(UT)/10/2026',
+    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) has officially released the advance notice regarding the conduct of the OMR-based written examination for the post of Accounts Assistant (Finance Department) advertised under Notification No. 10 of 2025, Item No. 271. The examination is scheduled to be held on 15th November 2026. E-Admit Cards will be available for download from 11th November 2026 onwards on the official portal.',
+    ageLimit: 'Open Merit: 40 Years, Reserved Categories: 43 Years, PwD: 42 Years (as per advertisement)',
+    eligibility: 'Graduation in Commerce or any discipline with minimum 50% marks from a recognized university, having applied under Item No. 271.',
+    totalPosts: 'Accounts Assistant (Finance Dept) Examination',
+    officialLink: 'https://jkssb.nic.in',
+    fees: {
+      genObc: 'Not Applicable (Admit Card / Exam Notice — No Fee)',
+      scSt: 'Not Applicable'
+    },
+    isNew: true
+  },
+
+  // 🏥 UNIVERSITY OF KASHMIR BUMS PRACTICAL DATE SHEET (Dated: 04.11.2026)
+  {
+    id: 'ku-bums-practical-exam-datesheet-nov-2026',
+    title: 'University of Kashmir: BUMS Practical Examination Date Sheet for 2nd & 3rd Professional Sessions',
+    category: 'exam_forms',
+    postDate: '04/11/2026',
+    startDate: '12/11/2026',
+    lastDate: '22/11/2026',
+    advertisementNo: 'Notice No. F(Date-Sheet-BUMS-Pract)KU/2026 (Dated: 04.11.2026)',
+    shortInfo: 'University of Kashmir (Examination Wing) has issued the official practical date sheet for Bachelor of Unani Medicine & Surgery (BUMS) 2nd Professional (Batch 2023 & Supplementary) and 3rd Professional (Batch 2021) candidates. The practical and viva-voce examinations are scheduled to commence from 12th November 2026 at designated Ayurvedic & Unani Medical College centers.',
+    ageLimit: 'Not Applicable (University Practical Examination Date Sheet)',
+    eligibility: 'Enrolled BUMS 2nd Professional and 3rd Professional students eligible for practical/clinical examinations.',
+    totalPosts: 'BUMS Practical Examination Schedule',
+    officialLink: 'https://kashmiruniversity.net',
+    fees: {
+      genObc: 'Not Applicable (Official Practical Date Sheet)',
+      scSt: 'Not Applicable'
+    },
+    isNew: true
+  },
+
+  // 🏫 CLUSTER UNIVERSITY SRINAGAR PRE-PH.D COURSEWORK EXAM FORM NOTICE (Dated: 03.11.2026)
+  {
+    id: 'cus-pre-phd-coursework-exam-form-2026',
+    title: 'Cluster University Srinagar: Online Examination Form Notice for Pre-Ph.D Course Work (Batch 2026)',
+    category: 'cluster_univ',
+    postDate: '03/11/2026',
+    startDate: '04/11/2026',
+    lastDate: '12/11/2026',
+    advertisementNo: 'Notice No. CUS/Exam-Form/Pre-PhD/2026 (Dated: 03.11.2026)',
+    shortInfo: 'Cluster University Srinagar has issued an official notification for the online submission of Examination Forms for Pre-Ph.D Course Work candidates belonging to Batch 2026 across various university faculties. Eligible research scholars must complete the form through their student login and clear all requisite examination fees before the prescribed deadline.',
+    ageLimit: 'Not Applicable (Postgraduate Research Examination)',
+    eligibility: 'Registered Pre-Ph.D Course Work research scholars (Batch 2026) in Cluster University Srinagar faculties.',
+    totalPosts: 'Pre-Ph.D Course Work Examination (Batch 2026)',
+    officialLink: 'https://www.cusrinagar.edu.in',
+    fees: {
+      genObc: 'As prescribed by University Examination Wing',
+      scSt: 'As prescribed by University Examination Wing'
+    },
+    isNew: true
+  },
+
   // 🇮🇳 STAFF SELECTION COMMISSION (SSC) NOVEMBER 2026 EXAMINATIONS SCHEDULE
   {
     id: 'ssc-examination-schedule-cgept-dept-steno-cpo-nov-2026',
