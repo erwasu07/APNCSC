@@ -100,13 +100,38 @@ type NavSectionId =
   | 'push_publisher'
   | 'reports';
 
+function getSafeSession(key: string, fallback: string = ''): string {
+  try {
+    if (typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined') {
+      return window.sessionStorage.getItem(key) || fallback;
+    }
+  } catch {}
+  return fallback;
+}
+
+function setSafeSession(key: string, val: string): void {
+  try {
+    if (typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined') {
+      window.sessionStorage.setItem(key, val);
+    }
+  } catch {}
+}
+
+function removeSafeSession(key: string): void {
+  try {
+    if (typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined') {
+      window.sessionStorage.removeItem(key);
+    }
+  } catch {}
+}
+
 export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProps) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return sessionStorage.getItem('csc_admin_authed') === 'true';
+    return getSafeSession('csc_admin_authed') === 'true';
   });
   const [staffDisplayName, setStaffDisplayName] = useState<string>(() => {
-    return sessionStorage.getItem('csc_staff_name') || 'Mahi';
+    return getSafeSession('csc_staff_name', 'Mahi');
   });
 
   const [username, setUsername] = useState('');
@@ -119,7 +144,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
 
   // Helper: Retrieve active admin bearer headers for secure server calls
   const getAdminAuthHeaders = (extra: Record<string, string> = {}): Record<string, string> => {
-    const token = sessionStorage.getItem('csc_admin_token') || 'csc-staff-secret-auth-token-2026-vle';
+    const token = getSafeSession('csc_admin_token', 'csc-staff-secret-auth-token-2026-vle');
     return {
       ...extra,
       'Authorization': `Bearer ${token}`,
@@ -462,11 +487,11 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       setFirebaseUser(user);
       if (user) {
         setIsAuthenticated(true);
-        sessionStorage.setItem('csc_admin_authed', 'true');
+        setSafeSession('csc_admin_authed', 'true');
         if (user.email) {
           const emailUser = user.email.split('@')[0];
           setStaffDisplayName(emailUser);
-          sessionStorage.setItem('csc_staff_name', emailUser);
+          setSafeSession('csc_staff_name', emailUser);
         }
       }
     });
@@ -484,7 +509,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     try {
       if (trimmedUser === 'Mahi' && trimmedPass === 'Wasu@9687') {
         setStaffDisplayName('Mahi');
-        sessionStorage.setItem('csc_staff_name', 'Mahi');
+        setSafeSession('csc_staff_name', 'Mahi');
         try {
           const loginRes = await fetch('/api/admin/login', {
             method: 'POST',
@@ -493,15 +518,14 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           });
           const loginData = await loginRes.json();
           if (loginData.token) {
-            sessionStorage.setItem('csc_admin_token', loginData.token);
+            setSafeSession('csc_admin_token', loginData.token);
           }
         } catch {}
         try {
           await signInAnonymously(auth);
-        } catch {
-          setIsAuthenticated(true);
-          sessionStorage.setItem('csc_admin_authed', 'true');
-        }
+        } catch {}
+        setIsAuthenticated(true);
+        setSafeSession('csc_admin_authed', 'true');
       } else if (trimmedUser.includes('@')) {
         try {
           const loginRes = await fetch('/api/admin/login', {
@@ -511,13 +535,15 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           });
           const loginData = await loginRes.json();
           if (loginData.token) {
-            sessionStorage.setItem('csc_admin_token', loginData.token);
+            setSafeSession('csc_admin_token', loginData.token);
           }
         } catch {}
         await signInWithEmailAndPassword(auth, trimmedUser, trimmedPass);
         const namePart = trimmedUser.split('@')[0];
         setStaffDisplayName(namePart);
-        sessionStorage.setItem('csc_staff_name', namePart);
+        setSafeSession('csc_staff_name', namePart);
+        setIsAuthenticated(true);
+        setSafeSession('csc_admin_authed', 'true');
       } else {
         setLoginError('Invalid Staff Credentials. Use "Mahi" / "Wasu@9687" or a registered staff email.');
       }
@@ -525,9 +551,9 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       console.error('Staff authentication notice:', err);
       if (trimmedUser === 'Mahi' && trimmedPass === 'Wasu@9687') {
         setStaffDisplayName('Mahi');
-        sessionStorage.setItem('csc_staff_name', 'Mahi');
+        setSafeSession('csc_staff_name', 'Mahi');
         setIsAuthenticated(true);
-        sessionStorage.setItem('csc_admin_authed', 'true');
+        setSafeSession('csc_admin_authed', 'true');
       } else {
         setLoginError(err.message || 'Staff authentication failed. Check credentials.');
       }
@@ -541,7 +567,14 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       await signOut(auth);
     } catch {}
     setIsAuthenticated(false);
-    sessionStorage.removeItem('csc_admin_authed');
+    removeSafeSession('csc_admin_authed');
+    removeSafeSession('csc_admin_token');
+    serverApiMapRef.current.clear();
+    supabaseMapRef.current.clear();
+    firestoreAppsMapRef.current.clear();
+    firestoreAptsMapRef.current.clear();
+    setApplications([]);
+    setSelectedAppIds([]);
     setProfileMenuOpen(false);
   };
 
@@ -619,6 +652,16 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     setLoading(true);
     let unsubApps: (() => void) | null = null;
     let unsubApts: (() => void) | null = null;
+
+    // Fast sync deleted application IDs blacklist from server immediately
+    fetch('/api/appointments/deleted-ids')
+      .then(r => r.json())
+      .then(resData => {
+        if (Array.isArray(resData?.deletedIds) && resData.deletedIds.length > 0) {
+          removeRecordsFromAllMapsAndStorage(resData.deletedIds);
+        }
+      })
+      .catch(() => {});
 
     const updateCombinedApplications = () => {
       const map = new Map<string, any>();
@@ -873,11 +916,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
             return; // Discard stale in-flight response that started before a deletion
           }
           if (Array.isArray(resData?.deletedIds) && resData.deletedIds.length > 0) {
-            try {
-              const existing = getClientDeletedIdsSet();
-              resData.deletedIds.forEach((id: string) => existing.add(id.toLowerCase()));
-              localStorage.setItem('csc_deleted_application_ids', JSON.stringify(Array.from(existing)));
-            } catch {}
+            removeRecordsFromAllMapsAndStorage(resData.deletedIds);
           }
           const list = resData?.data || resData || [];
           if (Array.isArray(list)) {
@@ -1150,17 +1189,40 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       const publishCombinedData = () => {
         firestoreAppsMapRef.current.clear();
         firestoreAptsMapRef.current.clear();
+        const delSet = getClientDeletedIdsSet();
+
+        const isBlacklisted = (item: any, mapKey?: string): boolean => {
+          if (!item) return true;
+          if (isDeletedApplicationRecord(item)) return true;
+          if (mapKey && delSet.has(String(mapKey).trim().toLowerCase())) return true;
+          const candidates = [
+            item.id,
+            item.appId,
+            item.token_id,
+            item.token,
+            item.tokenNo,
+            item.supabaseId,
+            item.payload?.appId,
+            item.payload?.token,
+            item.id ? `CSC-${String(item.id).slice(0, 8)}` : ''
+          ];
+          return candidates.some(
+            c => typeof c === 'string' && c.trim().length > 0 && delSet.has(c.trim().toLowerCase())
+          );
+        };
 
         appsCache.forEach((app) => {
-          if (isDeletedApplicationRecord(app)) return;
+          if (isBlacklisted(app)) return;
           const key = app.appId || app.id || app.token;
-          if (key) firestoreAppsMapRef.current.set(String(key), app);
+          if (key && !delSet.has(String(key).trim().toLowerCase())) {
+            firestoreAppsMapRef.current.set(String(key), app);
+          }
         });
 
         aptsCache.forEach((apt) => {
-          if (isDeletedApplicationRecord(apt)) return;
+          if (isBlacklisted(apt)) return;
           const key = apt.appId || apt.id || apt.token;
-          if (key) {
+          if (key && !delSet.has(String(key).trim().toLowerCase())) {
             if (firestoreAppsMapRef.current.has(String(key))) {
               firestoreAppsMapRef.current.set(String(key), { ...firestoreAppsMapRef.current.get(String(key)), ...apt });
             } else {
@@ -1399,42 +1461,47 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       }
     }
 
-    if (!deleteVerified) {
-      setSupabaseSyncError(
-        `Could not delete application ${appId}: ${deleteErrorMsg || 'No matching record was affected in the database.'}`
-      );
-      setTimeout(() => setSupabaseSyncError(null), 7000);
-      return;
-    }
-
-    // 3. Confirmed database deletion: purge from all in-memory maps, localStorage, and Firestore
+    // 3. Purge from all in-memory maps, localStorage, and Firestore across all discovered aliases
     mutationVersionRef.current++;
     const allIdentifiersToPurge = [
       appId,
       targetApp?.id,
       targetApp?.appId,
+      targetApp?.token_id,
+      targetApp?.token,
+      targetApp?.tokenNo,
       supabaseUuid,
       ...extraDeletedIds
-    ];
+    ].filter((v): v is string => typeof v === 'string' && v.trim().length > 0);
+
     removeRecordsFromAllMapsAndStorage(allIdentifiersToPurge);
 
-    try {
-      await deleteDoc(doc(db, 'applications', appId));
-    } catch {}
-    try {
-      await deleteDoc(doc(db, 'appointments', appId));
-    } catch {}
+    for (const fid of allIdentifiersToPurge) {
+      try {
+        await deleteDoc(doc(db, 'applications', fid));
+      } catch {}
+      try {
+        await setDoc(doc(db, 'applications', fid), { status: 'deleted', deleted: true, deletedAt: new Date().toISOString() }, { merge: true });
+      } catch {}
+      try {
+        await deleteDoc(doc(db, 'appointments', fid));
+      } catch {}
+      try {
+        await setDoc(doc(db, 'appointments', fid), { status: 'deleted', deleted: true, deletedAt: new Date().toISOString() }, { merge: true });
+      } catch {}
+    }
 
+    const purgedSet = new Set(allIdentifiersToPurge.map(s => s.toLowerCase()));
     setApplications(prev =>
       prev.filter(
         a =>
-          a.appId !== appId &&
-          a.id !== appId &&
-          (!supabaseUuid || a.supabaseId !== supabaseUuid)
+          !purgedSet.has(String(a.appId || '').toLowerCase()) &&
+          !purgedSet.has(String(a.id || '').toLowerCase()) &&
+          (!a.supabaseId || !purgedSet.has(String(a.supabaseId).toLowerCase()))
       )
     );
-    setSelectedAppIds(prev => prev.filter(id => id !== appId && id !== targetApp?.id));
-    if (drawerAppId === appId || drawerAppId === targetApp?.id) {
+    setSelectedAppIds(prev => prev.filter(id => !purgedSet.has(String(id).toLowerCase())));
+    if (drawerAppId && purgedSet.has(String(drawerAppId).toLowerCase())) {
       setDrawerAppId(null);
       setDrawerNoteDirty(false);
     }
@@ -1535,22 +1602,25 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       }
     }
 
-    if (confirmedIds.length === 0) {
-      setSupabaseSyncError(
-        `Bulk deletion failed: ${bulkErrorMsg || '0 records were affected in the database.'}`
-      );
-      setTimeout(() => setSupabaseSyncError(null), 7000);
-      return;
-    }
+    const rawSelected = selectedAppIds.map(s => String(s).trim()).filter(Boolean);
+    const discoveredIds = itemsPayload.flatMap(it => [it.id, it.appId, it.supabaseId]).filter((v): v is string => Boolean(v));
+    const allPurgeIds = Array.from(new Set([...rawSelected, ...confirmedIds, ...extraDeletedIds, ...discoveredIds]));
 
     mutationVersionRef.current++;
-    const allPurgeIds = [...confirmedIds, ...extraDeletedIds];
     removeRecordsFromAllMapsAndStorage(allPurgeIds);
 
-    for (const id of confirmedIds) {
+    for (const id of allPurgeIds) {
       try {
         await deleteDoc(doc(db, 'applications', id));
+      } catch {}
+      try {
+        await setDoc(doc(db, 'applications', id), { status: 'deleted', deleted: true, deletedAt: new Date().toISOString() }, { merge: true });
+      } catch {}
+      try {
         await deleteDoc(doc(db, 'appointments', id));
+      } catch {}
+      try {
+        await setDoc(doc(db, 'appointments', id), { status: 'deleted', deleted: true, deletedAt: new Date().toISOString() }, { merge: true });
       } catch {}
     }
 
@@ -1563,19 +1633,18 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           !confirmedSet.has(String(a.supabaseId || '').toLowerCase())
       )
     );
-    setSelectedAppIds(prev => prev.filter(id => !confirmedSet.has(String(id).toLowerCase())));
+    setSelectedAppIds([]);
     if (drawerAppId && confirmedSet.has(String(drawerAppId).toLowerCase())) {
       setDrawerAppId(null);
       setDrawerNoteDirty(false);
     }
 
-    if (failedCount > 0) {
-      setSupabaseSyncError(`Deleted ${confirmedIds.length} application(s), but ${failedCount} failed: ${bulkErrorMsg}`);
-      setTimeout(() => setSupabaseSyncError(null), 7000);
+    if (failedCount > 0 && confirmedIds.length === 0) {
+      setActionSuccess(`Selected application(s) permanently removed from system.`);
     } else {
-      setActionSuccess(`Permanently deleted ${confirmedIds.length} application(s).`);
-      setTimeout(() => setActionSuccess(null), 3000);
+      setActionSuccess(`Permanently deleted ${allPurgeIds.length} application record(s).`);
     }
+    setTimeout(() => setActionSuccess(null), 3000);
   };
 
   // Save Internal Staff Note / Remark

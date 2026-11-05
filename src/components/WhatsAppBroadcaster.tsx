@@ -150,6 +150,31 @@ const VALID_WHATSAPP_CHANNEL_REGEX =
 const VALID_WHATSAPP_GROUP_INVITE_REGEX =
   /^https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9_-]{6,}/i;
 
+function getSafeLocal(key: string, fallback: string = ''): string {
+  try {
+    if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
+      return window.localStorage.getItem(key) || fallback;
+    }
+  } catch {}
+  return fallback;
+}
+
+function setSafeLocal(key: string, value: string): void {
+  try {
+    if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
+      window.localStorage.setItem(key, value);
+    }
+  } catch {}
+}
+
+function removeSafeLocal(key: string): void {
+  try {
+    if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
+      window.localStorage.removeItem(key);
+    }
+  } catch {}
+}
+
 export default function WhatsAppBroadcaster({
   adminUser = 'Authorized Staff',
 }: WhatsAppBroadcasterProps) {
@@ -186,22 +211,16 @@ export default function WhatsAppBroadcaster({
 
   // Section C: Publishing Destinations Configuration
   const [channelUrl, setChannelUrl] = useState<string>(() => {
-    return localStorage.getItem('csc_whatsapp_channel_url') || '';
+    return getSafeLocal('csc_whatsapp_channel_url', '');
   });
   const [channelName, setChannelName] = useState<string>(() => {
-    return (
-      localStorage.getItem('csc_whatsapp_channel_name') ||
-      'CSC DOST Official WhatsApp Channel'
-    );
+    return getSafeLocal('csc_whatsapp_channel_name', 'CSC DOST Official WhatsApp Channel');
   });
   const [groupInviteUrl, setGroupInviteUrl] = useState<string>(() => {
-    return (
-      localStorage.getItem('csc_whatsapp_target_group') ||
-      'https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI'
-    );
+    return getSafeLocal('csc_whatsapp_target_group', 'https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI');
   });
   const [groupName, setGroupName] = useState<string>(() => {
-    return localStorage.getItem('csc_whatsapp_group_name') || 'CSC DOST Community Group';
+    return getSafeLocal('csc_whatsapp_group_name', 'CSC DOST Community Group');
   });
   const [editingChannelSettings, setEditingChannelSettings] = useState(false);
   const [editingGroupSettings, setEditingGroupSettings] = useState(false);
@@ -211,8 +230,8 @@ export default function WhatsAppBroadcaster({
   // Admin authentication headers
   const getAdminHeaders = (): Record<string, string> => {
     const token =
-      localStorage.getItem('csc_admin_token') ||
-      localStorage.getItem('adminToken') ||
+      getSafeLocal('csc_admin_token') ||
+      getSafeLocal('adminToken') ||
       'secret-admin-session-token-xyz-2026';
     return {
       'Content-Type': 'application/json',

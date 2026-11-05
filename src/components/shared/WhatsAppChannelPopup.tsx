@@ -24,22 +24,16 @@ export function WhatsAppIcon({ className = 'w-5 h-5' }: { className?: string }) 
 
 export default function WhatsAppChannelPopup({
   postTitle,
-  autoOpenDelayMs = 1200,
 }: WhatsAppChannelPopupProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
 
   useEffect(() => {
-    // Show after slight delay to allow page content to render smoothly
-    const timer = setTimeout(() => {
-      const dismissed = sessionStorage.getItem('csc_wa_channel_popup_dismissed');
-      if (!dismissed) {
-        setIsVisible(true);
-      }
-    }, autoOpenDelayMs);
-
-    return () => clearTimeout(timer);
-  }, [autoOpenDelayMs]);
+    // Only listen for explicit user action or custom trigger, never auto-block user reading experience
+    const handleOpenTrigger = () => setIsVisible(true);
+    window.addEventListener('open-whatsapp-channel-dialog', handleOpenTrigger);
+    return () => window.removeEventListener('open-whatsapp-channel-dialog', handleOpenTrigger);
+  }, []);
 
   const handleClose = () => {
     setIsVisible(false);

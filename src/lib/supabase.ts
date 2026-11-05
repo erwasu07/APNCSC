@@ -348,6 +348,32 @@ export function isDeletedApplicationRecord(row: any): boolean {
     if (payload.deleted === true || Boolean(payload.deletedAt) || Boolean(payload.deleted_at)) return true;
     if (String(payload.status || '').trim().toLowerCase() === 'deleted') return true;
   }
+  // Check client deleted blacklist in browser environment
+  if (typeof window !== 'undefined') {
+    try {
+      if (typeof window.localStorage !== 'undefined' && window.localStorage) {
+        const raw = JSON.parse(window.localStorage.getItem('csc_deleted_application_ids') || '[]');
+        if (Array.isArray(raw) && raw.length > 0) {
+          const blacklist = new Set(raw.map((s: any) => String(s).trim().toLowerCase()));
+          const candidates = [
+            row.id,
+            row.appId,
+            row.token_id,
+            row.token,
+            row.tokenNo,
+            row.supabaseId,
+            payload?.appId,
+            payload?.token,
+            row.id ? `csc-${String(row.id).slice(0, 8)}` : ''
+          ].filter(Boolean).map(c => String(c).trim().toLowerCase());
+
+          if (candidates.some(c => blacklist.has(c))) {
+            return true;
+          }
+        }
+      }
+    } catch {}
+  }
   return false;
 }
 

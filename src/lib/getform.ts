@@ -5,20 +5,34 @@
  */
 
 export function getFormEndpoint(): string {
+  let stored = '';
+  try {
+    if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
+      stored = window.localStorage.getItem('cscdost_getform_endpoint') || '';
+    }
+  } catch {}
+
+  const metaEnv = (typeof import.meta !== 'undefined' && (import.meta as any).env) || {};
+  const procEnv = (typeof process !== 'undefined' && process.env) || {};
+
   return (
-    localStorage.getItem('cscdost_getform_endpoint') ||
-    import.meta.env.VITE_GETFORM_ENDPOINT ||
-    process.env.VITE_GETFORM_ENDPOINT ||
+    stored ||
+    metaEnv.VITE_GETFORM_ENDPOINT ||
+    procEnv.VITE_GETFORM_ENDPOINT ||
     'https://getform.io/f/YOUR_UNIQUE_ENDPOINT'
   );
 }
 
 export function setFormEndpoint(url: string) {
-  if (url) {
-    localStorage.setItem('cscdost_getform_endpoint', url);
-  } else {
-    localStorage.removeItem('cscdost_getform_endpoint');
-  }
+  try {
+    if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
+      if (url) {
+        window.localStorage.setItem('cscdost_getform_endpoint', url);
+      } else {
+        window.localStorage.removeItem('cscdost_getform_endpoint');
+      }
+    }
+  } catch {}
 }
 
 export async function saveApplicationToFormEndpoint(

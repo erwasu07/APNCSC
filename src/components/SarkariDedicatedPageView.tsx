@@ -44,6 +44,12 @@ export default function SarkariDedicatedPageView({
 }: SarkariDedicatedPageViewProps) {
   const isAdmissionOrEdu = ADMISSION_EDUCATION_CATEGORIES.has(item.category);
   const isInfoOnlyNotice = ['results', 'answer_keys', 'syllabus'].includes(item.category);
+  const isExamSchedule =
+    item.noticeType === 'date_sheet' ||
+    item.stage === 'date_sheet' ||
+    item.stage === 'examination' ||
+    item.category === 'exam_forms' ||
+    item.id === 'ssc-examination-schedule-cgept-dept-steno-cpo-nov-2026';
 
   const [activeSectionId, setActiveSectionId] = useState<string>('overview-section');
 
@@ -126,6 +132,38 @@ export default function SarkariDedicatedPageView({
 
   // Key Information Strip tailored by Content Type
   const keyFacts: KeyInfoFact[] = useMemo(() => {
+    if (isExamSchedule) {
+      return [
+        {
+          label: 'Authority',
+          value: organisationName,
+          tone: 'default',
+        },
+        {
+          label: 'Notice Type',
+          value: 'Official Examination Schedule',
+          tone: 'blue',
+        },
+        {
+          label: 'Reference No.',
+          value: item.advertisementNo || 'Official Timetable',
+          tone: 'default',
+        },
+        {
+          label: 'Examination Dates',
+          value: item.startDate && item.lastDate && item.startDate !== item.lastDate
+            ? `${item.startDate} to ${item.lastDate}`
+            : item.lastDate || item.startDate || 'Refer to notice',
+          tone: 'rose',
+        },
+        {
+          label: 'Schedule Status',
+          value: 'Examination Schedule Active',
+          tone: 'emerald',
+        },
+      ];
+    }
+
     if (isAdmissionOrEdu) {
       return [
         {
@@ -189,12 +227,14 @@ export default function SarkariDedicatedPageView({
       },
     ];
   }, [
+    isExamSchedule,
     isAdmissionOrEdu,
     organisationName,
     item.advertisementNo,
     item.category,
     item.totalPosts,
     item.lastDate,
+    item.startDate,
     item.session,
     extractedSession,
     statusInfo,
@@ -202,6 +242,18 @@ export default function SarkariDedicatedPageView({
 
   // Section Navigation tailored by Content Type
   const sections: SectionNavItem[] = useMemo(() => {
+    if (isExamSchedule) {
+      return [
+        { id: 'overview-section', title: 'Schedule Overview' },
+        { id: 'important-dates', title: 'Examination Timetable' },
+        { id: 'candidate-guidelines', title: 'Who Should Read & Next Steps' },
+        { id: 'selection-process', title: 'Examination Scheme & Papers' },
+        { id: 'documents-required', title: 'Mandatory Exam Day Documents' },
+        { id: 'official-links', title: 'Official Portal & Admit Card' },
+        { id: 'faqs-section', title: 'FAQs' },
+      ];
+    }
+
     if (isAdmissionOrEdu) {
       return [
         { id: 'overview-section', title: 'Overview' },
@@ -234,7 +286,7 @@ export default function SarkariDedicatedPageView({
       { id: 'official-links', title: 'Official Sources' },
       { id: 'faqs-section', title: 'FAQs' },
     ];
-  }, [isAdmissionOrEdu, item.departmentBreakdown]);
+  }, [isExamSchedule, isAdmissionOrEdu, item.departmentBreakdown]);
 
   const scrollToSection = (id: string) => {
     setActiveSectionId(id);
@@ -446,12 +498,25 @@ export default function SarkariDedicatedPageView({
         intro={intro}
         metadata={[
           ...(item.postDate ? [{ label: 'Published', value: item.postDate }] : []),
-          ...(item.startDate ? [{ label: 'Starts', value: item.startDate }] : []),
-          ...(item.lastDate
-            ? [{ label: 'Closing Date', value: item.lastDate, emphasize: true }]
-            : []),
-          { label: 'Closing Time', value: item.closingTime || 'Inclusive through 23:59 IST' },
-          { label: 'Last Verified', value: item.verification?.lastVerified || '30/10/2026 IST' },
+          ...(isExamSchedule
+            ? [
+                {
+                  label: 'Examination Dates',
+                  value: item.startDate && item.lastDate && item.startDate !== item.lastDate
+                    ? `${item.startDate} – ${item.lastDate}`
+                    : (item.lastDate || item.startDate || 'Refer to Notice'),
+                  emphasize: true,
+                },
+                { label: 'Examination Mode', value: 'Computer Based & Skill Test' },
+              ]
+            : [
+                ...(item.startDate ? [{ label: 'Starts', value: item.startDate }] : []),
+                ...(item.lastDate
+                  ? [{ label: 'Closing Date', value: item.lastDate, emphasize: true }]
+                  : []),
+                { label: 'Closing Time', value: item.closingTime || 'Inclusive through 23:59 IST' },
+              ]),
+          { label: 'Last Verified', value: item.verification?.lastVerified || '04/11/2026 IST' },
           {
             label: 'Verification',
             value: item.verification?.verificationStatus === 'needs_verification' ? 'Needs Verification' : 'Verified (Official Portal)',
@@ -482,13 +547,13 @@ export default function SarkariDedicatedPageView({
         }
         officialLinks={[
           {
-            label: officialButtonLabel,
+            label: isExamSchedule ? 'Official Portal (ssc.gov.in)' : officialButtonLabel,
             href: officialPortalUrl,
           },
           ...(item.verification?.officialNotificationUrl && item.verification.officialNotificationUrl !== officialPortalUrl
             ? [
                 {
-                  label: 'Official Notification PDF',
+                  label: isExamSchedule ? 'Official Exam Notice (PDF)' : 'Official Notification PDF',
                   href: item.verification.officialNotificationUrl,
                 },
               ]
@@ -498,7 +563,9 @@ export default function SarkariDedicatedPageView({
           window.location.hash = '#track';
         }}
         assistanceDisclaimer={
-          canApplyOnline
+          isExamSchedule
+            ? 'This notification is an official examination timetable for previously registered candidates. No fresh applications or fees are required. Check city intimation and admit cards on ssc.gov.in.'
+            : canApplyOnline
             ? 'CSC DOST provides independent document preparation and form-filling assistance. You may also apply directly on the official authority portal above.'
             : 'Applications for this notification are closed. CSC DOST cannot accept assisted submissions for concluded cycles.'
         }
@@ -569,11 +636,15 @@ export default function SarkariDedicatedPageView({
         />
       </ContentSection>
 
-      {/* 2. IMPORTANT DATES */}
+      {/* 2. IMPORTANT DATES / EXAMINATION TIMETABLE */}
       <ContentSection
         id="important-dates"
-        title="Important Dates"
-        subtitle="Verify the notification release date, registration window, and closing deadline."
+        title={isExamSchedule ? 'Examination Timetable & Schedule' : 'Important Dates'}
+        subtitle={
+          isExamSchedule
+            ? 'Official schedule of computer-based and skill examinations as notified by the Commission.'
+            : 'Verify the notification release date, registration window, and closing deadline.'
+        }
       >
         <KeyValueRows
           rows={[
@@ -581,32 +652,72 @@ export default function SarkariDedicatedPageView({
               label: 'Notification Published Date',
               value: item.postDate,
             },
-            {
-              label: isAdmissionOrEdu
-                ? 'Registration / Form Start Date'
-                : 'Online Application Start Date',
-              value: item.startDate || item.postDate,
-              tone: 'emerald',
-              boldValue: true,
-            },
-            {
-              label: isAdmissionOrEdu
-                ? 'Last Date for Form Submission'
-                : 'Last Date to Apply Online',
-              value: item.lastDate || 'Refer to official notification',
-              tone: 'rose',
-              boldValue: true,
-            },
-            {
-              label: 'Fee Payment Closing Date',
-              value: item.lastDate || 'As specified in official notice',
-            },
-            {
-              label: isAdmissionOrEdu
-                ? 'Entrance / Examination Schedule'
-                : 'Admit Card & Examination Date',
-              value: 'As notified by the authority on the official portal',
-            },
+            ...(isExamSchedule
+              ? [
+                  {
+                    label: 'Examination Commencement Date',
+                    value: item.startDate || '17/11/2026',
+                    tone: 'emerald' as const,
+                    boldValue: true,
+                  },
+                  {
+                    label: 'Examination Conclusion Date',
+                    value: item.lastDate || '28/11/2026',
+                    tone: 'rose' as const,
+                    boldValue: true,
+                  },
+                  ...(item.id === 'ssc-examination-schedule-cgept-dept-steno-cpo-nov-2026'
+                    ? [
+                        {
+                          label: 'Coast Guard Enrolled Persons Test (CGEPT) 01/2027 & 02/2027',
+                          value: '17–18 November 2026 (Computer Based Exam)',
+                          boldValue: true,
+                        },
+                        {
+                          label: 'Annual Departmental Typing & Stenographer Skill Test 2025',
+                          value: '20–21 November 2026 (Skill / Typing Test)',
+                          boldValue: true,
+                        },
+                        {
+                          label: 'Sub-Inspector in Delhi Police & CAPFs Examination (Paper-II)',
+                          value: '28 November 2026 (Computer Based Exam)',
+                          boldValue: true,
+                        },
+                      ]
+                    : []),
+                  {
+                    label: 'City Intimation & Admit Card Status',
+                    value: 'To be hosted on the official SSC website (ssc.gov.in) prior to examination.',
+                  },
+                ]
+              : [
+                  {
+                    label: isAdmissionOrEdu
+                      ? 'Registration / Form Start Date'
+                      : 'Online Application Start Date',
+                    value: item.startDate || item.postDate,
+                    tone: 'emerald' as const,
+                    boldValue: true,
+                  },
+                  {
+                    label: isAdmissionOrEdu
+                      ? 'Last Date for Form Submission'
+                      : 'Last Date to Apply Online',
+                    value: item.lastDate || 'Refer to official notification',
+                    tone: 'rose' as const,
+                    boldValue: true,
+                  },
+                  {
+                    label: 'Fee Payment Closing Date',
+                    value: item.lastDate || 'As specified in official notice',
+                  },
+                  {
+                    label: isAdmissionOrEdu
+                      ? 'Entrance / Examination Schedule'
+                      : 'Admit Card & Examination Date',
+                    value: 'As notified by the authority on the official portal',
+                  },
+                ]),
           ]}
         />
       </ContentSection>
@@ -633,12 +744,12 @@ export default function SarkariDedicatedPageView({
         </p>
       </ContentSection>
 
-      {/* 4. AGE CRITERIA (Shown for Jobs & Recruitment, or if item.ageLimit is provided) */}
-      {(!isAdmissionOrEdu || item.ageLimit) && (
+      {/* 4. AGE CRITERIA (Omitted for examination schedule notices) */}
+      {!isExamSchedule && (!isAdmissionOrEdu || item.ageLimit) && (
         <ContentSection
           id="age-criteria"
           title="Age Criteria"
-          subtitle="Minimum and maximum age limits along with statutory category relaxations."
+          subtitle="Prescribed age requirements as notified in the official advertisement."
         >
           <KeyValueRows
             rows={[
@@ -652,7 +763,10 @@ export default function SarkariDedicatedPageView({
               {
                 label: 'Age Relaxation',
                 value:
-                  'Upper age limit relaxation applies to SC, ST, OBC, RBA, EWS, PwD, and Ex-Servicemen categories as per government norms.',
+                  item.ageRelaxationDetails ||
+                  (item.ageLimit?.toLowerCase().includes('relaxation')
+                    ? 'Refer to specific age criteria above'
+                    : 'Refer to the official notification for category-specific age relaxations, if applicable.'),
               },
               {
                 label: 'Age Verification Document',
@@ -663,46 +777,52 @@ export default function SarkariDedicatedPageView({
         </ContentSection>
       )}
 
-      {/* 5. FEES */}
-      <ContentSection
-        id="fee-structure"
-        title={isAdmissionOrEdu ? 'Fee Details' : 'Application Fees'}
-        subtitle="Official statutory examination or registration fees payable during online submission."
-      >
-        <KeyValueRows
-          rows={[
-            ...(item.feePerSubject
-              ? [
-                  {
-                    label: 'Fee Per Subject / Paper',
-                    value: item.feePerSubject,
-                    boldValue: true,
-                  },
-                ]
-              : []),
-            {
-              label: isAdmissionOrEdu
-                ? 'General / Open Merit Fee'
-                : 'General / OBC / Open Merit Candidates',
-              value: item.fees?.genObc || 'Refer to official notification',
-              boldValue: true,
-            },
-            {
-              label: 'SC / ST / PwD / Reserved Categories',
-              value: item.fees?.scSt || 'As per statutory fee structure in notice',
-              tone: 'emerald',
-              boldValue: true,
-            },
-            {
-              label: 'Accepted Payment Modes',
-              value: 'Online via UPI, Net Banking, Debit Card, or Credit Card',
-            },
-          ]}
-        />
-      </ContentSection>
+      {/* 5. FEES (Omitted for examination schedule notices) */}
+      {!isExamSchedule && (
+        <ContentSection
+          id="fee-structure"
+          title={isAdmissionOrEdu ? 'Fee Details' : 'Application Fees'}
+          subtitle="Official statutory examination or registration fees payable during online submission."
+        >
+          <KeyValueRows
+            rows={[
+              ...(item.feePerSubject
+                ? [
+                    {
+                      label: 'Fee Per Subject / Paper',
+                      value: item.feePerSubject,
+                      boldValue: true,
+                    },
+                  ]
+                : []),
+              {
+                label: isAdmissionOrEdu
+                  ? 'General / Open Merit Fee'
+                  : 'General / OBC / Open Merit Candidates',
+                value: item.fees?.genObc || 'Refer to official notification',
+                boldValue: true,
+              },
+              {
+                label: 'SC / ST / PwD / Reserved Categories',
+                value: item.fees?.scSt || 'As per statutory fee structure in notice',
+                tone: 'emerald',
+                boldValue: true,
+              },
+              {
+                label: (item.fees?.genObc && (item.fees.genObc.includes('₹0') || item.fees.genObc.toLowerCase().includes('no application fee') || item.fees.genObc.toLowerCase().includes('exempted')))
+                  ? 'Application Fee Status'
+                  : 'Accepted Payment Modes',
+                value: item.paymentInstructions || ((item.fees?.genObc && (item.fees.genObc.includes('₹0') || item.fees.genObc.toLowerCase().includes('no application fee') || item.fees.genObc.toLowerCase().includes('exempted')))
+                  ? '₹0/- (Exempted / Free for all candidates). No payment is required.'
+                  : 'Online via official recruitment board payment gateway (Net Banking, UPI, Debit/Credit Card)'),
+              },
+            ]}
+          />
+        </ContentSection>
+      )}
 
-      {/* 6. VACANCY / PROGRAMME BREAKDOWN (if available) */}
-      {item.departmentBreakdown && item.departmentBreakdown.length > 0 && (
+      {/* 6. VACANCY / PROGRAMME BREAKDOWN (Omitted for examination schedule notices) */}
+      {!isExamSchedule && item.departmentBreakdown && item.departmentBreakdown.length > 0 && (
         <ContentSection
           id="vacancy-details"
           title={isAdmissionOrEdu ? 'Programme & Seat Breakdown' : 'Vacancy Breakdown'}
@@ -752,25 +872,20 @@ export default function SarkariDedicatedPageView({
         <ContentChecklist
           columns={1}
           items={
-            isAdmissionOrEdu
+            item.selectionProcess && item.selectionProcess.length > 0
+              ? item.selectionProcess
+              : isAdmissionOrEdu
               ? [
                   'Verification of online registration form and academic eligibility credentials.',
-                  'Academic merit evaluation or entrance test score (such as CUET / University Entrance Test) as applicable.',
-                  'Publication of merit list / date sheet and counselling schedule on the official institution portal.',
-                  'Physical verification of original marksheets, migration, and category certificates at the allotted college or department.',
-                ]
-              : item.category === 'army_jobs'
-              ? [
-                  'Phase I: Online Computer-Based Common Entrance Examination (CEE) at designated examination centres.',
-                  'Phase II: Physical Fitness Test (1.6 km run, beam pull-ups, 9-feet ditch, zig-zag balance) & Physical Measurement Test (PMT) at rally ground.',
-                  'Document Verification of original academic, domicile, character, and unmarried certificates.',
-                  'Comprehensive Medical Examination at the rally site as per military standards.',
+                  'Academic merit evaluation or entrance test score as prescribed in the official brochure.',
+                  'Publication of merit list / selection list and counselling schedule on the official portal.',
+                  'Document verification of original marksheets and certificates at the allotted department.',
                 ]
               : [
-                  'Written Examination (Computer-Based Test / OMR Objective Examination) as per official syllabus.',
-                  'Physical Standard / Skill / Typewriting Test (wherever prescribed for specific technical or uniformed posts).',
-                  'Document Verification (DV) of original qualification, domicile, and reservation certificates.',
-                  'Publication of provisional and final selection lists by the recruiting board.',
+                  'Written Examination / Computer-Based Test (wherever prescribed in the official notification).',
+                  'Skill / Trade / Physical Standards Test as applicable for specific technical or uniformed posts.',
+                  'Document Verification of original educational, identity, and reservation certificates.',
+                  'Final selection list published by the official recruiting authority based on notification rules.',
                 ]
           }
         />
@@ -784,7 +899,9 @@ export default function SarkariDedicatedPageView({
       >
         <ContentChecklist
           items={
-            isAdmissionOrEdu
+            item.documentsRequired && item.documentsRequired.length > 0
+              ? item.documentsRequired
+              : isAdmissionOrEdu
               ? [
                   'Class 10th (Matriculation) Marksheet & Date of Birth Certificate',
                   'Class 12th / Qualifying Degree Marksheet & Provisional Certificate',
@@ -799,49 +916,103 @@ export default function SarkariDedicatedPageView({
                   'Qualifying Educational Marksheets & Degree / Diploma Certificates',
                   'Domicile Certificate issued by competent authority',
                   'Category / Reservation Certificate (SC/ST/OBC/EWS/RBA), if applicable',
-                  'Recent Passport-Size Photograph (20KB–50KB) & Scanned Signature (10KB–20KB)',
+                  'Recent Passport-Size Photograph & Scanned Signature per official portal specifications',
                 ]
           }
         />
       </ContentSection>
 
-      {/* 9. HOW TO APPLY / APPLICATION PROCESS */}
-      <ContentSection
-        id="how-to-apply"
-        title={isAdmissionOrEdu ? 'Application / Registration Process' : 'How to Apply'}
-        subtitle="Follow these steps to submit your form online or request assistance through CSC DOST."
-      >
-        <StepByStepList
-          steps={[
-            {
-              title: isAdmissionOrEdu
-                ? 'Open the Official University / Examination Portal'
-                : 'Visit the Official Recruitment Portal',
-              description: `Access ${officialPortalUrl} and locate the notification for "${item.title}".`,
-            },
-            {
-              title: 'Complete Candidate Registration / Login',
-              description:
-                'Sign in using your One-Time Registration (OTR) credentials or register with an active mobile number and email ID.',
-            },
-            {
-              title: 'Enter Personal & Academic Particulars',
-              description:
-                'Fill in your name, parentage, date of birth, and qualification details strictly matching your Class 10th and qualifying marksheets.',
-            },
-            {
-              title: 'Upload Photograph, Signature & Certificates',
-              description:
-                'Upload clear, properly sized JPG/PDF scans of your passport photo, signature, and supporting certificates.',
-            },
-            {
-              title: 'Pay the Statutory Fee & Download Confirmation Receipt',
-              description:
-                'Complete the online fee payment and save a PDF copy and printout of the final submitted form with your application reference number.',
-            },
-          ]}
-        />
-      </ContentSection>
+      {/* 9. HOW TO APPLY / CANDIDATE ACTION GUIDELINES */}
+      {isExamSchedule ? (
+        <ContentSection
+          id="candidate-guidelines"
+          title="Who Should Read This Schedule & Next Steps"
+          subtitle="Official candidate action guidelines strictly based on Commission Notice F. No. HQ-C1101/9/2026-C1/1."
+        >
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 rounded-xl space-y-2">
+              <h4 className="text-sm font-bold text-blue-950 dark:text-blue-100 flex items-center gap-2">
+                <span>🎯</span> Who Should Read This Schedule
+              </h4>
+              <ul className="text-xs sm:text-sm text-blue-900 dark:text-blue-200 space-y-2 list-disc pl-5 leading-relaxed">
+                <li>
+                  <strong>Coast Guard Enrolled Persons Test (CGEPT):</strong> Candidates who previously registered for Coast Guard CGEPT Batches 01/2027 &amp; 02/2027 to appear in the Computer Based Examination on 17 &amp; 18 November 2026.
+                </li>
+                <li>
+                  <strong>Departmental Typing &amp; Stenographer Candidates:</strong> Eligible serving Central Government employees registered for the Annual Departmental Typing Test and Stenographer Skill Test 2025 scheduled on 20 &amp; 21 November 2026.
+                </li>
+                <li>
+                  <strong>Sub-Inspector in Delhi Police &amp; CAPFs Examination:</strong> Shortlisted candidates who qualified in Paper-I and cleared the Physical Standard Test / Physical Endurance Test (PST/PET) appearing for Paper-II on 28 November 2026.
+                </li>
+              </ul>
+            </div>
+
+            <div className="p-4 bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 rounded-xl space-y-2">
+              <h4 className="text-sm font-bold text-emerald-950 dark:text-emerald-100 flex items-center gap-2">
+                <span>📋</span> What Action Candidates Must Take
+              </h4>
+              <ol className="text-xs sm:text-sm text-emerald-900 dark:text-emerald-200 space-y-2 list-decimal pl-5 leading-relaxed">
+                <li>
+                  <strong>Verify Test Dates:</strong> Note your scheduled test date and shift timing above.
+                </li>
+                <li>
+                  <strong>Check City Intimation Slip:</strong> Visit the official SSC website (<code className="font-mono text-xs bg-emerald-100 dark:bg-emerald-900/50 px-1.5 py-0.5 rounded">ssc.gov.in</code>) approximately 7–10 days before the exam date to check your allocated examination city.
+                </li>
+                <li>
+                  <strong>Download e-Admit Card:</strong> Regional SSC websites publish admission certificates 3 to 4 days prior to your test date. Download, print in high resolution, and read all exam instructions.
+                </li>
+                <li>
+                  <strong>Exam Day Reporting:</strong> Arrive at your examination centre well before gate closing with your printed e-Admit Card, two recent passport photos, and valid original Government Photo ID (Aadhaar, Voter ID, Passport, or DL).
+                </li>
+              </ol>
+            </div>
+
+            <div className="p-3.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+              <strong>Notice:</strong> This is strictly an examination timetable for registered candidates. No fresh application form or fee is required.
+            </div>
+          </div>
+        </ContentSection>
+      ) : (
+        <ContentSection
+          id="how-to-apply"
+          title={isAdmissionOrEdu ? 'Application / Registration Process' : 'How to Apply'}
+          subtitle="Follow these steps to submit your form online or request assistance through CSC DOST."
+        >
+          <StepByStepList
+            steps={[
+              {
+                title: isAdmissionOrEdu
+                  ? 'Open the Official University / Examination Portal'
+                  : 'Visit the Official Recruitment Portal',
+                description: `Access ${officialPortalUrl} and locate the notification for "${item.title}".`,
+              },
+              {
+                title: 'Complete Candidate Registration / Login',
+                description:
+                  'Sign in using your One-Time Registration (OTR) credentials or register with an active mobile number and email ID.',
+              },
+              {
+                title: 'Enter Personal & Academic Particulars',
+                description:
+                  'Fill in your name, parentage, date of birth, and qualification details strictly matching your Class 10th and qualifying marksheets.',
+              },
+              {
+                title: 'Upload Photograph, Signature & Certificates',
+                description:
+                  'Upload clear, properly sized JPG/PDF scans of your passport photo, signature, and supporting certificates.',
+              },
+              {
+                title: (item.fees?.genObc && (item.fees.genObc.includes('₹0') || item.fees.genObc.toLowerCase().includes('no application fee') || item.fees.genObc.toLowerCase().includes('exempted')))
+                  ? 'Submit Online Form & Download Confirmation'
+                  : 'Pay the Statutory Fee & Download Confirmation Receipt',
+                description: (item.fees?.genObc && (item.fees.genObc.includes('₹0') || item.fees.genObc.toLowerCase().includes('no application fee') || item.fees.genObc.toLowerCase().includes('exempted')))
+                  ? 'Submit your form on the official portal and download a printout of the final application confirmation receipt with your reference number.'
+                  : 'Complete the online fee payment and save a PDF copy and printout of the final submitted form with your application reference number.',
+              },
+            ]}
+          />
+        </ContentSection>
+      )}
 
       {/* 10. OFFICIAL SOURCES & ASSISTANCE */}
       <OfficialSourcesAndAssistance

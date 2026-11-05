@@ -53,14 +53,20 @@ export default function NotificationPreferencesModal({
     setStatusMsg(null);
     const perm = getBrowserPermission();
     setPermission(perm);
-    const status = localStorage.getItem('csc_push_notification_status');
-    setIsSubscribed(status === 'subscribed' && perm === 'granted');
+    try {
+      const status = localStorage.getItem('csc_push_notification_status');
+      setIsSubscribed(status === 'subscribed' && perm === 'granted');
+    } catch {
+      setIsSubscribed(false);
+    }
   }, [isOpen]);
 
   const handleTogglePreference = (key: keyof PushPreferences) => {
     setPreferences(prev => {
       const next = { ...prev, [key]: !prev[key] };
-      localStorage.setItem('csc_push_preferences', JSON.stringify(next));
+      try {
+        localStorage.setItem('csc_push_preferences', JSON.stringify(next));
+      } catch {}
       return next;
     });
   };

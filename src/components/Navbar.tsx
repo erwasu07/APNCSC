@@ -83,16 +83,21 @@ export default function Navbar({
     }
   }, [mobileSearchOpen]);
 
-  const navigateToSection = (sectionId: string) => {
+  const navigateToSection = (sectionId: string, urlPath?: string) => {
     setMobileMenuOpen(false);
     setMobileSearchOpen(false);
+
+    if (urlPath && window.location.pathname !== urlPath) {
+      window.history.pushState(null, '', urlPath);
+    }
 
     if (
       window.location.hash === '#tools' ||
       window.location.hash.startsWith('#tools/') ||
-      window.location.hash.startsWith('#apply') ||
+      window.location.hash.startsWith('#apply' ) ||
       window.location.hash.startsWith('#track') ||
-      window.location.pathname !== '/'
+      window.location.pathname.startsWith('/post/') ||
+      window.location.pathname.startsWith('/service/')
     ) {
       if (onHomeClick) onHomeClick();
       window.location.hash = '';
@@ -111,18 +116,27 @@ export default function Navbar({
   const handleOpenTools = () => {
     setMobileMenuOpen(false);
     setMobileSearchOpen(false);
+    if (window.location.pathname !== '/tools') {
+      window.history.pushState(null, '', '/tools');
+    }
     window.location.hash = '#tools';
   };
 
   const handleTrackApplication = () => {
     setMobileMenuOpen(false);
     setMobileSearchOpen(false);
+    if (window.location.pathname !== '/track') {
+      window.history.pushState(null, '', '/track');
+    }
     window.location.hash = '#track';
   };
 
   const handleLogoClick = () => {
     setMobileMenuOpen(false);
     setMobileSearchOpen(false);
+    if (window.location.pathname !== '/') {
+      window.history.pushState(null, '', '/');
+    }
     if (onHomeClick) {
       onHomeClick();
     } else {
@@ -199,38 +213,43 @@ export default function Navbar({
   const navItems = [
     {
       id: 'online-services',
+      href: '/services',
       line1: 'Online',
       line2: 'Services',
       fullLabel: 'Online Services',
       Icon: FileText,
-      onClick: () => navigateToSection('services'),
+      onClick: () => navigateToSection('services', '/services'),
     },
     {
       id: 'jobs-recruitment',
+      href: '/jobs',
       line1: 'Jobs &',
       line2: 'Recruitment',
       fullLabel: 'Jobs & Recruitment',
       Icon: BriefcaseBusiness,
-      onClick: () => navigateToSection('recruitment-section'),
+      onClick: () => navigateToSection('recruitment-section', '/jobs'),
     },
     {
       id: 'government-schemes',
+      href: '/schemes',
       line1: 'Government',
       line2: 'Schemes',
       fullLabel: 'Government Schemes',
       Icon: UsersRound,
-      onClick: () => navigateToSection('schemes-section'),
+      onClick: () => navigateToSection('schemes-section', '/schemes'),
     },
     {
       id: 'education-admissions',
+      href: '/education',
       line1: 'Education &',
       line2: 'Admissions',
       fullLabel: 'Education & Admissions',
       Icon: GraduationCap,
-      onClick: () => navigateToSection('education-resources'),
+      onClick: () => navigateToSection('education-resources', '/education'),
     },
     {
       id: 'citizen-tools',
+      href: '/tools',
       line1: 'Citizen',
       line2: 'Tools',
       fullLabel: 'Citizen Tools',
@@ -359,10 +378,13 @@ export default function Navbar({
                 const IconComponent = item.Icon;
                 return (
                   <React.Fragment key={item.id}>
-                    <button
-                      type="button"
-                      onClick={item.onClick}
-                      className="group flex items-center gap-1.5 xl:gap-2.5 px-1.5 xl:px-2.5 py-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+                    <a
+                      href={item.href}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        item.onClick();
+                      }}
+                      className="group flex items-center gap-1.5 xl:gap-2.5 px-1.5 xl:px-2.5 py-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 no-underline"
                     >
                       <IconComponent
                         className="w-[20px] h-[20px] xl:w-[23px] xl:h-[23px] 2xl:w-[27px] 2xl:h-[27px] text-white stroke-[1.9] shrink-0 transition-transform duration-150 group-hover:scale-105"
@@ -372,7 +394,7 @@ export default function Navbar({
                         <span className="block">{item.line1}</span>
                         <span className="block">{item.line2}</span>
                       </span>
-                    </button>
+                    </a>
                     {idx < navItems.length - 1 && (
                       <span
                         className="h-7 xl:h-8 2xl:h-9 w-[1px] bg-white/20 shrink-0"
@@ -439,10 +461,13 @@ export default function Navbar({
             )}
 
             {/* Button 1: Track Application */}
-            <button
-              type="button"
-              onClick={handleTrackApplication}
-              className="h-[38px] xl:h-[44px] 2xl:h-[54px] px-3 xl:px-4 2xl:px-5 bg-[#175CEE] hover:bg-[#124FD1] text-white rounded-[11px] xl:rounded-[13px] shadow-[0_2px_8px_rgba(23,92,238,0.24)] inline-flex items-center justify-center gap-1.5 xl:gap-2 text-[11.5px] xl:text-[13px] 2xl:text-[15.5px] font-semibold whitespace-nowrap transition-colors cursor-pointer"
+            <a
+              href="/track"
+              onClick={(e) => {
+                e.preventDefault();
+                handleTrackApplication();
+              }}
+              className="h-[38px] xl:h-[44px] 2xl:h-[54px] px-3 xl:px-4 2xl:px-5 bg-[#175CEE] hover:bg-[#124FD1] text-white rounded-[11px] xl:rounded-[13px] shadow-[0_2px_8px_rgba(23,92,238,0.24)] inline-flex items-center justify-center gap-1.5 xl:gap-2 text-[11.5px] xl:text-[13px] 2xl:text-[15.5px] font-semibold whitespace-nowrap transition-colors cursor-pointer no-underline"
             >
               {/* Crisp Document/Tracking Icon matching the reference */}
               <svg
@@ -462,7 +487,7 @@ export default function Navbar({
                 <line x1="8" y1="18" x2="16" y2="18" />
               </svg>
               <span>Track Application</span>
-            </button>
+            </a>
 
             {/* Button 2: Staff Login */}
             {onOpenAdmin && (
@@ -698,10 +723,13 @@ export default function Navbar({
               const IconComponent = item.Icon;
               return (
                 <React.Fragment key={`mob-row2-${item.id}`}>
-                  <button
-                    type="button"
-                    onClick={item.onClick}
-                    className="flex-1 min-w-[64px] min-h-[62px] sm:min-h-[66px] py-1.5 px-1 flex flex-col items-center justify-center gap-1 text-center text-white hover:bg-white/10 active:bg-white/20 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/80"
+                  <a
+                    href={item.href}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      item.onClick();
+                    }}
+                    className="flex-1 min-w-[64px] min-h-[62px] sm:min-h-[66px] py-1.5 px-1 flex flex-col items-center justify-center gap-1 text-center text-white hover:bg-white/10 active:bg-white/20 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/80 no-underline"
                   >
                     <IconComponent
                       className="w-[18px] h-[18px] min-[375px]:w-[19px] min-[375px]:h-[19px] sm:w-[21px] sm:h-[21px] text-white stroke-[1.9] shrink-0"
@@ -711,7 +739,7 @@ export default function Navbar({
                       <span className="block whitespace-nowrap">{item.line1}</span>
                       <span className="block whitespace-nowrap">{item.line2}</span>
                     </span>
-                  </button>
+                  </a>
                   {idx < navItems.length - 1 && (
                     <span
                       className="self-center h-8 sm:h-9 w-[1px] bg-white/20 shrink-0"
@@ -818,11 +846,14 @@ export default function Navbar({
                 {navItems.map((item) => {
                   const IconComponent = item.Icon;
                   return (
-                    <button
+                    <a
                       key={`drawer-${item.id}`}
-                      type="button"
-                      onClick={item.onClick}
-                      className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[14px] font-medium text-white hover:bg-white/12 active:bg-white/20 transition-colors cursor-pointer text-left"
+                      href={item.href}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        item.onClick();
+                      }}
+                      className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[14px] font-medium text-white hover:bg-white/12 active:bg-white/20 transition-colors cursor-pointer text-left no-underline"
                     >
                       <span className="flex items-center gap-3">
                         <IconComponent
@@ -832,7 +863,7 @@ export default function Navbar({
                         <span>{item.fullLabel}</span>
                       </span>
                       <ChevronRight className="w-4 h-4 text-white/50" aria-hidden="true" />
-                    </button>
+                    </a>
                   );
                 })}
 
@@ -854,14 +885,17 @@ export default function Navbar({
             {/* Bottom Section: TRACK APPLICATION & STAFF LOGIN */}
             <div className="p-4 border-t border-white/15 bg-[#04346C]/60 space-y-2.5">
               {/* TRACK APPLICATION — Blue filled button, white icon & text */}
-              <button
-                type="button"
-                onClick={handleTrackApplication}
-                className="w-full h-11 px-4 bg-[#175CEE] hover:bg-[#124FD1] active:scale-[0.99] text-white rounded-xl font-bold text-xs tracking-wide uppercase inline-flex items-center justify-center gap-2 shadow-[0_3px_10px_rgba(23,92,238,0.35)] transition-all cursor-pointer"
+              <a
+                href="/track"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleTrackApplication();
+                }}
+                className="w-full h-11 px-4 bg-[#175CEE] hover:bg-[#124FD1] active:scale-[0.99] text-white rounded-xl font-bold text-xs tracking-wide uppercase inline-flex items-center justify-center gap-2 shadow-[0_3px_10px_rgba(23,92,238,0.35)] transition-all cursor-pointer no-underline"
               >
                 <FileText className="w-4 h-4 text-white shrink-0" aria-hidden="true" />
                 <span>TRACK APPLICATION</span>
-              </button>
+              </a>
 
               {/* STAFF LOGIN — White outlined button, navy-blue icon & text */}
               {onOpenAdmin && (

@@ -10,14 +10,30 @@ export type VerificationStatus = 'verified' | 'needs_verification';
 
 export type ApplicationStatus = 'upcoming' | 'open' | 'closed' | 'cancelled' | 'unknown';
 
+export type NoticeType =
+  | 'recruitment'
+  | 'admission'
+  | 'exam_form'
+  | 'date_sheet'
+  | 'result'
+  | 'answer_key'
+  | 'objection_window'
+  | 'document_verification'
+  | 'admit_card'
+  | 'correction'
+  | 'scheme';
+
 export type NoticeStage =
   | 'recruitment'
   | 'admission'
   | 'exam_form'
+  | 'date_sheet'
   | 'correction'
   | 'admit_card'
   | 'examination'
   | 'answer_key'
+  | 'objection_window'
+  | 'document_verification'
   | 'result'
   | 'scheme';
 
@@ -45,6 +61,7 @@ export interface SarkariItem {
   id: string;
   title: string;
   category: 'jkssb' | 'jobs' | 'admit_cards' | 'results' | 'answer_keys' | 'syllabus' | 'admissions' | 'exam_forms' | 'cluster_univ' | 'nta' | 'ssc_jobs' | 'rrb_jobs' | 'army_jobs';
+  noticeType?: NoticeType;
   postDate: string;
   startDate?: string;
   lastDate?: string;
@@ -53,6 +70,7 @@ export interface SarkariItem {
   correctionWindow?: string;        // Separate correction window dates
   shortInfo: string;
   ageLimit?: string;
+  ageRelaxationDetails?: string;    // Explicit verified age relaxation or "No category relaxation"
   eligibility?: string;
   totalPosts?: string | number;
   feePerSubject?: string;
@@ -64,6 +82,11 @@ export interface SarkariItem {
     genObc: string;
     scSt: string;
   };
+  paymentInstructions?: string;     // Explicit verified payment instructions (e.g. ₹0 / Exempted)
+  selectionProcess?: string[];      // Verified stage-by-stage selection process
+  documentsRequired?: string[];     // Verified specific documents needed
+  editorialReviewRequired?: boolean;// Flagged for editorial review
+  editorialNotes?: string;          // Specific reviewer / auditor notes
   advertisementNo?: string;
   recruitmentYear?: string;         // e.g. "2024", "2026"
   session?: string;                 // e.g. "2026-28"
@@ -100,26 +123,39 @@ export const SARKARI_DATA: SarkariItem[] = [
   // 🇮🇳 STAFF SELECTION COMMISSION (SSC) NOVEMBER 2026 EXAMINATIONS SCHEDULE
   {
     id: 'ssc-examination-schedule-cgept-dept-steno-cpo-nov-2026',
-    title: 'SSC Important Notice: Schedule of Computer Based & Skill Examinations for November 2026 (CGEPT, Departmental Typing/Steno & SI Paper-II)',
+    title: 'SSC Examination Schedule November 2026: CGEPT, Departmental Typing/Steno & Sub-Inspector Paper-II Timetable',
     category: 'ssc_jobs',
     postDate: '02/11/2026',
     startDate: '17/11/2026',
     lastDate: '28/11/2026',
     closingTime: '18:00 IST',
-    advertisementNo: 'F. No. HQ-C1101/9/2026-C1/1 (Exam Schedule Nov 2026)',
+    advertisementNo: 'F. No. HQ-C1101/9/2026-C1/1 (Important Notice: Examination Schedule)',
     recruitmentYear: '2026',
-    shortInfo: 'Staff Selection Commission (SSC) has officially issued the schedule of Computer-Based & Skill Tests for November 2026: Coast Guard Enrolled Persons Test (CGEPT) Batches 01/2027 & 02/2027 on 17–18 November 2026; Annual Departmental Typing Test & Stenographer Skill Test 2025 on 20–21 November 2026; and Sub-Inspector in Delhi Police & CAPFs Examination (Paper-II) on 28 November 2026.',
-    ageLimit: 'As per respective examination notices and service rules',
-    eligibility: 'Candidates enrolled for Coast Guard CGEPT, eligible departmental candidates, and candidates qualified in Paper-I & PET/PST for SI Delhi Police/CAPFs.',
-    totalPosts: 'Schedule for Multiple Central & Coast Guard Cadres',
+    noticeType: 'date_sheet',
+    stage: 'date_sheet',
+    shortInfo: 'Staff Selection Commission (SSC) has officially issued Important Notice F. No. HQ-C1101/9/2026-C1/1 announcing the examination schedule for November 2026. The schedule covers three major examinations: Coast Guard Enrolled Persons Test (CGEPT) Batches 01/2027 & 02/2027 (17–18 Nov 2026), Annual Departmental Typing Test & Stenographer Skill Test 2025 (20–21 Nov 2026), and Sub-Inspector in Delhi Police & CAPFs Examination Paper-II (28 Nov 2026). This notification is strictly an official examination timetable for previously registered and shortlisted candidates.',
+    ageLimit: 'Not Applicable (Official Examination Schedule Notice)',
+    eligibility: 'Candidates enrolled for Coast Guard CGEPT, eligible central departmental candidates for Typing/Steno tests, and candidates qualified in Paper-I & PET/PST for Sub-Inspector in Delhi Police & CAPFs.',
+    totalPosts: 'Not Applicable (Examination Timetable for Registered Candidates)',
     officialLink: 'https://ssc.gov.in',
     officialNotificationUrl: 'https://ssc.gov.in',
     officialApplicationUrl: 'https://ssc.gov.in',
     fees: {
-      genObc: '₹0/- (Examination Schedule Notice)',
-      scSt: '₹0/- (Exempted)'
+      genObc: 'Not Applicable (Examination Timetable — No Fee)',
+      scSt: 'Not Applicable'
     },
-    stage: 'examination',
+    paymentInstructions: 'Not Applicable. This is an official examination schedule; no application fee or payment is required.',
+    selectionProcess: [
+      'Coast Guard Enrolled Persons Test (CGEPT) Batches 01/2027 & 02/2027: Computer Based Examination on 17 & 18 November 2026.',
+      'Annual Departmental Typing Test & Stenographer Skill Test 2025: Skill & Speed Test on 20 & 21 November 2026.',
+      'Sub-Inspector in Delhi Police & CAPFs Examination (Paper-II): Computer Based Examination on 28 November 2026 for Paper-I and PET/PST qualified candidates.'
+    ],
+    documentsRequired: [
+      'Printed e-Admit Card / Hall Ticket downloaded from official regional SSC portal',
+      'Valid Original Government Photo ID Proof (Aadhaar Card, Voter ID, Passport, PAN Card, or Driving Licence)',
+      'Two recent passport-size colour photographs matching the original application',
+      'Transparent ballpoint pen and valid COVID/health declaration if mandated on the admit card'
+    ],
     status: 'Informational',
     isNew: true
   },
@@ -180,14 +216,16 @@ export const SARKARI_DATA: SarkariItem[] = [
     id: 'ku-bed-3rd-4th-sem-revised-datesheet-nov-2026',
     title: 'University of Kashmir: Revised Date Sheet for B.Ed 3rd & 4th Semester (Batch 2024) Session November 2026 Released',
     category: 'exam_forms',
+    noticeType: 'date_sheet',
     postDate: '01/11/2026',
     startDate: '01/11/2026',
     lastDate: '25/11/2026',
     closingTime: '14:00 IST',
     advertisementNo: 'Notice No. F(Revised-Datesheet-B.Ed-3rd-4th-Sem)KU/2026 (Dated: 01.11.2026)',
     session: '2024-26',
-    shortInfo: 'University of Kashmir has officially issued the revised examination date sheet for regular candidates of B.Ed. 3rd & 4th Semester (Batch-2024) enrolled through Directorate of Distance Education, PG Department of Education, South Campus, and Affiliated Private B.Ed. Colleges for the examination session November 2026.',
-    ageLimit: 'Not Applicable (Semester Examination)',
+    shortInfo: 'University of Kashmir has officially issued the revised examination date sheet for regular candidates of B.Ed. 3rd & 4th Semester (Batch-2024) enrolled through Directorate of Distance Education, PG Department of Education, South Campus, and Affiliated Private B.Ed. Colleges for the examination session November 2026. Scheduled examinations commence on 25th November 2026.',
+    ageLimit: 'Not Applicable (Semester Examination Timetable)',
+    ageRelaxationDetails: 'Not Applicable (University Semester Examination)',
     eligibility: 'Regular enrolled candidates of B.Ed 3rd & 4th Semester (Batch 2024) who have submitted examination forms.',
     totalPosts: 'B.Ed Examination Session November 2026',
     officialLink: 'https://kashmiruniversity.net',
@@ -197,7 +235,12 @@ export const SARKARI_DATA: SarkariItem[] = [
       genObc: '₹0/- (Date Sheet Notification)',
       scSt: '₹0/- (Exempted)'
     },
-    stage: 'examination',
+    paymentInstructions: 'Not Applicable. This is an informational date sheet; no application fee is required.',
+    selectionProcess: [
+      'Theory examinations conducted according to the revised timetable and assigned examination centers.',
+      'Continuous evaluation and practical/internship marks as submitted by respective colleges.'
+    ],
+    stage: 'date_sheet',
     status: 'Informational',
     isNew: true
   },
@@ -797,20 +840,36 @@ export const SARKARI_DATA: SarkariItem[] = [
     id: 'army-tes-57-course-2026',
     title: 'Indian Army 10+2 Technical Entry Scheme (TES-57 Course) Online Form 2026',
     category: 'army_jobs',
+    noticeType: 'recruitment',
     postDate: '25/10/2026',
     startDate: '14/10/2026',
     lastDate: '12/11/2026',
     closingTime: '12:00 IST',
     advertisementNo: 'TES-57 Course Notification (Commencing July 2027)',
-    shortInfo: 'Join Indian Army invites online applications from unmarried male candidates who have passed 10+2 examination with Physics, Chemistry, and Mathematics (PCM) and appeared in JEE (Mains) for the 10+2 Technical Entry Scheme (TES-57) course for grant of Permanent Commission in the Indian Army. Applications close at 12:00 hrs.',
+    shortInfo: 'Join Indian Army invites online applications from unmarried male candidates who have passed 10+2 examination with Physics, Chemistry, and Mathematics (PCM) and appeared in JEE (Mains) 2026 for the 10+2 Technical Entry Scheme (TES-57) course for grant of Permanent Commission in the Indian Army. Applications close at 12:00 hrs IST.',
     ageLimit: '16½ to 19½ Years (Candidates must not be born before 02.01.2008 and not after 01.01.2011, both days inclusive)',
+    ageRelaxationDetails: 'Strict uniform age criteria: 16½ to 19½ years. Candidates must not be born before 02.01.2008 and not after 01.01.2011 (both days inclusive). No category age relaxation applies to any category under Indian Army Commissioned Officer Technical Entry Scheme rules.',
     eligibility: 'Minimum 60% aggregate marks in Physics, Chemistry & Mathematics (PCM) in Class 12th (10+2) from a recognized Education Board, and mandatory appearance in JEE (Mains) 2026.',
-    totalPosts: '90 Posts',
+    totalPosts: '90 Posts (Provisional)',
     officialLink: 'https://joinindianarmy.nic.in',
     fees: {
       genObc: '₹0/- (No Application Fee for any category)',
       scSt: '₹0/- (Exempted)'
     },
+    paymentInstructions: '₹0/- (Exempted). No application fee is payable by any candidate of any category. Applications are completely free of charge on joinindianarmy.nic.in.',
+    selectionProcess: [
+      'Shortlisting of applications based on JEE (Mains) 2026 Common Rank List (CRL) rank cutoff fixed by Integrated HQ of MoD (Army).',
+      'Two-stage Services Selection Board (SSB) Interview (5 days) at Selection Centres (Prayagraj, Bhopal, Bengaluru, or Jalandhar) comprising Psychological Tests, Group Testing Officer (GTO) Tasks, and Personal Interview.',
+      'Comprehensive Medical Examination at designated Military Hospitals for SSB-recommended candidates.',
+      'Final Merit List prepared on the basis of marks scored in SSB interview subject to medical fitness and availability of vacancies. Selected cadets undergo 4-year training (1 year basic military training + 3 years engineering degree course) leading to the grant of Permanent Commission in the rank of Lieutenant. (No CEE or physical rally is conducted for this officer course).'
+    ],
+    documentsRequired: [
+      'Class 10th Certificate & Marksheet (as matriculation date-of-birth proof).',
+      'Class 12th Certificate & Marksheet showing minimum 60% aggregate in Physics, Chemistry & Mathematics (PCM).',
+      'JEE (Mains) 2026 Scorecard showing Common Rank List (CRL) rank.',
+      'Aadhaar Card or Government Photo Identity Proof.',
+      'Clear passport-size photograph (5-20 KB) and signature (5-10 KB) as per JIA portal specifications.'
+    ],
     stage: 'recruitment',
     verificationStatus: 'verified',
     verification: {
@@ -823,7 +882,7 @@ export const SARKARI_DATA: SarkariItem[] = [
       verifiedOpeningDate: '14/10/2026',
       verifiedClosingDate: '12/11/2026',
       closingTime: '12:00 IST',
-      correctionHistory: ['Verified official notification PDF on joinindianarmy.nic.in.']
+      correctionHistory: ['Verified official notification brochure on joinindianarmy.nic.in. Selection is via JEE Main rank cutoff + SSB interview (no CEE/rally). No category age relaxation or application fee.']
     },
     isNew: true
   },

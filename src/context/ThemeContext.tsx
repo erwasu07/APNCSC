@@ -70,7 +70,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const setTheme = (newTheme: ThemeMode) => {
     setCurrentThemeState('tricolor');
     if (typeof window !== 'undefined') {
-      localStorage.setItem('cscdost_site_theme', 'tricolor');
+      try {
+        localStorage.setItem('cscdost_site_theme', 'tricolor');
+      } catch {}
       applyThemeToDom('tricolor');
     }
   };

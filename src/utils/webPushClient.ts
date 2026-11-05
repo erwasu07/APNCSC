@@ -145,7 +145,9 @@ export async function subscribeToWebPush(
   // 3. Request native browser notification permission
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') {
-    localStorage.setItem('csc_push_notification_status', 'denied');
+    try {
+      localStorage.setItem('csc_push_notification_status', 'denied');
+    } catch {}
     throw new Error(
       permission === 'denied'
         ? 'Notifications are blocked in your browser settings. Please enable notifications in site permissions.'
@@ -225,9 +227,11 @@ export async function subscribeToWebPush(
   }
 
   // 8. Update local storage with true confirmed state
-  localStorage.setItem('csc_push_notification_status', 'subscribed');
-  localStorage.setItem('csc_push_preferences', JSON.stringify(preferences));
-  localStorage.setItem('csc_push_endpoint', subJson.endpoint);
+  try {
+    localStorage.setItem('csc_push_notification_status', 'subscribed');
+    localStorage.setItem('csc_push_preferences', JSON.stringify(preferences));
+    localStorage.setItem('csc_push_endpoint', subJson.endpoint);
+  } catch {}
 
   return {
     success: true,
@@ -263,8 +267,10 @@ export async function unsubscribeFromWebPush(): Promise<boolean> {
       }
     }
 
-    localStorage.setItem('csc_push_notification_status', 'unsubscribed');
-    localStorage.removeItem('csc_push_endpoint');
+    try {
+      localStorage.setItem('csc_push_notification_status', 'unsubscribed');
+      localStorage.removeItem('csc_push_endpoint');
+    } catch {}
     return true;
   } catch (err) {
     console.error('[WebPush] Error during unsubscribe:', err);

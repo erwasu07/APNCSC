@@ -33,12 +33,12 @@ export const SERVICES_LIST: ServiceItem[] = [
   },
   {
     id: 'csc-aadhaar',
-    name: 'Aadhaar Card Update Assistance',
+    name: 'Aadhaar Address Update & ASK Appointment Guidance',
     category: 'csc',
-    description: 'Demographic updates (Name, Address, DOB, Gender, Mobile Number) and photo verification guidance.',
-    requirements: ['Aadhaar Card', 'Valid Address/ID Proof (e.g., Voter ID, Passport, Bank Passbook)'],
-    estimatedTime: '2 - 5 Days',
-    price: '₹50 (Govt Fee) + ₹70 (CSC Charge)',
+    description: 'Assistance with online address updates via official myAadhaar portal and appointment scheduling / document preparation guidance for authorized Aadhaar Seva Kendra visits.',
+    requirements: ['Aadhaar Number', 'Valid Address Proof (e.g., Voter ID, Passport, Domicile, Bank Passbook)', 'Aadhaar-Linked Active Mobile Number for OTP verification'],
+    estimatedTime: 'Typically 3 - 7 Days (Subject to UIDAI verification)',
+    price: '₹50 (UIDAI Portal Fee) + ₹70 (CSC Facilitation)',
     popular: true
   },
   {
@@ -47,8 +47,8 @@ export const SERVICES_LIST: ServiceItem[] = [
     category: 'csc',
     description: 'Apply for a new Voter ID card, make corrections, shift assembly constituencies, or request PVC card printing.',
     requirements: ['Aadhaar Card', 'Age Proof', 'Passport Size Photo', 'Address Proof'],
-    estimatedTime: '15 - 30 Days',
-    price: 'Free Application + ₹70 (CSC Charge)'
+    estimatedTime: '15 - 30 Days (Subject to ERO/BLO verification)',
+    price: 'Free Govt Application + ₹70 (CSC Facilitation)'
   },
   {
     id: 'csc-ayushman',
@@ -56,8 +56,8 @@ export const SERVICES_LIST: ServiceItem[] = [
     category: 'csc',
     description: 'Check eligibility and register for free ₹5 Lakh health insurance cover under PM-JAY scheme.',
     requirements: ['Aadhaar Card', 'Ration Card / PM Letter'],
-    estimatedTime: 'Same Day',
-    price: 'FREE Govt Scheme + ₹70 (CSC Charge)'
+    estimatedTime: '1 - 3 Days (Subject to State Health Agency approval)',
+    price: 'FREE Govt Scheme + ₹70 (CSC Facilitation)'
   },
   {
     id: 'csc-pmkisan',

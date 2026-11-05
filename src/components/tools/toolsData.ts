@@ -25,7 +25,7 @@ export const TOOLS_LIST: ToolItem[] = [
   {
     id: 'image-compressor',
     name: 'Image Compressor',
-    shortDescription: 'Compress JPG, PNG & WebP images to exact target sizes (20KB, 50KB, 100KB, 200KB) with zero quality loss.',
+    shortDescription: 'Compress JPG, PNG & WebP images to exact portal target sizes (20KB, 50KB, 100KB, 200KB) with optimized visual clarity.',
     category: 'image',
     categoryLabel: 'Image Tools',
     iconName: 'Minimize2',

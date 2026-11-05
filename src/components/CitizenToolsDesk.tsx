@@ -51,24 +51,24 @@ export default function CitizenToolsDesk({ onApplyService }: CitizenToolsDeskPro
       months += 12;
     }
 
-    // Category relaxation calculation
+    // Category relaxation benchmark
     let allowedMax = maxAgeLimit;
     let relaxationText = 'Standard OM / General Cutoff';
     if (category === 'rba_obc') {
       allowedMax = maxAgeLimit + 3;
-      relaxationText = '+3 Years Relaxation (RBA / OBC / EWS)';
+      relaxationText = '+3 Years Reference (RBA / OBC / EWS)';
     } else if (category === 'sc_st') {
       allowedMax = maxAgeLimit + 3;
-      relaxationText = '+3 Years Relaxation (SC / ST)';
+      relaxationText = '+3 Years Reference (SC / ST)';
     } else if (category === 'pwd') {
       allowedMax = maxAgeLimit + 2;
-      relaxationText = '+2 Years Relaxation (Physically Challenged)';
+      relaxationText = '+2 Years Reference (Physically Challenged)';
     } else if (category === 'esm') {
       allowedMax = maxAgeLimit + 8;
-      relaxationText = '+8 Years Relaxation (Ex-Servicemen)';
+      relaxationText = '+8 Years Reference (Ex-Servicemen)';
     }
 
-    const isEligible = years < allowedMax || (years === allowedMax && months === 0 && days === 0);
+    const withinAgeBracket = years < allowedMax || (years === allowedMax && months === 0 && days === 0);
 
     return {
       years,
@@ -76,7 +76,7 @@ export default function CitizenToolsDesk({ onApplyService }: CitizenToolsDeskPro
       days,
       allowedMax,
       relaxationText,
-      isEligible,
+      withinAgeBracket,
       minAgeMet: years >= 18
     };
   }, [dob, cutoffDate, category, maxAgeLimit]);
@@ -414,21 +414,34 @@ export default function CitizenToolsDesk({ onApplyService }: CitizenToolsDeskPro
                     </div>
                   </div>
 
-                  {ageCalculation.isEligible && ageCalculation.minAgeMet ? (
-                    <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 text-xs font-bold">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Eligible: Age falls within permissible recruitment limits.</span>
+                  {ageCalculation.withinAgeBracket && ageCalculation.minAgeMet ? (
+                    <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-900 text-xs font-medium">
+                      <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold block">Age Benchmark Met</span>
+                        <span className="text-[11px] text-blue-800">
+                          Chronological age ({ageCalculation.years}y {ageCalculation.months}m) is within the selected reference ceiling ({ageCalculation.allowedMax}y).
+                        </span>
+                      </div>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 text-xs font-bold">
-                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                      <span>
-                        {!ageCalculation.minAgeMet 
-                          ? 'Under-age: Must be at least 18 years on cutoff date.' 
-                          : 'Over-age: Exceeds the permissible upper age bracket for this selection.'}
-                      </span>
+                    <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 text-xs font-medium">
+                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold block">Outside Selected Reference Ceiling</span>
+                        <span className="text-[11px] text-amber-800">
+                          {!ageCalculation.minAgeMet 
+                            ? 'Calculated age is under 18 years on the specified cutoff date.' 
+                            : `Calculated age exceeds the selected ${ageCalculation.allowedMax}-year reference benchmark.`}
+                        </span>
+                      </div>
                     </div>
                   )}
+
+                  {/* Statutory Non-Eligibility Advisory */}
+                  <div className="p-2.5 bg-slate-100 border border-slate-200 rounded-lg text-[10px] text-slate-600 leading-normal">
+                    <strong>Important Note:</strong> Exact age calculation is mathematical. Overall recruitment eligibility depends on educational qualification cutoffs, degree marks, domicile, and advertisement-specific date-of-birth windows (certain posts enforce strict birth date ranges with no category relaxation). Meeting the age benchmark alone does not guarantee eligibility.
+                  </div>
                 </>
               ) : (
                 <div className="text-xs text-rose-600 p-3 bg-rose-50 rounded-lg">

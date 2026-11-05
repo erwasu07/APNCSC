@@ -64,13 +64,17 @@ export const LEGAL_PAGE_CONFIG: Record<LegalPageType, { title: string; metaTitle
 };
 
 export default function LegalPageView({ pageType, onNavigate, onBackToHome }: LegalPageViewProps) {
+  const safePageType: LegalPageType = (pageType && LEGAL_PAGE_CONFIG[pageType]) ? pageType : 'privacy';
+  const currentConfig = LEGAL_PAGE_CONFIG[safePageType];
+
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    const config = LEGAL_PAGE_CONFIG[pageType];
-    if (config) {
-      document.title = config.metaTitle;
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {}
+    if (currentConfig?.metaTitle) {
+      document.title = currentConfig.metaTitle;
     }
-  }, [pageType]);
+  }, [safePageType, currentConfig]);
 
   const navItems: { type: LegalPageType; label: string; icon: React.ReactNode }[] = [
     { type: 'about', label: 'About Us', icon: <Info className="w-4 h-4" /> },
@@ -95,7 +99,7 @@ export default function LegalPageView({ pageType, onNavigate, onBackToHome }: Le
               Home
             </button>
             <span>/</span>
-            <span className="text-slate-900 font-semibold">{LEGAL_PAGE_CONFIG[pageType].title}</span>
+            <span className="text-slate-900 font-semibold">{currentConfig.title}</span>
           </nav>
 
           <button

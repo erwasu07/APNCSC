@@ -33,13 +33,35 @@ export function renderPostSubstantiveHtml(item: SarkariItem): string {
   const safeScSt = escapeHtml(item.fees?.scSt || 'Refer to notification');
   const safeOfficialLink = escapeHtml(item.officialLink || 'https://www.cscdost.com');
 
+  const isZeroFee =
+    safeGenObc.toLowerCase().includes('0') ||
+    safeGenObc.toLowerCase().includes('nil') ||
+    safeGenObc.toLowerCase().includes('exempt') ||
+    safeGenObc.toLowerCase().includes('free') ||
+    item.fees?.genObc === '₹0' ||
+    item.fees?.genObc === '0' ||
+    item.fees?.genObc === 'Nil';
+
+  const paymentInstructionText = item.paymentInstructions
+    ? escapeHtml(item.paymentInstructions)
+    : isZeroFee
+      ? '₹0/- (Exempted / Free for all candidates). No payment is required.'
+      : 'Net Banking, Debit/Credit Card, UPI through Official Gateway';
+
+  const isDateSheet =
+    item.noticeType === 'date_sheet' ||
+    item.category === 'exam_forms' ||
+    item.stage === 'date_sheet' ||
+    item.stage === 'examination' ||
+    item.id === 'ssc-examination-schedule-cgept-dept-steno-cpo-nov-2026';
+
   return `
   <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
     <!-- Breadcrumb Navigation -->
     <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
       <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
       <span style="margin:0 6px;">/</span>
-      <a href="/#sarkari-board" style="color:#2563eb; text-decoration:none;">Recruitment Updates</a>
+      <a href="/jobs" style="color:#2563eb; text-decoration:none;">${isDateSheet ? 'Examination Notices' : 'Recruitment Updates'}</a>
       <span style="margin:0 6px;">/</span>
       <span style="color:#0f172a; font-weight:600;">${safeTitle}</span>
     </nav>
@@ -53,15 +75,15 @@ export function renderPostSubstantiveHtml(item: SarkariItem): string {
     <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:24px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
       <header style="border-bottom:1px solid #e2e8f0; padding-bottom:18px; margin-bottom:20px;">
         <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:10px;">
-          ${safeCategory}
+          ${isDateSheet ? 'EXAMINATION SCHEDULE' : safeCategory} ${item.noticeType ? `• ${escapeHtml(item.noticeType.replace(/_/g, ' ').toUpperCase())}` : ''}
         </span>
         <h1 style="font-size:26px; line-height:1.3; font-weight:800; color:#0f172a; margin:0 0 12px 0;">
           ${safeTitle}
         </h1>
         <div style="font-size:13px; color:#64748b; display:flex; flex-wrap:wrap; gap:16px;">
           <span><strong>Post Date:</strong> ${safePostDate}</span>
-          <span><strong>Advt No:</strong> ${safeAdvtNo}</span>
-          <span><strong>Last Date to Apply:</strong> <strong style="color:#b91c1c;">${safeLastDate}</strong></span>
+          <span><strong>Advt / Ref No:</strong> ${safeAdvtNo}</span>
+          <span><strong>${isDateSheet ? 'Examination Dates:' : 'Last Date to Apply:'}</strong> <strong style="color:#b91c1c;">${isDateSheet && safeStartDate && safeStartDate !== safeLastDate ? `${safeStartDate} to ${safeLastDate}` : safeLastDate}</strong></span>
         </div>
       </header>
 
@@ -73,76 +95,117 @@ export function renderPostSubstantiveHtml(item: SarkariItem): string {
         </p>
       </section>
 
-      <!-- Key Dates & Application Fees Table -->
+      <!-- Key Dates & Examination Timetable / Fees Table -->
       <section style="margin-bottom:24px; display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
         <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
-          <h3 style="font-size:15px; font-weight:700; color:#0f172a; margin:0 0 10px 0;">📅 Important Dates</h3>
+          <h3 style="font-size:15px; font-weight:700; color:#0f172a; margin:0 0 10px 0;">📅 ${isDateSheet ? 'Examination Schedule' : 'Important Dates'}</h3>
           <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#334155; line-height:1.8;">
             <li><strong>Notification Released:</strong> ${safePostDate}</li>
-            <li><strong>Online Application Start:</strong> ${safeStartDate}</li>
-            <li><strong>Last Date to Apply Online:</strong> <span style="color:#b91c1c; font-weight:700;">${safeLastDate}</span></li>
-            <li><strong>Exam / Admit Card:</strong> Check official portal for schedule</li>
+            <li><strong>${isDateSheet ? 'Commencement Date:' : 'Online Application Start:'}</strong> ${safeStartDate}</li>
+            <li><strong>${isDateSheet ? 'Examination Concluding Date:' : 'Last Date to Apply Online:'}</strong> <span style="color:#b91c1c; font-weight:700;">${safeLastDate}</span></li>
+            <li><strong>Status:</strong> ${isDateSheet ? 'Official Examination Timetable Active' : 'Official Recruitment Notification'}</li>
           </ul>
         </div>
 
         <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
-          <h3 style="font-size:15px; font-weight:700; color:#0f172a; margin:0 0 10px 0;">💳 Application Fee</h3>
+          <h3 style="font-size:15px; font-weight:700; color:#0f172a; margin:0 0 10px 0;">💳 ${isDateSheet ? 'Fee Status' : 'Application Fee'}</h3>
           <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#334155; line-height:1.8;">
-            <li><strong>General / OBC / EWS:</strong> ${safeGenObc}</li>
-            <li><strong>SC / ST / PwD / Female:</strong> ${safeScSt}</li>
-            <li><strong>Payment Mode:</strong> Net Banking, Debit/Credit Card, UPI through Official Gateway</li>
+            ${isDateSheet ? `
+            <li><strong>Application Fee:</strong> Not Applicable (Official Examination Schedule Notice)</li>
+            <li><strong>Status:</strong> No application fee is required for this examination schedule.</li>
+            <li><strong>Admit Cards:</strong> Download directly from official portal (${safeOfficialLink}).</li>
+            ` : `
+            <li><strong>General / OBC / EWS:</strong> ${isZeroFee ? '₹0/- (Exempted)' : safeGenObc}</li>
+            <li><strong>SC / ST / PwD / Female:</strong> ${isZeroFee ? '₹0/- (Exempted)' : safeScSt}</li>
+            <li><strong>Payment Instructions:</strong> ${paymentInstructionText}</li>
+            `}
           </ul>
         </div>
       </section>
 
       <!-- Eligibility, Age Limit & Vacancies -->
       <section style="margin-bottom:24px;">
-        <h2 style="font-size:18px; font-weight:700; color:#1e293b; margin:0 0 12px 0;">Eligibility Criteria &amp; Vacancy Details</h2>
+        <h2 style="font-size:18px; font-weight:700; color:#1e293b; margin:0 0 12px 0;">${isDateSheet ? 'Candidate Eligibility & Examination Details' : 'Eligibility Criteria & Vacancy Details'}</h2>
         <table style="width:100%; border-collapse:collapse; font-size:14px; text-align:left; border:1px solid #e2e8f0;">
           <tbody>
             <tr style="border-bottom:1px solid #e2e8f0;">
-              <th style="padding:10px 14px; background:#f1f5f9; width:30%; font-weight:600; color:#1e293b;">Total Vacancies</th>
+              <th style="padding:10px 14px; background:#f1f5f9; width:30%; font-weight:600; color:#1e293b;">${isDateSheet ? 'Schedule Category' : 'Total Vacancies'}</th>
               <td style="padding:10px 14px; color:#0f172a; font-weight:600;">${safeTotalPosts}</td>
             </tr>
             <tr style="border-bottom:1px solid #e2e8f0;">
-              <th style="padding:10px 14px; background:#f1f5f9; font-weight:600; color:#1e293b;">Age Limit</th>
-              <td style="padding:10px 14px; color:#334155;">${safeAgeLimit} (Age relaxation applicable as per government norms)</td>
+              <th style="padding:10px 14px; background:#f1f5f9; font-weight:600; color:#1e293b;">${isDateSheet ? 'Notice Type' : 'Age Limit'}</th>
+              <td style="padding:10px 14px; color:#334155;">
+                ${isDateSheet ? 'Official Examination Timetable' : safeAgeLimit}
+                ${!isDateSheet && item.ageRelaxationDetails ? `<div style="margin-top:4px; font-size:13px; color:#475569;"><strong>Relaxation Details:</strong> ${escapeHtml(item.ageRelaxationDetails)}</div>` : ''}
+              </td>
             </tr>
             <tr style="border-bottom:1px solid #e2e8f0;">
-              <th style="padding:10px 14px; background:#f1f5f9; font-weight:600; color:#1e293b;">Educational Qualification</th>
+              <th style="padding:10px 14px; background:#f1f5f9; font-weight:600; color:#1e293b;">Target Candidates / Qualification</th>
               <td style="padding:10px 14px; color:#334155;">${safeEligibility}</td>
             </tr>
+            ${item.selectionProcess ? `
+            <tr style="border-bottom:1px solid #e2e8f0;">
+              <th style="padding:10px 14px; background:#f1f5f9; font-weight:600; color:#1e293b;">${isDateSheet ? 'Examination Scheme & Papers' : 'Selection Process'}</th>
+              <td style="padding:10px 14px; color:#334155;">${item.selectionProcess.map(s => escapeHtml(s)).join('<br>')}</td>
+            </tr>
+            ` : ''}
           </tbody>
         </table>
       </section>
 
-      <!-- Step-by-Step Instructions -->
+      ${item.documentsRequired && item.documentsRequired.length > 0 ? `
+      <!-- Required Documents Section -->
+      <section style="margin-bottom:24px;">
+        <h2 style="font-size:18px; font-weight:700; color:#1e293b; margin:0 0 10px 0;">${isDateSheet ? 'Mandatory Documents Required at Examination Hall' : 'Mandatory Documents Required'}</h2>
+        <ul style="padding-left:20px; font-size:14px; color:#334155; line-height:1.8; margin:0;">
+          ${item.documentsRequired.map(doc => `<li>${escapeHtml(doc)}</li>`).join('')}
+        </ul>
+      </section>
+      ` : ''}
+
+      <!-- Step-by-Step Instructions / Who Should Read -->
       <section style="margin-bottom:28px;">
-        <h2 style="font-size:18px; font-weight:700; color:#1e293b; margin:0 0 10px 0;">How to Apply Online</h2>
+        <h2 style="font-size:18px; font-weight:700; color:#1e293b; margin:0 0 10px 0;">${isDateSheet ? 'Who Should Read This Schedule & Candidate Guidelines' : 'How to Apply Online'}</h2>
+        ${isDateSheet ? `
+        <ol style="padding-left:20px; font-size:14px; color:#334155; line-height:1.8; margin:0;">
+          <li><strong>Check Test Dates:</strong> Identify the test date and shift timing for your post (CGEPT: 17–18 Nov; Typing/Steno: 20–21 Nov; Sub-Inspector Paper-II: 28 Nov 2026).</li>
+          <li><strong>View City Intimation Slip:</strong> Visit <a href="https://ssc.gov.in" target="_blank" rel="noopener noreferrer" style="color:#2563eb;">ssc.gov.in</a> approximately 7 to 10 days before your test to view your allocated examination city.</li>
+          <li><strong>Download e-Admit Card:</strong> Print your official admission certificate 3 to 4 days prior to your test from your regional SSC website.</li>
+          <li><strong>Report to Centre:</strong> Arrive at the allotted test centre before gate closure with your printed Admit Card, two passport photos, and valid original photo ID.</li>
+          <li><strong>No Application Fee:</strong> This is strictly an examination timetable for registered candidates; no application fee is required.</li>
+        </ol>
+        ` : `
         <ol style="padding-left:20px; font-size:14px; color:#334155; line-height:1.8; margin:0;">
           <li>Review the complete official advertisement brochure to verify your educational eligibility and age requirements.</li>
           <li>Prepare scanned copies of your Matriculation (10th) mark sheet, identity proof (Aadhaar / Voter ID), passport photograph, and signature in accordance with board specifications.</li>
           <li>Visit the official recruiting website or authority link provided below.</li>
           <li>Complete one-time registration (OTR) or applicant login using valid mobile number and email.</li>
           <li>Fill in academic credentials, examination center preferences, and communication address accurately.</li>
-          <li>Submit mandatory application fees via the secured payment gateway before the closing date: <strong>${safeLastDate}</strong>.</li>
+          <li>${isZeroFee ? 'Submit your online application on the official recruitment portal and download the confirmation receipt (No application fee required).' : `Submit mandatory application fees via the secured payment gateway before the closing date: <strong>${safeLastDate}</strong>.`}</li>
           <li>Download and print the final application confirmation receipt for your records and examination entry.</li>
         </ol>
+        `}
       </section>
 
       <!-- Official Links Action Section -->
-      <section style="background:#f1f5f9; border-radius:10px; padding:18px; display:flex; flex-wrap:wrap; items-center; justify-content:space-between; gap:12px;">
+      <section style="background:#f1f5f9; border-radius:10px; padding:18px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
         <div>
           <div style="font-weight:700; font-size:15px; color:#0f172a;">Official Board Portal &amp; Direct Links</div>
           <div style="font-size:13px; color:#64748b;">Verify official notification details directly on the government portal.</div>
         </div>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
           <a href="${safeOfficialLink}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#2563eb; color:#ffffff; font-weight:600; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
-            Official Portal / Gazette ↗
+            ${isDateSheet ? 'Official Portal (ssc.gov.in) ↗' : 'Official Portal / Gazette ↗'}
           </a>
+          ${isDateSheet ? `
+          <a href="/" style="display:inline-block; background:#ffffff; color:#0f172a; border:1px solid #cbd5e1; font-weight:600; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
+            Return to Portal Homepage
+          </a>
+          ` : `
           <a href="/apply" style="display:inline-block; background:#ffffff; color:#0f172a; border:1px solid #cbd5e1; font-weight:600; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
             Assisted Application Desk
           </a>
+          `}
         </div>
       </section>
     </article>
@@ -717,6 +780,308 @@ export function renderHomepageSubstantiveHtml(posts: SarkariItem[], services: Se
   `;
 }
 
+export function renderCategorySubstantiveHtml(
+  categoryType: 'jobs' | 'education' | 'schemes' | 'services' | 'tools' | 'apply' | 'track',
+  posts: SarkariItem[],
+  services: ServiceItem[]
+): string {
+  if (categoryType === 'jobs') {
+    const jobPosts = posts.filter(
+      p =>
+        p.noticeType === 'recruitment' ||
+        ['army_jobs', 'rrb_jobs', 'ssc_jobs', 'jkssb'].includes(p.category) ||
+        !p.noticeType
+    );
+
+    return `
+    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
+      <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
+        <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+        <span style="margin:0 6px;">/</span>
+        <span style="color:#0f172a; font-weight:600;">Government Jobs &amp; Recruitment</span>
+      </nav>
+
+      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:20px; margin-bottom:24px;">
+        <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
+          Recruitment Desk
+        </span>
+        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Latest Government Jobs &amp; Recruitment Bulletins</h1>
+        <p style="font-size:15px; color:#475569; margin:0; max-width:850px;">
+          Verified sarkari job notifications, eligibility criteria, advertisement details, and direct official application portals for JKSSB, Indian Army, SSC, and RRB Railways.
+        </p>
+      </header>
+
+      <section style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:18px;">
+        ${jobPosts.map(post => `
+          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:18px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span style="font-size:11px; font-weight:700; color:#2563eb; background:#eff6ff; padding:3px 8px; border-radius:4px; text-transform:uppercase;">
+                  ${escapeHtml(post.category?.replace(/_/g, ' '))}
+                </span>
+                <span style="font-size:12px; color:#b91c1c; font-weight:600;">Last Date: ${escapeHtml(post.lastDate)}</span>
+              </div>
+              <h2 style="font-size:17px; font-weight:700; line-height:1.35; margin:0 0 8px 0;">
+                <a href="/post/${escapeHtml(post.id)}" style="color:#0f172a; text-decoration:none;">
+                  ${escapeHtml(post.title)}
+                </a>
+              </h2>
+              <p style="font-size:13px; color:#475569; line-height:1.5; margin:0 0 12px 0;">
+                ${escapeHtml((post.shortInfo || '').slice(0, 120))}...
+              </p>
+            </div>
+            <div style="border-top:1px solid #f1f5f9; padding-top:12px; display:flex; justify-content:space-between; align-items:center; font-size:12px;">
+              <span style="color:#64748b;">Vacancies: <strong>${escapeHtml(post.totalPosts || 'Open')}</strong></span>
+              <a href="/post/${escapeHtml(post.id)}" style="color:#2563eb; font-weight:600; text-decoration:none;">
+                View Notification &amp; Apply →
+              </a>
+            </div>
+          </article>
+        `).join('')}
+      </section>
+
+      <footer style="margin-top:40px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
+        <p>CSC DOST | Operator: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) | Sangran Qazigund, Anantnag, J&amp;K 192221</p>
+      </footer>
+    </main>
+    `;
+  }
+
+  if (categoryType === 'education') {
+    const eduPosts = posts.filter(
+      p =>
+        p.noticeType === 'date_sheet' ||
+        p.noticeType === 'exam_form' ||
+        p.noticeType === 'admission' ||
+        p.category === 'exam_forms' ||
+        p.category === 'admissions' ||
+        p.category === 'cluster_univ'
+    );
+
+    return `
+    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
+      <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
+        <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+        <span style="margin:0 6px;">/</span>
+        <span style="color:#0f172a; font-weight:600;">Higher Education &amp; Examinations</span>
+      </nav>
+
+      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:20px; margin-bottom:24px;">
+        <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
+          University &amp; Board Bulletins
+        </span>
+        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">University Admissions, Date Sheets &amp; Exam Forms</h1>
+        <p style="font-size:15px; color:#475569; margin:0; max-width:850px;">
+          Official semester examination date sheets, entrance test schedules, admission notices, and form deadlines for University of Kashmir, Cluster University Srinagar, and state higher education institutions.
+        </p>
+      </header>
+
+      <section style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:18px;">
+        ${eduPosts.map(post => `
+          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:18px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span style="font-size:11px; font-weight:700; color:#0284c7; background:#f0f9ff; padding:3px 8px; border-radius:4px; text-transform:uppercase;">
+                  ${escapeHtml(post.category?.replace(/_/g, ' '))}
+                </span>
+                <span style="font-size:12px; color:#0f172a; font-weight:600;">Date: ${escapeHtml(post.lastDate)}</span>
+              </div>
+              <h2 style="font-size:17px; font-weight:700; line-height:1.35; margin:0 0 8px 0;">
+                <a href="/post/${escapeHtml(post.id)}" style="color:#0f172a; text-decoration:none;">
+                  ${escapeHtml(post.title)}
+                </a>
+              </h2>
+              <p style="font-size:13px; color:#475569; line-height:1.5; margin:0 0 12px 0;">
+                ${escapeHtml((post.shortInfo || '').slice(0, 120))}...
+              </p>
+            </div>
+            <div style="border-top:1px solid #f1f5f9; padding-top:12px; display:flex; justify-content:space-between; align-items:center; font-size:12px;">
+              <span style="color:#0284c7; font-weight:600;">${post.noticeType === 'date_sheet' ? 'Date Sheet Active' : 'Active Notice'}</span>
+              <a href="/post/${escapeHtml(post.id)}" style="color:#2563eb; font-weight:600; text-decoration:none;">
+                View Gazette &amp; Details →
+              </a>
+            </div>
+          </article>
+        `).join('')}
+      </section>
+
+      <footer style="margin-top:40px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
+        <p>CSC DOST | Operator: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) | Sangran Qazigund, Anantnag, J&amp;K 192221</p>
+      </footer>
+    </main>
+    `;
+  }
+
+  if (categoryType === 'schemes') {
+    const schemeServices = services.filter(
+      s =>
+        s.category?.toLowerCase().includes('scheme') ||
+        s.id.includes('kisan') ||
+        s.id.includes('ayushman') ||
+        s.id.includes('golden')
+    );
+
+    return `
+    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
+      <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
+        <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+        <span style="margin:0 6px;">/</span>
+        <span style="color:#0f172a; font-weight:600;">Government Welfare Schemes</span>
+      </nav>
+
+      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:20px; margin-bottom:24px;">
+        <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
+          Welfare &amp; Subsidies
+        </span>
+        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Government Welfare Schemes &amp; Citizen Benefits</h1>
+        <p style="font-size:15px; color:#475569; margin:0; max-width:850px;">
+          Complete verified guides and assisted enrollment for PM-KISAN Samman Nidhi, Ayushman Bharat PM-JAY SEHAT Golden Card, and citizen welfare entitlements.
+        </p>
+      </header>
+
+      <section style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
+        ${schemeServices.map(s => `
+          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:18px;">
+            <div style="font-size:11px; font-weight:600; color:#15803d; text-transform:uppercase; margin-bottom:4px;">${escapeHtml(s.category)}</div>
+            <h2 style="font-size:16px; font-weight:700; color:#0f172a; margin:0 0 6px 0;">
+              <a href="/service/${escapeHtml(s.id)}" style="color:#0f172a; text-decoration:none;">${escapeHtml(s.name)}</a>
+            </h2>
+            <p style="font-size:13px; color:#64748b; line-height:1.4; margin:0 0 10px 0;">${escapeHtml(s.description)}</p>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; border-top:1px solid #f1f5f9; padding-top:10px;">
+              <span style="font-weight:700; color:#0f172a;">${escapeHtml(s.price)}</span>
+              <a href="/service/${escapeHtml(s.id)}" style="color:#2563eb; font-weight:600; text-decoration:none;">View Scheme Details →</a>
+            </div>
+          </article>
+        `).join('')}
+      </section>
+
+      <footer style="margin-top:40px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
+        <p>CSC DOST | Operator: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) | Sangran Qazigund, Anantnag, J&amp;K 192221</p>
+      </footer>
+    </main>
+    `;
+  }
+
+  if (categoryType === 'services') {
+    return `
+    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
+      <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
+        <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+        <span style="margin:0 6px;">/</span>
+        <span style="color:#0f172a; font-weight:600;">Citizen Services Directory</span>
+      </nav>
+
+      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:20px; margin-bottom:24px;">
+        <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
+          Digital Seva Facilitation
+        </span>
+        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Citizen E-Governance Services Directory</h1>
+        <p style="font-size:15px; color:#475569; margin:0; max-width:850px;">
+          Assisted online service filing, document preparation, identity registrations, and certificate applications conducted through our certified CSC center.
+        </p>
+      </header>
+
+      <section style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
+        ${services.map(s => `
+          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:18px;">
+            <div style="font-size:11px; font-weight:600; color:#15803d; text-transform:uppercase; margin-bottom:4px;">${escapeHtml(s.category)}</div>
+            <h2 style="font-size:16px; font-weight:700; color:#0f172a; margin:0 0 6px 0;">
+              <a href="/service/${escapeHtml(s.id)}" style="color:#0f172a; text-decoration:none;">${escapeHtml(s.name)}</a>
+            </h2>
+            <p style="font-size:13px; color:#64748b; line-height:1.4; margin:0 0 10px 0;">${escapeHtml(s.description)}</p>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; border-top:1px solid #f1f5f9; padding-top:10px;">
+              <span style="font-weight:700; color:#0f172a;">${escapeHtml(s.price)}</span>
+              <a href="/service/${escapeHtml(s.id)}" style="color:#2563eb; font-weight:600; text-decoration:none;">View Requirements →</a>
+            </div>
+          </article>
+        `).join('')}
+      </section>
+
+      <footer style="margin-top:40px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
+        <p>CSC DOST | Operator: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) | Sangran Qazigund, Anantnag, J&amp;K 192221</p>
+      </footer>
+    </main>
+    `;
+  }
+
+  if (categoryType === 'tools') {
+    return `
+    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
+      <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
+        <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+        <span style="margin:0 6px;">/</span>
+        <span style="color:#0f172a; font-weight:600;">Citizen Document Preparation Tools</span>
+      </nav>
+
+      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:20px; margin-bottom:24px;">
+        <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
+          100% Client-Side • Zero Data Upload
+        </span>
+        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Free Citizen Document Preparation Tools</h1>
+        <p style="font-size:15px; color:#475569; margin:0; max-width:850px;">
+          Crop, resize, and convert recruitment passport photos, signature slips, and application PDFs to precise government specifications. All files remain securely inside your local browser.
+        </p>
+      </header>
+
+      <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:18px;">
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:20px;">
+          <h2 style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 8px 0;">📸 Passport Photo Resizer</h2>
+          <p style="font-size:13px; color:#475569; line-height:1.5; margin:0 0 12px 0;">
+            Resize portrait photographs to exact 20 KB - 50 KB limits and standard 3.5 cm x 4.5 cm (200 x 230 px) dimensions required by SSC, UPSC, and JKSSB portals.
+          </p>
+        </div>
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:20px;">
+          <h2 style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 8px 0;">✍️ Signature Crop &amp; Joiner</h2>
+          <p style="font-size:13px; color:#475569; line-height:1.5; margin:0 0 12px 0;">
+            Standardize signature images to 10 KB - 20 KB with crisp white backgrounds and optional name/date timestamp imprint beneath the photograph.
+          </p>
+        </div>
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:20px;">
+          <h2 style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 8px 0;">📅 Benchmark Age Calculator</h2>
+          <p style="font-size:13px; color:#475569; line-height:1.5; margin:0 0 12px 0;">
+            Determine exact chronological age in years, months, and days against any specific official cutoff date specified in recruitment notifications.
+          </p>
+        </div>
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:20px;">
+          <h2 style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 8px 0;">📄 Government PDF Optimizer</h2>
+          <p style="font-size:13px; color:#475569; line-height:1.5; margin:0 0 12px 0;">
+            Compress educational marks cards and domicile certificates under 200 KB or 500 KB thresholds with optimized visual clarity for successful portal uploads.
+          </p>
+        </div>
+      </section>
+
+      <footer style="margin-top:40px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
+        <p>CSC DOST | Operator: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) | Sangran Qazigund, Anantnag, J&amp;K 192221</p>
+      </footer>
+    </main>
+    `;
+  }
+
+  // Fallback for apply or track
+  return `
+  <main class="ssr-category-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
+    <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
+      <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+      <span style="margin:0 6px;">/</span>
+      <span style="color:#0f172a; font-weight:600;">${categoryType === 'apply' ? 'Assisted Application Desk' : 'Application Tracking'}</span>
+    </nav>
+    <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:28px;">
+      <h1 style="font-size:26px; font-weight:800; color:#0f172a; margin:0 0 10px 0;">
+        ${categoryType === 'apply' ? 'Assisted Online Application Counter' : 'Application Tracking &amp; Receipts'}
+      </h1>
+      <p style="font-size:15px; color:#475569; line-height:1.7;">
+        ${categoryType === 'apply' ? 'Citizens needing assistance with complex online forms can submit an assistance request directly to our authorized CSC center in Sangran Qazigund, Anantnag. Our team reviews submissions and prepares applications accurately.' : 'Enter your unique 14-digit CSC application reference number to check the processing stage, payment status, and download filing receipts.'}
+      </p>
+      <div style="margin-top:20px;">
+        <a href="/" style="display:inline-block; background:#2563eb; color:#ffffff; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:600; font-size:14px;">
+          Return to Portal Homepage
+        </a>
+      </div>
+    </article>
+  </main>
+  `;
+}
+
 export function renderNotFoundSubstantiveHtml(requestedPath: string): string {
   const safePath = escapeHtml(requestedPath);
   return `
@@ -731,7 +1096,7 @@ export function renderNotFoundSubstantiveHtml(requestedPath: string): string {
         <a href="/" style="display:inline-block; background:#2563eb; color:#ffffff; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:600; font-size:14px;">
           Return to Homepage
         </a>
-        <a href="/#sarkari-board" style="display:inline-block; background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:600; font-size:14px;">
+        <a href="/jobs" style="display:inline-block; background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:600; font-size:14px;">
           Latest Sarkari Jobs
         </a>
       </div>

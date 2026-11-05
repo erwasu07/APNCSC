@@ -8,6 +8,10 @@ export interface ComputedSarkariStatus {
   badgeTone: 'emerald' | 'amber' | 'slate' | 'rose' | 'blue';
   canApplyOnline: boolean;
   isClosingSoon: boolean;
+  isClosed: boolean;
+  isUpcoming: boolean;
+  isCancelled: boolean;
+  isOpen: boolean;
   closingTimeNote?: string;
   timeRemainingText?: string;
   daysRemaining: number | null;
@@ -154,12 +158,22 @@ export function parseDateToKolkataMs(
  */
 export function inferNoticeStage(item: SarkariItem): NoticeStage {
   if (item.stage) return item.stage;
+  if (item.noticeType === 'date_sheet') return 'date_sheet';
+  if (item.noticeType === 'objection_window') return 'objection_window';
+  if (item.noticeType === 'document_verification') return 'document_verification';
+  if (item.noticeType) return item.noticeType as NoticeStage;
 
   if (item.category === 'results') return 'result';
   if (item.category === 'answer_keys') return 'answer_key';
   if (item.category === 'admit_cards') return 'admit_card';
   if (item.category === 'syllabus') return 'examination';
-  if (item.category === 'exam_forms') return 'exam_form';
+  if (item.category === 'exam_forms') {
+    const tUpper = item.title.toUpperCase();
+    if (tUpper.includes('DATE SHEET') || tUpper.includes('DATESHEET') || tUpper.includes('EXAM SCHEDULE')) {
+      return 'date_sheet';
+    }
+    return 'exam_form';
+  }
   if (item.category === 'admissions') return 'admission';
 
   const titleUpper = item.title.toUpperCase();
@@ -169,8 +183,17 @@ export function inferNoticeStage(item: SarkariItem): NoticeStage {
   if (titleUpper.includes('RESULT') || titleUpper.includes('MERIT LIST') || titleUpper.includes('SCORECARD') || titleUpper.includes('SELECTION LIST')) {
     return 'result';
   }
+  if (titleUpper.includes('OBJECTION')) {
+    return 'objection_window';
+  }
   if (titleUpper.includes('ANSWER KEY') || titleUpper.includes('RESPONSE SHEET')) {
     return 'answer_key';
+  }
+  if (titleUpper.includes('DOCUMENT VERIFICATION') || titleUpper.includes('DV SCHEDULE') || titleUpper.includes('SCRUTINY')) {
+    return 'document_verification';
+  }
+  if (titleUpper.includes('DATE SHEET') || titleUpper.includes('DATESHEET') || titleUpper.includes('EXAM SCHEDULE')) {
+    return 'date_sheet';
   }
   if (titleUpper.includes('CORRECTION WINDOW') || titleUpper.includes('EDIT WINDOW')) {
     return 'correction';
@@ -181,9 +204,6 @@ export function inferNoticeStage(item: SarkariItem): NoticeStage {
   if (titleUpper.includes('ADMISSION') || titleUpper.includes('COUNSELLING') || titleUpper.includes('SPOT ROUND')) {
     return 'admission';
   }
-  if (titleUpper.includes('DATE SHEET') || titleUpper.includes('EXAM SCHEDULE')) {
-    return 'examination';
-  }
 
   return 'recruitment';
 }
@@ -191,7 +211,7 @@ export function inferNoticeStage(item: SarkariItem): NoticeStage {
 /**
  * Authoritative status computation for any SarkariItem using Asia/Kolkata time.
  */
-export function computeSarkariStatus(item: SarkariItem, customNow?: Date): ComputedSarkariStatus {
+function rawComputeSarkariStatus(item: SarkariItem, customNow?: Date): Omit<ComputedSarkariStatus, 'isClosed' | 'isUpcoming' | 'isCancelled' | 'isOpen'> {
   const stage = inferNoticeStage(item);
   const verificationStatus: VerificationStatus =
     item.verification?.verificationStatus || item.verificationStatus || 'verified';
@@ -224,8 +244,24 @@ export function computeSarkariStatus(item: SarkariItem, customNow?: Date): Compu
     };
   }
 
-  // 2. Informational stages (Admit card, Result, Answer key, Exam date sheets)
-  // An admit card or result notice does NOT have an open application window for new applicants.
+  // 2. Informational stages (Admit card, Result, Answer key, Exam date sheets, DV schedule)
+  // These notices do NOT have an open recruitment application window for new applicants.
+  if (stage === 'date_sheet') {
+    return {
+      applicationStatus: 'closed', // No application form for new applicants
+      stage: 'date_sheet',
+      verificationStatus,
+      badgeLabel: 'Date Sheet Active',
+      badgeTone: 'blue',
+      canApplyOnline: false,
+      isClosingSoon: false,
+      closingTimeNote: `Examination session timetable published. Scheduled date / commencement: ${item.lastDate || item.postDate}. Detailed subject schedule is available in the official date sheet PDF.`,
+      daysRemaining: null,
+      officialNotificationUrl,
+      officialApplicationUrl,
+    };
+  }
+
   if (stage === 'admit_card') {
     return {
       applicationStatus: 'closed',
@@ -274,12 +310,28 @@ export function computeSarkariStatus(item: SarkariItem, customNow?: Date): Compu
     };
   }
 
+  if (stage === 'document_verification') {
+    return {
+      applicationStatus: 'closed',
+      stage: 'document_verification',
+      verificationStatus,
+      badgeLabel: 'DV Schedule Active',
+      badgeTone: 'blue',
+      canApplyOnline: false,
+      isClosingSoon: false,
+      closingTimeNote: 'Document verification schedule released. Shortlisted candidates must report with original credentials.',
+      daysRemaining: null,
+      officialNotificationUrl,
+      officialApplicationUrl,
+    };
+  }
+
   if (stage === 'examination') {
     return {
       applicationStatus: 'closed',
       stage: 'examination',
       verificationStatus,
-      badgeLabel: 'Exam Schedule Published',
+      badgeLabel: 'Exam Schedule Active',
       badgeTone: 'blue',
       canApplyOnline: false,
       isClosingSoon: false,
@@ -295,7 +347,7 @@ export function computeSarkariStatus(item: SarkariItem, customNow?: Date): Compu
       applicationStatus: 'closed',
       stage: 'correction',
       verificationStatus,
-      badgeLabel: 'Application Window Closed (Correction Stage)',
+      badgeLabel: 'Correction Window',
       badgeTone: 'amber',
       canApplyOnline: false,
       isClosingSoon: false,
@@ -411,6 +463,17 @@ export function computeSarkariStatus(item: SarkariItem, customNow?: Date): Compu
   };
 }
 
+export function computeSarkariStatus(item: SarkariItem, customNow?: Date): ComputedSarkariStatus {
+  const base = rawComputeSarkariStatus(item, customNow);
+  return {
+    ...base,
+    isClosed: base.applicationStatus === 'closed',
+    isUpcoming: base.applicationStatus === 'upcoming',
+    isCancelled: base.applicationStatus === 'cancelled',
+    isOpen: base.applicationStatus === 'open',
+  };
+}
+
 /**
  * Helper to determine if online assistance can be requested for this post.
  */
@@ -424,8 +487,8 @@ export function canApplyForSarkariItem(item?: SarkariItem | null, customNow?: Da
  * Backwards compatibility helper for components expecting the old JobDeadlineStatus shape.
  */
 export type JobDeadlineStatus = {
-  code: 'open' | 'closing_soon' | 'closed' | 'check_notice' | 'upcoming' | 'cancelled';
-  label: 'Open' | 'Closing Soon' | 'Closed' | 'Check Notice' | 'Upcoming' | 'Cancelled';
+  code: 'open' | 'closing_soon' | 'closed' | 'check_notice' | 'upcoming' | 'cancelled' | 'date_sheet' | 'result' | 'answer_key' | 'objection_window' | 'document_verification';
+  label: 'Open' | 'Closing Soon' | 'Closed' | 'Check Notice' | 'Upcoming' | 'Cancelled' | 'Date Sheet' | 'Result' | 'Answer Key' | 'Objection Window' | 'DV Schedule';
   daysRemaining: number | null;
   canApply: boolean;
 };
@@ -433,6 +496,41 @@ export type JobDeadlineStatus = {
 export function computeJobDeadlineStatus(lastDateStr?: string, item?: SarkariItem): JobDeadlineStatus {
   if (item) {
     const computed = computeSarkariStatus(item);
+
+    // Non-recruitment informational stages must never be shown as "Closed" recruitment applications
+    if (computed.stage === 'date_sheet') {
+      return {
+        code: 'date_sheet',
+        label: 'Date Sheet',
+        daysRemaining: null,
+        canApply: false,
+      };
+    }
+    if (computed.stage === 'result') {
+      return {
+        code: 'result',
+        label: 'Result',
+        daysRemaining: null,
+        canApply: false,
+      };
+    }
+    if (computed.stage === 'answer_key') {
+      return {
+        code: 'answer_key',
+        label: 'Answer Key',
+        daysRemaining: null,
+        canApply: false,
+      };
+    }
+    if (computed.stage === 'document_verification') {
+      return {
+        code: 'document_verification',
+        label: 'DV Schedule',
+        daysRemaining: null,
+        canApply: false,
+      };
+    }
+
     let code: JobDeadlineStatus['code'] = 'open';
     if (computed.applicationStatus === 'closed') code = 'closed';
     else if (computed.applicationStatus === 'cancelled') code = 'cancelled';

@@ -29,6 +29,7 @@ import {
   renderServiceSubstantiveHtml,
   renderLegalPageSubstantiveHtml,
   renderHomepageSubstantiveHtml,
+  renderCategorySubstantiveHtml,
   renderNotFoundSubstantiveHtml
 } from './src/serverContentRenderer';
 import { 
@@ -1239,6 +1240,13 @@ setInterval(() => {
     }
   });
 }, 15000);
+
+// Public API: Fast synchronization of deleted application IDs blacklist
+app.get('/api/appointments/deleted-ids', (req, res) => {
+  const db = getDb();
+  const deletedSet = new Set((db.deletedAppointmentIds || []).map(s => String(s).toLowerCase().trim()));
+  res.json({ success: true, deletedIds: Array.from(deletedSet) });
+});
 
 // Protected API: Get all submitted applications (authorized staff/admin only)
 app.get('/api/appointments', authenticateAdmin, (req, res) => {
@@ -4296,7 +4304,7 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       ogType = 'website';
       breadcrumbItems = [
         { name: 'Home', url: 'https://www.cscdost.com/' },
-        { name: 'Services', url: 'https://www.cscdost.com/#services' },
+        { name: 'Services', url: 'https://www.cscdost.com/services' },
         { name: service.name, url: canonicalUrl }
       ];
       substantiveBodyHtml = renderServiceSubstantiveHtml(service);
@@ -4304,12 +4312,79 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       isNotFound = true;
       title = 'Service Not Found (404) | CSC DOST';
       description = 'The requested citizen service could not be found. Please check our complete service directory on the CSC DOST portal.';
-      canonicalUrl = `${baseOrigin}/#services`;
+      canonicalUrl = `${baseOrigin}/services`;
       substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
     }
-  } else if (urlPath === '/') {
-    const allSarkari = [...SARKARI_DATA, ...getCustomSarkariPosts()];
-    substantiveBodyHtml = renderHomepageSubstantiveHtml(allSarkari, SERVICES_LIST);
+  } else {
+    const categoryMatch = urlPath.match(/^\/(jobs|education|schemes|services|tools|apply|track)(?:\/)?$/i);
+    if (categoryMatch) {
+      const catKey = categoryMatch[1].toLowerCase() as 'jobs' | 'education' | 'schemes' | 'services' | 'tools' | 'apply' | 'track';
+      const allSarkari = [...SARKARI_DATA, ...getCustomSarkariPosts()];
+      substantiveBodyHtml = renderCategorySubstantiveHtml(catKey, allSarkari, SERVICES_LIST);
+      canonicalUrl = `https://www.cscdost.com/${catKey}`;
+      ogType = 'website';
+
+      if (catKey === 'jobs') {
+        title = 'Latest Government Jobs & Recruitment Bulletins (JKSSB, Army, SSC, RRB) | CSC DOST';
+        description = 'Browse verified government jobs, recruitment notifications, defense vacancies, and application deadlines across Jammu & Kashmir and India on CSC DOST.';
+        breadcrumbItems = [
+          { name: 'Home', url: 'https://www.cscdost.com/' },
+          { name: 'Government Jobs', url: canonicalUrl }
+        ];
+      } else if (catKey === 'education') {
+        title = 'University Admissions, Date Sheets & Examination Notices | CSC DOST';
+        description = 'Official exam date sheets, college admissions, UG/PG entrance updates for University of Kashmir, Cluster University Srinagar, and state higher education institutions.';
+        breadcrumbItems = [
+          { name: 'Home', url: 'https://www.cscdost.com/' },
+          { name: 'Higher Education', url: canonicalUrl }
+        ];
+      } else if (catKey === 'schemes') {
+        title = 'Government Welfare Schemes & Digital Services Guide | CSC DOST';
+        description = 'Comprehensive eligibility criteria and application guides for PM-KISAN, Ayushman Bharat PM-JAY Golden Card, PM Vishwakarma, and citizen welfare schemes.';
+        breadcrumbItems = [
+          { name: 'Home', url: 'https://www.cscdost.com/' },
+          { name: 'Welfare Schemes', url: canonicalUrl }
+        ];
+      } else if (catKey === 'services') {
+        title = 'Citizen E-Governance Services Directory | CSC DOST';
+        description = 'Direct access to assisted online services: PAN card registration, Aadhaar address correction, Ayushman Card, state certificates, and document printing.';
+        breadcrumbItems = [
+          { name: 'Home', url: 'https://www.cscdost.com/' },
+          { name: 'Services Directory', url: canonicalUrl }
+        ];
+      } else if (catKey === 'tools') {
+        title = 'Free Citizen Document Preparation Tools (100% Client-Side) | CSC DOST';
+        description = 'Resize recruitment photos, crop signatures, calculate age against benchmark cutoff dates, and compress government PDFs securely in your browser.';
+        breadcrumbItems = [
+          { name: 'Home', url: 'https://www.cscdost.com/' },
+          { name: 'Document Tools', url: canonicalUrl }
+        ];
+      } else if (catKey === 'apply') {
+        title = 'Assisted Online Application Counter | CSC DOST';
+        description = 'Submit an assisted application request to our authorized CSC Village Level Entrepreneur desk in Sangran Qazigund, Anantnag for error-free form submission.';
+        breadcrumbItems = [
+          { name: 'Home', url: 'https://www.cscdost.com/' },
+          { name: 'Assisted Application', url: canonicalUrl }
+        ];
+      } else if (catKey === 'track') {
+        title = 'Track Application Status | CSC DOST';
+        description = 'Track your assisted application, document status, and payment receipts using your unique token ID.';
+        breadcrumbItems = [
+          { name: 'Home', url: 'https://www.cscdost.com/' },
+          { name: 'Track Application', url: canonicalUrl }
+        ];
+      }
+    } else if (urlPath === '/') {
+      const allSarkari = [...SARKARI_DATA, ...getCustomSarkariPosts()];
+      substantiveBodyHtml = renderHomepageSubstantiveHtml(allSarkari, SERVICES_LIST);
+    } else if (!legalMatch) {
+      // Unrecognized route: return 404
+      isNotFound = true;
+      title = 'Page Not Found (404) | CSC DOST';
+      description = 'The requested page or document could not be found on CSC DOST. Please check the URL or return to our homepage for verified recruitment and citizen services.';
+      canonicalUrl = `${baseOrigin}/`;
+      substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
+    }
   }
 
   // Escape HTML / XML special characters
@@ -4419,7 +4494,9 @@ ${JSON.stringify(breadcrumbLd, null, 2)}
     substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
   }
 
-  if (substantiveBodyHtml) {
+  // Preserve <div id="root"></div> for regular routes so the complete interactive React application mounts cleanly.
+  // Only inject fallback HTML if this is a genuine 404 not found page.
+  if (isNotFound && substantiveBodyHtml) {
     html = html.replace('<div id="root"></div>', `<div id="root">${substantiveBodyHtml}</div>`);
   }
 
@@ -4434,6 +4511,13 @@ app.get('/sitemap.xml', (req: Request, res: Response) => {
 
     const staticPages = [
       { loc: '/', priority: '1.0', changefreq: 'daily' },
+      { loc: '/jobs', priority: '0.9', changefreq: 'daily' },
+      { loc: '/education', priority: '0.9', changefreq: 'daily' },
+      { loc: '/schemes', priority: '0.9', changefreq: 'weekly' },
+      { loc: '/services', priority: '0.9', changefreq: 'weekly' },
+      { loc: '/tools', priority: '0.8', changefreq: 'monthly' },
+      { loc: '/apply', priority: '0.7', changefreq: 'monthly' },
+      { loc: '/track', priority: '0.7', changefreq: 'monthly' },
       { loc: '/about-us', priority: '0.8', changefreq: 'monthly' },
       { loc: '/contact-us', priority: '0.8', changefreq: 'monthly' },
       { loc: '/privacy-policy', priority: '0.7', changefreq: 'monthly' },
@@ -4463,8 +4547,14 @@ app.get('/sitemap.xml', (req: Request, res: Response) => {
     for (const post of allSarkari) {
       if (!post.id || seenPostIds.has(post.id)) continue;
       seenPostIds.add(post.id);
-      const modDate = post.postDate ? post.postDate.split('/').reverse().join('-') : TODAY;
-      const safeDate = /^\d{4}-\d{2}-\d{2}$/.test(modDate) ? modDate : TODAY;
+      let safeDate = TODAY;
+      if (post.postDate && /^\d{2}\/\d{2}\/\d{4}$/.test(post.postDate)) {
+        const [d, m, y] = post.postDate.split('/');
+        safeDate = `${y}-${m}-${d}`;
+      } else if (post.lastDate && /^\d{2}\/\d{2}\/\d{4}$/.test(post.lastDate)) {
+        const [d, m, y] = post.lastDate.split('/');
+        safeDate = `${y}-${m}-${d}`;
+      }
       xml += '  <url>\n';
       xml += `    <loc>${BASE_URL}/post/${encodeURIComponent(post.id)}</loc>\n`;
       xml += `    <lastmod>${safeDate}</lastmod>\n`;
@@ -4543,33 +4633,36 @@ async function startServer() {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
-      appType: 'spa',
+      appType: 'custom',
     });
 
-    app.use(async (req, res, next) => {
-      const url = req.originalUrl || req.url;
-      const isPostOrServiceOrLegal =
-        req.path === '/' ||
-        /^\/(?:post|job|jobs|sarkari|notice|admissions|notification|service|privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|about|contact-us|contact|refund-policy|refund)(?:\/|$)/i.test(req.path) ||
-        Boolean(req.query.post || req.query.job || req.query.service || req.query.id);
-      
-      const isCrawler = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Googlebot|bingbot|Slackbot/i.test(
-        req.headers['user-agent'] || ''
-      );
+    // Mount Vite's middleware to handle virtual modules (/@vite/client, /@react-refresh, etc.), assets, and transformations
+    app.use(vite.middlewares);
 
-      if ((isPostOrServiceOrLegal || isCrawler) && req.method === 'GET' && !req.path.includes('.')) {
-        try {
-          const indexHtml = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf-8');
-          const transformedHtml = await vite.transformIndexHtml(url, indexHtml);
-          const { html: finalHtml, isNotFound } = renderDynamicMetaHtml(transformedHtml, req);
-          res.setHeader('Content-Type', 'text/html; charset=utf-8');
-          if (isNotFound) { res.status(404); }
-          return res.send(finalHtml);
-        } catch (e) {
-          return next(e);
-        }
+    app.use('*', async (req: Request, res: Response, next: NextFunction) => {
+      if (req.path.startsWith('/api/')) {
+        return next();
       }
-      return vite.middlewares(req, res, next);
+      if (req.method !== 'GET') {
+        return next();
+      }
+
+      const url = req.originalUrl || req.url;
+      try {
+        const indexHtml = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf-8');
+        const transformedHtml = await vite.transformIndexHtml(url, indexHtml);
+        const { html: finalHtml, isNotFound } = renderDynamicMetaHtml(transformedHtml, req);
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        if (isNotFound) {
+          return res.status(404).send(finalHtml);
+        }
+        return res.send(finalHtml);
+      } catch (e: any) {
+        if (vite && typeof vite.ssrFixStacktrace === 'function') {
+          vite.ssrFixStacktrace(e);
+        }
+        return next(e);
+      }
     });
   }
 

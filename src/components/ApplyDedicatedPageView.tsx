@@ -84,7 +84,8 @@ export default function ApplyDedicatedPageView({
     userCategory: 'genObc' as 'genObc' | 'scSt',
     additionalDetails: '',
     portalFee: 70,
-    applicationFee: 0
+    applicationFee: 0,
+    deliveryOption: 'digital_download'
   });
 
   const [reviewConfirmed, setReviewConfirmed] = useState<boolean>(true);

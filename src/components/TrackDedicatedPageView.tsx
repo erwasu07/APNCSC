@@ -1102,8 +1102,8 @@ export default function TrackDedicatedPageView({
                     <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                       <dt className="text-[#64748B] font-medium">Assistance amount</dt>
                       <dd className="font-mono font-bold text-base text-[#102A43] sm:text-right">
-                        {liveData.totalAmount > 0 ? `₹${liveData.totalAmount}` : 'Free / Direct Filing'}
-                        {liveData.amountPaid && liveData.amountPaid > 0 && liveData.paymentStatus?.toLowerCase() === 'paid'
+                        {Number(liveData.totalAmount) > 0 ? `₹${liveData.totalAmount}` : 'Free / Direct Filing'}
+                        {liveData.amountPaid && Number(liveData.amountPaid) > 0 && liveData.paymentStatus?.toLowerCase() === 'paid'
                           ? ` (Paid ₹${liveData.amountPaid})`
                           : ''}
                       </dd>

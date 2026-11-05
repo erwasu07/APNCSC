@@ -24,9 +24,7 @@ const NodeInformation = lazy(() => import('./components/NodeInformation'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const Footer = lazy(() => import('./components/Footer'));
 const PrivacyPolicyModal = lazy(() => import('./components/PrivacyPolicyModal'));
-const LegalPageView = lazy(() => import('./components/LegalPageView'));
-import type { LegalPageType } from './components/LegalPageView';
-import { LEGAL_PAGE_CONFIG } from './components/LegalPageView';
+import LegalPageView, { LEGAL_PAGE_CONFIG, type LegalPageType } from './components/LegalPageView';
 const ToolsHub = lazy(() => import('./components/tools/ToolsHub'));
 const NotificationCenterModal = lazy(() => import('./components/NotificationCenterModal'));
 const NotificationPreferencesModal = lazy(() => import('./components/NotificationPreferencesModal'));
@@ -190,58 +188,67 @@ export default function App() {
     fetch('/api/tracker/view', { method: 'POST' }).catch(() => {});
 
     const parseRoute = () => {
-      const rawHash = window.location.hash;
-      const rawPathname = window.location.pathname;
+      const rawHash = window.location.hash || '';
+      const rawPathname = window.location.pathname || '/';
       const searchParams = new URLSearchParams(window.location.search);
       const postParam = searchParams.get('post') || searchParams.get('job') || searchParams.get('notice') || searchParams.get('id');
       const serviceParam = searchParams.get('service');
       const trackParam = searchParams.get('track') || searchParams.get('token') || searchParams.get('id');
+      const appParam = searchParams.get('appParams') || searchParams.get('page');
 
-      // 0. Transparent Migration for Legacy Shared Fragment URLs (e.g. #post/..., #service/..., #apply, etc.)
-      if (rawHash.startsWith('#post/') || rawHash.startsWith('#job/')) {
-        const legacyPostId = rawHash.replace(/^#(post|job)\//, '').split('?')[0];
-        if (legacyPostId) {
-          window.history.replaceState(null, '', `/post/${legacyPostId}`);
-        }
-      } else if (rawHash.startsWith('#service/')) {
-        const legacyServiceId = rawHash.replace(/^#service\//, '').split('?')[0];
-        if (legacyServiceId) {
-          window.history.replaceState(null, '', `/service/${legacyServiceId}`);
-        }
-      } else if (rawHash.startsWith('#apply')) {
-        const query = rawHash.includes('?') ? rawHash.slice(rawHash.indexOf('?')) : '';
-        window.history.replaceState(null, '', `/apply${query}`);
-      } else if (rawHash.startsWith('#track')) {
-        const token = rawHash.replace(/^#track\/?/, '').split('?')[0];
-        window.history.replaceState(null, '', token ? `/track/${token}` : '/track');
-      } else if (rawHash.startsWith('#tools')) {
-        const tool = rawHash.replace(/^#tools\/?/, '').split('?')[0];
-        window.history.replaceState(null, '', tool ? `/tools/${tool}` : '/tools');
-      } else if (rawHash === '#privacy') {
-        window.history.replaceState(null, '', '/privacy-policy');
-      } else if (rawHash === '#terms') {
-        window.history.replaceState(null, '', '/terms-of-service');
-      } else if (rawHash === '#disclaimer') {
-        window.history.replaceState(null, '', '/disclaimer');
-      } else if (rawHash === '#about') {
-        window.history.replaceState(null, '', '/about-us');
-      } else if (rawHash === '#contact') {
-        window.history.replaceState(null, '', '/contact-us');
-      } else if (rawHash === '#refund') {
-        window.history.replaceState(null, '', '/refund-policy');
+      // Determine effective path from pathname, hash route (#/... or #...), or appParams
+      let effectivePath = rawPathname;
+      if (rawHash.startsWith('#/')) {
+        effectivePath = rawHash.slice(1); // '#/privacy' -> '/privacy'
+      } else if (rawHash.startsWith('#') && rawHash.length > 1) {
+        effectivePath = '/' + rawHash.slice(1); // '#privacy' -> '/privacy'
+      } else if (appParam && (effectivePath === '/' || effectivePath === '')) {
+        effectivePath = appParam.startsWith('/') ? appParam : '/' + appParam;
       }
 
-      const pathname = window.location.pathname;
-      const hash = window.location.hash;
+      // Clean query parameters and trailing slashes for clean route matching
+      const cleanPath = (effectivePath.split('?')[0] || '/').replace(/\/+$/, '') || '/';
 
-      // 1. Check direct pathname matches (e.g. /post/xyz, /job/xyz, /service/xyz, /track/xyz, /apply)
-      const pathPostMatch = pathname.match(/^\/(?:post|job|jobs|sarkari|notice|admissions|notification)\/([^/?#]+)/i);
-      const pathServiceMatch = pathname.match(/^\/service\/([^/?#]+)/i);
-      const pathTrackMatch = pathname.match(/^\/track(?:\/([^/?#]+))?/i);
-      const pathApplyMatch = pathname.startsWith('/apply');
+      // 0. Transparent Migration for Legacy Shared Fragment URLs if supported
+      try {
+        if (rawHash.match(/^#(?:|\/)(post|job)\//)) {
+          const legacyPostId = rawHash.replace(/^#(?:|\/)(post|job)\//, '').split('?')[0];
+          if (legacyPostId) {
+            window.history.replaceState(null, '', `/post/${legacyPostId}`);
+          }
+        } else if (rawHash.match(/^#(?:|\/)service\//)) {
+          const legacyServiceId = rawHash.replace(/^#(?:|\/)service\//, '').split('?')[0];
+          if (legacyServiceId) {
+            window.history.replaceState(null, '', `/service/${legacyServiceId}`);
+          }
+        } else if (rawHash.match(/^#(?:|\/)apply/)) {
+          const query = rawHash.includes('?') ? rawHash.slice(rawHash.indexOf('?')) : '';
+          window.history.replaceState(null, '', `/apply${query}`);
+        } else if (rawHash.match(/^#(?:|\/)track/)) {
+          const token = rawHash.replace(/^#(?:|\/)track\/?/, '').split('?')[0];
+          window.history.replaceState(null, '', token ? `/track/${token}` : '/track');
+        } else if (rawHash.match(/^#(?:|\/)tools/)) {
+          const tool = rawHash.replace(/^#(?:|\/)tools\/?/, '').split('?')[0];
+          window.history.replaceState(null, '', tool ? `/tools/${tool}` : '/tools');
+        }
+      } catch {}
 
-      // 2. Check legal / informational routes (/privacy-policy, /terms-of-service, /disclaimer, /about-us, /contact-us, /refund-policy)
-      const legalMatch = pathname.match(/^\/(privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|about|contact-us|contact|refund-policy|refund)(?:\/)?$/i);
+      // Handle legacy hash modal dialogs (#privacy, #terms, #disclaimer, etc.) on homepage
+      const cleanHash = rawHash.replace(/^#\/?/, '').toLowerCase().split('?')[0];
+      if (['privacy', 'terms', 'disclaimer', 'hyperlink', 'copyright', 'help', 'refund'].includes(cleanHash) && (rawPathname === '/' || rawPathname === '')) {
+        openLegalModal(cleanHash as PolicyTab);
+        setActiveLegalPage(null);
+        setIsAdminView(false);
+        setIsApplyView(false);
+        setIsTrackView(false);
+        setIsToolsView(false);
+        setActiveJobPost(null);
+        setActiveServicePost(null);
+        return;
+      }
+
+      // 1. Check legal / informational routes (/privacy-policy, /privacy, /terms-of-service, /terms, etc.)
+      const legalMatch = cleanPath.match(/^\/(privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|about|contact-us|contact|refund-policy|refund)$/i);
       if (legalMatch) {
         let mappedType: LegalPageType = 'privacy';
         const rawKey = legalMatch[1].toLowerCase();
@@ -259,16 +266,63 @@ export default function App() {
         setIsToolsView(false);
         setActiveJobPost(null);
         setActiveServicePost(null);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        try {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch {}
         return;
       } else {
         setActiveLegalPage(null);
       }
 
-      // 3. Check Apply route
-      if (hash.startsWith('#apply') || pathApplyMatch) {
-        const applyQuery = hash.includes('?') ? hash.split('?')[1] : '';
-        const applyParams = new URLSearchParams(applyQuery);
+      // 2. Check Admin / Staff routes
+      if (
+        cleanPath === '/admin' || 
+        cleanPath === '/staff' || 
+        rawHash === '#admin' || 
+        rawHash === '#staff' || 
+        rawHash === '#/admin' || 
+        rawHash === '#/staff'
+      ) {
+        setIsAdminView(true);
+        setIsApplyView(false);
+        setIsTrackView(false);
+        setIsToolsView(false);
+        setActiveJobPost(null);
+        setActiveServicePost(null);
+        return;
+      }
+
+      // 3. Dedicated category routes: /jobs, /education, /schemes, /services
+      if (['/jobs', '/education', '/schemes', '/services'].includes(cleanPath)) {
+        setIsApplyView(false);
+        setIsTrackView(false);
+        setIsToolsView(false);
+        setActiveJobPost(null);
+        setActiveServicePost(null);
+        setActiveLegalPage(null);
+        setIsAdminView(false);
+
+        const targetId =
+          cleanPath === '/jobs'
+            ? 'recruitment-section'
+            : cleanPath === '/education'
+              ? 'education-resources'
+              : cleanPath === '/schemes'
+                ? 'schemes-section'
+                : 'services';
+
+        setTimeout(() => {
+          const el = document.getElementById(targetId) || document.getElementById('sarkari-board');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 120);
+        return;
+      }
+
+      // 4. Check Apply route (/apply, #apply, #/apply)
+      const pathApplyMatch = cleanPath.startsWith('/apply');
+      if (pathApplyMatch || rawHash.startsWith('#apply') || rawHash.startsWith('#/apply')) {
+        const queryFromHash = rawHash.includes('?') ? rawHash.split('?')[1] : '';
+        const applyParams = new URLSearchParams(queryFromHash);
         const svc = applyParams.get('service') || searchParams.get('service') || '';
         setIsApplyView(true);
         setApplyInitialService(svc);
@@ -277,15 +331,18 @@ export default function App() {
         setActiveJobPost(null);
         setActiveServicePost(null);
         setIsAdminView(false);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        try {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch {}
         return;
       } else {
         setIsApplyView(false);
       }
 
-      // 4. Check Track route
-      if (hash.startsWith('#track') || pathTrackMatch) {
-        const cleanHash = hash.replace(/^#track\/?/, '');
+      // 5. Check Track route (/track, /track/:token, #track, #/track)
+      const pathTrackMatch = cleanPath.match(/^\/track(?:\/([^/?#]+))?/i);
+      if (pathTrackMatch || rawHash.startsWith('#track') || rawHash.startsWith('#/track')) {
+        const cleanHash = rawHash.replace(/^#(?:|\/)track\/?/, '');
         const trackToken = (pathTrackMatch ? pathTrackMatch[1] : null) || cleanHash.split('?')[0] || trackParam || '';
         setIsTrackView(true);
         setTrackInitialToken(trackToken);
@@ -294,20 +351,22 @@ export default function App() {
         setActiveJobPost(null);
         setActiveServicePost(null);
         setIsAdminView(false);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        try {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch {}
         return;
       } else {
         setIsTrackView(false);
       }
 
-      // 5. Check Tools route (/tools, /tools/:toolId, #tools, #tools/:toolId)
-      const pathToolsMatch = pathname.match(/^\/tools(?:\/([^/?#]+))?/i);
-      if (hash.startsWith('#tools') || pathToolsMatch) {
+      // 6. Check Tools route (/tools, /tools/:toolId, #tools, #/tools)
+      const pathToolsMatch = cleanPath.match(/^\/tools(?:\/([^/?#]+))?/i);
+      if (pathToolsMatch || rawHash.startsWith('#tools') || rawHash.startsWith('#/tools')) {
         let toolParam = null;
         if (pathToolsMatch && pathToolsMatch[1]) {
           toolParam = pathToolsMatch[1];
-        } else if (hash.startsWith('#tools/')) {
-          toolParam = hash.replace(/^#tools\//, '').split('?')[0];
+        } else if (rawHash.match(/^#(?:|\/)tools\//)) {
+          toolParam = rawHash.replace(/^#(?:|\/)tools\//, '').split('?')[0];
         }
         setIsToolsView(true);
         setActiveToolId(toolParam || null);
@@ -316,13 +375,16 @@ export default function App() {
         setActiveJobPost(null);
         setActiveServicePost(null);
         setIsAdminView(false);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        try {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch {}
         return;
       } else {
         setIsToolsView(false);
       }
 
-      // 6. Check Service route
+      // 7. Check Service route (/service/:id, #service/:id, #/service/:id, ?service=:id)
+      const pathServiceMatch = cleanPath.match(/^\/service\/([^/?#]+)/i);
       if (pathServiceMatch) {
         const serviceId = decodeURIComponent(pathServiceMatch[1]);
         const matchService = SERVICES_LIST.find(s => s.id === serviceId);
@@ -333,12 +395,14 @@ export default function App() {
           setIsApplyView(false);
           setIsTrackView(false);
           setIsToolsView(false);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          try {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } catch {}
           return;
         }
       }
 
-      if (serviceParam && !hash.startsWith('#post')) {
+      if (serviceParam && !cleanPath.startsWith('/post')) {
         const matchService = SERVICES_LIST.find(s => s.id === serviceParam);
         if (matchService) {
           setActiveServicePost(matchService);
@@ -347,12 +411,15 @@ export default function App() {
           setIsApplyView(false);
           setIsTrackView(false);
           setIsToolsView(false);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          try {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } catch {}
           return;
         }
       }
 
-      // 7. Check Job/Post route
+      // 8. Check Job/Post route (/post/:id, /job/:id, #post/:id, #/post/:id, ?post=:id)
+      const pathPostMatch = cleanPath.match(/^\/(?:post|job|jobs|sarkari|notice|admissions|notification)\/([^/?#]+)/i);
       if (pathPostMatch) {
         const postId = decodeURIComponent(pathPostMatch[1]);
         const match = SARKARI_DATA.find(i => i.id === postId);
@@ -363,7 +430,9 @@ export default function App() {
           setIsApplyView(false);
           setIsTrackView(false);
           setIsToolsView(false);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          try {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } catch {}
           return;
         }
       }
@@ -377,25 +446,21 @@ export default function App() {
           setIsApplyView(false);
           setIsTrackView(false);
           setIsToolsView(false);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          try {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } catch {}
           return;
         }
       }
 
-      // 8. Check Admin / Staff or Legal Modals
-      if (hash === '#admin' || hash === '#staff' || pathname === '/admin') {
-        setIsAdminView(true);
-      } else if (hash === '#privacy') {
-        openLegalModal('privacy');
-      } else if (hash === '#terms') {
-        openLegalModal('terms');
-      } else if (hash === '#hyperlink') {
+      // 9. Legacy fallback modals if any hash remains
+      if (rawHash === '#hyperlink') {
         openLegalModal('hyperlink');
-      } else if (hash === '#copyright') {
+      } else if (rawHash === '#copyright') {
         openLegalModal('copyright');
-      } else if (hash === '#disclaimer') {
+      } else if (rawHash === '#disclaimer') {
         openLegalModal('disclaimer');
-      } else if (hash === '#help') {
+      } else if (rawHash === '#help') {
         openLegalModal('help');
       }
     };
@@ -415,14 +480,22 @@ export default function App() {
     setIsApplyView(false);
     setIsTrackView(false);
     setIsToolsView(false);
-    window.history.pushState(null, '', `/post/${item.id}`);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try {
+      window.history.pushState(null, '', `/post/${item.id}`);
+    } catch {}
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {}
   };
 
   const handleCloseJobPage = () => {
     setActiveJobPost(null);
-    window.history.pushState(null, '', '/');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try {
+      window.history.pushState(null, '', '/');
+    } catch {}
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {}
   };
 
   const handleOpenServicePage = (item: ServiceItem) => {
@@ -431,14 +504,22 @@ export default function App() {
     setIsApplyView(false);
     setIsTrackView(false);
     setIsToolsView(false);
-    window.history.pushState(null, '', `/service/${item.id}`);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try {
+      window.history.pushState(null, '', `/service/${item.id}`);
+    } catch {}
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {}
   };
 
   const handleCloseServicePage = () => {
     setActiveServicePost(null);
-    window.history.pushState(null, '', '/');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try {
+      window.history.pushState(null, '', '/');
+    } catch {}
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {}
   };
 
   const handleOpenApplyPage = (serviceName?: string) => {
@@ -451,14 +532,22 @@ export default function App() {
     setActiveServicePost(null);
     setIsAdminView(false);
     const targetUrl = serviceName ? `/apply?service=${encodeURIComponent(serviceName)}` : '/apply';
-    window.history.pushState(null, '', targetUrl);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try {
+      window.history.pushState(null, '', targetUrl);
+    } catch {}
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {}
   };
 
   const handleCloseApplyPage = () => {
     setIsApplyView(false);
-    window.history.pushState(null, '', '/');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try {
+      window.history.pushState(null, '', '/');
+    } catch {}
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {}
   };
 
   const handleOpenTrackPage = (tokenId?: string) => {
@@ -470,14 +559,22 @@ export default function App() {
     setActiveServicePost(null);
     setIsAdminView(false);
     const targetUrl = tokenId ? `/track/${encodeURIComponent(tokenId)}` : '/track';
-    window.history.pushState(null, '', targetUrl);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try {
+      window.history.pushState(null, '', targetUrl);
+    } catch {}
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {}
   };
 
   const handleCloseTrackPage = () => {
     setIsTrackView(false);
-    window.history.pushState(null, '', '/');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try {
+      window.history.pushState(null, '', '/');
+    } catch {}
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {}
   };
 
   const handleServiceSelect = (serviceName: string) => {
@@ -516,20 +613,26 @@ export default function App() {
 
   // Enforce portal light white theme mode always
   useEffect(() => {
-    document.documentElement.classList.remove('dark');
-    localStorage.setItem('theme', 'light');
+    try {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    } catch {}
   }, []);
 
   const handleOpenStaffPortal = () => {
     setIsAdminView(true);
-    window.location.hash = '#staff';
+    try {
+      window.location.hash = '#staff';
+    } catch {}
   };
 
   const handleCloseStaffPortal = () => {
     setIsAdminView(false);
-    if (window.location.hash === '#staff' || window.location.hash === '#admin') {
-      window.history.replaceState(null, '', window.location.pathname);
-    }
+    try {
+      if (window.location.hash === '#staff' || window.location.hash === '#admin') {
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    } catch {}
   };
 
   // Scrolls to Digital Application & Appointment Desk or opens apply page
@@ -547,10 +650,14 @@ export default function App() {
     setIsTrackView(false);
     setActiveLegalPage(null);
     setSelectedService('');
-    if (window.location.pathname !== '/' || window.location.hash) {
-      window.history.pushState(null, '', '/');
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try {
+      if (window.location.pathname !== '/' || window.location.hash) {
+        window.history.pushState(null, '', '/');
+      }
+    } catch {}
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {}
   };
 
   // WhatsApp Group / Community click trigger
@@ -562,7 +669,7 @@ export default function App() {
     <div className="min-h-screen bg-[#F6F8FC] text-[#102A43] flex flex-col justify-between font-sans transition-colors duration-200 w-full max-w-full overflow-x-hidden">
       
       {/* Top Navigation Panel (hidden in Staff Management Console and dedicated Apply/Track pages which use their own compact header) */}
-      {!isAdminView && !isApplyView && !isTrackView && !activeLegalPage && (
+      {!isAdminView && !isApplyView && !isTrackView && (
         <Navbar
           cafeName={settings.cafeName}
           onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
@@ -587,17 +694,19 @@ export default function App() {
         }
       >
         {activeLegalPage ? (
-          <Suspense fallback={<PageRouteSkeleton message="Loading Information & Policy..." />}>
-            <LegalPageView
-              pageType={activeLegalPage}
-              onNavigate={(type) => {
-                const cfg = LEGAL_PAGE_CONFIG[type];
-                window.history.pushState(null, '', cfg.path);
-                setActiveLegalPage(type);
-              }}
-              onBackToHome={handleGoHome}
-            />
-          </Suspense>
+          <LegalPageView
+            pageType={activeLegalPage}
+            onNavigate={(type) => {
+              const cfg = LEGAL_PAGE_CONFIG[type];
+              try {
+                if (cfg?.path) {
+                  window.history.pushState(null, '', cfg.path);
+                }
+              } catch {}
+              setActiveLegalPage(type);
+            }}
+            onBackToHome={handleGoHome}
+          />
         ) : isAdminView ? (
           <Suspense fallback={<PageRouteSkeleton message="Loading CSC Staff Management Console..." />}>
             <AdminDashboard
@@ -749,7 +858,14 @@ export default function App() {
         <Suspense fallback={null}>
           <PrivacyPolicyModal 
             isOpen={isPrivacyModalOpen} 
-            onClose={() => setIsPrivacyModalOpen(false)} 
+            onClose={() => {
+              setIsPrivacyModalOpen(false);
+              try {
+                if (window.location.hash.startsWith('#privacy') || window.location.hash.startsWith('#terms') || window.location.hash.startsWith('#disclaimer') || window.location.hash.startsWith('#refund') || window.location.hash.startsWith('#help') || window.location.hash.startsWith('#hyperlink') || window.location.hash.startsWith('#copyright')) {
+                  window.history.replaceState(null, '', window.location.pathname || '/');
+                }
+              } catch {}
+            }} 
             initialTab={legalModalTab}
           />
         </Suspense>

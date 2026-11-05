@@ -90,6 +90,38 @@ function getShortQualification(eligibility?: string): string | null {
 
 function renderStatusBadge(status: JobDeadlineStatus, computed?: SarkariStatusResult) {
   if (computed) {
+    if (computed.stage === 'date_sheet' || status.code === 'date_sheet') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-800 border border-cyan-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-600" aria-hidden="true" />
+          <span>Date Sheet Active</span>
+        </span>
+      );
+    }
+    if (computed.stage === 'result' || status.code === 'result') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" aria-hidden="true" />
+          <span>Result Declared</span>
+        </span>
+      );
+    }
+    if (computed.stage === 'answer_key' || status.code === 'answer_key') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-800 border border-purple-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-purple-600" aria-hidden="true" />
+          <span>Answer Key Published</span>
+        </span>
+      );
+    }
+    if (computed.stage === 'document_verification' || status.code === 'document_verification') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-800 border border-blue-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-600" aria-hidden="true" />
+          <span>DV Schedule Active</span>
+        </span>
+      );
+    }
     if (computed.applicationStatus === 'cancelled') {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-[#E11D48] border border-rose-200">
@@ -401,7 +433,8 @@ export default function PortalHomepage({
           facts.push({ icon: 'qualification', label: 'Qualification', value: j.qualification });
         }
         if (j.item.lastDate) {
-          facts.push({ icon: 'calendar', label: 'Closing Date', value: j.item.lastDate });
+          const dateLabel = j.computed.stage === 'date_sheet' ? 'Exam Date / Session' : 'Closing Date';
+          facts.push({ icon: 'calendar', label: dateLabel, value: j.item.lastDate });
         } else if (j.item.postDate) {
           facts.push({ icon: 'calendar', label: 'Published', value: j.item.postDate });
         }
@@ -409,7 +442,7 @@ export default function PortalHomepage({
           id: `job-${j.item.id}`,
           rawId: j.item.id,
           categoryType: j.item.category,
-          categoryBadge: 'Job / Recruitment',
+          categoryBadge: j.computed.stage === 'date_sheet' ? 'Date Sheet' : 'Job / Recruitment',
           organisation: j.organisation,
           title: j.item.title,
           summaryField: j.item.shortInfo,
@@ -431,7 +464,8 @@ export default function PortalHomepage({
           facts.push({ icon: 'qualification', label: 'Eligibility', value: j.qualification });
         }
         if (j.item.lastDate) {
-          facts.push({ icon: 'calendar', label: 'Closing Date', value: j.item.lastDate });
+          const dateLabel = j.computed.stage === 'date_sheet' ? 'Exam Date / Session' : 'Closing Date';
+          facts.push({ icon: 'calendar', label: dateLabel, value: j.item.lastDate });
         } else if (j.item.postDate) {
           facts.push({ icon: 'calendar', label: 'Published', value: j.item.postDate });
         }
@@ -578,9 +612,14 @@ export default function PortalHomepage({
       closing_soon: 1,
       open: 2,
       upcoming: 3,
-      check_notice: 4,
-      closed: 5,
-      cancelled: 6,
+      date_sheet: 4,
+      result: 5,
+      answer_key: 6,
+      objection_window: 7,
+      document_verification: 8,
+      check_notice: 9,
+      closed: 10,
+      cancelled: 11,
     };
 
     return [...listToSort].sort((a, b) => {
@@ -1302,7 +1341,7 @@ export default function PortalHomepage({
                 <ColourAccentCard
                   key={upd.id}
                   id={upd.id}
-                  thumbnailUrl={upd.thumbnailUrl}
+                  thumbnailUrl={'thumbnailUrl' in upd ? (upd as any).thumbnailUrl : undefined}
                   categoryType={upd.categoryType}
                   categoryLabel={upd.categoryBadge}
                   organisation={upd.organisation}

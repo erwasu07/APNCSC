@@ -17,18 +17,28 @@ try {
   // Fallback if file does not exist
 }
 
+const metaEnv = (typeof import.meta !== 'undefined' && (import.meta as any).env) || {};
+const procEnv = (typeof process !== 'undefined' && process.env) || {};
+
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || rawConfig.apiKey || "AIzaSyB3AR7b2uhkoyCu-asAii3QniAM-L5yr6Q",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || rawConfig.authDomain || "gen-lang-client-0229148353.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || rawConfig.projectId || "gen-lang-client-0229148353",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || rawConfig.storageBucket || "gen-lang-client-0229148353.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || rawConfig.messagingSenderId || "949991303699",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || rawConfig.appId || "1:949991303699:web:7644b6ab9249d745ce6de6",
-  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID || rawConfig.firestoreDatabaseId || "ai-studio-apnacscdigitalcy-13bad14b-8101-4982-a9df-be8f6af316b4"
+  apiKey: metaEnv.VITE_FIREBASE_API_KEY || procEnv.VITE_FIREBASE_API_KEY || rawConfig.apiKey || "AIzaSyB3AR7b2uhkoyCu-asAii3QniAM-L5yr6Q",
+  authDomain: metaEnv.VITE_FIREBASE_AUTH_DOMAIN || procEnv.VITE_FIREBASE_AUTH_DOMAIN || rawConfig.authDomain || "gen-lang-client-0229148353.firebaseapp.com",
+  projectId: metaEnv.VITE_FIREBASE_PROJECT_ID || procEnv.VITE_FIREBASE_PROJECT_ID || rawConfig.projectId || "gen-lang-client-0229148353",
+  storageBucket: metaEnv.VITE_FIREBASE_STORAGE_BUCKET || procEnv.VITE_FIREBASE_STORAGE_BUCKET || rawConfig.storageBucket || "gen-lang-client-0229148353.firebasestorage.app",
+  messagingSenderId: metaEnv.VITE_FIREBASE_MESSAGING_SENDER_ID || procEnv.VITE_FIREBASE_MESSAGING_SENDER_ID || rawConfig.messagingSenderId || "949991303699",
+  appId: metaEnv.VITE_FIREBASE_APP_ID || procEnv.VITE_FIREBASE_APP_ID || rawConfig.appId || "1:949991303699:web:7644b6ab9249d745ce6de6",
+  firestoreDatabaseId: metaEnv.VITE_FIREBASE_DATABASE_ID || procEnv.VITE_FIREBASE_DATABASE_ID || rawConfig.firestoreDatabaseId || "ai-studio-apnacscdigitalcy-13bad14b-8101-4982-a9df-be8f6af316b4"
 };
 
 // Initialize Firebase App
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+let appInstance: any;
+try {
+  appInstance = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+} catch (e) {
+  console.warn('Firebase initializeApp warning:', e);
+  appInstance = getApps()[0] || null;
+}
+const app = appInstance;
 
 // Initialize Firestore safely
 let firestoreDb: ReturnType<typeof getFirestore>;

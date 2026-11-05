@@ -60,13 +60,46 @@ Strictly verified circulars ingested matching required categories:
 
 ---
 
+---
+
+### 6. Original CSC DOST Interface Restoration & SSC Examination Timetable Corrections
+- **Root Cause Resolution**:
+  - In `server.ts`, eliminated the unconditional injection of `substantiveBodyHtml` into `<div id="root">`, which had inadvertently supplanted the full client-side React SPA with simplified, static fallback cards.
+  - Preserved a clean `<div id="root"></div>` for all standard routes (`/`, `/jobs`, `/education`, `/schemes`, `/services`, `/tools`, `/apply`, `/track`, `/post/:id`, `/service/:id`), while retaining rich `<head>` metadata (canonical links, OpenGraph, Twitter cards, and Schema.org JSON-LD). Fallback static HTML is now strictly restricted to 404 responses.
+  - Restored full assisted application workflow (`/apply` via `ApplyDedicatedPageView`): 3-step form, service selection, personal details, document upload slots with file validation and compression, dynamic fee calculation, payment choices, and printable acknowledgment receipt.
+- **SSC November 2026 Examination Schedule (`ssc-examination-schedule-cgept-dept-steno-cpo-nov-2026`)**:
+  - Reclassified from recruitment application to `noticeType: 'date_sheet'` and `stage: 'date_sheet'`.
+  - Replaced application deadlines with explicit examination dates (`17/11/2026 – 28/11/2026`): Coast Guard CGEPT (17–18 Nov 2026), Annual Departmental Typing & Steno Skill Test (20–21 Nov 2026), and Sub-Inspector in Delhi Police & CAPFs Paper-II (28 Nov 2026).
+  - Omitted irrelevant vacancies, fee requirements, age criteria, and generic OTR application steps.
+  - Formulated explicit, verified candidate action guidelines strictly based on Commission Notice `F. No. HQ-C1101/9/2026-C1/1` detailing target candidate groups (CGEPT candidates, Central Government departmental candidates, and Paper-I & PET/PST qualified Sub-Inspector candidates) and required actions (monitoring `ssc.gov.in`, checking city intimation slips, downloading e-Admit Cards, and mandatory exam-day entry protocols).
+
+### 7. Blank Screen Resolution & Sandboxed Iframe Resilience (`/#privacy`)
+- **Root Cause Analysis**:
+  1. **Storage Access Denials in Sandboxed Iframes**: Direct, unguarded access to `window.localStorage` and `window.sessionStorage` in `supabase.ts`, `firebase.ts`, `getform.ts`, `ThemeContext.tsx`, `AdminDashboard.tsx`, `WhatsAppBroadcaster.tsx`, `NotificationPreferencesModal.tsx`, and `webPushClient.ts` threw uncaught `DOMException: Access is denied for this document` when previewed in cross-origin / restrictive iframe contexts.
+  2. **Uncaught Error in `LegalPageView.tsx`**: Direct subscript access on `LEGAL_PAGE_CONFIG[pageType].title` caused an unhandled `TypeError` if `pageType` was not perfectly matched.
+  3. **Hash and Query Routing Mismatch**: Routes like `/#privacy`, `/#/privacy`, and `?appParams=privacy` were not unified in `parseRoute`, preventing proper mounting of either the interactive Privacy Policy modal or the standalone Legal view.
+  4. **Lack of React Error Boundary**: Absence of an Error Boundary in `main.tsx` meant any single render exception immediately collapsed the entire React tree into a blank white screen.
+- **Architectural Fixes Applied**:
+  - **`ErrorBoundary.tsx`**: Added an enterprise-grade error boundary in `src/components/ErrorBoundary.tsx` wrapping the application root in `src/main.tsx`. Provides user-facing diagnostics, a "Return to Portal Home" action, and an in-place "Reload Portal" recovery button.
+  - **Storage Hardening**: Wrapped all `localStorage` and `sessionStorage` accesses in defensive try-catch wrappers (`getSafeLocal`, `setSafeLocal`, `getSafeSession`, `setSafeSession`) with safe fallbacks across the entire codebase.
+  - **Environment Variable Protection**: Safely guarded `import.meta.env` and `process.env` in `src/lib/firebase.ts` with optional chaining and fallback configurations.
+  - **Unified Route Parsing (`App.tsx`)**: Upgraded `parseRoute()` to flawlessly resolve:
+    - Hash triggers on the homepage (`/#privacy`, `/#terms`, `/#disclaimer`, `/#about`, `/#contact`, `/#refund`) to open the interactive, accessible modal over the portal.
+    - Path and hash-path routing (`/privacy-policy`, `/privacy`, `/#/privacy`, `?appParams=privacy`) to render `LegalPageView` seamlessly with portal Navbar and breadcrumbs.
+  - **Resilient Fallback in `LegalPageView.tsx`**: Added default `safePageType = (pageType && LEGAL_PAGE_CONFIG[pageType]) ? pageType : 'privacy'` and guarded `window.scrollTo`.
+
 ## Validation & Verification
 - `tsc --noEmit`: 0 errors.
-- `compile_applet`: Build succeeded cleanly.
-- `SARKARI_DATA` Audit: 136 total records verified (13 open, 3 upcoming, 120 closed, 0 unknown).
-- Port 3000 Dev Server: Serving HTTP 200 OK.
-- Live API Endpoints:
-  - `GET /api/whatsapp/readiness`: 200 OK, reflects database settings and server secrets checklist.
-  - `PUT /api/whatsapp/config`: 200 OK for valid inputs, 400 rejection for consumer invite links.
-  - `POST /api/whatsapp/check-connection`: Authentic verification against Meta Graph API.
-  - `POST /api/whatsapp/test-send`: Real Meta dispatch tracking with history logging.
+- `lint_applet`: Passed with 0 errors.
+- `compile_applet`: Production build succeeded cleanly.
+- `npm run build`: Production client and server bundles built in 15.07s with zero errors.
+- Headless SSR & Component Execution Tests:
+  - `<ErrorBoundary><ThemeProvider><App /></ThemeProvider></ErrorBoundary>` rendered cleanly (39,518 chars).
+  - `PrivacyPolicyModal` rendered cleanly (34,489 chars).
+  - `LegalPageView` across all legal document types rendered cleanly with 0 errors.
+  - `PortalHomepage` (198,780 chars) and `AdminDashboard` (4,076 chars) rendered cleanly.
+- Live HTTP Endpoint Tests:
+  - `GET /`: 200 OK with clean `<div id="root"></div>` and full metadata.
+  - `GET /privacy-policy`: 200 OK with clean `<div id="root"></div>`.
+  - `GET /apply`: 200 OK with clean `<div id="root"></div>`.
+  - `GET /api/public-data`: 200 OK.
