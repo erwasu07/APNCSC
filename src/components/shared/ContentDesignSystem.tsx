@@ -1276,6 +1276,8 @@ export function resolveListingCategoryKey(rawCategory?: string): ListingCategory
   if (
     norm === 'job' ||
     norm === 'jobs' ||
+    norm === 'banking_jobs' ||
+    norm === 'banking' ||
     norm === 'jkssb' ||
     norm === 'army_jobs' ||
     norm === 'ssc_jobs' ||

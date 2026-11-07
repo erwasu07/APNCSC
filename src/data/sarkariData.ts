@@ -60,7 +60,7 @@ export interface VerificationEvidence {
 export interface SarkariItem {
   id: string;
   title: string;
-  category: 'jkssb' | 'jobs' | 'admit_cards' | 'results' | 'answer_keys' | 'syllabus' | 'admissions' | 'exam_forms' | 'cluster_univ' | 'nta' | 'ssc_jobs' | 'rrb_jobs' | 'army_jobs';
+  category: 'jkssb' | 'jobs' | 'admit_cards' | 'results' | 'answer_keys' | 'syllabus' | 'admissions' | 'exam_forms' | 'cluster_univ' | 'nta' | 'ssc_jobs' | 'rrb_jobs' | 'army_jobs' | 'banking_jobs';
   noticeType?: NoticeType;
   postDate: string;
   startDate?: string;
@@ -105,6 +105,7 @@ export interface SarkariItem {
 
 export const SARKARI_CATEGORIES = {
   jkssb: { label: 'JKSSB Jobs', color: 'border-indigo-600 text-indigo-700 bg-indigo-50 dark:bg-indigo-950/40' },
+  banking_jobs: { label: 'Banking Jobs', color: 'border-teal-600 text-teal-700 bg-teal-50 dark:bg-teal-950/40' },
   jobs: { label: 'Latest Jobs', color: 'border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-950/30' },
   admit_cards: { label: 'Admit Cards', color: 'border-orange-500 text-orange-600 bg-orange-50 dark:bg-orange-950/30' },
   results: { label: 'Results', color: 'border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30' },
@@ -124,7 +125,7 @@ export const SARKARI_DATA: SarkariItem[] = [
   {
     id: 'jk-bank-banking-associates-recruitment-2026',
     title: 'Jammu & Kashmir Bank Ltd. Recruitment of Banking Associates 2026 (1,033 Posts) - UT of J&K Domiciles',
-    category: 'jobs',
+    category: 'banking_jobs',
     postDate: '07/11/2026',
     startDate: '07/11/2026',
     lastDate: '26/11/2026',
@@ -3197,7 +3198,7 @@ export const SARKARI_DATA: SarkariItem[] = [
   {
     id: 'job-ibps-po-2026',
     title: 'IBPS PO XVI Officer Scale-I Recruitment 2026 (3,955 Posts)',
-    category: 'jobs',
+    category: 'banking_jobs',
     postDate: '29/07/2026',
     lastDate: '25/08/2026',
     advertisementNo: 'IBPS-CRP-PO/MT-XVI',

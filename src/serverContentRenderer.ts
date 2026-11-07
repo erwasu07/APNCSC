@@ -789,7 +789,7 @@ export function renderCategorySubstantiveHtml(
     const jobPosts = posts.filter(
       p =>
         p.noticeType === 'recruitment' ||
-        ['army_jobs', 'rrb_jobs', 'ssc_jobs', 'jkssb'].includes(p.category) ||
+        ['army_jobs', 'rrb_jobs', 'ssc_jobs', 'jkssb', 'banking_jobs', 'jobs'].includes(p.category) ||
         !p.noticeType
     );
 

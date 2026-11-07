@@ -283,7 +283,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<SarkariItem | null>(null);
   const [clickedItemId, setClickedItemId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'all' | 'jkssb' | 'jobs' | 'admissions' | 'exam_forms' | 'cluster_univ' | 'ssc_jobs' | 'rrb_jobs' | 'army_jobs'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'jkssb' | 'banking_jobs' | 'jobs' | 'admissions' | 'exam_forms' | 'cluster_univ' | 'ssc_jobs' | 'rrb_jobs' | 'army_jobs'>('all');
   const [itemsLimit, setItemsLimit] = useState(10);
   const [deskViewMode, setDeskViewMode] = useState<'boxes' | 'cards'>('boxes');
 
@@ -1207,6 +1207,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
             {[
               { id: 'all', label: 'All', icon: Briefcase },
               { id: 'jkssb', label: 'JKSSB', icon: Briefcase },
+              { id: 'banking_jobs', label: 'Banking', icon: Building2 },
               { id: 'army_jobs', label: 'Indian Army', icon: Shield },
               { id: 'ssc_jobs', label: 'SSC', icon: FileCheck },
               { id: 'rrb_jobs', label: 'RRB', icon: Train },
@@ -1254,6 +1255,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
 
           const popularCategoriesList = [
             { id: 'jkssb', label: 'JKSSB', count: SARKARI_DATA.filter(i => i.category === 'jkssb').length },
+            { id: 'banking_jobs', label: 'Banking', count: SARKARI_DATA.filter(i => i.category === 'banking_jobs').length },
             { id: 'army_jobs', label: 'Indian Army', count: SARKARI_DATA.filter(i => i.category === 'army_jobs').length },
             { id: 'ssc_jobs', label: 'SSC', count: SARKARI_DATA.filter(i => i.category === 'ssc_jobs').length },
             { id: 'rrb_jobs', label: 'RRB', count: SARKARI_DATA.filter(i => i.category === 'rrb_jobs').length },

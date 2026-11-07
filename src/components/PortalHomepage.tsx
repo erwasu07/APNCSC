@@ -69,6 +69,8 @@ function getRecruitingOrganisation(item: SarkariItem): string {
       return 'Staff Selection Commission (SSC)';
     case 'rrb_jobs':
       return 'Railway Recruitment Board (RRB)';
+    case 'banking_jobs':
+      return item.department || 'Banking Recruitment';
     case 'cluster_univ':
       return 'Cluster University Srinagar';
     case 'exam_forms':
@@ -585,6 +587,24 @@ export default function PortalHomepage({
   const filteredJobs = useMemo(() => {
     const orgFiltered = jobsWithStatus.filter(({ item }) => {
       if (jobOrgFilter === 'all') return true;
+      if (jobOrgFilter === 'banking') {
+        const text = (
+          (item.title || '') + ' ' + 
+          (item.department || '') + ' ' + 
+          (item.shortInfo || '') + ' ' + 
+          (item.advertisementNo || '')
+        ).toLowerCase();
+        return (
+          item.category === 'banking_jobs' ||
+          item.id.includes('bank') ||
+          item.id.includes('ibps') ||
+          text.includes('bank') ||
+          text.includes('ibps') ||
+          text.includes('sbi') ||
+          text.includes('rbi') ||
+          text.includes('nabard')
+        );
+      }
       if (jobOrgFilter === 'universities') {
         return (
           item.category === 'cluster_univ' ||
@@ -1279,6 +1299,7 @@ export default function PortalHomepage({
                 { id: 'all', label: 'All Recruitments' },
                 { id: 'latest_mixed', label: 'Latest Updates (All Categories)' },
                 { id: 'jkssb', label: 'JKSSB' },
+                { id: 'banking', label: 'Banking' },
                 { id: 'army_jobs', label: 'Indian Army' },
                 { id: 'ssc_jobs', label: 'SSC' },
                 { id: 'rrb_jobs', label: 'Railway RRB' },

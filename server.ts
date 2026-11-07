@@ -4191,7 +4191,8 @@ app.get(['/og-banner.svg', '/og-image.svg'], (req: Request, res: Response) => {
 // Helper to inject rich Open Graph tags for WhatsApp / Facebook / Twitter scrapers and users
 function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; isNotFound: boolean } {
   let isNotFound = false;
-  const urlPath = req.path;
+  const rawUrl = req.originalUrl || req.url || req.path || '/';
+  const urlPath = rawUrl.split('?')[0];
   const matchPost = urlPath.match(/^\/(?:post|job|jobs|sarkari|notice|admissions|notification)\/([^/?#]+)/i);
   const matchService = urlPath.match(/^\/service\/([^/?#]+)/i);
   const postParam = (req.query.post as string) || (req.query.job as string) || (req.query.id as string) || (req.query.notice as string);

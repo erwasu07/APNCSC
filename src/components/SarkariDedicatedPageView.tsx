@@ -65,6 +65,10 @@ export default function SarkariDedicatedPageView({
     if (item.category === 'army_jobs') return 'Indian Army (joinindianarmy.nic.in)';
     if (item.category === 'rrb_jobs') return 'Railway Recruitment Boards (RRB)';
     if (item.category === 'ssc_jobs') return 'Staff Selection Commission (SSC)';
+    if (item.category === 'banking_jobs') {
+      if (item.department) return item.department;
+      return 'Banking Recruiting Authority (IBPS / Banks)';
+    }
     if (item.category === 'cluster_univ') return 'Cluster University Srinagar (CUS)';
     if (item.category === 'jkssb') return 'J&K Services Selection Board (JKSSB)';
     if (item.category === 'exam_forms') return 'University of Kashmir (Examinations)';
@@ -72,6 +76,8 @@ export default function SarkariDedicatedPageView({
     if (item.category === 'nta') return 'National Testing Agency (NTA)';
 
     const titleUpper = item.title.toUpperCase();
+    if (titleUpper.includes('J&K BANK') || titleUpper.includes('JAMMU & KASHMIR BANK'))
+      return 'Jammu & Kashmir Bank Ltd. (jkb.bank.in)';
     if (titleUpper.includes('ARMY') || titleUpper.includes('AGNIVEER')) return 'Indian Army';
     if (titleUpper.includes('SSC')) return 'Staff Selection Commission (SSC)';
     if (titleUpper.includes('RRB') || titleUpper.includes('RAILWAY') || titleUpper.includes('RPF'))
@@ -94,6 +100,7 @@ export default function SarkariDedicatedPageView({
 
   const officialPortalUrl = useMemo(() => {
     if (item.officialLink && item.officialLink.trim()) return item.officialLink.trim();
+    if (item.category === 'banking_jobs') return 'https://jkb.bank.in/';
     if (item.category === 'army_jobs') return 'https://joinindianarmy.nic.in';
     if (item.category === 'rrb_jobs') return 'https://www.rrbapply.gov.in';
     if (item.category === 'ssc_jobs') return 'https://ssc.gov.in';
