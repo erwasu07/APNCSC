@@ -4643,7 +4643,7 @@ async function startServer() {
       if (req.path.startsWith('/api/')) {
         return next();
       }
-      if (req.method !== 'GET') {
+      if (req.method !== 'GET' && req.method !== 'HEAD') {
         return next();
       }
 

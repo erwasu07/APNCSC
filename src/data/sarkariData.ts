@@ -120,6 +120,87 @@ export const SARKARI_CATEGORIES = {
 };
 
 export const SARKARI_DATA: SarkariItem[] = [
+  // 🏦 JAMMU & KASHMIR BANK LTD. BANKING ASSOCIATES RECRUITMENT 2026 (Dated: 07.11.2026)
+  {
+    id: 'jk-bank-banking-associates-recruitment-2026',
+    title: 'Jammu & Kashmir Bank Ltd. Recruitment of Banking Associates 2026 (1,033 Posts) - UT of J&K Domiciles',
+    category: 'jobs',
+    postDate: '07/11/2026',
+    startDate: '07/11/2026',
+    lastDate: '26/11/2026',
+    closingTime: '23:59 IST',
+    feeDeadline: '26/11/2026',
+    advertisementNo: 'Notification No: JKB/HR/Rectt/2026-493 (Dated: 07-11-2026)',
+    recruitmentYear: '2026',
+    noticeType: 'recruitment',
+    stage: 'recruitment',
+    department: 'Jammu & Kashmir Bank Ltd. (Corporate Headquarters, M.A. Road, Srinagar)',
+    postType: 'Job',
+    status: 'Open',
+    shortInfo: 'Jammu & Kashmir Bank Ltd. (J&K Bank) invites online applications from eligible domiciles of UT of J&K for appointment to 1,033 Posts of Banking Associates. The online examination will be conducted by IBPS. Selected candidates will be placed on a 6-month probation with an initial starting basic pay of ₹24,050/- in the scale of ₹24,050–₹64,480 plus applicable allowances.',
+    ageLimit: '20 to 30 Years as on 01/01/2026 (Born between 01/01/1996 and 01/01/2006, both dates inclusive).',
+    ageRelaxationDetails: 'SC/ST: 5 Years | SEBC (OBC 8%, ALC/IB 4%, RBA 10%): 3 Years | PwBD: 10 Years | Ex-Servicemen: Defense Service + 3 Years (Max 48 Years) | EWS: Nil | J&K Bank Apprentices: 1 Year additional relaxation + 2.5% bonus marks in online exam.',
+    eligibility: 'Graduate in any discipline from a university recognized by the Government of India / UGC as on the last date of registration (26/11/2026). Candidate must be a bona fide Domicile of UT of J&K.',
+    totalPosts: '1,033 Posts',
+    officialLink: 'https://jkb.bank.in/',
+    officialNotificationUrl: '/assets/aistudio/JK_BANK_b62482f5.pdf',
+    officialApplicationUrl: 'https://jkb.bank.in/',
+    fees: {
+      genObc: '₹800/- (excluding GST) for General, EWS and other candidates',
+      scSt: '₹600/- (excluding GST) for SC / ST / SEBC / PwBD / ESM candidates'
+    },
+    paymentInstructions: 'Online payment through integrated payment gateway using Debit Cards (RuPay/Visa/MasterCard/Maestro), Credit Cards, Internet Banking, IMPS, Cash Cards / Mobile Wallets from 07/11/2026 to 26/11/2026.',
+    departmentBreakdown: [
+      {
+        department: 'J&K Bank Banking Operations',
+        postName: 'Banking Associate (UT of J&K)',
+        posts: 1033,
+        qualification: 'Graduation in any discipline from a recognized University/UGC as on 26-11-2026; Domicile of UT of J&K mandatory.',
+        fee: '₹800 (General/EWS) / ₹600 (SC/ST/SEBC/PwBD/ESM) + GST'
+      }
+    ],
+    selectionProcess: [
+      'Single-Stage Online Written Examination conducted by IBPS (100 Objective Questions, 100 Marks, 60 Minutes).',
+      'Examination Structure: English Language (30 Questions / 30 Marks / 20 Minutes), Quantitative Aptitude (35 Questions / 30 Marks / 20 Minutes), Reasoning Ability (35 Questions / 40 Marks / 20 Minutes).',
+      'Penalty for Wrong Answers: 1/4th (0.25) marks will be deducted as negative marking for each incorrect answer.',
+      'Cut-Off Scores: Minimum aggregate qualifying score of 40% for General Category candidates and 35% for Reserved Category candidates, subject to individual test cutoffs and total score cutoffs.',
+      'Mandatory 5-Year Zone Posting: Selected candidates must serve within the Branch/Office of their initially allotted Zone for a minimum period of 5 years with no inter-zone transfer.',
+      'Service Bond: Selected candidates must execute a service bond of ₹1,00,000/- (Rupees One Lakh) to serve the Bank for a minimum period of 6 months.'
+    ],
+    documentsRequired: [
+      'Valid Domicile Certificate of the UT of Jammu & Kashmir issued by Competent Authority.',
+      'Recent Passport Size Colour Photograph (4.5cm × 3.5cm, 200×230 pixels, 20KB–50KB, white background).',
+      'Live Webcam / Mobile Photograph capture during online application registration.',
+      'Scanned Signature on white paper with Black Ink pen (140×60 pixels, 10KB–20KB; Signature in CAPITAL letters not accepted).',
+      'Scanned Left Thumb Impression on white paper with black/blue ink (240×240 pixels at 200 DPI, 20KB–50KB).',
+      'Scanned Handwritten Declaration written in English with black ink in candidate’s own handwriting (800×400 pixels at 200 DPI, 50KB–100KB).',
+      '10th Certificate / Marksheet as Proof of Date of Birth (PDF format, up to 500KB).',
+      'Graduation Degree / Consolidated Marksheet (PDF format, up to 500KB).',
+      'Valid Reserved Category Certificate (SC/ST/OBC/ALC-IB/RBA/EWS/PwBD/ESM) as per J&K Reservation Rules.',
+      'J&K Bank Apprenticeship Completion Certificate (if claiming 1-year age relaxation and 2.5% additional marks).'
+    ],
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '07/11/2026',
+      lastVerified: '07/11/2026',
+      officialNotificationUrl: '/assets/aistudio/JK_BANK_b62482f5.pdf',
+      officialApplicationUrl: 'https://jkb.bank.in/',
+      advertisementNo: 'JKB/HR/Rectt/2026-493',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '07/11/2026',
+      verifiedClosingDate: '26/11/2026',
+      closingTime: '23:59 IST',
+      feePaymentDeadline: '26/11/2026 (23:59 IST)',
+      sourceHistory: [
+        'Official Advertisement Notification No: JKB/HR/Rectt/2026-493 dated 07-11-2026 issued by General Manager - HR, Corporate Headquarters, M.A. Road, Srinagar, J&K Bank Ltd.',
+        'Recruitment of Banking Associates - UT of J&K (1,033 vacancies). Online exam conducted by IBPS.'
+      ]
+    },
+    isNew: true
+  },
+
   // 🎓 UNIVERSITY OF KASHMIR FYUGP ADMISSIONS CLOSURE NOTICE (Dated: 05.11.2026)
   {
     id: 'ku-admission-closure-fyugp-nep2020-pvt-colleges-2026',
