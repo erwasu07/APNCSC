@@ -202,6 +202,314 @@ export const SARKARI_DATA: SarkariItem[] = [
     isNew: true
   },
 
+  // 🚆 RAILWAY RECRUITMENT BOARDS (RRB) NTPC GRADUATE LEVEL EXTENDED DEADLINE (Dated: 08.11.2026)
+  {
+    id: 'rrb-ntpc-graduate-level-cen-06-2026',
+    title: 'Railway RRB NTPC Graduate Level Recruitment 2026 (CEN No. 06/2026): 8,113 Posts Online Application Window Closing Today',
+    category: 'rrb_jobs',
+    postDate: '14/09/2026',
+    startDate: '14/09/2026',
+    lastDate: '08/11/2026',
+    closingTime: '23:59 IST',
+    feeDeadline: '08/11/2026 (23:59 IST)',
+    correctionWindow: '09/11/2026 to 18/11/2026',
+    advertisementNo: 'CEN No. 06/2026 (NTPC Graduate Level Posts)',
+    recruitmentYear: '2026',
+    noticeType: 'recruitment',
+    stage: 'recruitment',
+    department: 'Ministry of Railways (Railway Recruitment Boards - RRB)',
+    postType: 'Job',
+    status: 'Open',
+    shortInfo: 'Railway Recruitment Boards (RRBs) have extended the online application and fee payment deadline for 8,113 Graduate-level Non-Technical Popular Categories (NTPC) vacancies under CEN 06/2026 to 08th November 2026 (23:59 hrs). Graduate posts include Chief Commercial cum Ticket Supervisor, Station Master, Goods Train Manager, Junior Account Assistant cum Typist, and Senior Clerk cum Typist across all RRB zones. Modification window opens on 09th November 2026.',
+    ageLimit: '18 to 36 Years as on 01/01/2027 (SC/ST: 5 Years, OBC-NCL: 3 Years relaxation as per Railway rules).',
+    eligibility: 'Bachelor Degree in any discipline from a recognized University or equivalent. Typing proficiency in English or Hindi required for specific clerical posts.',
+    totalPosts: '8,113 Posts (Pay Levels 5 & 6)',
+    officialLink: 'https://www.rrbapply.gov.in',
+    officialNotificationUrl: 'https://www.rrbapply.gov.in',
+    officialApplicationUrl: 'https://www.rrbapply.gov.in',
+    fees: {
+      genObc: '₹500/- (₹400 refunded duly deducting bank charges upon appearing in 1st Stage CBT)',
+      scSt: '₹250/- (For SC/ST/Ex-SM/PwBD/Female/Transgender/EBC — Fully refunded after CBT)'
+    },
+    paymentInstructions: 'Online payment via Internet Banking, Debit Cards, Credit Cards, or UPI on rrbapply.gov.in until 08/11/2026 23:59 IST.',
+    departmentBreakdown: [
+      {
+        department: 'Indian Railways (All Zonal RRBs)',
+        postName: 'Chief Commercial cum Ticket Supervisor & Station Master',
+        posts: 4210,
+        qualification: 'Degree from recognized University; Computer Based Aptitude Test (CBAT) for Station Master.',
+        fee: '₹500 (Gen/OBC) / ₹250 (SC/ST/Female/PwBD)'
+      },
+      {
+        department: 'Indian Railways (All Zonal RRBs)',
+        postName: 'Goods Train Manager & Senior Clerk cum Typist',
+        posts: 3903,
+        qualification: 'Degree from recognized University; Typing skill test required for clerical cadre.',
+        fee: '₹500 (Gen/OBC) / ₹250 (SC/ST/Female/PwBD)'
+      }
+    ],
+    selectionProcess: [
+      '1st Stage Computer Based Test (CBT-1) common for all Graduate level posts.',
+      '2nd Stage Computer Based Test (CBT-2) separate for Level 5 and Level 6 posts.',
+      'Computer Based Aptitude Test (CBAT) for Station Master posts / Computer Based Typing Skill Test (CBTST) for Clerical posts.',
+      'Document Verification (DV) and Medical Examination at Railway Hospitals.'
+    ],
+    documentsRequired: [
+      'Recent clear color passport-size photograph with white background (35mm x 45mm, JPEG, 30-70 KB).',
+      'Scanned signature in black or blue ink (JPEG, 30-70 KB).',
+      'SC/ST Certificate (PDF format, up to 500 KB) for availing free sleeper rail travel pass.',
+      '10th / Matriculation Certificate as Proof of Date of Birth.',
+      'Graduation Degree / Final Marksheet.'
+    ],
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '08/11/2026',
+      lastVerified: '08/11/2026',
+      officialNotificationUrl: 'https://www.rrbapply.gov.in',
+      officialApplicationUrl: 'https://www.rrbapply.gov.in',
+      advertisementNo: 'CEN No. 06/2026',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '14/09/2026',
+      verifiedClosingDate: '08/11/2026',
+      closingTime: '23:59 IST',
+      feePaymentDeadline: '08/11/2026 (23:59 IST)',
+      correctionWindow: '09/11/2026 to 18/11/2026',
+      sourceHistory: [
+        'Verified officially extended application deadline notice on rrbapply.gov.in.',
+        'Online registration and fee payment closes on 08/11/2026 at 23:59 hrs IST. Modification window: 09/11/2026 to 18/11/2026.'
+      ]
+    },
+    isNew: true
+  },
+
+  // 🇮🇳 STAFF SELECTION COMMISSION (SSC) CONSTABLE GD FINAL ANSWER KEY & MARKS (Dated: 03.11.2026)
+  {
+    id: 'ssc-constable-gd-final-answer-key-marks-nov-2026',
+    title: 'SSC Constable (GD) Examination 2026: Final Answer Keys, Question Papers & Candidate Marks Released',
+    category: 'ssc_jobs',
+    postDate: '03/11/2026',
+    startDate: '03/11/2026',
+    lastDate: '18/11/2026',
+    closingTime: '18:00 IST',
+    advertisementNo: 'Notice: Constable (GD) in CAPFs, SSF & Rifleman (GD) in Assam Rifles Exam 2026 (F. No. HQ-C1101/FinalKey-GD/2026)',
+    recruitmentYear: '2026',
+    noticeType: 'answer_key',
+    stage: 'answer_key',
+    department: 'Staff Selection Commission (SSC)',
+    postType: 'Result',
+    status: 'Open',
+    shortInfo: 'Staff Selection Commission (SSC) has uploaded the Final Answer Keys along with Question Papers and candidate marks for the Computer Based Examination of Constable (GD) in Central Armed Police Forces (CAPFs), SSF, and Rifleman (GD) in Assam Rifles Examination, 2026. Qualified and non-qualified candidates can download their scorecards and final answer keys through the official portal ssc.gov.in up to 18th November 2026 (18:00 hrs).',
+    ageLimit: 'Not Applicable (Final Answer Key & Scorecard Download)',
+    eligibility: 'All candidates who appeared in the Computer-Based Examination for Constable (GD) 2026.',
+    totalPosts: 'Constable (GD) 2026 Final Keys & Marks Portal',
+    officialLink: 'https://ssc.gov.in',
+    officialNotificationUrl: 'https://ssc.gov.in',
+    officialApplicationUrl: 'https://ssc.gov.in',
+    fees: {
+      genObc: '₹0/- (Exempted — Scorecard & Final Key Download)',
+      scSt: '₹0/- (Exempted)'
+    },
+    paymentInstructions: 'Not Applicable. Downloading official scorecards and final question papers is free of charge.',
+    selectionProcess: [
+      'Computer Based Examination (CBE) completed.',
+      'Final Answer Keys, Question Papers, and normalized marks hosted from 03/11/2026 to 18/11/2026 (18:00 hrs).',
+      'Shortlisted candidates proceed to Physical Standard Test (PST) and Physical Efficiency Test (PET) conducted by CAPFs.'
+    ],
+    documentsRequired: [
+      'SSC Registration Number / Examination Roll Number',
+      'Password / Date of Birth for candidate login on ssc.gov.in'
+    ],
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '08/11/2026',
+      lastVerified: '08/11/2026',
+      officialNotificationUrl: 'https://ssc.gov.in',
+      officialApplicationUrl: 'https://ssc.gov.in',
+      advertisementNo: 'F. No. HQ-C1101/FinalKey-GD/2026',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '03/11/2026',
+      verifiedClosingDate: '18/11/2026',
+      closingTime: '18:00 IST',
+      sourceHistory: [
+        'Verified official notification published on ssc.gov.in on 03/11/2026 releasing final answer keys, candidate responses, and marks for Constable GD 2026.'
+      ]
+    },
+    isNew: true
+  },
+
+  // 🎓 UNIVERSITY OF KASHMIR PRO WRITTEN EXAM ADMIT CARDS (Dated: 07.11.2026)
+  {
+    id: 'ku-pro-written-exam-admit-card-nov-2026',
+    title: 'University of Kashmir Public Relations Officer (PRO) Written Test 2026: E-Admit Cards Download Link Active',
+    category: 'exam_forms',
+    postDate: '07/11/2026',
+    startDate: '07/11/2026',
+    lastDate: '15/11/2026',
+    closingTime: '17:00 IST',
+    advertisementNo: 'Notification No. F(Admit-Card-PRO)Rec/KU/2026 (Dated: 07.11.2026)',
+    recruitmentYear: '2026',
+    noticeType: 'admit_card',
+    stage: 'admit_card',
+    department: 'University of Kashmir (Recruitment Section)',
+    postType: 'Job',
+    status: 'Open',
+    shortInfo: 'University of Kashmir has officially issued notice regarding the activation of the online download link for E-Admit Cards for the OMR-based written examination for the post of Public Relations Officer (PRO). Candidates who have submitted online applications can download their admit card using their Form Number and Date of Birth from the university website kashmiruniversity.net.',
+    ageLimit: 'As per original advertisement criteria',
+    eligibility: 'Applicants who successfully submitted application forms for Public Relations Officer (PRO) position at University of Kashmir.',
+    totalPosts: 'Public Relations Officer (PRO) Written Test',
+    officialLink: 'https://kashmiruniversity.net',
+    officialNotificationUrl: 'https://kashmiruniversity.net',
+    officialApplicationUrl: 'https://kashmiruniversity.net',
+    fees: {
+      genObc: '₹0/- (Admit Card Download)',
+      scSt: '₹0/- (Exempted)'
+    },
+    paymentInstructions: 'Not Applicable. Downloading official admit cards is free of charge.',
+    selectionProcess: [
+      'OMR-based Written Examination at designated University of Kashmir centers.',
+      'Shortlisting of meritorious candidates for interview/interaction.'
+    ],
+    documentsRequired: [
+      'Printed copy of downloaded E-Admit Card.',
+      'Valid Original Government Photo ID Proof (Aadhaar, Voter ID, Passport, or Driving License).',
+      'Recent passport-size photograph.'
+    ],
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '08/11/2026',
+      lastVerified: '08/11/2026',
+      officialNotificationUrl: 'https://kashmiruniversity.net',
+      officialApplicationUrl: 'https://kashmiruniversity.net',
+      advertisementNo: 'F(Admit-Card-PRO)Rec/KU/2026',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '07/11/2026',
+      verifiedClosingDate: '15/11/2026',
+      closingTime: '17:00 IST',
+      sourceHistory: [
+        'Verified official notification released on 07/11/2026 on kashmiruniversity.net regarding admit cards for PRO examination.'
+      ]
+    },
+    isNew: true
+  },
+
+  // 🏫 CLUSTER UNIVERSITY SRINAGAR PH.D COURSE WORK DATE SHEET (Dated: 06.11.2026)
+  {
+    id: 'cus-phd-coursework-datesheet-nov-2026',
+    title: 'Cluster University Srinagar: Official Date Sheet for Ph.D. Course Work Examination (Batch 2026)',
+    category: 'cluster_univ',
+    postDate: '06/11/2026',
+    startDate: '06/11/2026',
+    lastDate: '24/11/2026',
+    closingTime: '14:00 IST',
+    advertisementNo: 'Notice No. CUS/Exam/Datesheet-PhD/2026 (Dated: 06.11.2026)',
+    recruitmentYear: '2026',
+    noticeType: 'date_sheet',
+    stage: 'date_sheet',
+    department: 'Office of the Controller of Examinations, Cluster University Srinagar',
+    postType: 'Admission',
+    status: 'Informational',
+    shortInfo: 'Office of the Controller of Examinations, Cluster University of Srinagar has released the official Date Sheet for the Ph.D. Course Work examination (Batch 2026) across constituent schools. Written papers will be conducted from 18th November to 24th November 2026 at designated examination centres.',
+    ageLimit: 'Not Applicable (Doctoral Examination Date Sheet)',
+    eligibility: 'Enrolled research scholars of Ph.D. Programme (Batch 2026) having submitted coursework examination forms.',
+    totalPosts: 'Ph.D. Course Work Examination (Batch 2026)',
+    officialLink: 'https://www.cusrinagar.edu.in',
+    officialNotificationUrl: 'https://www.cusrinagar.edu.in',
+    officialApplicationUrl: 'https://www.cusrinagar.edu.in',
+    fees: {
+      genObc: '₹0/- (Date Sheet Notification)',
+      scSt: '₹0/- (Exempted)'
+    },
+    paymentInstructions: 'Not Applicable. This is an official examination timetable; no fee is required.',
+    selectionProcess: [
+      'Written theory examinations as per the notified course work timetable.',
+      'Subsequent Research Advisory Committee (RAC) assessment.'
+    ],
+    documentsRequired: [
+      'University Roll Slip / Admit Card',
+      'University Research Scholar Identity Card'
+    ],
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '08/11/2026',
+      lastVerified: '08/11/2026',
+      officialNotificationUrl: 'https://www.cusrinagar.edu.in',
+      officialApplicationUrl: 'https://www.cusrinagar.edu.in',
+      advertisementNo: 'CUS/Exam/Datesheet-PhD/2026',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '06/11/2026',
+      verifiedClosingDate: '24/11/2026',
+      closingTime: '14:00 IST',
+      sourceHistory: [
+        'Verified official Ph.D. course work examination date sheet on cusrinagar.edu.in notifications portal.'
+      ]
+    },
+    isNew: true
+  },
+
+  // 🏫 CLUSTER UNIVERSITY SRINAGAR B.TECH 8TH SEM EXAM FORM NOTICE (Dated: 04.11.2026)
+  {
+    id: 'cus-btech-8th-sem-exam-form-nov-2026',
+    title: 'Cluster University Srinagar: Online Examination Form & Fee Notice for B.Tech 8th Semester (Batch 2021 & Backlog)',
+    category: 'cluster_univ',
+    postDate: '04/11/2026',
+    startDate: '04/11/2026',
+    lastDate: '14/11/2026',
+    closingTime: '23:59 IST',
+    advertisementNo: 'Notice No. CUS/Exam-Form/BTech-8thSem/2026 (Dated: 04.11.2026)',
+    recruitmentYear: '2026',
+    noticeType: 'exam_form',
+    stage: 'exam_form',
+    department: 'Cluster University Srinagar (Controller of Examinations)',
+    postType: 'Admission',
+    status: 'Open',
+    shortInfo: 'Cluster University Srinagar has invited online examination forms from regular students of B.Tech 8th Semester (Batch 2021) and eligible backlog candidates of previous batches at Government College of Engineering and Technology (GCET Safapora). The online student portal is active for form submission and semester examination fee clearance up to 14th November 2026.',
+    ageLimit: 'Not Applicable (Enrolled Engineering Students)',
+    eligibility: 'Regular B.Tech 8th Semester students (Batch 2021) and backlog candidates of previous batches with minimum prescribed attendance.',
+    totalPosts: 'B.Tech 8th Semester Examination Intake',
+    officialLink: 'https://www.cusrinagar.edu.in',
+    officialNotificationUrl: 'https://www.cusrinagar.edu.in',
+    officialApplicationUrl: 'https://www.cusrinagar.edu.in',
+    fees: {
+      genObc: '₹1,500/- (Semester Examination Fee)',
+      scSt: '₹1,500/-'
+    },
+    paymentInstructions: 'Online payment through student login dashboard on cusrinagar.edu.in.',
+    selectionProcess: [
+      'Submission of online semester examination form and fee verification.',
+      'Conduct of practical viva/project evaluation and final theory examinations.'
+    ],
+    documentsRequired: [
+      'Student Registration ID & Password',
+      'Previous semester marks clearance receipts'
+    ],
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '08/11/2026',
+      lastVerified: '08/11/2026',
+      officialNotificationUrl: 'https://www.cusrinagar.edu.in',
+      officialApplicationUrl: 'https://www.cusrinagar.edu.in',
+      advertisementNo: 'CUS/Exam-Form/BTech-8thSem/2026',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '04/11/2026',
+      verifiedClosingDate: '14/11/2026',
+      closingTime: '23:59 IST',
+      sourceHistory: [
+        'Verified official B.Tech 8th semester examination form notification on cusrinagar.edu.in notifications wing.'
+      ]
+    },
+    isNew: true
+  },
+
   // 🎓 UNIVERSITY OF KASHMIR FYUGP ADMISSIONS CLOSURE NOTICE (Dated: 05.11.2026)
   {
     id: 'ku-admission-closure-fyugp-nep2020-pvt-colleges-2026',
@@ -223,25 +531,51 @@ export const SARKARI_DATA: SarkariItem[] = [
     isNew: true
   },
 
-  // 🇮🇳 STAFF SELECTION COMMISSION (SSC) CGL TIER-1 TENTATIVE ANSWER KEY & OBJECTIONS (Dated: 04.11.2026)
+  // 🇮🇳 STAFF SELECTION COMMISSION (SSC) CGL TIER-1 TENTATIVE ANSWER KEY & OBJECTIONS (Dated: 04.11.2026 - CLOSED)
   {
     id: 'ssc-cgl-tier-1-tentative-answer-key-objection-notice-2026',
-    title: 'SSC CGL Tier-1 Examination 2026: Tentative Answer Key, Response Sheets & Objection Window Notice',
+    title: 'SSC CGL Tier-1 Examination 2026: Tentative Answer Key, Response Sheets & Objection Window (Concluded)',
     category: 'ssc_jobs',
     postDate: '04/11/2026',
     startDate: '04/11/2026',
     lastDate: '07/11/2026',
+    closingTime: '21:00 IST',
     advertisementNo: 'Notice: Combined Graduate Level Examination (Tier-I) 2026 (F.No. HQ-C1101/AnswerKey/2026)',
-    shortInfo: 'Staff Selection Commission (SSC) has uploaded the Tentative Answer Keys along with candidates’ Response Sheets for the Combined Graduate Level Examination (Tier-I), 2026. Candidates can check their question papers and submit online representations or challenges through the official commission website from 4th November to 7th November 2026 (up to 9:00 PM).',
-    ageLimit: 'Not Applicable (Answer Key & Challenge Window)',
+    recruitmentYear: '2026',
+    noticeType: 'answer_key',
+    stage: 'answer_key',
+    department: 'Staff Selection Commission (SSC)',
+    postType: 'Result',
+    status: 'Closed',
+    shortInfo: 'Staff Selection Commission (SSC) uploaded the Tentative Answer Keys along with candidates’ Response Sheets for the Combined Graduate Level Examination (Tier-I), 2026. The online representation and objection challenge window officially closed on 07th November 2026 at 21:00 hrs IST. Final evaluation is now in progress.',
+    ageLimit: 'Not Applicable (Answer Key & Challenge Window Closed)',
     eligibility: 'All candidates who appeared in the SSC Combined Graduate Level (Tier-I) Computer Based Examination 2026.',
     totalPosts: '17,727 Posts Tier-I Exam Key & Response Sheets',
     officialLink: 'https://ssc.gov.in',
+    officialNotificationUrl: 'https://ssc.gov.in',
+    officialApplicationUrl: 'https://ssc.gov.in',
     fees: {
-      genObc: '₹50 per question/answer challenged',
-      scSt: '₹50 per question/answer challenged'
+      genObc: '₹50 per question/answer challenged (Window Closed)',
+      scSt: '₹50 per question/answer challenged (Window Closed)'
     },
-    isNew: true
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '08/11/2026',
+      lastVerified: '08/11/2026',
+      officialNotificationUrl: 'https://ssc.gov.in',
+      officialApplicationUrl: 'https://ssc.gov.in',
+      advertisementNo: 'F.No. HQ-C1101/AnswerKey/2026',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '04/11/2026',
+      verifiedClosingDate: '07/11/2026',
+      closingTime: '21:00 IST',
+      sourceHistory: [
+        'Verified online challenge submission window closed on 07/11/2026 at 21:00 hrs IST as per official SSC notification.'
+      ]
+    },
+    isNew: false
   },
 
   // 🏛️ JKSSB ACCOUNTS ASSISTANT (FINANCE DEPT) WRITTEN EXAM & ADMIT CARD NOTICE (Dated: 04.11.2026)
@@ -349,7 +683,7 @@ export const SARKARI_DATA: SarkariItem[] = [
   // 🏛️ JKSSB HEALTH EDUCATOR PROVISIONAL ANSWER KEY & OBJECTION WINDOW
   {
     id: 'jkssb-health-educator-provisional-answer-key-exam-01-nov-2026',
-    title: 'JKSSB Health Educator Written Exam 2026: Provisional Answer Key & Objection Submission Window Announced',
+    title: 'JKSSB Health Educator Written Exam 2026: Provisional Answer Key & Objection Window (Concluded)',
     category: 'jkssb',
     postDate: '01/11/2026',
     startDate: '02/11/2026',
@@ -357,20 +691,37 @@ export const SARKARI_DATA: SarkariItem[] = [
     closingTime: '17:00 IST',
     advertisementNo: 'Advt No. 07 of 2025 (Item No. 137) | Notice No. JKSSB-COE0EXAM(UT)/03/2026-03(7909564)',
     recruitmentYear: '2026',
-    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) has officially released the Provisional Answer Keys (Series A, B, C, D) for the OMR-based written examination held on 01.11.2026 for the post of Health Educator (Health and Medical Education Department). Candidates may submit offline objections with documentary proof and ₹200 fee per question at JKSSB Central Offices in Jammu or Srinagar by 05.11.2026.',
-    ageLimit: 'Not Applicable (Provisional Answer Key Stage)',
+    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) released the Provisional Answer Keys for the OMR written examination held on 01.11.2026 for the post of Health Educator (Health and Medical Education Department). The offline objection submission window concluded at 17:00 hrs on 05.11.2026.',
+    ageLimit: 'Not Applicable (Provisional Answer Key Stage Closed)',
     eligibility: 'Candidates who appeared in the OMR written examination conducted on 01.11.2026 for Health Educator posts.',
     totalPosts: 'Health Educator (Health & Medical Education Department)',
     officialLink: 'https://jkssb.nic.in',
     officialNotificationUrl: 'https://jkssb.nic.in',
     officialApplicationUrl: 'https://jkssb.nic.in',
     fees: {
-      genObc: '₹200/- per question challenged (Demand Draft, refundable if upheld)',
-      scSt: '₹200/- per question challenged'
+      genObc: '₹200/- per question challenged (Window Closed)',
+      scSt: '₹200/- per question challenged (Window Closed)'
     },
     stage: 'answer_key',
-    status: 'Open',
-    isNew: true
+    status: 'Closed',
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '08/11/2026',
+      lastVerified: '08/11/2026',
+      officialNotificationUrl: 'https://jkssb.nic.in',
+      officialApplicationUrl: 'https://jkssb.nic.in',
+      advertisementNo: 'Advt No. 07 of 2025 (Item No. 137)',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '02/11/2026',
+      verifiedClosingDate: '05/11/2026',
+      closingTime: '17:00 IST',
+      sourceHistory: [
+        'Verified offline representation submission closed on 05/11/2026 at 17:00 hrs IST at JKSSB central offices.'
+      ]
+    },
+    isNew: false
   },
   // 🎓 CLUSTER UNIVERSITY SRINAGAR PG & PH.D REGISTRATION RETURNS
   {

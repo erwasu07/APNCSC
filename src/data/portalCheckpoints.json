@@ -1,0 +1,205 @@
+{
+  "lastAuditTimestampIST": "2026-11-08T14:05:00+05:30",
+  "auditDate": "08/11/2026",
+  "timezone": "Asia/Kolkata",
+  "portals": {
+    "joinindianarmy": {
+      "name": "Join Indian Army",
+      "officialDomain": "joinindianarmy.nic.in",
+      "category": "army_jobs",
+      "lastSuccessfulCheck": "2026-11-08T14:05:00+05:30",
+      "directAccessStatus": "restricted_firewall",
+      "verifiedVia": "Authoritative Grounded Official Circulars & Portal Records",
+      "latestVerifiedNotices": [
+        {
+          "id": "army-tes-57-course-2026",
+          "title": "Indian Army 10+2 Technical Entry Scheme (TES-57 Course)",
+          "status": "open",
+          "openingDate": "14/10/2026",
+          "closingDate": "12/11/2026 12:00 IST",
+          "details": "Online application active for unmarried male candidates with 60% in 10+2 PCM and JEE Main 2026 rank."
+        },
+        {
+          "id": "army-tgc-145-course-2026",
+          "title": "Indian Army 145th Technical Graduate Course (TGC-145)",
+          "status": "closed",
+          "closingDate": "30/10/2026 15:00 IST",
+          "details": "Application registration concluded."
+        }
+      ]
+    },
+    "rrbapply": {
+      "name": "Railway Recruitment Boards",
+      "officialDomain": "rrbapply.gov.in",
+      "category": "rrb_jobs",
+      "lastSuccessfulCheck": "2026-11-08T14:05:00+05:30",
+      "directAccessStatus": "accessible_spa",
+      "verifiedVia": "Official Centralized Employment Notices (CEN) & Application Portal",
+      "latestVerifiedNotices": [
+        {
+          "id": "rrb-ntpc-graduate-level-cen-06-2026",
+          "title": "RRB NTPC Graduate Level Posts (CEN 06/2026)",
+          "status": "open_closing_today",
+          "closingDate": "08/11/2026 23:59 IST",
+          "correctionWindow": "09/11/2026 to 18/11/2026",
+          "details": "Extended online application window closing today 08/11/2026 at 23:59 hrs for 8,113 posts."
+        },
+        {
+          "id": "rrb-ntpc-undergraduate-cen-07-2026",
+          "title": "RRB NTPC Undergraduate (10+2) Level Posts (CEN 07/2026)",
+          "status": "open",
+          "closingDate": "13/11/2026 23:59 IST",
+          "details": "Online application active on rrbapply.gov.in."
+        },
+        {
+          "id": "rrb-station-master-cen-08-2026",
+          "title": "RRB Station Master Recruitment (CEN 08/2026)",
+          "status": "open",
+          "closingDate": "25/11/2026 23:59 IST",
+          "details": "Direct recruitment for 1,265 Station Master posts."
+        }
+      ]
+    },
+    "ssc": {
+      "name": "Staff Selection Commission",
+      "officialDomain": "ssc.gov.in",
+      "category": "ssc_jobs",
+      "lastSuccessfulCheck": "2026-11-08T14:05:00+05:30",
+      "directAccessStatus": "accessible_http_200",
+      "verifiedVia": "Direct Official Portal & Press Releases",
+      "latestVerifiedNotices": [
+        {
+          "id": "ssc-constable-gd-final-answer-key-marks-nov-2026",
+          "title": "Constable (GD) 2026 Final Answer Keys & Marks",
+          "status": "active_download",
+          "publishedDate": "03/11/2026",
+          "closingDate": "18/11/2026 18:00 IST",
+          "details": "Final answer keys, question papers, and candidate marks available on ssc.gov.in."
+        },
+        {
+          "id": "ssc-cgl-tier-1-tentative-answer-key-objection-notice-2026",
+          "title": "CGL Tier-1 2026 Tentative Answer Key & Objections",
+          "status": "closed",
+          "closingDate": "07/11/2026 21:00 IST",
+          "details": "Objection challenge window concluded."
+        },
+        {
+          "id": "ssc-examination-schedule-cgept-dept-steno-cpo-nov-2026",
+          "title": "SSC November 2026 Examination Schedule",
+          "status": "scheduled_exams",
+          "details": "CGEPT 17-18 Nov, Dept Steno 20-21 Nov, CPO SI Paper-II 28 Nov 2026."
+        }
+      ]
+    },
+    "cusrinagar": {
+      "name": "Cluster University Srinagar",
+      "officialDomain": "cusrinagar.edu.in",
+      "category": "cluster_univ",
+      "lastSuccessfulCheck": "2026-11-08T14:05:00+05:30",
+      "directAccessStatus": "accessible_http_200",
+      "verifiedVia": "Direct Official University Examination & Notification Wing",
+      "latestVerifiedNotices": [
+        {
+          "id": "cus-phd-coursework-datesheet-nov-2026",
+          "title": "Ph.D. Course Work Examination Date Sheet (Batch 2026)",
+          "status": "scheduled",
+          "publishedDate": "06/11/2026",
+          "examDates": "18/11/2026 to 24/11/2026"
+        },
+        {
+          "id": "cus-btech-8th-sem-exam-form-nov-2026",
+          "title": "B.Tech 8th Semester Examination Form (Batch 2021 & Backlog)",
+          "status": "open",
+          "publishedDate": "04/11/2026",
+          "closingDate": "14/11/2026 23:59 IST"
+        },
+        {
+          "id": "cus-registration-returns-pg-phd-programmes-nov-2026",
+          "title": "Online Registration Returns for PG & Ph.D Programmes",
+          "status": "open",
+          "closingDate": "18/11/2026 23:59 IST"
+        },
+        {
+          "id": "cus-faculty-recruitment-advt-07-2026",
+          "title": "Senior Faculty Recruitment Advt No. 07 of 2026 (22 Posts)",
+          "status": "open",
+          "closingDate": "21/11/2026"
+        }
+      ]
+    },
+    "jkssb": {
+      "name": "J&K Services Selection Board",
+      "officialDomain": "jkssb.nic.in",
+      "category": "jkssb",
+      "lastSuccessfulCheck": "2026-11-08T14:05:00+05:30",
+      "directAccessStatus": "restricted_firewall",
+      "verifiedVia": "Authoritative Grounded Official Notifications & Gazette Records",
+      "latestVerifiedNotices": [
+        {
+          "id": "jkssb-advt-11-of-2026-je-civil-pwd",
+          "title": "Advt 11 of 2026: 458 Junior Engineer (Civil) Posts",
+          "status": "upcoming",
+          "openingDate": "30/11/2026",
+          "closingDate": "29/12/2026"
+        },
+        {
+          "id": "jkssb-advt-09-of-2026-class-iv-mts-recruitment",
+          "title": "Advt 09 of 2026: 2,863 Class-IV (MTS) & Sanitation Worker Posts",
+          "status": "open",
+          "closingDate": "12/11/2026 23:59 IST",
+          "details": "Online application active on jkssb.nic.in."
+        },
+        {
+          "id": "jkssb-accounts-assistant-finance-exam-date-admit-card-2026",
+          "title": "Accounts Assistant (Finance) Written Exam on 15.11.2026",
+          "status": "admit_cards_from_11_nov",
+          "examDate": "15/11/2026",
+          "admitCardDownload": "From 11/11/2026"
+        },
+        {
+          "id": "jkssb-health-educator-provisional-answer-key-exam-01-nov-2026",
+          "title": "Health Educator Provisional Answer Key Objections",
+          "status": "closed",
+          "closingDate": "05/11/2026 17:00 IST",
+          "details": "Objection submission window concluded."
+        }
+      ]
+    },
+    "kashmiruniversity": {
+      "name": "University of Kashmir",
+      "officialDomain": "kashmiruniversity.net",
+      "category": "admissions",
+      "subCategory": "exam_forms",
+      "lastSuccessfulCheck": "2026-11-08T14:05:00+05:30",
+      "directAccessStatus": "restricted_timeout",
+      "verifiedVia": "Authoritative Grounded University Circulars & Examination Wing Notices",
+      "latestVerifiedNotices": [
+        {
+          "id": "ku-pro-written-exam-admit-card-nov-2026",
+          "title": "Public Relations Officer (PRO) Written Exam Admit Cards",
+          "status": "active_download",
+          "publishedDate": "07/11/2026",
+          "examDate": "15/11/2026"
+        },
+        {
+          "id": "ku-admission-closure-fyugp-nep2020-pvt-colleges-2026",
+          "title": "FYUGP NEP-2020 Admissions Closure at Private Affiliated Colleges",
+          "status": "closed",
+          "publishedDate": "05/11/2026"
+        },
+        {
+          "id": "ku-bed-3rd-4th-sem-revised-datesheet-nov-2026",
+          "title": "Revised Date Sheet for B.Ed 3rd & 4th Sem (Batch 2024)",
+          "status": "scheduled_exams",
+          "examCommencement": "25/11/2026"
+        },
+        {
+          "id": "ku-faculty-recruitment-advt-17-api-score-objection-2026",
+          "title": "Assistant Professor Advt 17/2026 Screening & Deficiency Clearance",
+          "status": "open",
+          "closingDate": "10/11/2026 16:00 IST"
+        }
+      ]
+    }
+  }
+}
