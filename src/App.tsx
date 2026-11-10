@@ -1,5 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import Navbar from './components/Navbar';
+import MobileBottomNav, { BottomNavTab } from './components/MobileBottomNav';
 import type { PolicyTab } from './components/PrivacyPolicyModal';
 import { WebsiteSettings, Announcement, GalleryItem } from './types';
 import { SARKARI_DATA, SarkariItem } from './data/sarkariData';
@@ -28,6 +29,7 @@ import LegalPageView, { LEGAL_PAGE_CONFIG, type LegalPageType } from './componen
 const ToolsHub = lazy(() => import('./components/tools/ToolsHub'));
 const NotificationCenterModal = lazy(() => import('./components/NotificationCenterModal'));
 const NotificationPreferencesModal = lazy(() => import('./components/NotificationPreferencesModal'));
+const SarkariResultDesk = lazy(() => import('./components/SarkariResultDesk'));
 
 // Lightweight Skeleton Fallback for Section Containers (Prevents Layout Shift)
 function SectionSkeleton({ height = 'min-h-[360px]', title = 'Loading Desk...' }: { height?: string; title?: string }) {
@@ -109,6 +111,7 @@ export default function App() {
   const [trackInitialToken, setTrackInitialToken] = useState<string>('');
   const [isToolsView, setIsToolsView] = useState<boolean>(false);
   const [activeToolId, setActiveToolId] = useState<string | null>(null);
+  const [categoryView, setCategoryView] = useState<'jobs' | 'education' | 'schemes' | 'services' | null>(null);
 
   const [activeLegalPage, setActiveLegalPage] = useState<LegalPageType | null>(null);
 
@@ -302,20 +305,17 @@ export default function App() {
         setActiveLegalPage(null);
         setIsAdminView(false);
 
-        const targetId =
-          cleanPath === '/jobs'
-            ? 'recruitment-section'
-            : cleanPath === '/education'
-              ? 'education-resources'
-              : cleanPath === '/schemes'
-                ? 'schemes-section'
-                : 'services';
+        if (cleanPath === '/jobs') setCategoryView('jobs');
+        else if (cleanPath === '/education') setCategoryView('education');
+        else if (cleanPath === '/schemes') setCategoryView('schemes');
+        else if (cleanPath === '/services') setCategoryView('services');
 
-        setTimeout(() => {
-          const el = document.getElementById(targetId) || document.getElementById('sarkari-board');
-          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 120);
+        try {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch {}
         return;
+      } else {
+        setCategoryView(null);
       }
 
       // 4. Check Apply route (/apply, #apply, #/apply)
@@ -643,6 +643,7 @@ export default function App() {
   const handleGoHome = () => {
     setIsAdminView(false);
     setIsToolsView(false);
+    setCategoryView(null);
     setActiveToolId(null);
     setActiveJobPost(null);
     setActiveServicePost(null);
@@ -660,9 +661,84 @@ export default function App() {
     } catch {}
   };
 
+  const handleOpenToolsPage = (toolId?: string) => {
+    setIsToolsView(true);
+    setActiveToolId(toolId || null);
+    setCategoryView(null);
+    setIsApplyView(false);
+    setIsTrackView(false);
+    setActiveJobPost(null);
+    setActiveServicePost(null);
+    setIsAdminView(false);
+    setActiveLegalPage(null);
+    try {
+      window.history.pushState(null, '', toolId ? `/tools/${toolId}` : '/tools');
+    } catch {}
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {}
+  };
+
   // WhatsApp Group / Community click trigger
   const handleWhatsAppFloating = () => {
     window.open('https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI', '_blank');
+  };
+
+  const [activeBottomTab, setActiveBottomTab] = useState<BottomNavTab>('home');
+
+  useEffect(() => {
+    if (isTrackView || window.location.pathname.startsWith('/track')) {
+      setActiveBottomTab('track');
+    } else if (isToolsView || window.location.pathname.startsWith('/tools')) {
+      setActiveBottomTab('tools');
+    } else if (categoryView === 'jobs' || window.location.pathname === '/jobs') {
+      setActiveBottomTab('jobs');
+    } else if (categoryView === 'services' || window.location.pathname === '/services') {
+      setActiveBottomTab('services');
+    } else {
+      setActiveBottomTab('home');
+    }
+  }, [isTrackView, isToolsView, categoryView, isApplyView, activeJobPost, activeServicePost, activeLegalPage]);
+
+  const handleBottomNavNavigate = (tab: BottomNavTab) => {
+    setActiveBottomTab(tab);
+    if (tab === 'home') {
+      handleGoHome();
+    } else if (tab === 'jobs') {
+      setCategoryView('jobs');
+      setIsApplyView(false);
+      setIsTrackView(false);
+      setIsToolsView(false);
+      setActiveJobPost(null);
+      setActiveServicePost(null);
+      setActiveLegalPage(null);
+      setIsAdminView(false);
+      try {
+        if (window.location.pathname !== '/jobs') {
+          window.history.pushState(null, '', '/jobs');
+        }
+      } catch {}
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (tab === 'services') {
+      setCategoryView('services');
+      setIsApplyView(false);
+      setIsTrackView(false);
+      setIsToolsView(false);
+      setActiveJobPost(null);
+      setActiveServicePost(null);
+      setActiveLegalPage(null);
+      setIsAdminView(false);
+      try {
+        if (window.location.pathname !== '/services') {
+          window.history.pushState(null, '', '/services');
+        }
+      } catch {}
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (tab === 'tools') {
+      handleOpenToolsPage();
+    } else if (tab === 'track') {
+      handleOpenTrackPage();
+    }
   };
 
   return (
@@ -689,8 +765,8 @@ export default function App() {
           isAdminView
             ? 'flex-grow w-full min-h-screen bg-[#F6F8FC] overflow-x-hidden'
             : isApplyView || isTrackView
-            ? 'flex-grow w-full bg-white overflow-x-hidden'
-            : 'flex-grow w-full max-w-7xl mx-auto px-0 md:px-6 py-0 md:py-6 overflow-x-hidden'
+            ? 'flex-grow w-full bg-white overflow-x-hidden pb-20 md:pb-6'
+            : 'flex-grow w-full max-w-7xl mx-auto px-0 md:px-6 py-0 md:py-6 pb-20 md:pb-6 overflow-x-hidden'
         }
       >
         {activeLegalPage ? (
@@ -784,60 +860,128 @@ export default function App() {
               />
             </Suspense>
           </div>
+        ) : categoryView === 'jobs' ? (
+          /* DEDICATED FULL-PAGE VIEW FOR JOBS & RECRUITMENT */
+          <div className="animate-fade-in w-full px-3 sm:px-6 py-4 space-y-4">
+            <div className="flex items-center justify-between pb-1">
+              <button
+                type="button"
+                onClick={handleGoHome}
+                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#1E56C8] hover:underline cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Home</span>
+              </button>
+            </div>
+            <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Recruitment Notifications..." />}>
+              <SarkariResultDesk
+                onApplyService={handleServiceSelect}
+                onOpenDedicatedPage={handleOpenJobPage}
+              />
+            </Suspense>
+          </div>
+        ) : categoryView === 'education' ? (
+          /* DEDICATED FULL-PAGE VIEW FOR EDUCATION & ADMISSIONS */
+          <div className="animate-fade-in w-full px-3 sm:px-6 py-4 space-y-4">
+            <div className="flex items-center justify-between pb-1">
+              <button
+                type="button"
+                onClick={handleGoHome}
+                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#1E56C8] hover:underline cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Home</span>
+              </button>
+            </div>
+            <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Education & Admissions..." />}>
+              <SarkariResultDesk
+                onApplyService={handleServiceSelect}
+                onOpenDedicatedPage={handleOpenJobPage}
+              />
+            </Suspense>
+          </div>
+        ) : categoryView === 'schemes' ? (
+          /* DEDICATED FULL-PAGE VIEW FOR GOVERNMENT SCHEMES */
+          <div className="animate-fade-in w-full px-3 sm:px-6 py-4 space-y-4">
+            <div className="flex items-center justify-between pb-1">
+              <button
+                type="button"
+                onClick={handleGoHome}
+                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#1E56C8] hover:underline cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Home</span>
+              </button>
+            </div>
+            <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Government Schemes & Guides..." />}>
+              <GuidesKnowledgeHub onSelectService={handleServiceSelect} />
+            </Suspense>
+          </div>
+        ) : categoryView === 'services' ? (
+          /* DEDICATED FULL-PAGE VIEW FOR CSC E-SERVICES */
+          <div className="animate-fade-in w-full px-3 sm:px-6 py-4 space-y-4">
+            <div className="flex items-center justify-between pb-1">
+              <button
+                type="button"
+                onClick={handleGoHome}
+                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#1E56C8] hover:underline cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Home</span>
+              </button>
+            </div>
+            <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Citizen Services Catalogue..." />}>
+              <ExploreServicesDesk 
+                onApplyService={handleServiceSelect} 
+                selectedService={selectedService}
+                onOpenDedicatedServicePage={handleOpenServicePage}
+              />
+            </Suspense>
+          </div>
         ) : (
-          /* PUBLIC VISITOR INTERFACE */
-          <div className="animate-fade-in space-y-0 md:space-y-10 pb-16 md:pb-6 w-full">
-            
-            {/* Dedicated Modern Citizen Homepage Layout */}
+          /* COMPACT HOMEPAGE (MATCHES APPROVED MOBILE REFERENCE) */
+          <div className="animate-fade-in space-y-0 w-full">
             <Suspense fallback={<SectionSkeleton height="min-h-[520px]" title="Loading CSC DOST Citizen Portal..." />}>
               <PortalHomepage
                 onOpenJob={handleOpenJobPage}
                 onOpenService={handleOpenServicePage}
                 onApplyService={handleServiceSelect}
                 onOpenGuide={(guideId) => {
-                  window.dispatchEvent(
-                    new CustomEvent('open-guide-article', { detail: { guideId } })
-                  );
-                  const el = document.getElementById('knowledge-hub');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  setCategoryView('schemes');
+                  try {
+                    window.history.pushState(null, '', '/schemes');
+                  } catch {}
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 onOpenTrack={() => handleOpenTrackPage()}
                 onOpenLegal={openLegalModal}
+                onNavigateRoute={(route) => {
+                  if (route === '/jobs') {
+                    setCategoryView('jobs');
+                    try { window.history.pushState(null, '', '/jobs'); } catch {}
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  } else if (route === '/education') {
+                    setCategoryView('education');
+                    try { window.history.pushState(null, '', '/education'); } catch {}
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  } else if (route === '/schemes' || route.startsWith('/schemes#')) {
+                    setCategoryView('schemes');
+                    try { window.history.pushState(null, '', '/schemes'); } catch {}
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  } else if (route === '/services' || route.startsWith('/services#')) {
+                    setCategoryView('services');
+                    try { window.history.pushState(null, '', '/services'); } catch {}
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  } else if (route === '/tools' || route.startsWith('/tools#')) {
+                    handleOpenToolsPage();
+                  } else if (route === '/apply') {
+                    handleOpenApplyPage();
+                  } else if (route === '/track') {
+                    handleOpenTrackPage();
+                  }
+                }}
               />
             </Suspense>
-
-            {/* Complete Organised Service Directory */}
-            <div id="services-catalogue" className="scroll-mt-20">
-              <Suspense fallback={<SectionSkeleton height="min-h-[380px]" title="Loading Complete Service Directory..." />}>
-                <ExploreServicesDesk 
-                  onApplyService={handleServiceSelect} 
-                  selectedService={selectedService}
-                  onOpenDedicatedServicePage={handleOpenServicePage}
-                />
-              </Suspense>
-            </div>
-
-            {/* In-depth Citizen Guides & Scheme Knowledge Hub */}
-            <div id="knowledge-hub" className="scroll-mt-20">
-              <Suspense fallback={<SectionSkeleton height="min-h-[320px]" title="Loading Citizen Guides & Knowledge Hub..." />}>
-                <GuidesKnowledgeHub onSelectService={handleServiceSelect} />
-              </Suspense>
-            </div>
-
-            {/* Your Local CSC Assistance Centre (Centre Information & Trust) */}
-            <div className="scroll-mt-20">
-              <Suspense fallback={<SectionSkeleton height="min-h-[220px]" title="Loading Local CSC Centre Information..." />}>
-                <NodeInformation />
-              </Suspense>
-            </div>
-
-            {/* Streamlined Frequently Asked Questions */}
-            <div id="faq" className="scroll-mt-20">
-              <Suspense fallback={<SectionSkeleton height="min-h-[260px]" title="Loading Frequently Asked Questions..." />}>
-                <FrequentlyAskedQuestions />
-              </Suspense>
-            </div>
-
           </div>
         )}
       </main>
@@ -1017,12 +1161,12 @@ export default function App() {
         </div>
       )}
 
-      {/* Floating WhatsApp Updates Group Button - Compact 48px circle on mobile with safe-area clearance */}
+      {/* Floating WhatsApp Updates Group Button - Compact 48px circle on mobile with safe-area and bottom nav clearance */}
       {!isAdminView && !isApplyView && !isTrackView && !isPrivacyModalOpen && !showShareModal && (
         <button
           type="button"
           onClick={handleWhatsAppFloating}
-          className={`fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-3.5 sm:bottom-6 sm:right-6 w-12 h-12 sm:w-auto sm:h-11 sm:px-4 bg-[#16A34A] hover:bg-emerald-700 text-white rounded-full shadow-md transition-colors z-30 ${
+          className={`fixed bottom-[calc(68px+max(0.75rem,env(safe-area-inset-bottom)))] right-3.5 sm:bottom-6 sm:right-6 w-12 h-12 sm:w-auto sm:h-11 sm:px-4 bg-[#16A34A] hover:bg-emerald-700 text-white rounded-full shadow-md transition-colors z-30 ${
             activeJobPost || activeServicePost
               ? 'hidden md:flex'
               : 'flex'
@@ -1036,6 +1180,14 @@ export default function App() {
             Join WhatsApp Updates Group
           </span>
         </button>
+      )}
+
+      {/* Fixed Mobile Bottom Navigation Bar (4 items: Home, Services, Jobs, Track) */}
+      {!isAdminView && (
+        <MobileBottomNav
+          activeTab={activeBottomTab}
+          onNavigate={handleBottomNavNavigate}
+        />
       )}
 
     </div>
