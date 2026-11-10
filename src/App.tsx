@@ -988,7 +988,7 @@ export default function App() {
 
       {/* Global Page Footer (Below the Fold) */}
       {!isAdminView && (
-        <Suspense fallback={<div className="h-28 bg-[#102A43] border-t border-slate-800" />}>
+        <Suspense fallback={<div className="h-20 bg-[#F1F5F9] border-t border-[#E2E8F0]" />}>
           <Footer 
             cafeName={settings.cafeName} 
             onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
