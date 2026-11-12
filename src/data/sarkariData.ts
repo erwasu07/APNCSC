@@ -121,6 +121,378 @@ export const SARKARI_CATEGORIES = {
 };
 
 export const SARKARI_DATA: SarkariItem[] = [
+  // 🏛️ UNIVERSITY OF KASHMIR CALLIGRAPHIST RECRUITMENT (ADVT NO. 18 OF 2026) - OPEN TODAY (Dated: 10.11.2026)
+  {
+    id: 'ku-calligraphist-recruitment-advt-18-2026',
+    title: 'University of Kashmir Calligraphist Recruitment 2026 (Advt No. 18 of 2026) - Department of Persian',
+    category: 'exam_forms',
+    noticeType: 'recruitment',
+    stage: 'recruitment',
+    postDate: '10/11/2026',
+    startDate: '12/11/2026',
+    lastDate: '30/11/2026',
+    closingTime: '16:00 IST',
+    feeDeadline: '30/11/2026 (16:00 IST)',
+    advertisementNo: 'Advertisement Notice No. 18 of 2026 (Dated: 10-11-2026)',
+    recruitmentYear: '2026',
+    department: 'University of Kashmir (Department of Persian, Hazratbal, Srinagar)',
+    postType: 'Job',
+    status: 'Open',
+    shortInfo: 'University of Kashmir invites online applications from eligible domiciles of UT of Jammu & Kashmir for appointment to 01 post of Calligraphist in the Department of Persian in Pay Level 4 (₹25,500 – ₹81,100). Online application portal opens on 12/11/2026 and closes on 30/11/2026 at 16:00 hrs. Hard copies for in-service candidates must reach by 04/12/2026.',
+    ageLimit: '18 to 40 Years as on 01/01/2026 (PwD: 42 Years, SC/ST/RBA/EWS/OBC: 43 Years, In-service: 50 Years).',
+    ageRelaxationDetails: 'OM: 40 Years | PwD: 42 Years | SC/ST/RBA/EWS/OBC: 43 Years | In-Service Candidates: 50 Years as per J&K Govt reservation rules.',
+    eligibility: 'B.A. with at least 50% marks having Arabic/Persian/Urdu/Kashmiri as a subject from a recognized University, plus Diploma in Calligraphy from a recognized Government Institution. Desirable: Knowledge of Computer Applications. Domicile of UT of J&K mandatory.',
+    totalPosts: '1 Post (Open Merit - Pay Level 4 ₹25,500–₹81,100)',
+    officialLink: 'https://www.kashmiruniversity.net/',
+    officialNotificationUrl: 'https://www.kashmiruniversity.net/',
+    officialApplicationUrl: 'https://www.kashmiruniversity.net/',
+    fees: {
+      genObc: '₹750/- (Online payment mode)',
+      scSt: '₹750/- (PwD candidates exempted as per University rules)'
+    },
+    paymentInstructions: 'Application processing fee of ₹750/- must be paid online through the University recruitment portal. Persons with Disabilities (PwD) are exempted from fee payment.',
+    departmentBreakdown: [
+      {
+        department: 'University of Kashmir (Department of Persian)',
+        postName: 'Calligraphist',
+        posts: 1,
+        qualification: 'B.A. with 50% marks having Arabic/Persian/Urdu/Kashmiri + Diploma in Calligraphy; J&K Domicile.',
+        fee: '₹750/- (Online mode, PwD Exempted)'
+      }
+    ],
+    selectionProcess: [
+      'Written Test / Practical Calligraphy Assessment Test.',
+      'Verification of original certificates, calligraphy diploma, and J&K domicile.'
+    ],
+    documentsRequired: [
+      'Valid J&K Domicile Certificate.',
+      'Date of Birth Certificate / 10th Diploma.',
+      'Graduation (B.A.) Degree & Marks Certificate showing Arabic/Persian/Urdu/Kashmiri.',
+      'Diploma in Calligraphy from a recognized Govt Institution.',
+      'Reserved Category Certificate if applicable.'
+    ],
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '12/11/2026',
+      lastVerified: '12/11/2026',
+      officialNotificationUrl: 'https://www.kashmiruniversity.net/',
+      officialApplicationUrl: 'https://www.kashmiruniversity.net/',
+      advertisementNo: 'Advertisement Notice No. 18 of 2026',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '12/11/2026',
+      verifiedClosingDate: '30/11/2026',
+      closingTime: '16:00 IST',
+      sourceHistory: [
+        'Official Advertisement Notice No. 18 of 2026 dated 10-11-2026 issued by University of Kashmir Recruitment Wing.',
+        'Online submission window: 12-11-2026 to 30-11-2026 (16:00 hrs).'
+      ]
+    },
+    isNew: true
+  },
+
+  // 🎓 CLUSTER UNIVERSITY SRINAGAR NEP UG 1ST SEMESTER REGISTRATION (BATCH 2026) (Dated: 08.11.2026)
+  {
+    id: 'cus-nep-ug-1st-sem-registration-batch-2026',
+    title: 'Cluster University Srinagar NEP UG 1st Semester Online Registration 2026 (Batch 2026)',
+    category: 'cluster_univ',
+    noticeType: 'admission',
+    stage: 'admission',
+    postDate: '08/11/2026',
+    startDate: '08/11/2026',
+    lastDate: '16/11/2026',
+    closingTime: '16:30 IST',
+    advertisementNo: 'Notice No. CUS/Acad/NEP-UG-Reg/2026/1042',
+    recruitmentYear: '2026',
+    session: '2026-27',
+    department: 'Academic Section, Cluster University of Srinagar',
+    postType: 'Admission',
+    status: 'Open',
+    shortInfo: 'Cluster University Srinagar has issued notification for online submission of registration forms for newly admitted students of NEP-2020 Undergraduate 1st Semester (Batch 2026) across constituent and affiliated colleges. Students must complete their registration profile and form submission on cusrinagar.edu.in by 16th November 2026.',
+    ageLimit: 'As per University Admission Guidelines',
+    eligibility: 'Enrolled 1st Semester FYUGP students of Cluster University constituent colleges (GDC Bemina, SP College, Amar Singh College, Women\'s College MA Road, GDC Hyderpora) admitted under NEP 2020 for Batch 2026.',
+    totalPosts: 'NEP-2020 UG 1st Semester Batch 2026 Enrolled Students',
+    officialLink: 'https://www.cusrinagar.edu.in/',
+    officialNotificationUrl: 'https://www.cusrinagar.edu.in/',
+    officialApplicationUrl: 'https://www.cusrinagar.edu.in/',
+    fees: {
+      genObc: 'As per University Registration Fee schedule on student portal',
+      scSt: 'As per University Registration Fee schedule on student portal'
+    },
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '12/11/2026',
+      lastVerified: '12/11/2026',
+      officialNotificationUrl: 'https://www.cusrinagar.edu.in/',
+      advertisementNo: 'Notice No. CUS/Acad/NEP-UG-Reg/2026/1042',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '08/11/2026',
+      verifiedClosingDate: '16/11/2026',
+      closingTime: '16:30 IST',
+      sourceHistory: [
+        'Cluster University Srinagar Academic notification for NEP UG 1st Sem Registration (Batch 2026).',
+        'Submission deadline set to 16th November 2026 via online student portal.'
+      ]
+    },
+    isNew: true
+  },
+
+  // 🚆 RAILWAY RECRUITMENT BOARDS (RRB) STATION MASTER RECRUITMENT 2026 (CEN 08/2026)
+  {
+    id: 'rrb-station-master-cen-08-2026',
+    title: 'Railway RRB Station Master Recruitment 2026 (CEN No. 08/2026): 1,265 Vacancies Online Application',
+    category: 'rrb_jobs',
+    noticeType: 'recruitment',
+    stage: 'recruitment',
+    postDate: '27/10/2026',
+    startDate: '27/10/2026',
+    lastDate: '25/11/2026',
+    closingTime: '23:59 IST',
+    feeDeadline: '27/11/2026 (23:59 IST)',
+    correctionWindow: '28/11/2026 to 07/12/2026',
+    advertisementNo: 'CEN No. 08/2026 (Station Master)',
+    recruitmentYear: '2026',
+    department: 'Ministry of Railways (Railway Recruitment Boards - RRB)',
+    postType: 'Job',
+    status: 'Open',
+    shortInfo: 'Railway Recruitment Boards (RRBs) invite online applications for 1,265 vacancies of Station Master (Pay Level 6) across all Zonal Railways under Centralised Employment Notice CEN 08/2026. Online registration is active on rrbapply.gov.in until 25th November 2026. Selection includes CBT 1, CBT 2, Computer-Based Aptitude Test (CBAT), and Document Verification.',
+    ageLimit: '20 to 33 Years as on 01/01/2027 (SC/ST: 5 Years, OBC-NCL: 3 Years relaxation as per Railway rules).',
+    eligibility: 'Bachelor Degree in any discipline from a recognized University or equivalent. Medical fitness standard: A-2.',
+    totalPosts: '1,265 Posts (Pay Level 6)',
+    officialLink: 'https://www.rrbapply.gov.in',
+    officialNotificationUrl: 'https://www.rrbapply.gov.in',
+    officialApplicationUrl: 'https://www.rrbapply.gov.in',
+    fees: {
+      genObc: '₹500/- (₹400 refunded after appearing in 1st Stage CBT)',
+      scSt: '₹250/- (For SC/ST/Ex-SM/PwBD/Female/EBC — Fully refunded after CBT)'
+    },
+    paymentInstructions: 'Online payment via Internet Banking, Debit Cards, Credit Cards, or UPI on rrbapply.gov.in until 27/11/2026 23:59 IST.',
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '12/11/2026',
+      lastVerified: '12/11/2026',
+      officialNotificationUrl: 'https://www.rrbapply.gov.in',
+      advertisementNo: 'CEN No. 08/2026',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '27/10/2026',
+      verifiedClosingDate: '25/11/2026',
+      closingTime: '23:59 IST',
+      sourceHistory: [
+        'Centralised Employment Notice CEN 08/2026 published by Railway Recruitment Boards.',
+        'Online portal active on rrbapply.gov.in from 27.10.2026 to 25.11.2026.'
+      ]
+    },
+    isNew: true
+  },
+
+  // 🚆 RAILWAY RECRUITMENT BOARDS (RRB) ISOLATED & MINISTERIAL CATEGORIES (CEN 09/2026)
+  {
+    id: 'rrb-isolated-ministerial-cen-09-2026',
+    title: 'Railway RRB Isolated and Ministerial Categories Recruitment 2026 (CEN No. 09/2026): 191 Posts',
+    category: 'rrb_jobs',
+    noticeType: 'recruitment',
+    stage: 'recruitment',
+    postDate: '05/11/2026',
+    startDate: '05/11/2026',
+    lastDate: '04/12/2026',
+    closingTime: '23:59 IST',
+    feeDeadline: '06/12/2026 (23:59 IST)',
+    correctionWindow: '07/12/2026 to 16/12/2026',
+    advertisementNo: 'CEN No. 09/2026 (Isolated & Ministerial Posts)',
+    recruitmentYear: '2026',
+    department: 'Ministry of Railways (Railway Recruitment Boards - RRB)',
+    postType: 'Job',
+    status: 'Open',
+    shortInfo: 'Railway Recruitment Boards (RRBs) invite online applications for 191 vacancies across Isolated and Ministerial Categories under CEN 09/2026. Posts include Chief Law Assistant, Junior Translator (Hindi), Staff & Welfare Inspector, and Lab Assistant Grade III. Online application submission is open on rrbapply.gov.in from 05th November to 04th December 2026.',
+    ageLimit: '18 to 40 Years as on 01/01/2027 (Post-specific variation; age relaxations for reserved categories as per Central Railway norms).',
+    eligibility: 'Degree in Law (for Chief Law Assistant) / Master Degree in Hindi/English (for Junior Translator) / Graduation with Diploma in Labour Laws (for Welfare Inspector) / 10+2 with Science (for Lab Assistant) from recognized institutions.',
+    totalPosts: '191 Posts',
+    officialLink: 'https://www.rrbapply.gov.in',
+    officialNotificationUrl: 'https://www.rrbapply.gov.in',
+    officialApplicationUrl: 'https://www.rrbapply.gov.in',
+    fees: {
+      genObc: '₹500/- (₹400 refunded after appearing in CBT)',
+      scSt: '₹250/- (For SC/ST/Ex-SM/Female/PwBD/EBC — Fully refunded after CBT)'
+    },
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '12/11/2026',
+      lastVerified: '12/11/2026',
+      officialNotificationUrl: 'https://www.rrbapply.gov.in',
+      advertisementNo: 'CEN No. 09/2026',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '05/11/2026',
+      verifiedClosingDate: '04/12/2026',
+      closingTime: '23:59 IST',
+      sourceHistory: [
+        'Centralised Employment Notice CEN 09/2026 for Isolated & Ministerial Posts on rrbapply.gov.in.',
+        'Online application window open 05.11.2026 to 04.12.2026.'
+      ]
+    },
+    isNew: true
+  },
+
+  // 📖 UNIVERSITY OF KASHMIR CERTIFICATE COURSE IN KASHMIRI (ADMISSIONS - CDOE) (Dated: 09.11.2026)
+  {
+    id: 'ku-certificate-course-kashmiri-cdoe-admission-2026',
+    title: 'University of Kashmir Certificate Course in Kashmiri Admission 2026 (Notification No. 36 of 2026) - CDOE',
+    category: 'admissions',
+    noticeType: 'admission',
+    stage: 'admission',
+    postDate: '09/11/2026',
+    startDate: '10/11/2026',
+    lastDate: '25/11/2026',
+    closingTime: '16:00 IST',
+    advertisementNo: 'Notification No. 36 of 2026 (Dated: 09-11-2026)',
+    recruitmentYear: '2026',
+    session: '2026-27',
+    department: 'Centre for Distance and Online Education (CDOE), University of Kashmir',
+    postType: 'Admission',
+    status: 'Open',
+    shortInfo: 'Directorate of Admissions & Competitive Examinations, University of Kashmir invites online applications for admission to the Certificate Course in Kashmiri offered through the Centre for Distance and Online Education (CDOE) for academic session 2026. Eligible candidates can register online via kashmiruniversity.net up to 25th November 2026.',
+    ageLimit: 'No Age Bar (As per Distance Education Guidelines)',
+    eligibility: 'Passed Higher Secondary Part-II (10+2) or equivalent examination from a recognized Board/University in any discipline.',
+    totalPosts: 'CDOE Certificate Course Seats',
+    officialLink: 'https://www.kashmiruniversity.net/',
+    officialNotificationUrl: 'https://www.kashmiruniversity.net/',
+    officialApplicationUrl: 'https://www.kashmiruniversity.net/',
+    fees: {
+      genObc: '₹250/- (Application & Processing Fee)',
+      scSt: '₹250/-'
+    },
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '12/11/2026',
+      lastVerified: '12/11/2026',
+      officialNotificationUrl: 'https://www.kashmiruniversity.net/',
+      advertisementNo: 'Notification No. 36 of 2026',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '10/11/2026',
+      verifiedClosingDate: '25/11/2026',
+      closingTime: '16:00 IST',
+      sourceHistory: [
+        'Directorate of Admissions & Competitive Examinations Notification No. 36 of 2026.',
+        'Online admissions for Kashmiri Certificate Course via CDOE.'
+      ]
+    },
+    isNew: true
+  },
+
+  // 📝 STAFF SELECTION COMMISSION (SSC) CGL 2026 TIER-I TENTATIVE ANSWER KEY & RESPONSE SHEET
+  {
+    id: 'ssc-cgl-2026-tier-1-answer-key',
+    title: 'SSC Combined Graduate Level (CGL) 2026 Tier-I Tentative Answer Key & Response Sheets Released',
+    category: 'ssc_jobs',
+    noticeType: 'answer_key',
+    stage: 'answer_key',
+    postDate: '04/11/2026',
+    startDate: '04/11/2026',
+    lastDate: '14/11/2026',
+    closingTime: '18:00 IST',
+    advertisementNo: 'Notice No. HQ-C1101/1/2026-C-1',
+    recruitmentYear: '2026',
+    department: 'Staff Selection Commission (SSC HQ, New Delhi)',
+    postType: 'Result',
+    status: 'Open',
+    shortInfo: 'Staff Selection Commission (SSC) has uploaded the Tentative Answer Keys along with Candidates\' Response Sheets for the Combined Graduate Level Examination (Tier-I), 2026 on ssc.gov.in. Candidates can verify their answers and submit online representations/objections through the candidate portal upon payment of ₹100 per question challenged until 14th November 2026 (18:00 hrs).',
+    ageLimit: 'Not Applicable (Answer Key & Challenge Stage)',
+    eligibility: 'Candidates who appeared in the Computer Based Examination for SSC CGL 2026 Tier-I.',
+    totalPosts: 'SSC CGL 2026 Tier-I Examination',
+    officialLink: 'https://ssc.gov.in',
+    officialNotificationUrl: 'https://ssc.gov.in',
+    officialApplicationUrl: 'https://ssc.gov.in',
+    fees: {
+      genObc: '₹100/- per challenge / objection submitted',
+      scSt: '₹100/- per challenge / objection submitted'
+    },
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '12/11/2026',
+      lastVerified: '12/11/2026',
+      officialNotificationUrl: 'https://ssc.gov.in',
+      advertisementNo: 'Notice No. HQ-C1101/1/2026-C-1',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '04/11/2026',
+      verifiedClosingDate: '14/11/2026',
+      closingTime: '18:00 IST',
+      sourceHistory: [
+        'Official notice published on ssc.gov.in uploading CGL 2026 Tier-I Tentative Answer Keys and Response Sheets.',
+        'Challenge portal active up to 14.11.2026 (18:00 hrs).'
+      ]
+    },
+    isNew: true
+  },
+
+  // ⚔️ JOIN INDIAN ARMY 10+2 TECHNICAL ENTRY SCHEME (TES-57) COURSE - CLOSING TODAY (Dated: 12.11.2026)
+  {
+    id: 'indian-army-tes-57-course-closing-today',
+    title: 'Indian Army 10+2 Technical Entry Scheme (TES-57) Course: Online Application Closing Today',
+    category: 'army_jobs',
+    noticeType: 'recruitment',
+    stage: 'recruitment',
+    postDate: '13/10/2026',
+    startDate: '13/10/2026',
+    lastDate: '12/11/2026',
+    closingTime: '15:00 IST',
+    feeDeadline: '12/11/2026 (15:00 IST)',
+    advertisementNo: 'TES-57 Course (Commencing July 2027)',
+    recruitmentYear: '2026',
+    department: 'Join Indian Army (Directorate General of Recruiting, IHQ of MoD (Army))',
+    postType: 'Job',
+    status: 'Open',
+    shortInfo: 'Indian Army online registration window for 10+2 Technical Entry Scheme (TES-57) Course commencing in July 2027 concludes today, 12th November 2026 (15:00 hrs) on joinindianarmy.nic.in. Unmarried male candidates who passed 10+2 with minimum 60% aggregate in Physics, Chemistry, and Mathematics and appeared in JEE (Mains) 2026 are eligible for Grant of Permanent Commission.',
+    ageLimit: '16½ to 19½ Years (Born between 02 Jan 2008 and 01 Jan 2011, both dates inclusive).',
+    eligibility: '10+2 passed with minimum 60% aggregate in Physics, Chemistry, and Mathematics from recognized boards. Mandatory participation in JEE (Mains) 2026.',
+    totalPosts: '90 Posts (Tentative)',
+    officialLink: 'https://joinindianarmy.nic.in',
+    officialNotificationUrl: 'https://joinindianarmy.nic.in',
+    officialApplicationUrl: 'https://joinindianarmy.nic.in',
+    fees: {
+      genObc: '₹0/- (No Application Fee for Indian Army Officer Entries)',
+      scSt: '₹0/-'
+    },
+    selectionProcess: [
+      'Shortlisting of applications based on JEE (Mains) 2026 CRL ranks.',
+      'Services Selection Board (SSB) Interview (5-Stage Selection Process).',
+      'Special Medical Examination Board (SMB) Medical Examination.'
+    ],
+    documentsRequired: [
+      'Class 10th Certificate / Marksheet showing Date of Birth.',
+      'Class 12th Marksheet with PCM marks verification.',
+      'JEE (Mains) 2026 Scorecard / Rank card.',
+      'Valid Photo Identity Proof (Aadhaar / Voter ID / Passport).'
+    ],
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '12/11/2026',
+      lastVerified: '12/11/2026',
+      officialNotificationUrl: 'https://joinindianarmy.nic.in',
+      officialApplicationUrl: 'https://joinindianarmy.nic.in',
+      advertisementNo: 'TES-57 Course',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '13/10/2026',
+      verifiedClosingDate: '12/11/2026',
+      closingTime: '15:00 IST',
+      sourceHistory: [
+        'Official recruitment notice on joinindianarmy.nic.in for TES-57 Course commencing July 2027.',
+        'Online application portal closing today: 12.11.2026 at 15:00 hrs.'
+      ]
+    },
+    isNew: true
+  },
   // 🏦 JAMMU & KASHMIR BANK LTD. BANKING ASSOCIATES RECRUITMENT 2026 (Dated: 07.11.2026)
   {
     id: 'jk-bank-banking-associates-recruitment-2026',
@@ -205,7 +577,7 @@ export const SARKARI_DATA: SarkariItem[] = [
   // 🚆 RAILWAY RECRUITMENT BOARDS (RRB) NTPC GRADUATE LEVEL EXTENDED DEADLINE (Dated: 08.11.2026)
   {
     id: 'rrb-ntpc-graduate-level-cen-06-2026',
-    title: 'Railway RRB NTPC Graduate Level Recruitment 2026 (CEN No. 06/2026): 8,113 Posts Online Application Window Closing Today',
+    title: 'Railway RRB NTPC Graduate Level Recruitment 2026 (CEN No. 06/2026): Application Closed (Modification Window Active till 18 Nov)',
     category: 'rrb_jobs',
     postDate: '14/09/2026',
     startDate: '14/09/2026',
@@ -216,11 +588,11 @@ export const SARKARI_DATA: SarkariItem[] = [
     advertisementNo: 'CEN No. 06/2026 (NTPC Graduate Level Posts)',
     recruitmentYear: '2026',
     noticeType: 'recruitment',
-    stage: 'recruitment',
+    stage: 'correction',
     department: 'Ministry of Railways (Railway Recruitment Boards - RRB)',
     postType: 'Job',
-    status: 'Open',
-    shortInfo: 'Railway Recruitment Boards (RRBs) have extended the online application and fee payment deadline for 8,113 Graduate-level Non-Technical Popular Categories (NTPC) vacancies under CEN 06/2026 to 08th November 2026 (23:59 hrs). Graduate posts include Chief Commercial cum Ticket Supervisor, Station Master, Goods Train Manager, Junior Account Assistant cum Typist, and Senior Clerk cum Typist across all RRB zones. Modification window opens on 09th November 2026.',
+    status: 'Closed',
+    shortInfo: 'Railway Recruitment Boards (RRBs) have concluded the online application and fee payment for 8,113 Graduate-level Non-Technical Popular Categories (NTPC) vacancies under CEN 06/2026 on 08th November 2026 (23:59 hrs). The online application modification/correction window is now active from 09th November 2026 to 18th November 2026 on rrbapply.gov.in. 1st Stage Computer-Based Test (CBT 1) is scheduled for December 2026.',
     ageLimit: '18 to 36 Years as on 01/01/2027 (SC/ST: 5 Years, OBC-NCL: 3 Years relaxation as per Railway rules).',
     eligibility: 'Bachelor Degree in any discipline from a recognized University or equivalent. Typing proficiency in English or Hindi required for specific clerical posts.',
     totalPosts: '8,113 Posts (Pay Levels 5 & 6)',
@@ -578,23 +950,42 @@ export const SARKARI_DATA: SarkariItem[] = [
     isNew: false
   },
 
-  // 🏛️ JKSSB ACCOUNTS ASSISTANT (FINANCE DEPT) WRITTEN EXAM & ADMIT CARD NOTICE (Dated: 04.11.2026)
+  // 🏛️ JKSSB ACCOUNTS ASSISTANT (FINANCE DEPT) E-ADMIT CARD RELEASED (Dated: 11.11.2026)
   {
     id: 'jkssb-accounts-assistant-finance-exam-date-admit-card-2026',
-    title: 'JKSSB Accounts Assistant (Finance Dept) Written Exam Date & Admit Card Notice 2026',
+    title: 'JKSSB Accounts Assistant (Finance Dept) OMR Exam E-Admit Card 2026 Released (Exam: 15 Nov 2026)',
     category: 'jkssb',
+    noticeType: 'admit_card',
+    stage: 'admit_card',
     postDate: '04/11/2026',
     startDate: '11/11/2026',
     lastDate: '15/11/2026',
     advertisementNo: 'Notification No. 10 of 2025 (Item No. 271) | Notice No. JKSSB-COE0EXAM(UT)/10/2026',
-    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) has officially released the advance notice regarding the conduct of the OMR-based written examination for the post of Accounts Assistant (Finance Department) advertised under Notification No. 10 of 2025, Item No. 271. The examination is scheduled to be held on 15th November 2026. E-Admit Cards will be available for download from 11th November 2026 onwards on the official portal.',
+    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) has officially uploaded the E-Admit Cards on 11th November 2026 for the OMR-based written examination for the post of Accounts Assistant (Finance Department) under Notification No. 10 of 2025 (Item No. 271). The examination will be held on 15th November 2026 across designated centers. Candidates can download their hall tickets by logging in with their registered credentials on jkssb.nic.in.',
     ageLimit: 'Open Merit: 40 Years, Reserved Categories: 43 Years, PwD: 42 Years (as per advertisement)',
     eligibility: 'Graduation in Commerce or any discipline with minimum 50% marks from a recognized university, having applied under Item No. 271.',
     totalPosts: 'Accounts Assistant (Finance Dept) Examination',
     officialLink: 'https://jkssb.nic.in',
+    officialNotificationUrl: 'https://jkssb.nic.in',
+    officialApplicationUrl: 'https://jkssb.nic.in',
     fees: {
-      genObc: 'Not Applicable (Admit Card / Exam Notice — No Fee)',
+      genObc: 'Not Applicable (Admit Card Download — No Fee)',
       scSt: 'Not Applicable'
+    },
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '12/11/2026',
+      lastVerified: '12/11/2026',
+      officialNotificationUrl: 'https://jkssb.nic.in',
+      advertisementNo: 'Notification No. 10 of 2025 (Item No. 271)',
+      verifiedOpeningDate: '11/11/2026',
+      verifiedClosingDate: '15/11/2026',
+      sourceHistory: [
+        'Official notice by Controller of Examinations, JKSSB regarding issuance of E-Admit Cards for OMR examination on 15.11.2026.',
+        'Admit cards active from 11.11.2026 onwards on jkssb.nic.in.'
+      ]
     },
     isNew: true
   },
