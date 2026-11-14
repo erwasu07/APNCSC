@@ -5,6 +5,7 @@ import {
   isPublishedSarkariItem,
   parseSarkariDateSortValue,
 } from '../data/sarkariData';
+import { normalizeSarkariItem } from '../data/sarkariMigration';
 
 let cachedRuntimePosts: SarkariItem[] | null = null;
 let inflightFetch: Promise<SarkariItem[]> | null = null;
@@ -15,12 +16,12 @@ export function mergeSarkariPostsList(
 ): SarkariItem[] {
   const byId = new Map<string, SarkariItem>();
   for (const item of staticPosts) {
-    if (item && item.id) byId.set(item.id, item);
+    if (item && item.id) byId.set(item.id, normalizeSarkariItem(item));
   }
   for (const item of runtimePosts) {
     if (!item || !item.id) continue;
     const prev = byId.get(item.id);
-    byId.set(item.id, prev ? { ...prev, ...item } : item);
+    byId.set(item.id, normalizeSarkariItem(prev ? { ...prev, ...item } : item));
   }
   return Array.from(byId.values());
 }

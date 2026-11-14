@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   --font-sans: "Inter", "Noto Sans Devanagari", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -12,13 +13,183 @@
 
   --color-brand-primary: #101A36;
   --color-brand-dark: #101A36;
-  --color-brand-bg: #F6F8FC;
-  --color-brand-card: #FFFFFF;
-  --color-brand-text: #101A36;
-  --color-brand-muted: #526075;
-  --color-brand-border: #DCE3EE;
+  --color-brand-bg: var(--bg-page);
+  --color-brand-card: var(--bg-card);
+  --color-brand-text: var(--text-primary);
+  --color-brand-muted: var(--text-secondary);
+  --color-brand-border: var(--border-default);
   --color-brand-success: #1F9D6B;
   --color-brand-warning: #F5A623;
+}
+
+/* ============================================================================
+   CSC DOST DESIGN SYSTEM TOKENS (Light + Dark via prefers-color-scheme / .dark)
+   ============================================================================ */
+:root {
+  color-scheme: light dark;
+
+  /* Core Surfaces & Text */
+  --bg-page: #F6F8FC;
+  --bg-surface: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-subtle: #EEF2F8;
+  --bg-header: #101A36;
+  --bg-header-dark: #0B1226;
+
+  --text-primary: #101A36;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --text-inverse: #FFFFFF;
+
+  --border-default: #DCE3EE;
+  --border-strong: #B8C5DB;
+
+  /* Brand & Interactive Accents */
+  --brand-accent: #F5A623;
+  --brand-accent-hover: #E09112;
+  --brand-accent-ink: #101A36;
+  --brand-verified: #1F9D6B;
+  --brand-verified-hover: #178257;
+  --focus-ring: #F5A623;
+
+  /* 1. Open (Green) */
+  --status-open-bg: #ECFDF5;
+  --status-open-text: #0F5E3F;
+  --status-open-border: #A7F3D0;
+  --status-open-stripe: #1F9D6B;
+
+  /* 2. Closing Soon / Correction Window (Amber) */
+  --status-closing-bg: #FFFBEB;
+  --status-closing-text: #92400E;
+  --status-closing-border: #FCD34D;
+  --status-closing-stripe: #D97706;
+
+  /* 3. Exam / Admit Card / DV (Blue) */
+  --status-exam-bg: #EFF6FF;
+  --status-exam-text: #1E40AF;
+  --status-exam-border: #BFDBFE;
+  --status-exam-stripe: #2563EB;
+
+  /* 4. Result / Answer Key (Purple) */
+  --status-result-bg: #F5F3FF;
+  --status-result-text: #5B21B6;
+  --status-result-border: #DDD6FE;
+  --status-result-stripe: #7C3AED;
+
+  /* 5. Upcoming (Teal) */
+  --status-upcoming-bg: #F0FDFA;
+  --status-upcoming-text: #115E59;
+  --status-upcoming-border: #99F6E4;
+  --status-upcoming-stripe: #0D9488;
+
+  /* 6. Closed / Archive (Grey) */
+  --status-closed-bg: #F1F5F9;
+  --status-closed-text: #475569;
+  --status-closed-border: #CBD5E1;
+  --status-closed-stripe: #64748B;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --bg-page: #0B1120;
+    --bg-surface: #111A2E;
+    --bg-card: #16213A;
+    --bg-subtle: #1E2C4A;
+    --bg-header: #0A1124;
+    --bg-header-dark: #060B18;
+
+    --text-primary: #F1F5F9;
+    --text-secondary: #CBD5E1;
+    --text-muted: #94A3B8;
+    --text-inverse: #FFFFFF;
+
+    --border-default: #283757;
+    --border-strong: #3B4F78;
+
+    /* 1. Open (Green) */
+    --status-open-bg: rgba(31, 157, 107, 0.18);
+    --status-open-text: #6EE7B7;
+    --status-open-border: rgba(52, 211, 153, 0.35);
+    --status-open-stripe: #34D399;
+
+    /* 2. Closing Soon / Correction (Amber) */
+    --status-closing-bg: rgba(245, 158, 11, 0.18);
+    --status-closing-text: #FCD34D;
+    --status-closing-border: rgba(251, 191, 36, 0.38);
+    --status-closing-stripe: #FBBF24;
+
+    /* 3. Exam / Admit Card / DV (Blue) */
+    --status-exam-bg: rgba(59, 130, 246, 0.2);
+    --status-exam-text: #93C5FD;
+    --status-exam-border: rgba(96, 165, 250, 0.38);
+    --status-exam-stripe: #60A5FA;
+
+    /* 4. Result / Answer Key (Purple) */
+    --status-result-bg: rgba(139, 92, 246, 0.2);
+    --status-result-text: #C4B5FD;
+    --status-result-border: rgba(167, 139, 250, 0.38);
+    --status-result-stripe: #A78BFA;
+
+    /* 5. Upcoming (Teal) */
+    --status-upcoming-bg: rgba(20, 184, 166, 0.2);
+    --status-upcoming-text: #5EEAD4;
+    --status-upcoming-border: rgba(45, 212, 191, 0.38);
+    --status-upcoming-stripe: #2DD4BF;
+
+    /* 6. Closed / Archive (Grey) */
+    --status-closed-bg: rgba(100, 116, 139, 0.24);
+    --status-closed-text: #CBD5E1;
+    --status-closed-border: rgba(148, 163, 184, 0.32);
+    --status-closed-stripe: #94A3B8;
+  }
+}
+
+html.dark {
+  color-scheme: dark;
+  --bg-page: #0B1120;
+  --bg-surface: #111A2E;
+  --bg-card: #16213A;
+  --bg-subtle: #1E2C4A;
+  --bg-header: #0A1124;
+  --bg-header-dark: #060B18;
+
+  --text-primary: #F1F5F9;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+  --text-inverse: #FFFFFF;
+
+  --border-default: #283757;
+  --border-strong: #3B4F78;
+
+  --status-open-bg: rgba(31, 157, 107, 0.18);
+  --status-open-text: #6EE7B7;
+  --status-open-border: rgba(52, 211, 153, 0.35);
+  --status-open-stripe: #34D399;
+
+  --status-closing-bg: rgba(245, 158, 11, 0.18);
+  --status-closing-text: #FCD34D;
+  --status-closing-border: rgba(251, 191, 36, 0.38);
+  --status-closing-stripe: #FBBF24;
+
+  --status-exam-bg: rgba(59, 130, 246, 0.2);
+  --status-exam-text: #93C5FD;
+  --status-exam-border: rgba(96, 165, 250, 0.38);
+  --status-exam-stripe: #60A5FA;
+
+  --status-result-bg: rgba(139, 92, 246, 0.2);
+  --status-result-text: #C4B5FD;
+  --status-result-border: rgba(167, 139, 250, 0.38);
+  --status-result-stripe: #A78BFA;
+
+  --status-upcoming-bg: rgba(20, 184, 166, 0.2);
+  --status-upcoming-text: #5EEAD4;
+  --status-upcoming-border: rgba(45, 212, 191, 0.38);
+  --status-upcoming-stripe: #2DD4BF;
+
+  --status-closed-bg: rgba(100, 116, 139, 0.24);
+  --status-closed-text: #CBD5E1;
+  --status-closed-border: rgba(148, 163, 184, 0.32);
+  --status-closed-stripe: #94A3B8;
 }
 
 @layer base {
@@ -30,8 +201,8 @@
     position: relative;
     touch-action: manipulation;
     overscroll-behavior-x: none;
-    background-color: #F6F8FC;
-    color: #101A36;
+    background-color: var(--bg-page);
+    color: var(--text-primary);
     font-family: var(--font-sans);
   }
 
@@ -49,8 +220,8 @@
     padding: 0;
     touch-action: manipulation;
     overscroll-behavior-x: none;
-    background-color: #F6F8FC;
-    color: #101A36;
+    background-color: var(--bg-page);
+    color: var(--text-primary);
     font-size: 1rem;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
@@ -84,8 +255,13 @@
 
   /* Accessibility: High-contrast focus outline for keyboard navigation */
   :focus-visible {
-    outline: 2px solid #F5A623 !important;
+    outline: 2px solid var(--focus-ring) !important;
     outline-offset: 2px !important;
+  }
+
+  /* Tabular numbers for dates, vacancies, fees, and countdowns */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 
   /* Anti-CLS (Cumulative Layout Shift) Dynamic Cards Baseline Heights */
@@ -113,41 +289,39 @@
   }
 }
 
+/* Custom Glassmorphism Classes */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-default);
+}
+
 @media (prefers-color-scheme: dark) {
-  html, body, #root {
-    background-color: #F6F8FC !important;
-    color: #101A36 !important;
-    color-scheme: light !important;
+  .glass-panel {
+    background: rgba(17, 26, 46, 0.8);
   }
 }
 
-/* Custom Glassmorphism Classes */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
 .dark .glass-panel {
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(17, 26, 46, 0.8);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.55);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-default);
+}
+
+@media (prefers-color-scheme: dark) {
+  .glass-card {
+    background: rgba(22, 33, 58, 0.65);
+  }
 }
 
 .dark .glass-card {
-  background: rgba(30, 41, 59, 0.45);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(22, 33, 58, 0.65);
 }
 
 /* Custom Scrollbars */

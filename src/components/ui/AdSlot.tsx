@@ -31,14 +31,14 @@ export function AdSlot({ slotId = 'auto', className = '' }: AdSlotProps) {
   return (
     <aside
       aria-label={t.adLabel}
-      className={`w-full my-2 px-3 py-3 bg-white border border-dashed border-[#CBD5E1] rounded-xl text-center min-h-[104px] flex flex-col items-center justify-center ${className}`}
+      className={`w-full my-3 px-3 py-2.5 bg-[var(--bg-surface)] border border-dashed border-[var(--border-strong)] rounded-xl text-center h-[120px] md:h-[112px] overflow-hidden flex flex-col items-center justify-center ${className}`}
     >
-      <span className="text-[11px] font-semibold uppercase tracking-widest text-[#64748B] mb-1.5">
+      <span className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-1 shrink-0">
         {t.adLabel}
       </span>
       <ins
-        className="adsbygoogle block w-full"
-        style={{ display: 'block', minHeight: '64px' }}
+        className="adsbygoogle block w-full overflow-hidden"
+        style={{ display: 'block', height: '72px' }}
         data-ad-client="ca-pub-3600904217061779"
         data-ad-slot={slotId}
         data-ad-format="auto"

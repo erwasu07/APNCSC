@@ -28,11 +28,11 @@ export function Section({
     <section id={id} className={`w-full ${className}`}>
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 mb-4">
         <div className="space-y-1 text-start">
-          <h2 className="text-xl sm:text-2xl font-bold text-[#101A36] tracking-tight leading-snug">
+          <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] tracking-tight leading-snug">
             {title}
           </h2>
           {subtitle && (
-            <p className="text-base text-[#526075] leading-relaxed">{subtitle}</p>
+            <p className="text-base text-[var(--text-secondary)] leading-relaxed">{subtitle}</p>
           )}
         </div>
         {(actionLabel || secondaryAction) && (
@@ -47,10 +47,10 @@ export function Section({
                     onActionClick();
                   }
                 }}
-                className="min-h-[44px] inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-[#101A36] bg-white border border-[#DCE3EE] hover:border-[#101A36] transition-colors no-underline"
+                className="min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold text-[var(--text-primary)] bg-[var(--bg-card)] border border-[var(--border-default)] hover:border-[var(--border-strong)] transition-colors no-underline"
               >
                 <span>{actionLabel}</span>
-                <ArrowRight className="w-4 h-4 text-[#101A36] rtl:rotate-180" aria-hidden="true" />
+                <ArrowRight className="w-4 h-4 text-[var(--text-primary)] rtl:rotate-180" aria-hidden="true" />
               </a>
             )}
           </div>

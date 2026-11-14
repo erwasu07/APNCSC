@@ -1,3 +1,8 @@
+import {
+  normalizeSarkariItem,
+  resolvePostSection,
+} from './sarkariMigration';
+
 export interface DepartmentBreakdown {
   department: string;
   postName: string;
@@ -9,6 +14,43 @@ export interface DepartmentBreakdown {
 export type VerificationStatus = 'verified' | 'needs_verification';
 
 export type ApplicationStatus = 'upcoming' | 'open' | 'closed' | 'cancelled' | 'unknown';
+
+export type PostSection = 'jobs' | 'education';
+
+export type PostStructuredType =
+  | 'application'
+  | 'dv'
+  | 'admit_card'
+  | 'exam'
+  | 'result'
+  | 'answer_key'
+  | 'upcoming'
+  | 'admission';
+
+export type PostComputedStatus =
+  | 'open'
+  | 'closing_soon'
+  | 'exam'
+  | 'result'
+  | 'upcoming'
+  | 'closed';
+
+export interface TimelineStep {
+  label: string;
+  date?: string;
+  status?: 'done' | 'active' | 'upcoming';
+}
+
+export interface PostFaqItem {
+  question: string;
+  answer: string;
+}
+
+export interface PostFeeInfo {
+  genObc?: string;
+  scSt?: string;
+  note?: string;
+}
 
 export type NoticeType =
   | 'recruitment'
@@ -116,6 +158,34 @@ export interface SarkariItem {
   verification?: VerificationEvidence;
   thumbnailUrl?: string;
   thumbnailSpec?: any;
+
+  // Phase 2 Structured Schema Fields (populated via normalizeSarkariItem)
+  slug?: string;
+  section?: PostSection;
+  org?: string;
+  type?: PostStructuredType;
+  summary?: string;
+  posts?: string;
+  qualification?: string;
+  jkDomicile?: boolean;
+  applyStart?: string;
+  applyEnd?: string;
+  eventDate?: string;
+  eventLabel?: string;
+  venue?: string;
+  reportingTime?: string;
+  fee?: PostFeeInfo;
+  vacancyTable?: DepartmentBreakdown[];
+  officialUrl?: string;
+  notificationPdfUrl?: string;
+  documents?: string[];
+  faq?: PostFaqItem[];
+  timelineSteps?: TimelineStep[];
+  postedAt?: string;
+  updatedAt?: string;
+  duplicateOfId?: string;
+  duplicateNote?: string;
+  migrationReviewReasons?: string[];
 }
 
 export const SARKARI_CATEGORIES = {
@@ -145,31 +215,11 @@ export function isIgnouItem(item: SarkariItem): boolean {
 }
 
 export function isEducationSarkariItem(item: SarkariItem): boolean {
-  if (isIgnouItem(item)) return true;
-  return (
-    item.noticeType !== 'recruitment' &&
-    item.postType !== 'Job' &&
-    (['admissions', 'cluster_univ', 'exam_forms', 'nta'].includes(item.category) ||
-      [
-        'admission',
-        're_registration',
-        'assignment',
-        'exam_form',
-        'date_sheet',
-        'project_practical',
-        'rc_update',
-        'grade_card',
-      ].includes(item.noticeType || ''))
-  );
+  return resolvePostSection(item) === 'education';
 }
 
 export function isRecruitmentSarkariItem(item: SarkariItem): boolean {
-  if (isIgnouItem(item)) return false;
-  return (
-    item.noticeType === 'recruitment' ||
-    item.postType === 'Job' ||
-    ['jkssb', 'banking_jobs', 'army_jobs', 'ssc_jobs', 'rrb_jobs', 'jobs'].includes(item.category)
-  );
+  return resolvePostSection(item) === 'jobs';
 }
 
 export function parseSarkariDateSortValue(dateStr?: string): number {
@@ -182,7 +232,7 @@ export function parseSarkariDateSortValue(dateStr?: string): number {
   return y * 10000 + mo * 100 + d;
 }
 
-export const SARKARI_DATA: SarkariItem[] = [
+const RAW_SARKARI_DATA: SarkariItem[] = [
   // 🎓 VERIFIED IGNOU STUDENT NOTIFICATIONS (Verified 14/11/2026 IST from ignou.ac.in/announcements/0)
   {
     id: 'ignou-rc-srinagar-campus-placement-drive-nov-2026',
@@ -6007,3 +6057,7 @@ export const SARKARI_DATA: SarkariItem[] = [
     ]
   }
 ];
+
+export const SARKARI_DATA: SarkariItem[] = RAW_SARKARI_DATA.map((item) =>
+  normalizeSarkariItem(item)
+);

@@ -280,91 +280,206 @@ export function renderPostSubstantiveHtml(item: SarkariItem): string {
 export function renderServiceSubstantiveHtml(service: ServiceItem): string {
   const safeName = escapeHtml(service.name);
   const safeDescription = escapeHtml(service.description);
-  const safePrice = escapeHtml(service.price);
-  const safeTime = escapeHtml(service.estimatedTime);
+  const hasFeeLines = Array.isArray(service.feeLines) && service.feeLines.length > 0;
+  const hasPrice = Boolean(service.price && service.price.trim().length > 0);
+  const safePrice = escapeHtml(hasPrice ? service.price.trim() : 'Ask us');
+  const safeFeeHtml = hasFeeLines
+    ? service.feeLines!.map((l) => `<div>${escapeHtml(l)}</div>`).join('')
+    : safePrice;
+  const hasTime = Boolean(service.estimatedTime && service.estimatedTime.trim().length > 0);
+  const safeTime = escapeHtml(service.estimatedTime?.trim() || '');
   const safeCategory = escapeHtml(service.category);
-  const safeOfficialUrl = 'https://digitalseva.csc.gov.in';
-  const safeDocs = Array.isArray(service.requirements) ? service.requirements : [];
+  const safeOfficialUrl =
+    service.officialUrl && service.officialUrl.trim().length > 0
+      ? escapeHtml(service.officialUrl.trim())
+      : service.category === 'cards_adda'
+      ? ''
+      : '';
+  const safeDocs = Array.isArray(service.requirements) ? service.requirements.filter(Boolean) : [];
+  const waEnquiryUrl = `https://wa.me/917006833767?text=${encodeURIComponent(
+    `Hello Wasim Ahmad Khanday (CSC DOST), I would like to enquire about ${service.name}: https://www.cscdost.com/service/${service.id}`
+  )}`;
+
+  const faqItems = [
+    {
+      question: `What documents are needed for ${service.name}?`,
+      answer:
+        safeDocs.length > 0
+          ? `Listed documents: ${safeDocs.join(', ')}. Additional verification may be requested by the issuing authority.`
+          : 'Document requirements depend on your specific application case. Contact +91 70068 33767 before applying.',
+    },
+    {
+      question: `What are the charges for ${service.name}?`,
+      answer: `${hasPrice ? `Listed reference charge: ${service.price.trim()}. ` : 'Fee is confirmed on enquiry ("Ask us"). '}Final charges depend on the service and any government fee. Please confirm before applying.`,
+    },
+    {
+      question: `How long does ${service.name} typically take?`,
+      answer: hasTime
+        ? `Indicative timeline noted in the service entry: ${service.estimatedTime.trim()}. Actual completion depends on issuing authority verification.`
+        : 'Processing time depends on departmental verification. Contact +91 70068 33767 for current turnaround expectations.',
+    },
+  ];
+  const faqSchemaJson = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((f) => ({
+      '@type': 'Question',
+      name: f.question,
+      acceptedAnswer: { '@type': 'Answer', text: f.answer },
+    })),
+  }).replace(/</g, '\\u003c');
 
   return `
-  <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
-    <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
-      <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+  ${renderPrimaryCategoryNavHtml('services')}
+  <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:12px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:16px; color:#101A36; line-height:1.6;">
+    <nav aria-label="Breadcrumb" style="font-size:14px; color:#475569; margin-bottom:16px;">
+      <a href="/" style="color:#101A36; font-weight:600; text-decoration:none;">Home</a>
       <span style="margin:0 6px;">/</span>
-      <a href="/#services" style="color:#2563eb; text-decoration:none;">Citizen Services</a>
+      <a href="/services" style="color:#101A36; font-weight:600; text-decoration:none;">CSC E-Services</a>
       <span style="margin:0 6px;">/</span>
-      <span style="color:#0f172a; font-weight:600;">${safeName}</span>
+      <span style="color:#101A36; font-weight:700;">${safeName}</span>
     </nav>
 
-    <aside style="background:#fffbeb; border-left:4px solid #f59e0b; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:13px; color:#92400e;">
-      <strong>Citizen Transparency Notice:</strong> CSC DOST operates as an authorized Village Level Entrepreneur (VLE ID: 212515670018) under the Digital India Common Services Center framework to provide assisted e-governance service filing and document preparation.
+    <aside style="background:#FFFBEB; border-left:4px solid #F5A623; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:14px; color:#101A36;">
+      <strong>Fee &amp; Transparency Notice:</strong> Final charges depend on the service and any government fee. Please confirm before applying. Operated by Wasim Ahmad Khanday (CSC VLE ID: 212515670018, Sangran Qazigund, Anantnag, J&amp;K 192221).
     </aside>
 
-    <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:24px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:18px; margin-bottom:20px;">
-        <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:10px;">
+    <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:24px;">
+      <header style="border-bottom:1px solid #E2E8F0; padding-bottom:18px; margin-bottom:20px;">
+        <span style="display:inline-block; background:#ECFDF5; color:#1F9D6B; border:1px solid #A7F3D0; font-size:12px; font-weight:700; text-transform:uppercase; padding:4px 10px; border-radius:6px; margin-bottom:10px;">
           ${safeCategory}
         </span>
-        <h1 style="font-size:26px; line-height:1.3; font-weight:800; color:#0f172a; margin:0 0 12px 0;">
-          ${safeName} Application &amp; Assistance
+        <h1 style="font-size:28px; line-height:1.3; font-weight:800; color:#101A36; margin:0 0 12px 0;">
+          ${safeName}
         </h1>
-        <p style="font-size:15px; color:#475569; margin:0;">
+        <p style="font-size:16px; color:#475569; margin:0;">
           ${safeDescription}
         </p>
       </header>
 
-      <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:16px; margin-bottom:24px;">
-        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
-          <div style="font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase;">Official Fee</div>
-          <div style="font-size:20px; font-weight:800; color:#15803d; margin-top:4px;">${safePrice}</div>
+      <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:24px;">
+        <div style="background:#F6F8FC; border:1px solid #E2E8F0; border-radius:10px; padding:16px;">
+          <div style="font-size:12px; font-weight:600; color:#64748B; text-transform:uppercase;">Fee</div>
+          <div style="font-size:16px; font-weight:800; color:#1F9D6B; margin-top:4px; line-height:1.45;">${safeFeeHtml}</div>
         </div>
-        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
-          <div style="font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase;">Estimated Processing Time</div>
-          <div style="font-size:20px; font-weight:800; color:#1e293b; margin-top:4px;">${safeTime}</div>
-        </div>
+        ${
+          hasTime
+            ? `<div style="background:#F6F8FC; border:1px solid #E2E8F0; border-radius:10px; padding:16px;">
+          <div style="font-size:12px; font-weight:600; color:#64748B; text-transform:uppercase;">Typical Time</div>
+          <div style="font-size:18px; font-weight:800; color:#101A36; margin-top:4px;">${safeTime}</div>
+        </div>`
+            : ''
+        }
       </section>
 
       <section style="margin-bottom:24px;">
-        <h2 style="font-size:18px; font-weight:700; color:#1e293b; margin:0 0 12px 0;">Required Documents</h2>
-        <ul style="padding-left:20px; font-size:14px; color:#334155; line-height:1.8; margin:0;">
-          ${safeDocs.map(doc => `<li>${escapeHtml(doc)}</li>`).join('')}
-        </ul>
+        <h2 style="font-size:20px; font-weight:700; color:#101A36; margin:0 0 12px 0;">Documents Checklist</h2>
+        ${
+          safeDocs.length > 0
+            ? `<ul style="padding-left:20px; font-size:15px; color:#334155; line-height:1.8; margin:0;">
+          ${safeDocs.map((doc) => `<li>${escapeHtml(doc)}</li>`).join('')}
+        </ul>`
+            : `<p style="font-size:15px; color:#475569; margin:0;">Ask us — document requirements depend on your specific application case.</p>`
+        }
       </section>
 
-      <section style="background:#f1f5f9; border-radius:10px; padding:18px; display:flex; flex-wrap:wrap; items-center; justify-content:space-between; gap:12px;">
+      <section style="margin-bottom:24px;">
+        <h2 style="font-size:20px; font-weight:700; color:#101A36; margin:0 0 12px 0;">Process Steps</h2>
+        <ol style="padding-left:20px; font-size:15px; color:#334155; line-height:1.8; margin:0;">
+          <li>Confirm required documents and total fee (${safePrice}) on WhatsApp or +91 70068 33767 before applying.</li>
+          <li>Submit clear supporting document scans online or at CSC DOST (Sangran Qazigund, Anantnag).</li>
+          <li>Application is filed on the relevant official portal with OTP or biometric verification where needed.</li>
+          <li>Save your submission receipt / reference number to monitor progress.</li>
+        </ol>
+      </section>
+
+      <section style="margin-bottom:24px;">
+        <h2 style="font-size:20px; font-weight:700; color:#101A36; margin:0 0 10px 0;">Frequently Asked Questions</h2>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          ${faqItems
+            .map(
+              (f) => `
+          <details style="border:1px solid #E2E8F0; border-radius:10px; padding:12px;">
+            <summary style="font-weight:700; color:#101A36; cursor:pointer;">${escapeHtml(f.question)}</summary>
+            <p style="margin:8px 0 0 0; font-size:14px; color:#334155;">${escapeHtml(f.answer)}</p>
+          </details>`
+            )
+            .join('')}
+        </div>
+      </section>
+
+      <section style="background:#F6F8FC; border:1px solid #E2E8F0; border-radius:12px; padding:18px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
         <div>
-          <div style="font-weight:700; font-size:15px; color:#0f172a;">Apply Online or Direct Portal</div>
-          <div style="font-size:13px; color:#64748b;">Submit your application through our assisted counter or visit the official department portal.</div>
+          <div style="font-weight:700; font-size:16px; color:#101A36;">Enquire or Request Filing Help</div>
+          <div style="font-size:14px; color:#475569;">Final charges depend on the service and any government fee. Please confirm before applying.</div>
         </div>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <a href="/apply?service=${encodeURIComponent(service.name)}" style="display:inline-block; background:#2563eb; color:#ffffff; font-weight:600; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
-            Apply Online with CSC DOST
+          <a href="${escapeHtml(waEnquiryUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">
+            Enquire on WhatsApp
           </a>
-          <a href="${safeOfficialUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#ffffff; color:#0f172a; border:1px solid #cbd5e1; font-weight:600; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
-            Official Department Portal ↗
+          <a href="tel:+917006833767" style="display:inline-block; background:#101A36; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">
+            Call +91 70068 33767
           </a>
+          ${
+            safeOfficialUrl
+              ? `<a href="${safeOfficialUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#ffffff; color:#101A36; border:1px solid #CBD5E1; font-weight:600; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">
+            Official Portal ↗
+          </a>`
+              : ''
+          }
         </div>
       </section>
     </article>
-
-    <footer style="margin-top:30px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
-      <p>CSC DOST | Operator: Wasim Ahmad Khanday (VLE ID: 212515670018) | Sangran Qazigund, Anantnag, J&amp;K 192221</p>
-      <p>
-        <a href="/privacy-policy" style="color:#2563eb; text-decoration:none;">Privacy Policy</a> •
-        <a href="/terms-of-service" style="color:#2563eb; text-decoration:none;">Terms of Service</a> •
-        <a href="/disclaimer" style="color:#2563eb; text-decoration:none;">Disclaimer</a> •
-        <a href="/contact-us" style="color:#2563eb; text-decoration:none;">Contact Helpdesk</a>
-      </p>
-    </footer>
+    <script type="application/ld+json">${faqSchemaJson}</script>
   </main>
   `;
 }
 
 export function renderLegalPageSubstantiveHtml(pageType: string): string {
   const norm = pageType.toLowerCase();
+  const navTabs = [
+    { key: 'about', href: '/about-us', label: 'About Us' },
+    { key: 'contact', href: '/contact-us', label: 'Contact Helpdesk' },
+    { key: 'privacy', href: '/privacy-policy', label: 'Privacy Policy' },
+    { key: 'terms', href: '/terms-of-service', label: 'Terms of Service' },
+    { key: 'disclaimer', href: '/disclaimer', label: 'Disclaimer' },
+    { key: 'refund', href: '/refund-policy', label: 'Refund Policy' },
+  ];
+
+  const activeTabKey = norm.includes('privacy')
+    ? 'privacy'
+    : norm.includes('disclaimer')
+    ? 'disclaimer'
+    : norm.includes('terms')
+    ? 'terms'
+    : norm.includes('about')
+    ? 'about'
+    : norm.includes('contact')
+    ? 'contact'
+    : 'refund';
+
+  const legalHeaderShell = `
+  ${renderPrimaryCategoryNavHtml()}
+  <div style="max-width:960px; margin:0 auto; padding:4px 16px 0 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+    <aside style="background:#FFFBEB; border:1px solid #FDE68A; border-left:4px solid #F5A623; border-radius:0 10px 10px 0; padding:12px 16px; margin-bottom:14px; font-size:14px; color:#101A36; line-height:1.5;">
+      <strong>Official Transparency Notice:</strong> CSC DOST (cscdost.com) is an independent citizen portal operated by Authorized CSC VLE <strong>Wasim Ahmad Khanday</strong> (VLE ID: <strong>212515670018</strong>). We are <strong>NOT</strong> an official government website.
+    </aside>
+    <nav aria-label="Static Policy Pages" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+      ${navTabs
+        .map(
+          (tab) =>
+            `<a href="${tab.href}" style="display:inline-block; padding:8px 14px; border-radius:8px; font-size:13px; font-weight:700; text-decoration:none; ${
+              tab.key === activeTabKey
+                ? 'background:#101A36; color:#ffffff; border:1px solid #101A36;'
+                : 'background:#ffffff; color:#101A36; border:1px solid #E2E8F0;'
+            }">${tab.label}</a>`
+        )
+        .join('')}
+    </nav>
+  </div>`;
 
   if (norm.includes('privacy')) {
-    return `
+    return `${legalHeaderShell}
     <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.7;">
       <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
         <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
@@ -444,7 +559,7 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
   }
 
   if (norm.includes('disclaimer')) {
-    return `
+    return `${legalHeaderShell}
     <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.7;">
       <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
         <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
@@ -499,7 +614,7 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
   }
 
   if (norm.includes('terms')) {
-    return `
+    return `${legalHeaderShell}
     <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.7;">
       <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
         <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
@@ -551,7 +666,7 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
   }
 
   if (norm.includes('about')) {
-    return `
+    return `${legalHeaderShell}
     <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.7;">
       <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
         <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
@@ -606,7 +721,7 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
   }
 
   if (norm.includes('contact')) {
-    return `
+    return `${legalHeaderShell}
     <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.7;">
       <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
         <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
@@ -655,7 +770,7 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
   }
 
   // Refund policy fallback
-  return `
+  return `${legalHeaderShell}
   <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.7;">
     <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
       <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
@@ -737,6 +852,15 @@ export function renderHomepageSubstantiveHtml(posts: SarkariItem[], services: Se
         parseSarkariDateSortValue(a.postDate || a.documentDate)
     );
 
+  const closingThisWeek = verifiedVisiblePosts
+    .filter((p) => {
+      if (p.duplicateOfId) return false;
+      const st = computeSarkariStatus(p);
+      return st.isUrgentUnder7Days && st.daysRemaining !== null && st.daysRemaining >= 0 && st.daysRemaining <= 7;
+    })
+    .sort((a, b) => (computeSarkariStatus(a).daysRemaining ?? 99) - (computeSarkariStatus(b).daysRemaining ?? 99))
+    .slice(0, 6);
+
   const recruitmentPosts = verifiedVisiblePosts
     .filter((p) => isRecruitmentSarkariItem(p))
     .slice(0, 6);
@@ -754,8 +878,41 @@ export function renderHomepageSubstantiveHtml(posts: SarkariItem[], services: Se
     { href: '/education', title: 'Admissions', desc: 'Kashmir Univ, Cluster Univ & IGNOU notifications.' },
     { href: '/schemes', title: 'Schemes', desc: 'PM-KISAN, Ayushman PM-JAY & citizen welfare guides.' },
     { href: '/services', title: 'CSC Services', desc: 'PAN card, domicile, Aadhaar & certificate filing.' },
-    { href: '/tools', title: 'Tools', desc: 'Photo resizer, signature cropper, PDF tools & calculators.' },
+    { href: '/tools', title: 'Tools & Calculators', desc: 'Photo resizer, PDF tools & age/fee calculators.' },
   ];
+
+  const closingWeekHtml =
+    closingThisWeek.length > 0
+      ? `
+    <section aria-labelledby="ssr-closing-week-heading" style="margin-bottom:28px;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+        <h2 id="ssr-closing-week-heading" style="font-size:20px; font-weight:800; color:#101A36; margin:0;">
+          Closing this week
+        </h2>
+        <a href="/jobs" style="font-size:14px; font-weight:700; color:#1F9D6B; text-decoration:none;">View all jobs →</a>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(290px, 1fr)); gap:12px;">
+        ${closingThisWeek
+          .map((post) => {
+            const st = computeSarkariStatus(post);
+            const daysText = st.daysRemaining === 0 ? 'Closes today' : `${st.daysRemaining}d left`;
+            return `
+          <article style="background:#ffffff; border:1px solid #FECACA; border-left:4px solid #DC2626; border-radius:12px; padding:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; font-size:12px; font-weight:700;">
+              <span style="color:#475569; text-transform:uppercase;">${escapeHtml(post.category?.replace(/_/g, ' '))}</span>
+              <span style="padding:2px 8px; border-radius:6px; background:#FEF2F2; color:#B91C1C; border:1px solid #FECACA;">
+                ${escapeHtml(daysText)}${post.lastDate ? ` · ${escapeHtml(post.lastDate)}` : ''}
+              </span>
+            </div>
+            <h3 style="font-size:15px; font-weight:700; margin:0;">
+              <a href="/post/${escapeHtml(post.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(post.title)}</a>
+            </h3>
+          </article>`;
+          })
+          .join('')}
+      </div>
+    </section>`
+      : '';
 
   return `
   ${renderPrimaryCategoryNavHtml()}
@@ -775,6 +932,8 @@ export function renderHomepageSubstantiveHtml(posts: SarkariItem[], services: Se
         <a href="/track" style="background:#1F9D6B; color:#ffffff; font-weight:700; font-size:15px; padding:10px 18px; border-radius:10px; text-decoration:none;">Track Application</a>
       </div>
     </section>
+
+    ${closingWeekHtml}
 
     <section aria-labelledby="explore-categories-ssr" style="margin-bottom:28px;">
       <h2 id="explore-categories-ssr" style="font-size:20px; font-weight:800; color:#101A36; margin:0 0 12px 0;">
@@ -926,7 +1085,20 @@ export function renderHomepageSubstantiveHtml(posts: SarkariItem[], services: Se
       </div>
     </section>
 
-    <section aria-labelledby="ssr-help-heading" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:16px; padding:20px; margin-bottom:28px;">
+    <section aria-labelledby="ssr-alerts-heading" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:16px; padding:20px; margin-bottom:24px;">
+      <h2 id="ssr-alerts-heading" style="font-size:19px; font-weight:800; color:#101A36; margin:0 0 6px 0;">
+        Get Free Job &amp; Admission Alerts
+      </h2>
+      <p style="font-size:15px; color:#475569; margin:0 0 12px 0;">
+        Receive verified J&amp;K and national updates directly on your phone.
+      </p>
+      <div style="display:flex; flex-wrap:wrap; gap:10px;">
+        <a href="https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI" target="_blank" rel="noopener noreferrer" style="background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 16px; border-radius:10px; text-decoration:none;">Join WhatsApp Group</a>
+        <span aria-disabled="true" style="background:#F1F5F9; color:#475569; border:1px solid #CBD5E1; font-weight:600; font-size:14px; padding:10px 16px; border-radius:10px;">Telegram Channel (Coming soon)</span>
+      </div>
+    </section>
+
+    <section aria-labelledby="ssr-help-heading" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:16px; padding:20px; margin-bottom:24px;">
       <h2 id="ssr-help-heading" style="font-size:20px; font-weight:800; color:#101A36; margin:0 0 8px 0;">
         Need help applying?
       </h2>
@@ -937,6 +1109,18 @@ export function renderHomepageSubstantiveHtml(posts: SarkariItem[], services: Se
         <a href="tel:+917006833767" style="background:#101A36; color:#ffffff; font-weight:700; font-size:14px; padding:10px 16px; border-radius:10px; text-decoration:none;">Call +91 70068 33767</a>
         <a href="https://wa.me/917006833767" target="_blank" rel="noopener noreferrer" style="background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 16px; border-radius:10px; text-decoration:none;">WhatsApp CSC DOST</a>
       </div>
+    </section>
+
+    <section aria-label="Authorized CSC Citizen Facilitation Desk" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:16px; padding:18px 20px; margin-bottom:28px;">
+      <h2 style="font-size:17px; font-weight:800; color:#101A36; margin:0 0 8px 0;">
+        Authorized CSC Citizen Facilitation Desk
+      </h2>
+      <p style="font-size:14px; color:#475569; margin:0 0 6px 0;">
+        <strong>Operator:</strong> Wasim Ahmad Khanday · <strong>Authorized CSC VLE ID:</strong> 212515670018 · <strong>Centre:</strong> Sangran Qazigund, Anantnag, Jammu &amp; Kashmir 192221 · <strong>Helpline:</strong> +91 70068 33767
+      </p>
+      <p style="font-size:13px; color:#64748B; margin:0;">
+        CSC DOST is an independent portal, not an official government website. Always confirm details on the official notification.
+      </p>
     </section>
 
     <footer style="background:#101A36; color:#E2E8F0; border-radius:16px; padding:24px 20px; text-align:center; font-size:14px; line-height:1.8;">
@@ -963,6 +1147,23 @@ export function renderSchemeSubstantiveHtml(guide: GuideArticle): string {
   const safeCategory = escapeHtml(guide.category);
   const safePortal = escapeHtml(guide.officialPortal);
   const safeOfficialUrl = escapeHtml(guide.officialUrl);
+  const fallbackWithPortal = `As per official scheme guidelines (<a href="${safeOfficialUrl}" target="_blank" rel="noopener noreferrer" style="color:#1F9D6B; font-weight:600;">${safePortal}</a>)`;
+
+  const faqSchemaJson =
+    guide.faqs && guide.faqs.length > 0
+      ? JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: guide.faqs.map((faq) => ({
+            '@type': 'Question',
+            name: faq.question,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: faq.answer,
+            },
+          })),
+        }).replace(/</g, '\\u003c')
+      : '';
 
   return `
   ${renderPrimaryCategoryNavHtml('schemes')}
@@ -975,8 +1176,16 @@ export function renderSchemeSubstantiveHtml(guide: GuideArticle): string {
       <span style="color:#101A36; font-weight:700;">${safeTitle}</span>
     </nav>
 
+    ${
+      guide.id === 'army-agniveer-rally-guide-2026'
+        ? `<aside role="note" style="background:#FFFFFF; border:2px solid #D97706; padding:12px 16px; border-radius:10px; margin-bottom:14px; font-size:14px; font-weight:600; color:#101A36;">
+      Last updated 13 Aug 2026. Confirm the latest details on the official site (<a href="https://joinindianarmy.nic.in" target="_blank" rel="noopener noreferrer" style="color:#1F9D6B; font-weight:700;">joinindianarmy.nic.in</a>).
+    </aside>`
+        : ''
+    }
+
     <aside style="background:#FFFBEB; border-left:4px solid #F5A623; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:14px; color:#101A36;">
-      <strong>Independent Citizen Guide:</strong> CSC DOST (cscdost.com) is an independent private digital facilitation center operated by Wasim Ahmad Khanday (CSC VLE ID: 212515670018). Apply directly through the official portal linked below.
+      <strong>Independent Citizen Guide:</strong> CSC DOST (cscdost.com) is an independent portal, not a government website, operated by Wasim Ahmad Khanday (Authorized CSC VLE ID: 212515670018, Sangran Qazigund, Anantnag, J&amp;K 192221). This site does not guarantee scheme approval or benefit sanction. Always verify details on the official portal linked below.
     </aside>
 
     <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:24px;">
@@ -992,6 +1201,36 @@ export function renderSchemeSubstantiveHtml(guide: GuideArticle): string {
           <strong>Official Portal:</strong> ${safePortal} · <strong>Last Updated:</strong> ${escapeHtml(guide.lastUpdated)}
         </div>
       </header>
+
+      <section style="background:#F6F8FC; border:1px solid #E2E8F0; border-radius:12px; padding:16px; margin-bottom:22px;">
+        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 12px 0;">Scheme Summary</h2>
+        <dl style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin:0; font-size:14px;">
+          <div>
+            <dt style="font-size:12px; color:#64748B; font-weight:600;">Department</dt>
+            <dd style="margin:2px 0 0 0; font-weight:700; color:#101A36;">${guide.responsibleDepartment ? escapeHtml(guide.responsibleDepartment) : fallbackWithPortal}</dd>
+          </div>
+          <div>
+            <dt style="font-size:12px; color:#64748B; font-weight:600;">Intended Beneficiaries</dt>
+            <dd style="margin:2px 0 0 0; font-weight:700; color:#101A36;">${guide.intendedBeneficiaries ? escapeHtml(guide.intendedBeneficiaries) : fallbackWithPortal}</dd>
+          </div>
+          <div>
+            <dt style="font-size:12px; color:#64748B; font-weight:600;">Benefit Amount / Scope</dt>
+            <dd style="margin:2px 0 0 0; font-weight:700; color:#101A36;">${guide.benefitSummary ? escapeHtml(guide.benefitSummary) : fallbackWithPortal}</dd>
+          </div>
+          <div>
+            <dt style="font-size:12px; color:#64748B; font-weight:600;">Applicable Region</dt>
+            <dd style="margin:2px 0 0 0; font-weight:700; color:#101A36;">${guide.applicableRegion ? escapeHtml(guide.applicableRegion) : fallbackWithPortal}</dd>
+          </div>
+          <div>
+            <dt style="font-size:12px; color:#64748B; font-weight:600;">Application Window / Deadline</dt>
+            <dd style="margin:2px 0 0 0; font-weight:700; color:#101A36;">${fallbackWithPortal}</dd>
+          </div>
+          <div>
+            <dt style="font-size:12px; color:#64748B; font-weight:600;">Official Fee</dt>
+            <dd style="margin:2px 0 0 0; font-weight:700; color:#101A36;">${fallbackWithPortal}</dd>
+          </div>
+        </dl>
+      </section>
 
       ${guide.sections
         .map(
@@ -1012,7 +1251,7 @@ export function renderSchemeSubstantiveHtml(guide: GuideArticle): string {
         .join('')}
 
       <section style="margin-bottom:22px;">
-        <h2 style="font-size:20px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Eligibility Criteria</h2>
+        <h2 style="font-size:20px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Eligibility Checklist</h2>
         <ul style="padding-left:20px; font-size:15px; color:#334155; margin:0;">
           ${guide.eligibility.map((e) => `<li>${escapeHtml(e)}</li>`).join('')}
         </ul>
@@ -1026,27 +1265,49 @@ export function renderSchemeSubstantiveHtml(guide: GuideArticle): string {
       </section>
 
       <section style="margin-bottom:24px;">
-        <h2 style="font-size:20px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Step-by-Step Application Process</h2>
+        <h2 style="font-size:20px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Step-by-Step Apply Guide</h2>
         <ol style="padding-left:20px; font-size:15px; color:#334155; margin:0;">
           ${guide.stepByStep.map((s) => `<li>${escapeHtml(s)}</li>`).join('')}
         </ol>
       </section>
 
+      ${
+        guide.faqs && guide.faqs.length > 0
+          ? `
+      <section style="margin-bottom:24px;">
+        <h2 style="font-size:20px; font-weight:700; color:#101A36; margin:0 0 10px 0;">Frequently Asked Questions</h2>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          ${guide.faqs
+            .map(
+              (f) => `
+          <details style="border:1px solid #E2E8F0; border-radius:10px; padding:12px;">
+            <summary style="font-weight:700; color:#101A36; cursor:pointer;">${escapeHtml(f.question)}</summary>
+            <p style="margin:8px 0 0 0; font-size:14px; color:#334155;">${escapeHtml(f.answer)}</p>
+          </details>`
+            )
+            .join('')}
+        </div>
+      </section>
+      `
+          : ''
+      }
+
       <section style="background:#F6F8FC; border:1px solid #E2E8F0; border-radius:12px; padding:18px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
         <div>
           <div style="font-weight:700; font-size:16px; color:#101A36;">Official Authority Portal &amp; Assisted Filing</div>
-          <div style="font-size:14px; color:#475569;">Verify details on ${safePortal} or request CSC assistance.</div>
+          <div style="font-size:14px; color:#475569;">Verify details on ${safePortal} or contact Wasim Ahmad Khanday (+91 70068 33767).</div>
         </div>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
           <a href="${safeOfficialUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#101A36; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">
             Official Portal ↗
           </a>
           <a href="/apply" style="display:inline-block; background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">
-            Need Help Applying
+            Need help applying? Contact us
           </a>
         </div>
       </section>
     </article>
+    ${faqSchemaJson ? `<script type="application/ld+json">${faqSchemaJson}</script>` : ''}
   </main>
   `;
 }
@@ -1055,7 +1316,8 @@ export function renderToolDetailSubstantiveHtml(tool: ToolItem): string {
   const safeName = escapeHtml(tool.name);
   const safeDesc = escapeHtml(tool.shortDescription);
   const safeCat = escapeHtml(tool.categoryLabel);
-  const safeSpecs = escapeHtml(tool.specs || '100% client-side HTML5 Canvas processing');
+  const safeSpecs = escapeHtml(tool.specs || 'Local browser HTML5 Canvas / JavaScript processing');
+  const usesPdfWorker = tool.id === 'pdf-compressor' || tool.id === 'pdf-to-image';
 
   return `
   ${renderPrimaryCategoryNavHtml('tools')}
@@ -1071,20 +1333,30 @@ export function renderToolDetailSubstantiveHtml(tool: ToolItem): string {
     <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:24px;">
       <header style="border-bottom:1px solid #E2E8F0; padding-bottom:18px; margin-bottom:20px;">
         <span style="display:inline-block; background:#ECFDF5; color:#1F9D6B; border:1px solid #A7F3D0; font-size:12px; font-weight:700; text-transform:uppercase; padding:4px 10px; border-radius:6px; margin-bottom:10px;">
-          ${safeCat} · 100% Browser Private
+          ${safeCat} · Processed Locally in Browser
         </span>
         <h1 style="font-size:28px; font-weight:800; color:#101A36; margin:0 0 10px 0;">${safeName}</h1>
         <p style="font-size:16px; color:#475569; margin:0;">${safeDesc}</p>
       </header>
 
-      <section style="background:#F6F8FC; border:1px solid #E2E8F0; border-radius:10px; padding:16px; margin-bottom:20px;">
-        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Privacy &amp; Technical Specifications</h2>
-        <p style="font-size:15px; color:#334155; margin:0 0 8px 0;"><strong>Capabilities:</strong> ${safeSpecs}</p>
-        <p style="font-size:15px; color:#334155; margin:0;">All processing happens locally on your device — your photographs, signatures, and certificates are never uploaded to external servers.</p>
+      <section style="background:#F6F8FC; border:1px solid #E2E8F0; border-radius:10px; padding:16px; margin-bottom:16px;">
+        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">How This Tool Works</h2>
+        <p style="font-size:15px; color:#334155; margin:0 0 8px 0;">${safeDesc}</p>
+        <p style="font-size:15px; color:#334155; margin:0;"><strong>Supported capabilities:</strong> ${safeSpecs}</p>
+      </section>
+
+      <section style="background:#ECFDF5; border:1px solid #A7F3D0; border-radius:10px; padding:16px; margin-bottom:20px;">
+        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Privacy Note</h2>
+        <p style="font-size:15px; color:#334155; margin:0;">Files are processed in your browser and not uploaded to any server.</p>
+        ${
+          usesPdfWorker
+            ? `<p style="font-size:13px; color:#334155; margin:8px 0 0 0;">Technical note: The open-source pdf.js worker script is loaded from cdnjs.cloudflare.com for local rendering while your PDF document itself never leaves your device.</p>`
+            : ''
+        }
       </section>
 
       <div style="display:flex; flex-wrap:wrap; gap:10px;">
-        <a href="/tools" style="background:#101A36; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">Browse All Document Tools</a>
+        <a href="/tools" style="background:#101A36; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">Back to All Document Tools</a>
         <a href="/calculators" style="background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">Citizen Calculators</a>
       </div>
     </article>
@@ -1299,6 +1571,8 @@ export function renderCategorySubstantiveHtml(
     const schemeServices = services.filter(
       s =>
         s.category?.toLowerCase().includes('scheme') ||
+        s.id === 'jk-ladli-beti' ||
+        s.id === 'jk-pension-isss' ||
         s.id.includes('kisan') ||
         s.id.includes('ayushman') ||
         s.id.includes('golden')
@@ -1315,8 +1589,11 @@ export function renderCategorySubstantiveHtml(
 
       <header style="border-bottom:1px solid #E2E8F0; padding-bottom:16px; margin-bottom:24px;">
         <h1 style="font-size:28px; font-weight:800; color:#101A36; margin:0 0 8px 0;">Government Schemes &amp; Citizen Guides</h1>
-        <p style="font-size:16px; color:#475569; margin:0; max-width:850px;">
-          Eligibility criteria, document checklists and application guides for PM-KISAN, Ayushman Bharat PM-JAY, PM Vishwakarma and citizen welfare programs.
+        <p style="font-size:16px; color:#475569; margin:0 0 10px 0; max-width:850px;">
+          Eligibility criteria, document checklists and application guides for PM-KISAN, Ayushman Bharat PM-JAY and citizen welfare programs.
+        </p>
+        <p style="font-size:14px; color:#475569; margin:0; max-width:850px;">
+          For J&amp;K state welfare facilitation, see <a href="/service/jk-ladli-beti" style="color:#1F9D6B; font-weight:700; text-decoration:underline;">Ladli Beti &amp; State Marriage Assistance Scheme</a> and <a href="/service/jk-pension-isss" style="color:#1F9D6B; font-weight:700; text-decoration:underline;">JK-ISSS &amp; GOI NSAP Social Pension Sanction</a>.
         </p>
       </header>
 
@@ -1343,8 +1620,8 @@ export function renderCategorySubstantiveHtml(
             </h2>
             <p style="font-size:14px; color:#475569; line-height:1.4; margin:0 0 10px 0;">${escapeHtml(s.description)}</p>
             <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; border-top:1px solid #F1F5F9; padding-top:10px;">
-              <span style="font-weight:700; color:#101A36;">${escapeHtml(s.price)}</span>
-              <a href="/service/${escapeHtml(s.id)}" style="color:#1F9D6B; font-weight:700; text-decoration:none;">View Scheme Details →</a>
+              <span style="font-weight:700; color:#101A36;">${escapeHtml(s.price?.trim() || 'Ask us')}</span>
+              <a href="/service/${escapeHtml(s.id)}" style="color:#1F9D6B; font-weight:700; text-decoration:none;">View Service Details →</a>
             </div>
           </article>
         `).join('')}
@@ -1364,27 +1641,43 @@ export function renderCategorySubstantiveHtml(
         <span style="color:#101A36; font-weight:700;">CSC E-Services</span>
       </nav>
 
-      <header style="border-bottom:1px solid #E2E8F0; padding-bottom:16px; margin-bottom:24px;">
+      <header style="border-bottom:1px solid #E2E8F0; padding-bottom:16px; margin-bottom:20px;">
         <h1 style="font-size:28px; font-weight:800; color:#101A36; margin:0 0 8px 0;">CSC E-Services</h1>
-        <p style="font-size:16px; color:#475569; margin:0; max-width:850px;">
+        <p style="font-size:16px; color:#475569; margin:0 0 10px 0; max-width:850px;">
           Complete directory of assisted citizen e-services: PAN card registration, Aadhaar assistance, J&amp;K domicile certificates, income certificates and document services.
+        </p>
+        <p style="font-size:14px; font-weight:600; color:#92400E; background:#FFFBEB; border:1px solid #FDE68A; padding:10px 14px; border-radius:8px; margin:0;">
+          Final charges depend on the service and any government fee. Please confirm before applying.
         </p>
       </header>
 
       <section style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
-        ${services.map(s => `
-          <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:18px;">
-            <div style="font-size:11px; font-weight:700; color:#1F9D6B; text-transform:uppercase; margin-bottom:4px;">${escapeHtml(s.category)}</div>
-            <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">
-              <a href="/service/${escapeHtml(s.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(s.name)}</a>
-            </h2>
-            <p style="font-size:14px; color:#475569; line-height:1.45; margin:0 0 10px 0;">${escapeHtml(s.description)}</p>
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; border-top:1px solid #F1F5F9; padding-top:10px;">
-              <span style="font-weight:700; color:#101A36;">${escapeHtml(s.price)}</span>
-              <a href="/service/${escapeHtml(s.id)}" style="color:#1F9D6B; font-weight:700; text-decoration:none;">View Requirements →</a>
+        ${services.map(s => {
+          const docs = Array.isArray(s.requirements) && s.requirements.length > 0 ? s.requirements.join(', ') : 'Ask us';
+          const fee = s.price && s.price.trim() ? s.price.trim() : 'Ask us';
+          const feeHtml = Array.isArray(s.feeLines) && s.feeLines.length > 0
+            ? s.feeLines.map(line => `<div>${escapeHtml(line)}</div>`).join('')
+            : escapeHtml(fee);
+          const waHref = `https://wa.me/917006833767?text=${encodeURIComponent(`Hello Wasim Ahmad Khanday (CSC DOST), I would like to enquire about ${s.name}`)}`;
+          return `
+          <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:18px; display:flex; flex-direction:column; justify-content:space-between; gap:10px;">
+            <div>
+              <div style="font-size:11px; font-weight:700; color:#1F9D6B; text-transform:uppercase; margin-bottom:4px;">${escapeHtml(s.category)}</div>
+              <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">
+                <a href="/service/${escapeHtml(s.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(s.name)}</a>
+              </h2>
+              <p style="font-size:14px; color:#475569; line-height:1.45; margin:0 0 8px 0;">${escapeHtml(s.description)}</p>
+              <div style="font-size:13px; color:#334155; margin-bottom:4px;"><strong>Documents needed:</strong> ${escapeHtml(docs)}</div>
+              ${s.estimatedTime && s.estimatedTime.trim() ? `<div style="font-size:13px; color:#334155; margin-bottom:4px;"><strong>Typical time:</strong> ${escapeHtml(s.estimatedTime.trim())}</div>` : ''}
+              <div style="font-size:13px; font-weight:700; color:#101A36;"><strong>Fee:</strong> ${feeHtml}</div>
+            </div>
+            <div style="border-top:1px solid #F1F5F9; padding-top:10px; display:flex; flex-wrap:wrap; gap:8px; font-size:13px;">
+              <a href="${escapeHtml(waHref)}" target="_blank" rel="noopener noreferrer" style="background:#1F9D6B; color:#ffffff; padding:6px 10px; border-radius:8px; font-weight:700; text-decoration:none;">Enquire on WhatsApp</a>
+              <a href="tel:+917006833767" style="background:#101A36; color:#ffffff; padding:6px 10px; border-radius:8px; font-weight:700; text-decoration:none;">Call +91 70068 33767</a>
             </div>
           </article>
-        `).join('')}
+        `;
+        }).join('')}
       </section>
     </main>
     `;
@@ -1429,37 +1722,40 @@ export function renderCategorySubstantiveHtml(
   if (categoryType === 'calculators') {
     return `
     ${renderPrimaryCategoryNavHtml('calculators')}
-    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
-      <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
-        <a href="/" style="color:#1e56c8; text-decoration:none;">Home</a>
+    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; color:#101A36; line-height:1.6;">
+      <nav aria-label="Breadcrumb" style="font-size:14px; color:#475569; margin-bottom:16px;">
+        <a href="/" style="color:#101A36; font-weight:600; text-decoration:none;">Home</a>
         <span style="margin:0 6px;">/</span>
-        <span style="color:#0f172a; font-weight:600;">Citizen Calculators</span>
+        <span style="color:#101A36; font-weight:700;">Citizen Calculators</span>
       </nav>
 
-      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:16px; margin-bottom:24px;">
-        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Citizen Calculators</h1>
-        <p style="font-size:15px; color:#475569; margin:0; max-width:850px;">
-          Calculate recruitment age eligibility against cutoff dates, inspect photo and signature size rules, and check regulated CSC service fees.
+      <header style="border-bottom:1px solid #E2E8F0; padding-bottom:16px; margin-bottom:20px;">
+        <h1 style="font-size:28px; font-weight:800; color:#101A36; margin:0 0 8px 0;">Citizen Calculators</h1>
+        <p style="font-size:16px; color:#475569; margin:0 0 10px 0; max-width:850px;">
+          Check recruitment age against cutoff dates, inspect photo and signature dimensions locally, and review indicative CSC service fees.
+        </p>
+        <p style="font-size:14px; font-weight:600; color:#92400E; background:#FFFBEB; border:1px solid #FDE68A; padding:10px 14px; border-radius:8px; margin:0;">
+          Rates &amp; benchmarks as of 2026-01-01 (Age Calculator) or without verification date recorded (Fee &amp; Portal Presets) — confirm with the official source before applying.
         </p>
       </header>
 
-      <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:18px;">
-        <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:20px;">
-          <h2 style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 8px 0;">Recruitment Age Eligibility Calculator</h2>
-          <p style="font-size:13px; color:#475569; line-height:1.5; margin:0;">
-            Calculate exact age in years, months and days against JKSSB, SSC, Railway RRB and Indian Army cutoff dates with category benchmarks.
+      <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:18px; margin-bottom:24px;">
+        <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:20px;">
+          <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Recruitment Age Eligibility Calculator</h2>
+          <p style="font-size:14px; color:#475569; line-height:1.5; margin:0;">
+            Calculates exact calendar years, months, and days against cutoff dates (default 2026-01-01) plus reference category age ceilings.
           </p>
         </article>
-        <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:20px;">
-          <h2 style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 8px 0;">Photo &amp; Signature Spec Inspector</h2>
-          <p style="font-size:13px; color:#475569; line-height:1.5; margin:0;">
-            Verify pixel dimensions and KB file limits locally in your browser before uploading photographs or signatures to exam portals.
+        <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:20px;">
+          <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Photo &amp; Signature Spec Inspector</h2>
+          <p style="font-size:14px; color:#475569; line-height:1.5; margin:0;">
+            Reads pixel dimensions and KB file size locally in your browser without uploading files to any server.
           </p>
         </article>
-        <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:20px;">
-          <h2 style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 8px 0;">CSC Regulated Fee Breakdown</h2>
-          <p style="font-size:13px; color:#475569; line-height:1.5; margin:0;">
-            View transparent statutory department fee and facilitation charge breakdowns for PAN card, domicile, Aadhaar updates and exam applications.
+        <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:20px;">
+          <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">CSC Regulated Fee Breakdown</h2>
+          <p style="font-size:14px; color:#475569; line-height:1.5; margin:0;">
+            Shows recorded statutory departmental fee and facilitation charge ranges. Always confirm current rates with the official source before applying.
           </p>
         </article>
       </section>

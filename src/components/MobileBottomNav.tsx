@@ -23,7 +23,7 @@ export default function MobileBottomNav({ activeTab, onNavigate }: MobileBottomN
   return (
     <nav
       aria-label="Mobile Navigation"
-      className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-[#DCE3EE] px-1.5 py-1 md:hidden pb-[max(0.35rem,env(safe-area-inset-bottom))] shadow-[0_-2px_10px_rgba(16,26,54,0.06)] flex items-center justify-around select-none"
+      className="fixed bottom-0 inset-x-0 z-40 bg-[var(--bg-surface)] border-t border-[var(--border-default)] px-1.5 py-1 md:hidden pb-[max(0.35rem,env(safe-area-inset-bottom))] shadow-[0_-2px_10px_rgba(10,17,36,0.12)] flex items-center justify-around select-none"
     >
       {navItems.map((item) => {
         const IconComponent = item.Icon;
@@ -40,13 +40,15 @@ export default function MobileBottomNav({ activeTab, onNavigate }: MobileBottomN
             aria-current={isActive ? 'page' : undefined}
             className={`min-h-[44px] min-w-[56px] flex flex-col items-center justify-center transition-colors cursor-pointer rounded-lg no-underline ${
               isActive
-                ? 'bg-[#101A36] text-white px-2.5 py-1'
-                : 'text-[#101A36] hover:bg-[#F6F8FC] px-2 py-1'
+                ? 'bg-[#101A36] dark:bg-[#F5A623] text-white dark:text-[#101A36] px-2.5 py-1'
+                : 'text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] px-2 py-1'
             }`}
           >
             <IconComponent
               className={`w-[18px] h-[18px] ${
-                isActive ? 'text-[#F5A623] stroke-[2.2]' : 'text-[#526075] stroke-[1.8]'
+                isActive
+                  ? 'text-[#F5A623] dark:text-[#101A36] stroke-[2.2]'
+                  : 'text-[var(--text-secondary)] stroke-[1.8]'
               }`}
               aria-hidden="true"
             />

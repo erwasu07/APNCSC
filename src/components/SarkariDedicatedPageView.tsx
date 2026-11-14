@@ -1,43 +1,71 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
+import {
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  ExternalLink,
+  FileText,
+  Info,
+  MessageCircle,
+  Printer,
+  Share2,
+  XCircle,
+} from 'lucide-react';
 import {
   SarkariItem,
-  SARKARI_CATEGORIES,
   isIgnouItem,
-  isEducationSarkariItem,
   isRecruitmentSarkariItem,
 } from '../data/sarkariData';
-import { computeSarkariStatus, ComputedSarkariStatus, extractDatePattern } from '../utils/sarkariStatus';
-import { useSyncedSarkariPosts, sortByNewestPostDate } from '../utils/postDataSync';
-import SarkariNotificationBanner from './SarkariNotificationBanner';
-import { buildWhatsAppNotification } from '../utils/whatsappFormatter';
-import { AlertCircle, Clock, XCircle } from 'lucide-react';
 import {
-  ContentPageLayout,
-  ContentArticleHeader,
-  KeyInfoStrip,
-  PrimaryActionBar,
-  MobileSectionNav,
-  ContentSection,
-  KeyValueRows,
-  ContentChecklist,
-  StepByStepList,
-  OfficialSourcesAndAssistance,
-  extractConciseIntro,
-  KeyInfoFact,
-  SectionNavItem,
-  RelatedContentItem,
-} from './shared/ContentDesignSystem';
-import WhatsAppChannelPopup, { WhatsAppChannelInPostCard } from './shared/WhatsAppChannelPopup';
-import { HelpApplyingCard } from './ui/HelpApplyingCard';
-import { Badge } from './ui/Badge';
-
-function toIsoDate(raw?: string): string | undefined {
-  const parsed = extractDatePattern(raw);
-  if (!parsed) return undefined;
-  const mm = String(parsed.month).padStart(2, '0');
-  const dd = String(parsed.day).padStart(2, '0');
-  return `${parsed.year}-${mm}-${dd}`;
-}
+  getDeduplicatedSarkariPosts,
+  resolvePostOrg,
+} from '../data/sarkariMigration';
+import { computeSarkariStatus, type ComputedSarkariStatus } from '../utils/sarkariStatus';
+import { useSyncedSarkariPosts, sortByNewestPostDate } from '../utils/postDataSync';
+import { useLanguage, type Language } from '../contexts/LanguageContext';
+import { buildWhatsAppNotification } from '../utils/whatsappFormatter';
+import SarkariNotificationBanner from './SarkariNotificationBanner';
+import {
+  AdSlot,
+  AlertsBox,
+  Breadcrumbs,
+  Card,
+  ChecklistWithProgress,
+  Chip,
+  DateBlock,
+  FaqAccordion,
+  HelpApplyingCard,
+  StatusPill,
+  StickyMobileActionBar,
+  type BreadcrumbItem,
+} from './ui';
+import {
+  buildPostFaqs,
+  deriveTimelineForPost,
+  getCategoryBreadcrumb,
+  getChecklistTitleForType,
+  getDocumentsForPost,
+  getProcessSectionConfig,
+  hasRealDataValue,
+  isGenericNoticePlaceholder,
+  isNonApplicationTemplateType,
+  resolveEffectiveTemplateType,
+  resolvePostPdfUrl,
+  resolvePostPortalUrl,
+  splitSummaryParagraphs,
+  toIsoDate,
+} from './post/postHelpers';
+import {
+  PostExternalCtaRow,
+  PostFactsGrid,
+  PostFeeSection,
+  PostProcessSteps,
+  PostSscTimetableTable,
+  PostTimelineCard,
+  PostVacancyTable,
+} from './post/PostTemplateSections';
 
 interface SarkariDedicatedPageViewProps {
   item: SarkariItem;
@@ -47,6 +75,22 @@ interface SarkariDedicatedPageViewProps {
   onNavigateRoute?: (path: string) => void;
 }
 
+function getPostStatusBadgeLabel(
+  st: ComputedSarkariStatus,
+  language: Language
+): string {
+  if (
+    !st.isArchiveBucket &&
+    st.computedStatus === 'closing_soon' &&
+    (st.stage === 'answer_key' || st.stage === 'objection_window')
+  ) {
+    if (language === 'hi') return `आपत्ति तक ${st.dateValue}`;
+    if (language === 'ur') return `اعتراض تک ${st.dateValue}`;
+    return `Objections till ${st.dateValue}`;
+  }
+  return st.badgeLabel;
+}
+
 export default function SarkariDedicatedPageView({
   item,
   onBack,
@@ -54,1252 +98,806 @@ export default function SarkariDedicatedPageView({
   onShare,
   onNavigateRoute,
 }: SarkariDedicatedPageViewProps) {
+  const { language, t } = useLanguage();
   const allPosts = useSyncedSarkariPosts();
+
+  const statusInfo = useMemo(() => computeSarkariStatus(item), [item]);
+  const effectiveType = useMemo(
+    () => resolveEffectiveTemplateType(item, statusInfo),
+    [item, statusInfo]
+  );
+  const nonAppTemplate = isNonApplicationTemplateType(effectiveType);
+
+  const orgName = useMemo(() => item.org || resolvePostOrg(item), [item]);
   const isIgnou = isIgnouItem(item);
-  const isAdmissionOrEdu = isEducationSarkariItem(item);
-  const isInfoOnlyNotice = ['results', 'answer_keys', 'syllabus'].includes(item.category);
-  const isSscTimetablePost = item.id === 'ssc-examination-schedule-cgept-dept-steno-cpo-nov-2026';
-  const isExamSchedule =
-    item.noticeType === 'date_sheet' ||
-    item.stage === 'date_sheet' ||
-    item.stage === 'examination' ||
-    item.category === 'exam_forms' ||
-    isSscTimetablePost;
+  const isEducation = item.section === 'education' || isIgnou;
+  const isSscTimetablePost =
+    item.id === 'ssc-examination-schedule-cgept-dept-steno-cpo-nov-2026';
 
-  const [activeSectionId, setActiveSectionId] = useState<string>('overview-section');
+  const portalUrl = useMemo(() => resolvePostPortalUrl(item), [item]);
+  const pdfUrl = useMemo(
+    () => resolvePostPdfUrl(item, portalUrl),
+    [item, portalUrl]
+  );
+  const isDirectPdfPortal = /\.pdf($|\?)/i.test(portalUrl);
 
-  useEffect(() => {
-    const originalTitle = document.title;
-    document.title = `${item.title} – Official Notification & Details | CSC DOST`;
-    return () => {
-      document.title = originalTitle;
-    };
-  }, [item]);
+  const { intro, remainder } = useMemo(
+    () => splitSummaryParagraphs(item.summary || item.shortInfo),
+    [item.summary, item.shortInfo]
+  );
 
-  const organisationName = useMemo(() => {
-    if (isIgnouItem(item)) return item.department || 'Indira Gandhi National Open University (IGNOU)';
-    if (item.category === 'army_jobs') return 'Indian Army (joinindianarmy.nic.in)';
-    if (item.category === 'rrb_jobs') return 'Railway Recruitment Boards (RRB)';
-    if (item.category === 'ssc_jobs') return 'Staff Selection Commission (SSC)';
-    if (item.category === 'banking_jobs') {
-      if (item.department) return item.department;
-      return 'Banking Recruiting Authority (IBPS / Banks)';
-    }
-    if (item.category === 'cluster_univ') return 'Cluster University Srinagar (CUS)';
-    if (item.category === 'jkssb') return 'J&K Services Selection Board (JKSSB)';
-    if (item.category === 'exam_forms') return 'University of Kashmir (Examinations)';
-    if (item.category === 'admissions') return 'University of Kashmir (Admissions)';
-    if (item.category === 'nta') return 'National Testing Agency (NTA)';
+  const whatsappShareUrl = useMemo(
+    () => buildWhatsAppNotification(item).whatsappShareUrl,
+    [item]
+  );
 
-    const titleUpper = item.title.toUpperCase();
-    if (titleUpper.includes('J&K BANK') || titleUpper.includes('JAMMU & KASHMIR BANK'))
-      return 'Jammu & Kashmir Bank Ltd. (jkb.bank.in)';
-    if (titleUpper.includes('ARMY') || titleUpper.includes('AGNIVEER')) return 'Indian Army';
-    if (titleUpper.includes('SSC')) return 'Staff Selection Commission (SSC)';
-    if (titleUpper.includes('RRB') || titleUpper.includes('RAILWAY') || titleUpper.includes('RPF'))
-      return 'Railway Recruitment Boards (RRB)';
-    if (titleUpper.includes('IBPS')) return 'Institute of Banking Personnel Selection (IBPS)';
-    if (titleUpper.includes('JKSSB') || titleUpper.includes('J&K'))
-      return 'J&K Services Selection Board (JKSSB)';
-    if (titleUpper.includes('UP POLICE') || titleUpper.includes('UPPRPB'))
-      return 'UP Police Recruitment Board';
-    if (titleUpper.includes('UPSC')) return 'Union Public Service Commission (UPSC)';
-    if (titleUpper.includes('NEET') || titleUpper.includes('NTA') || titleUpper.includes('JEE') || titleUpper.includes('CUET'))
-      return 'National Testing Agency (NTA)';
-    if (titleUpper.includes('CBSE') || titleUpper.includes('CTET'))
-      return 'Central Board of Secondary Education (CBSE)';
-    if (titleUpper.includes('DELHI UNIVERSITY') || titleUpper.includes('CSAS'))
-      return 'University of Delhi';
-    if (titleUpper.includes('IGNOU')) return 'Indira Gandhi National Open University (IGNOU)';
-    return SARKARI_CATEGORIES[item.category]?.label || 'Official Recruiting / Examination Authority';
-  }, [item]);
+  const timelineSteps = useMemo(
+    () => deriveTimelineForPost(item, effectiveType, statusInfo),
+    [item, effectiveType, statusInfo]
+  );
 
-  const officialPortalUrl = useMemo(() => {
-    if (item.officialLink && item.officialLink.trim()) return item.officialLink.trim();
-    if (isIgnouItem(item)) return 'https://www.ignou.ac.in';
-    if (item.category === 'banking_jobs') return 'https://jkb.bank.in/';
-    if (item.category === 'army_jobs') return 'https://joinindianarmy.nic.in';
-    if (item.category === 'rrb_jobs') return 'https://www.rrbapply.gov.in';
-    if (item.category === 'ssc_jobs') return 'https://ssc.gov.in';
-    if (item.category === 'cluster_univ') return 'https://cusrinagar.edu.in';
-    if (item.category === 'jkssb') return 'https://jkssb.nic.in';
-    if (item.category === 'exam_forms' || item.category === 'admissions')
-      return 'https://kashmiruniversity.net';
-    return 'https://www.india.gov.in';
-  }, [item]);
+  const checklistItems = useMemo(
+    () => getDocumentsForPost(item, effectiveType),
+    [item, effectiveType]
+  );
 
-  const isDirectPdfUrl = useMemo(() => {
-    return /\.pdf($|\?)/i.test(officialPortalUrl);
-  }, [officialPortalUrl]);
+  const processConfig = useMemo(
+    () => getProcessSectionConfig(item, effectiveType, statusInfo, portalUrl),
+    [item, effectiveType, statusInfo, portalUrl]
+  );
 
-  const statusInfo: ComputedSarkariStatus = useMemo(() => {
-    return computeSarkariStatus(item);
-  }, [item]);
+  const faqItems = useMemo(
+    () => buildPostFaqs(item, effectiveType, orgName, portalUrl, statusInfo),
+    [item, effectiveType, orgName, portalUrl, statusInfo]
+  );
 
-  const canApplyOnline = statusInfo.canApplyOnline;
-  const isClosed = statusInfo.applicationStatus === 'closed';
-  const isUpcoming = statusInfo.applicationStatus === 'upcoming';
-  const isCancelled = statusInfo.applicationStatus === 'cancelled';
+  const vacancyRows = item.vacancyTable || item.departmentBreakdown || [];
 
-  // Extract Academic Session if present in title or shortInfo for Admissions/Education
-  const extractedSession = useMemo(() => {
-    const match = `${item.title} ${item.shortInfo || ''}`.match(/\b(202\d\s*[-–]\s*(?:20)?2\d|Session\s+202\d)\b/i);
-    return match ? match[0] : undefined;
-  }, [item]);
-
-  const { intro, remainder } = useMemo(() => {
-    const fallbackText = isAdmissionOrEdu
-      ? `${organisationName} has published an official update regarding ${item.title}. Review the eligibility requirements, important dates, fee details, and registration instructions below.`
-      : `${organisationName} has released the official notification for ${item.title}. Review the vacancy details, eligibility criteria, age limits, fee structure, and application procedure below.`;
-    return extractConciseIntro(item.shortInfo || fallbackText, 240);
-  }, [item.shortInfo, item.title, organisationName, isAdmissionOrEdu]);
-
-  // Key Information Strip tailored by Content Type
-  const keyFacts: KeyInfoFact[] = useMemo(() => {
+  // Breadcrumbs via / -> /jobs or /education (-> /education/ignou) -> category/org
+  const breadcrumbItems: BreadcrumbItem[] = useMemo(() => {
+    const { sectionLabel, sectionPath, categoryLabel } = getCategoryBreadcrumb(item);
     if (isIgnou) {
       return [
-        {
-          label: 'University',
-          value: 'Indira Gandhi National Open University (IGNOU)',
-          tone: 'default',
-        },
-        {
-          label: 'Learner Group',
-          value: item.learnerGroup || 'IGNOU Learners',
-          tone: 'blue',
-        },
-        {
-          label: 'Circular / Post Date',
-          value: item.documentDate && item.documentDate !== item.postDate
-            ? `${item.documentDate} (Portal: ${item.postDate})`
-            : item.postDate || 'Recent',
-          tone: 'default',
-        },
-        {
-          label: item.isTentative ? 'Schedule Type' : 'Important Date / Deadline',
-          value: item.isTentative
-            ? `Tentative Date Sheet${item.lastDate ? ` · ${item.lastDate}` : ''}`
-            : item.lastDate || item.startDate || 'Refer to official notice',
-          tone: item.isTentative ? 'amber' : statusInfo.isClosingSoon ? 'rose' : 'default',
-        },
-        {
-          label: 'Notice Status',
-          value: statusInfo.badgeLabel,
-          tone: statusInfo.badgeTone,
-        },
+        { label: t.navHome, href: '/' },
+        { label: t.educationPageTitle, href: '/education' },
+        { label: 'IGNOU', href: '/education/ignou' },
+        { label: item.learnerGroup || orgName },
       ];
     }
-
-    if (isExamSchedule) {
-      return [
-        {
-          label: 'Authority',
-          value: organisationName,
-          tone: 'default',
-        },
-        {
-          label: 'Notice Type',
-          value: item.isTentative ? 'Tentative Examination Schedule' : 'Official Examination Schedule',
-          tone: item.isTentative ? 'amber' : 'blue',
-        },
-        {
-          label: 'Reference No.',
-          value: item.advertisementNo || 'Official Timetable',
-          tone: 'default',
-        },
-        {
-          label: 'Examination Dates',
-          value: item.startDate && item.lastDate && item.startDate !== item.lastDate
-            ? `${item.startDate} to ${item.lastDate}`
-            : item.lastDate || item.startDate || 'Refer to notice',
-          tone: 'rose',
-        },
-        {
-          label: 'Schedule Status',
-          value: statusInfo.badgeLabel,
-          tone: statusInfo.badgeTone,
-        },
-      ];
-    }
-
-    if (isAdmissionOrEdu) {
-      return [
-        {
-          label: 'Institution',
-          value: organisationName,
-          tone: 'default',
-        },
-        {
-          label: 'Course / Programme',
-          value: item.advertisementNo || SARKARI_CATEGORIES[item.category]?.label,
-          tone: 'blue',
-        },
-        {
-          label: 'Academic Session',
-          value: extractedSession || item.session,
-          tone: 'default',
-        },
-        {
-          label: 'Available Seats / Intake',
-          value: item.totalPosts,
-          tone: 'default',
-        },
-        {
-          label: 'Closing Date',
-          value: item.lastDate,
-          tone: statusInfo.isClosingSoon ? 'rose' : 'default',
-        },
-        {
-          label: 'Admission / Exam Status',
-          value: statusInfo.badgeLabel,
-          tone: statusInfo.badgeTone,
-        },
-      ];
-    }
-
     return [
-      {
-        label: 'Recruiting Organisation',
-        value: organisationName,
-        tone: 'default',
-      },
-      {
-        label: 'Advertisement No.',
-        value: item.advertisementNo,
-        tone: 'default',
-      },
-      {
-        label: 'Vacancies',
-        value: item.totalPosts,
-        tone: 'blue',
-      },
-      {
-        label: 'Application Closing Date',
-        value: item.lastDate,
-        tone: statusInfo.isClosingSoon ? 'rose' : 'default',
-      },
-      {
-        label: 'Application Status',
-        value: statusInfo.badgeLabel,
-        tone: statusInfo.badgeTone,
-      },
+      { label: t.navHome, href: '/' },
+      { label: sectionLabel, href: sectionPath },
+      { label: categoryLabel },
     ];
-  }, [
-    isIgnou,
-    isExamSchedule,
-    isAdmissionOrEdu,
-    organisationName,
-    item.learnerGroup,
-    item.documentDate,
-    item.postDate,
-    item.isTentative,
-    item.advertisementNo,
-    item.category,
-    item.totalPosts,
-    item.lastDate,
-    item.startDate,
-    item.session,
-    extractedSession,
-    statusInfo,
-  ]);
+  }, [item, isIgnou, orgName, t.navHome, t.educationPageTitle]);
 
-  // Section Navigation tailored by Content Type
-  const sections: SectionNavItem[] = useMemo(() => {
-    if (isExamSchedule) {
-      return [
-        { id: 'overview-section', title: 'Schedule Overview' },
-        { id: 'important-dates', title: 'Examination Timetable' },
-        { id: 'candidate-guidelines', title: 'Who Should Read & Next Steps' },
-        { id: 'selection-process', title: 'Examination Scheme & Papers' },
-        { id: 'documents-required', title: 'Mandatory Exam Day Documents' },
-        { id: 'official-links', title: 'Official Portal & Admit Card' },
-        { id: 'faqs-section', title: 'FAQs' },
-      ];
-    }
-
-    if (isAdmissionOrEdu) {
-      return [
-        { id: 'overview-section', title: 'Overview' },
-        { id: 'eligibility-section', title: 'Eligibility & Academic Requirements' },
-        { id: 'important-dates', title: 'Important Dates' },
-        { id: 'fee-structure', title: 'Fee Details' },
-        ...(item.departmentBreakdown && item.departmentBreakdown.length > 0
-          ? [{ id: 'vacancy-details', title: 'Programme & Seat Breakdown' }]
-          : []),
-        { id: 'documents-required', title: 'Required Documents' },
-        { id: 'how-to-apply', title: 'Application / Registration Process' },
-        { id: 'selection-process', title: 'Selection / Counselling / Exam Details' },
-        { id: 'official-links', title: 'Official Sources' },
-        { id: 'faqs-section', title: 'FAQs' },
-      ];
-    }
-
-    return [
-      { id: 'overview-section', title: 'Overview' },
-      { id: 'important-dates', title: 'Important Dates' },
-      { id: 'eligibility-section', title: 'Eligibility & Qualifications' },
-      { id: 'age-criteria', title: 'Age Criteria' },
-      { id: 'fee-structure', title: 'Application Fees' },
-      ...(item.departmentBreakdown && item.departmentBreakdown.length > 0
-        ? [{ id: 'vacancy-details', title: 'Vacancy Breakdown' }]
-        : []),
-      { id: 'selection-process', title: 'Selection Process' },
-      { id: 'documents-required', title: 'Documents Required' },
-      { id: 'how-to-apply', title: 'How to Apply' },
-      { id: 'official-links', title: 'Official Sources' },
-      { id: 'faqs-section', title: 'FAQs' },
-    ];
-  }, [isExamSchedule, isAdmissionOrEdu, item.departmentBreakdown]);
-
-  const scrollToSection = (id: string) => {
-    setActiveSectionId(id);
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
-  // Related items from same category or related board (exclude unverified & cancelled)
-  const relatedItems: RelatedContentItem[] = useMemo(() => {
-    return [...allPosts]
+  // Deduplicated related posts in the same section / org
+  const relatedPosts = useMemo(() => {
+    const deduped = getDeduplicatedSarkariPosts(allPosts);
+    return [...deduped]
       .sort(sortByNewestPostDate)
-      .filter((i) => {
-        if (i.id === item.id) return false;
-        const st = computeSarkariStatus(i);
-        if (st.verificationStatus === 'needs_verification' || i.isCancelled) return false;
-        if (isIgnou) return isIgnouItem(i);
-        return i.category === item.category || i.category === 'jkssb';
+      .filter((rel) => {
+        if (rel.id === item.id || rel.isCancelled) return false;
+        const relSt = computeSarkariStatus(rel);
+        if (relSt.verificationStatus === 'needs_verification') return false;
+        if (isIgnou) return isIgnouItem(rel);
+        return (
+          (rel.org || resolvePostOrg(rel)) === orgName ||
+          rel.section === item.section ||
+          rel.category === item.category
+        );
       })
       .slice(0, 4)
       .map((rel) => ({
-        id: rel.id,
-        title: rel.title,
-        categoryLabel: isIgnouItem(rel) ? 'IGNOU' : SARKARI_CATEGORIES[rel.category]?.label || rel.category,
-        metaText: rel.lastDate ? `Closing Date: ${rel.lastDate}` : `Published: ${rel.postDate}`,
-        thumbnailUrl: rel.thumbnailUrl || `/thumbnails/${rel.id}.png`,
-        onClick: () => {
-          if (onNavigateRoute) {
-            onNavigateRoute(`/post/${rel.id}`);
-          } else {
-            window.history.pushState(null, '', `/post/${rel.id}`);
-            window.dispatchEvent(new PopStateEvent('popstate'));
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }
-        },
+        item: rel,
+        st: computeSarkariStatus(rel),
       }));
-  }, [item, allPosts, isIgnou, onNavigateRoute]);
+  }, [allPosts, item.id, item.section, item.category, isIgnou, orgName]);
 
-  const primaryAssistanceLabel = isAdmissionOrEdu
-    ? 'Get Admission Help'
-    : 'Get Application Help';
+  // Document title & Schema.org JSON-LD (JobPosting ONLY on active open/upcoming recruitment forms)
+  useEffect(() => {
+    const prevTitle = document.title;
+    document.title = `${item.title} | CSC DOST`;
 
-  const officialButtonLabel = isDirectPdfUrl
-    ? isAdmissionOrEdu
-      ? 'Official Notification (PDF)'
-      : 'Official Notification (PDF)'
-    : isIgnou
-    ? 'Official IGNOU Link'
-    : isAdmissionOrEdu
-    ? 'Official University Portal'
-    : 'Official Application Portal';
+    const scriptId = 'csc-post-structured-schema';
+    let scriptEl = document.getElementById(scriptId) as HTMLScriptElement | null;
+    if (!scriptEl) {
+      scriptEl = document.createElement('script');
+      scriptEl.id = scriptId;
+      scriptEl.type = 'application/ld+json';
+      document.head.appendChild(scriptEl);
+    }
+
+    const emitJobSchema =
+      (effectiveType === 'application' || effectiveType === 'upcoming') &&
+      isRecruitmentSarkariItem(item) &&
+      !statusInfo.isClosed &&
+      !statusInfo.isCancelled;
+
+    const schemaPayload = emitJobSchema
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'JobPosting',
+          title: item.title,
+          description: item.summary || item.shortInfo || item.title,
+          datePosted: toIsoDate(item.postDate) || '2026-11-01',
+          ...(toIsoDate(item.applyEnd || item.lastDate)
+            ? { validThrough: toIsoDate(item.applyEnd || item.lastDate) }
+            : {}),
+          employmentType: 'FULL_TIME',
+          hiringOrganization: {
+            '@type': 'Organization',
+            name: orgName,
+            sameAs: portalUrl,
+          },
+          jobLocation: {
+            '@type': 'Place',
+            address: {
+              '@type': 'PostalAddress',
+              addressRegion: 'Jammu and Kashmir',
+              addressCountry: 'IN',
+            },
+          },
+          directApply: false,
+          url: `https://www.cscdost.com/post/${item.id}`,
+        }
+      : {
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: item.title,
+          description: item.summary || item.shortInfo || item.title,
+          articleSection: orgName,
+          datePublished: toIsoDate(item.postDate) || undefined,
+          dateModified: toIsoDate(item.updatedAt || item.postDate) || undefined,
+          author: {
+            '@type': 'Organization',
+            name: 'CSC DOST',
+            url: 'https://www.cscdost.com',
+          },
+          mainEntityOfPage: {
+            '@type': 'WebPage',
+            '@id': `https://www.cscdost.com/post/${item.id}`,
+          },
+        };
+
+    scriptEl.textContent = JSON.stringify(schemaPayload);
+
+    return () => {
+      document.title = prevTitle;
+      try {
+        document.getElementById(scriptId)?.remove();
+      } catch {}
+    };
+  }, [item, effectiveType, orgName, portalUrl, statusInfo.isClosed, statusInfo.isCancelled]);
+
+  const navigateInternal = (path: string) => {
+    if (onNavigateRoute) {
+      onNavigateRoute(path);
+    } else {
+      window.history.pushState(null, '', path);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   const handleRequestAssistance = () => {
     onApplyService(
-      isAdmissionOrEdu
+      isEducation
         ? `Admission / Exam Form Assistance: ${item.title}`
         : `Filing Application: ${item.title}`
     );
   };
 
+  const applyButtonLabel = isEducation
+    ? t.getAdmissionHelp
+    : t.getApplicationHelp;
+  const officialButtonLabel = isDirectPdfPortal
+    ? t.officialPdfBtn
+    : t.officialPortalBtn;
+
+  const eligibilityText =
+    item.eligibility && !isGenericNoticePlaceholder(item.eligibility)
+      ? item.eligibility
+      : !isGenericNoticePlaceholder(item.qualification)
+      ? item.qualification
+      : undefined;
+
+  const showEligibilityAgeCard =
+    !nonAppTemplate &&
+    (Boolean(eligibilityText) ||
+      (!isEducation && hasRealDataValue(item.ageLimit)) ||
+      (hasRealDataValue(item.ageLimit) && !isGenericNoticePlaceholder(item.ageLimit)));
+
+  const showSelectionProcess =
+    !nonAppTemplate || Boolean(item.selectionProcess && item.selectionProcess.length > 0);
+
+  const selectionSteps =
+    item.selectionProcess && item.selectionProcess.length > 0
+      ? item.selectionProcess
+      : isEducation
+      ? [
+          'Verification of submitted online registration / examination form.',
+          'Merit evaluation, entrance score, or term-end assessment per university rules.',
+          'Publication of selection / result status on the official portal.',
+        ]
+      : [
+          'Written / Computer-Based Examination as prescribed in the official advertisement.',
+          'Skill, Physical, or Trade Test (wherever applicable per recruitment rules).',
+          'Document Verification of original educational, DOB, domicile, and category records.',
+        ];
+
   return (
-    <ContentPageLayout
-      breadcrumbs={
-        isIgnou
-          ? [
-              { label: 'Home', onClick: () => (onNavigateRoute ? onNavigateRoute('/') : onBack()) },
-              {
-                label: 'Education & Admissions',
-                onClick: () => (onNavigateRoute ? onNavigateRoute('/education') : onBack()),
-              },
-              {
-                label: 'IGNOU',
-                onClick: () => (onNavigateRoute ? onNavigateRoute('/education/ignou') : onBack()),
-              },
-              { label: item.learnerGroup || 'Notification' },
-            ]
-          : [
-              { label: 'Home', onClick: onBack },
-              {
-                label: isAdmissionOrEdu ? 'Admissions & Education' : 'Jobs & Recruitment',
-                onClick: () =>
-                  onNavigateRoute
-                    ? onNavigateRoute(isAdmissionOrEdu ? '/education' : '/jobs')
-                    : onBack(),
-              },
-              { label: SARKARI_CATEGORIES[item.category]?.label || 'Notice' },
-            ]
-      }
-      onBack={isIgnou && onNavigateRoute ? () => onNavigateRoute('/education/ignou') : onBack}
-      backLabel={
-        isIgnou
-          ? 'Back to IGNOU Notifications'
-          : isAdmissionOrEdu
-          ? 'Back to Education Notices'
-          : 'Back to All Notifications'
-      }
-      onPrint={() => window.print()}
-      whatsappShareUrl={buildWhatsAppNotification(item).whatsappShareUrl}
-      onShare={() => onShare(item)}
-      sections={sections}
-      activeSectionId={activeSectionId}
-      onSelectSection={scrollToSection}
-      relatedTitle={isIgnou ? 'More IGNOU Notifications' : isAdmissionOrEdu ? 'Related Academic Notices' : 'Related Recruitment Notices'}
-      relatedItems={relatedItems}
-      sidebarCta={
-        canApplyOnline
-          ? {
-              badge: isAdmissionOrEdu ? 'Admission Desk Support' : 'Application Support',
-              title: isAdmissionOrEdu
-                ? 'Need Help With Your Admission or Exam Form?'
-                : 'Need Help Submitting Your Online Application?',
-              description:
-                'Submit your documents to our CSC DOST operator desk for document sizing, form preparation, and verified online filing.',
-              buttonLabel: primaryAssistanceLabel,
-              onAction: handleRequestAssistance,
-            }
-          : {
-              badge:
-                statusInfo.verificationStatus === 'needs_verification'
-                  ? 'Needs Verification'
-                  : isClosed
-                  ? 'Applications Closed'
-                  : isUpcoming
-                  ? 'Upcoming Notice'
-                  : isCancelled
-                  ? 'Notice Cancelled'
-                  : statusInfo.badgeLabel,
-              title:
-                statusInfo.verificationStatus === 'needs_verification'
-                  ? 'Pending Official Verification'
-                  : isClosed
-                  ? 'Application Window Concluded'
-                  : isUpcoming
-                  ? 'Application Window Not Yet Open'
-                  : isCancelled
-                  ? 'Recruitment Cancelled'
-                  : 'Official Notice Update',
-              description:
-                statusInfo.verificationStatus === 'needs_verification'
-                  ? 'This notice could not be freshly corroborated from the official portal today. Check the official portal directly.'
-                  : statusInfo.closingTimeNote ||
-                    (isClosed
-                      ? 'The official submission window for this recruitment has ended. CSC DOST cannot accept assisted applications for closed notices.'
-                      : isUpcoming
-                      ? 'Online applications will open on the announced date.'
-                      : 'Check the official authority link directly for downloads, instructions, or objection/DV schedules.'),
-              buttonLabel: 'Official Authority Portal',
-              onAction: () => window.open(officialPortalUrl, '_blank', 'noopener,noreferrer'),
-            }
-      }
-      mobileStickyAction={
-        canApplyOnline
-          ? {
-              primaryLabel: primaryAssistanceLabel,
-              onPrimaryClick: handleRequestAssistance,
-              secondaryLabel: isDirectPdfUrl ? 'Official PDF' : 'Official Portal',
-              secondaryHref: officialPortalUrl,
-            }
-          : {
-              primaryLabel: isDirectPdfUrl ? 'Official PDF' : 'Official Portal',
-              onPrimaryClick: () => window.open(officialPortalUrl, '_blank', 'noopener,noreferrer'),
-              secondaryLabel: 'Back to Notices',
-              onSecondaryClick: onBack,
-            }
-      }
-      schemaJson={
-        isRecruitmentSarkariItem(item)
-          ? {
-              '@context': 'https://schema.org',
-              '@type': 'JobPosting',
-              title: item.title,
-              description: item.shortInfo || item.title,
-              datePosted: toIsoDate(item.postDate) || '2026-11-01',
-              ...(toIsoDate(item.lastDate) ? { validThrough: toIsoDate(item.lastDate) } : {}),
-              employmentType: 'FULL_TIME',
-              hiringOrganization: {
-                '@type': 'Organization',
-                name: organisationName,
-                sameAs: officialPortalUrl,
-              },
-              jobLocation: {
-                '@type': 'Place',
-                address: {
-                  '@type': 'PostalAddress',
-                  addressRegion: 'Jammu and Kashmir',
-                  addressCountry: 'IN',
-                },
-              },
-              directApply: false,
-              url: `https://www.cscdost.com/post/${item.id}`,
-            }
-          : {
-              '@context': 'https://schema.org',
-              '@type': 'Article',
-              headline: item.title,
-              description: item.shortInfo || item.title,
-              articleSection: SARKARI_CATEGORIES[item.category]?.label || 'Notice',
-              datePublished: toIsoDate(item.postDate) || item.postDate || undefined,
-              author: {
-                '@type': 'Organization',
-                name: 'CSC DOST',
-                url: 'https://www.cscdost.com',
-              },
-              mainEntityOfPage: {
-                '@type': 'WebPage',
-                '@id': `https://www.cscdost.com/post/${item.id}`,
-              },
-            }
-      }
+    <article
+      aria-labelledby="post-page-h1"
+      className="w-full bg-[var(--bg-page)] text-[var(--text-primary)] pb-28 md:pb-12"
     >
-      {/* Explicit Authoritative Status Notice Banner */}
-      {isClosed && (
-        <div className="mb-5 p-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-slate-500 shrink-0 mt-0.5" />
-          <div className="min-w-0">
-            <div className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <span>Applications Closed</span>
-              <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
-                Archived Notification
-              </span>
-            </div>
-            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
-              {statusInfo.closingTimeNote || `The online application deadline concluded on ${item.lastDate}.`} Online application assistance is disabled for this recruitment. All official links and archived details remain accessible for your reference.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {isUpcoming && (
-        <div className="mb-5 p-4 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50 dark:bg-blue-950/40 flex items-start gap-3">
-          <Clock className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-          <div className="min-w-0">
-            <div className="text-sm font-bold text-blue-950 dark:text-blue-100 flex items-center gap-2">
-              <span>Upcoming Application Window</span>
-              <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200">
-                Starts {item.startDate}
-              </span>
-            </div>
-            <p className="text-xs text-blue-800 dark:text-blue-200 mt-1 leading-relaxed">
-              Online applications are scheduled to commence on <strong>{item.startDate}</strong>. Assisted registration and form preparation will become available once the official portal opens.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {isCancelled && (
-        <div className="mb-5 p-4 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 flex items-start gap-3">
-          <XCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-          <div className="min-w-0">
-            <div className="text-sm font-bold text-rose-950 dark:text-rose-100">
-              Notification Cancelled
-            </div>
-            <p className="text-xs text-rose-800 dark:text-rose-200 mt-1 leading-relaxed">
-              This notification has been formally cancelled or withdrawn by the issuing authority. Applications are closed.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {statusInfo.verificationStatus === 'needs_verification' && (
-        <div className="mb-5 p-4 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/40 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-          <div className="min-w-0">
-            <div className="text-sm font-bold text-amber-950 dark:text-amber-100">
-              Needs Authoritative Verification
-            </div>
-            <p className="text-xs text-amber-800 dark:text-amber-200 mt-1 leading-relaxed">
-              {statusInfo.closingTimeNote || 'This post is under editorial review and pending corroboration with the latest official gazette/portal.'} Assisted applications are suspended.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {item.isTentative && (
-        <div className="mb-5 p-4 rounded-xl border border-amber-200 bg-amber-50 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-          <div className="min-w-0">
-            <div className="text-sm font-bold text-amber-950 flex flex-wrap items-center gap-2">
-              <span>Tentative Date Sheet Notice</span>
-              {item.learnerGroup && (
-                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-100 text-amber-900">
-                  Learner Group: {item.learnerGroup}
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-amber-900 mt-1 leading-relaxed">
-              This is a tentative examination date sheet published for advance student planning{item.learnerGroup ? ` (${item.learnerGroup})` : ''}. Final dates remain subject to official updates on {isIgnou ? 'ignou.ac.in' : 'the university portal'}.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* A–E: Category/Organisation Label, Single H1, Concise Intro, and Metadata */}
-      <ContentArticleHeader
-        categoryLabel={organisationName}
-        secondaryBadge={
-          item.learnerGroup
-            ? `${SARKARI_CATEGORIES[item.category]?.label || 'Notice'} · ${item.learnerGroup}`
-            : SARKARI_CATEGORIES[item.category]?.label
-        }
-        statusBadge={
-          statusInfo.isUrgentUnder7Days && statusInfo.daysRemaining !== null ? (
-            <Badge variant="urgent">{statusInfo.badgeLabel}</Badge>
-          ) : statusInfo.canApplyOnline ? (
-            <Badge variant="green">{statusInfo.badgeLabel}</Badge>
-          ) : (
-            <Badge variant="neutral">{statusInfo.badgeLabel}</Badge>
-          )
-        }
-        title={item.title}
-        subtitle={
-          item.advertisementNo ? `Reference / Advertisement No: ${item.advertisementNo}` : undefined
-        }
-        intro={intro}
-        metadata={[
-          ...(item.postDate ? [{ label: 'Published', value: item.postDate }] : []),
-          ...(item.documentDate && item.documentDate !== item.postDate
-            ? [{ label: 'Circular Date', value: item.documentDate }]
-            : []),
-          ...(item.learnerGroup ? [{ label: 'Learner Group', value: item.learnerGroup }] : []),
-          ...(isExamSchedule
-            ? [
-                {
-                  label: 'Examination Dates',
-                  value: item.startDate && item.lastDate && item.startDate !== item.lastDate
-                    ? `${item.startDate} – ${item.lastDate}`
-                    : (item.lastDate || item.startDate || 'Refer to Notice'),
-                  emphasize: true,
-                },
-                { label: 'Schedule Status', value: item.isTentative ? 'Tentative' : 'Final / Notified' },
-              ]
-            : [
-                ...(item.startDate ? [{ label: 'Starts', value: item.startDate }] : []),
-                ...(item.lastDate
-                  ? [{ label: 'Closing Date', value: item.lastDate, emphasize: true }]
-                  : []),
-                { label: 'Closing Time', value: item.closingTime || 'Inclusive through 23:59 IST' },
-              ]),
-          {
-            label: 'Last Verified',
-            value:
-              statusInfo.verificationStatus === 'needs_verification'
-                ? 'Pending Verification'
-                : item.verification?.verifiedAt || item.verification?.lastVerified || '14/11/2026 IST',
-          },
-          {
-            label: 'Verification',
-            value:
-              statusInfo.verificationStatus === 'needs_verification'
-                ? 'Needs Verification'
-                : 'Verified (Official Portal)',
-          },
-          { label: 'Source', value: organisationName },
-        ]}
-      />
-
-      {/* Master Reference 2048 x 677 px Post Thumbnail Banner */}
-      <SarkariNotificationBanner
-        item={item}
-        className="mb-5"
-        onApply={canApplyOnline ? handleRequestAssistance : undefined}
-      />
-
-      {/* F: Key Information Strip (Flat subtle background band with separators, no rounded cards) */}
-      <KeyInfoStrip facts={keyFacts} />
-
-      {/* G: Clear Primary Actions */}
-      <PrimaryActionBar
-        primaryAction={
-          canApplyOnline
-            ? {
-                label: primaryAssistanceLabel,
-                onClick: handleRequestAssistance,
-              }
-            : undefined
-        }
-        officialLinks={[
-          {
-            label: isSscTimetablePost ? 'Official Portal (ssc.gov.in)' : officialButtonLabel,
-            href: officialPortalUrl,
-          },
-          ...(item.verification?.officialNotificationUrl && item.verification.officialNotificationUrl !== officialPortalUrl
-            ? [
-                {
-                  label: isExamSchedule ? 'Official Notice (PDF)' : 'Official Notification PDF',
-                  href: item.verification.officialNotificationUrl,
-                },
-              ]
-            : []),
-        ]}
-        onTrackApplication={() => {
-          if (onNavigateRoute) {
-            onNavigateRoute('/track');
-          } else {
-            window.history.pushState(null, '', '/track');
-            window.dispatchEvent(new PopStateEvent('popstate'));
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 space-y-5 sm:space-y-6">
+        {/* Top Breadcrumbs + Back Action */}
+        <Breadcrumbs
+          items={breadcrumbItems}
+          onNavigate={onNavigateRoute}
+          rightSlot={
+            <button
+              type="button"
+              onClick={() => {
+                if (isIgnou && onNavigateRoute) {
+                  onNavigateRoute('/education/ignou');
+                } else {
+                  onBack();
+                }
+              }}
+              className="min-h-[40px] inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--text-primary)] hover:text-[#1F9D6B] cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4 rtl:rotate-180 shrink-0" aria-hidden="true" />
+              <span>{t.backToNotices}</span>
+            </button>
           }
-        }}
-        assistanceDisclaimer={
-          isSscTimetablePost
-            ? 'This notification is an official examination timetable for previously registered candidates. No fresh applications or fees are required. Check city intimation and admit cards on ssc.gov.in.'
-            : item.isTentative
-            ? `This notice is a tentative date sheet (${item.learnerGroup || 'check applicability'}). Always confirm final dates and hall tickets on ${isIgnou ? 'ignou.ac.in' : 'the official portal'}.`
-            : canApplyOnline
-            ? 'CSC DOST provides independent document preparation and form-filling assistance. You may also apply directly on the official authority portal above.'
-            : 'Refer directly to the official circular or authority link above for verified student instructions.'
-        }
-      />
+        />
 
-      {/* H: Compact Navigation to Page Sections (Sticky on Mobile) */}
-      <MobileSectionNav
-        sections={sections}
-        activeSectionId={activeSectionId}
-        onSelectSection={scrollToSection}
-      />
-
-      {/* WhatsApp Channel Alert Card */}
-      <WhatsAppChannelInPostCard postTitle={item.title} />
-
-      {/* I: Main Content Sections */}
-
-      {/* 1. OVERVIEW */}
-      <ContentSection
-        id="overview-section"
-        title="Overview"
-        subtitle={
-          isAdmissionOrEdu
-            ? 'Summary of the academic notice, institution details, and key instructions.'
-            : 'Summary of the recruitment notification, recruiting authority, and key parameters.'
-        }
-      >
-        <p className="text-xs sm:text-sm text-[#102A43] leading-relaxed">
-          {item.shortInfo || intro}
-        </p>
-        {remainder && (
-          <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">{remainder}</p>
+        {/* Duplicate Entry Continuity Notice (keeps legacy /post/<slug> alive cleanly) */}
+        {item.duplicateOfId && (
+          <div className="rounded-2xl border border-[var(--status-closing-border)] bg-[var(--status-closing-bg)] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-start">
+            <div className="flex items-start gap-2.5 min-w-0">
+              <Info
+                className="w-5 h-5 text-[var(--status-closing-text)] shrink-0 mt-0.5"
+                aria-hidden="true"
+              />
+              <div className="min-w-0 space-y-0.5">
+                <div className="text-sm font-bold text-[var(--status-closing-text)]">
+                  {t.duplicateNoticeBannerTitle}
+                </div>
+                <p className="text-xs sm:text-sm text-[var(--text-primary)] m-0 leading-relaxed">
+                  {item.duplicateNote ||
+                    'This entry refers to the same official notice as our primary updated post.'}
+                </p>
+              </div>
+            </div>
+            <a
+              href={`/post/${item.duplicateOfId}`}
+              onClick={(e) => {
+                e.preventDefault();
+                navigateInternal(`/post/${item.duplicateOfId}`);
+              }}
+              className="min-h-[44px] px-4 py-2 rounded-xl bg-[#101A36] dark:bg-[#F5A623] text-white dark:text-[#101A36] text-sm font-bold inline-flex items-center justify-center gap-1.5 no-underline shrink-0"
+            >
+              <span>{t.viewCanonicalNotice}</span>
+              <ArrowRight className="w-4 h-4 rtl:rotate-180 shrink-0" aria-hidden="true" />
+            </a>
+          </div>
         )}
 
-        <KeyValueRows
-          rows={[
-            {
-              label: isAdmissionOrEdu ? 'University / Institution' : 'Recruiting Organisation',
-              value: organisationName,
-              boldValue: true,
-            },
-            {
-              label: isAdmissionOrEdu ? 'Notice / Programme Title' : 'Post / Examination Title',
-              value: item.title,
-              boldValue: true,
-            },
-            {
-              label: 'Advertisement / Reference No.',
-              value: item.advertisementNo,
-            },
-            {
-              label: isAdmissionOrEdu ? 'Available Seats / Intake' : 'Total Vacancies',
-              value: item.totalPosts,
-              boldValue: true,
-            },
-            {
-              label: 'Current Status',
-              value: isInfoOnlyNotice ? 'Published — Check Official Notice' : statusInfo.badgeLabel,
-              tone:
-                statusInfo.applicationStatus === 'open'
-                  ? 'emerald'
-                  : statusInfo.isClosingSoon
-                  ? 'rose'
-                  : 'default',
-              boldValue: true,
-            },
-          ]}
-        />
-      </ContentSection>
-
-      {/* 2. IMPORTANT DATES / EXAMINATION TIMETABLE */}
-      <ContentSection
-        id="important-dates"
-        title={isExamSchedule ? 'Examination Timetable & Schedule' : 'Important Dates'}
-        subtitle={
-          isExamSchedule
-            ? 'Official schedule of computer-based and skill examinations as notified by the Commission.'
-            : 'Verify the notification release date, registration window, and closing deadline.'
-        }
-      >
-        <KeyValueRows
-          rows={[
-            {
-              label: 'Notification Published Date',
-              value: item.postDate,
-            },
-            ...(isExamSchedule
-              ? [
-                  ...(item.startDate
-                    ? [
-                        {
-                          label: 'Commencement Date',
-                          value: item.startDate,
-                          tone: 'emerald' as const,
-                          boldValue: true,
-                        },
-                      ]
-                    : []),
-                  ...(item.lastDate
-                    ? [
-                        {
-                          label: item.isTentative ? 'Schedule Window End' : 'Closing / Conclusion Date',
-                          value: item.lastDate,
-                          tone: 'rose' as const,
-                          boldValue: true,
-                        },
-                      ]
-                    : []),
-                  ...(isSscTimetablePost
-                    ? [
-                        {
-                          label: 'Coast Guard Enrolled Persons Test (CGEPT) 01/2027 & 02/2027',
-                          value: '17–18 November 2026 (Computer Based Exam)',
-                          boldValue: true,
-                        },
-                        {
-                          label: 'Annual Departmental Typing & Stenographer Skill Test 2025',
-                          value: '20–21 November 2026 (Skill / Typing Test)',
-                          boldValue: true,
-                        },
-                        {
-                          label: 'Sub-Inspector in Delhi Police & CAPFs Examination (Paper-II)',
-                          value: '28 November 2026 (Computer Based Exam)',
-                          boldValue: true,
-                        },
-                        {
-                          label: 'City Intimation & Admit Card Status',
-                          value: 'To be hosted on the official SSC website (ssc.gov.in) prior to examination.',
-                        },
-                      ]
-                    : [
-                        {
-                          label: 'Official Notice Status',
-                          value: item.isTentative
-                            ? `Tentative Date Sheet${item.learnerGroup ? ` (${item.learnerGroup})` : ''} — monitor official website for final revision.`
-                            : 'Follow instructions and hall ticket updates published on the official portal.',
-                        },
-                      ]),
-                ]
-              : [
-                  {
-                    label: isAdmissionOrEdu
-                      ? 'Registration / Form Start Date'
-                      : 'Online Application Start Date',
-                    value: item.startDate || item.postDate,
-                    tone: 'emerald' as const,
-                    boldValue: true,
-                  },
-                  {
-                    label: isAdmissionOrEdu
-                      ? 'Last Date for Form Submission'
-                      : 'Last Date to Apply Online',
-                    value: item.lastDate || 'Refer to official notification',
-                    tone: 'rose' as const,
-                    boldValue: true,
-                  },
-                  {
-                    label: 'Fee Payment Closing Date',
-                    value: item.lastDate || 'As specified in official notice',
-                  },
-                  {
-                    label: isAdmissionOrEdu
-                      ? 'Entrance / Examination Schedule'
-                      : 'Admit Card & Examination Date',
-                    value: 'As notified by the authority on the official portal',
-                  },
-                ]),
-          ]}
-        />
-      </ContentSection>
-
-      {/* 3. ELIGIBILITY & QUALIFICATIONS */}
-      <ContentSection
-        id="eligibility-section"
-        title={
-          isAdmissionOrEdu
-            ? 'Eligibility & Academic Requirements'
-            : 'Eligibility & Qualifications'
-        }
-        subtitle="Minimum academic qualifications and mandatory certificates required before applying."
-      >
-        <div className="p-3.5 bg-[#F6F8FC] border-l-2 border-[#2563EB] text-xs sm:text-sm text-[#102A43] leading-relaxed">
-          {item.eligibility ||
-            (isAdmissionOrEdu
-              ? 'Candidates must have passed the qualifying examination from a recognised board or university as prescribed in the official admission brochure.'
-              : 'Candidates must possess the required educational qualification (10th / 12th / Diploma / Graduation) from a recognised board or university as specified in the official recruitment notification.')}
-        </div>
-        <p className="text-xs text-[#64748B] leading-relaxed">
-          Applicants must ensure that their qualifying marksheet or degree certificate is issued on
-          or before the cut-off date specified by {organisationName}.
-        </p>
-      </ContentSection>
-
-      {/* 4. AGE CRITERIA (Omitted for examination schedule notices) */}
-      {!isExamSchedule && (!isAdmissionOrEdu || item.ageLimit) && (
-        <ContentSection
-          id="age-criteria"
-          title="Age Criteria"
-          subtitle="Prescribed age requirements as notified in the official advertisement."
-        >
-          <KeyValueRows
-            rows={[
-              {
-                label: 'Prescribed Age Limit',
-                value:
-                  item.ageLimit ||
-                  'As per official recruitment rules of the recruiting board.',
-                boldValue: true,
-              },
-              {
-                label: 'Age Relaxation',
-                value:
-                  item.ageRelaxationDetails ||
-                  (item.ageLimit?.toLowerCase().includes('relaxation')
-                    ? 'Refer to specific age criteria above'
-                    : 'Refer to the official notification for category-specific age relaxations, if applicable.'),
-              },
-              {
-                label: 'Age Verification Document',
-                value: 'Date of Birth recorded on the Class 10th (Matriculation) certificate.',
-              },
-            ]}
-          />
-        </ContentSection>
-      )}
-
-      {/* 5. FEES (Omitted for examination schedule notices) */}
-      {!isExamSchedule && (
-        <ContentSection
-          id="fee-structure"
-          title={isAdmissionOrEdu ? 'Fee Details' : 'Application Fees'}
-          subtitle="Official statutory examination or registration fees payable during online submission."
-        >
-          <KeyValueRows
-            rows={[
-              ...(item.feePerSubject
-                ? [
-                    {
-                      label: 'Fee Per Subject / Paper',
-                      value: item.feePerSubject,
-                      boldValue: true,
-                    },
-                  ]
-                : []),
-              {
-                label: isAdmissionOrEdu
-                  ? 'General / Open Merit Fee'
-                  : 'General / OBC / Open Merit Candidates',
-                value: item.fees?.genObc || 'Refer to official notification',
-                boldValue: true,
-              },
-              {
-                label: 'SC / ST / PwD / Reserved Categories',
-                value: item.fees?.scSt || 'As per statutory fee structure in notice',
-                tone: 'emerald',
-                boldValue: true,
-              },
-              {
-                label: (item.fees?.genObc && (item.fees.genObc.includes('₹0') || item.fees.genObc.toLowerCase().includes('no application fee') || item.fees.genObc.toLowerCase().includes('exempted')))
-                  ? 'Application Fee Status'
-                  : 'Accepted Payment Modes',
-                value: item.paymentInstructions || ((item.fees?.genObc && (item.fees.genObc.includes('₹0') || item.fees.genObc.toLowerCase().includes('no application fee') || item.fees.genObc.toLowerCase().includes('exempted')))
-                  ? '₹0/- (Exempted / Free for all candidates). No payment is required.'
-                  : 'Online via official recruitment board payment gateway (Net Banking, UPI, Debit/Credit Card)'),
-              },
-            ]}
-          />
-        </ContentSection>
-      )}
-
-      {/* 6. VACANCY / PROGRAMME BREAKDOWN (Omitted for examination schedule notices) */}
-      {!isExamSchedule && item.departmentBreakdown && item.departmentBreakdown.length > 0 && (
-        <ContentSection
-          id="vacancy-details"
-          title={isAdmissionOrEdu ? 'Programme & Seat Breakdown' : 'Vacancy Breakdown'}
-          subtitle="Detailed post-wise or department-wise distribution."
-        >
-          <div className="w-full overflow-x-auto border border-[#E2E8F0] rounded-lg">
-            <table className="w-full text-left text-xs sm:text-sm border-collapse">
-              <thead>
-                <tr className="bg-[#F6F8FC] border-b border-[#E2E8F0] text-[#64748B] font-semibold">
-                  <th className="py-2.5 px-3">Department / Wing</th>
-                  <th className="py-2.5 px-3">Post / Programme</th>
-                  <th className="py-2.5 px-3 text-center">Posts / Seats</th>
-                  <th className="py-2.5 px-3">Qualification</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#E2E8F0]">
-                {item.departmentBreakdown.map((dept, idx) => (
-                  <tr key={idx} className="hover:bg-[#F6F8FC]/60">
-                    <td className="py-2.5 px-3 font-semibold text-[#102A43]">{dept.department}</td>
-                    <td className="py-2.5 px-3 text-[#2563EB] font-medium">{dept.postName}</td>
-                    <td className="py-2.5 px-3 text-center font-bold text-[#102A43]">
-                      {dept.posts}
-                    </td>
-                    <td className="py-2.5 px-3 text-[#64748B] text-xs">{dept.qualification}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </ContentSection>
-      )}
-
-      {/* 7. SELECTION / COUNSELLING / EXAMINATION PROCESS */}
-      <ContentSection
-        id="selection-process"
-        title={
-          isAdmissionOrEdu
-            ? 'Selection, Counselling & Examination Details'
-            : 'Selection Process'
-        }
-        subtitle={
-          isAdmissionOrEdu
-            ? 'How candidates are evaluated and admitted for this programme or examination.'
-            : 'Stages of evaluation conducted by the recruiting authority.'
-        }
-      >
-        <ContentChecklist
-          columns={1}
-          items={
-            item.selectionProcess && item.selectionProcess.length > 0
-              ? item.selectionProcess
-              : isAdmissionOrEdu
-              ? [
-                  'Verification of online registration form and academic eligibility credentials.',
-                  'Academic merit evaluation or entrance test score as prescribed in the official brochure.',
-                  'Publication of merit list / selection list and counselling schedule on the official portal.',
-                  'Document verification of original marksheets and certificates at the allotted department.',
-                ]
-              : [
-                  'Written Examination / Computer-Based Test (wherever prescribed in the official notification).',
-                  'Skill / Trade / Physical Standards Test as applicable for specific technical or uniformed posts.',
-                  'Document Verification of original educational, identity, and reservation certificates.',
-                  'Final selection list published by the official recruiting authority based on notification rules.',
-                ]
-          }
-        />
-      </ContentSection>
-
-      {/* 8. DOCUMENTS REQUIRED */}
-      <ContentSection
-        id="documents-required"
-        title={isAdmissionOrEdu ? 'Required Documents' : 'Documents Required'}
-        subtitle="Keep clear scanned copies of these documents ready before starting your online form."
-      >
-        <ContentChecklist
-          items={
-            item.documentsRequired && item.documentsRequired.length > 0
-              ? item.documentsRequired
-              : isAdmissionOrEdu
-              ? [
-                  'Class 10th (Matriculation) Marksheet & Date of Birth Certificate',
-                  'Class 12th / Qualifying Degree Marksheet & Provisional Certificate',
-                  'Aadhaar Card or Valid Government Photo Identity',
-                  'Domicile Certificate (for state/UT quota seats)',
-                  'Reserved Category Certificate (SC/ST/OBC/RBA/EWS), if applicable',
-                  'Recent Passport-Size Colour Photograph & Scanned Signature',
-                ]
-              : [
-                  'Aadhaar Card / Valid Government Photo Identity Proof',
-                  'Class 10th Marksheet & Certificate (for Date of Birth verification)',
-                  'Qualifying Educational Marksheets & Degree / Diploma Certificates',
-                  'Domicile Certificate issued by competent authority',
-                  'Category / Reservation Certificate (SC/ST/OBC/EWS/RBA), if applicable',
-                  'Recent Passport-Size Photograph & Scanned Signature per official portal specifications',
-                ]
-          }
-        />
-      </ContentSection>
-
-      {/* 9. HOW TO APPLY / CANDIDATE ACTION GUIDELINES */}
-      {isSscTimetablePost ? (
-        <ContentSection
-          id="candidate-guidelines"
-          title="Who Should Read This Schedule & Next Steps"
-          subtitle="Official candidate action guidelines strictly based on Commission Notice F. No. HQ-C1101/9/2026-C1/1."
-        >
-          <div className="space-y-4">
-            <div className="p-4 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 rounded-xl space-y-2">
-              <h4 className="text-sm font-bold text-blue-950 dark:text-blue-100 flex items-center gap-2">
-                <span>🎯</span> Who Should Read This Schedule
-              </h4>
-              <ul className="text-xs sm:text-sm text-blue-900 dark:text-blue-200 space-y-2 list-disc pl-5 leading-relaxed">
-                <li>
-                  <strong>Coast Guard Enrolled Persons Test (CGEPT):</strong> Candidates who previously registered for Coast Guard CGEPT Batches 01/2027 &amp; 02/2027 to appear in the Computer Based Examination on 17 &amp; 18 November 2026.
-                </li>
-                <li>
-                  <strong>Departmental Typing &amp; Stenographer Candidates:</strong> Eligible serving Central Government employees registered for the Annual Departmental Typing Test and Stenographer Skill Test 2025 scheduled on 20 &amp; 21 November 2026.
-                </li>
-                <li>
-                  <strong>Sub-Inspector in Delhi Police &amp; CAPFs Examination:</strong> Shortlisted candidates who qualified in Paper-I and cleared the Physical Standard Test / Physical Endurance Test (PST/PET) appearing for Paper-II on 28 November 2026.
-                </li>
-              </ul>
-            </div>
-
-            <div className="p-4 bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 rounded-xl space-y-2">
-              <h4 className="text-sm font-bold text-emerald-950 dark:text-emerald-100 flex items-center gap-2">
-                <span>📋</span> What Action Candidates Must Take
-              </h4>
-              <ol className="text-xs sm:text-sm text-emerald-900 dark:text-emerald-200 space-y-2 list-decimal pl-5 leading-relaxed">
-                <li>
-                  <strong>Verify Test Dates:</strong> Note your scheduled test date and shift timing above.
-                </li>
-                <li>
-                  <strong>Check City Intimation Slip:</strong> Visit the official SSC website (<code className="font-mono text-xs bg-emerald-100 dark:bg-emerald-900/50 px-1.5 py-0.5 rounded">ssc.gov.in</code>) approximately 7–10 days before the exam date to check your allocated examination city.
-                </li>
-                <li>
-                  <strong>Download e-Admit Card:</strong> Regional SSC websites publish admission certificates 3 to 4 days prior to your test date. Download, print in high resolution, and read all exam instructions.
-                </li>
-                <li>
-                  <strong>Exam Day Reporting:</strong> Arrive at your examination centre well before gate closing with your printed e-Admit Card, two recent passport photos, and valid original Government Photo ID (Aadhaar, Voter ID, Passport, or DL).
-                </li>
-              </ol>
-            </div>
-
-            <div className="p-3.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-              <strong>Notice:</strong> This is strictly an examination timetable for registered candidates. No fresh application form or fee is required.
+        {/* Contextual Status Callouts */}
+        {statusInfo.isCancelled && (
+          <div className="rounded-2xl border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 p-4 flex items-start gap-3 text-start">
+            <XCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" aria-hidden="true" />
+            <div className="space-y-1 min-w-0">
+              <div className="text-sm font-bold text-rose-900 dark:text-rose-100">
+                Notification Cancelled / Withdrawn
+              </div>
+              <p className="text-sm text-rose-800 dark:text-rose-200 m-0 leading-relaxed">
+                This notice has been cancelled or superseded by the issuing authority.
+              </p>
             </div>
           </div>
-        </ContentSection>
-      ) : (
-        <ContentSection
-          id="how-to-apply"
-          title={isAdmissionOrEdu ? 'Application / Registration Process' : 'How to Apply'}
-          subtitle="Follow these steps to submit your form online or request assistance through CSC DOST."
-        >
-          <StepByStepList
-            steps={[
-              {
-                title: isAdmissionOrEdu
-                  ? 'Open the Official University / Examination Portal'
-                  : 'Visit the Official Recruitment Portal',
-                description: `Access ${officialPortalUrl} and locate the notification for "${item.title}".`,
-              },
-              {
-                title: 'Complete Candidate Registration / Login',
-                description:
-                  'Sign in using your One-Time Registration (OTR) credentials or register with an active mobile number and email ID.',
-              },
-              {
-                title: 'Enter Personal & Academic Particulars',
-                description:
-                  'Fill in your name, parentage, date of birth, and qualification details strictly matching your Class 10th and qualifying marksheets.',
-              },
-              {
-                title: 'Upload Photograph, Signature & Certificates',
-                description:
-                  'Upload clear, properly sized JPG/PDF scans of your passport photo, signature, and supporting certificates.',
-              },
-              {
-                title: (item.fees?.genObc && (item.fees.genObc.includes('₹0') || item.fees.genObc.toLowerCase().includes('no application fee') || item.fees.genObc.toLowerCase().includes('exempted')))
-                  ? 'Submit Online Form & Download Confirmation'
-                  : 'Pay the Statutory Fee & Download Confirmation Receipt',
-                description: (item.fees?.genObc && (item.fees.genObc.includes('₹0') || item.fees.genObc.toLowerCase().includes('no application fee') || item.fees.genObc.toLowerCase().includes('exempted')))
-                  ? 'Submit your form on the official portal and download a printout of the final application confirmation receipt with your reference number.'
-                  : 'Complete the online fee payment and save a PDF copy and printout of the final submitted form with your application reference number.',
-              },
-            ]}
-          />
-        </ContentSection>
-      )}
+        )}
 
-      {/* 10. OFFICIAL SOURCES & ASSISTANCE */}
-      <OfficialSourcesAndAssistance
-        sectionId="official-links"
-        organisationName={organisationName}
-        officialLinks={[
-          {
-            label: officialButtonLabel,
-            href: officialPortalUrl,
-          },
-        ]}
-        assistanceTitle={
-          isAdmissionOrEdu
-            ? 'CSC DOST Admission & Examination Form Desk'
-            : 'CSC DOST Online Application Assistance Desk'
-        }
-        assistanceDescription={
-          canApplyOnline
-            ? "Prefer assisted filing? Submit your documents through CSC DOST and our operator will resize your photo/signature, prepare your online form, and share your confirmation receipt."
-            : "The official application window has closed. CSC DOST assisted filing is disabled for this recruitment."
-        }
-        assistanceButtonLabel={primaryAssistanceLabel}
-        onRequestAssistance={canApplyOnline ? handleRequestAssistance : undefined}
-      />
+        {statusInfo.verificationStatus === 'needs_verification' && (
+          <div className="rounded-2xl border border-[var(--status-closing-border)] bg-[var(--status-closing-bg)] p-4 flex items-start gap-3 text-start">
+            <AlertCircle
+              className="w-5 h-5 text-[var(--status-closing-text)] shrink-0 mt-0.5"
+              aria-hidden="true"
+            />
+            <div className="space-y-1 min-w-0">
+              <div className="text-sm font-bold text-[var(--status-closing-text)]">
+                Pending Official Portal Verification
+              </div>
+              <p className="text-sm text-[var(--text-primary)] m-0 leading-relaxed">
+                {statusInfo.closingTimeNote ||
+                  'Please verify live dates and eligibility directly on the official authority website.'}
+              </p>
+            </div>
+          </div>
+        )}
 
-      {/* Reusable CSC DOST Helpdesk Contact Card */}
-      <div className="my-5">
-        <HelpApplyingCard contextTitle={item.title} />
-      </div>
+        {effectiveType === 'upcoming' && (
+          <div className="rounded-2xl border border-[var(--status-upcoming-border)] bg-[var(--status-upcoming-bg)] p-4 flex items-start gap-3 text-start">
+            <Clock
+              className="w-5 h-5 text-[var(--status-upcoming-text)] shrink-0 mt-0.5"
+              aria-hidden="true"
+            />
+            <div className="space-y-1 min-w-0">
+              <div className="text-sm font-bold text-[var(--status-upcoming-text)]">
+                Upcoming Registration Window · {statusInfo.badgeLabel}
+              </div>
+              <p className="text-sm text-[var(--text-primary)] m-0 leading-relaxed">
+                {statusInfo.closingTimeNote ||
+                  `Registration is scheduled to open on ${item.applyStart || item.startDate}.`}
+              </p>
+            </div>
+          </div>
+        )}
 
-      {/* 11. FREQUENTLY ASKED QUESTIONS */}
-      <ContentSection
-        id="faqs-section"
-        title="Frequently Asked Questions"
-        showBottomBorder={false}
-      >
-        <div className="divide-y divide-[#E2E8F0] border-t border-[#E2E8F0]">
-          <div className="py-3 space-y-1">
-            <h3 className="text-xs sm:text-sm font-bold text-[#102A43]">
-              Where can I verify the official notification for {item.title}?
-            </h3>
-            <p className="text-xs text-[#64748B] leading-relaxed">
-              You can verify the official notice and submit applications directly through{' '}
-              <span className="font-semibold text-[#102A43]">{organisationName}</span> at{' '}
+        {!nonAppTemplate && statusInfo.isClosed && !statusInfo.isCancelled && (
+          <div className="rounded-2xl border border-[var(--status-closed-border)] bg-[var(--status-closed-bg)] p-4 flex items-start gap-3 text-start">
+            <AlertCircle
+              className="w-5 h-5 text-[var(--status-closed-text)] shrink-0 mt-0.5"
+              aria-hidden="true"
+            />
+            <div className="space-y-1 min-w-0">
+              <div className="text-sm font-bold text-[var(--text-primary)]">
+                Application Window Closed ({item.applyEnd || item.lastDate || statusInfo.dateValue})
+              </div>
+              <p className="text-sm text-[var(--text-secondary)] m-0 leading-relaxed">
+                {statusInfo.closingTimeNote ||
+                  'The online submission deadline for this notification has passed. Official archive details remain available below.'}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {effectiveType === 'answer_key' && statusInfo.computedStatus === 'closing_soon' && (
+          <div className="rounded-2xl border border-[var(--status-closing-border)] bg-[var(--status-closing-bg)] p-4 flex items-start gap-3 text-start">
+            <Clock
+              className="w-5 h-5 text-[var(--status-closing-text)] shrink-0 mt-0.5"
+              aria-hidden="true"
+            />
+            <div className="space-y-1 min-w-0">
+              <div className="text-sm font-bold text-[var(--status-closing-text)]">
+                {getPostStatusBadgeLabel(statusInfo, language)}
+              </div>
+              <p className="text-sm text-[var(--text-primary)] m-0 leading-relaxed">
+                {statusInfo.closingTimeNote ||
+                  `Answer key challenge window closes on ${statusInfo.dateValue}.`}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {item.isTentative && (
+          <div className="rounded-2xl border border-[var(--status-closing-border)] bg-[var(--status-closing-bg)] p-4 flex items-start gap-3 text-start">
+            <Info
+              className="w-5 h-5 text-[var(--status-closing-text)] shrink-0 mt-0.5"
+              aria-hidden="true"
+            />
+            <div className="space-y-1 min-w-0">
+              <div className="text-sm font-bold text-[var(--status-closing-text)]">
+                Tentative Date Sheet Notice
+              </div>
+              <p className="text-sm text-[var(--text-primary)] m-0 leading-relaxed">
+                This schedule is tentative for advance student planning. Confirm final examination dates on your official hall ticket.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Header Block + DateBlock */}
+        <header className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-4 sm:p-6 space-y-4 text-start shadow-2xs">
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusPill
+              status={statusInfo.computedStatus}
+              label={getPostStatusBadgeLabel(statusInfo, language)}
+              size="md"
+            />
+            <Chip>{orgName}</Chip>
+            {item.jkDomicile && (
+              <Chip variant="verified">{t.jkDomicileBadge}</Chip>
+            )}
+            {isIgnou && item.learnerGroup && (
+              <Chip variant="accent">{item.learnerGroup}</Chip>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_220px] gap-4 items-start">
+            <div className="space-y-2 min-w-0">
+              <h1
+                id="post-page-h1"
+                className="text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] leading-snug tracking-tight m-0 break-words"
+              >
+                {item.title}
+              </h1>
+
+              {item.advertisementNo && (
+                <p className="text-sm font-semibold text-[var(--text-secondary)] m-0">
+                  {item.advertisementNo}
+                </p>
+              )}
+
+              {intro && (
+                <p className="text-base text-[var(--text-secondary)] leading-relaxed m-0 max-w-3xl break-words">
+                  {intro}
+                </p>
+              )}
+
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-[var(--text-muted)] pt-1 tabular-nums">
+                {item.postDate && <span>Published: {item.postDate}</span>}
+                {item.updatedAt && item.updatedAt !== item.postDate && (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span>Verified: {item.updatedAt}</span>
+                  </>
+                )}
+                <span aria-hidden="true">·</span>
+                <span>{t.independentChip}</span>
+              </div>
+            </div>
+
+            <DateBlock
+              tone={statusInfo.computedStatus}
+              label={statusInfo.dateLabel}
+              dateText={statusInfo.dateValue}
+              hint={statusInfo.dateHint}
+              className="w-full"
+            />
+          </div>
+
+          {/* Primary Actions Bar */}
+          <div className="pt-2 border-t border-[var(--border-default)] flex flex-wrap items-center justify-between gap-3">
+            <PostExternalCtaRow
+              portalUrl={portalUrl}
+              pdfUrl={pdfUrl}
+              portalLabel={officialButtonLabel}
+              pdfLabel={t.officialPdfBtn}
+              canApplyOnline={statusInfo.canApplyOnline}
+              applyLabel={applyButtonLabel}
+              onApplyClick={handleRequestAssistance}
+            />
+
+            <div className="flex items-center gap-2">
               <a
-                href={officialPortalUrl}
+                href={whatsappShareUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#2563EB] hover:underline break-all"
+                onClick={(e) => {
+                  if (onShare) {
+                    e.preventDefault();
+                    onShare(item);
+                  }
+                }}
+                className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[var(--status-open-bg)] text-[var(--status-open-text)] border border-[var(--status-open-border)] font-bold text-sm inline-flex items-center gap-1.5 no-underline transition-colors hover:opacity-90"
               >
-                {officialPortalUrl}
+                <MessageCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>{t.shareOnWhatsApp}</span>
               </a>
-              .
-            </p>
+
+              <button
+                type="button"
+                onClick={() => window.print()}
+                aria-label="Print notice details"
+                className="min-h-[44px] min-w-[44px] px-3 py-2 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-default)] font-semibold text-sm inline-flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span className="hidden sm:inline">Print</span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* Official Summary Banner */}
+        <SarkariNotificationBanner
+          item={item}
+          onApply={statusInfo.canApplyOnline ? handleRequestAssistance : undefined}
+        />
+
+        {/* Fixed-height AdSlot below header/banner (never adjacent to CTAs or inside forms) */}
+        <AdSlot />
+
+        {/* Main 2-Column Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start">
+          {/* MAIN CONTENT COLUMN */}
+          <div className="min-w-0 space-y-5">
+            {/* Key Facts Grid tailored per template type */}
+            <PostFactsGrid
+              item={item}
+              type={effectiveType}
+              statusInfo={statusInfo}
+              orgName={orgName}
+              labels={{
+                asPerNotice: t.asPerOfficialNotice,
+                vacanciesLabel: t.vacanciesLabel,
+                qualificationLabel: t.qualificationLabel,
+                venueLabel: t.venueLabel,
+                reportingTimeLabel: t.reportingTimeLabel,
+                examWindowLabel: t.examWindowLabel,
+                dvDateLabel: t.dvDateLabel,
+                resultOutLabel: t.resultOutLabel,
+                keyOutLabel: t.keyOutLabel,
+                windowOpensLabel: t.windowOpensLabel,
+                closingDateLabel: t.closingDateLabel,
+                closedOnLabel: t.closedOnLabel,
+              }}
+            />
+
+            {/* Overview Card */}
+            <section
+              id="overview-section"
+              aria-label={t.postOverview}
+              className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-4 sm:p-5 space-y-3 text-start"
+            >
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-[#1F9D6B] shrink-0" aria-hidden="true" />
+                <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)] m-0">
+                  {t.postOverview}
+                </h2>
+              </div>
+              <p className="text-sm sm:text-base text-[var(--text-primary)] leading-relaxed m-0">
+                {item.shortInfo || intro}
+              </p>
+              {remainder && (
+                <p className="text-sm text-[var(--text-secondary)] leading-relaxed m-0">
+                  {remainder}
+                </p>
+              )}
+              {statusInfo.closingTimeNote && (
+                <p className="text-sm font-medium text-[var(--text-secondary)] bg-[var(--bg-subtle)] border border-[var(--border-default)] rounded-xl p-3 m-0">
+                  {statusInfo.closingTimeNote}
+                </p>
+              )}
+            </section>
+
+            {/* STRICT: Fee Section ONLY rendered for application | admission | upcoming */}
+            {!nonAppTemplate && (
+              <PostFeeSection
+                item={item}
+                sectionTitle={t.postFeeDetails}
+                asPerNoticeText={t.asPerOfficialNotice}
+              />
+            )}
+
+            {/* Eligibility & Age Section (ONLY rendered when meaningful data exists on application/admission/upcoming) */}
+            {showEligibilityAgeCard && (
+              <section
+                id="eligibility-section"
+                aria-label="Eligibility & Age Criteria"
+                className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-4 sm:p-5 space-y-3 text-start"
+              >
+                <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)] m-0">
+                  {isEducation
+                    ? 'Eligibility & Academic Requirements'
+                    : 'Eligibility & Age Criteria'}
+                </h2>
+
+                {eligibilityText && (
+                  <p className="text-sm sm:text-base text-[var(--text-primary)] leading-relaxed bg-[var(--bg-subtle)] border border-[var(--border-default)] rounded-xl p-3.5 m-0">
+                    {eligibilityText}
+                  </p>
+                )}
+
+                {hasRealDataValue(item.ageLimit) &&
+                  (!isEducation || !isGenericNoticePlaceholder(item.ageLimit)) && (
+                    <div className="pt-1">
+                      <dl className="divide-y divide-[var(--border-default)] border-t border-[var(--border-default)] m-0">
+                        <div className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4">
+                          <dt className="text-sm font-medium text-[var(--text-secondary)]">
+                            {t.postAgeLimit}
+                          </dt>
+                          <dd className="text-sm sm:text-base font-bold text-[var(--text-primary)] m-0">
+                            {item.ageLimit}
+                          </dd>
+                        </div>
+                        {hasRealDataValue(item.ageRelaxationDetails) && (
+                          <div className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4">
+                            <dt className="text-sm font-medium text-[var(--text-secondary)]">
+                              Age Relaxation
+                            </dt>
+                            <dd className="text-sm text-[var(--text-primary)] m-0">
+                              {item.ageRelaxationDetails}
+                            </dd>
+                          </div>
+                        )}
+                      </dl>
+                    </div>
+                  )}
+              </section>
+            )}
+
+            {/* Special SSC Timetable Table */}
+            {isSscTimetablePost && <PostSscTimetableTable />}
+
+            {/* Vacancy / Programme Table (completely hidden when empty) */}
+            <PostVacancyTable
+              rows={vacancyRows}
+              title={t.postVacancyBreakdown}
+              isEducation={isEducation}
+            />
+
+            {/* Selection Process (hidden on non-application types unless custom verified stages exist) */}
+            {showSelectionProcess && (
+              <section
+                id="selection-process"
+                aria-label="Selection Process"
+                className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-4 sm:p-5 space-y-3 text-start"
+              >
+                <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)] m-0">
+                  {isEducation ? 'Selection & Evaluation' : 'Selection Process'}
+                </h2>
+                <ul className="space-y-2 list-none m-0 p-0">
+                  {selectionSteps.map((step, idx) => (
+                    <li
+                      key={`${step}-${idx}`}
+                      className="flex items-start gap-2.5 text-sm sm:text-base text-[var(--text-primary)] leading-relaxed"
+                    >
+                      <CheckCircle2
+                        className="w-4 h-4 text-[#1F9D6B] shrink-0 mt-1"
+                        aria-hidden="true"
+                      />
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {/* Interactive Checklist With Progress (hidden automatically if empty) */}
+            {checklistItems.length > 0 && (
+              <ChecklistWithProgress
+                title={getChecklistTitleForType(effectiveType)}
+                items={checklistItems}
+                storageKey={item.id}
+              />
+            )}
+
+            {/* Type-Specific Action / Instruction Steps (NEVER "How to apply online" on non-application posts) */}
+            {processConfig && (
+              <PostProcessSteps
+                id={processConfig.id}
+                title={processConfig.title}
+                subtitle={processConfig.subtitle}
+                steps={processConfig.steps}
+              />
+            )}
+
+            {/* Free WhatsApp Alert Subscription */}
+            <AlertsBox />
+
+            {/* Citizen Helpdesk Card (Operator Wasim Ahmad Khanday, VLE ID 212515670018, Qazigund) */}
+            <HelpApplyingCard contextTitle={item.title} />
+
+            {/* FAQs Accordion + FAQPage Schema */}
+            <FaqAccordion items={faqItems} injectSchema />
+
+            {/* Bottom Fixed-Height AdSlot */}
+            <AdSlot />
           </div>
 
-          <div className="py-3 space-y-1">
-            <h3 className="text-xs sm:text-sm font-bold text-[#102A43]">
-              What happens if my online fee payment is deducted but the form shows pending?
-            </h3>
-            <p className="text-xs text-[#64748B] leading-relaxed">
-              Avoid paying a second time immediately. Wait 24–48 hours for payment gateway
-              reconciliation or use the &ldquo;Verify Payment Status&rdquo; option inside your
-              candidate login dashboard.
-            </p>
-          </div>
+          {/* STICKY RIGHT SIDEBAR (320px Desktop, Stacked on Mobile) */}
+          <aside className="space-y-5 lg:sticky lg:top-20">
+            {/* Primary Portal & Assisted Application Card */}
+            <Card className="p-4 sm:p-5 space-y-3.5 text-start">
+              <div className="space-y-1">
+                <h2 className="text-base font-extrabold text-[var(--text-primary)] m-0">
+                  {statusInfo.canApplyOnline
+                    ? isEducation
+                      ? 'Apply Online or Get Help'
+                      : 'Submit Form or Get Help'
+                    : 'Official Authority Link'}
+                </h2>
+                <p className="text-sm text-[var(--text-secondary)] leading-relaxed m-0">
+                  {statusInfo.canApplyOnline
+                    ? 'Apply directly on the official portal or let CSC DOST prepare and file your application.'
+                    : 'Access the official notification, result, admit card, or notice directly on the issuing portal.'}
+                </p>
+              </div>
 
-          <div className="py-3 space-y-1">
-            <h3 className="text-xs sm:text-sm font-bold text-[#102A43]">
-              Is requesting assistance through CSC DOST the same as submitting on the government portal?
-            </h3>
-            <p className="text-xs text-[#64748B] leading-relaxed">
-              CSC DOST is an independent citizen service and facilitation centre. When you request
-              assistance here, our operator prepares and files your application on the official
-              portal after verifying your documents and shares the official acknowledgment slip with
-              you.
-            </p>
-          </div>
+              <div className="flex flex-col gap-2.5">
+                {statusInfo.canApplyOnline && (
+                  <button
+                    type="button"
+                    onClick={handleRequestAssistance}
+                    className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[#1F9D6B] hover:bg-[#178257] text-white font-bold text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                  >
+                    <span>{applyButtonLabel}</span>
+                  </button>
+                )}
+
+                <a
+                  href={portalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[#101A36] hover:bg-[#1B2A52] text-white font-bold text-sm inline-flex items-center justify-center gap-2 no-underline transition-colors border border-white/10"
+                >
+                  <span>{officialButtonLabel}</span>
+                  <ExternalLink className="w-4 h-4 text-[#F5A623] shrink-0" aria-hidden="true" />
+                </a>
+
+                {pdfUrl && (
+                  <a
+                    href={pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-default)] font-bold text-sm inline-flex items-center justify-center gap-2 no-underline transition-colors"
+                  >
+                    <span>{t.officialPdfBtn}</span>
+                    <ExternalLink className="w-4 h-4 text-[var(--text-muted)] shrink-0" aria-hidden="true" />
+                  </a>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => onShare(item)}
+                  className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[var(--bg-card)] hover:bg-[var(--bg-subtle)] text-[var(--text-primary)] border border-[var(--border-default)] font-semibold text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                >
+                  <Share2 className="w-4 h-4 text-[#1F9D6B] shrink-0" aria-hidden="true" />
+                  <span>{t.shareOnWhatsApp}</span>
+                </button>
+              </div>
+            </Card>
+
+            {/* Notice Timeline Milestones */}
+            <PostTimelineCard steps={timelineSteps} title={t.postTimeline} />
+
+            {/* Related Notices (Deduplicated) */}
+            {relatedPosts.length > 0 && (
+              <section
+                aria-label={t.postRelated}
+                className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-4 space-y-3 text-start"
+              >
+                <h2 className="text-sm font-extrabold uppercase tracking-wider text-[var(--text-primary)] m-0">
+                  {t.postRelated}
+                </h2>
+                <ul className="space-y-2.5 list-none m-0 p-0">
+                  {relatedPosts.map(({ item: rel, st }) => (
+                    <li key={rel.id}>
+                      <a
+                        href={`/post/${rel.id}`}
+                        onClick={(e) => {
+                          if (!e.metaKey && !e.ctrlKey && e.button === 0) {
+                            e.preventDefault();
+                            navigateInternal(`/post/${rel.id}`);
+                          }
+                        }}
+                        className="block rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] hover:border-[var(--border-strong)] p-3 space-y-1.5 no-underline transition-colors"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <StatusPill
+                            status={st.computedStatus}
+                            label={getPostStatusBadgeLabel(st, language)}
+                          />
+                          <span className="text-[11px] font-semibold text-[var(--text-muted)] tabular-nums truncate">
+                            {st.dateValue}
+                          </span>
+                        </div>
+                        <p className="text-sm font-bold text-[var(--text-primary)] line-clamp-2 leading-snug m-0">
+                          {rel.title}
+                        </p>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            <AlertsBox compact />
+          </aside>
         </div>
-      </ContentSection>
+      </div>
 
-      {/* WhatsApp Channel Popup Modal & Floating Badge */}
-      <WhatsAppChannelPopup postTitle={item.title} />
-    </ContentPageLayout>
+      {/* Sticky Bottom Mobile Quick Bar (Official Notice + Share on WhatsApp) */}
+      <StickyMobileActionBar
+        officialUrl={portalUrl}
+        officialLabel={isDirectPdfPortal ? t.officialPdfBtn : t.officialNotice}
+        shareWhatsAppUrl={whatsappShareUrl}
+        aboveBottomNav={true}
+      />
+    </article>
   );
 }

@@ -50,23 +50,23 @@ import {
 // Lightweight Skeleton Fallback for Section Containers (Prevents Layout Shift)
 function SectionSkeleton({ height = 'min-h-[360px]', title = 'Loading Desk...' }: { height?: string; title?: string }) {
   return (
-    <div className={`w-full ${height} bg-white dark:bg-slate-900 border-b md:border border-slate-200 dark:border-slate-800 rounded-none md:rounded-2xl px-4 py-6 sm:p-6 shadow-none md:shadow-xs flex flex-col justify-between animate-pulse font-sans`}>
+    <div className={`w-full ${height} bg-[var(--bg-card)] border-b md:border border-[var(--border-default)] rounded-none md:rounded-2xl px-4 py-6 sm:p-6 shadow-none md:shadow-xs flex flex-col justify-between animate-pulse font-sans`}>
       <div className="space-y-3">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-slate-200 dark:bg-slate-800" />
-            <div className="h-4 w-36 sm:w-48 bg-slate-200 dark:bg-slate-800 rounded" />
+            <div className="w-7 h-7 rounded-lg bg-[var(--bg-subtle)]" />
+            <div className="h-4 w-36 sm:w-48 bg-[var(--bg-subtle)] rounded" />
           </div>
-          <div className="h-3 w-16 bg-slate-200 dark:bg-slate-800 rounded hidden sm:block" />
+          <div className="h-3 w-16 bg-[var(--bg-subtle)] rounded hidden sm:block" />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-2">
-          <div className="h-24 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
-          <div className="h-24 bg-slate-100 dark:bg-slate-800/60 rounded-xl hidden sm:block" />
-          <div className="h-24 bg-slate-100 dark:bg-slate-800/60 rounded-xl hidden md:block" />
+          <div className="h-24 bg-[var(--bg-subtle)] rounded-xl" />
+          <div className="h-24 bg-[var(--bg-subtle)] rounded-xl hidden sm:block" />
+          <div className="h-24 bg-[var(--bg-subtle)] rounded-xl hidden md:block" />
         </div>
       </div>
-      <div className="flex items-center justify-center gap-2 text-slate-400 text-xs py-2">
-        <div className="w-3.5 h-3.5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="flex items-center justify-center gap-2 text-[var(--text-muted)] text-xs py-2">
+        <div className="w-3.5 h-3.5 border-2 border-[var(--brand-accent)] border-t-transparent rounded-full animate-spin" />
         <span className="text-[11px] font-mono font-medium">{title}</span>
       </div>
     </div>
@@ -76,25 +76,25 @@ function SectionSkeleton({ height = 'min-h-[360px]', title = 'Loading Desk...' }
 // Lightweight Full Page Skeleton (For dedicated service/job routes)
 function PageRouteSkeleton({ message = 'Loading Official Notification...' }: { message?: string }) {
   return (
-    <div className="w-full min-h-[500px] bg-white dark:bg-slate-900 border-b md:border border-slate-200 dark:border-slate-800 rounded-none md:rounded-2xl px-4 py-6 sm:p-6 shadow-none md:shadow-sm animate-pulse space-y-6">
-      <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
-        <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800" />
+    <div className="w-full min-h-[500px] bg-[var(--bg-card)] border-b md:border border-[var(--border-default)] rounded-none md:rounded-2xl px-4 py-6 sm:p-6 shadow-none md:shadow-sm animate-pulse space-y-6">
+      <div className="flex items-center gap-3 border-b border-[var(--border-default)] pb-4">
+        <div className="w-10 h-10 rounded-xl bg-[var(--bg-subtle)]" />
         <div className="space-y-2">
-          <div className="h-5 w-48 sm:w-64 bg-slate-200 dark:bg-slate-800 rounded" />
-          <div className="h-3 w-36 sm:w-40 bg-slate-100 dark:bg-slate-800 rounded" />
+          <div className="h-5 w-48 sm:w-64 bg-[var(--bg-subtle)] rounded" />
+          <div className="h-3 w-36 sm:w-40 bg-[var(--bg-subtle)] rounded" />
         </div>
       </div>
       <div className="space-y-3">
-        <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-full" />
-        <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-5/6" />
-        <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-4/6" />
+        <div className="h-4 bg-[var(--bg-subtle)] rounded w-full" />
+        <div className="h-4 bg-[var(--bg-subtle)] rounded w-5/6" />
+        <div className="h-4 bg-[var(--bg-subtle)] rounded w-4/6" />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-        <div className="h-32 bg-slate-100 dark:bg-slate-800 rounded-xl" />
-        <div className="h-32 bg-slate-100 dark:bg-slate-800 rounded-xl" />
+        <div className="h-32 bg-[var(--bg-subtle)] rounded-xl" />
+        <div className="h-32 bg-[var(--bg-subtle)] rounded-xl" />
       </div>
-      <div className="flex items-center justify-center gap-2 pt-4 text-slate-400 text-xs">
-        <div className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+      <div className="flex items-center justify-center gap-2 pt-4 text-[var(--text-muted)] text-xs">
+        <div className="w-4 h-4 border-2 border-[var(--brand-verified)] border-t-transparent rounded-full animate-spin" />
         <span className="font-mono text-xs">{message}</span>
       </div>
     </div>
@@ -828,11 +828,14 @@ export default function App() {
     isNotFoundView,
   ]);
 
-  // Enforce portal light white theme mode always
+  // Respect system prefers-color-scheme instead of forcing light mode
   useEffect(() => {
     try {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'light') {
+        localStorage.removeItem('theme');
+      }
+      document.documentElement.classList.remove('light');
     } catch {}
   }, []);
 
@@ -979,14 +982,33 @@ export default function App() {
     }
   };
 
+  const currentNavPath = activeLegalPage
+    ? LEGAL_PAGE_CONFIG[activeLegalPage].path
+    : activeJobPost
+    ? `/post/${activeJobPost.id}`
+    : activeServicePost
+    ? `/service/${activeServicePost.id}`
+    : isToolsView
+    ? activeToolId
+      ? `/tools/${activeToolId}`
+      : '/tools'
+    : activeSchemeId
+    ? `/scheme/${activeSchemeId}`
+    : categoryView === 'education' && educationSubRoute === 'ignou'
+    ? '/education/ignou'
+    : categoryView
+    ? `/${categoryView}`
+    : '/';
+
   return (
     <LanguageProvider>
-    <div className="min-h-screen bg-[#F6F8FC] text-[#101A36] text-base flex flex-col justify-between font-sans transition-colors duration-200 w-full max-w-full overflow-x-hidden">
+    <div className="min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)] text-base flex flex-col justify-between font-sans transition-colors duration-200 w-full max-w-full overflow-x-hidden">
       
       {/* Top Navigation Panel (hidden in Staff Management Console and dedicated Apply/Track pages which use their own compact header) */}
       {!isAdminView && !isApplyView && !isTrackView && (
         <Navbar
           cafeName={settings.cafeName}
+          currentPath={currentNavPath}
           onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
           onOpenAdmin={handleOpenStaffPortal}
           onHomeClick={handleGoHome}
@@ -1002,9 +1024,9 @@ export default function App() {
       <main
         className={
           isAdminView
-            ? 'flex-grow w-full min-h-screen bg-[#F6F8FC] overflow-x-hidden'
+            ? 'flex-grow w-full min-h-screen bg-[var(--bg-page)] overflow-x-hidden'
             : isApplyView || isTrackView
-            ? 'flex-grow w-full bg-white overflow-x-hidden pb-20 md:pb-6'
+            ? 'flex-grow w-full bg-[var(--bg-surface)] overflow-x-hidden pb-20 md:pb-6'
             : 'flex-grow w-full max-w-7xl mx-auto px-0 md:px-6 py-0 md:py-6 pb-20 md:pb-6 overflow-x-hidden'
         }
       >
@@ -1079,7 +1101,7 @@ export default function App() {
             <Suspense fallback={<PageRouteSkeleton message="Loading CSC E-Service Catalogue..." />}>
               <ServiceDedicatedPageView
                 service={activeServicePost}
-                onBack={handleCloseServicePage}
+                onBack={() => navigateToPath('/services')}
                 onNavigateRoute={navigateToPath}
                 onApplyService={(service) => {
                   handleCloseServicePage();
@@ -1098,20 +1120,21 @@ export default function App() {
                 onSelectTool={(id) => {
                   setActiveToolId(id);
                 }}
+                onNavigateRoute={navigateToPath}
               />
             </Suspense>
           </div>
         ) : isNotFoundView ? (
           /* GENUINE 404 PAGE VIEW FOR UNRECOGNIZED CLIENT ROUTES */
           <div className="animate-fade-in w-full px-4 py-12 flex items-center justify-center">
-            <div className="max-w-lg w-full bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-8 text-center shadow-xs space-y-4">
-              <div className="inline-flex items-center px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-[#101A36] text-xs font-bold">
+            <div className="max-w-lg w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-6 sm:p-8 text-center shadow-xs space-y-4">
+              <div className="inline-flex items-center px-3 py-1 rounded-full bg-[var(--status-closing-bg)] border border-[var(--status-closing-border)] text-[var(--status-closing-text)] text-xs font-bold">
                 HTTP 404 · Page Not Found
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#101A36]">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)]">
                 Page Could Not Be Found
               </h1>
-              <p className="text-base text-[#475569] leading-relaxed">
+              <p className="text-base text-[var(--text-secondary)] leading-relaxed">
                 The page or notice you requested does not exist or may have moved. Browse our main sections below or return to the homepage.
               </p>
               <div className="flex flex-wrap justify-center gap-2 pt-2">
@@ -1121,7 +1144,7 @@ export default function App() {
                     e.preventDefault();
                     handleGoHome();
                   }}
-                  className="px-4 py-2.5 bg-[#101A36] text-white text-sm font-bold rounded-xl hover:bg-[#1E2B4F] transition-colors no-underline"
+                  className="min-h-[44px] inline-flex items-center px-4 py-2.5 bg-[#101A36] text-white text-sm font-bold rounded-xl hover:bg-[#1E2B4F] transition-colors no-underline"
                 >
                   Return to Homepage
                 </a>
@@ -1133,7 +1156,7 @@ export default function App() {
                       e.preventDefault();
                       navigateToPath(cat.path);
                     }}
-                    className="px-3.5 py-2.5 bg-[#F6F8FC] hover:bg-white text-[#101A36] hover:text-[#1F9D6B] border border-[#E2E8F0] text-sm font-semibold rounded-xl transition-colors no-underline"
+                    className="min-h-[44px] inline-flex items-center px-3.5 py-2.5 bg-[var(--bg-subtle)] hover:bg-[var(--bg-surface)] text-[var(--text-primary)] hover:text-[#1F9D6B] border border-[var(--border-default)] text-sm font-semibold rounded-xl transition-colors no-underline"
                   >
                     {cat.label}
                   </a>
@@ -1143,37 +1166,11 @@ export default function App() {
           </div>
         ) : categoryView === 'jobs' ? (
           /* DEDICATED FULL-PAGE VIEW FOR JOBS & RECRUITMENT */
-          <div className="animate-fade-in w-full px-3 sm:px-6 py-4 space-y-4">
-            <nav aria-label="Breadcrumb" className="flex items-center justify-between gap-3 pb-1 text-sm">
-              <div className="flex items-center gap-1.5 text-[#475569]">
-                <a
-                  href="/"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleGoHome();
-                  }}
-                  className="font-bold text-[#101A36] hover:text-[#1F9D6B] hover:underline inline-flex items-center gap-1"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5 rtl:rotate-180" />
-                  <span>Home</span>
-                </a>
-                <span aria-hidden="true">/</span>
-                <span className="font-semibold text-[#101A36]">Jobs &amp; Recruitment</span>
-              </div>
-              <a
-                href="/education"
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigateToPath('/education');
-                }}
-                className="text-sm font-semibold text-[#101A36] hover:text-[#1F9D6B] hover:underline"
-              >
-                Education &amp; Admissions →
-              </a>
-            </nav>
+          <div className="animate-fade-in w-full">
             <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Recruitment Notifications..." />}>
               <SarkariResultDesk
                 mode="jobs"
+                onNavigateRoute={navigateToPath}
                 onApplyService={handleServiceSelect}
                 onOpenDedicatedPage={handleOpenJobPage}
               />
@@ -1181,51 +1178,7 @@ export default function App() {
           </div>
         ) : categoryView === 'education' ? (
           /* DEDICATED FULL-PAGE VIEW FOR EDUCATION & ADMISSIONS (INCLUDING /education/ignou) */
-          <div className="animate-fade-in w-full px-3 sm:px-6 py-4 space-y-4">
-            <nav aria-label="Breadcrumb" className="flex items-center justify-between gap-3 pb-1 text-sm">
-              <div className="flex items-center gap-1.5 text-[#475569] flex-wrap">
-                <a
-                  href="/"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleGoHome();
-                  }}
-                  className="font-bold text-[#101A36] hover:text-[#1F9D6B] hover:underline inline-flex items-center gap-1"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5 rtl:rotate-180" />
-                  <span>Home</span>
-                </a>
-                <span aria-hidden="true">/</span>
-                {educationSubRoute === 'ignou' ? (
-                  <>
-                    <a
-                      href="/education"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigateToPath('/education');
-                      }}
-                      className="font-semibold text-[#101A36] hover:text-[#1F9D6B] hover:underline"
-                    >
-                      Education &amp; Admissions
-                    </a>
-                    <span aria-hidden="true">/</span>
-                    <span className="font-semibold text-[#101A36]">IGNOU</span>
-                  </>
-                ) : (
-                  <span className="font-semibold text-[#101A36]">Education &amp; Admissions</span>
-                )}
-              </div>
-              <a
-                href="/jobs"
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigateToPath('/jobs');
-                }}
-                className="text-sm font-semibold text-[#101A36] hover:text-[#1F9D6B] hover:underline shrink-0"
-              >
-                Jobs &amp; Recruitment →
-              </a>
-            </nav>
+          <div className="animate-fade-in w-full">
             <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Education & Admissions..." />}>
               <SarkariResultDesk
                 mode="education"
@@ -1239,93 +1192,37 @@ export default function App() {
           </div>
         ) : categoryView === 'schemes' || activeSchemeId !== null ? (
           /* DEDICATED FULL-PAGE VIEW FOR GOVERNMENT SCHEMES & GUIDES */
-          <div className="animate-fade-in w-full px-3 sm:px-6 py-4 space-y-4">
-            {!activeSchemeId && (
-              <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 pb-1 text-sm text-[#475569]">
-                <a
-                  href="/"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleGoHome();
-                  }}
-                  className="font-bold text-[#101A36] hover:text-[#1F9D6B] hover:underline inline-flex items-center gap-1"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5 rtl:rotate-180" />
-                  <span>Home</span>
-                </a>
-                <span aria-hidden="true">/</span>
-                <span className="font-semibold text-[#101A36]">Government Schemes</span>
-              </nav>
-            )}
+          <div className="animate-fade-in w-full">
             <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Government Schemes & Guides..." />}>
               <GuidesKnowledgeHub
                 initialArticleId={activeSchemeId}
                 onClearInitialArticle={() => navigateToPath('/schemes')}
                 onOpenArticle={(articleId) => handleOpenSchemePage(articleId)}
                 onSelectService={handleServiceSelect}
+                onNavigateRoute={navigateToPath}
               />
             </Suspense>
           </div>
         ) : categoryView === 'services' ? (
           /* DEDICATED FULL-PAGE VIEW FOR CSC E-SERVICES */
-          <div className="animate-fade-in w-full px-3 sm:px-6 py-4 space-y-4">
-            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 pb-1 text-sm text-[#475569]">
-              <a
-                href="/"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleGoHome();
-                }}
-                className="font-bold text-[#101A36] hover:text-[#1F9D6B] hover:underline inline-flex items-center gap-1"
-              >
-                <ArrowLeft className="w-3.5 h-3.5 rtl:rotate-180" />
-                <span>Home</span>
-              </a>
-              <span aria-hidden="true">/</span>
-              <span className="font-semibold text-[#101A36]">CSC E-Services</span>
-            </nav>
+          <div className="animate-fade-in w-full">
             <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Citizen Services Catalogue..." />}>
-              <ExploreServicesDesk 
-                onApplyService={handleServiceSelect} 
+              <ExploreServicesDesk
+                onApplyService={handleServiceSelect}
                 selectedService={selectedService}
                 onOpenDedicatedServicePage={handleOpenServicePage}
+                onNavigateRoute={navigateToPath}
               />
             </Suspense>
           </div>
         ) : categoryView === 'calculators' ? (
           /* DEDICATED FULL-PAGE VIEW FOR CITIZEN CALCULATORS */
-          <div className="animate-fade-in w-full px-3 sm:px-6 py-4 space-y-4">
-            <nav aria-label="Breadcrumb" className="flex items-center justify-between gap-3 pb-1 text-sm">
-              <div className="flex items-center gap-1.5 text-[#475569]">
-                <a
-                  href="/"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleGoHome();
-                  }}
-                  className="font-bold text-[#101A36] hover:text-[#1F9D6B] hover:underline inline-flex items-center gap-1"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5 rtl:rotate-180" />
-                  <span>Home</span>
-                </a>
-                <span aria-hidden="true">/</span>
-                <span className="font-semibold text-[#101A36]">Citizen Calculators</span>
-              </div>
-              <a
-                href="/tools"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleOpenToolsPage();
-                }}
-                className="text-sm font-semibold text-[#101A36] hover:text-[#1F9D6B] hover:underline"
-              >
-                Document Tools →
-              </a>
-            </nav>
+          <div className="animate-fade-in w-full">
             <Suspense fallback={<SectionSkeleton height="min-h-[420px]" title="Loading Citizen Calculators..." />}>
               <CitizenToolsDesk
                 isStandalonePage
                 onApplyService={handleServiceSelect}
+                onNavigateRoute={navigateToPath}
               />
             </Suspense>
           </div>
@@ -1372,7 +1269,7 @@ export default function App() {
 
       {/* Global Page Footer (Below the Fold) */}
       {!isAdminView && (
-        <Suspense fallback={<div className="h-20 bg-[#F1F5F9] border-t border-[#E2E8F0]" />}>
+        <Suspense fallback={<div className="h-20 bg-[var(--bg-header-dark)] border-t border-white/10" />}>
           <Footer 
             cafeName={settings.cafeName} 
             onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}

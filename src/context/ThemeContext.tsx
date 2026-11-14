@@ -78,7 +78,24 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    const syncColorScheme = () => {
+      if (typeof document === 'undefined') return;
+      const prefersDark =
+        typeof window !== 'undefined' &&
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.classList.toggle('dark', prefersDark);
+    };
+
     applyThemeToDom('tricolor');
+    syncColorScheme();
+
+    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+      const mql = window.matchMedia('(prefers-color-scheme: dark)');
+      const handler = () => syncColorScheme();
+      mql.addEventListener?.('change', handler);
+      return () => mql.removeEventListener?.('change', handler);
+    }
   }, []);
 
   const activeThemeConfig = THEMES.find(t => t.id === 'tricolor') || THEMES[1];
@@ -94,12 +111,6 @@ function applyThemeToDom(theme: ThemeMode) {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
   root.setAttribute('data-theme', theme);
-  
-  if (theme === 'dark-slate') {
-    root.classList.add('dark');
-  } else {
-    root.classList.remove('dark');
-  }
 }
 
 export function useTheme() {

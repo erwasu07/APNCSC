@@ -1,28 +1,33 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   ArrowRight,
-  ArrowUpRight,
-  X,
-  FileText,
+  CheckCircle2,
   Clock,
-  CheckCircle,
-  Search,
-  Check,
-  Tag,
   FileCheck,
-  Share2,
-  Copy,
-  MessageSquare,
-  Send,
+  MessageCircle,
+  PhoneCall,
+  Search,
+  ShieldAlert,
+  Tag,
+  X,
 } from 'lucide-react';
 import { SERVICES_LIST, CATEGORY_LABELS, ServiceItem } from '../servicesData';
-import { ColourAccentCard } from './shared/ContentDesignSystem';
-import { buildServiceWhatsAppNotification } from '../utils/whatsappFormatter';
+import { useLanguage } from '../contexts/LanguageContext';
+import {
+  AdSlot,
+  AlertsBox,
+  Breadcrumbs,
+  Card,
+  Chip,
+  FilterChip,
+  HelpApplyingCard,
+} from './ui';
 
 interface ExploreServicesDeskProps {
   onApplyService: (serviceName: string) => void;
   selectedService?: string;
   onOpenDedicatedServicePage?: (service: ServiceItem) => void;
+  onNavigateRoute?: (path: string) => void;
 }
 
 type DirectoryCategory =
@@ -77,43 +82,38 @@ function matchesDirectoryCategory(service: ServiceItem, cat: DirectoryCategory):
 
 const DIRECTORY_TABS: { id: DirectoryCategory; label: string }[] = [
   { id: 'all', label: 'All Services' },
-  { id: 'identity', label: 'Identity & Documents' },
+  { id: 'identity', label: 'Identity & Cards' },
   { id: 'jk_revenue', label: 'J&K Certificates & Revenue' },
-  { id: 'jobs_assistance', label: 'Jobs & Application Assistance' },
+  { id: 'jobs_assistance', label: 'Jobs & Form Assistance' },
   { id: 'education', label: 'Education & Scholarships' },
   { id: 'welfare', label: 'Welfare & Health' },
   { id: 'business', label: 'Business & Tax' },
-  { id: 'digital', label: 'Digital & Printing Services' },
+  { id: 'digital', label: 'Digital & Printing' },
 ];
 
 export default function ExploreServicesDesk({
   onApplyService,
   onOpenDedicatedServicePage,
+  onNavigateRoute,
 }: ExploreServicesDeskProps) {
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<DirectoryCategory>('all');
-  const [selectedServiceItem, setSelectedServiceItem] = useState<ServiceItem | null>(null);
   const [showAllServices, setShowAllServices] = useState(false);
-
-  // Sharing & Notification States
-  const [shareToast, setShareToast] = useState<string | null>(null);
-  const [showShareModal, setShowShareModal] = useState(false);
-  const [activeShareData, setActiveShareData] = useState<{
-    title: string;
-    text: string;
-    url: string;
-    name: string;
-  } | null>(null);
 
   const handleOpenService = (item: ServiceItem) => {
     if (onOpenDedicatedServicePage) {
       onOpenDedicatedServicePage(item);
+    } else if (onNavigateRoute) {
+      onNavigateRoute(`/service/${item.id}`);
     } else {
-      setSelectedServiceItem(item);
+      try {
+        window.history.pushState(null, '', `/service/${item.id}`);
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      } catch {}
     }
   };
 
-  // Listen for category selection from homepage preview cards
   useEffect(() => {
     const handleSelectCategory = (e: Event) => {
       const customEvent = e as CustomEvent<{ category: DirectoryCategory }>;
@@ -128,415 +128,357 @@ export default function ExploreServicesDesk({
     };
   }, []);
 
-  // Auto-open service if ?service=... is present in URL without external routing
-  useEffect(() => {
-    if (typeof window !== 'undefined' && !onOpenDedicatedServicePage) {
-      const params = new URLSearchParams(window.location.search);
-      const serviceId = params.get('service');
-      if (serviceId) {
-        const match = SERVICES_LIST.find((s) => s.id === serviceId);
-        if (match) {
-          setSelectedServiceItem(match);
-        }
-      }
-    }
-  }, [onOpenDedicatedServicePage]);
-
-  const triggerToast = (msg: string) => {
-    setShareToast(msg);
-    setTimeout(() => setShareToast(null), 3000);
-  };
-
-  const handleShareService = async (item: ServiceItem) => {
-    const payload = buildServiceWhatsAppNotification(item);
-    const dataPayload = {
-      title: payload.nativeShareData.title,
-      text: payload.message,
-      url: payload.canonicalUrl,
-      name: item.name,
-    };
-    setActiveShareData(dataPayload);
-    setShowShareModal(true);
-  };
-
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    triggerToast(`Copied ${label} to clipboard`);
-  };
-
-  // Filter list based on active category tab and search query
-  const filteredServices = useMemo(() => {
+  const searchMatchingServices = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return SERVICES_LIST.filter((service) => {
-      const matchesCat = matchesDirectoryCategory(service, selectedCategory);
-      const matchesSearch =
-        !q ||
+    if (!q) return SERVICES_LIST;
+    return SERVICES_LIST.filter(
+      (service) =>
         service.name.toLowerCase().includes(q) ||
         service.description.toLowerCase().includes(q) ||
-        service.requirements.some((r) => r.toLowerCase().includes(q));
-      return matchesCat && matchesSearch;
-    });
-  }, [selectedCategory, searchQuery]);
+        (CATEGORY_LABELS[service.category] || '').toLowerCase().includes(q) ||
+        service.requirements.some((r) => r.toLowerCase().includes(q))
+    );
+  }, [searchQuery]);
+
+  const filteredServices = useMemo(() => {
+    return searchMatchingServices.filter((service) =>
+      matchesDirectoryCategory(service, selectedCategory)
+    );
+  }, [searchMatchingServices, selectedCategory]);
 
   const displayedServices =
-    showAllServices || searchQuery.trim().length > 0
+    showAllServices || searchQuery.trim().length > 0 || selectedCategory !== 'all'
       ? filteredServices
-      : filteredServices.slice(0, 9);
+      : filteredServices.slice(0, 12);
 
-  const handleApply = (service: ServiceItem) => {
-    setSelectedServiceItem(null);
-    onApplyService(service.name);
+  const navigateRoute = (href: string) => {
+    if (onNavigateRoute) {
+      onNavigateRoute(href);
+    } else {
+      try {
+        window.history.pushState(null, '', href);
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      } catch {}
+    }
   };
 
   return (
     <section
       id="services"
       aria-labelledby="services-board-heading"
-      className="w-full max-w-7xl mx-auto bg-[#F6F8FC] px-3 sm:px-6 py-5 md:py-2 space-y-3.5 md:space-y-4 scroll-mt-20"
+      className="w-full bg-[var(--bg-page)] text-[var(--text-primary)] pb-12 scroll-mt-20"
     >
-      {/* Section Header + Search Input */}
-      <div
-        id="services-board"
-        className="flex flex-col md:flex-row md:items-end justify-between gap-3 border-b border-[#E2E8F0] pb-3 scroll-mt-20 px-1 sm:px-0"
-      >
-        <div>
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1F9D6B] uppercase tracking-wider mb-1">
-            <FileCheck className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Complete Service Directory</span>
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 space-y-5">
+        <Breadcrumbs
+          items={[
+            { label: t.navHome, href: '/' },
+            { label: t.navServices },
+          ]}
+          onNavigate={navigateRoute}
+        />
+
+        {/* Header */}
+        <header className="space-y-2 text-start">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-[#1F9D6B]">
+              <FileCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <span>{SERVICES_LIST.length} Citizen E-Services</span>
+            </span>
+            <Chip>{t.independentChip}</Chip>
           </div>
           <h1
             id="services-board-heading"
-            className="text-2xl sm:text-3xl font-extrabold text-[#101A36] tracking-tight"
+            className="text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] tracking-tight m-0"
           >
-            CSC E-Services
+            {t.servicesHubTitle}
           </h1>
-          <p className="text-base text-[#475569] mt-1.5">
-            Search and browse all {SERVICES_LIST.length} citizen services, required documents, and fee details.
+          <p className="text-sm sm:text-base text-[var(--text-secondary)] max-w-3xl leading-relaxed m-0">
+            {t.servicesHubSubtitle}
           </p>
-        </div>
+        </header>
 
-        <div className="w-full md:w-80 relative">
-          <label htmlFor="service-directory-search" className="sr-only">
-            Search services in directory
-          </label>
-          <Search
-            className="w-4 h-4 text-[#64748B] absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+        {/* Required Fee Confirmation Note */}
+        <div
+          role="note"
+          className="rounded-2xl border border-[var(--status-closing-border)] bg-[var(--status-closing-bg)] p-3.5 sm:p-4 flex items-start gap-3 text-start"
+        >
+          <ShieldAlert
+            className="w-5 h-5 text-[var(--status-closing-text)] shrink-0 mt-0.5"
             aria-hidden="true"
           />
-          <input
-            id="service-directory-search"
-            type="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Filter services by name or document…"
-            className="w-full min-h-[44px] ps-9 pe-8 py-2 bg-white border border-[#E2E8F0] focus:border-[#101A36] rounded-xl text-sm text-[#101A36] placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#101A36]/15"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              aria-label="Clear service filter"
-              className="absolute end-2.5 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#101A36] cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Category Filter Tabs */}
-      <div
-        role="tablist"
-        aria-label="Service categories"
-        className="flex flex-wrap sm:flex-nowrap items-center gap-x-1.5 gap-y-2 sm:overflow-x-auto text-xs sm:text-sm font-medium px-1 sm:px-0"
-      >
-        {DIRECTORY_TABS.map((tab) => (
-          <button
-            key={tab.id}
-            id={`services-cat-btn-${tab.id}`}
-            type="button"
-            role="tab"
-            aria-selected={selectedCategory === tab.id}
-            onClick={() => {
-              setSelectedCategory(tab.id);
-              setShowAllServices(false);
-            }}
-            className={`min-h-[40px] px-3.5 py-1.5 rounded-xl whitespace-nowrap transition-colors cursor-pointer border ${
-              selectedCategory === tab.id
-                ? 'bg-[#101A36] text-white border-[#101A36] font-semibold'
-                : 'bg-white text-[#101A36] border-[#E2E8F0] hover:bg-[#F6F8FC]'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Services Colour-Accent Cards Grid */}
-      {displayedServices.length === 0 ? (
-        <div className="bg-white border border-[#E2E8F0] rounded-xl py-6 px-4 text-center space-y-2">
-          <p className="text-base font-bold text-[#101A36]">No matching services found</p>
-          <p className="text-sm text-[#475569]">
-            Try clearing your search filter or switching to &ldquo;All Services&rdquo;.
+          <p className="text-xs sm:text-sm font-semibold text-[var(--text-primary)] leading-relaxed m-0">
+            {t.servicesFeeNote}
           </p>
-          <button
-            type="button"
-            onClick={() => {
-              setSearchQuery('');
-              setSelectedCategory('all');
-            }}
-            className="min-h-[40px] mt-2 px-4 py-2 bg-[#101A36] text-white text-sm font-semibold rounded-xl cursor-pointer"
-          >
-            Reset Filters
-          </button>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-          {displayedServices.map((item) => {
-            const reqText =
-              item.requirements && item.requirements.length > 0
-                ? `${item.requirements.slice(0, 2).join(', ')}${
-                    item.requirements.length > 2 ? ` (+${item.requirements.length - 2})` : ''
-                  }`
-                : undefined;
-            const feeText = item.price
-              ? item.estimatedTime
-                ? `${item.price} · ${item.estimatedTime}`
-                : item.price
-              : item.estimatedTime;
 
-            return (
-              <ColourAccentCard
-                key={item.id}
-                id={`eservice-item-${item.id}`}
-                categoryType="service"
-                categoryLabel="CSC E-Service"
-                organisation={CATEGORY_LABELS[item.category]}
-                title={item.name}
-                summary={item.description}
-                infoFacts={[
-                  ...(reqText
-                    ? [{ icon: 'requirement' as const, label: 'Requirement', value: reqText }]
-                    : []),
-                  ...(feeText
-                    ? [{ icon: 'fee' as const, label: 'Fee / Time', value: feeText }]
-                    : []),
-                ]}
-                secondaryActionLabel="Request Assistance"
-                onSecondaryClick={() => handleApply(item)}
-                actionLabel="View Service →"
-                onPrimaryClick={() => handleOpenService(item)}
-              />
-            );
-          })}
-        </div>
-      )}
-
-      {/* Show All / Show Fewer Toggle */}
-      {filteredServices.length > 9 && !searchQuery.trim() && (
-        <div className="pt-1 flex justify-center">
-          <button
-            type="button"
-            onClick={() => setShowAllServices((prev) => !prev)}
-            className="min-h-[44px] px-5 py-2.5 rounded-xl text-sm font-semibold bg-white text-[#101A36] border border-[#E2E8F0] hover:border-[#101A36] transition-colors cursor-pointer inline-flex items-center gap-2"
-          >
-            <span>
-              {showAllServices
-                ? 'Show Featured Services (9)'
-                : `View All ${filteredServices.length} Services in This Category`}
-            </span>
-            <ArrowRight
-              className={`w-4 h-4 transition-transform ${showAllServices ? '-rotate-90' : ''}`}
+        {/* Search & Category Filter Tabs */}
+        <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-3.5 sm:p-4 space-y-3">
+          <div className="relative w-full">
+            <label htmlFor="service-directory-search" className="sr-only">
+              {t.servicesSearchPlaceholder}
+            </label>
+            <Search
+              className="w-4 h-4 text-[var(--text-muted)] absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
               aria-hidden="true"
             />
-          </button>
-        </div>
-      )}
+            <input
+              id="service-directory-search"
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t.servicesSearchPlaceholder}
+              className="w-full min-h-[44px] ps-10 pe-10 py-2 bg-[var(--bg-surface)] border border-[var(--border-default)] focus:border-[#1F9D6B] rounded-xl text-base sm:text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none transition-colors"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                aria-label={t.clearSearch}
+                className="w-9 h-9 rounded-lg inline-flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] absolute end-1.5 top-1/2 -translate-y-1/2 cursor-pointer"
+              >
+                <X className="w-4 h-4" aria-hidden="true" />
+              </button>
+            )}
+          </div>
 
-      {/* SERVICE DETAILS MODAL (Full-width mobile sheet on <= 767px) */}
-      {selectedServiceItem && (
-        <div className="fixed inset-0 bg-slate-900/60 flex items-end md:items-center justify-center p-0 md:p-4 z-50">
           <div
-            className="bg-white rounded-none md:rounded-2xl w-full max-w-2xl h-full md:h-auto max-h-screen md:max-h-[90vh] overflow-hidden flex flex-col shadow-xl border-0 md:border border-[#E2E8F0]"
-            id={`explore-modal-${selectedServiceItem.id}`}
+            role="group"
+            aria-label="Filter CSC e-services by category"
+            className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar"
           >
-            <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-[#E2E8F0] bg-[#101A36] text-white flex items-start justify-between gap-4 shrink-0">
-              <div className="space-y-1 min-w-0">
-                <span className="text-xs font-semibold text-[#F5A623]">
-                  {CATEGORY_LABELS[selectedServiceItem.category]}
-                </span>
-                <h3 className="text-lg sm:text-xl font-bold text-white">
-                  {selectedServiceItem.name}
-                </h3>
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => handleShareService(selectedServiceItem)}
-                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white font-semibold text-xs rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer"
-                  id="eservice-modal-top-share-btn"
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                  <span>Share</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedServiceItem(null)}
-                  className="p-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors cursor-pointer"
-                  aria-label="Close service details"
-                  id="eservice-modal-top-close-btn"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-0 md:p-6 overflow-y-auto flex-1 divide-y divide-[#E2E8F0] md:divide-y-0 md:space-y-5 text-base bg-white md:bg-[#F6F8FC]">
-              <div className="bg-white md:border md:border-[#E2E8F0] md:rounded-xl px-4 py-4 md:p-4 space-y-1.5">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
-                  Service Overview
-                </h4>
-                <p className="text-[#101A36] text-base leading-relaxed">
-                  {selectedServiceItem.description}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x md:divide-x-0 divide-[#E2E8F0] md:gap-3">
-                <div className="px-4 py-3.5 md:p-4 bg-white md:border md:border-[#E2E8F0] md:rounded-xl flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B]">
-                    <Tag className="w-4 h-4 text-[#101A36]" />
-                    <span>Fee Details</span>
-                  </div>
-                  <span className="font-bold text-[#101A36] text-sm">
-                    {selectedServiceItem.price}
-                  </span>
-                </div>
-
-                <div className="px-4 py-3.5 md:p-4 bg-white md:border md:border-[#E2E8F0] md:rounded-xl flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B]">
-                    <Clock className="w-4 h-4 text-[#101A36]" />
-                    <span>Estimated Time</span>
-                  </div>
-                  <span className="font-bold text-[#101A36] text-sm">
-                    {selectedServiceItem.estimatedTime}
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-white md:border md:border-[#E2E8F0] md:rounded-xl px-4 py-4 md:p-4 space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#101A36] flex items-center gap-2">
-                  <FileCheck className="w-4 h-4 text-[#1F9D6B]" />
-                  <span>Required Documents</span>
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                  {selectedServiceItem.requirements.map((req, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center gap-2 p-2.5 bg-[#F6F8FC] rounded-lg border border-[#E2E8F0]"
-                    >
-                      <CheckCircle className="w-4 h-4 text-[#1F9D6B] shrink-0" />
-                      <span className="font-medium text-[#101A36]">{req}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 sm:px-6 border-t border-[#E2E8F0] flex items-center justify-between gap-3 bg-white shrink-0">
-              <button
-                type="button"
-                onClick={() => setSelectedServiceItem(null)}
-                className="px-4 py-2 bg-[#F6F8FC] hover:bg-slate-200/70 text-[#101A36] text-sm font-semibold rounded-xl border border-[#E2E8F0] cursor-pointer"
-                id="eservice-modal-close-btn"
-              >
-                Close
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleApply(selectedServiceItem)}
-                className="px-5 py-2.5 bg-[#1F9D6B] hover:bg-[#19875B] text-white text-sm font-semibold rounded-xl flex items-center gap-2 cursor-pointer"
-                id="eservice-modal-apply-btn"
-              >
-                <span>Request Service Assistance</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
+            {DIRECTORY_TABS.map((tab) => {
+              const count = searchMatchingServices.filter((s) =>
+                matchesDirectoryCategory(s, tab.id)
+              ).length;
+              return (
+                <FilterChip
+                  key={tab.id}
+                  label={tab.id === 'all' ? t.filterAll : tab.label}
+                  active={selectedCategory === tab.id}
+                  count={count}
+                  onClick={() => {
+                    setSelectedCategory(tab.id);
+                    setShowAllServices(false);
+                  }}
+                />
+              );
+            })}
           </div>
         </div>
-      )}
 
-      {/* SHARE OPTIONS POPUP MODAL */}
-      {showShareModal && activeShareData && (
-        <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-[60]">
-          <div className="bg-white border border-[#E2E8F0] rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl text-[#102A43]">
-            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
-              <div className="flex items-center gap-2">
-                <Share2 className="w-4 h-4 text-[#2563EB]" />
-                <h3 className="font-bold text-base">Share Service</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowShareModal(false)}
-                className="p-1.5 hover:bg-[#F6F8FC] rounded-lg text-[#64748B] hover:text-[#102A43] cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <p className="text-xs text-[#64748B]">
-              Share <strong className="text-[#102A43]">{activeShareData.name}</strong> with family or applicants:
+        {/* Service Cards Grid */}
+        {displayedServices.length === 0 ? (
+          <Card className="p-8 text-center space-y-3">
+            <p className="text-base font-bold text-[var(--text-primary)] m-0">
+              No matching services found
             </p>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedCategory('all');
+              }}
+              className="min-h-[44px] px-4 py-2 rounded-xl bg-[#101A36] text-white font-bold text-sm inline-flex items-center justify-center cursor-pointer hover:bg-[#1B2A52]"
+            >
+              {t.resetFilters}
+            </button>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {displayedServices.map((item) => {
+              const hasPrice = Boolean(item.price && item.price.trim().length > 0);
+              const feeText = hasPrice ? item.price.trim() : t.servicesAskUs;
+              const hasTime = Boolean(item.estimatedTime && item.estimatedTime.trim().length > 0);
+              const docsList = Array.isArray(item.requirements)
+                ? item.requirements.filter((r) => Boolean(r && r.trim()))
+                : [];
+              const whatsappEnquiryUrl = `https://wa.me/917006833767?text=${encodeURIComponent(
+                `Hello Wasim Ahmad Khanday (CSC DOST), I would like to enquire about: ${item.name} (https://www.cscdost.com/service/${item.id})`
+              )}`;
 
-            <div className="grid grid-cols-1 gap-2">
-              <a
-                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(activeShareData.text)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between p-3 bg-[#16A34A] hover:bg-emerald-700 text-white rounded-xl font-semibold text-xs transition-colors"
-              >
-                <div className="flex items-center gap-2.5">
-                  <MessageSquare className="w-4 h-4" />
-                  <span>Share on WhatsApp</span>
-                </div>
-                <ArrowUpRight className="w-4 h-4" />
-              </a>
+              return (
+                <Card
+                  key={item.id}
+                  interactive
+                  className="p-4 sm:p-5 flex flex-col justify-between gap-4 text-start"
+                >
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <Chip variant="default">
+                        {CATEGORY_LABELS[item.category] || 'CSC E-Service'}
+                      </Chip>
+                      {hasTime && (
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--text-muted)]">
+                          <Clock className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                          <span>{item.estimatedTime.trim()}</span>
+                        </span>
+                      )}
+                    </div>
 
-              <a
-                href={`https://t.me/share/url?url=${encodeURIComponent(activeShareData.url)}&text=${encodeURIComponent(activeShareData.title)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between p-3 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl font-semibold text-xs transition-colors"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Send className="w-4 h-4" />
-                  <span>Share on Telegram</span>
-                </div>
-                <ArrowUpRight className="w-4 h-4" />
-              </a>
+                    <a
+                      href={`/service/${item.id}`}
+                      onClick={(e) => {
+                        if (!e.metaKey && !e.ctrlKey && e.button === 0) {
+                          e.preventDefault();
+                          handleOpenService(item);
+                        }
+                      }}
+                      className="block group no-underline space-y-1.5"
+                    >
+                      <h2 className="text-base sm:text-lg font-extrabold text-[var(--text-primary)] group-hover:text-[#1F9D6B] transition-colors leading-snug m-0">
+                        {item.name}
+                      </h2>
+                      <p className="text-sm text-[var(--text-secondary)] leading-relaxed line-clamp-2 m-0">
+                        {item.description}
+                      </p>
+                    </a>
 
-              <button
-                type="button"
-                onClick={() => copyToClipboard(activeShareData.url, 'service link')}
-                className="flex items-center justify-between p-3 bg-[#F6F8FC] hover:bg-slate-200/70 text-[#102A43] rounded-xl font-semibold text-xs border border-[#E2E8F0] cursor-pointer"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Copy className="w-4 h-4 text-[#2563EB]" />
-                  <span>Copy Service Link</span>
-                </div>
-              </button>
-            </div>
+                    {/* Documents Needed (Strictly from existing data) */}
+                    <div className="space-y-1.5 pt-2 border-t border-[var(--border-default)]">
+                      <div className="text-xs font-bold uppercase tracking-wide text-[var(--text-muted)]">
+                        {t.servicesDocsNeeded}
+                      </div>
+                      {docsList.length > 0 ? (
+                        <ul className="space-y-1 list-none m-0 p-0">
+                          {docsList.slice(0, 3).map((doc, idx) => (
+                            <li
+                              key={`${item.id}-doc-${idx}`}
+                              className="flex items-start gap-1.5 text-xs sm:text-sm text-[var(--text-primary)]"
+                            >
+                              <CheckCircle2
+                                className="w-3.5 h-3.5 text-[#1F9D6B] shrink-0 mt-0.5"
+                                aria-hidden="true"
+                              />
+                              <span className="line-clamp-1">{doc}</span>
+                            </li>
+                          ))}
+                          {docsList.length > 3 && (
+                            <li className="text-xs font-semibold text-[var(--text-muted)] ps-5">
+                              +{docsList.length - 3} more
+                            </li>
+                          )}
+                        </ul>
+                      ) : (
+                        <p className="text-xs font-semibold text-[var(--text-secondary)] m-0">
+                          {t.servicesAskUs}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Fee & Typical Time Summary Row */}
+                    <div className="rounded-xl bg-[var(--bg-surface)] border border-[var(--border-default)] p-2.5 space-y-1.5 text-xs">
+                      <div className="flex items-start gap-1.5 min-w-0">
+                        <Tag className="w-3.5 h-3.5 text-[#1F9D6B] shrink-0 mt-0.5" aria-hidden="true" />
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <span className="font-semibold text-[var(--text-muted)] me-1">
+                            {t.servicesFeeLabel}:
+                          </span>
+                          {Array.isArray(item.feeLines) && item.feeLines.length > 0 ? (
+                            <div className="space-y-0.5 mt-0.5">
+                              {item.feeLines.map((line, lineIdx) => (
+                                <div
+                                  key={`${item.id}-fee-${lineIdx}`}
+                                  className="font-bold text-[var(--text-primary)] leading-snug break-words"
+                                >
+                                  {line}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="font-bold text-[var(--text-primary)] break-words">
+                              {feeText}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {hasTime && (
+                        <div className="text-xs font-semibold text-[var(--text-secondary)] pt-1 border-t border-[var(--border-default)]">
+                          {t.servicesTypicalTime}: <strong className="text-[var(--text-primary)]">{item.estimatedTime.trim()}</strong>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Direct WhatsApp + Call + Details/Apply Actions */}
+                  <div className="space-y-2.5 pt-2 border-t border-[var(--border-default)]">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <a
+                        href={whatsappEnquiryUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="min-h-[44px] px-3 py-2 rounded-xl bg-[#1F9D6B] hover:bg-[#178257] text-white font-bold text-xs sm:text-sm inline-flex items-center justify-center gap-1.5 no-underline transition-colors"
+                      >
+                        <MessageCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
+                        <span>{t.servicesEnquireWhatsapp}</span>
+                      </a>
+
+                      <a
+                        href="tel:+917006833767"
+                        aria-label={`Call +91 70068 33767 about ${item.name}`}
+                        className="min-h-[44px] px-3 py-2 rounded-xl bg-[#101A36] hover:bg-[#1B2A52] text-white font-bold text-xs sm:text-sm inline-flex items-center justify-center gap-1.5 no-underline transition-colors border border-white/10"
+                      >
+                        <PhoneCall className="w-4 h-4 text-[#F5A623] shrink-0" aria-hidden="true" />
+                        <span dir="ltr" className="tabular-nums">
+                          {t.servicesCallBtn} · +91 70068 33767
+                        </span>
+                      </a>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 pt-0.5">
+                      <a
+                        href={`/service/${item.id}`}
+                        onClick={(e) => {
+                          if (!e.metaKey && !e.ctrlKey && e.button === 0) {
+                            e.preventDefault();
+                            handleOpenService(item);
+                          }
+                        }}
+                        className="min-h-[38px] inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-[#1F9D6B] hover:underline no-underline"
+                      >
+                        <span>{t.servicesViewDetails}</span>
+                        <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180 shrink-0" aria-hidden="true" />
+                      </a>
+
+                      <button
+                        type="button"
+                        onClick={() => onApplyService(item.name)}
+                        className="min-h-[38px] px-2.5 py-1 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--bg-surface)] border border-[var(--border-default)] text-xs font-bold text-[var(--text-primary)] cursor-pointer transition-colors"
+                      >
+                        {t.servicesApplyOnline}
+                      </button>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
-        </div>
-      )}
+        )}
 
-      {shareToast && (
-        <div className="fixed bottom-6 right-6 z-[70] bg-[#102A43] text-white px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 font-semibold text-xs">
-          <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>{shareToast}</span>
-        </div>
-      )}
+        {/* Show All Toggle */}
+        {filteredServices.length > 12 && !searchQuery.trim() && selectedCategory === 'all' && (
+          <div className="pt-1 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setShowAllServices((prev) => !prev)}
+              className="min-h-[44px] px-5 py-2.5 rounded-xl text-sm font-bold bg-[var(--bg-card)] text-[var(--text-primary)] border border-[var(--border-default)] hover:border-[var(--border-strong)] transition-colors cursor-pointer inline-flex items-center gap-2"
+            >
+              <span>
+                {showAllServices
+                  ? 'Show Featured Services (12)'
+                  : `View All ${filteredServices.length} Services`}
+              </span>
+              <ArrowRight
+                className={`w-4 h-4 transition-transform ${showAllServices ? '-rotate-90' : ''}`}
+                aria-hidden="true"
+              />
+            </button>
+          </div>
+        )}
+
+        <AdSlot />
+        <HelpApplyingCard contextTitle={t.servicesHubTitle} />
+        <AlertsBox />
+      </div>
     </section>
   );
 }

@@ -1,24 +1,32 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Banknote,
+  Clock,
+  ExternalLink,
+  FileCheck,
+  MessageCircle,
+  PhoneCall,
+  Printer,
+  Share2,
+  ShieldAlert,
+} from 'lucide-react';
 import { ServiceItem, CATEGORY_LABELS, SERVICES_LIST } from '../servicesData';
 import { buildServiceWhatsAppNotification } from '../utils/whatsappFormatter';
+import { useLanguage } from '../contexts/LanguageContext';
 import {
-  ContentPageLayout,
-  ContentArticleHeader,
-  KeyInfoStrip,
-  PrimaryActionBar,
-  MobileSectionNav,
-  ContentSection,
-  KeyValueRows,
-  ContentChecklist,
-  StepByStepList,
-  OfficialSourcesAndAssistance,
-  extractConciseIntro,
-  KeyInfoFact,
-  SectionNavItem,
-  RelatedContentItem,
-} from './shared/ContentDesignSystem';
-import WhatsAppChannelPopup, { WhatsAppChannelInPostCard } from './shared/WhatsAppChannelPopup';
-import { HelpApplyingCard } from './ui/HelpApplyingCard';
+  AdSlot,
+  AlertsBox,
+  Breadcrumbs,
+  Card,
+  ChecklistWithProgress,
+  Chip,
+  FaqAccordion,
+  HelpApplyingCard,
+  StickyMobileActionBar,
+  type FaqItem,
+} from './ui';
 
 interface ServiceDedicatedPageViewProps {
   service: ServiceItem;
@@ -35,17 +43,36 @@ export default function ServiceDedicatedPageView({
   onShare,
   onNavigateRoute,
 }: ServiceDedicatedPageViewProps) {
-  const [activeSectionId, setActiveSectionId] = useState<string>('service-overview');
+  const { t } = useLanguage();
 
-  useEffect(() => {
-    const orig = document.title;
-    document.title = `${service.name} – Process, Documents & Fees | CSC DOST`;
-    return () => {
-      document.title = orig;
-    };
-  }, [service]);
+  const categoryTitle = CATEGORY_LABELS[service.category] || 'CSC E-Services';
+  const feeDisplay =
+    service.price && service.price.trim().length > 0 ? service.price.trim() : t.servicesAskUs;
+  const timeDisplay =
+    service.estimatedTime && service.estimatedTime.trim().length > 0
+      ? service.estimatedTime.trim()
+      : '';
+  const docsList = useMemo(
+    () =>
+      Array.isArray(service.requirements)
+        ? service.requirements.filter((r) => Boolean(r && r.trim()))
+        : [],
+    [service.requirements]
+  );
 
   const officialPortal = useMemo(() => {
+    if (service.officialUrl && service.officialUrl.trim().length > 0) {
+      return {
+        name: 'Official Portal',
+        url: service.officialUrl.trim(),
+      };
+    }
+
+    // For all cards_adda services without an explicit officialUrl in data, do not guess portal URLs
+    if (service.category === 'cards_adda') {
+      return null;
+    }
+
     const sId = service.id.toLowerCase();
     const sName = service.name.toLowerCase();
 
@@ -116,409 +143,497 @@ export default function ServiceDedicatedPageView({
         url: 'https://eunnat.jk.gov.in',
       };
     }
-    return {
-      name: 'National Government Services Portal (India.gov.in)',
-      url: 'https://services.india.gov.in',
-    };
+    return null;
   }, [service]);
 
-  const categoryTitle = CATEGORY_LABELS[service.category] || 'CSC E-Services';
-  const requiredDocsList = useMemo(() => {
-    if (service.requirements && service.requirements.length > 0) {
-      return service.requirements;
-    }
-    return [
-      'Aadhaar Card / Valid Government Photo Identity',
-      'Active Mobile Number for OTP Verification',
-      'Recent Passport-Size Colour Photograph',
-      'Supporting Address or Date of Birth Proof (if applicable)',
-    ];
-  }, [service.requirements]);
-
-  const { intro, remainder } = useMemo(() => {
-    return extractConciseIntro(service.description, 220);
-  }, [service.description]);
-
-  // Useful summary fields for CSC E-Services
-  const keyFacts: KeyInfoFact[] = useMemo(() => {
-    return [
-      {
-        label: 'Service Category',
-        value: categoryTitle,
-        tone: 'default',
-      },
-      {
-        label: 'Service Channel',
-        value: 'Online / CSC Desk',
-        tone: 'blue',
-      },
-      {
-        label: 'Required Documents',
-        value: `${requiredDocsList.length} Key Items`,
-        tone: 'default',
-      },
-      {
-        label: 'Fee Information',
-        value: service.price,
-        tone: 'emerald',
-      },
-      {
-        label: 'Processing Estimate',
-        value: service.estimatedTime,
-        tone: 'default',
-      },
-    ];
-  }, [categoryTitle, requiredDocsList.length, service.price, service.estimatedTime]);
-
-  const sections: SectionNavItem[] = useMemo(
-    () => [
-      { id: 'service-overview', title: 'Service Overview' },
-      { id: 'who-can-request', title: 'Who Can Request This Service' },
-      { id: 'documents-required', title: 'Documents Required' },
-      { id: 'assistance-process', title: 'Application / Assistance Process' },
-      { id: 'fees-charges', title: 'Fees & Charges' },
-      { id: 'important-conditions', title: 'Important Conditions' },
-      { id: 'tracking-help', title: 'Tracking & Help Information' },
-      { id: 'official-sources', title: 'Official Sources' },
-    ],
-    []
+  const whatsappShareUrl = useMemo(
+    () => buildServiceWhatsAppNotification(service).whatsappShareUrl,
+    [service]
   );
 
-  const scrollToSection = (id: string) => {
-    setActiveSectionId(id);
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const whatsappEnquiryUrl = useMemo(() => {
+    const msg = `Hello Wasim Ahmad Khanday (CSC DOST), I would like to enquire about ${service.name}: https://www.cscdost.com/service/${service.id}`;
+    return `https://wa.me/917006833767?text=${encodeURIComponent(msg)}`;
+  }, [service]);
+
+  // Inject Service JSON-LD schema cleanly
+  useEffect(() => {
+    const scriptId = 'csc-service-schema';
+    let scriptEl = document.getElementById(scriptId) as HTMLScriptElement | null;
+    if (!scriptEl) {
+      scriptEl = document.createElement('script');
+      scriptEl.id = scriptId;
+      scriptEl.type = 'application/ld+json';
+      document.head.appendChild(scriptEl);
     }
-  };
 
-  const relatedServices: RelatedContentItem[] = useMemo(() => {
-    return SERVICES_LIST.filter((s) => s.id !== service.id && s.category === service.category)
-      .slice(0, 4)
-      .map((rel) => ({
-        id: rel.id,
-        title: rel.name,
-        categoryLabel: CATEGORY_LABELS[rel.category] || 'Citizen Service',
-        metaText: `Fee: ${rel.price} · Estimate: ${rel.estimatedTime}`,
-        onClick: () => {
-          if (onNavigateRoute) {
-            onNavigateRoute(`/service/${rel.id}`);
-          } else {
-            window.history.pushState(null, '', `/service/${rel.id}`);
-            window.dispatchEvent(new PopStateEvent('popstate'));
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }
+    scriptEl.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Service',
+      name: service.name,
+      description: service.description,
+      serviceType: categoryTitle,
+      provider: {
+        '@type': 'LocalBusiness',
+        name: 'CSC DOST',
+        telephone: '+91-70068-33767',
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: 'Sangran Qazigund',
+          addressLocality: 'Anantnag',
+          addressRegion: 'Jammu and Kashmir',
+          postalCode: '192221',
+          addressCountry: 'IN',
         },
-      }));
-  }, [service, onNavigateRoute]);
+      },
+      url: `https://www.cscdost.com/service/${encodeURIComponent(service.id)}`,
+    });
 
-  const handleRequestAssistance = () => {
-    onApplyService(service.name);
+    return () => {
+      try {
+        document.getElementById(scriptId)?.remove();
+      } catch {}
+    };
+  }, [service, categoryTitle]);
+
+  const processSteps = useMemo(
+    () => [
+      {
+        title: 'Confirm service requirements and fee before applying',
+        description: `Review the required documents below and confirm applicable charges (${feeDisplay}) with CSC DOST on +91 70068 33767 or WhatsApp before proceeding. Final charges depend on the service and any government fee.`,
+      },
+      {
+        title: 'Submit details & supporting documents',
+        description: `Click "${t.servicesApplyOnline}" or visit our Sangran Qazigund facilitation desk with clear copies/originals of the documents listed for ${service.name}.`,
+      },
+      {
+        title: 'Portal verification & filing',
+        description: officialPortal
+          ? `Your application or request is prepared and submitted on ${officialPortal.name} with required OTP or biometric verification where applicable.`
+          : 'Your request is prepared and processed with required OTP, verification, or document checks where applicable.',
+      },
+      {
+        title: 'Save acknowledgment & track progress',
+        description:
+          'Receive your submission acknowledgment or tracking reference token. Issuing authority timelines apply for final verification and issuance.',
+      },
+    ],
+    [feeDisplay, officialPortal, service.name, t.servicesApplyOnline]
+  );
+
+  const serviceFaqs: FaqItem[] = useMemo(() => {
+    const docsAnswer =
+      docsList.length > 0
+        ? `Listed documents for ${service.name}: ${docsList.join(', ')}. Additional verification may be requested by the issuing authority depending on your case.`
+        : `Required documents depend on your specific application case. Contact Wasim Ahmad Khanday on +91 70068 33767 or WhatsApp before visiting.`;
+
+    const feeAnswer =
+      service.price && service.price.trim().length > 0
+        ? `The listed reference charge is ${service.price.trim()}. Final charges depend on the service and any government fee. Please confirm before applying.`
+        : `Fee details are confirmed upon checking your request ("Ask us"). Final charges depend on the service and any government fee. Please confirm before applying.`;
+
+    const timeAnswer = timeDisplay
+      ? `Indicative timeline noted in the service entry is ${timeDisplay}. Actual completion depends on departmental verification and portal processing.`
+      : `Processing time varies by department verification and application type. Contact us on +91 70068 33767 for current turnaround expectations.`;
+
+    return [
+      {
+        question: `What documents are needed for ${service.name}?`,
+        answer: docsAnswer,
+      },
+      {
+        question: `What are the charges for ${service.name}?`,
+        answer: feeAnswer,
+      },
+      {
+        question: `How long does ${service.name} typically take?`,
+        answer: timeAnswer,
+      },
+      {
+        question: 'Can I get help with this service at CSC DOST?',
+        answer: officialPortal
+          ? `Yes. You can apply directly via ${officialPortal.name} (${officialPortal.url}), or contact CSC DOST (+91 70068 33767) operated by Authorized CSC VLE Wasim Ahmad Khanday (VLE ID 212515670018) for assisted document preparation and online filing.`
+          : `Yes. Contact CSC DOST (+91 70068 33767) operated by Authorized CSC VLE Wasim Ahmad Khanday (VLE ID 212515670018) at Sangran Qazigund, Anantnag for document verification and assisted processing.`,
+      },
+    ];
+  }, [docsList, officialPortal, service.name, service.price, timeDisplay]);
+
+  const relatedServices = useMemo(() => {
+    return SERVICES_LIST.filter((s) => s.id !== service.id && s.category === service.category).slice(
+      0,
+      4
+    );
+  }, [service]);
+
+  const navigateRoute = (href: string) => {
+    if (href === '/services') {
+      onBack();
+    } else if (onNavigateRoute) {
+      onNavigateRoute(href);
+    } else {
+      window.history.pushState(null, '', href);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }
   };
 
   return (
-    <ContentPageLayout
-      breadcrumbs={[
-        { label: 'Home', onClick: onBack },
-        { label: 'CSC E-Services', onClick: onBack },
-        { label: service.name },
-      ]}
-      onBack={onBack}
-      backLabel="Back to All Services"
-      onPrint={() => window.print()}
-      whatsappShareUrl={buildServiceWhatsAppNotification(service).whatsappShareUrl}
-      onShare={() => onShare(service)}
-      sections={sections}
-      activeSectionId={activeSectionId}
-      onSelectSection={scrollToSection}
-      relatedTitle="Related Citizen Services"
-      relatedItems={relatedServices}
-      sidebarCta={{
-        badge: 'CSC Digital Seva Desk',
-        title: 'Request Assisted Service Filing',
-        description:
-          'Submit your details and required document scans online. Our VLE operator will verify your paperwork and assist with official submission.',
-        buttonLabel: 'Request Assistance',
-        onAction: handleRequestAssistance,
-      }}
-      mobileStickyAction={{
-        primaryLabel: 'Request Assistance',
-        onPrimaryClick: handleRequestAssistance,
-        secondaryLabel: 'Official Portal',
-        secondaryHref: officialPortal.url,
-      }}
-      schemaJson={{
-        '@context': 'https://schema.org',
-        '@type': 'Service',
-        name: service.name,
-        description: service.description,
-        provider: {
-          '@type': 'Organization',
-          name: 'CSC DOST',
-          url: 'https://www.cscdost.com',
-        },
-        serviceType: categoryTitle,
-        offers: {
-          '@type': 'Offer',
-          price: service.price,
-          priceCurrency: 'INR',
-        },
-      }}
+    <article
+      aria-labelledby="service-page-h1"
+      className="w-full bg-[var(--bg-page)] text-[var(--text-primary)] pb-28 md:pb-12"
     >
-      {/* A–E: Category Label, Single H1, Concise Intro, Metadata */}
-      <ContentArticleHeader
-        categoryLabel={categoryTitle}
-        secondaryBadge="Online & CSC Desk"
-        title={service.name}
-        intro={intro}
-        metadata={[
-          { label: 'Service Channel', value: 'Online / CSC Desk' },
-          ...(service.estimatedTime
-            ? [{ label: 'Indicative Estimate', value: service.estimatedTime }]
-            : []),
-          ...(service.price
-            ? [{ label: 'Indicative Fee', value: service.price, emphasize: true }]
-            : []),
-          { label: 'Authority Portal', value: officialPortal.name },
-        ]}
-      />
-
-      {/* F: Key Information Strip */}
-      <KeyInfoStrip facts={keyFacts} />
-
-      {/* G: Clear Primary Actions */}
-      <PrimaryActionBar
-        primaryAction={{
-          label: 'Request Assistance',
-          onClick: handleRequestAssistance,
-        }}
-        officialLinks={[
-          {
-            label: 'Official Government Portal',
-            href: officialPortal.url,
-          },
-        ]}
-        onTrackApplication={() => {
-          if (onNavigateRoute) {
-            onNavigateRoute('/track');
-          } else {
-            window.history.pushState(null, '', '/track');
-            window.dispatchEvent(new PopStateEvent('popstate'));
-          }
-        }}
-        assistanceDisclaimer="CSC DOST provides document preparation and assisted online filing. You may also apply independently on the official government portal linked above."
-      />
-
-      {/* H: Compact Navigation to Page Sections (Sticky on Mobile) */}
-      <MobileSectionNav
-        sections={sections}
-        activeSectionId={activeSectionId}
-        onSelectSection={scrollToSection}
-      />
-
-      {/* WhatsApp Channel Alert Card */}
-      <WhatsAppChannelInPostCard postTitle={service.name} />
-
-      {/* I: Main Content Sections */}
-
-      {/* 1. SERVICE OVERVIEW */}
-      <ContentSection
-        id="service-overview"
-        title="Service Overview"
-        subtitle="What this citizen service covers and how it is processed."
-      >
-        <p className="text-base text-[#101A36] leading-relaxed">{service.description}</p>
-        {remainder && (
-          <p className="text-base text-[#526075] leading-relaxed">{remainder}</p>
-        )}
-        <KeyValueRows
-          rows={[
-            {
-              label: 'Service Name',
-              value: service.name,
-              boldValue: true,
-            },
-            {
-              label: 'Service Category',
-              value: categoryTitle,
-            },
-            {
-              label: 'Delivery Channel',
-              value: 'Online Assistance Desk & Physical CSC Centre (Qazigund, J&K)',
-            },
-            {
-              label: 'Indicative Turnaround Time',
-              value: service.estimatedTime,
-              tone: 'emerald',
-              boldValue: true,
-            },
-          ]}
-        />
-      </ContentSection>
-
-      {/* 2. WHO CAN REQUEST THIS SERVICE */}
-      <ContentSection
-        id="who-can-request"
-        title="Who Can Request This Service"
-        subtitle="Eligibility and general requirements for applicants."
-      >
-        <ContentChecklist
-          columns={1}
-          items={
-            service.category === 'jk_state' || service.category === 'revenue'
-              ? [
-                  'Bonafide residents and domiciles of the Union Territory of Jammu & Kashmir applying for revenue, domicile, or social welfare certificates.',
-                  'Applicants holding valid identity and parentage proof along with supporting revenue/local verification records.',
-                  'Citizens seeking new certificate issuance, digital re-verification, or corrections in existing records.',
-                ]
-              : [
-                  'Any eligible Indian citizen holding valid identity and address proof documents.',
-                  'Applicants seeking a fresh registration, card re-issuance, demographic correction, or e-KYC update.',
-                  'Guardians or parents applying on behalf of minor applicants with valid birth/relationship proof.',
-                ]
-          }
-        />
-      </ContentSection>
-
-      {/* 3. DOCUMENTS REQUIRED */}
-      <ContentSection
-        id="documents-required"
-        title="Documents Required"
-        subtitle="Keep clear original scans or photographs of the following documents ready."
-      >
-        <ContentChecklist items={requiredDocsList} />
-      </ContentSection>
-
-      {/* 4. APPLICATION OR ASSISTANCE PROCESS */}
-      <ContentSection
-        id="assistance-process"
-        title="Application & Assistance Process"
-        subtitle="Step-by-step workflow when requesting assistance through CSC DOST or applying online."
-      >
-        <StepByStepList
-          steps={[
-            {
-              title: 'Select Service & Submit Applicant Details',
-              description: `Click "Request Assistance" for ${service.name} and enter your name, mobile number, and required particulars.`,
-            },
-            {
-              title: 'Upload Supporting Documents',
-              description:
-                'Attach clear scans or photos of the required proofs. Our operator checks document clarity and required pixel/PDF sizes.',
-            },
-            {
-              title: 'Operator Verification & Portal Submission',
-              description: `A certified CSC VLE prepares your form on ${officialPortal.name} and coordinates OTP verification if required.`,
-            },
-            {
-              title: 'Receive Reference Token & Official Acknowledgment',
-              description:
-                'Save your CSC DOST tracking token and receive the official department acknowledgment receipt once filed.',
-            },
-          ]}
-        />
-      </ContentSection>
-
-      {/* 5. FEES AND CHARGES */}
-      <ContentSection
-        id="fees-charges"
-        title="Fees & Charges"
-        subtitle="Clear breakdown distinguishing statutory government charges from CSC assistance fees."
-      >
-        <KeyValueRows
-          rows={[
-            {
-              label: 'Indicative Total Service Charge',
-              value: service.price || 'As per applicable tariff',
-              tone: 'blue',
-              boldValue: true,
-            },
-            {
-              label: 'Official Government / Portal Fee',
-              value:
-                'Included as per statutory department tariff (payable directly to the issuing authority gateway where applicable).',
-            },
-            {
-              label: 'CSC Assistance & Document Formatting',
-              value:
-                'Covers document scanning, photo/PDF resizing, form preparation, and operator verification.',
-            },
-            {
-              label: 'Direct Self-Application Option',
-              value: `Citizens applying directly on ${officialPortal.name} only pay the statutory government portal fee.`,
-            },
-          ]}
-        />
-      </ContentSection>
-
-      {/* 6. IMPORTANT CONDITIONS */}
-      <ContentSection
-        id="important-conditions"
-        title="Important Conditions"
-        subtitle="Key guidelines to prevent application rejection or processing delays."
-      >
-        <ContentChecklist
-          columns={1}
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 space-y-5 sm:space-y-6">
+        <Breadcrumbs
           items={[
-            'Ensure your full name, date of birth, and parentage match across your Aadhaar Card and supporting certificates.',
-            'Keep your Aadhaar-linked mobile number active to receive verification OTPs during online submission.',
-            'Processing timelines are indicative estimates; final approval and certificate issuance depend on the concerned government authority.',
+            { label: t.navHome, href: '/' },
+            { label: t.navServices, href: '/services' },
+            { label: service.name },
           ]}
+          onNavigate={navigateRoute}
+          rightSlot={
+            <button
+              type="button"
+              onClick={onBack}
+              className="min-h-[40px] inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--text-primary)] hover:text-[#1F9D6B] cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4 rtl:rotate-180 shrink-0" aria-hidden="true" />
+              <span>{t.servicesBackToAll}</span>
+            </button>
+          }
         />
-      </ContentSection>
 
-      {/* 7. TRACKING AND HELP INFORMATION */}
-      <ContentSection
-        id="tracking-help"
-        title="Tracking & Help Information"
-        subtitle="How to monitor your application status after submitting a request."
-      >
-        <p className="text-xs sm:text-sm text-[#102A43] leading-relaxed">
-          Every assistance request submitted on CSC DOST generates a unique tracking reference token
-          (for example, <span className="font-mono font-semibold">CSC-2026-XXXX</span>). You can
-          check real-time operator verification progress, remarks, and final acknowledgment updates
-          at any time using the online tracker.
-        </p>
-        <div className="pt-1">
-          <button
-            type="button"
-            onClick={() => {
-              if (onNavigateRoute) {
-                onNavigateRoute('/track');
-              } else {
-                window.history.pushState(null, '', '/track');
-                window.dispatchEvent(new PopStateEvent('popstate'));
-              }
-            }}
-            className="min-h-[44px] px-4 py-2 bg-[#F6F8FC] hover:bg-slate-200 text-[#101A36] border border-[#DCE3EE] rounded-xl text-sm font-semibold transition-colors cursor-pointer"
-          >
-            Open Application Status Tracker →
-          </button>
+        {/* Transparency & Fee Confirmation Notice */}
+        <div
+          role="note"
+          className="rounded-2xl border border-[var(--status-closing-border)] bg-[var(--status-closing-bg)] p-3.5 sm:p-4 flex items-start gap-3 text-start"
+        >
+          <ShieldAlert
+            className="w-5 h-5 text-[var(--status-closing-text)] shrink-0 mt-0.5"
+            aria-hidden="true"
+          />
+          <p className="text-xs sm:text-sm font-semibold text-[var(--text-primary)] leading-relaxed m-0">
+            {t.servicesFeeNote}
+          </p>
         </div>
-      </ContentSection>
 
-      {/* 8. OFFICIAL SOURCES */}
-      <OfficialSourcesAndAssistance
-        sectionId="official-sources"
-        organisationName={officialPortal.name}
-        officialLinks={[
-          {
-            label: 'Official Government Portal',
-            href: officialPortal.url,
-          },
-        ]}
-        assistanceTitle="CSC DOST Digital Service Desk"
-        assistanceDescription={`Need help preparing and submitting your ${service.name} request? Our VLE desk handles document formatting and online filing for you.`}
-        assistanceButtonLabel="Request Assistance"
-        onRequestAssistance={handleRequestAssistance}
-      />
+        {/* Service Header Card */}
+        <header className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-4 sm:p-6 space-y-4 text-start shadow-2xs">
+          <div className="flex flex-wrap items-center gap-2">
+            <Chip variant="verified">{categoryTitle}</Chip>
+            <Chip>{t.independentChip}</Chip>
+          </div>
 
-      <div className="my-5">
-        <HelpApplyingCard contextTitle={service.name} />
+          <div className="space-y-2">
+            <h1
+              id="service-page-h1"
+              className="text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] leading-snug tracking-tight m-0 break-words"
+            >
+              {service.name}
+            </h1>
+            <p className="text-base text-[var(--text-secondary)] leading-relaxed m-0 max-w-3xl break-words">
+              {service.description}
+            </p>
+          </div>
+
+          {/* Summary Strip: Fee (or "Ask us"), Typical Time (only if present), Documents Count, Official Portal */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+            <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-3.5">
+              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
+                <Banknote className="w-4 h-4 text-[#1F9D6B] shrink-0" aria-hidden="true" />
+                <span>{t.servicesFeeLabel}</span>
+              </div>
+              {Array.isArray(service.feeLines) && service.feeLines.length > 0 ? (
+                <div className="text-sm sm:text-base font-bold text-[var(--text-primary)] mt-1 leading-snug space-y-1">
+                  {service.feeLines.map((line, idx) => (
+                    <div key={`${service.id}-summary-fee-${idx}`}>{line}</div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm sm:text-base font-bold text-[var(--text-primary)] mt-1 leading-snug">
+                  {feeDisplay}
+                </div>
+              )}
+            </div>
+
+            {timeDisplay && (
+              <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-3.5">
+                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
+                  <Clock className="w-4 h-4 text-[#2563EB] shrink-0" aria-hidden="true" />
+                  <span>{t.servicesTypicalTime}</span>
+                </div>
+                <div className="text-sm sm:text-base font-bold text-[var(--text-primary)] mt-1 leading-snug">
+                  {timeDisplay}
+                </div>
+              </div>
+            )}
+
+            <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-3.5">
+              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
+                <FileCheck className="w-4 h-4 text-[#D97706] shrink-0" aria-hidden="true" />
+                <span>{t.servicesDocsNeeded}</span>
+              </div>
+              <div className="text-sm sm:text-base font-bold text-[var(--text-primary)] mt-1 leading-snug tabular-nums">
+                {docsList.length > 0 ? `${docsList.length} listed items` : t.servicesAskUs}
+              </div>
+            </div>
+          </div>
+
+          {/* Primary Actions: Enquire on WhatsApp, Call +91 70068 33767, Apply Online, Official Portal */}
+          <div className="pt-3 border-t border-[var(--border-default)] flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <a
+                href={whatsappEnquiryUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="min-h-[44px] px-4 py-2.5 rounded-xl bg-[#1F9D6B] hover:bg-[#178257] text-white font-bold text-sm sm:text-base inline-flex items-center justify-center gap-2 no-underline transition-colors"
+              >
+                <MessageCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>{t.servicesEnquireWhatsapp}</span>
+              </a>
+
+              <a
+                href="tel:+917006833767"
+                className="min-h-[44px] px-4 py-2.5 rounded-xl bg-[#101A36] hover:bg-[#1B2A52] text-white font-bold text-sm sm:text-base inline-flex items-center justify-center gap-2 no-underline transition-colors border border-white/10"
+              >
+                <PhoneCall className="w-4 h-4 text-[#F5A623] shrink-0" aria-hidden="true" />
+                <span dir="ltr" className="tabular-nums">
+                  {t.servicesCallBtn} +91 70068 33767
+                </span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => onApplyService(service.name)}
+                className="min-h-[44px] px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-default)] font-bold text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
+              >
+                <span>{t.servicesApplyOnline}</span>
+                <ArrowRight className="w-4 h-4 rtl:rotate-180 shrink-0" aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {officialPortal && (
+                <a
+                  href={officialPortal.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-default)] font-semibold text-sm inline-flex items-center gap-1.5 no-underline"
+                >
+                  <span>{t.officialPortalBtn}</span>
+                  <ExternalLink className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                </a>
+              )}
+
+              <button
+                type="button"
+                onClick={() => onShare(service)}
+                aria-label="Share service"
+                className="min-h-[44px] min-w-[44px] px-3 py-2 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-default)] font-semibold text-sm inline-flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Share2 className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span className="hidden sm:inline">Share</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => window.print()}
+                aria-label="Print service checklist"
+                className="min-h-[44px] min-w-[44px] px-3 py-2 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-default)] font-semibold text-sm inline-flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span className="hidden sm:inline">Print</span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <AdSlot />
+
+        {/* Main 2-Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start">
+          {/* LEFT MAIN COLUMN */}
+          <div className="min-w-0 space-y-5">
+            {/* Documents Checklist (Strictly from data; shows Ask us if none listed) */}
+            {docsList.length > 0 ? (
+              <div id="service-documents" className="scroll-mt-20">
+                <ChecklistWithProgress
+                  title={t.servicesDocsChecklistTitle}
+                  items={docsList}
+                  storageKey={`service_docs_${service.id}`}
+                  note={`Bring clear originals or legible scans. ${t.servicesFeeNote}`}
+                />
+              </div>
+            ) : (
+              <Card className="p-5 space-y-2 text-start">
+                <h2 className="text-lg font-bold text-[var(--text-primary)] m-0">
+                  {t.servicesDocsChecklistTitle}
+                </h2>
+                <p className="text-sm text-[var(--text-secondary)] m-0">
+                  {t.servicesAskUs} — document requirements depend on your specific application case.
+                </p>
+              </Card>
+            )}
+
+            {/* Process Steps */}
+            <section
+              id="service-process-steps"
+              aria-label={t.servicesProcessStepsTitle}
+              className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-4 sm:p-5 space-y-3.5 text-start scroll-mt-20"
+            >
+              <div className="space-y-1">
+                <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)] m-0">
+                  {t.servicesProcessStepsTitle}
+                </h2>
+                <p className="text-sm text-[var(--text-secondary)] m-0">
+                  {officialPortal ? (
+                    <>
+                      How CSC DOST helps prepare and submit your request, or apply independently via{' '}
+                      <a
+                        href={officialPortal.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-[#1F9D6B] hover:underline"
+                      >
+                        {officialPortal.name}
+                      </a>
+                      .
+                    </>
+                  ) : (
+                    'How CSC DOST helps verify documents, prepare your request, and confirm applicable charges.'
+                  )}
+                </p>
+              </div>
+
+              <ol className="space-y-2.5 list-none m-0 p-0">
+                {processSteps.map((step, idx) => (
+                  <li
+                    key={step.title}
+                    className="flex items-start gap-3 p-3.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-default)]"
+                  >
+                    <span className="w-7 h-7 rounded-lg bg-[#101A36] dark:bg-[#F5A623] text-white dark:text-[#101A36] text-xs font-extrabold tabular-nums flex items-center justify-center shrink-0 mt-0.5">
+                      {idx + 1}
+                    </span>
+                    <div className="space-y-1 min-w-0">
+                      <h3 className="text-sm sm:text-base font-bold text-[var(--text-primary)] m-0">
+                        {step.title}
+                      </h3>
+                      <p className="text-sm text-[var(--text-secondary)] leading-relaxed m-0">
+                        {step.description}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+
+              <p className="text-xs font-semibold text-[var(--text-muted)] m-0 pt-1">
+                {t.servicesFeeNote}
+              </p>
+            </section>
+
+            {/* Help Applying Card (Wasim Ahmad Khanday · VLE ID 212515670018 · Call & WhatsApp) */}
+            <HelpApplyingCard contextTitle={service.name} />
+
+            {/* FAQ Accordion with FAQPage JSON-LD */}
+            <div id="service-faqs" className="scroll-mt-20">
+              <FaqAccordion items={serviceFaqs} title={t.servicesFaqTitle} injectSchema />
+            </div>
+
+            <AdSlot />
+          </div>
+
+          {/* RIGHT STICKY SIDEBAR */}
+          <aside className="space-y-5 lg:sticky lg:top-20">
+            <Card className="p-4 sm:p-5 space-y-3.5 text-start">
+              <div className="space-y-1">
+                <h2 className="text-base font-extrabold text-[var(--text-primary)] m-0">
+                  Direct Enquiry &amp; Support
+                </h2>
+                <p className="text-sm text-[var(--text-secondary)] leading-relaxed m-0">
+                  Confirm required documents, government fee, and service charges before submitting.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2.5">
+                <a
+                  href={whatsappEnquiryUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[#1F9D6B] hover:bg-[#178257] text-white font-bold text-sm inline-flex items-center justify-center gap-2 no-underline transition-colors"
+                >
+                  <MessageCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <span>{t.servicesEnquireWhatsapp}</span>
+                </a>
+
+                <a
+                  href="tel:+917006833767"
+                  className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[#101A36] hover:bg-[#1B2A52] text-white font-bold text-sm inline-flex items-center justify-center gap-2 no-underline transition-colors border border-white/10"
+                >
+                  <PhoneCall className="w-4 h-4 text-[#F5A623] shrink-0" aria-hidden="true" />
+                  <span dir="ltr" className="tabular-nums">
+                    {t.servicesCallBtn} · +91 70068 33767
+                  </span>
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => onApplyService(service.name)}
+                  className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-default)] font-bold text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                >
+                  <span>{t.servicesApplyOnline}</span>
+                </button>
+              </div>
+
+              <p className="text-xs text-[var(--text-muted)] leading-relaxed m-0 pt-2 border-t border-[var(--border-default)]">
+                {t.servicesFeeNote}
+              </p>
+            </Card>
+
+            {/* Related Services */}
+            {relatedServices.length > 0 && (
+              <section
+                aria-label={t.servicesRelatedTitle}
+                className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-4 space-y-3 text-start"
+              >
+                <h2 className="text-sm font-extrabold uppercase tracking-wider text-[var(--text-primary)] m-0">
+                  {t.servicesRelatedTitle}
+                </h2>
+                <ul className="space-y-2.5 list-none m-0 p-0">
+                  {relatedServices.map((rel) => (
+                    <li key={rel.id}>
+                      <a
+                        href={`/service/${rel.id}`}
+                        onClick={(e) => {
+                          if (!e.metaKey && !e.ctrlKey && e.button === 0) {
+                            e.preventDefault();
+                            navigateRoute(`/service/${rel.id}`);
+                          }
+                        }}
+                        className="block rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] hover:border-[var(--border-strong)] p-3 space-y-1 no-underline transition-colors"
+                      >
+                        <p className="text-sm font-bold text-[var(--text-primary)] line-clamp-2 leading-snug m-0">
+                          {rel.name}
+                        </p>
+                        <div className="text-xs font-semibold text-[#1F9D6B]">
+                          {rel.price?.trim() || t.servicesAskUs}
+                        </div>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            <AlertsBox compact />
+          </aside>
+        </div>
       </div>
 
-      {/* WhatsApp Channel Popup Modal & Floating Badge */}
-      <WhatsAppChannelPopup postTitle={service.name} />
-    </ContentPageLayout>
+      {/* Mobile Sticky Bottom Quick Bar */}
+      <StickyMobileActionBar
+        officialUrl={whatsappEnquiryUrl}
+        officialLabel={t.servicesEnquireWhatsapp}
+        shareWhatsAppUrl={whatsappShareUrl}
+        aboveBottomNav={true}
+      />
+    </article>
   );
 }

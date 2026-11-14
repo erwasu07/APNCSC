@@ -16,10 +16,47 @@
 
     <!-- 3. Inline Critical CSS (Immediate FCP & Zero-CLS Layout Stabilization) -->
     <style>
-      /* Critical Layout Base & Background */
+      /* Critical Layout Base & Theme Tokens (Light + Dark) */
       :root {
         --font-fallback: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-        color-scheme: light;
+        --bg-page: #F6F8FC;
+        --bg-surface: #FFFFFF;
+        --bg-card: #FFFFFF;
+        --bg-subtle: #EEF2F8;
+        --bg-header: #101A36;
+        --bg-header-dark: #0B1226;
+        --text-primary: #101A36;
+        --text-secondary: #475569;
+        --text-muted: #64748B;
+        --border-default: #DCE3EE;
+        color-scheme: light dark;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not(.light) {
+          --bg-page: #0B1120;
+          --bg-surface: #111A2E;
+          --bg-card: #16213A;
+          --bg-subtle: #1E2C4A;
+          --bg-header: #0A1124;
+          --bg-header-dark: #060B18;
+          --text-primary: #F1F5F9;
+          --text-secondary: #CBD5E1;
+          --text-muted: #94A3B8;
+          --border-default: #283757;
+        }
+      }
+      html.dark {
+        --bg-page: #0B1120;
+        --bg-surface: #111A2E;
+        --bg-card: #16213A;
+        --bg-subtle: #1E2C4A;
+        --bg-header: #0A1124;
+        --bg-header-dark: #060B18;
+        --text-primary: #F1F5F9;
+        --text-secondary: #CBD5E1;
+        --text-muted: #94A3B8;
+        --border-default: #283757;
+        color-scheme: dark;
       }
       *, *::before, *::after {
         box-sizing: border-box;
@@ -29,8 +66,8 @@
         max-width: 100%;
         font-size: 16px;
         overflow-x: hidden !important;
-        background-color: #F6F8FC !important;
-        color: #101A36 !important;
+        background-color: var(--bg-page);
+        color: var(--text-primary);
         font-family: 'Inter', 'Noto Sans Devanagari', var(--font-fallback);
         text-size-adjust: 100%;
         -webkit-text-size-adjust: 100%;
@@ -46,8 +83,8 @@
         margin: 0;
         padding: 0;
         overflow-x: hidden !important;
-        background-color: #F6F8FC !important;
-        color: #101A36 !important;
+        background-color: var(--bg-page);
+        color: var(--text-primary);
         font-size: 1rem;
         line-height: 1.6;
         -webkit-font-smoothing: antialiased;
@@ -61,14 +98,14 @@
         max-width: 100%;
         min-height: 100vh;
         overflow-x: hidden !important;
-        background-color: #F6F8FC !important;
+        background-color: var(--bg-page);
         display: flex;
         flex-direction: column;
       }
 
       /* Critical Header Skeleton (Prevents Layout Shift) */
       .critical-main-header {
-        background-color: #101A36;
+        background-color: var(--bg-header);
         border-bottom: 1px solid rgba(255, 255, 255, 0.12);
         min-height: 56px;
       }

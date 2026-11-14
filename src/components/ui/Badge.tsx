@@ -10,10 +10,10 @@ interface BadgeProps {
 
 const VARIANT_CLASSES: Record<BadgeVariant, string> = {
   navy: 'bg-[#101A36] text-white border border-[#101A36]',
-  amber: 'bg-[#FFFBEB] text-[#92400E] border border-[#FDE68A]',
-  green: 'bg-[#ECFDF5] text-[#146C48] border border-[#A7F3D0]',
-  urgent: 'bg-[#FEF2F2] text-[#B91C1C] border border-[#FECACA]',
-  neutral: 'bg-[#F6F8FC] text-[#475569] border border-[#DCE3EE]',
+  amber: 'bg-[var(--status-closing-bg)] text-[var(--status-closing-text)] border border-[var(--status-closing-border)]',
+  green: 'bg-[var(--status-open-bg)] text-[var(--status-open-text)] border border-[var(--status-open-border)]',
+  urgent: 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/60',
+  neutral: 'bg-[var(--bg-subtle)] text-[var(--text-secondary)] border border-[var(--border-default)]',
   chip: 'bg-white/10 text-[#F5A623] border border-[#F5A623]/40',
 };
 

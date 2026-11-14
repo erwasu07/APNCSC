@@ -6,6 +6,8 @@ export interface ServiceItem {
   requirements: string[];
   estimatedTime: string;
   price: string;
+  feeLines?: string[];
+  officialUrl?: string;
   popular?: boolean;
 }
 
@@ -38,7 +40,11 @@ export const SERVICES_LIST: ServiceItem[] = [
     description: 'Assistance with online address updates via official myAadhaar portal and appointment scheduling / document preparation guidance for authorized Aadhaar Seva Kendra visits.',
     requirements: ['Aadhaar Number', 'Valid Address Proof (e.g., Voter ID, Passport, Domicile, Bank Passbook)', 'Aadhaar-Linked Active Mobile Number for OTP verification'],
     estimatedTime: 'Typically 3 - 7 Days (Subject to UIDAI verification)',
-    price: '₹50 (UIDAI Portal Fee) + ₹70 (CSC Facilitation)',
+    price: 'Government (UIDAI) fee: as per UIDAI for the update type · Our service charge: ₹70',
+    feeLines: [
+      'Government (UIDAI) fee: as per UIDAI for the update type',
+      'Our service charge: ₹70',
+    ],
     popular: true
   },
   {
@@ -104,7 +110,7 @@ export const SERVICES_LIST: ServiceItem[] = [
     description: 'Online registration for fresh passports, renewals, tatkaal services, and appointment booking at PSK.',
     requirements: ['Aadhaar Card', '10th Marksheet/Non-ECR Proof', 'Bank Statement', 'Address Proof'],
     estimatedTime: 'Appointment booked in 24h',
-    price: '₹1500 (Govt Fee) + ₹70 (CSC Charge)'
+    price: 'Government fee depends on the type of application (booklet size, minor/adult, Tatkal). Ask us for the current fee.'
   },
   {
     id: 'csc-dl',
@@ -122,7 +128,7 @@ export const SERVICES_LIST: ServiceItem[] = [
     description: 'Instant payments for electricity bills, water bills, gas cylinders, mobile/DTH, FASTag recharges, and premium insurance payments.',
     requirements: ['Consumer ID / Policy Number', 'Mobile Number'],
     estimatedTime: 'Instant Credit',
-    price: 'FREE (₹0 Convenience Fee)',
+    price: 'Convenience fee may apply depending on the biller. Ask us.',
     popular: true
   },
 
@@ -621,7 +627,7 @@ export const SERVICES_LIST: ServiceItem[] = [
     description: 'Instant Ayushman Bharat Health Card download and high-quality waterproof PVC Smart Card printing with HD barcode.',
     requirements: ['Aadhaar Card', 'Ayushman PMJAY ID or Registered Mobile Number'],
     estimatedTime: 'Instant / Same Day',
-    price: '₹30 - ₹50 (PVC Print)',
+    price: 'Ask us',
     popular: true
   },
   {
@@ -631,7 +637,7 @@ export const SERVICES_LIST: ServiceItem[] = [
     description: 'Official Driving License search, PDF download, and durable chip-style PVC Smart Card printing.',
     requirements: ['Driving License Number', 'Date of Birth', 'Aadhaar Card'],
     estimatedTime: 'Instant / Same Day',
-    price: '₹50 (PVC Smart Card)',
+    price: 'Ask us',
     popular: true
   },
   {
@@ -661,7 +667,7 @@ export const SERVICES_LIST: ServiceItem[] = [
     description: 'Vehicle Registration Certificate (RC) PDF search, smart card layout, and high-density PVC printing.',
     requirements: ['Vehicle Registration Number (RC No.)', 'Chassis Number (Last 5 Digits)'],
     estimatedTime: 'Instant / Same Day',
-    price: '₹50 (PVC Smart Card)',
+    price: 'Ask us',
     popular: true
   },
   {
@@ -671,7 +677,7 @@ export const SERVICES_LIST: ServiceItem[] = [
     description: 'Waterproof Aadhaar PVC Smart Card printing with secure QR code scan and microtext layout.',
     requirements: ['Aadhaar Number / EID', 'Aadhaar OTP or e-Aadhaar PDF File'],
     estimatedTime: 'Same Day',
-    price: '₹40 - ₹50 (PVC Print)'
+    price: 'Ask us'
   },
   {
     id: 'ca-voter-pvc',
@@ -680,7 +686,7 @@ export const SERVICES_LIST: ServiceItem[] = [
     description: 'Voter ID e-EPIC search and download without OTP requirement, plus PVC Smart Card printing.',
     requirements: ['Voter EPIC Number or Applicant Name & State', 'Photo'],
     estimatedTime: 'Instant / Same Day',
-    price: '₹30 - ₹50 (PVC Print)',
+    price: 'Ask us',
     popular: true
   },
   {
@@ -717,7 +723,7 @@ export const SERVICES_LIST: ServiceItem[] = [
     description: 'Agri Stack Farmer ID card search, verification, and PVC Smart Card download for agricultural benefits.',
     requirements: ['Aadhaar Card', 'Land Khata / Survey Number', 'Mobile Number'],
     estimatedTime: 'Instant / 1 Day',
-    price: '₹30 (PVC Print)'
+    price: 'Ask us'
   },
   {
     id: 'ca-ration-rice-pvc',
@@ -726,7 +732,7 @@ export const SERVICES_LIST: ServiceItem[] = [
     description: 'AP Rice Card & Telangana Ration Card PDF search, photo/QR download, and PVC Smart Card printing.',
     requirements: ['Ration Card Number / Aadhaar Number', 'Family Head Details'],
     estimatedTime: 'Instant',
-    price: '₹30 (PVC Print)'
+    price: 'Ask us'
   },
   {
     id: 'ca-gst-registration',

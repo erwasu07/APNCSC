@@ -46,7 +46,7 @@ export const CORE_CATEGORIES: CategoryMetaEntry[] = [
     label: 'Government Schemes',
     title: 'Government Schemes | CSC DOST',
     description:
-      'Explore PM-KISAN, Ayushman Bharat PM-JAY, PM Vishwakarma and central or J&K citizen welfare scheme guides on CSC DOST.',
+      'Explore PM-KISAN, Ayushman Bharat PM-JAY, and central or J&K citizen welfare scheme guides with official portal links on CSC DOST.',
     canonicalUrl: `${SITE_ORIGIN}/schemes`,
   },
   {
