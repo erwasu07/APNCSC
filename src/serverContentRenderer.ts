@@ -5,7 +5,14 @@
  * inside <div id="root"> prior to client-side hydration.
  */
 
-import { SarkariItem } from './data/sarkariData';
+import {
+  SarkariItem,
+  isPublishedSarkariItem,
+  isIgnouItem,
+  isEducationSarkariItem,
+  isRecruitmentSarkariItem,
+  parseSarkariDateSortValue,
+} from './data/sarkariData';
 import { ServiceItem } from './servicesData';
 import { computeSarkariStatus } from './utils/sarkariStatus';
 
@@ -50,12 +57,16 @@ export function renderPostSubstantiveHtml(item: SarkariItem): string {
       ? '₹0/- (Exempted / Free for all candidates). No payment is required.'
       : 'Net Banking, Debit/Credit Card, UPI through Official Gateway';
 
+  const isIgnouPost = isIgnouItem(item);
+  const isEducationPost = isEducationSarkariItem(item);
+  const isSscTimetablePost = item.id === 'ssc-examination-schedule-cgept-dept-steno-cpo-nov-2026';
+
   const isDateSheet =
     item.noticeType === 'date_sheet' ||
     item.category === 'exam_forms' ||
     item.stage === 'date_sheet' ||
     item.stage === 'examination' ||
-    item.id === 'ssc-examination-schedule-cgept-dept-steno-cpo-nov-2026';
+    isSscTimetablePost;
 
   return `
   <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
@@ -63,7 +74,15 @@ export function renderPostSubstantiveHtml(item: SarkariItem): string {
     <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
       <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
       <span style="margin:0 6px;">/</span>
-      <a href="/jobs" style="color:#2563eb; text-decoration:none;">${isDateSheet ? 'Examination Notices' : 'Recruitment Updates'}</a>
+      ${
+        isIgnouPost
+          ? `<a href="/education" style="color:#2563eb; text-decoration:none;">Education &amp; Admissions</a>
+             <span style="margin:0 6px;">/</span>
+             <a href="/education/ignou" style="color:#2563eb; text-decoration:none;">IGNOU</a>`
+          : isEducationPost
+          ? `<a href="/education" style="color:#2563eb; text-decoration:none;">Education &amp; Admissions</a>`
+          : `<a href="/jobs" style="color:#2563eb; text-decoration:none;">Jobs &amp; Recruitment</a>`
+      }
       <span style="margin:0 6px;">/</span>
       <span style="color:#0f172a; font-weight:600;">${safeTitle}</span>
     </nav>
@@ -88,19 +107,27 @@ export function renderPostSubstantiveHtml(item: SarkariItem): string {
     </aside>
     ` : ''}
 
+    ${item.isTentative ? `
+    <aside style="background:#fffbeb; border:1px solid #fde68a; border-left:4px solid #d97706; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:13px; color:#92400e;">
+      <strong>Tentative Date Sheet Notice:</strong> This schedule is explicitly marked as <strong>Tentative</strong>${item.learnerGroup ? ` for <strong>${escapeHtml(item.learnerGroup)}</strong>` : ''}. Verify clash adjustments and the final date sheet directly on the official IGNOU portal before examinations.
+    </aside>
+    ` : ''}
+
     <!-- Article Header -->
     <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:24px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
       <header style="border-bottom:1px solid #e2e8f0; padding-bottom:18px; margin-bottom:20px;">
         <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:10px;">
-          ${isDateSheet ? 'EXAMINATION SCHEDULE' : safeCategory} ${item.noticeType ? `• ${escapeHtml(item.noticeType.replace(/_/g, ' ').toUpperCase())}` : ''}
+          ${isIgnouPost ? 'IGNOU UPDATE' : isDateSheet ? 'EXAMINATION SCHEDULE' : safeCategory} ${item.noticeType ? `• ${escapeHtml(item.noticeType.replace(/_/g, ' ').toUpperCase())}` : ''}${item.isTentative ? ' • TENTATIVE' : ''}
         </span>
         <h1 style="font-size:26px; line-height:1.3; font-weight:800; color:#0f172a; margin:0 0 12px 0;">
           ${safeTitle}
         </h1>
         <div style="font-size:13px; color:#64748b; display:flex; flex-wrap:wrap; gap:16px;">
           <span><strong>Post Date:</strong> ${safePostDate}</span>
+          ${item.documentDate ? `<span><strong>Circular Date:</strong> ${escapeHtml(item.documentDate)}</span>` : ''}
+          ${item.learnerGroup ? `<span><strong>Learner Group:</strong> <strong style="color:#0369a1;">${escapeHtml(item.learnerGroup)}</strong></span>` : ''}
           <span><strong>Advt / Ref No:</strong> ${safeAdvtNo}</span>
-          <span><strong>${isDateSheet ? 'Examination Dates:' : 'Last Date to Apply:'}</strong> <strong style="color:#b91c1c;">${isDateSheet && safeStartDate && safeStartDate !== safeLastDate ? `${safeStartDate} to ${safeLastDate}` : safeLastDate}</strong></span>
+          <span><strong>${isDateSheet ? 'Examination Dates:' : 'Last Date / Schedule:'}</strong> <strong style="color:#b91c1c;">${isDateSheet && safeStartDate && safeStartDate !== safeLastDate ? `${safeStartDate} to ${safeLastDate}` : safeLastDate}</strong></span>
         </div>
       </header>
 
@@ -182,8 +209,8 @@ export function renderPostSubstantiveHtml(item: SarkariItem): string {
 
       <!-- Step-by-Step Instructions / Who Should Read -->
       <section style="margin-bottom:28px;">
-        <h2 style="font-size:18px; font-weight:700; color:#1e293b; margin:0 0 10px 0;">${isDateSheet ? 'Who Should Read This Schedule & Candidate Guidelines' : 'How to Apply Online'}</h2>
-        ${isDateSheet ? `
+        <h2 style="font-size:18px; font-weight:700; color:#1e293b; margin:0 0 10px 0;">${isDateSheet ? 'Who Should Read This Schedule & Candidate Guidelines' : isIgnouPost ? 'Official IGNOU Circular & Student Instructions' : 'How to Apply Online'}</h2>
+        ${isSscTimetablePost ? `
         <ol style="padding-left:20px; font-size:14px; color:#334155; line-height:1.8; margin:0;">
           <li><strong>Check Test Dates:</strong> Identify the test date and shift timing for your post (CGEPT: 17–18 Nov; Typing/Steno: 20–21 Nov; Sub-Inspector Paper-II: 28 Nov 2026).</li>
           <li><strong>View City Intimation Slip:</strong> Visit <a href="https://ssc.gov.in" target="_blank" rel="noopener noreferrer" style="color:#2563eb;">ssc.gov.in</a> approximately 7 to 10 days before your test to view your allocated examination city.</li>
@@ -191,15 +218,22 @@ export function renderPostSubstantiveHtml(item: SarkariItem): string {
           <li><strong>Report to Centre:</strong> Arrive at the allotted test centre before gate closure with your printed Admit Card, two passport photos, and valid original photo ID.</li>
           <li><strong>No Application Fee:</strong> This is strictly an examination timetable for registered candidates; no application fee is required.</li>
         </ol>
+        ` : isDateSheet ? `
+        <ol style="padding-left:20px; font-size:14px; color:#334155; line-height:1.8; margin:0;">
+          <li><strong>Verify Programme &amp; Course Codes:</strong> Match your enrolled programme subjects against the official schedule${item.learnerGroup ? ` (${escapeHtml(item.learnerGroup)})` : ''}.</li>
+          <li><strong>Confirm Final Updates:</strong> ${item.isTentative ? 'This is a Tentative Date Sheet; keep checking the official portal for clash adjustments and final date sheet publication.' : 'Download the official circular from the portal link below for session timings.'}</li>
+          <li><strong>Check Exam Form &amp; Assignment Status:</strong> Ensure required assignments and examination form submissions are completed before downloading your hall ticket.</li>
+          <li><strong>Download Hall Ticket:</strong> Carry your valid Identity Card and Hall Ticket to the allotted examination centre.</li>
+        </ol>
         ` : `
         <ol style="padding-left:20px; font-size:14px; color:#334155; line-height:1.8; margin:0;">
-          <li>Review the complete official advertisement brochure to verify your educational eligibility and age requirements.</li>
-          <li>Prepare scanned copies of your Matriculation (10th) mark sheet, identity proof (Aadhaar / Voter ID), passport photograph, and signature in accordance with board specifications.</li>
-          <li>Visit the official recruiting website or authority link provided below.</li>
-          <li>Complete one-time registration (OTR) or applicant login using valid mobile number and email.</li>
-          <li>Fill in academic credentials, examination center preferences, and communication address accurately.</li>
-          <li>${isZeroFee ? 'Submit your online application on the official recruitment portal and download the confirmation receipt (No application fee required).' : `Submit mandatory application fees via the secured payment gateway before the closing date: <strong>${safeLastDate}</strong>.`}</li>
-          <li>Download and print the final application confirmation receipt for your records and examination entry.</li>
+          <li>Review the complete official notification / circular to verify your eligibility and programme / cadre requirements.</li>
+          <li>Prepare scanned copies of required academic records, identity proof, photograph, and signature according to official guidelines.</li>
+          <li>Visit the verified official authority portal link provided below.</li>
+          <li>Complete registration or student login using valid enrollment / OTR credentials.</li>
+          <li>Verify all personal details, study/exam centre preferences, and course or post selections accurately.</li>
+          <li>${isZeroFee ? 'Submit your online request on the official portal and download the confirmation receipt (No application fee required).' : `Complete required fee payment via the official gateway before the closing schedule: <strong>${safeLastDate}</strong>.`}</li>
+          <li>Download and save the confirmation receipt / PDF for future reference.</li>
         </ol>
         `}
       </section>
@@ -208,11 +242,11 @@ export function renderPostSubstantiveHtml(item: SarkariItem): string {
       <section style="background:#f1f5f9; border-radius:10px; padding:18px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
         <div>
           <div style="font-weight:700; font-size:15px; color:#0f172a;">Official Board Portal &amp; Direct Links</div>
-          <div style="font-size:13px; color:#64748b;">Verify official notification details directly on the government portal.</div>
+          <div style="font-size:13px; color:#64748b;">Verify official notification details directly on the issuing authority portal.</div>
         </div>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
           <a href="${safeOfficialLink}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#2563eb; color:#ffffff; font-weight:600; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
-            ${isDateSheet ? 'Official Portal (ssc.gov.in) ↗' : 'Official Portal / Gazette ↗'}
+            ${isSscTimetablePost ? 'Official Portal (ssc.gov.in) ↗' : isIgnouPost ? 'Official IGNOU Circular / Portal ↗' : 'Official Portal / Gazette ↗'}
           </a>
           ${!computed.canApplyOnline ? `
           <a href="/" style="display:inline-block; background:#ffffff; color:#0f172a; border:1px solid #cbd5e1; font-weight:600; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
@@ -689,37 +723,29 @@ function renderPrimaryCategoryNavHtml(activeCategory?: string): string {
 }
 
 export function renderHomepageSubstantiveHtml(posts: SarkariItem[], services: ServiceItem[]): string {
-  const verifiedVisiblePosts = posts.filter((p) => {
-    const st = computeSarkariStatus(p);
-    return st.verificationStatus !== 'needs_verification' && !p.isCancelled;
-  });
+  const verifiedVisiblePosts = posts
+    .filter((p) => {
+      if (!isPublishedSarkariItem(p)) return false;
+      const st = computeSarkariStatus(p);
+      return st.verificationStatus !== 'needs_verification' && !p.isCancelled;
+    })
+    .sort(
+      (a, b) =>
+        parseSarkariDateSortValue(b.postDate || b.documentDate) -
+        parseSarkariDateSortValue(a.postDate || a.documentDate)
+    );
 
   const recruitmentPosts = verifiedVisiblePosts
-    .filter(
-      (p) =>
-        p.noticeType === 'recruitment' ||
-        p.postType === 'Job' ||
-        ['jkssb', 'banking_jobs', 'army_jobs', 'ssc_jobs', 'rrb_jobs', 'jobs'].includes(p.category)
-    )
-    .sort((a, b) => Number(computeSarkariStatus(b).canApplyOnline) - Number(computeSarkariStatus(a).canApplyOnline))
+    .filter((p) => isRecruitmentSarkariItem(p))
     .slice(0, 6);
   const educationPosts = verifiedVisiblePosts
-    .filter(
-      (p) =>
-        p.noticeType !== 'recruitment' &&
-        p.postType !== 'Job' &&
-        (p.noticeType === 'admission' ||
-          p.noticeType === 'exam_form' ||
-          p.noticeType === 'date_sheet' ||
-          ['admissions', 'exam_forms', 'cluster_univ', 'nta'].includes(p.category))
-    )
-    .sort((a, b) => Number(computeSarkariStatus(b).canApplyOnline) - Number(computeSarkariStatus(a).canApplyOnline))
+    .filter((p) => isEducationSarkariItem(p))
     .slice(0, 4);
   const topServices = services.slice(0, 6);
 
   const categoryCards = [
     { href: '/jobs', title: 'Jobs &amp; Recruitment', desc: 'Latest JKSSB, Banking, Indian Army, SSC and RRB vacancies.' },
-    { href: '/education', title: 'Education &amp; Admissions', desc: 'University of Kashmir and Cluster University admissions, exams and date sheets.' },
+    { href: '/education', title: 'Education &amp; Admissions', desc: 'University of Kashmir, Cluster University and IGNOU admissions, exams and date sheets.' },
     { href: '/schemes', title: 'Government Schemes', desc: 'PM-KISAN, Ayushman Bharat PM-JAY and citizen welfare guides.' },
     { href: '/services', title: 'CSC E-Services', desc: 'PAN card, Aadhaar assistance, domicile certificates and digital services.' },
     { href: '/tools', title: 'Document Tools', desc: 'Client-side photo resizer, signature cropper and PDF utilities.' },
@@ -786,11 +812,14 @@ export function renderHomepageSubstantiveHtml(posts: SarkariItem[], services: Se
     </section>
 
     <section aria-labelledby="ssr-education-heading" style="margin-bottom:28px;">
-      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
         <h2 id="ssr-education-heading" style="font-size:20px; font-weight:800; color:#0f172a; margin:0;">
           Education &amp; Admissions
         </h2>
-        <a href="/education" style="font-size:13px; font-weight:700; color:#1e56c8; text-decoration:none;">View all education notices →</a>
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+          <a href="/education/ignou" style="font-size:13px; font-weight:700; color:#0284c7; text-decoration:none;">IGNOU Notifications →</a>
+          <a href="/education" style="font-size:13px; font-weight:700; color:#1e56c8; text-decoration:none;">View all education notices →</a>
+        </div>
       </div>
       <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:14px;">
         ${educationPosts
@@ -847,22 +876,24 @@ export function renderHomepageSubstantiveHtml(posts: SarkariItem[], services: Se
 }
 
 export function renderCategorySubstantiveHtml(
-  categoryType: 'jobs' | 'education' | 'schemes' | 'services' | 'tools' | 'calculators' | 'apply' | 'track' | 'admin',
+  categoryType: 'jobs' | 'education' | 'ignou' | 'schemes' | 'services' | 'tools' | 'calculators' | 'apply' | 'track' | 'admin',
   posts: SarkariItem[],
   services: ServiceItem[]
 ): string {
-  const verifiedPosts = posts.filter((p) => {
-    const st = computeSarkariStatus(p);
-    return st.verificationStatus !== 'needs_verification' && !p.isCancelled;
-  });
+  const verifiedPosts = posts
+    .filter((p) => {
+      if (!isPublishedSarkariItem(p)) return false;
+      const st = computeSarkariStatus(p);
+      return st.verificationStatus !== 'needs_verification' && !p.isCancelled;
+    })
+    .sort(
+      (a, b) =>
+        parseSarkariDateSortValue(b.postDate || b.documentDate) -
+        parseSarkariDateSortValue(a.postDate || a.documentDate)
+    );
 
   if (categoryType === 'jobs') {
-    const jobPosts = verifiedPosts.filter(
-      p =>
-        p.noticeType === 'recruitment' ||
-        p.postType === 'Job' ||
-        ['army_jobs', 'rrb_jobs', 'ssc_jobs', 'jkssb', 'banking_jobs', 'jobs'].includes(p.category)
-    );
+    const jobPosts = verifiedPosts.filter((p) => isRecruitmentSarkariItem(p));
 
     return `
     ${renderPrimaryCategoryNavHtml('jobs')}
@@ -915,19 +946,79 @@ export function renderCategorySubstantiveHtml(
     `;
   }
 
+  if (categoryType === 'ignou') {
+    const ignouPosts = verifiedPosts.filter((p) => isIgnouItem(p));
+
+    return `
+    ${renderPrimaryCategoryNavHtml('education')}
+    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
+      <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
+        <a href="/" style="color:#1e56c8; text-decoration:none;">Home</a>
+        <span style="margin:0 6px;">/</span>
+        <a href="/education" style="color:#1e56c8; text-decoration:none;">Education &amp; Admissions</a>
+        <span style="margin:0 6px;">/</span>
+        <span style="color:#0f172a; font-weight:600;">IGNOU</span>
+      </nav>
+
+      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:16px; margin-bottom:24px;">
+        <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;">
+          <span style="font-size:11px; font-weight:700; color:#0369a1; background:#e0f2fe; padding:4px 10px; border-radius:6px; text-transform:uppercase;">
+            Education &amp; Admissions · IGNOU (${ignouPosts.length} Notices)
+          </span>
+          <a href="/education" style="font-size:13px; font-weight:700; color:#1e56c8; text-decoration:none;">← Back to Education &amp; Admissions</a>
+        </div>
+        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">IGNOU Latest Notifications</h1>
+        <p style="font-size:15px; color:#475569; margin:0 0 12px 0; max-width:850px;">
+          Find IGNOU admission, re-registration, assignment, exam form, datesheet, hall ticket and result updates with official links on CSC DOST.
+        </p>
+        <div style="font-size:12px; color:#0c4a6e; background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:10px 14px;">
+          <strong>Learner Streams Covered:</strong> ODL (Open &amp; Distance Learning) · Online Programmes · GOAL · E-Vidya Bharti · Regional Centre Srinagar
+        </div>
+      </header>
+
+      <section style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:18px;">
+        ${ignouPosts.map(post => {
+          const st = computeSarkariStatus(post);
+          return `
+          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:18px; display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:10px;">
+                <span style="font-size:11px; font-weight:700; color:#0369a1; background:#f0f9ff; padding:3px 8px; border-radius:4px; text-transform:uppercase;">
+                  IGNOU${post.learnerGroup ? ` · ${escapeHtml(post.learnerGroup)}` : ''}
+                </span>
+                <span style="font-size:12px; color:${post.isTentative ? '#b45309' : st.canApplyOnline ? '#047857' : '#0f172a'}; font-weight:700;">
+                  ${escapeHtml(post.isTentative ? 'Tentative' : st.badgeLabel)}
+                </span>
+              </div>
+              <h2 style="font-size:17px; font-weight:700; line-height:1.35; margin:0 0 8px 0;">
+                <a href="/post/${escapeHtml(post.id)}" style="color:#0f172a; text-decoration:none;">
+                  ${escapeHtml(post.title)}
+                </a>
+              </h2>
+              <p style="font-size:13px; color:#475569; line-height:1.5; margin:0 0 12px 0;">
+                ${escapeHtml((post.shortInfo || '').slice(0, 130))}...
+              </p>
+            </div>
+            <div style="border-top:1px solid #f1f5f9; padding-top:12px; display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; font-size:12px;">
+              <span style="color:#64748b;">
+                ${post.lastDate ? `Due / Schedule: <strong>${escapeHtml(post.lastDate)}</strong>` : `Date: <strong>${escapeHtml(post.documentDate || post.postDate)}</strong>`}
+              </span>
+              <div style="display:flex; gap:10px; align-items:center;">
+                <a href="${escapeHtml(post.officialLink)}" target="_blank" rel="noopener noreferrer" style="color:#0369a1; font-weight:600; text-decoration:none;">Official Link ↗</a>
+                <a href="/post/${escapeHtml(post.id)}" style="color:#1e56c8; font-weight:600; text-decoration:none;">View Details →</a>
+              </div>
+            </div>
+          </article>
+        `;
+        }).join('')}
+      </section>
+    </main>
+    `;
+  }
+
   if (categoryType === 'education') {
-    const eduPosts = verifiedPosts.filter(
-      p =>
-        p.noticeType !== 'recruitment' &&
-        p.postType !== 'Job' &&
-        (p.noticeType === 'date_sheet' ||
-          p.noticeType === 'exam_form' ||
-          p.noticeType === 'admission' ||
-          p.category === 'exam_forms' ||
-          p.category === 'admissions' ||
-          p.category === 'cluster_univ' ||
-          p.category === 'nta')
-    );
+    const eduPosts = verifiedPosts.filter((p) => isEducationSarkariItem(p));
+    const ignouCount = eduPosts.filter((p) => isIgnouItem(p)).length;
 
     return `
     ${renderPrimaryCategoryNavHtml('education')}
@@ -940,9 +1031,15 @@ export function renderCategorySubstantiveHtml(
 
       <header style="border-bottom:1px solid #e2e8f0; padding-bottom:16px; margin-bottom:24px;">
         <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Education &amp; Admissions</h1>
-        <p style="font-size:15px; color:#475569; margin:0; max-width:850px;">
-          Official University of Kashmir and Cluster University Srinagar admissions, semester examination forms, date sheets and scholarship notices.
+        <p style="font-size:15px; color:#475569; margin:0 0 14px 0; max-width:850px;">
+          Official University of Kashmir, Cluster University Srinagar and IGNOU admissions, re-registration, examination forms, date sheets and scholarship notices.
         </p>
+        <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <span style="font-size:14px; color:#0c4a6e;">
+            <strong>IGNOU Student Corner:</strong> ODL, Online, GOAL &amp; E-Vidya Bharti circulars (${ignouCount} notices)
+          </span>
+          <a href="/education/ignou" style="font-size:13px; font-weight:700; color:#0369a1; text-decoration:none;">IGNOU Latest Notifications →</a>
+        </div>
       </header>
 
       <section style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:18px;">
@@ -953,7 +1050,7 @@ export function renderCategorySubstantiveHtml(
             <div>
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <span style="font-size:11px; font-weight:700; color:#7c3aed; background:#f5f3ff; padding:3px 8px; border-radius:4px; text-transform:uppercase;">
-                  ${escapeHtml(post.category?.replace(/_/g, ' '))}
+                  ${escapeHtml(isIgnouItem(post) ? 'IGNOU' : post.category?.replace(/_/g, ' '))}
                 </span>
                 <span style="font-size:12px; color:#0f172a; font-weight:600;">${post.lastDate ? `Date: ${escapeHtml(post.lastDate)}` : `Published: ${escapeHtml(post.postDate)}`}</span>
               </div>

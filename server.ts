@@ -4,7 +4,14 @@ import fs from 'fs';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import sharp from 'sharp';
-import { SARKARI_DATA } from './src/data/sarkariData';
+import {
+  SarkariItem,
+  SARKARI_DATA,
+  isPublishedSarkariItem,
+  isIgnouItem,
+  isEducationSarkariItem,
+  parseSarkariDateSortValue,
+} from './src/data/sarkariData';
 import { computeSarkariStatus } from './src/utils/sarkariStatus';
 import { SERVICES_LIST } from './src/servicesData';
 import { 
@@ -38,6 +45,7 @@ import {
   HOMEPAGE_SEO,
   LEGAL_SEO_MAP,
   PRIVATE_NOINDEX_META,
+  IGNOU_EDUCATION_SEO,
   getCategorySeoMeta,
   CategorySlug,
 } from './src/utils/seoConfig';
@@ -2922,7 +2930,7 @@ app.post('/api/whatsapp/send', authenticateAdmin, async (req: Request, res: Resp
     }
 
     // B. Server-Side Post Lookup & Expiration Validation (Do not trust client-supplied text)
-    const allPosts = [...SARKARI_DATA, ...getCustomSarkariPosts()];
+    const allPosts = getAllMergedSarkariPosts().filter(isPublishedSarkariItem);
     let matchedPost = allPosts.find(p => p.id === cleanPostId || p.id === decodeURIComponent(cleanPostId));
     let isService = false;
     let matchedService: any = null;
@@ -3477,16 +3485,18 @@ app.get(['/api/notifications/center', '/notifications/center'], (_req: Request, 
       badge: 'Announcement'
     }));
 
-    // Latest 10 verified & non-cancelled Sarkari items from memory
-    const topSarkari = SARKARI_DATA.filter((item) => {
-      const st = computeSarkariStatus(item);
-      return st.verificationStatus !== 'needs_verification' && !item.isCancelled;
-    })
+    // Latest 10 verified & non-cancelled published Sarkari items sorted newest-first
+    const topSarkari = getAllMergedSarkariPosts()
+      .filter((item) => {
+        if (!isPublishedSarkariItem(item)) return false;
+        const st = computeSarkariStatus(item);
+        return st.verificationStatus !== 'needs_verification' && !item.isCancelled;
+      })
       .slice(0, 10)
       .map(item => ({
         id: item.id,
         type: 'post' as const,
-        category: item.category === 'exam_forms' ? 'exams' : item.category === 'admissions' ? 'exams' : 'jobs',
+        category: isEducationSarkariItem(item) ? 'exams' : 'jobs',
         title: item.title,
         description: item.shortInfo,
         date: item.postDate || 'Recent',
@@ -3754,6 +3764,183 @@ function syncCustomPostsAndThumbnailsInMemory() {
 }
 
 syncCustomPostsAndThumbnailsInMemory();
+
+function getAllMergedSarkariPosts(): SarkariItem[] {
+  const thumbnailsMap = getPostThumbnailsMap();
+  const mergedMap = new Map<string, SarkariItem>();
+
+  for (const item of SARKARI_DATA) {
+    if (item && item.id) {
+      mergedMap.set(item.id, item);
+    }
+  }
+  for (const custom of getCustomSarkariPosts()) {
+    if (custom && custom.id) {
+      const existing = mergedMap.get(custom.id);
+      mergedMap.set(custom.id, existing ? { ...existing, ...custom } : custom);
+    }
+  }
+
+  return Array.from(mergedMap.values())
+    .map((item) => {
+      const savedThumb = thumbnailsMap[item.id];
+      if (savedThumb && savedThumb.thumbnailUrl) {
+        return {
+          ...item,
+          thumbnailUrl: savedThumb.thumbnailUrl,
+          thumbnailSpec: savedThumb.spec || item.thumbnailSpec,
+        };
+      }
+      return item;
+    })
+    .sort(
+      (a, b) =>
+        parseSarkariDateSortValue(b.postDate || b.documentDate) -
+        parseSarkariDateSortValue(a.postDate || a.documentDate)
+    );
+}
+
+// Public & Admin Sarkari Posts Feed (Excludes draft/archived unless includeAll=1)
+app.get('/api/sarkari-posts', (req: Request, res: Response) => {
+  const includeAll = req.query.includeAll === '1' || req.query.includeAll === 'true';
+  const merged = getAllMergedSarkariPosts();
+  if (includeAll) {
+    return res.json({
+      success: true,
+      posts: merged,
+    });
+  }
+  const posts = merged.filter(isPublishedSarkariItem);
+  const hiddenIds = merged.filter((p) => !isPublishedSarkariItem(p)).map((p) => p.id);
+  res.json({
+    success: true,
+    posts,
+    hiddenIds,
+  });
+});
+
+// Admin helper: Fetch & parse verifiable metadata from an official authority URL without fabricating data
+app.post('/api/admin/fetch-official-source', async (req: Request, res: Response) => {
+  try {
+    const rawUrl = String(req.body?.url || '').trim();
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(rawUrl);
+    } catch {
+      return res.status(400).json({
+        success: false,
+        error: 'Please enter a valid http:// or https:// official source URL.',
+      });
+    }
+    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+      return res.status(400).json({
+        success: false,
+        error: 'Official source URL must use http:// or https://.',
+      });
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    let response: globalThis.Response;
+    try {
+      response = await fetch(parsedUrl.toString(), {
+        signal: controller.signal,
+        redirect: 'follow',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; CSCDOST-Verifier/1.0; +https://www.cscdost.com)',
+          Accept: 'text/html,application/xhtml+xml,application/pdf;q=0.9,*/*;q=0.8',
+        },
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+
+    if (!response.ok) {
+      return res.status(422).json({
+        success: false,
+        error: `Official server returned HTTP ${response.status}. Please enter the notification fields manually.`,
+      });
+    }
+
+    const contentType = (response.headers.get('content-type') || '').toLowerCase();
+    const finalUrl = response.url || parsedUrl.toString();
+
+    if (contentType.includes('application/pdf') || /\.pdf(?:$|\?)/i.test(finalUrl)) {
+      const fileSlug = decodeURIComponent(finalUrl.split('/').pop()?.split('?')[0] || '')
+        .replace(/\.pdf$/i, '')
+        .replace(/[_-]+/g, ' ')
+        .trim();
+      return res.json({
+        success: true,
+        kind: 'pdf',
+        extracted: {
+          title: fileSlug.length >= 6 ? fileSlug : '',
+          officialLink: finalUrl,
+          officialNotificationUrl: finalUrl,
+        },
+        note: 'Verified PDF URL reachable. Enter exact circular title, circular date, learner group, and summary from the PDF.',
+      });
+    }
+
+    const htmlText = await response.text();
+    const decodeEntities = (input: string) =>
+      input
+        .replace(/&amp;/gi, '&')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#0?39;/gi, "'")
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const stripTags = (input: string) => decodeEntities(input.replace(/<[^>]+>/g, ' '));
+    const h1Match = htmlText.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+    const titleMatch = htmlText.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    const metaDescMatch =
+      htmlText.match(/<meta[^>]+name=["']description["'][^>]+content=["']([\s\S]*?)["'][^>]*>/i) ||
+      htmlText.match(/<meta[^>]+content=["']([\s\S]*?)["'][^>]+name=["']description["'][^>]*>/i);
+
+    const extractedTitle = stripTags(h1Match?.[1] || titleMatch?.[1] || '');
+    const extractedDesc = metaDescMatch?.[1] ? decodeEntities(metaDescMatch[1]) : '';
+
+    let pdfUrl = '';
+    const pdfHrefMatch = htmlText.match(/href=["']([^"']+\.pdf(?:\?[^"']*)?)["']/i);
+    if (pdfHrefMatch?.[1]) {
+      try {
+        pdfUrl = new URL(pdfHrefMatch[1], finalUrl).toString();
+      } catch {
+        pdfUrl = '';
+      }
+    }
+
+    if (!extractedTitle && !extractedDesc && !pdfUrl) {
+      return res.status(422).json({
+        success: false,
+        error: 'Could not extract details automatically from that official URL. Please fill the notification fields manually.',
+      });
+    }
+
+    return res.json({
+      success: true,
+      kind: 'html',
+      extracted: {
+        title: extractedTitle,
+        shortDescription: extractedDesc,
+        officialLink: finalUrl,
+        officialNotificationUrl: pdfUrl || finalUrl,
+      },
+    });
+  } catch (err: any) {
+    return res.status(422).json({
+      success: false,
+      error:
+        err?.name === 'AbortError'
+          ? 'Official source request timed out. Please enter the notification fields manually.'
+          : 'Could not fetch details from that official URL. Please fill the notification fields manually.',
+    });
+  }
+});
 
 // 1. Get all saved post thumbnails and custom posts
 app.get('/api/thumbnails/map', (_req: Request, res: Response) => {
@@ -4038,12 +4225,30 @@ app.post('/api/thumbnails/save', async (req: Request, res: Response) => {
   }
 });
 
-// 5. Create or Update a Post with its Associated 2048x677 Thumbnail
+// 5. Create or Update a Post with its Associated Metadata & Thumbnail
 app.post('/api/posts', async (req: Request, res: Response) => {
   try {
     const body = req.body || {};
     if (!body.title || !String(body.title).trim()) {
       return res.status(400).json({ error: 'Post Title is required.' });
+    }
+
+    const rawOfficialUrl = String(
+      body.officialNotificationUrl || body.officialLink || body.officialApplicationUrl || ''
+    ).trim();
+    let validatedOfficialUrl = '';
+    try {
+      const parsed = new URL(rawOfficialUrl);
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+        validatedOfficialUrl = parsed.toString();
+      }
+    } catch {
+      validatedOfficialUrl = '';
+    }
+    if (!validatedOfficialUrl) {
+      return res.status(400).json({
+        error: 'A valid Official Source / Notification URL (http:// or https://) is mandatory.',
+      });
     }
 
     const slug = String(
@@ -4056,33 +4261,63 @@ app.post('/api/posts', async (req: Request, res: Response) => {
     );
 
     const todayStr = new Date().toLocaleDateString('en-GB'); // DD/MM/YYYY
+    const rawPubStatus = String(body.publicationStatus || 'published').toLowerCase().trim();
+    const publicationStatus: 'published' | 'draft' | 'archived' =
+      rawPubStatus === 'draft' || rawPubStatus === 'archived' ? rawPubStatus : 'published';
+
+    const category = body.category || (String(body.institution || '').toUpperCase() === 'IGNOU' ? 'ignou' : 'jkssb');
+    const resolvedNoticeType = body.noticeType || undefined;
 
     const newPost: any = {
       id: slug,
       title: String(body.title).trim(),
-      category: body.category || 'jkssb',
-      department: body.department || '',
-      postType: body.postType || 'Job',
+      category,
+      institution: body.institution ? String(body.institution).trim() : category === 'ignou' ? 'IGNOU' : undefined,
+      department:
+        body.department ||
+        (category === 'ignou' ? 'Indira Gandhi National Open University (IGNOU)' : ''),
+      postType:
+        body.postType ||
+        (category === 'ignou'
+          ? resolvedNoticeType === 'result' || resolvedNoticeType === 'grade_card' || resolvedNoticeType === 'answer_key'
+            ? 'Result'
+            : 'Admission'
+          : 'Job'),
+      noticeType: resolvedNoticeType,
+      stage: body.stage || resolvedNoticeType || undefined,
+      learnerGroup: body.learnerGroup ? String(body.learnerGroup).trim() : undefined,
+      documentDate: body.documentDate ? String(body.documentDate).trim() : undefined,
+      isTentative: Boolean(body.isTentative),
+      publicationStatus,
       status: body.applicationStatus || body.status || 'Open',
-      postDate: body.postDate || todayStr,
-      startDate: body.startDate || todayStr,
-      lastDate: body.lastDate || 'Check Notification',
+      postDate: body.postDate || body.documentDate || todayStr,
+      startDate: body.startDate || body.postDate || body.documentDate || todayStr,
+      lastDate: body.lastDate || 'Check Official Circular',
       advertisementNo: body.advertisementNo || '',
       shortInfo:
         body.shortDescription ||
         body.shortInfo ||
-        `${body.title} official notification, eligibility, important dates, and online application assistance via CSC DOST.`,
-      ageLimit: body.ageLimit || 'As per official notification norms',
+        `${body.title} official notification, eligibility, important dates, and official portal details via CSC DOST.`,
+      ageLimit: body.ageLimit || (category === 'ignou' ? 'As per IGNOU programme norms' : 'As per official notification norms'),
       eligibility: body.eligibility || 'Refer to official notification for qualification details',
-      totalPosts: body.totalPosts || 'Various Posts',
-      officialLink: body.officialLink || 'https://www.india.gov.in',
+      totalPosts: body.totalPosts || (category === 'ignou' ? 'IGNOU Circular' : 'Various Posts'),
+      officialLink: String(body.officialLink || validatedOfficialUrl).trim(),
+      officialNotificationUrl: String(body.officialNotificationUrl || validatedOfficialUrl).trim(),
+      officialApplicationUrl: body.officialApplicationUrl ? String(body.officialApplicationUrl).trim() : undefined,
       fees: body.fees || {
         genObc: body.genObcFee || 'As per official notice',
         scSt: body.scStFee || 'As per official notice'
       },
-      isNew: true,
+      isNew: publicationStatus === 'published',
       thumbnailUrl: body.thumbnailUrl || `/api/thumbnails/post/${slug}.png`,
-      thumbnailSpec: body.thumbnailSpec || undefined
+      thumbnailSpec: body.thumbnailSpec || undefined,
+      verification: {
+        verificationStatus: 'verified',
+        verifiedAt: todayStr,
+        lastVerified: todayStr,
+        officialNotificationUrl: String(body.officialNotificationUrl || validatedOfficialUrl).trim(),
+        officialApplicationUrl: String(body.officialApplicationUrl || body.officialLink || validatedOfficialUrl).trim(),
+      }
     };
 
     upsertCustomSarkariPost(newPost);
@@ -4096,10 +4331,10 @@ app.post('/api/posts', async (req: Request, res: Response) => {
 
     syncCustomPostsAndThumbnailsInMemory();
 
-    // Check if auto-publish push is active
+    // Check if auto-publish push is active (never push drafts or archived notices)
     const pushSettings = getPushServerSettings();
-    if (pushSettings.autoPublishPush && !body.suppressPush) {
-      const pushCategory = newPost.category === 'exam_forms' ? 'exams' : newPost.category === 'admissions' ? 'exams' : 'jobs';
+    if (publicationStatus === 'published' && pushSettings.autoPublishPush && !body.suppressPush) {
+      const pushCategory = isEducationSarkariItem(newPost) ? 'exams' : 'jobs';
       broadcastPushNotification({
         title: `CSC DOST | ${newPost.postType === 'Job' ? 'New Job Alert' : 'New Update'} 🔔`,
         body: `${newPost.title} — ${newPost.totalPosts || ''} (${newPost.lastDate ? `Last Date: ${newPost.lastDate}` : ''}). Tap to view full details.`,
@@ -4143,8 +4378,8 @@ app.get(['/api/og-image/:id.png', '/api/og-image/:id.webp', '/api/og-image/:id.s
     const rawId = (req.params.id || (req.query.id as string) || '').replace(/\.(png|svg|webp)$/i, '');
     const format = req.path.endsWith('.svg') || req.query.format === 'svg' ? 'svg' : 'png';
 
-    // 1. Search in Sarkari notifications (both predefined SARKARI_DATA and custom posts)
-    const allSarkari = [...SARKARI_DATA, ...getCustomSarkariPosts()];
+    // 1. Search in Published Sarkari notifications (predefined SARKARI_DATA and custom posts)
+    const allSarkari = getAllMergedSarkariPosts().filter(isPublishedSarkariItem);
     const sarkariItem = allSarkari.find(i => i.id === rawId || i.id === decodeURIComponent(rawId));
     if (sarkariItem) {
       if (format === 'svg') {
@@ -4286,7 +4521,7 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
     robotsContent = PRIVATE_NOINDEX_META.admin.robots;
     substantiveBodyHtml = renderCategorySubstantiveHtml('admin', [], []);
   } else if (targetPostId) {
-    const allSarkari = [...SARKARI_DATA, ...getCustomSarkariPosts()];
+    const allSarkari = getAllMergedSarkariPosts().filter(isPublishedSarkariItem);
     const item = allSarkari.find(i => i.id === targetPostId || i.id === decodeURIComponent(targetPostId));
     if (item) {
       title = `${item.title} | CSC DOST`;
@@ -4297,19 +4532,23 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       robotsContent = 'index, follow';
       ogType = 'article';
       articlePublishedDate = toIsoDate(item.postDate);
-      const isEducationPost =
-        item.noticeType === 'date_sheet' ||
-        item.noticeType === 'exam_form' ||
-        item.noticeType === 'admission' ||
-        ['admissions', 'exam_forms', 'cluster_univ', 'nta'].includes(item.category);
-      breadcrumbItems = [
-        { name: 'Home', url: `${SITE_ORIGIN}/` },
-        {
-          name: isEducationPost ? 'Education & Admissions' : 'Jobs & Recruitment',
-          url: `${SITE_ORIGIN}${isEducationPost ? '/education' : '/jobs'}`,
-        },
-        { name: item.title, url: canonicalUrl }
-      ];
+      const isIgnouPost = isIgnouItem(item);
+      const isEducationPost = isEducationSarkariItem(item);
+      breadcrumbItems = isIgnouPost
+        ? [
+            { name: 'Home', url: `${SITE_ORIGIN}/` },
+            { name: 'Education & Admissions', url: `${SITE_ORIGIN}/education` },
+            { name: 'IGNOU', url: `${SITE_ORIGIN}/education/ignou` },
+            { name: item.title, url: canonicalUrl }
+          ]
+        : [
+            { name: 'Home', url: `${SITE_ORIGIN}/` },
+            {
+              name: isEducationPost ? 'Education & Admissions' : 'Jobs & Recruitment',
+              url: `${SITE_ORIGIN}${isEducationPost ? '/education' : '/jobs'}`,
+            },
+            { name: item.title, url: canonicalUrl }
+          ];
       substantiveBodyHtml = renderPostSubstantiveHtml(item);
     } else if (matchPost) {
       isNotFound = true;
@@ -4348,7 +4587,7 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
     const categoryMatch = urlPath.match(/^\/(jobs|education|schemes|services|calculators)$/i);
 
     if (toolsMatch) {
-      const allSarkari = [...SARKARI_DATA, ...getCustomSarkariPosts()];
+      const allSarkari = getAllMergedSarkariPosts();
       const toolSlug = toolsMatch[1] ? decodeURIComponent(toolsMatch[1]) : null;
       if (toolSlug) {
         const matchedTool = TOOLS_LIST.find((t) => t.id === toolSlug);
@@ -4392,10 +4631,18 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       canonicalUrl = PRIVATE_NOINDEX_META.track.canonicalUrl;
       robotsContent = PRIVATE_NOINDEX_META.track.robots;
       substantiveBodyHtml = renderCategorySubstantiveHtml('track', [], []);
+    } else if (urlPath.toLowerCase() === '/education/ignou') {
+      const allSarkari = getAllMergedSarkariPosts();
+      title = IGNOU_EDUCATION_SEO.title;
+      description = IGNOU_EDUCATION_SEO.description;
+      canonicalUrl = IGNOU_EDUCATION_SEO.canonicalUrl;
+      robotsContent = IGNOU_EDUCATION_SEO.robots;
+      breadcrumbItems = IGNOU_EDUCATION_SEO.breadcrumbs || [];
+      substantiveBodyHtml = renderCategorySubstantiveHtml('ignou', allSarkari, SERVICES_LIST);
     } else if (categoryMatch) {
       const catKey = categoryMatch[1].toLowerCase() as CategorySlug;
       const meta = getCategorySeoMeta(catKey);
-      const allSarkari = [...SARKARI_DATA, ...getCustomSarkariPosts()];
+      const allSarkari = getAllMergedSarkariPosts();
       title = meta.title;
       description = meta.description;
       canonicalUrl = meta.canonicalUrl;
@@ -4403,7 +4650,7 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       breadcrumbItems = meta.breadcrumbs || [];
       substantiveBodyHtml = renderCategorySubstantiveHtml(catKey, allSarkari, SERVICES_LIST);
     } else if (urlPath === '/') {
-      const allSarkari = [...SARKARI_DATA, ...getCustomSarkariPosts()];
+      const allSarkari = getAllMergedSarkariPosts();
       substantiveBodyHtml = renderHomepageSubstantiveHtml(allSarkari, SERVICES_LIST);
     } else {
       isNotFound = true;
@@ -4549,6 +4796,7 @@ app.get('/sitemap.xml', (req: Request, res: Response) => {
       { loc: '/', changefreq: 'daily', priority: '1.0' },
       { loc: '/jobs', changefreq: 'daily', priority: '0.9' },
       { loc: '/education', changefreq: 'daily', priority: '0.9' },
+      { loc: '/education/ignou', changefreq: 'daily', priority: '0.9' },
       { loc: '/schemes', changefreq: 'weekly', priority: '0.9' },
       { loc: '/services', changefreq: 'weekly', priority: '0.9' },
       { loc: '/tools', changefreq: 'monthly', priority: '0.9' },
@@ -4561,7 +4809,7 @@ app.get('/sitemap.xml', (req: Request, res: Response) => {
       { loc: '/refund-policy', changefreq: 'monthly', priority: '0.5' }
     ];
 
-    const allSarkari = [...SARKARI_DATA, ...getCustomSarkariPosts()];
+    const allSarkari = getAllMergedSarkariPosts().filter(isPublishedSarkariItem);
     const seenPostIds = new Set<string>();
 
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';

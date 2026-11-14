@@ -13,19 +13,26 @@ export type ApplicationStatus = 'upcoming' | 'open' | 'closed' | 'cancelled' | '
 export type NoticeType =
   | 'recruitment'
   | 'admission'
+  | 're_registration'
+  | 'assignment'
   | 'exam_form'
   | 'date_sheet'
   | 'result'
+  | 'grade_card'
   | 'answer_key'
   | 'objection_window'
   | 'document_verification'
   | 'admit_card'
+  | 'project_practical'
+  | 'rc_update'
   | 'correction'
   | 'scheme';
 
 export type NoticeStage =
   | 'recruitment'
   | 'admission'
+  | 're_registration'
+  | 'assignment'
   | 'exam_form'
   | 'date_sheet'
   | 'correction'
@@ -34,7 +41,10 @@ export type NoticeStage =
   | 'answer_key'
   | 'objection_window'
   | 'document_verification'
+  | 'project_practical'
+  | 'rc_update'
   | 'result'
+  | 'grade_card'
   | 'scheme';
 
 export interface VerificationEvidence {
@@ -60,14 +70,19 @@ export interface VerificationEvidence {
 export interface SarkariItem {
   id: string;
   title: string;
-  category: 'jkssb' | 'jobs' | 'admit_cards' | 'results' | 'answer_keys' | 'syllabus' | 'admissions' | 'exam_forms' | 'cluster_univ' | 'nta' | 'ssc_jobs' | 'rrb_jobs' | 'army_jobs' | 'banking_jobs';
+  category: 'jkssb' | 'jobs' | 'admit_cards' | 'results' | 'answer_keys' | 'syllabus' | 'admissions' | 'exam_forms' | 'cluster_univ' | 'ignou' | 'nta' | 'ssc_jobs' | 'rrb_jobs' | 'army_jobs' | 'banking_jobs';
+  institution?: string;             // e.g. 'IGNOU', 'JKSSB', 'University of Kashmir'
+  learnerGroup?: string;            // e.g. 'ODL', 'Online', 'ODL / Online', 'GOAL', 'E-Vidya Bharti', 'Regional Centre Srinagar'
   noticeType?: NoticeType;
-  postDate: string;
+  postDate: string;                 // Official portal publication date (DD/MM/YYYY)
+  documentDate?: string;            // Circular / signed document date when distinct from portal upload date
   startDate?: string;
   lastDate?: string;
   closingTime?: string;             // e.g. "23:00 IST" or "17:00 IST"
   feeDeadline?: string;             // Separate fee payment deadline
   correctionWindow?: string;        // Separate correction window dates
+  isTentative?: boolean;            // True for tentative date sheets
+  publicationStatus?: 'published' | 'draft' | 'archived';
   shortInfo: string;
   ageLimit?: string;
   ageRelaxationDetails?: string;    // Explicit verified age relaxation or "No category relaxation"
@@ -114,13 +129,495 @@ export const SARKARI_CATEGORIES = {
   admissions: { label: 'KU Admissions', color: 'border-teal-600 text-teal-700 bg-teal-50 dark:bg-teal-950/40' },
   exam_forms: { label: 'KU Exam Forms', color: 'border-amber-600 text-amber-800 bg-amber-50 dark:bg-amber-950/40' },
   cluster_univ: { label: 'Cluster Univ', color: 'border-cyan-600 text-cyan-700 bg-cyan-50 dark:bg-cyan-950/40' },
+  ignou: { label: 'IGNOU', color: 'border-sky-600 text-sky-700 bg-sky-50 dark:bg-sky-950/40' },
   nta: { label: 'NTA Exams', color: 'border-red-600 text-red-700 bg-red-50 dark:bg-red-950/40' },
   ssc_jobs: { label: 'SSC Jobs', color: 'border-orange-600 text-orange-700 bg-orange-50 dark:bg-orange-950/40' },
   rrb_jobs: { label: 'RRB Jobs', color: 'border-emerald-600 text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40' },
   army_jobs: { label: 'Indian Army Jobs', color: 'border-red-700 text-red-800 bg-red-50 dark:bg-red-950/40' }
 };
 
+export function isPublishedSarkariItem(item: SarkariItem): boolean {
+  return !item.publicationStatus || item.publicationStatus === 'published';
+}
+
+export function isIgnouItem(item: SarkariItem): boolean {
+  return item.category === 'ignou' || item.institution === 'IGNOU';
+}
+
+export function isEducationSarkariItem(item: SarkariItem): boolean {
+  if (isIgnouItem(item)) return true;
+  return (
+    item.noticeType !== 'recruitment' &&
+    item.postType !== 'Job' &&
+    (['admissions', 'cluster_univ', 'exam_forms', 'nta'].includes(item.category) ||
+      [
+        'admission',
+        're_registration',
+        'assignment',
+        'exam_form',
+        'date_sheet',
+        'project_practical',
+        'rc_update',
+        'grade_card',
+      ].includes(item.noticeType || ''))
+  );
+}
+
+export function isRecruitmentSarkariItem(item: SarkariItem): boolean {
+  if (isIgnouItem(item)) return false;
+  return (
+    item.noticeType === 'recruitment' ||
+    item.postType === 'Job' ||
+    ['jkssb', 'banking_jobs', 'army_jobs', 'ssc_jobs', 'rrb_jobs', 'jobs'].includes(item.category)
+  );
+}
+
+export function parseSarkariDateSortValue(dateStr?: string): number {
+  if (!dateStr) return 0;
+  const m = String(dateStr).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if (!m) return 0;
+  const d = parseInt(m[1], 10);
+  const mo = parseInt(m[2], 10);
+  const y = parseInt(m[3], 10);
+  return y * 10000 + mo * 100 + d;
+}
+
 export const SARKARI_DATA: SarkariItem[] = [
+  // 🎓 VERIFIED IGNOU STUDENT NOTIFICATIONS (Verified 14/11/2026 IST from ignou.ac.in/announcements/0)
+  {
+    id: 'ignou-rc-srinagar-campus-placement-drive-nov-2026',
+    title: 'IGNOU Regional Centre Srinagar Campus Placement Drive Rescheduled to 19 November 2026',
+    category: 'ignou',
+    institution: 'IGNOU',
+    learnerGroup: 'Regional Centre Srinagar',
+    noticeType: 'rc_update',
+    stage: 'rc_update',
+    postType: 'Admission',
+    department: 'Indira Gandhi National Open University (IGNOU) · RC Srinagar & CPC',
+    postDate: '11/11/2026',
+    startDate: '19/11/2026',
+    lastDate: '19/11/2026',
+    advertisementNo: 'CPC / RC Srinagar Placement Announcement (Rescheduled from 12 Nov 2026)',
+    session: 'November 2026',
+    status: 'Informational',
+    shortInfo: 'Campus Placement Cell, IGNOU in collaboration with Regional Centre Srinagar and Axis Bank Sales Academy has rescheduled its Face-to-Face Campus Placement Drive (originally 12 Nov 2026) to Thursday, 19 November 2026 from 10:00 AM onwards at Bibi Halima College of Nursing & Medical Technology, Rainawari, Srinagar for IGNOU students and alumni.',
+    ageLimit: 'As per Axis Bank Sales Academy recruitment norms',
+    eligibility: 'IGNOU enrolled students and alumni (Graduates / Postgraduates; freshers and experienced candidates eligible for Officer Sales OS1 across Srinagar, Budgam, Kupwara, Sopore, Kargil, Leh & Jammu).',
+    totalPosts: 'Officer Sales (OS1) – Multiple J&K & Ladakh Locations',
+    officialLink: 'https://www.ignou.ac.in/announcements/0?nav=1',
+    officialNotificationUrl: 'https://www.ignou.ac.in/announcements/0?nav=1',
+    fees: {
+      genObc: '₹0/- (No Placement Fee)',
+      scSt: '₹0/- (No Placement Fee)'
+    },
+    paymentInstructions: '₹0/- Free face-to-face placement drive for IGNOU students and alumni. Carry CV copies to the Srinagar venue or contact rcsrinagar@ignou.ac.in.',
+    verificationStatus: 'verified',
+    publicationStatus: 'published',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://www.ignou.ac.in/announcements/0?nav=1',
+      sourceHistory: [
+        'Verified directly on ignou.ac.in/announcements/0?nav=1 on 14/11/2026 (Rescheduled date 19 Nov 2026, venue Bibi Halima College, Rainawari, Srinagar).'
+      ]
+    },
+    isNew: true
+  },
+  {
+    id: 'ignou-oams-assignment-submission-dec-2026-tee',
+    title: 'IGNOU Dec 2026 TEE Online Assignment Submission via OAMS (ODL & Online) – Last Date 20 Nov 2026',
+    category: 'ignou',
+    institution: 'IGNOU',
+    learnerGroup: 'ODL / Online',
+    noticeType: 'assignment',
+    stage: 'assignment',
+    postType: 'Admission',
+    department: 'IGNOU Student Evaluation Division (SED)',
+    postDate: '02/11/2026',
+    documentDate: '28/10/2026',
+    startDate: '28/10/2026',
+    lastDate: '20/11/2026',
+    closingTime: '23:59 IST',
+    advertisementNo: 'F.No. IG/SED/2026/ (Dated 28 Oct 2026)',
+    session: 'December 2026 TEE',
+    status: 'Open',
+    shortInfo: 'IGNOU Student Evaluation Division (SED) has launched the Online Assignment Management System (OAMS) on the IGNOU Samarth Portal for eligible ODL and Online programme learners appearing in December 2026 TEE. The last date for online assignment submission is 20th November 2026; learners who already submitted assignments at their Study Centre or Regional Centre do not need to re-upload.',
+    eligibility: 'Eligible learners enrolled in IGNOU Open and Distance Learning (ODL) and Online Programmes for December 2026 Term-End Examination.',
+    totalPosts: 'ODL & Online Assignments (OAMS)',
+    officialLink: 'https://ignou.samarth.edu.in/index.php/site/login',
+    officialNotificationUrl: 'https://www.ignou.ac.in/viewFile/SED/notification/OAMS-Notification.pdf',
+    officialApplicationUrl: 'https://ignou.samarth.edu.in/index.php/site/login',
+    fees: {
+      genObc: '₹0/- (No Assignment Upload Fee)',
+      scSt: '₹0/- (Exempted)'
+    },
+    paymentInstructions: '₹0/- Online assignment upload through Samarth OAMS login is free.',
+    verificationStatus: 'verified',
+    publicationStatus: 'published',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://www.ignou.ac.in/viewFile/SED/notification/OAMS-Notification.pdf',
+      officialApplicationUrl: 'https://ignou.samarth.edu.in/index.php/site/login',
+      verifiedClosingDate: '20/11/2026',
+      closingTime: '23:59 IST',
+      sourceHistory: [
+        'Verified official circular OAMS-Notification.pdf (Document date 28/10/2026, portal upload 02/11/2026, last date 20/11/2026).'
+      ]
+    },
+    isNew: true
+  },
+  {
+    id: 'ignou-evidya-bharti-dec-2026-exam-form',
+    title: 'IGNOU E-Vidya Bharti Dec 2026 TEE Examination Form (E-Vidya Bharti Learners Only) – Last Date 25 Nov 2026',
+    category: 'ignou',
+    institution: 'IGNOU',
+    learnerGroup: 'E-Vidya Bharti',
+    noticeType: 'exam_form',
+    stage: 'exam_form',
+    postType: 'Admission',
+    department: 'IGNOU Student Evaluation Division (Exam-II)',
+    postDate: '02/11/2026',
+    documentDate: '02/11/2026',
+    startDate: '02/11/2026',
+    lastDate: '25/11/2026',
+    closingTime: '23:59 IST',
+    advertisementNo: 'F.No. IG/SED/E-VB/TEE/Dec.-2026/',
+    session: 'December 2026 TEE',
+    status: 'Open',
+    shortInfo: 'IGNOU SED has opened the online December 2026 Term-End Examination (TEE) form exclusively for E-Vidya Bharti (eVBAB) learners from 02 November 2026 to 25 November 2026 (11:59 PM IST without late fee). Examinations for E-Vidya Bharti learners are scheduled tentatively from 15 December 2026 onwards. Regular ODL/Online and GOAL learners should NOT use this portal.',
+    eligibility: 'Strictly eligible learners registered under IGNOU E-Vidya Bharti (iLearn / e-VBAB) programmes with valid registration and submitted assignments.',
+    totalPosts: 'E-Vidya Bharti Learners Only',
+    feePerSubject: '₹200 per Theory Course',
+    officialLink: 'https://exam.ignou.ac.in/evbDec2026/',
+    officialNotificationUrl: 'https://www.ignou.ac.in/viewFile/SED/notification/E-VAB-EXAM-2026-NOTIFICATION.pdf',
+    officialApplicationUrl: 'https://exam.ignou.ac.in/evbDec2026/',
+    fees: {
+      genObc: '₹200 per Theory Course (Practical: ₹300–₹500 for Jan 2023+ batch)',
+      scSt: '₹200 per Theory Course (Practical: ₹300–₹500 for Jan 2023+ batch)'
+    },
+    verificationStatus: 'verified',
+    publicationStatus: 'published',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://www.ignou.ac.in/viewFile/SED/notification/E-VAB-EXAM-2026-NOTIFICATION.pdf',
+      officialApplicationUrl: 'https://exam.ignou.ac.in/evbDec2026/',
+      verifiedOpeningDate: '02/11/2026',
+      verifiedClosingDate: '25/11/2026',
+      closingTime: '23:59 IST',
+      sourceHistory: [
+        'Verified E-VAB-EXAM-2026-NOTIFICATION.pdf and live portal exam.ignou.ac.in/evbDec2026/ on 14/11/2026.'
+      ]
+    },
+    isNew: true
+  },
+  {
+    id: 'ignou-dec-2026-tee-revised-tentative-datesheet-odl-online',
+    title: 'IGNOU Revised Tentative Date Sheet for December 2026 TEE (ODL & Online Mode) [25 Nov 2026 – 14 Jan 2027]',
+    category: 'ignou',
+    institution: 'IGNOU',
+    learnerGroup: 'ODL / Online',
+    noticeType: 'date_sheet',
+    stage: 'date_sheet',
+    isTentative: true,
+    postType: 'Admission',
+    department: 'IGNOU Student Evaluation Division (SED)',
+    postDate: '02/11/2026',
+    documentDate: '30/10/2026',
+    startDate: '25/11/2026',
+    lastDate: '14/01/2027',
+    advertisementNo: 'SED Revised Tentative Date Sheet (Dated 30 Oct 2026)',
+    session: 'December 2026 TEE',
+    status: 'Informational',
+    shortInfo: 'IGNOU has uploaded the Revised Tentative Date Sheet for December 2026 Term-End Examination (TEE) for Open and Distance Learning (ODL) and Online mode programmes. Exams are tentatively scheduled from 25 November 2026 to 14 January 2027 in Morning (10:00 AM–1:00 PM) and Evening (2:00 PM–5:00 PM) sessions. Being tentative, candidates must confirm final dates on their Hall Ticket.',
+    eligibility: 'Eligible IGNOU ODL & Online learners with valid course registration, submitted assignments, and paid Dec 2026 TEE exam fee.',
+    totalPosts: 'Tentative Exam Schedule (ODL & Online)',
+    officialLink: 'https://www.ignou.ac.in/viewFile/SED/notification/Revised-date-dec-2026-TEE.pdf',
+    officialNotificationUrl: 'https://www.ignou.ac.in/viewFile/SED/notification/Revised-date-dec-2026-TEE.pdf',
+    fees: {
+      genObc: '₹0/- (Tentative Date Sheet Notice)',
+      scSt: '₹0/- (Tentative Date Sheet Notice)'
+    },
+    verificationStatus: 'verified',
+    publicationStatus: 'published',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://www.ignou.ac.in/viewFile/SED/notification/Revised-date-dec-2026-TEE.pdf',
+      sourceHistory: [
+        'Verified Revised-date-dec-2026-TEE.pdf (Document date 30/10/2026, uploaded 02/11/2026, exam window 25.11.2026 to 14.01.2027).'
+      ]
+    },
+    isNew: true
+  },
+  {
+    id: 'ignou-phd-entrance-2026-answer-key-notice',
+    title: 'IGNOU Ph.D. Entrance Test Answer Key & Query Notice (Exam Held 11 Oct 2026)',
+    category: 'ignou',
+    institution: 'IGNOU',
+    learnerGroup: 'Ph.D. Applicants',
+    noticeType: 'answer_key',
+    stage: 'answer_key',
+    postType: 'Admission',
+    department: 'IGNOU Student Evaluation Division (Exam-II)',
+    postDate: '02/11/2026',
+    documentDate: '02/11/2026',
+    startDate: '02/11/2026',
+    lastDate: '08/11/2026',
+    closingTime: '18:00 IST',
+    advertisementNo: 'F.No. IG/SED/Ex-II/Ph.D.)/ET/KEY/Oct.-26/2026/',
+    session: '2026',
+    status: 'Closed',
+    shortInfo: 'IGNOU Student Evaluation Division (SED) published the official Answer Key notification for the Ph.D. Entrance Test conducted on 11 October 2026. Applicants were invited to submit answer key queries to entrancetest@ignou.ac.in until 08 November 2026 (06:00 PM IST); the query submission window has now concluded.',
+    eligibility: 'Candidates who appeared in the IGNOU Ph.D. Entrance Test held on 11 October 2026.',
+    totalPosts: 'Ph.D. Entrance Answer Key',
+    officialLink: 'https://www.ignou.ac.in/viewFile/SED/notification/Answerkey-Phd-2026.pdf',
+    officialNotificationUrl: 'https://www.ignou.ac.in/viewFile/SED/notification/Notification-P.HD.2026.pdf',
+    fees: {
+      genObc: '₹0/- (Answer Key Notice)',
+      scSt: '₹0/- (Exempted)'
+    },
+    verificationStatus: 'verified',
+    publicationStatus: 'published',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://www.ignou.ac.in/viewFile/SED/notification/Notification-P.HD.2026.pdf',
+      amendmentUrls: [
+        'https://www.ignou.ac.in/viewFile/SED/notification/Answerkey-Phd-2026.pdf'
+      ],
+      sourceHistory: [
+        'Verified Notification-P.HD.2026.pdf dated 02/11/2026 (query deadline 08/11/2026 06:00 PM).'
+      ]
+    },
+    isNew: false
+  },
+  {
+    id: 'ignou-dec-2026-tee-tentative-datesheet-goal',
+    title: 'IGNOU Tentative Date Sheet for December 2026 TEE – GOAL Learners (Guyana MoU) [05 Dec 2026 – 14 Jan 2027]',
+    category: 'ignou',
+    institution: 'IGNOU',
+    learnerGroup: 'GOAL',
+    noticeType: 'date_sheet',
+    stage: 'date_sheet',
+    isTentative: true,
+    postType: 'Admission',
+    department: 'IGNOU Student Evaluation Division (SED)',
+    postDate: '01/11/2026',
+    documentDate: '30/10/2026',
+    startDate: '05/12/2026',
+    lastDate: '14/01/2027',
+    advertisementNo: 'GOAL Dec 2026 Tentative Date Sheet (Dated 30 Oct 2026)',
+    session: 'December 2026 TEE',
+    status: 'Informational',
+    shortInfo: 'Tentative Date Sheet for Online December 2026 Term-End Examination exclusively for GOAL learners registered under IGNOU-Guyana-MoU (BAEGH, BCA, BTS, MLIS). Examinations run tentatively from 05 December 2026 to 14 January 2027 (6:00 PM–9:00 PM IST / 8:30 AM–11:30 AM GYT, with break from 20 Dec to 03 Jan). Applies ONLY to GOAL learners.',
+    eligibility: 'Students registered under IGNOU GOAL (Guyana Online Academy of Learning) programmes: BAEGH, BCA, BTS, MLIS.',
+    totalPosts: 'Tentative Date Sheet (GOAL Learners Only)',
+    officialLink: 'https://www.ignou.ac.in/viewFile/SED/notification/GOAL-DEC2026-EXAM-DATESHEET.pdf',
+    officialNotificationUrl: 'https://www.ignou.ac.in/viewFile/SED/notification/GOAL-DEC2026-EXAM-DATESHEET.pdf',
+    fees: {
+      genObc: '₹0/- (Tentative Date Sheet)',
+      scSt: '₹0/- (Tentative Date Sheet)'
+    },
+    verificationStatus: 'verified',
+    publicationStatus: 'published',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://www.ignou.ac.in/viewFile/SED/notification/GOAL-DEC2026-EXAM-DATESHEET.pdf',
+      sourceHistory: [
+        'Verified GOAL-DEC2026-EXAM-DATESHEET.pdf (Document date 30/10/2026, uploaded 01/11/2026).'
+      ]
+    },
+    isNew: true
+  },
+  {
+    id: 'ignou-dec-2026-tee-tentative-datesheet-evab',
+    title: 'IGNOU Tentative Date Sheet for December 2026 TEE – E-Vidya Bharti Online Learners [15 Dec 2026 – 11 Jan 2027]',
+    category: 'ignou',
+    institution: 'IGNOU',
+    learnerGroup: 'E-Vidya Bharti',
+    noticeType: 'date_sheet',
+    stage: 'date_sheet',
+    isTentative: true,
+    postType: 'Admission',
+    department: 'IGNOU Student Evaluation Division (SED)',
+    postDate: '30/10/2026',
+    documentDate: '30/10/2026',
+    startDate: '15/12/2026',
+    lastDate: '11/01/2027',
+    advertisementNo: 'E-Vidya Bharti Dec 2026 Tentative Date Sheet (Dated 30 Oct 2026)',
+    session: 'December 2026 TEE',
+    status: 'Informational',
+    shortInfo: 'Tentative Date Sheet for Online December 2026 Term-End Examination for students registered under E-Vidya Bharti online programmes (BATSOL, BCAOL, BCA_NEWOL, BCOMOL, BCOMFOL, BSWGOL, BTSOL, MADEOL, MAJMCOL, MAPC, MARDOL, MATSOL, MBAOL, MCAOL, MEGOL, MGPSOL, MHDOL). Exams run tentatively from 15 December 2026 to 11 January 2027 (Morning 12:30–3:30 PM IST, Evening 4:30–7:30 PM IST).',
+    eligibility: 'Students registered under IGNOU E-Vidya Bharti Online Programmes only.',
+    totalPosts: 'Tentative Date Sheet (E-Vidya Bharti Only)',
+    officialLink: 'https://www.ignou.ac.in/viewFile/SED/notification/EVAB-DEC2026-EXAM-DATESHEET.pdf',
+    officialNotificationUrl: 'https://www.ignou.ac.in/viewFile/SED/notification/EVAB-DEC2026-EXAM-DATESHEET.pdf',
+    fees: {
+      genObc: '₹0/- (Tentative Date Sheet)',
+      scSt: '₹0/- (Tentative Date Sheet)'
+    },
+    verificationStatus: 'verified',
+    publicationStatus: 'published',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://www.ignou.ac.in/viewFile/SED/notification/EVAB-DEC2026-EXAM-DATESHEET.pdf',
+      sourceHistory: [
+        'Verified EVAB-DEC2026-EXAM-DATESHEET.pdf (Dated 30/10/2026).'
+      ]
+    },
+    isNew: true
+  },
+  {
+    id: 'ignou-project-practical-fee-dec-2026-tee',
+    title: 'IGNOU Dec 2026 TEE Project, Internship & Practical Course Fee Submission (ODL & Online) – Last Date 30 Nov 2026',
+    category: 'ignou',
+    institution: 'IGNOU',
+    learnerGroup: 'ODL / Online',
+    noticeType: 'project_practical',
+    stage: 'project_practical',
+    postType: 'Admission',
+    department: 'IGNOU Student Evaluation Division (SED)',
+    postDate: '18/09/2026',
+    startDate: '18/09/2026',
+    lastDate: '30/11/2026',
+    closingTime: '23:59 IST',
+    advertisementNo: 'SED Project / Internship / Practical Fee Notice (Dec 2026 TEE)',
+    session: 'December 2026 TEE',
+    status: 'Open',
+    shortInfo: 'Online submission of fees for Project, Internship, and Practical courses for Term-End Examination (TEE) December 2026 is open for eligible IGNOU ODL and Online programme learners via the IGNOU Samarth Portal. The last date for fee submission is 30 November 2026.',
+    eligibility: 'Eligible IGNOU ODL and Online learners having Project, Internship, or Practical course components in December 2026 TEE.',
+    totalPosts: 'Project / Practical Fee (ODL & Online)',
+    officialLink: 'https://ignou.samarth.edu.in/index.php/site/login',
+    officialNotificationUrl: 'https://www.ignou.ac.in/announcements/0?nav=1',
+    officialApplicationUrl: 'https://ignou.samarth.edu.in/index.php/site/login',
+    fees: {
+      genObc: 'As per Samarth course fee rules',
+      scSt: 'As per Samarth course fee rules'
+    },
+    verificationStatus: 'verified',
+    publicationStatus: 'published',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://www.ignou.ac.in/announcements/0?nav=1',
+      officialApplicationUrl: 'https://ignou.samarth.edu.in/index.php/site/login',
+      verifiedClosingDate: '30/11/2026',
+      closingTime: '23:59 IST',
+      sourceHistory: [
+        'Verified on ignou.ac.in/announcements/0?nav=1 (Project/Internship/Practical fee last date 30 November 2026).'
+      ]
+    },
+    isNew: true
+  },
+  {
+    id: 'ignou-odl-online-dec-2026-exam-form',
+    title: 'IGNOU Dec 2026 TEE Examination Form (ODL & Online Theory Courses) – Closed 15 Oct 2026',
+    category: 'ignou',
+    institution: 'IGNOU',
+    learnerGroup: 'ODL / Online',
+    noticeType: 'exam_form',
+    stage: 'exam_form',
+    postType: 'Admission',
+    department: 'IGNOU Student Evaluation Division (SED)',
+    postDate: '11/09/2026',
+    documentDate: '30/09/2026',
+    startDate: '10/09/2026',
+    lastDate: '15/10/2026',
+    closingTime: '23:59 IST',
+    advertisementNo: 'F.No. IG/SED/Exam-II/December-26/TEE/2026/',
+    session: 'December 2026 TEE',
+    status: 'Closed',
+    shortInfo: 'Online submission of Examination Forms for December 2026 TEE theory courses for ODL and Online programmes ran from 10 September 2026 to 07 October 2026 (without late fee) and until 15 October 2026 with Rs. 1,100/- late fee via IGNOU Samarth Portal. The ODL/Online theory exam form window has concluded.',
+    eligibility: 'Eligible IGNOU ODL and Online programme learners for December 2026 TEE.',
+    totalPosts: 'ODL & Online Theory Courses (Closed)',
+    feePerSubject: '₹200 per Theory Course (+ ₹1,100 late fee 08–15 Oct 2026)',
+    officialLink: 'https://www.ignou.ac.in/viewFile/SED/notification/Notification-December-26-TEE.pdf',
+    officialNotificationUrl: 'https://www.ignou.ac.in/viewFile/SED/notification/Notification-December-26-TEE.pdf',
+    fees: {
+      genObc: '₹200 per course (Late fee window closed 15/10/2026)',
+      scSt: '₹200 per course (Late fee window closed 15/10/2026)'
+    },
+    verificationStatus: 'verified',
+    publicationStatus: 'published',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://www.ignou.ac.in/viewFile/SED/notification/Notification-December-26-TEE.pdf',
+      amendmentUrls: [
+        'https://www.ignou.ac.in/viewFile/SED/notification/Notification_Examform_dec26_TEE.pdf'
+      ],
+      verifiedOpeningDate: '10/09/2026',
+      verifiedClosingDate: '15/10/2026',
+      sourceHistory: [
+        'Verified Notification_Examform_dec26_TEE.pdf (10/09/2026) and extension Notification-December-26-TEE.pdf (30/09/2026; closed 15/10/2026).'
+      ]
+    },
+    isNew: false
+  },
+  {
+    id: 'ignou-july-2026-re-registration',
+    title: 'IGNOU July 2026 Session Online Re-Registration (ODL & Online) – Closed 30 Sep 2026',
+    category: 'ignou',
+    institution: 'IGNOU',
+    learnerGroup: 'ODL / Online',
+    noticeType: 're_registration',
+    stage: 're_registration',
+    postType: 'Admission',
+    department: 'IGNOU Student Registration Division (SRD)',
+    postDate: '16/09/2026',
+    startDate: '16/09/2026',
+    lastDate: '30/09/2026',
+    closingTime: '23:59 IST',
+    advertisementNo: 'SRD July 2026 Re-Registration Extension Notice',
+    session: 'July 2026',
+    status: 'Closed',
+    shortInfo: 'Online Re-Registration for the July 2026 session across IGNOU ODL and Online programmes (with late fee of Rs. 200/-) closed on 30 September 2026 on onlinerr.ignou.ac.in. Students should await the next cycle notification on ignou.ac.in.',
+    eligibility: 'Existing IGNOU ODL & Online learners eligible for next semester/year re-registration in July 2026 cycle.',
+    totalPosts: 'July 2026 Re-Registration Cycle (Closed)',
+    officialLink: 'https://onlinerr.ignou.ac.in/',
+    officialNotificationUrl: 'https://www.ignou.ac.in/announcements/0?nav=1',
+    fees: {
+      genObc: 'Programme Fee + ₹200 Late Fee (Closed 30/09/2026)',
+      scSt: 'Programme Fee + ₹200 Late Fee (Closed 30/09/2026)'
+    },
+    verificationStatus: 'verified',
+    publicationStatus: 'published',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://www.ignou.ac.in/announcements/0?nav=1',
+      officialApplicationUrl: 'https://onlinerr.ignou.ac.in/',
+      verifiedClosingDate: '30/09/2026',
+      sourceHistory: [
+        'Verified on onlinerr.ignou.ac.in and SRD announcement dated 16/09/2026 (closed 30/09/2026).'
+      ]
+    },
+    isNew: false
+  },
   // 🏛️ JKSSB JUNIOR ASSISTANT DOCUMENT VERIFICATION SCHEDULE (Dated: 12.11.2026)
   {
     id: 'jkssb-junior-assistant-dv-schedule-nov-2026',
@@ -5126,12 +5623,37 @@ export const SARKARI_DATA: SarkariItem[] = [
   },
   {
     id: 'adm-ignou-july',
-    title: 'IGNOU July Session Open & Distance Learning Online Form',
-    category: 'admissions',
+    title: 'IGNOU July 2026 Session Fresh Admission (ODL & Online) – Closed 13 Oct 2026',
+    category: 'ignou',
+    institution: 'IGNOU',
+    learnerGroup: 'ODL / Online',
+    noticeType: 'admission',
+    stage: 'admission',
+    postType: 'Admission',
+    department: 'IGNOU Student Registration Division (SRD)',
     postDate: '20/07/2026',
-    lastDate: '31/08/2026',
-    shortInfo: 'Indira Gandhi National Open University (IGNOU) fresh admission for BA, B.Com, B.Sc, MA, MBA, and Diploma courses.',
-    isNew: true
+    lastDate: '13/10/2026',
+    session: 'July 2026',
+    status: 'Closed',
+    shortInfo: 'Indira Gandhi National Open University (IGNOU) fresh admission for BA, B.Com, B.Sc, MA, MBA, and Diploma courses (ODL & Online modes, excluding Semester-based and Certificate programmes) was extended up to 13 October 2026 and has now concluded.',
+    officialLink: 'https://ignouadmission.samarth.edu.in/',
+    officialNotificationUrl: 'https://www.ignou.ac.in/announcements/0?nav=1',
+    officialApplicationUrl: 'https://ignouadmission.samarth.edu.in/',
+    verificationStatus: 'verified',
+    publicationStatus: 'published',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://www.ignou.ac.in/announcements/0?nav=1',
+      officialApplicationUrl: 'https://ignouadmission.samarth.edu.in/',
+      verifiedClosingDate: '13/10/2026',
+      sourceHistory: [
+        'Verified final SRD extension of July 2026 Fresh Admission up to 13/10/2026 on ignou.ac.in/announcements/0?nav=1.'
+      ]
+    },
+    isNew: false
   },
   {
     id: 'adm-up-deled',

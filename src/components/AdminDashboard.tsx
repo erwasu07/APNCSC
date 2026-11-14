@@ -2341,9 +2341,9 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       breadcrumb: 'Finance / Payments'
     },
     post_thumbnails: {
-      title: 'Create / Edit Post & AI Thumbnail Generator (2048×677)',
-      subtitle: 'Generate high-resolution 2048 × 677 px thumbnails strictly matching the JKSSB Class IV master reference.',
-      breadcrumb: 'Operations / AI Thumbnail Studio'
+      title: 'Create / Edit Post & Social Thumbnail Studio',
+      subtitle: 'Author, save drafts, publish or archive notifications (including IGNOU) and generate 1200 × 630 px social thumbnails.',
+      breadcrumb: 'Operations / Post & Thumbnail Studio'
     },
     vle_logs: {
       title: 'VLE Visitor Access Logs',

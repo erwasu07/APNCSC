@@ -37,7 +37,7 @@ export const CORE_CATEGORIES: CategoryMetaEntry[] = [
     label: 'Education & Admissions',
     title: 'Education & Admissions | CSC DOST',
     description:
-      'Check University of Kashmir and Cluster University admissions, examination forms, date sheets and scholarship notices on CSC DOST.',
+      'Check IGNOU, University of Kashmir and Cluster University admissions, examination forms, date sheets and scholarship notices on CSC DOST.',
     canonicalUrl: `${SITE_ORIGIN}/education`,
   },
   {
@@ -85,6 +85,20 @@ export const CATEGORY_META_MAP: Record<CategorySlug, CategoryMetaEntry> = CORE_C
   },
   {} as Record<CategorySlug, CategoryMetaEntry>
 );
+
+export const IGNOU_EDUCATION_SEO: RouteSeoMeta = {
+  title: 'IGNOU Latest Notifications, Admissions & Exams | CSC DOST',
+  description:
+    'Find IGNOU admission, re-registration, assignment, exam form, datesheet, hall ticket and result updates with official links on CSC DOST.',
+  canonicalUrl: `${SITE_ORIGIN}/education/ignou`,
+  robots: 'index, follow',
+  ogType: 'website',
+  breadcrumbs: [
+    { name: 'Home', url: `${SITE_ORIGIN}/` },
+    { name: 'Education & Admissions', url: `${SITE_ORIGIN}/education` },
+    { name: 'IGNOU', url: `${SITE_ORIGIN}/education/ignou` },
+  ],
+};
 
 export const HOMEPAGE_SEO: RouteSeoMeta = {
   title: 'CSC DOST – Jobs, Admissions & Citizen Services',

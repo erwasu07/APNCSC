@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { SarkariItem, SARKARI_CATEGORIES, SARKARI_DATA } from '../data/sarkariData';
+import {
+  SarkariItem,
+  SARKARI_CATEGORIES,
+  isIgnouItem,
+  isEducationSarkariItem,
+} from '../data/sarkariData';
 import { computeSarkariStatus, ComputedSarkariStatus } from '../utils/sarkariStatus';
+import { useSyncedSarkariPosts, sortByNewestPostDate } from '../utils/postDataSync';
 import SarkariNotificationBanner from './SarkariNotificationBanner';
 import { buildWhatsAppNotification } from '../utils/whatsappFormatter';
 import { AlertCircle, Clock, CheckCircle2, XCircle, FileText, ExternalLink, ShieldCheck } from 'lucide-react';
@@ -27,29 +33,27 @@ interface SarkariDedicatedPageViewProps {
   onBack: () => void;
   onApplyService: (serviceName: string) => void;
   onShare: (item: SarkariItem) => void;
+  onNavigateRoute?: (path: string) => void;
 }
-
-const ADMISSION_EDUCATION_CATEGORIES = new Set([
-  'admissions',
-  'exam_forms',
-  'cluster_univ',
-  'nta',
-]);
 
 export default function SarkariDedicatedPageView({
   item,
   onBack,
   onApplyService,
   onShare,
+  onNavigateRoute,
 }: SarkariDedicatedPageViewProps) {
-  const isAdmissionOrEdu = ADMISSION_EDUCATION_CATEGORIES.has(item.category);
+  const allPosts = useSyncedSarkariPosts();
+  const isIgnou = isIgnouItem(item);
+  const isAdmissionOrEdu = isEducationSarkariItem(item);
   const isInfoOnlyNotice = ['results', 'answer_keys', 'syllabus'].includes(item.category);
+  const isSscTimetablePost = item.id === 'ssc-examination-schedule-cgept-dept-steno-cpo-nov-2026';
   const isExamSchedule =
     item.noticeType === 'date_sheet' ||
     item.stage === 'date_sheet' ||
     item.stage === 'examination' ||
     item.category === 'exam_forms' ||
-    item.id === 'ssc-examination-schedule-cgept-dept-steno-cpo-nov-2026';
+    isSscTimetablePost;
 
   const [activeSectionId, setActiveSectionId] = useState<string>('overview-section');
 
@@ -62,6 +66,7 @@ export default function SarkariDedicatedPageView({
   }, [item]);
 
   const organisationName = useMemo(() => {
+    if (isIgnouItem(item)) return item.department || 'Indira Gandhi National Open University (IGNOU)';
     if (item.category === 'army_jobs') return 'Indian Army (joinindianarmy.nic.in)';
     if (item.category === 'rrb_jobs') return 'Railway Recruitment Boards (RRB)';
     if (item.category === 'ssc_jobs') return 'Staff Selection Commission (SSC)';
@@ -100,6 +105,7 @@ export default function SarkariDedicatedPageView({
 
   const officialPortalUrl = useMemo(() => {
     if (item.officialLink && item.officialLink.trim()) return item.officialLink.trim();
+    if (isIgnouItem(item)) return 'https://www.ignou.ac.in';
     if (item.category === 'banking_jobs') return 'https://jkb.bank.in/';
     if (item.category === 'army_jobs') return 'https://joinindianarmy.nic.in';
     if (item.category === 'rrb_jobs') return 'https://www.rrbapply.gov.in';
@@ -139,6 +145,40 @@ export default function SarkariDedicatedPageView({
 
   // Key Information Strip tailored by Content Type
   const keyFacts: KeyInfoFact[] = useMemo(() => {
+    if (isIgnou) {
+      return [
+        {
+          label: 'University',
+          value: 'Indira Gandhi National Open University (IGNOU)',
+          tone: 'default',
+        },
+        {
+          label: 'Learner Group',
+          value: item.learnerGroup || 'IGNOU Learners',
+          tone: 'blue',
+        },
+        {
+          label: 'Circular / Post Date',
+          value: item.documentDate && item.documentDate !== item.postDate
+            ? `${item.documentDate} (Portal: ${item.postDate})`
+            : item.postDate || 'Recent',
+          tone: 'default',
+        },
+        {
+          label: item.isTentative ? 'Schedule Type' : 'Important Date / Deadline',
+          value: item.isTentative
+            ? `Tentative Date Sheet${item.lastDate ? ` · ${item.lastDate}` : ''}`
+            : item.lastDate || item.startDate || 'Refer to official notice',
+          tone: item.isTentative ? 'amber' : statusInfo.isClosingSoon ? 'rose' : 'default',
+        },
+        {
+          label: 'Notice Status',
+          value: statusInfo.badgeLabel,
+          tone: statusInfo.badgeTone,
+        },
+      ];
+    }
+
     if (isExamSchedule) {
       return [
         {
@@ -148,8 +188,8 @@ export default function SarkariDedicatedPageView({
         },
         {
           label: 'Notice Type',
-          value: 'Official Examination Schedule',
-          tone: 'blue',
+          value: item.isTentative ? 'Tentative Examination Schedule' : 'Official Examination Schedule',
+          tone: item.isTentative ? 'amber' : 'blue',
         },
         {
           label: 'Reference No.',
@@ -165,8 +205,8 @@ export default function SarkariDedicatedPageView({
         },
         {
           label: 'Schedule Status',
-          value: 'Examination Schedule Active',
-          tone: 'emerald',
+          value: statusInfo.badgeLabel,
+          tone: statusInfo.badgeTone,
         },
       ];
     }
@@ -234,9 +274,14 @@ export default function SarkariDedicatedPageView({
       },
     ];
   }, [
+    isIgnou,
     isExamSchedule,
     isAdmissionOrEdu,
     organisationName,
+    item.learnerGroup,
+    item.documentDate,
+    item.postDate,
+    item.isTentative,
     item.advertisementNo,
     item.category,
     item.totalPosts,
@@ -305,25 +350,32 @@ export default function SarkariDedicatedPageView({
 
   // Related items from same category or related board (exclude unverified & cancelled)
   const relatedItems: RelatedContentItem[] = useMemo(() => {
-    return SARKARI_DATA.filter((i) => {
-      if (i.id === item.id) return false;
-      const st = computeSarkariStatus(i);
-      if (st.verificationStatus === 'needs_verification' || i.isCancelled) return false;
-      return i.category === item.category || i.category === 'jkssb';
-    })
+    return [...allPosts]
+      .sort(sortByNewestPostDate)
+      .filter((i) => {
+        if (i.id === item.id) return false;
+        const st = computeSarkariStatus(i);
+        if (st.verificationStatus === 'needs_verification' || i.isCancelled) return false;
+        if (isIgnou) return isIgnouItem(i);
+        return i.category === item.category || i.category === 'jkssb';
+      })
       .slice(0, 4)
       .map((rel) => ({
         id: rel.id,
         title: rel.title,
-        categoryLabel: SARKARI_CATEGORIES[rel.category]?.label || rel.category,
+        categoryLabel: isIgnouItem(rel) ? 'IGNOU' : SARKARI_CATEGORIES[rel.category]?.label || rel.category,
         metaText: rel.lastDate ? `Closing Date: ${rel.lastDate}` : `Published: ${rel.postDate}`,
         thumbnailUrl: rel.thumbnailUrl || `/thumbnails/${rel.id}.png`,
         onClick: () => {
-          window.location.hash = `#post/${rel.id}`;
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          if (onNavigateRoute) {
+            onNavigateRoute(`/post/${rel.id}`);
+          } else {
+            window.location.hash = `#post/${rel.id}`;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
         },
       }));
-  }, [item]);
+  }, [item, allPosts, isIgnou, onNavigateRoute]);
 
   const primaryAssistanceLabel = isAdmissionOrEdu
     ? 'Get Admission Help'
@@ -331,8 +383,10 @@ export default function SarkariDedicatedPageView({
 
   const officialButtonLabel = isDirectPdfUrl
     ? isAdmissionOrEdu
-      ? 'Official Admission Notice (PDF)'
+      ? 'Official Notification (PDF)'
       : 'Official Notification (PDF)'
+    : isIgnou
+    ? 'Official IGNOU Link'
     : isAdmissionOrEdu
     ? 'Official University Portal'
     : 'Official Application Portal';
@@ -347,23 +401,47 @@ export default function SarkariDedicatedPageView({
 
   return (
     <ContentPageLayout
-      breadcrumbs={[
-        { label: 'Home', onClick: onBack },
-        {
-          label: isAdmissionOrEdu ? 'Admissions & Education' : 'Jobs & Recruitment',
-          onClick: onBack,
-        },
-        { label: SARKARI_CATEGORIES[item.category]?.label || 'Notice' },
-      ]}
-      onBack={onBack}
-      backLabel={isAdmissionOrEdu ? 'Back to Education Notices' : 'Back to All Notifications'}
+      breadcrumbs={
+        isIgnou
+          ? [
+              { label: 'Home', onClick: () => (onNavigateRoute ? onNavigateRoute('/') : onBack()) },
+              {
+                label: 'Education & Admissions',
+                onClick: () => (onNavigateRoute ? onNavigateRoute('/education') : onBack()),
+              },
+              {
+                label: 'IGNOU',
+                onClick: () => (onNavigateRoute ? onNavigateRoute('/education/ignou') : onBack()),
+              },
+              { label: item.learnerGroup || 'Notification' },
+            ]
+          : [
+              { label: 'Home', onClick: onBack },
+              {
+                label: isAdmissionOrEdu ? 'Admissions & Education' : 'Jobs & Recruitment',
+                onClick: () =>
+                  onNavigateRoute
+                    ? onNavigateRoute(isAdmissionOrEdu ? '/education' : '/jobs')
+                    : onBack(),
+              },
+              { label: SARKARI_CATEGORIES[item.category]?.label || 'Notice' },
+            ]
+      }
+      onBack={isIgnou && onNavigateRoute ? () => onNavigateRoute('/education/ignou') : onBack}
+      backLabel={
+        isIgnou
+          ? 'Back to IGNOU Notifications'
+          : isAdmissionOrEdu
+          ? 'Back to Education Notices'
+          : 'Back to All Notifications'
+      }
       onPrint={() => window.print()}
       whatsappShareUrl={buildWhatsAppNotification(item).whatsappShareUrl}
       onShare={() => onShare(item)}
       sections={sections}
       activeSectionId={activeSectionId}
       onSelectSection={scrollToSection}
-      relatedTitle={isAdmissionOrEdu ? 'Related Academic Notices' : 'Related Recruitment Notices'}
+      relatedTitle={isIgnou ? 'More IGNOU Notifications' : isAdmissionOrEdu ? 'Related Academic Notices' : 'Related Recruitment Notices'}
       relatedItems={relatedItems}
       sidebarCta={
         canApplyOnline
@@ -507,10 +585,33 @@ export default function SarkariDedicatedPageView({
         </div>
       )}
 
+      {item.isTentative && (
+        <div className="mb-5 p-4 rounded-xl border border-amber-200 bg-amber-50 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <div className="text-sm font-bold text-amber-950 flex flex-wrap items-center gap-2">
+              <span>Tentative Date Sheet Notice</span>
+              {item.learnerGroup && (
+                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-100 text-amber-900">
+                  Learner Group: {item.learnerGroup}
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-amber-900 mt-1 leading-relaxed">
+              This is a tentative examination date sheet published for advance student planning{item.learnerGroup ? ` (${item.learnerGroup})` : ''}. Final dates remain subject to official updates on {isIgnou ? 'ignou.ac.in' : 'the university portal'}.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* A–E: Category/Organisation Label, Single H1, Concise Intro, and Metadata */}
       <ContentArticleHeader
         categoryLabel={organisationName}
-        secondaryBadge={SARKARI_CATEGORIES[item.category]?.label}
+        secondaryBadge={
+          item.learnerGroup
+            ? `${SARKARI_CATEGORIES[item.category]?.label || 'Notice'} · ${item.learnerGroup}`
+            : SARKARI_CATEGORIES[item.category]?.label
+        }
         title={item.title}
         subtitle={
           item.advertisementNo ? `Reference / Advertisement No: ${item.advertisementNo}` : undefined
@@ -518,6 +619,10 @@ export default function SarkariDedicatedPageView({
         intro={intro}
         metadata={[
           ...(item.postDate ? [{ label: 'Published', value: item.postDate }] : []),
+          ...(item.documentDate && item.documentDate !== item.postDate
+            ? [{ label: 'Circular Date', value: item.documentDate }]
+            : []),
+          ...(item.learnerGroup ? [{ label: 'Learner Group', value: item.learnerGroup }] : []),
           ...(isExamSchedule
             ? [
                 {
@@ -527,7 +632,7 @@ export default function SarkariDedicatedPageView({
                     : (item.lastDate || item.startDate || 'Refer to Notice'),
                   emphasize: true,
                 },
-                { label: 'Examination Mode', value: 'Computer Based & Skill Test' },
+                { label: 'Schedule Status', value: item.isTentative ? 'Tentative' : 'Final / Notified' },
               ]
             : [
                 ...(item.startDate ? [{ label: 'Starts', value: item.startDate }] : []),
@@ -576,13 +681,13 @@ export default function SarkariDedicatedPageView({
         }
         officialLinks={[
           {
-            label: isExamSchedule ? 'Official Portal (ssc.gov.in)' : officialButtonLabel,
+            label: isSscTimetablePost ? 'Official Portal (ssc.gov.in)' : officialButtonLabel,
             href: officialPortalUrl,
           },
           ...(item.verification?.officialNotificationUrl && item.verification.officialNotificationUrl !== officialPortalUrl
             ? [
                 {
-                  label: isExamSchedule ? 'Official Exam Notice (PDF)' : 'Official Notification PDF',
+                  label: isExamSchedule ? 'Official Notice (PDF)' : 'Official Notification PDF',
                   href: item.verification.officialNotificationUrl,
                 },
               ]
@@ -592,11 +697,13 @@ export default function SarkariDedicatedPageView({
           window.location.hash = '#track';
         }}
         assistanceDisclaimer={
-          isExamSchedule
+          isSscTimetablePost
             ? 'This notification is an official examination timetable for previously registered candidates. No fresh applications or fees are required. Check city intimation and admit cards on ssc.gov.in.'
+            : item.isTentative
+            ? `This notice is a tentative date sheet (${item.learnerGroup || 'check applicability'}). Always confirm final dates and hall tickets on ${isIgnou ? 'ignou.ac.in' : 'the official portal'}.`
             : canApplyOnline
             ? 'CSC DOST provides independent document preparation and form-filling assistance. You may also apply directly on the official authority portal above.'
-            : 'Applications for this notification are closed. CSC DOST cannot accept assisted submissions for concluded cycles.'
+            : 'Refer directly to the official circular or authority link above for verified student instructions.'
         }
       />
 
@@ -683,19 +790,27 @@ export default function SarkariDedicatedPageView({
             },
             ...(isExamSchedule
               ? [
-                  {
-                    label: 'Examination Commencement Date',
-                    value: item.startDate || '17/11/2026',
-                    tone: 'emerald' as const,
-                    boldValue: true,
-                  },
-                  {
-                    label: 'Examination Conclusion Date',
-                    value: item.lastDate || '28/11/2026',
-                    tone: 'rose' as const,
-                    boldValue: true,
-                  },
-                  ...(item.id === 'ssc-examination-schedule-cgept-dept-steno-cpo-nov-2026'
+                  ...(item.startDate
+                    ? [
+                        {
+                          label: 'Commencement Date',
+                          value: item.startDate,
+                          tone: 'emerald' as const,
+                          boldValue: true,
+                        },
+                      ]
+                    : []),
+                  ...(item.lastDate
+                    ? [
+                        {
+                          label: item.isTentative ? 'Schedule Window End' : 'Closing / Conclusion Date',
+                          value: item.lastDate,
+                          tone: 'rose' as const,
+                          boldValue: true,
+                        },
+                      ]
+                    : []),
+                  ...(isSscTimetablePost
                     ? [
                         {
                           label: 'Coast Guard Enrolled Persons Test (CGEPT) 01/2027 & 02/2027',
@@ -712,12 +827,19 @@ export default function SarkariDedicatedPageView({
                           value: '28 November 2026 (Computer Based Exam)',
                           boldValue: true,
                         },
+                        {
+                          label: 'City Intimation & Admit Card Status',
+                          value: 'To be hosted on the official SSC website (ssc.gov.in) prior to examination.',
+                        },
                       ]
-                    : []),
-                  {
-                    label: 'City Intimation & Admit Card Status',
-                    value: 'To be hosted on the official SSC website (ssc.gov.in) prior to examination.',
-                  },
+                    : [
+                        {
+                          label: 'Official Notice Status',
+                          value: item.isTentative
+                            ? `Tentative Date Sheet${item.learnerGroup ? ` (${item.learnerGroup})` : ''} — monitor official website for final revision.`
+                            : 'Follow instructions and hall ticket updates published on the official portal.',
+                        },
+                      ]),
                 ]
               : [
                   {
@@ -952,7 +1074,7 @@ export default function SarkariDedicatedPageView({
       </ContentSection>
 
       {/* 9. HOW TO APPLY / CANDIDATE ACTION GUIDELINES */}
-      {isExamSchedule ? (
+      {isSscTimetablePost ? (
         <ContentSection
           id="candidate-guidelines"
           title="Who Should Read This Schedule & Next Steps"

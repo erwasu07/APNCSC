@@ -239,7 +239,7 @@ export function generateShortWhatsAppTitle(rawTitle?: string, category?: string)
     .replace(/\s+Online\s+Application\s+Form(?=\s+20\d{2}|$)/i, ' Recruitment')
     .replace(
       /\s+Online\s+Form(?=\s+20\d{2}|$)/i,
-      category === 'admissions' || category === 'exam_forms' || category === 'cluster_univ'
+      category === 'admissions' || category === 'exam_forms' || category === 'cluster_univ' || category === 'ignou'
         ? ''
         : ' Recruitment'
     )
@@ -322,7 +322,22 @@ export function detectWhatsAppNotificationCategory(
     return 'result';
   }
 
-  // 4. Check Admissions (University admissions, IGNOU, CUET/NEET admission portals, counselling, degree/diploma admissions)
+  // 4. Explicit IGNOU notifications (prefer result/grade card/answer key -> result, else admission/education)
+  const instUpper = (item.institution || '').toUpperCase().trim();
+  const noticeTypeLower = (item.noticeType || '').toLowerCase().trim();
+  if (cat === 'ignou' || instUpper === 'IGNOU') {
+    if (
+      noticeTypeLower === 'result' ||
+      noticeTypeLower === 'grade_card' ||
+      noticeTypeLower === 'answer_key' ||
+      /\b(result|results|grade\s*card|answer\s+key|scorecard)\b/i.test(title)
+    ) {
+      return 'result';
+    }
+    return 'admission';
+  }
+
+  // 5. Check Admissions (University admissions, IGNOU, CUET/NEET admission portals, counselling, degree/diploma admissions)
   if (
     cat === 'admissions' ||
     postType === 'admission' ||
@@ -333,7 +348,7 @@ export function detectWhatsAppNotificationCategory(
     return 'admission';
   }
 
-  // 5. Check Cluster Univ / Exam Forms / NTA
+  // 6. Check Cluster Univ / Exam Forms / NTA
   if (cat === 'cluster_univ' || cat === 'exam_forms' || cat === 'nta') {
     if (/\b(result|scorecard|answer\s+key)\b/i.test(title)) {
       return 'result';
@@ -374,7 +389,7 @@ export function resolvePostOrganization(item: Partial<SarkariItem>): string {
   if (/\bJKBOSE\b|J&K\s+Board\s+of\s+School\s+Education/i.test(combined)) {
     return 'J&K Board of School Education (JKBOSE)';
   }
-  if (/\bIGNOU\b|Indira\s+Gandhi\s+National\s+Open\s+University/i.test(combined)) {
+  if (cat === 'ignou' || (item.institution || '').toUpperCase().trim() === 'IGNOU' || /\bIGNOU\b|Indira\s+Gandhi\s+National\s+Open\s+University/i.test(combined)) {
     return 'Indira Gandhi National Open University (IGNOU)';
   }
   if (cat === 'army_jobs' || /\bIndian\s+Army\b|\bAgniveer\b/i.test(title)) {

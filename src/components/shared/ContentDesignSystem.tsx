@@ -1312,10 +1312,12 @@ export function resolveListingCategoryKey(rawCategory?: string): ListingCategory
     norm === 'admissions' ||
     norm === 'cluster_univ' ||
     norm === 'exam_forms' ||
+    norm === 'ignou' ||
     norm === 'nta' ||
     norm === 'education' ||
     norm.includes('admission') ||
     norm.includes('university') ||
+    norm.includes('ignou') ||
     norm.includes('exam') ||
     norm.includes('education') ||
     norm.includes('scholarship')

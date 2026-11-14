@@ -3,8 +3,9 @@ import Navbar from './components/Navbar';
 import MobileBottomNav, { BottomNavTab } from './components/MobileBottomNav';
 import type { PolicyTab } from './components/PrivacyPolicyModal';
 import { WebsiteSettings, Announcement, GalleryItem } from './types';
-import { SARKARI_DATA, SarkariItem } from './data/sarkariData';
+import { SARKARI_DATA, SarkariItem, isPublishedSarkariItem } from './data/sarkariData';
 import { SERVICES_LIST, ServiceItem } from './servicesData';
+import { useSyncedSarkariPosts } from './utils/postDataSync';
 import {
   buildWhatsAppNotification,
   buildServiceWhatsAppNotification,
@@ -36,6 +37,7 @@ import {
   applyClientSeo,
   getCategorySeoMeta,
   HOMEPAGE_SEO,
+  IGNOU_EDUCATION_SEO,
   LEGAL_SEO_MAP,
   PRIVATE_NOINDEX_META,
   SITE_ORIGIN,
@@ -113,6 +115,7 @@ export default function App() {
   const [darkMode] = useState<boolean>(false);
   const [isAdminView, setIsAdminView] = useState<boolean>(false);
 
+  const syncedPosts = useSyncedSarkariPosts(true);
   const [selectedService, setSelectedService] = useState('');
   const [activeJobPost, setActiveJobPost] = useState<SarkariItem | null>(null);
   const [activeServicePost, setActiveServicePost] = useState<ServiceItem | null>(null);
@@ -123,6 +126,7 @@ export default function App() {
   const [isToolsView, setIsToolsView] = useState<boolean>(false);
   const [activeToolId, setActiveToolId] = useState<string | null>(null);
   const [categoryView, setCategoryView] = useState<'jobs' | 'education' | 'schemes' | 'services' | 'calculators' | null>(null);
+  const [educationSubRoute, setEducationSubRoute] = useState<'all' | 'ignou'>('all');
   const [isNotFoundView, setIsNotFoundView] = useState<boolean>(false);
 
   const [activeLegalPage, setActiveLegalPage] = useState<LegalPageType | null>(null);
@@ -197,11 +201,14 @@ export default function App() {
     }
   };
 
-  // Track page views on mount and update document title and URL hashes
+  // Fetch initial public data and log view once on mount
   useEffect(() => {
     fetchPublicData();
     fetch('/api/tracker/view', { method: 'POST' }).catch(() => {});
+  }, []);
 
+  // Track route changes and keep post resolution synced with published posts
+  useEffect(() => {
     const parseRoute = () => {
       const rawHash = window.location.hash || '';
       const rawPathname = window.location.pathname || '/';
@@ -317,8 +324,8 @@ export default function App() {
         setIsAdminView(false);
       }
 
-      // 3. Dedicated category routes: /jobs, /education, /schemes, /services, /calculators
-      if (['/jobs', '/education', '/schemes', '/services', '/calculators'].includes(cleanPath)) {
+      // 3. Dedicated category routes: /jobs, /education, /education/ignou, /schemes, /services, /calculators
+      if (['/jobs', '/education', '/education/ignou', '/schemes', '/services', '/calculators'].includes(cleanPath)) {
         setIsApplyView(false);
         setIsTrackView(false);
         setIsToolsView(false);
@@ -327,11 +334,25 @@ export default function App() {
         setActiveLegalPage(null);
         setIsAdminView(false);
 
-        if (cleanPath === '/jobs') setCategoryView('jobs');
-        else if (cleanPath === '/education') setCategoryView('education');
-        else if (cleanPath === '/schemes') setCategoryView('schemes');
-        else if (cleanPath === '/services') setCategoryView('services');
-        else if (cleanPath === '/calculators') setCategoryView('calculators');
+        if (cleanPath === '/jobs') {
+          setCategoryView('jobs');
+          setEducationSubRoute('all');
+        } else if (cleanPath === '/education') {
+          setCategoryView('education');
+          setEducationSubRoute('all');
+        } else if (cleanPath === '/education/ignou') {
+          setCategoryView('education');
+          setEducationSubRoute('ignou');
+        } else if (cleanPath === '/schemes') {
+          setCategoryView('schemes');
+          setEducationSubRoute('all');
+        } else if (cleanPath === '/services') {
+          setCategoryView('services');
+          setEducationSubRoute('all');
+        } else if (cleanPath === '/calculators') {
+          setCategoryView('calculators');
+          setEducationSubRoute('all');
+        }
 
         try {
           window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -339,6 +360,7 @@ export default function App() {
         return;
       } else {
         setCategoryView(null);
+        setEducationSubRoute('all');
       }
 
       // 4. Check Apply route (/apply, #apply, #/apply)
@@ -456,7 +478,7 @@ export default function App() {
       const pathPostMatch = cleanPath.match(/^\/(?:post|job|jobs|sarkari|notice|admissions|notification)\/([^/?#]+)$/i);
       if (pathPostMatch) {
         const postId = decodeURIComponent(pathPostMatch[1]);
-        const match = SARKARI_DATA.find(i => i.id === postId);
+        const match = syncedPosts.find(i => i.id === postId && isPublishedSarkariItem(i));
         if (match) {
           setActiveJobPost(match);
           setActiveServicePost(null);
@@ -477,7 +499,7 @@ export default function App() {
       }
 
       if (postParam) {
-        const match = SARKARI_DATA.find(i => i.id === postParam);
+        const match = syncedPosts.find(i => i.id === postParam && isPublishedSarkariItem(i));
         if (match) {
           setActiveJobPost(match);
           setActiveServicePost(null);
@@ -520,7 +542,16 @@ export default function App() {
       window.removeEventListener('hashchange', parseRoute);
       window.removeEventListener('popstate', parseRoute);
     };
-  }, []);
+  }, [syncedPosts]);
+
+  const navigateToPath = (path: string) => {
+    try {
+      window.history.pushState(null, '', path);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    } catch {
+      window.location.href = path;
+    }
+  };
 
   const handleOpenJobPage = (item: SarkariItem) => {
     setActiveJobPost(item);
@@ -715,7 +746,11 @@ export default function App() {
       return;
     }
     if (categoryView) {
-      applyClientSeo(getCategorySeoMeta(categoryView));
+      if (categoryView === 'education' && educationSubRoute === 'ignou') {
+        applyClientSeo(IGNOU_EDUCATION_SEO);
+      } else {
+        applyClientSeo(getCategorySeoMeta(categoryView));
+      }
       return;
     }
     applyClientSeo(HOMEPAGE_SEO);
@@ -729,6 +764,7 @@ export default function App() {
     isToolsView,
     activeToolId,
     categoryView,
+    educationSubRoute,
     isNotFoundView,
   ]);
 
@@ -966,6 +1002,7 @@ export default function App() {
               <SarkariDedicatedPageView
                 item={activeJobPost}
                 onBack={handleCloseJobPage}
+                onNavigateRoute={navigateToPath}
                 onApplyService={(service) => {
                   handleCloseJobPage();
                   handleOpenApplyPage(service);
@@ -1086,10 +1123,10 @@ export default function App() {
             </Suspense>
           </div>
         ) : categoryView === 'education' ? (
-          /* DEDICATED FULL-PAGE VIEW FOR EDUCATION & ADMISSIONS */
+          /* DEDICATED FULL-PAGE VIEW FOR EDUCATION & ADMISSIONS (INCLUDING /education/ignou) */
           <div className="animate-fade-in w-full px-3 sm:px-6 py-4 space-y-4">
             <nav aria-label="Breadcrumb" className="flex items-center justify-between gap-3 pb-1 text-xs sm:text-sm">
-              <div className="flex items-center gap-1.5 text-slate-500">
+              <div className="flex items-center gap-1.5 text-slate-500 flex-wrap">
                 <a
                   href="/"
                   onClick={(e) => {
@@ -1102,16 +1139,32 @@ export default function App() {
                   <span>Home</span>
                 </a>
                 <span aria-hidden="true">/</span>
-                <span className="font-semibold text-[#0F172A]">Education &amp; Admissions</span>
+                {educationSubRoute === 'ignou' ? (
+                  <>
+                    <a
+                      href="/education"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigateToPath('/education');
+                      }}
+                      className="font-semibold text-[#1E56C8] hover:underline"
+                    >
+                      Education &amp; Admissions
+                    </a>
+                    <span aria-hidden="true">/</span>
+                    <span className="font-semibold text-[#0F172A]">IGNOU</span>
+                  </>
+                ) : (
+                  <span className="font-semibold text-[#0F172A]">Education &amp; Admissions</span>
+                )}
               </div>
               <a
                 href="/jobs"
                 onClick={(e) => {
                   e.preventDefault();
-                  setCategoryView('jobs');
-                  try { window.history.pushState(null, '', '/jobs'); } catch {}
+                  navigateToPath('/jobs');
                 }}
-                className="text-xs font-semibold text-[#1E56C8] hover:underline"
+                className="text-xs font-semibold text-[#1E56C8] hover:underline shrink-0"
               >
                 Jobs &amp; Recruitment →
               </a>
@@ -1119,6 +1172,9 @@ export default function App() {
             <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Education & Admissions..." />}>
               <SarkariResultDesk
                 mode="education"
+                initialTab={educationSubRoute === 'ignou' ? 'ignou' : 'all'}
+                educationSubRoute={educationSubRoute === 'ignou'}
+                onNavigateRoute={navigateToPath}
                 onApplyService={handleServiceSelect}
                 onOpenDedicatedPage={handleOpenJobPage}
               />
@@ -1228,21 +1284,15 @@ export default function App() {
                 onOpenLegal={openLegalModal}
                 onNavigateRoute={(route) => {
                   if (route === '/jobs') {
-                    setCategoryView('jobs');
-                    try { window.history.pushState(null, '', '/jobs'); } catch {}
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    navigateToPath('/jobs');
                   } else if (route === '/education') {
-                    setCategoryView('education');
-                    try { window.history.pushState(null, '', '/education'); } catch {}
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    navigateToPath('/education');
+                  } else if (route === '/education/ignou') {
+                    navigateToPath('/education/ignou');
                   } else if (route === '/schemes' || route.startsWith('/schemes#')) {
-                    setCategoryView('schemes');
-                    try { window.history.pushState(null, '', '/schemes'); } catch {}
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    navigateToPath('/schemes');
                   } else if (route === '/services' || route.startsWith('/services#')) {
-                    setCategoryView('services');
-                    try { window.history.pushState(null, '', '/services'); } catch {}
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    navigateToPath('/services');
                   } else if (route === '/calculators') {
                     handleOpenCalculatorsPage();
                   } else if (route === '/tools' || route.startsWith('/tools#')) {

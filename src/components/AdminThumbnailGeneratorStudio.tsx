@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { SARKARI_DATA, SARKARI_CATEGORIES, SarkariItem } from '../data/sarkariData';
+import { SARKARI_DATA, SARKARI_CATEGORIES, SarkariItem, NoticeType } from '../data/sarkariData';
+import { notifySarkariPostsUpdated } from '../utils/postDataSync';
 import {
   Sparkles,
   RefreshCw,
@@ -118,6 +119,19 @@ const APPROVED_PRESETS = [
     eligibilityValue: 'B.Ed Enrolled Candidates',
     lastDateValue: '15/06/2026',
     howToApplyValue: 'Visit CSC DOST'
+  },
+  {
+    key: 'ignou-notice',
+    badge: 'IGNOU Approved Style',
+    id: 'ignou-oams-assignment-submission-dec-2026-tee',
+    title: 'IGNOU OAMS Assignment Submission Last Date Extended – Dec 2026 TEE',
+    category: 'ignou',
+    department: 'Indira Gandhi National Open University (IGNOU)',
+    orgTitle: 'IGNOU',
+    postBadgeTitle: 'ASSIGNMENT SUBMISSION',
+    eligibilityValue: 'ODL / Online / GOAL',
+    lastDateValue: '20/11/2026',
+    howToApplyValue: 'Visit CSC DOST'
   }
 ];
 
@@ -135,11 +149,19 @@ export default function AdminThumbnailGeneratorStudio({
   );
   const [title, setTitle] = useState<string>('');
   const [category, setCategory] = useState<string>('jkssb');
+  const [institution, setInstitution] = useState<string>('JKSSB');
+  const [noticeType, setNoticeType] = useState<NoticeType>('recruitment');
+  const [learnerGroup, setLearnerGroup] = useState<string>('');
   const [department, setDepartment] = useState<string>('J&K Services Selection Board (JKSSB)');
   const [shortDescription, setShortDescription] = useState<string>('');
+  const [postDate, setPostDate] = useState<string>(() => new Date().toLocaleDateString('en-GB'));
+  const [documentDate, setDocumentDate] = useState<string>('');
   const [lastDate, setLastDate] = useState<string>('');
+  const [isTentative, setIsTentative] = useState<boolean>(false);
+  const [publicationStatus, setPublicationStatus] = useState<'published' | 'draft' | 'archived'>('published');
   const [eligibility, setEligibility] = useState<string>('');
   const [officialLink, setOfficialLink] = useState<string>('');
+  const [officialNotificationUrl, setOfficialNotificationUrl] = useState<string>('');
 
   // 1200x630 Specification Overrides
   const [styleOverride, setStyleOverride] = useState<SupportedCategoryStyle | 'auto'>('auto');
@@ -164,6 +186,7 @@ export default function AdminThumbnailGeneratorStudio({
   // Loading & Feedback
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [isFetchingSource, setIsFetchingSource] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<{
     type: 'success' | 'error' | 'info';
     text: string;
@@ -179,7 +202,9 @@ export default function AdminThumbnailGeneratorStudio({
       return styleOverride;
     }
     const catLower = (category || '').toLowerCase();
+    const instLower = (institution || '').toLowerCase();
     const titleUpper = (title || '').toUpperCase();
+    if (catLower === 'ignou' || instLower === 'ignou' || titleUpper.includes('IGNOU')) return 'ignou';
     if (catLower === 'jkssb' || titleUpper.includes('JKSSB')) return 'jkssb';
     if (catLower === 'army_jobs' || titleUpper.includes('ARMY') || titleUpper.includes('AGNIVEER')) return 'army_jobs';
     if (catLower === 'rrb_jobs' || titleUpper.includes('RRB') || titleUpper.includes('RAILWAY')) return 'rrb_jobs';
@@ -188,7 +213,7 @@ export default function AdminThumbnailGeneratorStudio({
     if (catLower === 'exam_forms' || titleUpper.includes('KASHMIR UNIVERSITY') || titleUpper.includes('EXAM FORM')) return 'exam_forms';
     if (catLower === 'admissions' || titleUpper.includes('ADMISSION')) return 'admissions';
     return 'default';
-  }, [category, title, styleOverride]);
+  }, [category, institution, title, styleOverride]);
 
   // Construct active 1200x630 Spec
   const activeSpec: ThumbnailSpec = useMemo(() => {
@@ -235,16 +260,21 @@ export default function AdminThumbnailGeneratorStudio({
     return `data:image/svg+xml;utf8,${encodeURIComponent(previewSvg)}`;
   }, [previewSvg, isCustomUploaded, customImageDataUrl]);
 
-  // Fetch posts list on mount
+  // Fetch all posts list (including draft/archived) on mount
+  const reloadAllPosts = async () => {
+    try {
+      const r = await fetch('/api/sarkari-posts?includeAll=1', { cache: 'no-store' });
+      const d = await r.json();
+      if (d && Array.isArray(d.posts) && d.posts.length > 0) {
+        setPostsList(d.posts);
+      }
+    } catch {
+      // keep existing fallback
+    }
+  };
+
   useEffect(() => {
-    fetch('/api/sarkari-posts')
-      .then(r => r.json())
-      .then(d => {
-        if (d && Array.isArray(d.posts) && d.posts.length > 0) {
-          setPostsList(d.posts);
-        }
-      })
-      .catch(() => {});
+    reloadAllPosts();
   }, []);
 
   // When a post is chosen, populate all fields
@@ -255,11 +285,34 @@ export default function AdminThumbnailGeneratorStudio({
     setPostId(post.id);
     setTitle(post.title);
     setCategory(post.category);
+    setInstitution(
+      post.institution ||
+        (post.category === 'ignou'
+          ? 'IGNOU'
+          : post.category === 'jkssb'
+          ? 'JKSSB'
+          : post.category === 'army_jobs'
+          ? 'Indian Army'
+          : post.category === 'ssc_jobs'
+          ? 'SSC'
+          : post.category === 'rrb_jobs'
+          ? 'RRB'
+          : post.category === 'cluster_univ'
+          ? 'Cluster University Srinagar'
+          : 'University of Kashmir')
+    );
+    setNoticeType(post.noticeType || (post.category === 'ignou' ? 'admission' : 'recruitment'));
+    setLearnerGroup(post.learnerGroup || '');
     setDepartment(post.department || '');
     setShortDescription(post.shortInfo || '');
+    setPostDate(post.postDate || '');
+    setDocumentDate(post.documentDate || '');
     setLastDate(post.lastDate || '');
+    setIsTentative(Boolean(post.isTentative));
+    setPublicationStatus(post.publicationStatus || 'published');
     setEligibility(post.eligibility || '');
     setOfficialLink(post.officialLink || '');
+    setOfficialNotificationUrl(post.officialNotificationUrl || post.officialLink || '');
 
     // Extract deterministic spec
     const spec = buildDeterministicThumbnailSpec({
@@ -326,6 +379,159 @@ export default function AdminThumbnailGeneratorStudio({
     }
   };
 
+  // ACTION: Fetch verifiable title/description from official URL (never fabricates details)
+  const handleFetchOfficialSource = async () => {
+    const targetUrl = (officialNotificationUrl || officialLink).trim();
+    if (!targetUrl) {
+      setStatusMessage({
+        type: 'error',
+        text: 'Enter an official source or PDF URL first, then click Fetch Official Source.'
+      });
+      return;
+    }
+
+    setIsFetchingSource(true);
+    setStatusMessage(null);
+    try {
+      const res = await fetch('/api/admin/fetch-official-source', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: targetUrl })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setStatusMessage({
+          type: 'error',
+          text: data.error || 'Could not extract details from that official URL. Please fill the fields manually.'
+        });
+        return;
+      }
+
+      if (data.extracted?.title && (!title.trim() || mode === 'create')) {
+        setTitle(data.extracted.title);
+      }
+      if (data.extracted?.shortDescription && !shortDescription.trim()) {
+        setShortDescription(data.extracted.shortDescription);
+      }
+      if (data.extracted?.officialNotificationUrl) {
+        setOfficialNotificationUrl(data.extracted.officialNotificationUrl);
+      }
+      if (data.extracted?.officialLink) {
+        setOfficialLink(data.extracted.officialLink);
+      }
+
+      setStatusMessage({
+        type: 'info',
+        text:
+          data.note ||
+          'Fetched verifiable metadata from the official URL. Review Learner Group, Dates, and Summary before publishing.'
+      });
+    } catch {
+      setStatusMessage({
+        type: 'error',
+        text: 'Official source could not be reached automatically. Please fill the notification fields manually.'
+      });
+    } finally {
+      setIsFetchingSource(false);
+    }
+  };
+
+  // ACTION: Save Post (Draft / Publish / Archive) via /api/posts
+  const handleSavePostStatus = async (targetStatus: 'published' | 'draft' | 'archived') => {
+    if (!title.trim()) {
+      setStatusMessage({
+        type: 'error',
+        text: 'Please enter the exact Notification Title before saving.'
+      });
+      return;
+    }
+
+    const chosenUrl = (officialNotificationUrl || officialLink).trim();
+    if (!/^https?:\/\/\S+/i.test(chosenUrl)) {
+      setStatusMessage({
+        type: 'error',
+        text: 'A valid Official Source URL (https://...) is mandatory before saving or publishing.'
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    setStatusMessage(null);
+
+    try {
+      const effectiveId =
+        postId.trim() ||
+        title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '')
+          .slice(0, 65);
+
+      const postTypeVal =
+        category === 'ignou' || institution === 'IGNOU'
+          ? noticeType === 'result' || noticeType === 'grade_card' || noticeType === 'answer_key'
+            ? 'Result'
+            : 'Admission'
+          : noticeType === 'recruitment'
+          ? 'Job'
+          : 'Admission';
+
+      const res = await fetch('/api/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: effectiveId,
+          title: title.trim(),
+          category,
+          institution,
+          department: department.trim() || (institution === 'IGNOU' ? 'Indira Gandhi National Open University (IGNOU)' : ''),
+          postType: postTypeVal,
+          noticeType,
+          stage: noticeType,
+          learnerGroup: learnerGroup.trim() || undefined,
+          documentDate: documentDate.trim() || undefined,
+          postDate: postDate.trim() || undefined,
+          lastDate: lastDate.trim() || 'Check Official Circular',
+          isTentative,
+          publicationStatus: targetStatus,
+          shortDescription: shortDescription.trim(),
+          eligibility: eligibility.trim() || undefined,
+          officialLink: (officialLink || chosenUrl).trim(),
+          officialNotificationUrl: chosenUrl,
+          thumbnailSpec: activeSpec,
+          suppressPush: targetStatus !== 'published'
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to save post');
+      }
+
+      setPostId(data.post.id);
+      setPublicationStatus(targetStatus);
+      await reloadAllPosts();
+      notifySarkariPostsUpdated();
+
+      const labelMap = {
+        published: 'Published & live on public pages/sitemap',
+        draft: 'Saved as Draft (hidden from public pages, feeds & sitemap)',
+        archived: 'Archived (hidden from public pages & sitemap)'
+      };
+      setStatusMessage({
+        type: 'success',
+        text: `${labelMap[targetStatus]} — "${data.post.id}"`
+      });
+    } catch (err: any) {
+      setStatusMessage({
+        type: 'error',
+        text: err?.message || 'Failed to save post.'
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // ACTION: Save Thumbnail to Server and Post Record
   const handleSaveThumbnail = async () => {
     if (!title.trim()) {
@@ -368,6 +574,8 @@ export default function AdminThumbnailGeneratorStudio({
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'Failed to save thumbnail');
       }
+
+      notifySarkariPostsUpdated();
 
       setStatusMessage({
         type: 'success',
@@ -480,7 +688,7 @@ export default function AdminThumbnailGeneratorStudio({
             type="button"
             onClick={handleRegenerate}
             disabled={isGenerating}
-            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isGenerating ? 'animate-spin' : ''}`} />
             <span>Regenerate</span>
@@ -489,24 +697,52 @@ export default function AdminThumbnailGeneratorStudio({
           <button
             type="button"
             onClick={handleDownloadPng}
-            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Download PNG</span>
+            <span>PNG</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleSavePostStatus('draft')}
+            disabled={isSaving}
+            className="px-3 py-2 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+          >
+            Save Draft
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleSavePostStatus('published')}
+            disabled={isSaving}
+            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>Publish Post</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleSavePostStatus('archived')}
+            disabled={isSaving}
+            className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+          >
+            Archive Post
           </button>
 
           <button
             type="button"
             onClick={handleSaveThumbnail}
             disabled={isSaving}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+            className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
           >
             {isSaving ? (
               <RefreshCw className="w-3.5 h-3.5 animate-spin" />
             ) : (
               <Save className="w-3.5 h-3.5" />
             )}
-            <span>Save Thumbnail to Post</span>
+            <span>Save Thumbnail</span>
           </button>
         </div>
       </div>
@@ -536,7 +772,7 @@ export default function AdminThumbnailGeneratorStudio({
         <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
           Load Approved Reference Presets:
         </label>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2">
           {APPROVED_PRESETS.map(p => (
             <button
               key={p.key}
@@ -545,6 +781,7 @@ export default function AdminThumbnailGeneratorStudio({
                 setPostId(p.id);
                 setTitle(p.title);
                 setCategory(p.category);
+                setInstitution(p.category === 'ignou' ? 'IGNOU' : institution);
                 setDepartment(p.department);
                 setOrgTitle(p.orgTitle);
                 setPostBadgeTitle(p.postBadgeTitle);
@@ -577,7 +814,20 @@ export default function AdminThumbnailGeneratorStudio({
           {/* Post Selection or Creation Toggle */}
           <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-900 dark:text-white">Active Post</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-900 dark:text-white">Active Post</span>
+                <span
+                  className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                    publicationStatus === 'published'
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : publicationStatus === 'draft'
+                      ? 'bg-amber-100 text-amber-800'
+                      : 'bg-slate-200 text-slate-700'
+                  }`}
+                >
+                  {publicationStatus}
+                </span>
+              </div>
               <div className="flex items-center gap-1 bg-slate-200 dark:bg-slate-700 p-0.5 rounded-lg text-[11px] font-bold">
                 <button
                   type="button"
@@ -592,10 +842,20 @@ export default function AdminThumbnailGeneratorStudio({
                   type="button"
                   onClick={() => {
                     setMode('create');
-                    setPostId(`post-${Date.now()}`);
-                    setTitle('New Job Notification 2026');
-                    setOrgTitle('JKSSB');
-                    setPostBadgeTitle('NEW POSTS');
+                    setPostId(`ignou-notice-${Date.now()}`);
+                    setTitle('');
+                    setInstitution('IGNOU');
+                    setCategory('ignou');
+                    setNoticeType('admission');
+                    setLearnerGroup('ODL / Online');
+                    setDepartment('Indira Gandhi National Open University (IGNOU)');
+                    setShortDescription('');
+                    setOfficialLink('');
+                    setOfficialNotificationUrl('');
+                    setIsTentative(false);
+                    setPublicationStatus('draft');
+                    setOrgTitle('IGNOU');
+                    setPostBadgeTitle('IGNOU NOTICE');
                   }}
                   className={`px-2 py-0.5 rounded-md cursor-pointer ${
                     mode === 'create' ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-xs' : 'text-slate-600 dark:text-slate-400'
@@ -614,16 +874,43 @@ export default function AdminThumbnailGeneratorStudio({
               >
                 {postsList.map(p => (
                   <option key={p.id} value={p.id}>
-                    [{p.category}] {p.title.slice(0, 50)}...
+                    [{(p.publicationStatus || 'published').toUpperCase()}] [{p.category}] {p.title.slice(0, 48)}...
                   </option>
                 ))}
               </select>
             )}
 
+            {/* Official Source URL + Fetch Button */}
+            <div>
+              <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
+                Official Source / Notification URL *
+              </label>
+              <div className="flex gap-1.5">
+                <input
+                  type="url"
+                  value={officialNotificationUrl}
+                  onChange={e => {
+                    setOfficialNotificationUrl(e.target.value);
+                    if (!officialLink) setOfficialLink(e.target.value);
+                  }}
+                  placeholder="https://www.ignou.ac.in/..."
+                  className="flex-1 px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white"
+                />
+                <button
+                  type="button"
+                  onClick={handleFetchOfficialSource}
+                  disabled={isFetchingSource}
+                  className="px-2.5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-[11px] font-bold whitespace-nowrap cursor-pointer"
+                >
+                  {isFetchingSource ? 'Fetching...' : 'Fetch Source'}
+                </button>
+              </div>
+            </div>
+
             {/* Post Title */}
             <div>
               <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
-                Notification Full Title
+                Notification Full Title *
               </label>
               <textarea
                 value={title}
@@ -631,6 +918,138 @@ export default function AdminThumbnailGeneratorStudio({
                 rows={2}
                 className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-900 dark:text-white resize-none"
               />
+            </div>
+
+            {/* Summary */}
+            <div>
+              <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
+                Official Summary / Notification Details
+              </label>
+              <textarea
+                value={shortDescription}
+                onChange={e => setShortDescription(e.target.value)}
+                rows={2}
+                placeholder="Accurate summary of notification scope, learner groups, dates, and instructions..."
+                className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-900 dark:text-white resize-none"
+              />
+            </div>
+
+            {/* Institution, Notice Type, Learner Group */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
+                  Institution
+                </label>
+                <select
+                  value={institution}
+                  onChange={e => {
+                    const inst = e.target.value;
+                    setInstitution(inst);
+                    if (inst === 'IGNOU') {
+                      setCategory('ignou');
+                      setDepartment('Indira Gandhi National Open University (IGNOU)');
+                      setOrgTitle('IGNOU');
+                    }
+                  }}
+                  className="w-full px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold"
+                >
+                  <option value="IGNOU">IGNOU</option>
+                  <option value="JKSSB">JKSSB</option>
+                  <option value="Indian Army">Indian Army</option>
+                  <option value="SSC">SSC</option>
+                  <option value="RRB">RRB</option>
+                  <option value="University of Kashmir">University of Kashmir</option>
+                  <option value="Cluster University Srinagar">Cluster University Srinagar</option>
+                  <option value="NTA">NTA</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
+                  Notice Type
+                </label>
+                <select
+                  value={noticeType}
+                  onChange={e => setNoticeType(e.target.value as NoticeType)}
+                  className="w-full px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold"
+                >
+                  <option value="admission">Admission</option>
+                  <option value="re_registration">Re-Registration</option>
+                  <option value="assignment">Assignment Submission</option>
+                  <option value="exam_form">Exam Form</option>
+                  <option value="date_sheet">Date Sheet</option>
+                  <option value="admit_card">Hall Ticket / Admit Card</option>
+                  <option value="grade_card">Grade Card</option>
+                  <option value="result">Result</option>
+                  <option value="answer_key">Answer Key</option>
+                  <option value="project_practical">Project / Practical</option>
+                  <option value="rc_update">Regional Centre Update</option>
+                  <option value="recruitment">Recruitment / Job</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
+                  Learner Group / Stream
+                </label>
+                <input
+                  type="text"
+                  list="ignou-learner-groups"
+                  value={learnerGroup}
+                  onChange={e => setLearnerGroup(e.target.value)}
+                  placeholder="ODL / Online / GOAL / E-Vidya Bharti"
+                  className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs"
+                />
+                <datalist id="ignou-learner-groups">
+                  <option value="ODL" />
+                  <option value="Online" />
+                  <option value="ODL / Online" />
+                  <option value="GOAL" />
+                  <option value="E-Vidya Bharti" />
+                  <option value="Regional Centre Srinagar" />
+                  <option value="Ph.D. Applicants" />
+                </datalist>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
+                  Closing / Exam Date
+                </label>
+                <input
+                  type="text"
+                  value={lastDate}
+                  onChange={e => setLastDate(e.target.value)}
+                  placeholder="DD/MM/YYYY"
+                  className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 items-end">
+              <div>
+                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
+                  Circular / Document Date
+                </label>
+                <input
+                  type="text"
+                  value={documentDate}
+                  onChange={e => setDocumentDate(e.target.value)}
+                  placeholder="DD/MM/YYYY"
+                  className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs"
+                />
+              </div>
+
+              <label className="flex items-center gap-2 py-2 px-2.5 bg-amber-50/70 border border-amber-200 rounded-lg text-xs font-semibold text-amber-900 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isTentative}
+                  onChange={e => setIsTentative(e.target.checked)}
+                />
+                <span>Tentative Date Sheet</span>
+              </label>
             </div>
           </div>
 
@@ -653,6 +1072,9 @@ export default function AdminThumbnailGeneratorStudio({
                   onChange={e => {
                     const newCat = e.target.value;
                     setCategory(newCat);
+                    if (newCat === 'ignou') {
+                      setInstitution('IGNOU');
+                    }
                     const def = CATEGORY_THEMES[newCat];
                     if (def) {
                       setOrgTitle(def.orgTitle);
@@ -678,6 +1100,7 @@ export default function AdminThumbnailGeneratorStudio({
                   className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold"
                 >
                   <option value="auto">Auto (from Category)</option>
+                  <option value="ignou">IGNOU (Sky Blue &amp; Navy)</option>
                   <option value="jkssb">JKSSB (Blue &amp; Orange)</option>
                   <option value="army_jobs">Indian Army (Green &amp; Gold)</option>
                   <option value="rrb_jobs">Railways / RRB (Navy &amp; Orange)</option>

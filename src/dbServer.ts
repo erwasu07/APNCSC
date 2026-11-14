@@ -800,14 +800,22 @@ export function clearWhatsAppPublishHistory(): void {
 
 export function deleteCustomSarkariPost(postId: string): boolean {
   const db = getDb();
-  if (!Array.isArray(db.customPosts)) return false;
-  const before = db.customPosts.length;
-  db.customPosts = db.customPosts.filter((p: any) => p && p.id !== postId);
-  if (db.customPosts.length !== before) {
-    saveDb(db);
-    return true;
+  let changed = false;
+  if (Array.isArray(db.customPosts)) {
+    const before = db.customPosts.length;
+    db.customPosts = db.customPosts.filter((p: any) => p && p.id !== postId);
+    if (db.customPosts.length !== before) {
+      changed = true;
+    }
   }
-  return false;
+  if (db.postThumbnails && db.postThumbnails[postId]) {
+    delete db.postThumbnails[postId];
+    changed = true;
+  }
+  if (changed) {
+    saveDb(db);
+  }
+  return changed;
 }
 
 // ============================================================

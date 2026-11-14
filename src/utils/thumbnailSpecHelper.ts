@@ -9,6 +9,7 @@ export type SupportedCategoryStyle =
   | 'exam_forms'
   | 'admissions'
   | 'cluster_univ'
+  | 'ignou'
   | 'default';
 
 export interface ThumbnailSpec {
@@ -227,6 +228,26 @@ export const CATEGORY_THEMES: Record<string, CategoryThemeConfig> = {
     hasTicks: true,
     badgeLabel: 'UNIVERSITY UPDATE'
   },
+  ignou: {
+    name: 'IGNOU (Sky Blue & Navy)',
+    orgTitle: 'IGNOU',
+    primaryColor: '#0C4A6E',
+    secondaryColor: '#0284C7',
+    pillBg: '#0284C7',
+    pillText: '#FFFFFF',
+    isPillGradient: false,
+    card1Bg: '#F0F9FF',
+    card1Border: '#BAE6FD',
+    card2Bg: '#FFF8F1',
+    card2Border: '#FCD9BD',
+    card3Bg: '#F0F9FF',
+    card3Border: '#BAE6FD',
+    waveRibbon: '#0284C7',
+    waveFill: '#0C4A6E',
+    bottomPillBg: '#082F49',
+    hasTicks: true,
+    badgeLabel: 'IGNOU NOTICE'
+  },
   default: {
     name: 'CSC DOST Default (Royal Blue & Orange)',
     orgTitle: 'CSC DOST',
@@ -275,6 +296,18 @@ export function extractSpecificPostRole(title: string, category: string): string
   if (upper.includes('B.TECH')) return 'B.TECH ENGG EXAM';
   if (upper.includes('BG 1ST') || upper.includes('BG 2ND') || upper.includes('1ST & 2ND SEM')) return 'BG 1ST & 2ND SEM';
   if (upper.includes('INTEGRATED PG') || upper.includes('SPOT ROUND')) return 'INTEGRATED PG ADMISSION';
+  if (upper.includes('IGNOU') || category === 'ignou') {
+    if (upper.includes('RE-REGISTRATION') || upper.includes('REREGISTRATION')) return 'RE-REGISTRATION';
+    if (upper.includes('TENTATIVE') && upper.includes('DATE SHEET')) return 'TENTATIVE DATE SHEET';
+    if (upper.includes('DATE SHEET') || upper.includes('DATESHEET')) return 'TERM-END DATE SHEET';
+    if (upper.includes('ASSIGNMENT')) return 'ASSIGNMENT SUBMISSION';
+    if (upper.includes('EXAM FORM') || upper.includes('EXAMINATION FORM')) return 'TERM-END EXAM FORM';
+    if (upper.includes('PLACEMENT')) return 'CAMPUS PLACEMENT DRIVE';
+    if (upper.includes('ANSWER KEY')) return 'PH.D. ANSWER KEY';
+    if (upper.includes('PROJECT') || upper.includes('PRACTICAL') || upper.includes('DISSERTATION')) return 'PROJECT / PRACTICAL';
+    if (upper.includes('RESULT') || upper.includes('GRADE CARD')) return 'RESULT / GRADE CARD';
+    if (upper.includes('HALL TICKET') || upper.includes('ADMIT CARD')) return 'HALL TICKET';
+  }
 
   const parenMatch = cleanTitle.match(/\(([A-Za-z0-9+–—\s/]{3,24})\)/);
   if (parenMatch && !parenMatch[1].toLowerCase().includes('advt') && !parenMatch[1].toLowerCase().includes('notice')) {
@@ -286,6 +319,7 @@ export function extractSpecificPostRole(title: string, category: string): string
     .replace(/^Indian Army\s+/i, '')
     .replace(/^RRB\s+/i, '')
     .replace(/^SSC\s+/i, '')
+    .replace(/^IGNOU\s+/i, '')
     .replace(/^Cluster University Srinagar\s+/i, '')
     .replace(/^University of Kashmir\s+/i, '')
     .replace(/^CUS\s+/i, '')
@@ -306,7 +340,7 @@ export function extractSpecificPostRole(title: string, category: string): string
     stripped = words.slice(0, 3).join(' ');
   }
 
-  return (stripped || (category === 'admissions' ? 'ADMISSION NOTICE' : 'RECRUITMENT NOTICE')).toUpperCase().slice(0, 32);
+  return (stripped || (category === 'admissions' || category === 'ignou' ? 'ADMISSION NOTICE' : 'RECRUITMENT NOTICE')).toUpperCase().slice(0, 32);
 }
 
 export function buildDeterministicThumbnailSpec(input: ThumbnailInputPayload): ThumbnailSpec {
@@ -316,7 +350,9 @@ export function buildDeterministicThumbnailSpec(input: ThumbnailInputPayload): T
   const statusLower = (input.status || '').toLowerCase();
 
   let style: SupportedCategoryStyle = 'default';
-  if (rawCategory === 'jkssb' || titleUpper.includes('JKSSB')) {
+  if (rawCategory === 'ignou' || titleUpper.includes('IGNOU')) {
+    style = 'ignou';
+  } else if (rawCategory === 'jkssb' || titleUpper.includes('JKSSB')) {
     style = 'jkssb';
   } else if (rawCategory === 'army_jobs' || titleUpper.includes('ARMY') || titleUpper.includes('AGNIVEER')) {
     style = 'army_jobs';
@@ -342,6 +378,8 @@ export function buildDeterministicThumbnailSpec(input: ThumbnailInputPayload): T
   let orgTitle = theme.orgTitle;
   if (input.department && input.department.trim().length <= 26) {
     orgTitle = input.department.trim().toUpperCase();
+  } else if (style === 'ignou' || titleUpper.includes('IGNOU')) {
+    orgTitle = 'IGNOU';
   } else if (titleUpper.includes('INDIAN ARMY')) {
     orgTitle = 'INDIAN ARMY';
   } else if (titleUpper.includes('JKSSB')) {
@@ -398,7 +436,8 @@ export function buildDeterministicThumbnailSpec(input: ThumbnailInputPayload): T
       'ssc_jobs',
       'exam_forms',
       'admissions',
-      'cluster_univ'
+      'cluster_univ',
+      'ignou'
     ].includes(style)
       ? 'preset'
       : 'placeholder',
@@ -477,6 +516,15 @@ function getVerifiedLogoVector(category: string, primaryColor: string): string {
         <path d="M 72 85 Q 100 95, 100 115 Q 100 95, 128 85 L 128 108 Q 100 118, 100 132 Q 100 118, 72 108 Z" fill="#0047BA" />
         <path d="M 80 72 L 120 72 L 100 56 Z" fill="#FF7900" />
         <text x="100" y="185" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="14" fill="#0047BA" text-anchor="middle" letter-spacing="1">CUS SRINAGAR</text>
+      </g>`;
+    case 'ignou':
+      return `<g transform="translate(18, 15)">
+        <circle cx="100" cy="95" r="75" fill="#0C4A6E" fill-opacity="0.06" stroke="#0C4A6E" stroke-width="2" />
+        <circle cx="100" cy="95" r="64" fill="none" stroke="#0284C7" stroke-width="1.5" stroke-dasharray="4,3" />
+        <path d="M 65 76 L 100 60 L 135 76 L 100 92 Z" fill="#0284C7" />
+        <path d="M 76 86 L 76 112 Q 100 124, 124 112 L 124 86" fill="none" stroke="#0C4A6E" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+        <line x1="132" y1="78" x2="132" y2="108" stroke="#0284C7" stroke-width="3" stroke-linecap="round" />
+        <text x="100" y="185" font-family="'Liberation Sans', Arial, Helvetica, sans-serif" font-weight="900" font-size="16" fill="#0C4A6E" text-anchor="middle" letter-spacing="1">IGNOU</text>
       </g>`;
     default:
       return '';

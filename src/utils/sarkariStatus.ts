@@ -183,6 +183,9 @@ export function inferNoticeStage(item: SarkariItem): NoticeStage {
   if (titleUpper.includes('RESULT') || titleUpper.includes('MERIT LIST') || titleUpper.includes('SCORECARD') || titleUpper.includes('SELECTION LIST')) {
     return 'result';
   }
+  if (titleUpper.includes('GRADE CARD')) {
+    return 'grade_card';
+  }
   if (titleUpper.includes('OBJECTION')) {
     return 'objection_window';
   }
@@ -197,6 +200,12 @@ export function inferNoticeStage(item: SarkariItem): NoticeStage {
   }
   if (titleUpper.includes('CORRECTION WINDOW') || titleUpper.includes('EDIT WINDOW')) {
     return 'correction';
+  }
+  if (titleUpper.includes('RE-REGISTRATION') || titleUpper.includes('RE REGISTRATION')) {
+    return 're_registration';
+  }
+  if (titleUpper.includes('ASSIGNMENT')) {
+    return 'assignment';
   }
   if (titleUpper.includes('EXAM FORM') || titleUpper.includes('EXAMINATION FORM')) {
     return 'exam_form';
@@ -261,18 +270,49 @@ function rawComputeSarkariStatus(item: SarkariItem, customNow?: Date): Omit<Comp
     };
   }
 
-  // 3. Informational stages (Admit card, Result, Answer key, Objection window, Exam date sheets, DV schedule)
+  // 3. Informational stages (Admit card, Result, Grade Card, Answer key, Objection window, Exam date sheets, DV schedule, RC updates)
   // These notices do NOT have an open recruitment application window for new applicants.
   if (stage === 'date_sheet') {
+    const isTentativeSheet =
+      Boolean(item.isTentative) || item.title.toLowerCase().includes('tentative');
     return {
       applicationStatus: 'closed', // No application form for new applicants
       stage: 'date_sheet',
       verificationStatus,
-      badgeLabel: 'Date Sheet Active',
-      badgeTone: 'blue',
+      badgeLabel: isTentativeSheet ? 'Tentative Date Sheet' : 'Date Sheet Active',
+      badgeTone: isTentativeSheet ? 'amber' : 'blue',
       canApplyOnline: false,
       isClosingSoon: false,
-      closingTimeNote: `Examination session timetable published. Scheduled date / commencement: ${item.lastDate || item.postDate}. Detailed subject schedule is available in the official date sheet PDF.`,
+      closingTimeNote: `${
+        isTentativeSheet ? 'Tentative' : 'Final'
+      } examination timetable published${
+        item.learnerGroup ? ` (${item.learnerGroup} learners)` : ''
+      }. Scheduled window: ${
+        item.startDate && item.lastDate && item.startDate !== item.lastDate
+          ? `${item.startDate} to ${item.lastDate}`
+          : item.lastDate || item.postDate
+      }. Verify final subject dates on your official Hall Ticket / circular PDF.`,
+      daysRemaining: null,
+      officialNotificationUrl,
+      officialApplicationUrl,
+    };
+  }
+
+  if (stage === 'rc_update') {
+    const { nowMs } = getNowInAsiaKolkata(customNow);
+    const eventEnd = parseDateToKolkataMs(item.lastDate, item.closingTime, true);
+    const isPast = Boolean(eventEnd && nowMs > eventEnd.timestampMs);
+    return {
+      applicationStatus: 'closed',
+      stage: 'rc_update',
+      verificationStatus,
+      badgeLabel: isPast ? 'Event Concluded' : 'Regional Centre Notice',
+      badgeTone: isPast ? 'slate' : 'blue',
+      canApplyOnline: false,
+      isClosingSoon: false,
+      closingTimeNote: isPast
+        ? `Regional Centre update concluded on ${item.lastDate}. Check official announcements for latest updates.`
+        : `Official Regional Centre notice${item.lastDate ? ` scheduled for ${item.lastDate}` : ''}. Refer to official announcement details below.`,
       daysRemaining: null,
       officialNotificationUrl,
       officialApplicationUrl,
@@ -284,27 +324,27 @@ function rawComputeSarkariStatus(item: SarkariItem, customNow?: Date): Omit<Comp
       applicationStatus: 'closed',
       stage: 'admit_card',
       verificationStatus,
-      badgeLabel: 'Admit Card Available',
+      badgeLabel: 'Admit Card / Hall Ticket',
       badgeTone: 'blue',
       canApplyOnline: false,
       isClosingSoon: false,
-      closingTimeNote: 'New applications closed. Candidates can download admit cards via the official portal.',
+      closingTimeNote: 'New applications closed. Candidates can download admit cards / hall tickets via the official portal.',
       daysRemaining: null,
       officialNotificationUrl,
       officialApplicationUrl,
     };
   }
 
-  if (stage === 'result') {
+  if (stage === 'result' || stage === 'grade_card') {
     return {
       applicationStatus: 'closed',
-      stage: 'result',
+      stage,
       verificationStatus,
-      badgeLabel: 'Result Declared',
+      badgeLabel: stage === 'grade_card' ? 'Grade Card / Result' : 'Result Declared',
       badgeTone: 'emerald',
       canApplyOnline: false,
       isClosingSoon: false,
-      closingTimeNote: 'Recruitment stage concluded. Results / scorecards published.',
+      closingTimeNote: 'Examination stage concluded. Results / grade cards published on the official portal.',
       daysRemaining: null,
       officialNotificationUrl,
       officialApplicationUrl,

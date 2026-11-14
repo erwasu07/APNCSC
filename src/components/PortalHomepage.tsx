@@ -23,8 +23,14 @@ import {
   ExternalLink,
   X,
 } from 'lucide-react';
-import { SARKARI_DATA, SarkariItem } from '../data/sarkariData';
+import {
+  SarkariItem,
+  isIgnouItem,
+  isEducationSarkariItem,
+  isRecruitmentSarkariItem,
+} from '../data/sarkariData';
 import { computeSarkariStatus } from '../utils/sarkariStatus';
+import { useSyncedSarkariPosts, sortByNewestPostDate } from '../utils/postDataSync';
 import { SERVICES_LIST, ServiceItem } from '../servicesData';
 import { GUIDE_ARTICLES } from './GuidesKnowledgeHub';
 import { TOOLS_LIST } from './tools/toolsData';
@@ -47,6 +53,8 @@ export default function PortalHomepage({
   onOpenTrack,
   onNavigateRoute,
 }: PortalHomepageProps) {
+  const allPosts = useSyncedSarkariPosts();
+
   // Tabs for Latest Updates: 'recruitment' | 'education' | 'schemes'
   const [latestUpdatesTab, setLatestUpdatesTab] = useState<'recruitment' | 'education' | 'schemes'>('recruitment');
   
@@ -204,6 +212,7 @@ export default function PortalHomepage({
 
   // Helper to format organization name for notices
   const getOrganisationLabel = (item: SarkariItem): string => {
+    if (isIgnouItem(item)) return 'Indira Gandhi National Open University (IGNOU)';
     switch (item.category) {
       case 'jkssb':
         return 'J&K Services Selection Board (JKSSB)';
@@ -227,57 +236,38 @@ export default function PortalHomepage({
     }
   };
 
-  // Up to 2 recent verified published notices per tab without duplicates (active open first)
+  // Up to 2 recent verified published notices per tab without duplicates (active open first, newest first)
   const recruitmentNotices = useMemo(() => {
-    const isRecruitment = (item: SarkariItem) =>
-      item.noticeType === 'recruitment' ||
-      item.postType === 'Job' ||
-      item.category === 'jkssb' ||
-      item.category === 'banking_jobs' ||
-      item.category === 'army_jobs' ||
-      item.category === 'ssc_jobs' ||
-      item.category === 'rrb_jobs' ||
-      item.category === 'jobs';
-
-    return SARKARI_DATA.filter((item) => {
-      if (!isRecruitment(item)) return false;
-      const st = computeSarkariStatus(item);
-      return st.verificationStatus !== 'needs_verification' && !item.isCancelled;
-    })
+    return allPosts
+      .filter((item) => {
+        if (!isRecruitmentSarkariItem(item)) return false;
+        const st = computeSarkariStatus(item);
+        return st.verificationStatus !== 'needs_verification' && !item.isCancelled;
+      })
       .sort((a, b) => {
         const stA = computeSarkariStatus(a);
         const stB = computeSarkariStatus(b);
         if (stA.canApplyOnline !== stB.canApplyOnline) return stA.canApplyOnline ? -1 : 1;
-        return 0;
+        return sortByNewestPostDate(a, b);
       })
       .slice(0, 2);
-  }, []);
+  }, [allPosts]);
 
   const educationNotices = useMemo(() => {
-    const isEducation = (item: SarkariItem) =>
-      item.noticeType !== 'recruitment' &&
-      item.postType !== 'Job' &&
-      (item.category === 'cluster_univ' ||
-        item.category === 'exam_forms' ||
-        item.category === 'admissions' ||
-        item.category === 'nta' ||
-        item.noticeType === 'admission' ||
-        item.noticeType === 'exam_form' ||
-        item.noticeType === 'date_sheet');
-
-    return SARKARI_DATA.filter((item) => {
-      if (!isEducation(item)) return false;
-      const st = computeSarkariStatus(item);
-      return st.verificationStatus !== 'needs_verification' && !item.isCancelled;
-    })
+    return allPosts
+      .filter((item) => {
+        if (!isEducationSarkariItem(item)) return false;
+        const st = computeSarkariStatus(item);
+        return st.verificationStatus !== 'needs_verification' && !item.isCancelled;
+      })
       .sort((a, b) => {
         const stA = computeSarkariStatus(a);
         const stB = computeSarkariStatus(b);
         if (stA.canApplyOnline !== stB.canApplyOnline) return stA.canApplyOnline ? -1 : 1;
-        return 0;
+        return sortByNewestPostDate(a, b);
       })
       .slice(0, 2);
-  }, []);
+  }, [allPosts]);
 
   const schemeNotices = useMemo(() => {
     return GUIDE_ARTICLES.filter((g) => g.category === 'Central Scheme' || g.category === 'State Services').slice(0, 2);
@@ -322,12 +312,13 @@ export default function PortalHomepage({
         s.category.toLowerCase().includes(q)
     ).slice(0, 5);
 
-    const matchedJobs = SARKARI_DATA.filter((j) => {
+    const matchedJobs = allPosts.filter((j) => {
       const st = computeSarkariStatus(j);
       if (st.verificationStatus === 'needs_verification' || j.isCancelled) return false;
       return (
         j.title.toLowerCase().includes(q) ||
         j.shortInfo.toLowerCase().includes(q) ||
+        (j.learnerGroup && j.learnerGroup.toLowerCase().includes(q)) ||
         (j.eligibility && j.eligibility.toLowerCase().includes(q))
       );
     }).slice(0, 5);
@@ -351,7 +342,7 @@ export default function PortalHomepage({
       tools: matchedTools,
       total: matchedServices.length + matchedJobs.length + matchedGuides.length + matchedTools.length,
     };
-  }, [searchQuery]);
+  }, [searchQuery, allPosts]);
 
   return (
     <div className="w-full pb-4 sm:pb-8 space-y-3 sm:space-y-4 px-3 sm:px-4 max-w-[1100px] mx-auto select-none">
@@ -736,7 +727,7 @@ export default function PortalHomepage({
                     No active education notices found.
                   </div>
                 )}
-                <div className="pt-2">
+                <div className="pt-2 flex flex-wrap items-center justify-between gap-2">
                   <a
                     href="/education"
                     onClick={(e) => {
@@ -746,6 +737,17 @@ export default function PortalHomepage({
                     className="text-xs font-bold text-[#1E56C8] hover:underline inline-flex items-center gap-1 cursor-pointer"
                   >
                     <span>View all education notices</span>
+                    <span aria-hidden="true">→</span>
+                  </a>
+                  <a
+                    href="/education/ignou"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleNavigate('/education/ignou');
+                    }}
+                    className="text-xs font-bold text-[#7C3AED] hover:underline inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>IGNOU Notifications</span>
                     <span aria-hidden="true">→</span>
                   </a>
                 </div>

@@ -50,8 +50,16 @@ import {
   Code,
   HelpCircle
 } from 'lucide-react';
-import { SARKARI_DATA, SARKARI_CATEGORIES, SarkariItem } from '../data/sarkariData';
+import {
+  SARKARI_DATA,
+  SARKARI_CATEGORIES,
+  SarkariItem,
+  isIgnouItem,
+  isEducationSarkariItem,
+  isRecruitmentSarkariItem,
+} from '../data/sarkariData';
 import { computeSarkariStatus } from '../utils/sarkariStatus';
+import { useSyncedSarkariPosts, sortByNewestPostDate } from '../utils/postDataSync';
 import { SERVICES_LIST } from '../servicesData';
 import { UploadedDocument } from '../types';
 import { ColourAccentCard } from './shared/ContentDesignSystem';
@@ -61,6 +69,9 @@ interface SarkariResultDeskProps {
   selectedService?: string;
   onOpenDedicatedPage?: (item: SarkariItem) => void;
   mode?: 'all' | 'jobs' | 'education';
+  initialTab?: 'all' | 'jkssb' | 'banking_jobs' | 'jobs' | 'admissions' | 'exam_forms' | 'cluster_univ' | 'ignou' | 'ssc_jobs' | 'rrb_jobs' | 'army_jobs';
+  educationSubRoute?: boolean;
+  onNavigateRoute?: (path: string) => void;
 }
 
 export interface PostCompletionDoc {
@@ -281,19 +292,28 @@ export const SERVICE_DOCUMENT_MAP: Record<string, string[]> = {
   'other': ['aadhaar', 'other_doc']
 };
 
-export default function SarkariResultDesk({ onApplyService, selectedService, onOpenDedicatedPage, mode = 'all' }: SarkariResultDeskProps) {
+export default function SarkariResultDesk({
+  onApplyService,
+  selectedService,
+  onOpenDedicatedPage,
+  mode = 'all',
+  initialTab,
+  educationSubRoute = false,
+  onNavigateRoute,
+}: SarkariResultDeskProps) {
+  const allPosts = useSyncedSarkariPosts();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<SarkariItem | null>(null);
   const [clickedItemId, setClickedItemId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'all' | 'jkssb' | 'banking_jobs' | 'jobs' | 'admissions' | 'exam_forms' | 'cluster_univ' | 'ssc_jobs' | 'rrb_jobs' | 'army_jobs'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'jkssb' | 'banking_jobs' | 'jobs' | 'admissions' | 'exam_forms' | 'cluster_univ' | 'ignou' | 'ssc_jobs' | 'rrb_jobs' | 'army_jobs'>(initialTab || 'all');
   const [itemsLimit, setItemsLimit] = useState(10);
   const [deskViewMode, setDeskViewMode] = useState<'boxes' | 'cards'>('boxes');
 
   useEffect(() => {
-    setActiveTab('all');
+    setActiveTab(initialTab || 'all');
     setItemsLimit(10);
     setSearchQuery('');
-  }, [mode]);
+  }, [mode, initialTab]);
 
   // Interactive Digital Application Portal State
   const [formData, setFormData] = useState({
@@ -344,7 +364,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
       const params = new URLSearchParams(window.location.search);
       const postId = params.get('post');
       if (postId) {
-        const match = SARKARI_DATA.find(i => i.id === postId);
+        const match = allPosts.find(i => i.id === postId);
         if (match) {
           if (onOpenDedicatedPage) {
             onOpenDedicatedPage(match);
@@ -354,7 +374,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
         }
       }
     }
-  }, [onOpenDedicatedPage]);
+  }, [onOpenDedicatedPage, allPosts]);
 
   const triggerToast = (msg: string) => {
     setShareToast(msg);
@@ -446,9 +466,9 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
     }
 
     if (!docKeys) {
-      const sarkariItem = SARKARI_DATA.find(item => item.title.toLowerCase() === serviceVal.toLowerCase());
+      const sarkariItem = allPosts.find(item => item.title.toLowerCase() === serviceVal.toLowerCase());
       if (sarkariItem) {
-        if (sarkariItem.category === 'jobs' || sarkariItem.category === 'admissions') {
+        if (sarkariItem.category === 'jobs' || sarkariItem.category === 'admissions' || isIgnouItem(sarkariItem)) {
           docKeys = ['aadhaar', 'marksheet', 'photo', 'caste'];
         }
       }
@@ -556,7 +576,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
     let appFee = 0;
     if (serviceVal !== 'other') {
       // Find matching exam bulletin to set application fee
-      const matchingBulletin = SARKARI_DATA.find(item => item.title === serviceVal);
+      const matchingBulletin = allPosts.find(item => item.title === serviceVal);
       if (matchingBulletin && matchingBulletin.fees) {
         const feeStr = formData.userCategory === 'scSt' ? matchingBulletin.fees.scSt : matchingBulletin.fees.genObc;
         appFee = parseFeeString(feeStr);
@@ -572,7 +592,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
   const handleCategoryChange = (categoryVal: 'genObc' | 'scSt') => {
     let appFee = 0;
     if (formData.selectedService !== 'other') {
-      const matchingBulletin = SARKARI_DATA.find(item => item.title === formData.selectedService);
+      const matchingBulletin = allPosts.find(item => item.title === formData.selectedService);
       if (matchingBulletin && matchingBulletin.fees) {
         const feeStr = categoryVal === 'scSt' ? matchingBulletin.fees.scSt : matchingBulletin.fees.genObc;
         appFee = parseFeeString(feeStr);
@@ -590,8 +610,8 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
       // Clean up any prefix if present
       const cleanName = selectedService.replace(/^(Assistance Request:|Filing Application:)\s*/i, '').trim();
 
-      // Look for exact title match in SARKARI_DATA or SERVICES_LIST
-      const sarkariMatch = SARKARI_DATA.find(item => item.title.toLowerCase() === cleanName.toLowerCase());
+      // Look for exact title match in allPosts or SERVICES_LIST
+      const sarkariMatch = allPosts.find(item => item.title.toLowerCase() === cleanName.toLowerCase());
       const serviceMatch = SERVICES_LIST.find(s => s.name.toLowerCase() === cleanName.toLowerCase());
 
       if (sarkariMatch) {
@@ -600,7 +620,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
         handleServiceChange(serviceMatch.name);
       } else {
         // Search by partial match
-        const partialSarkari = SARKARI_DATA.find(item => item.title.toLowerCase().includes(cleanName.toLowerCase()) || cleanName.toLowerCase().includes(item.title.toLowerCase()));
+        const partialSarkari = allPosts.find(item => item.title.toLowerCase().includes(cleanName.toLowerCase()) || cleanName.toLowerCase().includes(item.title.toLowerCase()));
         const partialService = SERVICES_LIST.find(s => s.name.toLowerCase().includes(cleanName.toLowerCase()) || cleanName.toLowerCase().includes(s.name.toLowerCase()));
 
         if (partialSarkari) {
@@ -1014,40 +1034,33 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
     window.print();
   };
 
-  const isEducationItem = (item: SarkariItem) =>
-    item.noticeType !== 'recruitment' &&
-    item.postType !== 'Job' &&
-    (item.category === 'admissions' ||
-      item.category === 'cluster_univ' ||
-      item.category === 'exam_forms' ||
-      item.category === 'nta' ||
-      item.noticeType === 'admission' ||
-      item.noticeType === 'exam_form' ||
-      item.noticeType === 'date_sheet');
-
-  const isRecruitmentItem = (item: SarkariItem) =>
-    item.noticeType === 'recruitment' ||
-    item.postType === 'Job' ||
-    ['jkssb', 'banking_jobs', 'army_jobs', 'ssc_jobs', 'rrb_jobs', 'jobs'].includes(item.category);
+  const matchesCategoryTab = (item: SarkariItem, tabId: string): boolean => {
+    if (tabId === 'all') return true;
+    if (tabId === 'ignou') return isIgnouItem(item);
+    return !isIgnouItem(item) && item.category === tabId;
+  };
 
   // Base items scoped by route mode ('jobs', 'education', or 'all')
-  const modeScopedData = SARKARI_DATA.filter(item => {
-    const st = computeSarkariStatus(item);
-    if (st.verificationStatus === 'needs_verification' || item.isCancelled) return false;
-    if (mode === 'education') return isEducationItem(item);
-    if (mode === 'jobs') return isRecruitmentItem(item);
-    return true;
-  });
+  const modeScopedData = [...allPosts]
+    .filter(item => {
+      const st = computeSarkariStatus(item);
+      if (st.verificationStatus === 'needs_verification' || item.isCancelled) return false;
+      if (mode === 'education') return isEducationSarkariItem(item);
+      if (mode === 'jobs') return isRecruitmentSarkariItem(item);
+      return true;
+    })
+    .sort(sortByNewestPostDate);
 
   // Filter items based on search query and category tab
   const filteredItems = modeScopedData.filter(item => {
-    const matchesSearch = 
+    const matchesSearch =
       item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.shortInfo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.learnerGroup && item.learnerGroup.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (item.eligibility && item.eligibility.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const matchesTab = activeTab === 'all' || item.category === activeTab;
-    
+
+    const matchesTab = matchesCategoryTab(item, activeTab);
+
     return matchesSearch && matchesTab;
   });
 
@@ -1060,12 +1073,17 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
     { category: 'jkssb', tag: 'JKSSB', emoji: '⚡' },
     { category: 'exam_forms', tag: 'EXAM FORM', emoji: '📝' },
     { category: 'admissions', tag: 'ADMISSION', emoji: '🎓' },
+    { category: 'ignou', tag: 'IGNOU', emoji: '🎓' },
   ];
+
+  const sortedAllPosts = [...allPosts].sort(sortByNewestPostDate);
 
   const latestTickerItems = tickerSections
     .map(sec => {
-      const latestItem = SARKARI_DATA.find(item => {
-        if (item.category !== sec.category) return false;
+      const latestItem = sortedAllPosts.find(item => {
+        if (sec.category === 'ignou' ? !isIgnouItem(item) : (isIgnouItem(item) || item.category !== sec.category)) {
+          return false;
+        }
         const st = computeSarkariStatus(item);
         return st.verificationStatus !== 'needs_verification' && !item.isCancelled;
       });
@@ -1074,19 +1092,20 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
     .filter((entry): entry is { item: SarkariItem; category: SarkariItem['category']; tag: string; emoji: string } => entry !== null);
 
   // Group items by category for the multi-box layout
-  const getItemsByCategory = (cat: 'jkssb' | 'jobs' | 'admit_cards' | 'results' | 'answer_keys' | 'syllabus' | 'admissions') => {
-    return SARKARI_DATA.filter(item => {
+  const getItemsByCategory = (cat: 'jkssb' | 'jobs' | 'admit_cards' | 'results' | 'answer_keys' | 'syllabus' | 'admissions' | 'ignou') => {
+    return sortedAllPosts.filter(item => {
       const st = computeSarkariStatus(item);
       if (st.verificationStatus === 'needs_verification' || item.isCancelled) return false;
-      const matchesSearch = 
+      const matchesSearch =
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.shortInfo.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (item.eligibility && item.eligibility.toLowerCase().includes(searchQuery.toLowerCase()));
-      return matchesSearch && item.category === cat;
+      return matchesSearch && (cat === 'ignou' ? isIgnouItem(item) : (!isIgnouItem(item) && item.category === cat));
     });
   };
 
   const getOrgName = (item: SarkariItem) => {
+    if (isIgnouItem(item)) return item.department || 'Indira Gandhi National Open University (IGNOU)';
     if (item.category === 'army_jobs') return 'Indian Army (joinindianarmy.nic.in)';
     if (item.category === 'rrb_jobs') return 'Railway Recruitment Boards (RRB)';
     if (item.category === 'ssc_jobs') return 'Staff Selection Commission (SSC)';
@@ -1106,7 +1125,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
     if (titleUpper.includes('NEET') || titleUpper.includes('NTA') || titleUpper.includes('JEE') || titleUpper.includes('CUET')) return 'National Testing Agency (NTA)';
     if (titleUpper.includes('CBSE') || titleUpper.includes('CTET')) return 'Central Board of Secondary Education';
     if (titleUpper.includes('DELHI UNIVERSITY') || titleUpper.includes('CSAS')) return 'Delhi University Admission Board';
-    if (titleUpper.includes('IGNOU')) return 'Indira Gandhi National Open University';
+    if (titleUpper.includes('IGNOU')) return 'Indira Gandhi National Open University (IGNOU)';
     return item.advertisementNo || 'Government Recruitment Board';
   };
 
@@ -1233,15 +1252,56 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
 
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6">
         {/* 2. SECTION HEADING */}
-        <div id="sarkari-board" className="max-w-7xl mx-auto mb-6 scroll-mt-24 space-y-1">
-          {mode === 'education' ? (
+        <div id="sarkari-board" className="max-w-7xl mx-auto mb-6 scroll-mt-24 space-y-2">
+          {mode === 'education' && educationSubRoute ? (
+            <>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#172033] tracking-tight">
+                IGNOU Latest Notifications
+              </h1>
+              <p className="text-xs sm:text-sm text-[#667085] leading-relaxed">
+                Find IGNOU admission, re-registration, assignment, exam form, datesheet, hall ticket and result updates with official links on CSC DOST.
+              </p>
+              <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px]">
+                <span className="px-2 py-0.5 rounded-md bg-sky-50 text-sky-800 border border-sky-200 font-semibold">
+                  Learner Streams: ODL · Online · GOAL · E-Vidya Bharti · RC Srinagar
+                </span>
+                <a
+                  href="/education"
+                  onClick={(e) => {
+                    if (onNavigateRoute) {
+                      e.preventDefault();
+                      onNavigateRoute('/education');
+                    }
+                  }}
+                  className="text-xs font-semibold text-[#155EEF] hover:underline"
+                >
+                  ← View all Education &amp; Admissions
+                </a>
+              </div>
+            </>
+          ) : mode === 'education' ? (
             <>
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#172033] tracking-tight">
                 Education &amp; Admissions
               </h1>
               <p className="text-xs sm:text-sm text-[#667085]">
-                Official University of Kashmir and Cluster University admissions, examination forms, date sheets and scholarship notices.
+                Official IGNOU, University of Kashmir and Cluster University admissions, re-registration, examination forms, date sheets and scholarship notices.
               </p>
+              <div className="pt-1">
+                <a
+                  href="/education/ignou"
+                  onClick={(e) => {
+                    if (onNavigateRoute) {
+                      e.preventDefault();
+                      onNavigateRoute('/education/ignou');
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#155EEF] hover:underline"
+                >
+                  <span>Browse dedicated IGNOU Latest Notifications page</span>
+                  <span aria-hidden="true">→</span>
+                </a>
+              </div>
             </>
           ) : mode === 'jobs' ? (
             <>
@@ -1277,10 +1337,11 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
               { id: 'admissions', label: 'Admissions', icon: GraduationCap },
               { id: 'cluster_univ', label: 'Cluster Univ', icon: Building2 },
               { id: 'exam_forms', label: 'KU Exams', icon: BookOpen },
+              { id: 'ignou', label: 'IGNOU', icon: GraduationCap },
             ]
               .filter(cat => {
                 if (cat.id === 'all') return true;
-                if (mode === 'education') return ['admissions', 'cluster_univ', 'exam_forms'].includes(cat.id);
+                if (mode === 'education') return ['admissions', 'cluster_univ', 'exam_forms', 'ignou'].includes(cat.id);
                 if (mode === 'jobs') return ['jkssb', 'banking_jobs', 'army_jobs', 'ssc_jobs', 'rrb_jobs'].includes(cat.id);
                 return true;
               })
@@ -1308,7 +1369,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                     <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
                       isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-[#667085]'
                     }`}>
-                      {modeScopedData.filter(i => i.category === cat.id).length}
+                      {modeScopedData.filter(i => matchesCategoryTab(i, cat.id)).length}
                     </span>
                   )}
                 </button>
@@ -1324,14 +1385,15 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
           const hasMore = totalFilteredCount > itemsLimit;
 
           const popularCategoriesList = [
-            { id: 'jkssb', label: 'JKSSB', count: modeScopedData.filter(i => i.category === 'jkssb').length },
-            { id: 'banking_jobs', label: 'Banking', count: modeScopedData.filter(i => i.category === 'banking_jobs').length },
-            { id: 'army_jobs', label: 'Indian Army', count: modeScopedData.filter(i => i.category === 'army_jobs').length },
-            { id: 'ssc_jobs', label: 'SSC', count: modeScopedData.filter(i => i.category === 'ssc_jobs').length },
-            { id: 'rrb_jobs', label: 'RRB', count: modeScopedData.filter(i => i.category === 'rrb_jobs').length },
-            { id: 'admissions', label: 'Admissions', count: modeScopedData.filter(i => i.category === 'admissions').length },
-            { id: 'cluster_univ', label: 'Cluster University', count: modeScopedData.filter(i => i.category === 'cluster_univ').length },
-            { id: 'exam_forms', label: 'KU Exam Forms', count: modeScopedData.filter(i => i.category === 'exam_forms').length },
+            { id: 'jkssb', label: 'JKSSB', count: modeScopedData.filter(i => !isIgnouItem(i) && i.category === 'jkssb').length },
+            { id: 'banking_jobs', label: 'Banking', count: modeScopedData.filter(i => !isIgnouItem(i) && i.category === 'banking_jobs').length },
+            { id: 'army_jobs', label: 'Indian Army', count: modeScopedData.filter(i => !isIgnouItem(i) && i.category === 'army_jobs').length },
+            { id: 'ssc_jobs', label: 'SSC', count: modeScopedData.filter(i => !isIgnouItem(i) && i.category === 'ssc_jobs').length },
+            { id: 'rrb_jobs', label: 'RRB', count: modeScopedData.filter(i => !isIgnouItem(i) && i.category === 'rrb_jobs').length },
+            { id: 'admissions', label: 'Admissions', count: modeScopedData.filter(i => !isIgnouItem(i) && i.category === 'admissions').length },
+            { id: 'cluster_univ', label: 'Cluster University', count: modeScopedData.filter(i => !isIgnouItem(i) && i.category === 'cluster_univ').length },
+            { id: 'exam_forms', label: 'KU Exam Forms', count: modeScopedData.filter(i => !isIgnouItem(i) && i.category === 'exam_forms').length },
+            { id: 'ignou', label: 'IGNOU', count: modeScopedData.filter(i => isIgnouItem(i)).length },
           ].filter(c => c.count > 0);
 
           return (
@@ -1344,7 +1406,9 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                 <div className="bg-white border border-[#E4E7EC] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
                   <div>
                     <h2 className="text-sm sm:text-base font-bold text-[#172033]">
-                      {activeTab === 'all' 
+                      {activeTab === 'ignou'
+                        ? 'IGNOU Student Notifications'
+                        : activeTab === 'all'
                         ? (mode === 'education' ? 'Latest Education & Admission Notices' : 'Latest Recruitment')
                         : SARKARI_CATEGORIES[activeTab as keyof typeof SARKARI_CATEGORIES]?.label || 'Updates'}
                     </h2>
@@ -1381,16 +1445,8 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                 <div className="space-y-3">
                   {displayedItems.length > 0 ? (
                     displayedItems.map((item) => {
-                      const isAdmission =
-                        item.noticeType !== 'recruitment' &&
-                        item.postType !== 'Job' &&
-                        (item.category === 'admissions' ||
-                          item.category === 'cluster_univ' ||
-                          item.category === 'exam_forms' ||
-                          item.category === 'nta' ||
-                          item.noticeType === 'admission' ||
-                          item.noticeType === 'exam_form' ||
-                          item.noticeType === 'date_sheet');
+                      const isIgnou = isIgnouItem(item);
+                      const isAdmission = isEducationSarkariItem(item);
                       const st = computeSarkariStatus(item);
                       const badgeColorClass =
                         st.badgeTone === 'emerald'
@@ -1410,7 +1466,9 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                           thumbnailUrl={item.thumbnailUrl || `/thumbnails/${item.id}.png`}
                           categoryType={isAdmission ? 'admission' : item.category}
                           categoryLabel={
-                            isAdmission
+                            isIgnou
+                              ? 'IGNOU Notification'
+                              : isAdmission
                               ? 'Admission / Exam'
                               : SARKARI_CATEGORIES[item.category]?.label || 'Job / Recruitment'
                           }
@@ -1423,6 +1481,15 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                           title={item.title}
                           summary={item.shortInfo}
                           infoFacts={[
+                            ...(isIgnou && item.learnerGroup
+                              ? [
+                                  {
+                                    icon: 'qualification' as const,
+                                    label: 'Learner Group',
+                                    value: item.learnerGroup,
+                                  },
+                                ]
+                              : []),
                             ...(item.eligibility
                               ? [
                                   {
@@ -1558,6 +1625,7 @@ export default function SarkariResultDesk({ onApplyService, selectedService, onO
                       { label: 'Railway Recruitment (RRB)', url: 'https://www.rrbapply.gov.in' },
                       { label: 'Kashmir University Admissions', url: 'https://kashmiruniversity.net' },
                       { label: 'Cluster University Srinagar', url: 'https://cusrinagar.edu.in' },
+                      { label: 'IGNOU Official Announcements', url: 'https://www.ignou.ac.in/announcements/0?nav=1' },
                     ].map((portal, idx) => (
                       <a
                         key={idx}
