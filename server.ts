@@ -21,10 +21,12 @@ import { GUIDE_ARTICLES } from './src/data/guidesData';
 import { 
   generateOgPng, 
   generateOgSvg, 
+  generatePostThumbnailBuffer,
   generateServiceOgPng, 
   generateServiceOgSvg,
   generateSocialPreviewPng 
 } from './src/ogImageGenerator';
+import { computeThumbnailVersionHash } from './src/utils/postThumbnailMeta';
 import {
   THUMBNAIL_WIDTH,
   THUMBNAIL_HEIGHT,
@@ -4392,60 +4394,79 @@ app.delete('/api/posts/:id', (req: Request, res: Response) => {
   }
 });
 
-// Dynamic Open Graph Image Generator Endpoint for WhatsApp / Facebook / Social Share Previews
+// Dynamic Open Graph & List-Card Thumbnail Generator Endpoint (1200x630 Social PNG & 600x315 Card WebP/PNG)
 app.get(['/api/og-image/:id.png', '/api/og-image/:id.webp', '/api/og-image/:id.svg', '/api/og-image/:id', '/api/og-image'], async (req: Request, res: Response) => {
+  const isSvg = req.path.endsWith('.svg') || req.query.format === 'svg';
+  const isWebp = req.path.endsWith('.webp') || req.query.format === 'webp';
+  const format: 'png' | 'webp' = isWebp ? 'webp' : 'png';
+  const size: 'social' | 'card' =
+    req.query.size === 'card' || req.query.w === '600' || req.query.width === '600'
+      ? 'card'
+      : 'social';
+  const hasVersionParam = typeof req.query.v === 'string' && req.query.v.trim().length > 0;
+  const cacheHeader = hasVersionParam
+    ? 'public, max-age=31536000, s-maxage=31536000, immutable'
+    : 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400';
+
   try {
     const rawId = (req.params.id || (req.query.id as string) || '').replace(/\.(png|svg|webp)$/i, '');
-    const format = req.path.endsWith('.svg') || req.query.format === 'svg' ? 'svg' : 'png';
+    const decodedId = rawId ? decodeURIComponent(rawId) : '';
 
     // 1. Search in Published Sarkari notifications (predefined SARKARI_DATA and custom posts)
     const allSarkari = getAllMergedSarkariPosts().filter(isPublishedSarkariItem);
-    const sarkariItem = allSarkari.find(i => i.id === rawId || i.id === decodeURIComponent(rawId));
+    const sarkariItem = allSarkari.find(i => i.id === rawId || i.id === decodedId);
     if (sarkariItem) {
-      if (format === 'svg') {
+      if (isSvg) {
         const svg = generateOgSvg(sarkariItem);
-        res.setHeader('Content-Type', 'image/svg+xml');
-        res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+        res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
+        res.setHeader('Cache-Control', cacheHeader);
         return res.send(svg);
       }
-      const png = await generateSocialPreviewPng(sarkariItem);
-      res.setHeader('Content-Type', 'image/png');
-      res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
-      return res.send(png);
+      const buffer = await generatePostThumbnailBuffer(sarkariItem, { size, format });
+      res.setHeader('Content-Type', format === 'webp' ? 'image/webp' : 'image/png');
+      res.setHeader('Cache-Control', cacheHeader);
+      return res.send(buffer);
     }
 
     // 2. Search in Services list
-    const serviceItem = SERVICES_LIST.find(s => s.id === rawId || s.id === decodeURIComponent(rawId));
+    const serviceItem = SERVICES_LIST.find(s => s.id === rawId || s.id === decodedId);
     if (serviceItem) {
-      if (format === 'svg') {
+      if (isSvg) {
         const svg = generateServiceOgSvg(serviceItem);
-        res.setHeader('Content-Type', 'image/svg+xml');
-        res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+        res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
+        res.setHeader('Cache-Control', cacheHeader);
         return res.send(svg);
       }
-      const png = await generateServiceOgPng(serviceItem);
-      res.setHeader('Content-Type', 'image/png');
-      res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
-      return res.send(png);
+      const buffer = await generateServiceOgPng(serviceItem, { size, format });
+      res.setHeader('Content-Type', format === 'webp' ? 'image/webp' : 'image/png');
+      res.setHeader('Cache-Control', cacheHeader);
+      return res.send(buffer);
     }
 
-    // 3. Fallback: Default CSC DOST Open Graph Banner (1200x630)
-    if (format === 'svg') {
+    // 3. Fallback: Clean generic CSC DOST image (never return 404 for thumbnail requests)
+    if (isSvg) {
       const svg = generateOgSvg(null);
-      res.setHeader('Content-Type', 'image/svg+xml');
-      res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+      res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400');
       return res.send(svg);
     }
-    const png = await generateSocialPreviewPng(null);
-    res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
-    return res.send(png);
+    const buffer = await generatePostThumbnailBuffer(null, { size, format });
+    res.setHeader('Content-Type', format === 'webp' ? 'image/webp' : 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+    return res.send(buffer);
   } catch (err) {
     console.error('OG Image Generation Error:', err);
-    const fallbackPath = path.join(process.cwd(), 'public', 'og-banner.png');
-    res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Cache-Control', 'public, max-age=3600');
-    return res.status(200).sendFile(fallbackPath);
+    try {
+      const fallbackBuffer = await generatePostThumbnailBuffer(null, { size, format });
+      res.setHeader('Content-Type', format === 'webp' ? 'image/webp' : 'image/png');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      return res.status(200).send(fallbackBuffer);
+    } catch {
+      const fallbackPath = path.join(process.cwd(), 'public', 'og-banner.png');
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      return res.status(200).sendFile(fallbackPath);
+    }
   }
 });
 
@@ -4551,8 +4572,8 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       matchedJobPost = item;
       title = `${item.title} | CSC DOST`;
       description = item.shortInfo || `Apply online for ${item.title}. Last Date: ${item.lastDate || 'Check Notification'}. Vacancies: ${item.totalPosts || 'Open'}. Official updates & application assistance at cscdost.com.`;
-      const dateVersion = (item.lastDate || item.postDate || '2026').replace(/[^0-9]/g, '') || '2026';
-      ogImage = `${baseOrigin}/api/og-image/${encodeURIComponent(item.id)}.png?v=${dateVersion}_v3`;
+      const thumbHash = computeThumbnailVersionHash(item);
+      ogImage = `${baseOrigin}/api/og-image/${encodeURIComponent(item.id)}.png?v=${thumbHash}`;
       canonicalUrl = `${SITE_ORIGIN}/post/${item.id}`;
       robotsContent = 'index, follow';
       ogType = 'article';
@@ -4696,6 +4717,12 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       robotsContent = meta.robots;
       breadcrumbItems = meta.breadcrumbs || [];
       substantiveBodyHtml = renderCategorySubstantiveHtml(catKey, allSarkari, SERVICES_LIST);
+    } else if (urlPath === '/dev/thumbnails') {
+      title = 'Thumbnail Preview Matrix | CSC DOST';
+      description = 'Internal development preview for generated OG images and list thumbnails.';
+      canonicalUrl = `${SITE_ORIGIN}/dev/thumbnails`;
+      robotsContent = 'noindex, nofollow';
+      substantiveBodyHtml = '<h1>Thumbnail Preview Matrix</h1><p>Internal thumbnail review view (noindex).</p>';
     } else if (urlPath === '/') {
       const allSarkari = getAllMergedSarkariPosts();
       substantiveBodyHtml = renderHomepageSubstantiveHtml(allSarkari, SERVICES_LIST);

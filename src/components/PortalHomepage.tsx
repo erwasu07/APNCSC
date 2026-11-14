@@ -24,6 +24,7 @@ import {
   isRecruitmentSarkariItem,
 } from '../data/sarkariData';
 import { computeSarkariStatus } from '../utils/sarkariStatus';
+import { getPostListThumbnailUrl } from '../utils/postThumbnailMeta';
 import { useSyncedSarkariPosts, sortByNewestPostDate } from '../utils/postDataSync';
 import { SERVICES_LIST, ServiceItem } from '../servicesData';
 import { GUIDE_ARTICLES } from '../data/guidesData';
@@ -597,59 +598,71 @@ export default function PortalHomepage({
                   onClick={() => onOpenJob(job)}
                   className="p-4 sm:p-5"
                 >
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                    <div className="space-y-2 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant="navy">{getOrganisationLabel(job)}</Badge>
-                        {isUrgent ? (
-                          <Badge variant="urgent">
-                            <Clock className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                            <span>
-                              {t.urgentDaysLeft(status.daysRemaining!)} · {deadlineText}
-                            </span>
-                          </Badge>
-                        ) : status.canApplyOnline ? (
-                          <Badge variant="green">
-                            <span>
-                              {t.lastDateLabel}: {deadlineText}
-                            </span>
-                          </Badge>
-                        ) : (
-                          <Badge variant="neutral">
-                            <span>{status.badgeLabel}</span>
-                          </Badge>
-                        )}
-                      </div>
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3.5 min-w-0 flex-1">
+                      <img
+                        src={getPostListThumbnailUrl(job, 'webp')}
+                        alt={`${job.title} — ${getOrganisationLabel(job)} summary`}
+                        width={600}
+                        height={315}
+                        loading="lazy"
+                        decoding="async"
+                        className="w-[168px] h-[88px] sm:w-[176px] sm:h-[92px] max-h-[120px] rounded-xl border border-[var(--border-default)] object-cover shrink-0 block bg-[var(--bg-subtle)]"
+                      />
 
-                      <h3 className="text-base sm:text-lg font-bold text-[var(--text-primary)] leading-snug m-0">
-                        <a
-                          href={`/post/${job.id}`}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            onOpenJob(job);
-                          }}
-                          className="text-[var(--text-primary)] hover:underline no-underline"
-                        >
-                          {job.title}
-                        </a>
-                      </h3>
+                      <div className="space-y-2 min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="navy">{getOrganisationLabel(job)}</Badge>
+                          {isUrgent ? (
+                            <Badge variant="urgent">
+                              <Clock className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                              <span>
+                                {t.urgentDaysLeft(status.daysRemaining!)} · {deadlineText}
+                              </span>
+                            </Badge>
+                          ) : status.canApplyOnline ? (
+                            <Badge variant="green">
+                              <span>
+                                {t.lastDateLabel}: {deadlineText}
+                              </span>
+                            </Badge>
+                          ) : (
+                            <Badge variant="neutral">
+                              <span>{status.badgeLabel}</span>
+                            </Badge>
+                          )}
+                        </div>
 
-                      <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-[var(--text-secondary)]">
-                        <span className="inline-flex items-center gap-1.5">
-                          <Building2 className="w-4 h-4 text-[var(--text-primary)] shrink-0" aria-hidden="true" />
-                          <span>
-                            <strong className="text-[var(--text-primary)]">{t.departmentLabel}:</strong>{' '}
-                            {job.department || getOrganisationLabel(job)}
+                        <h3 className="text-base sm:text-lg font-bold text-[var(--text-primary)] leading-snug m-0">
+                          <a
+                            href={`/post/${job.id}`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              onOpenJob(job);
+                            }}
+                            className="text-[var(--text-primary)] hover:underline no-underline"
+                          >
+                            {job.title}
+                          </a>
+                        </h3>
+
+                        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-[var(--text-secondary)]">
+                          <span className="inline-flex items-center gap-1.5">
+                            <Building2 className="w-4 h-4 text-[var(--text-primary)] shrink-0" aria-hidden="true" />
+                            <span>
+                              <strong className="text-[var(--text-primary)]">{t.departmentLabel}:</strong>{' '}
+                              {job.department || getOrganisationLabel(job)}
+                            </span>
                           </span>
-                        </span>
-                        <span className="inline-flex items-center gap-1.5">
-                          <Users className="w-4 h-4 text-[var(--text-primary)] shrink-0" aria-hidden="true" />
-                          <span>
-                            <strong className="text-[var(--text-primary)]">{t.vacanciesLabel}:</strong>{' '}
-                            {job.totalPosts || t.asPerOfficialNotice}
+                          <span className="inline-flex items-center gap-1.5">
+                            <Users className="w-4 h-4 text-[var(--text-primary)] shrink-0" aria-hidden="true" />
+                            <span>
+                              <strong className="text-[var(--text-primary)]">{t.vacanciesLabel}:</strong>{' '}
+                              {job.totalPosts || t.asPerOfficialNotice}
+                            </span>
                           </span>
-                        </span>
+                        </div>
                       </div>
                     </div>
 
@@ -722,25 +735,36 @@ export default function PortalHomepage({
                   }}
                   className="p-4 sm:p-5 flex flex-col justify-between gap-3"
                 >
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <Badge variant="navy">{getOrganisationLabel(notice)}</Badge>
-                      {status.isUrgentUnder7Days && status.daysRemaining !== null ? (
-                        <Badge variant="urgent">
-                          {t.urgentDaysLeft(status.daysRemaining)}
-                        </Badge>
-                      ) : (
-                        <Badge variant={status.canApplyOnline ? 'green' : 'neutral'}>
-                          {status.badgeLabel}
-                        </Badge>
-                      )}
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+                    <img
+                      src={getPostListThumbnailUrl(notice, 'webp')}
+                      alt={`${notice.title} — ${getOrganisationLabel(notice)} summary`}
+                      width={600}
+                      height={315}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-[168px] h-[88px] sm:w-[160px] sm:h-[84px] max-h-[120px] rounded-xl border border-[var(--border-default)] object-cover shrink-0 block bg-[var(--bg-subtle)]"
+                    />
+                    <div className="space-y-2 min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <Badge variant="navy">{getOrganisationLabel(notice)}</Badge>
+                        {status.isUrgentUnder7Days && status.daysRemaining !== null ? (
+                          <Badge variant="urgent">
+                            {t.urgentDaysLeft(status.daysRemaining)}
+                          </Badge>
+                        ) : (
+                          <Badge variant={status.canApplyOnline ? 'green' : 'neutral'}>
+                            {status.badgeLabel}
+                          </Badge>
+                        )}
+                      </div>
+                      <h3 className="text-base sm:text-lg font-bold text-[var(--text-primary)] leading-snug m-0">
+                        {notice.title}
+                      </h3>
+                      <p className="text-sm sm:text-base text-[var(--text-secondary)] line-clamp-2 leading-relaxed m-0">
+                        {notice.shortInfo}
+                      </p>
                     </div>
-                    <h3 className="text-base sm:text-lg font-bold text-[var(--text-primary)] leading-snug m-0">
-                      {notice.title}
-                    </h3>
-                    <p className="text-base text-[var(--text-secondary)] line-clamp-2 leading-relaxed m-0">
-                      {notice.shortInfo}
-                    </p>
                   </div>
                   <div className="flex items-center justify-between text-sm text-[var(--text-secondary)] border-t border-[var(--border-default)] pt-2.5">
                     <span>

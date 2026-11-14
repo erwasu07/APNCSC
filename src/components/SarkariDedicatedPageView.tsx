@@ -26,7 +26,6 @@ import { computeSarkariStatus, type ComputedSarkariStatus } from '../utils/sarka
 import { useSyncedSarkariPosts, sortByNewestPostDate } from '../utils/postDataSync';
 import { useLanguage, type Language } from '../contexts/LanguageContext';
 import { buildWhatsAppNotification } from '../utils/whatsappFormatter';
-import SarkariNotificationBanner from './SarkariNotificationBanner';
 import {
   AdSlot,
   AlertsBox,
@@ -37,6 +36,7 @@ import {
   DateBlock,
   FaqAccordion,
   HelpApplyingCard,
+  OrgBadge,
   StatusPill,
   StickyMobileActionBar,
   type BreadcrumbItem,
@@ -517,40 +517,49 @@ export default function SarkariDedicatedPageView({
           </div>
         )}
 
-        {/* Header Block + DateBlock */}
-        <header className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-4 sm:p-6 space-y-4 text-start shadow-2xs">
-          <div className="flex flex-wrap items-center gap-2">
-            <StatusPill
-              status={statusInfo.computedStatus}
-              label={getPostStatusBadgeLabel(statusInfo, language)}
-              size="md"
-            />
-            <Chip>{orgName}</Chip>
-            {item.jkDomicile && (
-              <Chip variant="verified">{t.jkDomicileBadge}</Chip>
-            )}
-            {isIgnou && item.learnerGroup && (
-              <Chip variant="accent">{item.learnerGroup}</Chip>
-            )}
-          </div>
+        {/* At a glance Header Card (Compact CSS Org Badge + StatusPill + Title + DateBlock; NO large inline image) */}
+        <header
+          aria-label="At a glance"
+          className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-4 sm:p-6 space-y-4 text-start shadow-2xs"
+        >
+          <div className="flex items-start gap-3.5 sm:gap-4">
+            <OrgBadge item={item} />
 
-          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_220px] gap-4 items-start">
-            <div className="space-y-2 min-w-0">
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusPill
+                  status={statusInfo.computedStatus}
+                  label={getPostStatusBadgeLabel(statusInfo, language)}
+                  size="md"
+                />
+                <Chip>{orgName}</Chip>
+                {item.jkDomicile && (
+                  <Chip variant="verified">{t.jkDomicileBadge}</Chip>
+                )}
+                {isIgnou && item.learnerGroup && (
+                  <Chip variant="accent">{item.learnerGroup}</Chip>
+                )}
+              </div>
+
               <h1
                 id="post-page-h1"
-                className="text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] leading-snug tracking-tight m-0 break-words"
+                className="text-xl sm:text-3xl font-extrabold text-[var(--text-primary)] leading-snug tracking-tight m-0 break-words"
               >
                 {item.title}
               </h1>
 
               {item.advertisementNo && (
-                <p className="text-sm font-semibold text-[var(--text-secondary)] m-0">
+                <p className="text-xs sm:text-sm font-semibold text-[var(--text-secondary)] m-0">
                   {item.advertisementNo}
                 </p>
               )}
+            </div>
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_220px] gap-4 items-start">
+            <div className="space-y-2 min-w-0">
               {intro && (
-                <p className="text-base text-[var(--text-secondary)] leading-relaxed m-0 max-w-3xl break-words">
+                <p className="text-sm sm:text-base text-[var(--text-secondary)] leading-relaxed m-0 max-w-3xl break-words">
                   {intro}
                 </p>
               )}
@@ -576,7 +585,7 @@ export default function SarkariDedicatedPageView({
           </div>
 
           {/* Primary Actions Bar */}
-          <div className="pt-2 border-t border-[var(--border-default)] flex flex-wrap items-center justify-between gap-3">
+          <div className="pt-3 border-t border-[var(--border-default)] flex flex-wrap items-center justify-between gap-3">
             <PostExternalCtaRow
               portalUrl={portalUrl}
               pdfUrl={pdfUrl}
@@ -617,13 +626,7 @@ export default function SarkariDedicatedPageView({
           </div>
         </header>
 
-        {/* Official Summary Banner */}
-        <SarkariNotificationBanner
-          item={item}
-          onApply={statusInfo.canApplyOnline ? handleRequestAssistance : undefined}
-        />
-
-        {/* Fixed-height AdSlot below header/banner (never adjacent to CTAs or inside forms) */}
+        {/* Fixed-height AdSlot below At a glance card (never adjacent to CTAs or inside forms) */}
         <AdSlot />
 
         {/* Main 2-Column Content Grid */}

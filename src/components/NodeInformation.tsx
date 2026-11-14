@@ -471,6 +471,10 @@ export default function NodeInformation() {
                     ? 'CSC VLE Certificate - Wasim Ahmad Khanday'
                     : 'Udyam Registration Certificate - UDYAM-JK-01-0041957'
                 }
+                width={800}
+                height={560}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-auto max-h-[68vh] object-contain rounded-xl border border-[#E2E8F0] bg-white shadow-sm"
               />
             </div>

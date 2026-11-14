@@ -4,6 +4,7 @@ export { Card, type CardStatusStripe } from './Card';
 export { Section } from './Section';
 export { HelpApplyingCard } from './HelpApplyingCard';
 export { StatusPill, type StatusTone, type StatusPillProps } from './StatusPill';
+export { OrgBadge, type OrgBadgeProps } from './OrgBadge';
 export { DateBlock, type DateBlockProps } from './DateBlock';
 export { Chip, FilterChip, type ChipProps, type FilterChipProps } from './Chip';
 export {

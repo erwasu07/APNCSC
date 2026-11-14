@@ -229,8 +229,12 @@ export default function NotificationCenterModal({
                     {item.thumbnailUrl ? (
                       <img
                         src={item.thumbnailUrl}
-                        alt="Notification Thumbnail"
-                        className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shadow-2xs"
+                        alt={item.title || 'Notification Thumbnail'}
+                        width={40}
+                        height={40}
+                        loading="lazy"
+                        decoding="async"
+                        className="w-10 h-10 max-h-[120px] rounded-xl object-cover border border-slate-200 dark:border-slate-700 shadow-2xs"
                       />
                     ) : item.category === 'jobs' ? (
                       <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center">

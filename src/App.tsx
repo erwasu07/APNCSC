@@ -32,9 +32,11 @@ const CitizenToolsDesk = lazy(() => import('./components/CitizenToolsDesk'));
 const NotificationCenterModal = lazy(() => import('./components/NotificationCenterModal'));
 const NotificationPreferencesModal = lazy(() => import('./components/NotificationPreferencesModal'));
 const SarkariResultDesk = lazy(() => import('./components/SarkariResultDesk'));
+const DevThumbnailsPreview = lazy(() => import('./components/DevThumbnailsPreview'));
 import { TOOLS_LIST } from './components/tools/toolsData';
 import { GUIDE_ARTICLES } from './data/guidesData';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { getPostOgImageUrl } from './utils/postThumbnailMeta';
 import {
   applyClientSeo,
   getCategorySeoMeta,
@@ -132,6 +134,7 @@ export default function App() {
   const [educationSubRoute, setEducationSubRoute] = useState<'all' | 'ignou'>('all');
   const [activeSchemeId, setActiveSchemeId] = useState<string | null>(null);
   const [isNotFoundView, setIsNotFoundView] = useState<boolean>(false);
+  const [isDevThumbnailsView, setIsDevThumbnailsView] = useState<boolean>(false);
 
   const [activeLegalPage, setActiveLegalPage] = useState<LegalPageType | null>(null);
 
@@ -327,6 +330,7 @@ export default function App() {
         rawHash === '#/staff'
       ) {
         setIsAdminView(true);
+        setIsDevThumbnailsView(false);
         setCategoryView(null);
         setIsApplyView(false);
         setIsTrackView(false);
@@ -336,6 +340,23 @@ export default function App() {
         return;
       } else {
         setIsAdminView(false);
+      }
+
+      // 2b. Check Dev Thumbnail Preview route (/dev/thumbnails) - internal QA only (noindex)
+      if (cleanPath === '/dev/thumbnails') {
+        setIsDevThumbnailsView(true);
+        setIsNotFoundView(false);
+        setCategoryView(null);
+        setIsAdminView(false);
+        setIsApplyView(false);
+        setIsTrackView(false);
+        setIsToolsView(false);
+        setActiveJobPost(null);
+        setActiveServicePost(null);
+        setActiveLegalPage(null);
+        return;
+      } else {
+        setIsDevThumbnailsView(false);
       }
 
       // 3. Dedicated category routes: /jobs, /education, /education/ignou, /schemes, /services, /calculators
@@ -763,6 +784,16 @@ export default function App() {
 
   // Sync document head SEO metadata accurately across all routes
   useEffect(() => {
+    if (isDevThumbnailsView) {
+      applyClientSeo({
+        title: 'Thumbnail Preview Matrix | CSC DOST',
+        description: 'Internal development preview for generated OG images and list thumbnails.',
+        canonicalUrl: `${SITE_ORIGIN}/dev/thumbnails`,
+        robots: 'noindex, nofollow',
+        ogType: 'website',
+      });
+      return;
+    }
     if (isNotFoundView) {
       applyClientSeo(PRIVATE_NOINDEX_META.notfound);
       return;
@@ -792,6 +823,7 @@ export default function App() {
         canonicalUrl: `${SITE_ORIGIN}/post/${activeJobPost.id}`,
         robots: 'index, follow',
         ogType: 'article',
+        ogImage: getPostOgImageUrl(activeJobPost, SITE_ORIGIN),
       });
       return;
     }
@@ -839,6 +871,7 @@ export default function App() {
     }
     applyClientSeo(HOMEPAGE_SEO);
   }, [
+    isDevThumbnailsView,
     activeLegalPage,
     isAdminView,
     isApplyView,
@@ -887,6 +920,7 @@ export default function App() {
 
   const handleGoHome = () => {
     setIsAdminView(false);
+    setIsDevThumbnailsView(false);
     setIsToolsView(false);
     setCategoryView(null);
     setActiveSchemeId(null);
@@ -1055,7 +1089,15 @@ export default function App() {
             : 'flex-grow w-full max-w-7xl mx-auto px-0 md:px-6 py-0 md:py-6 pb-20 md:pb-6 overflow-x-hidden'
         }
       >
-        {activeLegalPage ? (
+        {isDevThumbnailsView ? (
+          <Suspense fallback={<PageRouteSkeleton message="Loading Thumbnail Preview Matrix..." />}>
+            <DevThumbnailsPreview
+              posts={syncedPosts}
+              onOpenPost={handleOpenJobPage}
+              onBackHome={handleGoHome}
+            />
+          </Suspense>
+        ) : activeLegalPage ? (
           <LegalPageView
             pageType={activeLegalPage}
             onNavigate={(type) => {

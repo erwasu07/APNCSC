@@ -1087,21 +1087,18 @@ export function ContentPageLayout({
                           {(rel.thumbnailUrl || rel.id) && (
                             <div
                               onClick={rel.onClick}
-                              className="overflow-hidden rounded-lg border border-[#E2E8F0] hover:border-[#CBD5E1] bg-slate-50 cursor-pointer w-full aspect-[1200/630]"
+                              className="overflow-hidden rounded-lg border border-[#E2E8F0] hover:border-[#CBD5E1] bg-slate-50 cursor-pointer w-[190px] max-w-full max-h-[120px]"
                             >
                               <img
-                                src={rel.thumbnailUrl || `/thumbnails/${rel.id}.png`}
+                                src={rel.thumbnailUrl || `/api/og-image/${encodeURIComponent(rel.id || '')}.webp?size=card`}
                                 alt={rel.title}
+                                width={600}
+                                height={315}
                                 loading="lazy"
-                                className="w-full h-full object-contain block"
+                                decoding="async"
+                                className="w-[190px] h-[100px] max-h-[120px] object-cover block"
                                 onError={(e) => {
-                                  const target = e.currentTarget;
-                                  if (!target.dataset.triedApi) {
-                                    target.dataset.triedApi = '1';
-                                    target.src = `/api/thumbnails/post/${rel.id}.png`;
-                                  } else {
-                                    target.style.display = 'none';
-                                  }
+                                  e.currentTarget.style.display = 'none';
                                 }}
                               />
                             </div>
@@ -1631,42 +1628,36 @@ export function ColourAccentCard({
                   onPrimaryClick();
                 }
               }}
-              className="mt-2.5 overflow-hidden rounded-lg border border-[#E2E8F0] hover:border-[#CBD5E1] bg-slate-50 block transition-transform duration-150 hover:scale-[1.005] w-full aspect-[1200/630]"
+              className="mt-2.5 overflow-hidden rounded-lg border border-[#E2E8F0] hover:border-[#CBD5E1] bg-slate-50 inline-block max-w-full max-h-[120px]"
             >
               <img
                 src={thumbnailUrl}
                 alt={title}
+                width={600}
+                height={315}
                 loading="lazy"
-                className="w-full h-full object-contain block"
+                decoding="async"
+                className="w-[190px] h-[100px] max-h-[120px] object-cover block"
                 onError={(e) => {
-                  const target = e.currentTarget;
-                  if (!target.dataset.triedFallback && id) {
-                    target.dataset.triedFallback = '1';
-                    target.src = `/thumbnails/${id}.png`;
-                  } else {
-                    target.style.display = 'none';
-                  }
+                  e.currentTarget.style.display = 'none';
                 }}
               />
             </a>
           ) : (
             <div
               onClick={onPrimaryClick}
-              className="mt-2.5 overflow-hidden rounded-lg border border-[#E2E8F0] hover:border-[#CBD5E1] bg-slate-50 cursor-pointer transition-transform duration-150 hover:scale-[1.005] w-full aspect-[1200/630]"
+              className="mt-2.5 overflow-hidden rounded-lg border border-[#E2E8F0] hover:border-[#CBD5E1] bg-slate-50 cursor-pointer inline-block max-w-full max-h-[120px]"
             >
               <img
                 src={thumbnailUrl}
                 alt={title}
+                width={600}
+                height={315}
                 loading="lazy"
-                className="w-full h-full object-contain block"
+                decoding="async"
+                className="w-[190px] h-[100px] max-h-[120px] object-cover block"
                 onError={(e) => {
-                  const target = e.currentTarget;
-                  if (!target.dataset.triedFallback && id) {
-                    target.dataset.triedFallback = '1';
-                    target.src = `/thumbnails/${id}.png`;
-                  } else {
-                    target.style.display = 'none';
-                  }
+                  e.currentTarget.style.display = 'none';
                 }}
               />
             </div>

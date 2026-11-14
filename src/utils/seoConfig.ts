@@ -9,6 +9,7 @@ export interface RouteSeoMeta {
   canonicalUrl: string;
   robots: 'index, follow' | 'noindex, nofollow';
   ogType?: 'website' | 'article';
+  ogImage?: string;
   breadcrumbs?: { name: string; url: string }[];
 }
 
@@ -280,6 +281,14 @@ export function applyClientSeo(meta: RouteSeoMeta): void {
     setMetaTag('property', 'og:url', meta.canonicalUrl);
     setMetaTag('property', 'og:title', meta.title);
     setMetaTag('property', 'og:description', meta.description);
+
+    if (meta.ogImage) {
+      setMetaTag('property', 'og:image', meta.ogImage);
+      setMetaTag('property', 'og:image:secure_url', meta.ogImage);
+      setMetaTag('property', 'og:image:alt', meta.title);
+      setMetaTag('name', 'twitter:image', meta.ogImage);
+      setMetaTag('name', 'twitter:image:alt', meta.title);
+    }
 
     setMetaTag('name', 'twitter:title', meta.title);
     setMetaTag('name', 'twitter:description', meta.description);

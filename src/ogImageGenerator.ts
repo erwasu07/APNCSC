@@ -1,333 +1,545 @@
-import fs from 'fs';
-import path from 'path';
 import sharp from 'sharp';
-import { SarkariItem, SARKARI_CATEGORIES } from './data/sarkariData';
-import { ServiceItem } from './servicesData';
+import type { SarkariItem } from './data/sarkariData';
+import type { ServiceItem } from './servicesData';
 import {
-  renderMasterThumbnailBuffer,
-  renderStandaloneMasterThumbnailSvg,
-  buildDeterministicThumbnailSpec,
-  ThumbnailSpec
-} from './thumbnailGenerator';
-import { renderVectorText } from './utils/vectorText';
+  buildThumbnailRenderData,
+  sanitizeImageText,
+  type ThumbnailRenderData,
+} from './utils/postThumbnailMeta';
+import {
+  measureVectorTextWidth,
+  renderVectorText,
+  type VectorFontWeight,
+} from './utils/vectorText';
 
-// Helper to escape XML special characters
-function escapeXml(unsafe: string): string {
-  if (!unsafe) return '';
-  return unsafe
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
+export const OG_SOCIAL_WIDTH = 1200;
+export const OG_SOCIAL_HEIGHT = 630;
+export const CARD_THUMB_WIDTH = 600;
+export const CARD_THUMB_HEIGHT = 315;
 
-function wrapText(text: string, maxCharsPerLine = 48, maxLines = 3): string[] {
-  if (!text) return [];
-  const words = text.split(/\s+/);
-  const lines: string[] = [];
-  let currentLine = '';
-
-  for (const word of words) {
-    if ((currentLine + ' ' + word).trim().length <= maxCharsPerLine) {
-      currentLine = (currentLine + ' ' + word).trim();
-    } else {
-      if (currentLine) lines.push(currentLine);
-      currentLine = word;
-      if (lines.length >= maxLines - 1) break;
-    }
-  }
-  if (currentLine && lines.length < maxLines) {
-    lines.push(currentLine);
-  }
-  return lines;
+export interface OgRenderOptions {
+  size?: 'social' | 'card';
+  format?: 'png' | 'webp';
 }
 
 /**
- * Generate official, high-resolution 1200x630 SVG for the CSC DOST Portal Homepage
- * Designed with a centered 1:1 safe zone so WhatsApp, Facebook, Twitter, and LinkedIn
- * render a pristine, beautifully branded thumbnail preview without awkward cropping.
+ * Wraps text into at most `maxLines` lines based on exact Inter glyph advance width.
  */
-export function generatePortalOgBannerSvg(): string {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
-  <defs>
-    <!-- Background Gradient -->
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#071328"/>
-      <stop offset="50%" stop-color="#0b1b38"/>
-      <stop offset="100%" stop-color="#08142b"/>
-    </linearGradient>
+function wrapTextByPixelWidth(
+  rawText: string,
+  fontSize: number,
+  maxWidthPx: number,
+  maxLines: number,
+  weight: VectorFontWeight = 'extrabold'
+): string[] {
+  const clean = sanitizeImageText(rawText)
+    .replace(/\s*\(Concluded\)/i, '')
+    .replace(/\s*-\s*CSC DOST.*/i, '')
+    .trim();
 
-    <!-- Card Background Gradient -->
-    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#142447" stop-opacity="0.9"/>
-      <stop offset="100%" stop-color="#0d1830" stop-opacity="0.95"/>
-    </linearGradient>
+  if (!clean) return ['Official Notification'];
 
-    <!-- Tricolor Gradients -->
-    <linearGradient id="saffronGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FF9933"/>
-      <stop offset="100%" stop-color="#E65100"/>
-    </linearGradient>
-    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#22C55E"/>
-      <stop offset="100%" stop-color="#15803D"/>
-    </linearGradient>
+  const words = clean.split(/\s+/);
+  const lines: string[] = [];
+  let currentLine = '';
 
-    <!-- Soft Drop Shadows -->
-    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.45"/>
-    </filter>
-  </defs>
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+    const candidate = currentLine ? `${currentLine} ${word}` : word;
+    const candidateWidth = measureVectorTextWidth(candidate, fontSize, { weight });
 
-  <!-- Background Base -->
-  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+    if (candidateWidth <= maxWidthPx || !currentLine) {
+      currentLine = candidate;
+    } else {
+      lines.push(currentLine);
+      currentLine = word;
 
-  <!-- Subtle Ambient Glow Orbs -->
-  <circle cx="600" cy="240" r="320" fill="#2563eb" opacity="0.12"/>
-  <circle cx="150" cy="450" r="220" fill="#f59e0b" opacity="0.08"/>
-  <circle cx="1050" cy="450" r="220" fill="#10b981" opacity="0.08"/>
+      if (lines.length === maxLines - 1) {
+        // Fill last line cleanly with remaining words or ellipsis
+        let remaining = word;
+        let truncated = false;
+        for (let j = i + 1; j < words.length; j++) {
+          const next = `${remaining} ${words[j]}`;
+          if (measureVectorTextWidth(`${next}...`, fontSize, { weight }) <= maxWidthPx) {
+            remaining = next;
+          } else {
+            truncated = true;
+            break;
+          }
+        }
+        remaining = remaining.replace(/[,:;/-]+$/, '');
+        if (truncated) {
+          remaining = `${remaining}...`;
+        } else if (measureVectorTextWidth(remaining, fontSize, { weight }) > maxWidthPx) {
+          while (
+            remaining.length > 4 &&
+            measureVectorTextWidth(`${remaining}...`, fontSize, { weight }) > maxWidthPx
+          ) {
+            remaining = remaining.slice(0, -1).trim();
+          }
+          remaining = `${remaining}...`;
+        }
+        lines.push(remaining);
+        return lines;
+      }
+    }
+  }
 
-  <!-- Top Tricolor Accent Bar -->
-  <rect x="0" y="0" width="400" height="6" fill="#FF9933"/>
-  <rect x="400" y="0" width="400" height="6" fill="#FFFFFF"/>
-  <rect x="800" y="0" width="400" height="6" fill="#138808"/>
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+  return lines.slice(0, maxLines);
+}
 
-  <!-- Geometric Grid Accent Lines -->
-  <g stroke="#3b82f6" stroke-opacity="0.08" stroke-width="1">
-    <line x1="0" y1="100" x2="1200" y2="100"/>
-    <line x1="0" y1="200" x2="1200" y2="200"/>
-    <line x1="0" y1="300" x2="1200" y2="300"/>
-    <line x1="0" y1="400" x2="1200" y2="400"/>
-    <line x1="0" y1="500" x2="1200" y2="500"/>
-    <line x1="200" y1="0" x2="200" y2="630"/>
-    <line x1="400" y1="0" x2="400" y2="630"/>
-    <line x1="600" y1="0" x2="600" y2="630"/>
-    <line x1="800" y1="0" x2="800" y2="630"/>
-    <line x1="1000" y1="0" x2="1000" y2="630"/>
-  </g>
+/**
+ * Fits single-line key highlight text at >= 40px by choosing the largest crisp size within maxWidthPx.
+ */
+function fitHighlightFontSize(
+  text: string,
+  preferredSize: number,
+  minSize: number,
+  maxWidthPx: number,
+  weight: VectorFontWeight = 'extrabold'
+): number {
+  for (let size = preferredSize; size >= minSize; size -= 2) {
+    if (measureVectorTextWidth(text, size, { weight }) <= maxWidthPx) {
+      return size;
+    }
+  }
+  return minSize;
+}
 
-  <!-- TOP HEADER BADGE (Centered) -->
-  <g transform="translate(600, 48)">
-    <rect x="-290" y="-18" width="580" height="36" rx="18" fill="#172554" stroke="#3b82f6" stroke-width="1.2" opacity="0.95"/>
-    <circle cx="-264" cy="0" r="5" fill="#22c55e"/>
-    ${renderVectorText('AUTHORIZED DIGITAL PORTAL • CSC VLE ID: 212515670018', -248, 5, 13, '#93c5fd', { anchor: 'start', weight: 'bold', letterSpacing: 1 })}
-  </g>
+function renderPillSvg(
+  text: string,
+  x: number,
+  y: number,
+  options: {
+    height?: number;
+    fontSize?: number;
+    bgHex: string;
+    textHex: string;
+    borderHex: string;
+    borderWidth?: number;
+    radius?: number;
+    paddingX?: number;
+    weight?: VectorFontWeight;
+    letterSpacing?: number;
+  }
+): { svg: string; width: number } {
+  const height = options.height ?? 44;
+  const fontSize = options.fontSize ?? 20;
+  const paddingX = options.paddingX ?? 20;
+  const radius = options.radius ?? 10;
+  const weight = options.weight ?? 'extrabold';
+  const letterSpacing = options.letterSpacing ?? 0.4;
+  const borderWidth = options.borderWidth ?? 2;
 
-  <!-- CENTER HERO BRAND BLOCK (WhatsApp Square Crop Safe Zone) -->
-  <g transform="translate(600, 160)">
-    <!-- CSC Digital India Emblem Vector -->
-    <g transform="translate(0, 0)">
-      <circle cx="0" cy="0" r="56" fill="#1e3a8a" opacity="0.4"/>
-      <circle cx="0" cy="0" r="52" fill="#ffffff"/>
-      <!-- Saffron Swash -->
-      <path d="M -22 -32 A 40 40 0 0 1 42 -22" fill="none" stroke="url(#saffronGrad)" stroke-width="7" stroke-linecap="round"/>
-      <!-- Green Swash -->
-      <path d="M 40 22 A 40 40 0 0 1 -24 32" fill="none" stroke="url(#greenGrad)" stroke-width="7" stroke-linecap="round"/>
-      <!-- Inner Globe Grid -->
-      <circle cx="0" cy="0" r="24" fill="none" stroke="#000080" stroke-width="2.5"/>
-      <ellipse cx="0" cy="0" rx="24" ry="11" fill="none" stroke="#000080" stroke-width="1.8"/>
-      <ellipse cx="0" cy="0" rx="11" ry="24" fill="none" stroke="#000080" stroke-width="1.8"/>
-      <!-- Golden Verified Badge -->
-      <circle cx="36" cy="36" r="14" fill="#f59e0b" stroke="#ffffff" stroke-width="2.5"/>
-      <path d="M 31 36 L 35 40 L 42 32" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  const textWidth = measureVectorTextWidth(text, fontSize, { weight, letterSpacing });
+  const width = Math.ceil(textWidth + paddingX * 2);
+  const textY = Math.round(y + height / 2 + fontSize * 0.35);
+
+  const svg = `
+    <g>
+      <rect x="${x}" y="${y}" width="${width}" height="${height}" rx="${radius}" fill="${options.bgHex}" stroke="${options.borderHex}" stroke-width="${borderWidth}" />
+      ${renderVectorText(text, x + paddingX, textY, fontSize, options.textHex, {
+        anchor: 'start',
+        weight,
+        letterSpacing,
+      })}
     </g>
+  `;
 
-    <!-- Main Brand Title as Pure Vector Path -->
-    ${renderVectorText('CSC DOST', 0, 105, 78, '#ffffff', { anchor: 'middle', weight: 'bold', letterSpacing: -1 })}
+  return { svg, width };
+}
 
-    <!-- Subtitle / Tagline as Pure Vector Path -->
-    ${renderVectorText('Government Services, Schemes & Recruitment Simplified', 0, 145, 22, '#93c5fd', { anchor: 'middle', weight: 'bold', letterSpacing: 0.5 })}
+function renderChipsRowSvg(
+  chips: string[],
+  startX: number,
+  y: number,
+  maxEndX: number,
+  accentHex: string
+): string {
+  if (!chips.length) return '';
+  let curX = startX;
+  const parts: string[] = [];
 
-    <!-- Web URL Pill with Pure Vector Path -->
-    <g transform="translate(0, 185)">
-      <rect x="-170" y="-18" width="340" height="36" rx="18" fill="#0f172a" stroke="#f59e0b" stroke-width="1.5"/>
-      ${renderVectorText('WWW.CSCDOST.COM', 0, 5, 17, '#fbbf24', { anchor: 'middle', weight: 'bold', letterSpacing: 1.5 })}
-    </g>
-  </g>
+  for (let i = 0; i < chips.length; i++) {
+    const label = sanitizeImageText(chips[i]);
+    if (!label) continue;
+    const isJk = label.toLowerCase().includes('j&k');
+    const pill = renderPillSvg(label, curX, y, {
+      height: 44,
+      fontSize: 21,
+      paddingX: 18,
+      radius: 10,
+      bgHex: isJk ? '#ECFDF5' : '#F1F5F9',
+      textHex: isJk ? '#065F46' : '#1E293B',
+      borderHex: isJk ? '#10B981' : '#CBD5E1',
+      borderWidth: 2,
+      weight: 'bold',
+      letterSpacing: 0.1,
+    });
+    if (curX + pill.width > maxEndX) break;
+    parts.push(pill.svg);
+    curX += pill.width + 14;
+  }
 
-  <!-- 3 FEATURE CARDS (Recruitment, Services, University) -->
-  <g transform="translate(70, 425)" filter="url(#cardShadow)">
-    <rect x="0" y="0" width="320" height="125" rx="16" fill="url(#cardGrad)" stroke="#1e40af" stroke-width="1.5"/>
-    <rect x="18" y="16" width="38" height="38" rx="10" fill="#1e3a8a"/>
-    <text x="37" y="42" text-anchor="middle" font-size="20">📋</text>
-    ${renderVectorText('Sarkari Jobs & Exams', 68, 34, 15, '#ffffff', { weight: 'bold' })}
-    ${renderVectorText('Daily Verified Gazettes', 68, 50, 12, '#60a5fa', { weight: 'bold' })}
-    <line x1="18" y1="68" x2="302" y2="68" stroke="#1e3a8a" stroke-width="1"/>
-    ${renderVectorText('JKSSB • Indian Army • SSC • RRB', 18, 90, 13, '#e2e8f0', { weight: 'bold' })}
-    ${renderVectorText('Admit Cards • Syllabi • Answer Keys', 18, 108, 11, '#94a3b8', { weight: 'regular' })}
-  </g>
+  return parts.join('\n');
+}
 
-  <g transform="translate(440, 425)" filter="url(#cardShadow)">
-    <rect x="0" y="0" width="320" height="125" rx="16" fill="url(#cardGrad)" stroke="#059669" stroke-width="1.5"/>
-    <rect x="18" y="16" width="38" height="38" rx="10" fill="#065f46"/>
-    <text x="37" y="42" text-anchor="middle" font-size="20">🏛️</text>
-    ${renderVectorText('Citizen Digital Services', 68, 34, 15, '#ffffff', { weight: 'bold' })}
-    ${renderVectorText('Online Counter Assistance', 68, 50, 12, '#34d399', { weight: 'bold' })}
-    <line x1="18" y1="68" x2="302" y2="68" stroke="#047857" stroke-width="1"/>
-    ${renderVectorText('Aadhaar • PAN • Ayushman • KISAN', 18, 90, 13, '#e2e8f0', { weight: 'bold' })}
-    ${renderVectorText('Domicile • E-Tickets • Certificates', 18, 108, 11, '#94a3b8', { weight: 'regular' })}
-  </g>
+/**
+ * Generates crisp, dynamic 1200x630 SVG for any SarkariItem using bundled Inter vector paths.
+ * Features:
+ * - Status colour left stripe (green=open, amber=closing soon, blue=exam/admit/DV, purple=result/answer key, teal=upcoming, grey=closed)
+ * - Organisation-specific accent colour & badge (text only, zero official emblems)
+ * - 3 distinct automatic layout variants (number / date / title)
+ * - Key highlight rendered at >= 40px Inter ExtraBold
+ * - Strictly English text, real data chips only, zero filler text
+ */
+export function generatePostOgSvg(item: SarkariItem, customNow?: Date): string {
+  const data: ThumbnailRenderData = buildThumbnailRenderData(item, customNow);
 
-  <g transform="translate(810, 425)" filter="url(#cardShadow)">
-    <rect x="0" y="0" width="320" height="125" rx="16" fill="url(#cardGrad)" stroke="#d97706" stroke-width="1.5"/>
-    <rect x="18" y="16" width="38" height="38" rx="10" fill="#92400e"/>
-    <text x="37" y="42" text-anchor="middle" font-size="20">🎓</text>
-    ${renderVectorText('University Desk', 68, 34, 15, '#ffffff', { weight: 'bold' })}
-    ${renderVectorText('KU & Cluster Univ Srinagar', 68, 50, 12, '#fbbf24', { weight: 'bold' })}
-    <line x1="18" y1="68" x2="302" y2="68" stroke="#b45309" stroke-width="1"/>
-    ${renderVectorText('Admissions • Exam Forms • Results', 18, 90, 13, '#e2e8f0', { weight: 'bold' })}
-    ${renderVectorText('Direct Link Portals & Step Guides', 18, 108, 11, '#94a3b8', { weight: 'regular' })}
-  </g>
+  const LEFT_STRIPE_W = 24;
+  const PAD_X = 64;
+  const RIGHT_BOUND = 1136;
 
-  <!-- BOTTOM ACCREDITATION BAR -->
-  <g transform="translate(600, 595)">
-    ${renderVectorText('Operated by Wasim Ahmad Khanday (CSC VLE) • Sangran Qazigund, Anantnag, J&K 192221 • Official Helpline: +91 70068 33767', 0, 0, 12, '#64748b', { anchor: 'middle', weight: 'bold', letterSpacing: 0.5 })}
-  </g>
+  // Top Header Row: Org Badge (accented dark pill) + Status Pill
+  const orgBadge = renderPillSvg(data.org.orgShort, PAD_X, 46, {
+    height: 48,
+    fontSize: 22,
+    paddingX: 22,
+    radius: 10,
+    bgHex: data.org.badgeBgHex,
+    textHex: data.org.badgeTextHex,
+    borderHex: data.org.accentHex,
+    borderWidth: 2,
+    weight: 'extrabold',
+    letterSpacing: 0.7,
+  });
+
+  const statusPill = renderPillSvg(data.statusLabel, PAD_X + orgBadge.width + 16, 46, {
+    height: 48,
+    fontSize: 21,
+    paddingX: 20,
+    radius: 24,
+    bgHex: data.statusPillBgHex,
+    textHex: data.statusPillTextHex,
+    borderHex: data.statusPillBorderHex,
+    borderWidth: 2,
+    weight: 'extrabold',
+    letterSpacing: 0.6,
+  });
+
+  let bodySvg = '';
+
+  if (data.variant === 'number' && data.heroNumber) {
+    // VARIANT 1: NUMBER-FOCUSED (e.g. 1,033 POSTS | 458 POSTS | 90 POSTS)
+    const leftMaxW = 685;
+    const titleFontSize = 38;
+    const titleLines = wrapTextByPixelWidth(item.title, titleFontSize, leftMaxW, 2, 'extrabold');
+
+    const titleStartY = 166;
+    const titleLineHeight = 52;
+    const titleSvg = titleLines
+      .map((line, idx) =>
+        renderVectorText(line, PAD_X, titleStartY + idx * titleLineHeight, titleFontSize, '#0F172A', {
+          anchor: 'start',
+          weight: 'extrabold',
+          letterSpacing: -0.5,
+        })
+      )
+      .join('\n');
+
+    // Key highlight bar (>= 40px)
+    const hlBoxY = titleLines.length > 1 ? 276 : 244;
+    const hlFontSize = fitHighlightFontSize(data.keyHighlight, 44, 40, leftMaxW - 36, 'extrabold');
+    const hlBoxSvg = `
+      <rect x="${PAD_X}" y="${hlBoxY}" width="${leftMaxW}" height="82" rx="14" fill="${data.org.accentSoftHex}" stroke="${data.statusStripeHex}" stroke-width="2.5" />
+      <rect x="${PAD_X}" y="${hlBoxY}" width="12" height="82" rx="4" fill="${data.statusStripeHex}" />
+      ${renderVectorText(data.keyHighlight, PAD_X + 28, hlBoxY + 55, hlFontSize, '#0F172A', {
+        anchor: 'start',
+        weight: 'extrabold',
+        letterSpacing: -0.4,
+      })}
+    `;
+
+    // Real data chips below highlight bar
+    const chipsY = hlBoxY + 106;
+    const chipsSvg = renderChipsRowSvg(data.chips, PAD_X, chipsY, PAD_X + leftMaxW, data.org.accentHex);
+
+    // Right Hero Stat Card
+    const cardX = 786;
+    const cardY = 128;
+    const cardW = 350;
+    const cardH = 382;
+    const numLen = data.heroNumber.length;
+    const numFontSize = numLen <= 3 ? 104 : numLen <= 5 ? 88 : 72;
+    const numCenterX = cardX + cardW / 2;
+
+    const heroCardSvg = `
+      <rect x="${cardX}" y="${cardY}" width="${cardW}" height="${cardH}" rx="20" fill="${data.org.badgeBgHex}" />
+      <rect x="${cardX}" y="${cardY}" width="${cardW}" height="12" rx="6" fill="${data.statusStripeHex}" />
+      ${renderVectorText(data.heroNumber, numCenterX, cardY + 175, numFontSize, '#FFFFFF', {
+        anchor: 'middle',
+        weight: 'extrabold',
+        letterSpacing: -1.5,
+      })}
+      ${renderVectorText(data.heroNumberLabel || 'POSTS', numCenterX, cardY + 236, 32, '#E2E8F0', {
+        anchor: 'middle',
+        weight: 'bold',
+        letterSpacing: 3,
+      })}
+      <line x1="${cardX + 36}" y1="${cardY + 276}" x2="${cardX + cardW - 36}" y2="${cardY + 276}" stroke="${data.org.accentHex}" stroke-opacity="0.55" stroke-width="2" />
+      ${renderVectorText(data.org.orgShort, numCenterX, cardY + 328, 22, '#F8FAFC', {
+        anchor: 'middle',
+        weight: 'bold',
+        letterSpacing: 1.2,
+      })}
+    `;
+
+    bodySvg = `${titleSvg}\n${hlBoxSvg}\n${chipsSvg}\n${heroCardSvg}`;
+  } else if (data.variant === 'date') {
+    // VARIANT 2: DATE-FOCUSED (DV, Admit Card, Exam, Result, Answer Key, Exam/Re-eval forms)
+    const maxW = RIGHT_BOUND - PAD_X;
+    const titleFontSize = 40;
+    const titleLines = wrapTextByPixelWidth(item.title, titleFontSize, maxW, 2, 'extrabold');
+
+    const titleStartY = 166;
+    const titleLineHeight = 54;
+    const titleSvg = titleLines
+      .map((line, idx) =>
+        renderVectorText(line, PAD_X, titleStartY + idx * titleLineHeight, titleFontSize, '#0F172A', {
+          anchor: 'start',
+          weight: 'extrabold',
+          letterSpacing: -0.6,
+        })
+      )
+      .join('\n');
+
+    // Prominent High-Contrast Highlight Callout (>= 42px)
+    const hlBoxY = titleLines.length > 1 ? 286 : 252;
+    const hlFontSize = fitHighlightFontSize(data.keyHighlight, 48, 40, maxW - 60, 'extrabold');
+    const hlBoxSvg = `
+      <rect x="${PAD_X}" y="${hlBoxY}" width="${maxW}" height="104" rx="16" fill="${data.org.accentSoftHex}" stroke="${data.statusStripeHex}" stroke-width="3" />
+      <rect x="${PAD_X}" y="${hlBoxY}" width="16" height="104" rx="6" fill="${data.statusStripeHex}" />
+      ${renderVectorText(data.keyHighlight, PAD_X + 38, hlBoxY + 68, hlFontSize, '#0F172A', {
+        anchor: 'start',
+        weight: 'extrabold',
+        letterSpacing: -0.5,
+      })}
+    `;
+
+    const chipsY = hlBoxY + 132;
+    const chipsSvg = renderChipsRowSvg(data.chips, PAD_X, chipsY, RIGHT_BOUND, data.org.accentHex);
+
+    bodySvg = `${titleSvg}\n${hlBoxSvg}\n${chipsSvg}`;
+  } else {
+    // VARIANT 3: TITLE-FOCUSED (when neither vacancy count nor dated window exists)
+    const maxW = RIGHT_BOUND - PAD_X;
+    const titleFontSize = 44;
+    const titleLines = wrapTextByPixelWidth(item.title, titleFontSize, maxW, 2, 'extrabold');
+
+    const titleStartY = 178;
+    const titleLineHeight = 60;
+    const titleSvg = titleLines
+      .map((line, idx) =>
+        renderVectorText(line, PAD_X, titleStartY + idx * titleLineHeight, titleFontSize, '#0F172A', {
+          anchor: 'start',
+          weight: 'extrabold',
+          letterSpacing: -0.7,
+        })
+      )
+      .join('\n');
+
+    const hlBoxY = titleLines.length > 1 ? 310 : 272;
+    const hlFontSize = fitHighlightFontSize(data.keyHighlight, 42, 40, maxW - 56, 'extrabold');
+    const hlBoxSvg = `
+      <rect x="${PAD_X}" y="${hlBoxY}" width="${maxW}" height="92" rx="14" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2.5" />
+      <rect x="${PAD_X}" y="${hlBoxY}" width="14" height="92" rx="5" fill="${data.org.accentHex}" />
+      ${renderVectorText(data.keyHighlight, PAD_X + 36, hlBoxY + 60, hlFontSize, '#0F172A', {
+        anchor: 'start',
+        weight: 'extrabold',
+        letterSpacing: -0.4,
+      })}
+    `;
+
+    const chipsY = hlBoxY + 120;
+    const chipsSvg = renderChipsRowSvg(data.chips, PAD_X, chipsY, RIGHT_BOUND, data.org.accentHex);
+
+    bodySvg = `${titleSvg}\n${hlBoxSvg}\n${chipsSvg}`;
+  }
+
+  // Footer strip: strictly cscdost.com + subtle org accent bar (no official claims, no Ashoka emblem)
+  const footerSvg = `
+    <line x1="${PAD_X}" y1="544" x2="${RIGHT_BOUND}" y2="544" stroke="#E2E8F0" stroke-width="2" />
+    <rect x="${PAD_X}" y="572" width="14" height="24" rx="4" fill="${data.org.accentHex}" />
+    ${renderVectorText('cscdost.com', PAD_X + 26, 593, 25, '#0F172A', {
+      anchor: 'start',
+      weight: 'extrabold',
+      letterSpacing: -0.3,
+    })}
+    ${renderVectorText('Citizen Notice & Form Desk', RIGHT_BOUND, 592, 20, '#475569', {
+      anchor: 'end',
+      weight: 'semibold',
+    })}
+  `;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${OG_SOCIAL_WIDTH} ${OG_SOCIAL_HEIGHT}" width="${OG_SOCIAL_WIDTH}" height="${OG_SOCIAL_HEIGHT}">
+  <rect width="${OG_SOCIAL_WIDTH}" height="${OG_SOCIAL_HEIGHT}" fill="#FFFFFF" />
+  <!-- Top Status Bar Hairline -->
+  <rect x="0" y="0" width="${OG_SOCIAL_WIDTH}" height="8" fill="${data.statusStripeHex}" />
+  <!-- Left Status Colour Stripe -->
+  <rect x="0" y="0" width="${LEFT_STRIPE_W}" height="${OG_SOCIAL_HEIGHT}" fill="${data.statusStripeHex}" />
+  <!-- Subtle Org Accent Corner Accent -->
+  <rect x="${LEFT_STRIPE_W}" y="0" width="120" height="8" fill="${data.org.accentHex}" />
+
+  ${orgBadge.svg}
+  ${statusPill.svg}
+  ${bodySvg}
+  ${footerSvg}
 </svg>`;
 }
 
 /**
- * Generate high-fidelity 1200x630 SVG matching approved reference images
+ * Clean fallback banner (1200x630 SVG) using pure Inter vector paths — zero emojis, zero missing font tofu.
  */
-export function generateOgSvg(item?: Partial<SarkariItem> | null): string {
-  if (!item || !item.id) {
+export function generatePortalOgBannerSvg(): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <rect width="1200" height="630" fill="#0F172A" />
+  <rect x="0" y="0" width="24" height="630" fill="#16A34A" />
+  <rect x="0" y="0" width="1200" height="8" fill="#16A34A" />
+
+  <rect x="72" y="64" width="230" height="48" rx="10" fill="#1E293B" stroke="#3B82F6" stroke-width="2" />
+  ${renderVectorText('CSC DOST', 187, 96, 24, '#FFFFFF', { anchor: 'middle', weight: 'extrabold', letterSpacing: 1 })}
+
+  ${renderVectorText('J&K Jobs, Admissions &', 72, 224, 56, '#FFFFFF', { anchor: 'start', weight: 'extrabold', letterSpacing: -1 })}
+  ${renderVectorText('Citizen E-Services Desk', 72, 294, 56, '#F59E0B', { anchor: 'start', weight: 'extrabold', letterSpacing: -1 })}
+
+  <rect x="72" y="346" width="1056" height="92" rx="16" fill="#1E293B" stroke="#334155" stroke-width="2" />
+  ${renderVectorText('JKSSB • SSC • RRB • Army • Universities • Schemes', 104, 405, 34, '#E2E8F0', {
+    anchor: 'start',
+    weight: 'bold',
+  })}
+
+  <line x1="72" y1="538" x2="1128" y2="538" stroke="#334155" stroke-width="2" />
+  <rect x="72" y="566" width="14" height="24" rx="4" fill="#16A34A" />
+  ${renderVectorText('cscdost.com', 98, 587, 26, '#FFFFFF', { anchor: 'start', weight: 'extrabold' })}
+  ${renderVectorText('Independent Citizen Notice Desk', 1128, 586, 20, '#94A3B8', { anchor: 'end', weight: 'semibold' })}
+</svg>`;
+}
+
+export function generateOgSvg(item?: Partial<SarkariItem> | null, customNow?: Date): string {
+  if (!item || !item.id || !item.title) {
     return generatePortalOgBannerSvg();
   }
-
-  const spec = buildDeterministicThumbnailSpec({
-    id: item.id,
-    title: item.title || 'CSC DOST – Citizen Recruitment & Government Services Portal',
-    category: item.category,
-    department: item.department,
-    postType: item.postType,
-    shortInfo: item.shortInfo,
-    startDate: item.startDate,
-    lastDate: item.lastDate,
-    eligibility: item.eligibility,
-    status: item.status
-  });
-
-  return renderStandaloneMasterThumbnailSvg(spec);
+  return generatePostOgSvg(item as SarkariItem, customNow);
 }
 
 /**
- * Generate 1200x630 Social Preview PNG for Open Graph (Facebook / WhatsApp / Twitter)
+ * Generates an image buffer for a SarkariItem or generic fallback.
+ * Supports 1200x630 social PNG or 600x315 list-card WebP/PNG.
  */
-export async function generateSocialPreviewPng(item: Partial<SarkariItem> | null): Promise<Buffer> {
-  if (!item || !item.id) {
-    const svg = generatePortalOgBannerSvg();
-    return sharp(Buffer.from(svg))
-      .png({ quality: 95, compressionLevel: 9 })
-      .toBuffer();
+export async function generatePostThumbnailBuffer(
+  item: SarkariItem | null,
+  options: OgRenderOptions = {}
+): Promise<Buffer> {
+  const size = options.size === 'card' ? 'card' : 'social';
+  const format = options.format === 'webp' ? 'webp' : 'png';
+
+  const targetW = size === 'card' ? CARD_THUMB_WIDTH : OG_SOCIAL_WIDTH;
+  const targetH = size === 'card' ? CARD_THUMB_HEIGHT : OG_SOCIAL_HEIGHT;
+
+  let svg: string;
+  try {
+    svg = item ? generatePostOgSvg(item) : generatePortalOgBannerSvg();
+  } catch (err) {
+    console.warn('[OG Generator] Falling back to portal banner SVG:', err);
+    svg = generatePortalOgBannerSvg();
   }
 
   try {
-    const spec = buildDeterministicThumbnailSpec({
-      id: item.id,
-      title: item.title || 'CSC DOST – Citizen Recruitment & Government Services Portal',
-      category: item.category,
-      department: item.department,
-      postType: item.postType,
-      shortInfo: item.shortInfo,
-      startDate: item.startDate,
-      lastDate: item.lastDate,
-      eligibility: item.eligibility,
-      status: item.status
-    });
-
-    return await renderMasterThumbnailBuffer(spec, 'png');
+    let pipeline = sharp(Buffer.from(svg));
+    if (size === 'card') {
+      pipeline = pipeline.resize(targetW, targetH, { kernel: sharp.kernel.lanczos3 });
+    }
+    if (format === 'webp') {
+      return await pipeline.webp({ quality: 88, effort: 4 }).toBuffer();
+    }
+    return await pipeline.png({ compressionLevel: 8 }).toBuffer();
   } catch (err) {
-    console.warn('[SocialPreview] Falling back to portal banner PNG:', err);
+    console.warn('[OG Generator] Sharp raster fallback:', err);
     const fallbackSvg = generatePortalOgBannerSvg();
-    return sharp(Buffer.from(fallbackSvg))
-      .png({ quality: 95, compressionLevel: 9 })
-      .toBuffer();
+    let fallbackPipeline = sharp(Buffer.from(fallbackSvg));
+    if (size === 'card') {
+      fallbackPipeline = fallbackPipeline.resize(targetW, targetH, { kernel: sharp.kernel.lanczos3 });
+    }
+    return format === 'webp'
+      ? await fallbackPipeline.webp({ quality: 85 }).toBuffer()
+      : await fallbackPipeline.png({ compressionLevel: 8 }).toBuffer();
   }
 }
 
-/**
- * Generate high-contrast PNG from SVG
- */
+export async function generateSocialPreviewPng(item: Partial<SarkariItem> | null): Promise<Buffer> {
+  if (!item || !item.id || !item.title) {
+    return generatePostThumbnailBuffer(null, { size: 'social', format: 'png' });
+  }
+  return generatePostThumbnailBuffer(item as SarkariItem, { size: 'social', format: 'png' });
+}
+
 export async function generateOgPng(item?: Partial<SarkariItem> | null): Promise<Buffer> {
   return generateSocialPreviewPng(item || null);
 }
 
 /**
- * Generate Service Item SVG
+ * Generates clean 1200x630 Service OG SVG (pure Inter vector paths, zero missing emoji tofu).
  */
 export function generateServiceOgSvg(service: ServiceItem): string {
-  const escapedName = escapeXml(service.name);
-  const escapedPrice = escapeXml(service.price);
-  const escapedTime = escapeXml(service.estimatedTime);
-  const descLines = wrapText(service.description, 50, 2).map(l => escapeXml(l));
+  const titleLines = wrapTextByPixelWidth(service.name, 42, 1050, 2, 'extrabold');
+  const priceText = sanitizeImageText(service.price || 'Ask us');
+  const timeText = sanitizeImageText(service.estimatedTime || 'Same day / As applicable');
 
   return `<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0F172A" />
-      <stop offset="50%" stop-color="#1E293B" />
-      <stop offset="100%" stop-color="#020617" />
-    </linearGradient>
+  <rect width="1200" height="630" fill="#FFFFFF" />
+  <rect x="0" y="0" width="24" height="630" fill="#101A36" />
+  <rect x="0" y="0" width="1200" height="8" fill="#F5A623" />
 
-    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#F59E0B" />
-      <stop offset="100%" stop-color="#EAB308" />
-    </linearGradient>
+  <rect x="64" y="48" width="246" height="48" rx="10" fill="#101A36" />
+  ${renderVectorText('CSC E-SERVICE', 187, 80, 21, '#FFFFFF', { anchor: 'middle', weight: 'extrabold', letterSpacing: 0.8 })}
 
-    <filter id="dropShadow" x="-10%" y="-10%" width="130%" height="130%">
-      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.6"/>
-    </filter>
-  </defs>
+  ${titleLines
+    .map((l, idx) =>
+      renderVectorText(l, 64, 168 + idx * 54, 42, '#0F172A', { anchor: 'start', weight: 'extrabold', letterSpacing: -0.6 })
+    )
+    .join('\n  ')}
 
-  <rect width="1200" height="630" fill="url(#bgGrad)" />
-  <rect x="18" y="18" width="1164" height="594" rx="28" fill="none" stroke="url(#goldGrad)" stroke-width="8" />
+  <rect x="64" y="302" width="516" height="148" rx="16" fill="#F0FDF4" stroke="#16A34A" stroke-width="2" />
+  ${renderVectorText('CHARGES / FEE', 92, 346, 18, '#166534', { weight: 'bold', letterSpacing: 1 })}
+  ${renderVectorText(priceText.slice(0, 32), 92, 410, 34, '#0F172A', { weight: 'extrabold' })}
 
-  <!-- TOP HEADER -->
-  <g transform="translate(65, 50)">
-    <circle cx="55" cy="55" r="50" fill="#0F172A" stroke="#F59E0B" stroke-width="4" filter="url(#dropShadow)" />
-    ${renderVectorText('CSC DOST', 55, 44, 16, '#FDE047', { anchor: 'middle', weight: 'bold' })}
-    ${renderVectorText('SERVICES', 55, 64, 20, '#FFFFFF', { anchor: 'middle', weight: 'bold' })}
-  </g>
+  <rect x="608" y="302" width="528" height="148" rx="16" fill="#EFF6FF" stroke="#2563EB" stroke-width="2" />
+  ${renderVectorText('TYPICAL TIME', 636, 346, 18, '#1E40AF', { weight: 'bold', letterSpacing: 1 })}
+  ${renderVectorText(timeText.slice(0, 32), 636, 410, 34, '#0F172A', { weight: 'extrabold' })}
 
-  <g transform="translate(195, 48)" filter="url(#dropShadow)">
-    <rect x="0" y="0" width="620" height="62" rx="14" fill="#0284C7" stroke="#38BDF8" stroke-width="2" />
-    ${renderVectorText('ONLINE CITIZEN E-SERVICES', 310, 40, 28, '#FFFFFF', { anchor: 'middle', weight: 'bold' })}
-  </g>
-
-  <!-- CONTENT -->
-  <g transform="translate(65, 140)">
-    <rect x="0" y="0" width="1070" height="370" rx="20" fill="#FFFFFF" fill-opacity="0.05" stroke="#334155" stroke-width="2" />
-    
-    ${renderVectorText(service.name.slice(0, 42), 40, 70, 40, '#FFFFFF', { weight: 'bold' })}
-
-    ${descLines.map((l, idx) => renderVectorText(l, 40, 130 + idx * 35, 22, '#94A3B8', { weight: 'regular' })).join('\n    ')}
-
-    <g transform="translate(40, 240)">
-      <rect x="0" y="0" width="300" height="90" rx="12" fill="#14532D" stroke="#22C55E" stroke-width="2" />
-      ${renderVectorText('ESTIMATED FEE', 20, 32, 14, '#BBF7D0', { weight: 'bold' })}
-      ${renderVectorText(service.price, 20, 68, 28, '#FFFFFF', { weight: 'bold' })}
-    </g>
-
-    <g transform="translate(370, 240)">
-      <rect x="0" y="0" width="300" height="90" rx="12" fill="#1E3A8A" stroke="#3B82F6" stroke-width="2" />
-      ${renderVectorText('PROCESSING TIME', 20, 32, 14, '#BFDBFE', { weight: 'bold' })}
-      ${renderVectorText(service.estimatedTime, 20, 68, 28, '#FFFFFF', { weight: 'bold' })}
-    </g>
-  </g>
-
-  <!-- FOOTER -->
-  <g transform="translate(65, 530)">
-    <rect x="0" y="0" width="1070" height="55" rx="12" fill="#020617" stroke="#F59E0B" stroke-width="2" />
-    ${renderVectorText('cscdost.com • Authorized Common Service Center', 30, 35, 20, '#FDE047', { weight: 'bold' })}
-    ${renderVectorText('Apply & Upload Documents Online', 1040, 35, 18, '#FFFFFF', { anchor: 'end', weight: 'bold' })}
-  </g>
+  <line x1="64" y1="544" x2="1136" y2="544" stroke="#E2E8F0" stroke-width="2" />
+  <rect x="64" y="572" width="14" height="24" rx="4" fill="#F5A623" />
+  ${renderVectorText('cscdost.com', 90, 593, 25, '#0F172A', { weight: 'extrabold' })}
+  ${renderVectorText('Citizen E-Governance Assistance', 1136, 592, 20, '#475569', { anchor: 'end', weight: 'semibold' })}
 </svg>`;
 }
 
-export async function generateServiceOgPng(service: ServiceItem): Promise<Buffer> {
+export async function generateServiceOgPng(
+  service: ServiceItem,
+  options: OgRenderOptions = {}
+): Promise<Buffer> {
   const svgString = generateServiceOgSvg(service);
-  return sharp(Buffer.from(svgString))
-    .png({ quality: 90, compressionLevel: 8 })
-    .toBuffer();
+  const size = options.size === 'card' ? 'card' : 'social';
+  const format = options.format === 'webp' ? 'webp' : 'png';
+
+  let pipeline = sharp(Buffer.from(svgString));
+  if (size === 'card') {
+    pipeline = pipeline.resize(CARD_THUMB_WIDTH, CARD_THUMB_HEIGHT, { kernel: sharp.kernel.lanczos3 });
+  }
+  return format === 'webp'
+    ? await pipeline.webp({ quality: 88 }).toBuffer()
+    : await pipeline.png({ compressionLevel: 8 }).toBuffer();
 }

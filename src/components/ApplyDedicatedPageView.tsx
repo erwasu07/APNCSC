@@ -1145,8 +1145,11 @@ export default function ApplyDedicatedPageView({
           >
             <img
               src="/favicon.svg"
-              alt=""
-              className="w-8 h-8 rounded-lg shrink-0 object-contain"
+              alt="CSC DOST Emblem"
+              width={32}
+              height={32}
+              decoding="async"
+              className="w-8 h-8 max-h-[120px] rounded-lg shrink-0 object-contain"
             />
             <div className="min-w-0">
               <span className="text-sm sm:text-base font-extrabold tracking-tight text-[#102A43] block leading-none">

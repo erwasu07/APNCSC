@@ -46,10 +46,10 @@ export default function Footer({ cafeName = 'CSC DOST' }: FooterProps) {
           <div className="flex items-start sm:items-center gap-3">
             <img
               src="/csc-dost-header-logo.png"
-              alt=""
+              alt={`${cafeName} Emblem`}
               width={40}
               height={40}
-              className="w-10 h-10 rounded-full bg-white p-0.5 object-contain shrink-0"
+              className="w-10 h-10 max-h-[120px] rounded-full bg-white p-0.5 object-contain shrink-0"
               loading="lazy"
             />
             <div className="space-y-1">

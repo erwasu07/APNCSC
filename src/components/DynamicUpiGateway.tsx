@@ -145,10 +145,11 @@ export const DynamicUpiGateway: React.FC<DynamicUpiGatewayProps> = ({
               <img 
                 src={qrCodeDataUrl} 
                 alt={`UPI QR Code for ₹${amount}`} 
-                width="144"
-                height="144"
+                width={120}
+                height={120}
+                loading="lazy"
                 decoding="async"
-                className="w-32 h-32 sm:w-36 sm:h-36 object-contain rounded-md"
+                className="w-[120px] h-[120px] sm:w-36 sm:h-36 max-h-[120px] sm:max-h-[144px] object-contain rounded-md"
               />
             ) : (
               <div className="w-32 h-32 sm:w-36 sm:h-36 flex items-center justify-center text-slate-400">

@@ -25,6 +25,7 @@ import {
 } from '../../data/sarkariData';
 import { getDeduplicatedSarkariPosts, resolvePostOrg } from '../../data/sarkariMigration';
 import { computeSarkariStatus, parseDateToKolkataMs, type ComputedSarkariStatus } from '../../utils/sarkariStatus';
+import { getPostListThumbnailUrl } from '../../utils/postThumbnailMeta';
 import { useSyncedSarkariPosts } from '../../utils/postDataSync';
 import { useLanguage, type Language } from '../../contexts/LanguageContext';
 import {
@@ -999,63 +1000,81 @@ export default function SarkariListPage({
                           )}
                         </div>
 
-                        {/* Title + Summary + DateBlock */}
-                        <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_180px] gap-3 sm:gap-4 items-start text-start">
-                          <div className="space-y-1.5 min-w-0">
-                            <h3 className="text-base sm:text-lg font-bold leading-snug m-0">
-                              <a
-                                href={`/post/${item.id}`}
-                                onClick={(e) => handlePostClick(e, item)}
-                                className="text-[var(--text-primary)] hover:text-[#1F9D6B] hover:underline no-underline transition-colors break-words"
-                              >
-                                {item.title}
-                              </a>
-                            </h3>
+                        {/* Thumbnail (600x315 WebP, <=120px tall on mobile) + Title + Summary + DateBlock */}
+                        <div className="flex flex-col sm:flex-row gap-3.5 items-start text-start">
+                          <a
+                            href={`/post/${item.id}`}
+                            onClick={(e) => handlePostClick(e, item)}
+                            className="shrink-0 block rounded-xl overflow-hidden border border-[var(--border-default)] bg-[var(--bg-subtle)] max-h-[120px]"
+                          >
+                            <img
+                              src={getPostListThumbnailUrl(item, 'webp')}
+                              alt={`${item.title} — ${orgLabel} (${getLocalizedStatusLabel(st, language)})`}
+                              width={600}
+                              height={315}
+                              loading="lazy"
+                              decoding="async"
+                              className="w-[168px] h-[88px] sm:w-[184px] sm:h-[97px] max-h-[120px] object-cover block"
+                            />
+                          </a>
 
-                            {(item.summary || item.shortInfo) && (
-                              <p className="text-sm text-[var(--text-secondary)] line-clamp-2 leading-relaxed m-0">
-                                {item.summary || item.shortInfo}
-                              </p>
-                            )}
+                          <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_172px] gap-3 items-start w-full">
+                            <div className="space-y-1.5 min-w-0">
+                              <h3 className="text-base sm:text-lg font-bold leading-snug m-0">
+                                <a
+                                  href={`/post/${item.id}`}
+                                  onClick={(e) => handlePostClick(e, item)}
+                                  className="text-[var(--text-primary)] hover:text-[#1F9D6B] hover:underline no-underline transition-colors break-words"
+                                >
+                                  {item.title}
+                                </a>
+                              </h3>
 
-                            {/* Compact Facts (Max 3) */}
-                            <div className="flex flex-wrap gap-x-4 gap-y-1.5 pt-1 text-xs sm:text-sm text-[var(--text-secondary)]">
-                              {showVacancies && (
-                                <span className="inline-flex items-center gap-1.5 font-semibold text-[var(--text-primary)] tabular-nums">
-                                  <Users className="w-3.5 h-3.5 text-[#1F9D6B] shrink-0" aria-hidden="true" />
-                                  <span>
-                                    {t.vacanciesLabel}: {item.totalPosts}
-                                  </span>
-                                </span>
+                              {(item.summary || item.shortInfo) && (
+                                <p className="text-sm text-[var(--text-secondary)] line-clamp-2 leading-relaxed m-0">
+                                  {item.summary || item.shortInfo}
+                                </p>
                               )}
 
-                              {qualificationText && (
-                                <span className="inline-flex flex-wrap items-center gap-1.5 max-w-full">
-                                  <GraduationCap className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0" aria-hidden="true" />
-                                  <span className="line-clamp-1">
-                                    <strong className="font-semibold text-[var(--text-primary)]">
-                                      {t.qualificationLabel}:
-                                    </strong>{' '}
-                                    {qualificationText}
-                                  </span>
-                                  {isUnspecifiedQualification(item) && (
-                                    <span className="px-1.5 py-0.5 rounded bg-[var(--status-closing-bg)] border border-[var(--status-closing-border)] text-[var(--status-closing-text)] text-[11px] font-bold whitespace-nowrap shrink-0">
-                                      {t.checkNoticeTag}
+                              {/* Compact Facts (Max 3) */}
+                              <div className="flex flex-wrap gap-x-4 gap-y-1.5 pt-1 text-xs sm:text-sm text-[var(--text-secondary)]">
+                                {showVacancies && (
+                                  <span className="inline-flex items-center gap-1.5 font-semibold text-[var(--text-primary)] tabular-nums">
+                                    <Users className="w-3.5 h-3.5 text-[#1F9D6B] shrink-0" aria-hidden="true" />
+                                    <span>
+                                      {t.vacanciesLabel}: {item.totalPosts}
                                     </span>
-                                  )}
-                                </span>
-                              )}
-                            </div>
-                          </div>
+                                  </span>
+                                )}
 
-                          <DateBlock
-                            compact
-                            tone={st.computedStatus}
-                            label={getLocalizedDateLabel(st, language)}
-                            dateText={st.dateValue}
-                            hint={getLocalizedDateHint(st, language)}
-                            className="w-full sm:w-auto"
-                          />
+                                {qualificationText && (
+                                  <span className="inline-flex flex-wrap items-center gap-1.5 max-w-full">
+                                    <GraduationCap className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0" aria-hidden="true" />
+                                    <span className="line-clamp-1">
+                                      <strong className="font-semibold text-[var(--text-primary)]">
+                                        {t.qualificationLabel}:
+                                      </strong>{' '}
+                                      {qualificationText}
+                                    </span>
+                                    {isUnspecifiedQualification(item) && (
+                                      <span className="px-1.5 py-0.5 rounded bg-[var(--status-closing-bg)] border border-[var(--status-closing-border)] text-[var(--status-closing-text)] text-[11px] font-bold whitespace-nowrap shrink-0">
+                                        {t.checkNoticeTag}
+                                      </span>
+                                    )}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <DateBlock
+                              compact
+                              tone={st.computedStatus}
+                              label={getLocalizedDateLabel(st, language)}
+                              dateText={st.dateValue}
+                              hint={getLocalizedDateHint(st, language)}
+                              className="w-full md:w-auto"
+                            />
+                          </div>
                         </div>
 
                         {/* Footer Meta + Action Link */}

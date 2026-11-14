@@ -189,10 +189,10 @@ export default function Navbar({
         >
           <img
             src="/csc-dost-header-logo.png"
-            alt=""
+            alt={`${cafeName || 'CSC DOST'} Emblem`}
             width={36}
             height={36}
-            className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-white p-0.5 object-contain shrink-0"
+            className="w-8 h-8 md:w-9 md:h-9 max-h-[120px] rounded-full bg-white p-0.5 object-contain shrink-0"
           />
           <div className="leading-none text-start">
             <span className="text-base md:text-lg font-extrabold tracking-tight text-white block whitespace-nowrap">
