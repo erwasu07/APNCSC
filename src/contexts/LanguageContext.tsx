@@ -213,6 +213,32 @@ interface TranslationDict {
   calculatorsRateNoticeFee: string;
   closingThisWeekTitle: string;
   closingThisWeekSubtitle: string;
+  closingSoonTitle: string;
+  viewAllDeadlines: string;
+  deadlinesPageTitle: string;
+  deadlinesPageSubtitle: string;
+  filterJobs: string;
+  filterEducation: string;
+  latestJobsCompactTitle: string;
+  eduExamsTitle: string;
+  latestUpdatesTitle: string;
+  viewAllLabel: string;
+  govSchemesTitle: string;
+  freeDocToolsTitle: string;
+  joinWhatsAppChannelBtn: string;
+  joinWhatsAppGroupBtn: string;
+  helpFormTitle: string;
+  helpLocationShort: string;
+  programmeLabel: string;
+  eligibleLearnersLabel: string;
+  academicSessionLabel: string;
+  submissionDeadlineLabel: string;
+  examDateLabel: string;
+  submissionProcedureTitle: string;
+  viewResultBtn: string;
+  downloadDatesheetBtn: string;
+  viewAnswerKeyBtn: string;
+  viewCounsellingBtn: string;
   trustStripTitle: string;
   comingSoon: string;
 }
@@ -221,11 +247,10 @@ const EN_DICT: TranslationDict = {
   brandName: 'CSC DOST',
   brandSubtitle: 'J&K Citizen Portal',
   searchPlaceholder: 'Search jobs, schemes, services…',
-  heroSearchPlaceholder: 'Search JKSSB, IGNOU, PM-KISAN, PAN, PDF tools…',
-  independentChip: 'Independent portal, not a government website',
-  heroTitle: 'Jobs, Admissions & Citizen Services for Jammu & Kashmir',
-  heroSubtitle:
-    'Verified recruitment notices, university forms, central welfare schemes, CSC e-services, and free document tools in one fast portal.',
+  heroSearchPlaceholder: 'Search jobs, IGNOU, schemes or tools…',
+  independentChip: 'Independent portal, not a government website.',
+  heroTitle: 'Jobs, Admissions & Citizen Services',
+  heroSubtitle: 'Jammu & Kashmir updates, official links and free tools.',
   searchButton: 'Search',
   trackButton: 'Track Application',
   staffLogin: 'Staff Login',
@@ -293,9 +318,9 @@ const EN_DICT: TranslationDict = {
   clearSearch: 'Clear search',
   officialNotice: 'Official notice',
   shareOnWhatsApp: 'Share on WhatsApp',
-  alertsTitle: 'Get Free Job & Admission Alerts',
-  alertsSubtitle: 'Receive verified J&K and national updates directly on your phone.',
-  joinWhatsAppGroup: 'Join WhatsApp Group',
+  alertsTitle: 'Get updates on WhatsApp',
+  alertsSubtitle: 'Receive job alerts, admission updates and important announcements.',
+  joinWhatsAppGroup: 'Join Group',
   joinTelegramChannel: 'Telegram Channel',
   jobsPageTitle: 'Jobs & Recruitment',
   jobsPageSubtitle:
@@ -447,6 +472,33 @@ const EN_DICT: TranslationDict = {
     'Statutory & CSC fee estimates have no verification date recorded in portal data — confirm current rates with the official source and operator before applying.',
   closingThisWeekTitle: 'Closing this week',
   closingThisWeekSubtitle: 'Verified applications and objection windows closing within 7 days.',
+  closingSoonTitle: 'Closing soon',
+  viewAllDeadlines: 'View all deadlines',
+  deadlinesPageTitle: 'Closing Deadlines',
+  deadlinesPageSubtitle:
+    'Active recruitment applications, university admissions, exam forms, and assignment deadlines sorted soonest first (Asia/Kolkata time).',
+  filterJobs: 'Jobs',
+  filterEducation: 'Education',
+  latestJobsCompactTitle: 'Latest Jobs',
+  eduExamsTitle: 'Education & Exams',
+  latestUpdatesTitle: 'Latest Updates',
+  viewAllLabel: 'View all',
+  govSchemesTitle: 'Government Schemes',
+  freeDocToolsTitle: 'Free Document Tools',
+  joinWhatsAppChannelBtn: 'Join Channel',
+  joinWhatsAppGroupBtn: 'Join Group',
+  helpFormTitle: 'Need help with an online form?',
+  helpLocationShort: 'Sangran Qazigund, Anantnag',
+  programmeLabel: 'Programme',
+  eligibleLearnersLabel: 'Eligible learners',
+  academicSessionLabel: 'Academic session',
+  submissionDeadlineLabel: 'Submission deadline',
+  examDateLabel: 'Exam date',
+  submissionProcedureTitle: 'Submission procedure',
+  viewResultBtn: 'View result',
+  downloadDatesheetBtn: 'Download datesheet',
+  viewAnswerKeyBtn: 'View answer key',
+  viewCounsellingBtn: 'View counselling notice',
   trustStripTitle: 'Authorized CSC Citizen Facilitation Desk',
   comingSoon: 'Coming soon',
 };
@@ -455,11 +507,10 @@ const HI_DICT: TranslationDict = {
   brandName: 'CSC DOST',
   brandSubtitle: 'जम्मू-कश्मीर नागरिक पोर्टल',
   searchPlaceholder: 'नौकरी, योजना, सेवा खोजें…',
-  heroSearchPlaceholder: 'JKSSB, IGNOU, PM-KISAN, पैन कार्ड या PDF टूल खोजें…',
-  independentChip: 'स्वतंत्र पोर्टल, सरकारी वेबसाइट नहीं',
-  heroTitle: 'जम्मू-कश्मीर के लिए नौकरियां, दाखिले और नागरिक सेवाएं',
-  heroSubtitle:
-    'आधिकारिक भर्ती सूचनाएं, विश्वविद्यालय फॉर्म, सरकारी योजनाएं, सीएससी ई-सेवाएं और मुफ्त डॉक्यूमेंट टूल्स एक ही जगह।',
+  heroSearchPlaceholder: 'नौकरी, IGNOU, योजना या टूल्स खोजें…',
+  independentChip: 'स्वतंत्र पोर्टल, सरकारी वेबसाइट नहीं।',
+  heroTitle: 'नौकरियां, दाखिले और नागरिक सेवाएं',
+  heroSubtitle: 'जम्मू-कश्मीर अपडेट, आधिकारिक लिंक और मुफ्त टूल्स।',
   searchButton: 'खोजें',
   trackButton: 'आवेदन ट्रैक करें',
   staffLogin: 'स्टाफ लॉगिन',
@@ -527,9 +578,9 @@ const HI_DICT: TranslationDict = {
   clearSearch: 'खोज हटाएं',
   officialNotice: 'आधिकारिक सूचना',
   shareOnWhatsApp: 'व्हाट्सएप पर शेयर करें',
-  alertsTitle: 'मुफ्त नौकरी और दाखिला अलर्ट पाएं',
-  alertsSubtitle: 'जम्मू-कश्मीर और राष्ट्रीय अपडेट सीधे अपने फोन पर पाएं।',
-  joinWhatsAppGroup: 'व्हाट्सएप ग्रुप से जुड़ें',
+  alertsTitle: 'व्हाट्सएप पर अपडेट पाएं',
+  alertsSubtitle: 'नौकरी अलर्ट, दाखिला अपडेट और महत्वपूर्ण सूचनाएं प्राप्त करें।',
+  joinWhatsAppGroup: 'ग्रुप से जुड़ें',
   joinTelegramChannel: 'टेलीग्राम चैनल',
   jobsPageTitle: 'नौकरियां और भर्तियां',
   jobsPageSubtitle:
@@ -681,6 +732,33 @@ const HI_DICT: TranslationDict = {
     'सरकारी व CSC शुल्क अनुमानों की सत्यापन तिथि पोर्टल डेटा में दर्ज नहीं है — आवेदन से पहले आधिकारिक स्रोत से वर्तमान दरों की पुष्टि करें।',
   closingThisWeekTitle: 'इस सप्ताह बंद होने वाले आवेदन',
   closingThisWeekSubtitle: 'अगले 7 दिनों के भीतर समाप्त होने वाले सत्यापित आवेदन और आपत्ति विंडो।',
+  closingSoonTitle: 'जल्द बंद होने वाले',
+  viewAllDeadlines: 'सभी अंतिम तिथियां देखें',
+  deadlinesPageTitle: 'अंतिम तिथियां',
+  deadlinesPageSubtitle:
+    'सक्रिय भर्ती आवेदन, विश्वविद्यालय दाखिले, परीक्षा फॉर्म और असाइनमेंट की अंतिम तिथियां।',
+  filterJobs: 'नौकरियां',
+  filterEducation: 'शिक्षा',
+  latestJobsCompactTitle: 'ताज़ा नौकरियां',
+  eduExamsTitle: 'शिक्षा और परीक्षाएं',
+  latestUpdatesTitle: 'ताज़ा अपडेट',
+  viewAllLabel: 'सभी देखें',
+  govSchemesTitle: 'सरकारी योजनाएं',
+  freeDocToolsTitle: 'मुफ्त डॉक्यूमेंट टूल्स',
+  joinWhatsAppChannelBtn: 'चैनल से जुड़ें',
+  joinWhatsAppGroupBtn: 'ग्रुप से जुड़ें',
+  helpFormTitle: 'ऑनलाइन फॉर्म भरने में मदद चाहिए?',
+  helpLocationShort: 'संगरान काजीगुंड, अनंतनाग',
+  programmeLabel: 'कार्यक्रम',
+  eligibleLearnersLabel: 'पात्र शिक्षार्थी',
+  academicSessionLabel: 'शैक्षणिक सत्र',
+  submissionDeadlineLabel: 'जमा करने की अंतिम तिथि',
+  examDateLabel: 'परीक्षा तिथि',
+  submissionProcedureTitle: 'जमा करने की प्रक्रिया',
+  viewResultBtn: 'परिणाम देखें',
+  downloadDatesheetBtn: 'डेटशीट डाउनलोड करें',
+  viewAnswerKeyBtn: 'उत्तर कुंजी देखें',
+  viewCounsellingBtn: 'काउंसलिंग सूचना देखें',
   trustStripTitle: 'अधिकृत CSC नागरिक सहायता केंद्र',
   comingSoon: 'जल्द आ रहा है',
 };
@@ -689,11 +767,10 @@ const UR_DICT: TranslationDict = {
   brandName: 'CSC DOST',
   brandSubtitle: 'جموں و کشمیر شہری پورٹل',
   searchPlaceholder: 'نوکریاں، اسکیمیں، خدمات تلاش کریں…',
-  heroSearchPlaceholder: 'JKSSB، IGNOU، PM-KISAN، پین کارڈ یا ٹولز تلاش کریں…',
-  independentChip: 'آزاد پورٹل، سرکاری ویب سائٹ نہیں',
-  heroTitle: 'جموں و کشمیر کے لیے نوکریاں، داخلے اور شہری خدمات',
-  heroSubtitle:
-    'مصدقہ بھرتی نوٹس، یونیورسٹی فارم، سرکاری اسکیمیں، سی ایس سی ای-سروسز اور مفت دستاویزی ٹولز ایک ہی جگہ۔',
+  heroSearchPlaceholder: 'نوکریاں، IGNOU، اسکیمیں یا ٹولز تلاش کریں…',
+  independentChip: 'آزاد پورٹل، سرکاری ویب سائٹ نہیں۔',
+  heroTitle: 'نوکریاں، داخلے اور شہری خدمات',
+  heroSubtitle: 'جموں و کشمیر اپ ڈیٹس، سرکاری لنکس اور مفت ٹولز۔',
   searchButton: 'تلاش کریں',
   trackButton: 'درخواست ٹریک کریں',
   staffLogin: 'اسٹاف لاگ ان',
@@ -761,9 +838,9 @@ const UR_DICT: TranslationDict = {
   clearSearch: 'تلاش صاف کریں',
   officialNotice: 'سرکاری نوٹیفکیشن',
   shareOnWhatsApp: 'واٹس ایپ پر شیئر کریں',
-  alertsTitle: 'مفت نوکری اور داخلہ الرٹس حاصل کریں',
-  alertsSubtitle: 'جموں و کشمیر اور قومی اپ ڈیٹس براہ راست اپنے فون پر حاصل کریں۔',
-  joinWhatsAppGroup: 'واٹس ایپ گروپ جوائن کریں',
+  alertsTitle: 'واٹس ایپ پر اپ ڈیٹس حاصل کریں',
+  alertsSubtitle: 'نوکری الرٹس، داخلہ اپ ڈیٹس اور اہم اعلانات حاصل کریں۔',
+  joinWhatsAppGroup: 'گروپ جوائن کریں',
   joinTelegramChannel: 'ٹیلی گرام چینل',
   jobsPageTitle: 'نوکریاں اور بھرتیاں',
   jobsPageSubtitle:
@@ -915,6 +992,33 @@ const UR_DICT: TranslationDict = {
     'سرکاری اور CSC فیس کے تخمینوں میں تصدیق کی تاریخ درج نہیں ہے — درخواست دینے سے پہلے سرکاری ذریعے سے موجودہ فیس کی تصدیق کریں۔',
   closingThisWeekTitle: 'اس ہفتے بند ہونے والے فارم',
   closingThisWeekSubtitle: 'اگلے 7 دنوں کے اندر بند ہونے والی تصدیق شدہ درخواستیں اور اعتراض کی تاریخیں۔',
+  closingSoonTitle: 'جلد بند ہونے والے',
+  viewAllDeadlines: 'تمام آخری تاریخیں دیکھیں',
+  deadlinesPageTitle: 'آخری تاریخیں',
+  deadlinesPageSubtitle:
+    'فعال بھرتی درخواستیں، یونیورسٹی داخلے، امتحانی فارم اور اسائنمنٹ کی آخری تاریخیں۔',
+  filterJobs: 'نوکریاں',
+  filterEducation: 'تعلیم',
+  latestJobsCompactTitle: 'تازہ ترین نوکریاں',
+  eduExamsTitle: 'تعلیم اور امتحانات',
+  latestUpdatesTitle: 'تازہ ترین اپ ڈیٹس',
+  viewAllLabel: 'تمام دیکھیں',
+  govSchemesTitle: 'سرکاری اسکیمیں',
+  freeDocToolsTitle: 'مفت دستاویزی ٹولز',
+  joinWhatsAppChannelBtn: 'چینل جوائن کریں',
+  joinWhatsAppGroupBtn: 'گروپ جوائن کریں',
+  helpFormTitle: 'آن لائن فارم بھرنے میں مدد چاہیے؟',
+  helpLocationShort: 'سنگران قاضی گنڈ، اننت ناگ',
+  programmeLabel: 'پروگرام',
+  eligibleLearnersLabel: 'اہل طلباء',
+  academicSessionLabel: 'تعلیمی سیشن',
+  submissionDeadlineLabel: 'جمع کرانے کی آخری تاریخ',
+  examDateLabel: 'امتحان کی تاریخ',
+  submissionProcedureTitle: 'جمع کرانے کا طریقہ کار',
+  viewResultBtn: 'نتیجہ دیکھیں',
+  downloadDatesheetBtn: 'ڈیٹ شیٹ ڈاؤن لوڈ کریں',
+  viewAnswerKeyBtn: 'انسر کی دیکھیں',
+  viewCounsellingBtn: 'کاؤنسلنگ نوٹس دیکھیں',
   trustStripTitle: 'مجاز CSC شہری سہولت مرکز',
   comingSoon: 'جلد آ رہا ہے',
 };

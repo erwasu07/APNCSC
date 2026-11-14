@@ -16,7 +16,7 @@ import {
 import { ServiceItem } from './servicesData';
 import { GUIDE_ARTICLES, GuideArticle } from './data/guidesData';
 import { TOOLS_LIST, ToolItem } from './components/tools/toolsData';
-import { computeSarkariStatus } from './utils/sarkariStatus';
+import { computeSarkariStatus, getActiveClosingDeadlines } from './utils/sarkariStatus';
 import { resolvePostOrg } from './data/sarkariMigration';
 import {
   buildPostFaqs,
@@ -936,7 +936,11 @@ function renderPrimaryCategoryNavHtml(activeCategory?: string): string {
   </header>`;
 }
 
-export function renderHomepageSubstantiveHtml(posts: SarkariItem[], services: ServiceItem[]): string {
+export function renderHomepageSubstantiveHtml(
+  posts: SarkariItem[],
+  _services: ServiceItem[],
+  alertsConfig?: { whatsappUrl: string; whatsappType: 'channel' | 'group' }
+): string {
   const verifiedVisiblePosts = posts
     .filter((p) => {
       if (!isPublishedSarkariItem(p)) return false;
@@ -949,60 +953,56 @@ export function renderHomepageSubstantiveHtml(posts: SarkariItem[], services: Se
         parseSarkariDateSortValue(a.postDate || a.documentDate)
     );
 
-  const closingThisWeek = verifiedVisiblePosts
-    .filter((p) => {
-      if (p.duplicateOfId) return false;
-      const st = computeSarkariStatus(p);
-      return st.isUrgentUnder7Days && st.daysRemaining !== null && st.daysRemaining >= 0 && st.daysRemaining <= 7;
-    })
-    .sort((a, b) => (computeSarkariStatus(a).daysRemaining ?? 99) - (computeSarkariStatus(b).daysRemaining ?? 99))
-    .slice(0, 6);
+  const closingSoonDeadlines = getActiveClosingDeadlines(posts, { maxDays: 14 }).slice(0, 6);
 
   const recruitmentPosts = verifiedVisiblePosts
     .filter((p) => isRecruitmentSarkariItem(p))
-    .slice(0, 6);
+    .slice(0, 5);
   const educationPosts = verifiedVisiblePosts
     .filter((p) => isEducationSarkariItem(p))
-    .slice(0, 4);
+    .slice(0, 5);
   const popularSchemes = GUIDE_ARTICLES.filter(
     (g) => g.category === 'Central Scheme' || g.category === 'State Services' || g.category === 'Identity & Tax'
   ).slice(0, 4);
-  const topServices = services.slice(0, 6);
-  const topTools = TOOLS_LIST.filter((t) => t.popular || t.featured).slice(0, 6);
+
+  const featuredToolIds = ['image-compressor', 'image-resizer', 'pdf-merge', 'image-to-pdf'];
+  const topTools = featuredToolIds
+    .map((id) => TOOLS_LIST.find((t) => t.id === id))
+    .filter((t): t is ToolItem => Boolean(t));
+
+  const waUrl = alertsConfig?.whatsappUrl || 'https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI';
+  const waBtnLabel = alertsConfig?.whatsappType === 'channel' ? 'Join Channel' : 'Join Group';
 
   const categoryCards = [
-    { href: '/jobs', title: 'Jobs', desc: 'JKSSB, Banking, Indian Army, SSC & RRB openings.' },
-    { href: '/education', title: 'Admissions', desc: 'Kashmir Univ, Cluster Univ & IGNOU notifications.' },
-    { href: '/schemes', title: 'Schemes', desc: 'PM-KISAN, Ayushman PM-JAY & citizen welfare guides.' },
-    { href: '/services', title: 'CSC Services', desc: 'PAN card, domicile, Aadhaar & certificate filing.' },
-    { href: '/tools', title: 'Tools & Calculators', desc: 'Photo resizer, PDF tools & age/fee calculators.' },
+    { href: '/jobs', title: 'Jobs', desc: 'JKSSB, Army, SSC & RRB' },
+    { href: '/education', title: 'Admissions', desc: 'KU, Cluster Univ & IGNOU' },
+    { href: '/schemes', title: 'Schemes', desc: 'PM-KISAN & Welfare' },
+    { href: '/services', title: 'CSC Services', desc: 'PAN, Domicile & Forms' },
+    { href: '/tools', title: 'Document Tools', desc: 'Resize, Merge & Convert' },
   ];
 
-  const closingWeekHtml =
-    closingThisWeek.length > 0
+  const closingSoonHtml =
+    closingSoonDeadlines.length > 0
       ? `
-    <section aria-labelledby="ssr-closing-week-heading" style="margin-bottom:28px;">
-      <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
-        <h2 id="ssr-closing-week-heading" style="font-size:20px; font-weight:800; color:#101A36; margin:0;">
-          Closing this week
+    <section aria-labelledby="ssr-closing-soon-heading" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:18px; margin-bottom:20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+        <h2 id="ssr-closing-soon-heading" style="font-size:19px; font-weight:800; color:#101A36; margin:0;">
+          Closing soon
         </h2>
-        <a href="/jobs" style="font-size:14px; font-weight:700; color:#1F9D6B; text-decoration:none;">View all jobs →</a>
+        <a href="/deadlines" style="font-size:13px; font-weight:700; color:#101A36; text-decoration:none;">View all deadlines →</a>
       </div>
-      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(290px, 1fr)); gap:12px;">
-        ${closingThisWeek
-          .map((post) => {
-            const st = computeSarkariStatus(post);
-            const daysText = st.daysRemaining === 0 ? 'Closes today' : `${st.daysRemaining}d left`;
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:10px;">
+        ${closingSoonDeadlines
+          .map((d) => {
+            const daysText = d.daysRemaining === 0 ? 'Closes today' : `${d.daysRemaining}d left`;
             return `
-          <article style="background:#ffffff; border:1px solid #FECACA; border-left:4px solid #DC2626; border-radius:12px; padding:14px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; font-size:12px; font-weight:700;">
-              <span style="color:#475569; text-transform:uppercase;">${escapeHtml(post.category?.replace(/_/g, ' '))}</span>
-              <span style="padding:2px 8px; border-radius:6px; background:#FEF2F2; color:#B91C1C; border:1px solid #FECACA;">
-                ${escapeHtml(daysText)}${post.lastDate ? ` · ${escapeHtml(post.lastDate)}` : ''}
-              </span>
+          <article style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:4px; font-size:12px; font-weight:700;">
+              <span style="color:#475569;">${escapeHtml(d.institution)}</span>
+              <span style="color:#B45309;">${escapeHtml(daysText)} · ${escapeHtml(d.closingDate)}</span>
             </div>
-            <h3 style="font-size:15px; font-weight:700; margin:0;">
-              <a href="/post/${escapeHtml(post.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(post.title)}</a>
+            <h3 style="font-size:14px; font-weight:700; margin:0;">
+              <a href="/post/${escapeHtml(d.item.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(d.item.title)}</a>
             </h3>
           </article>`;
           })
@@ -1013,226 +1013,154 @@ export function renderHomepageSubstantiveHtml(posts: SarkariItem[], services: Se
 
   return `
   ${renderPrimaryCategoryNavHtml()}
-  <main class="ssr-homepage-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:16px; color:#101A36; background:#F6F8FC; line-height:1.6;">
-    <section style="background:#101A36; color:#ffffff; border-radius:16px; padding:28px 24px; margin-bottom:24px;">
-      <div style="display:inline-block; background:rgba(245,166,35,0.18); border:1px solid rgba(245,166,35,0.5); color:#F5A623; font-size:13px; font-weight:700; padding:4px 12px; border-radius:999px; margin-bottom:12px;">
-        Independent portal, not a government website
-      </div>
-      <h1 style="font-size:28px; font-weight:800; line-height:1.25; margin:0 0 10px 0; color:#ffffff;">
-        CSC DOST – J&amp;K Jobs, Admissions, Schemes &amp; Citizen Services
+  <main class="ssr-homepage-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:16px; color:#101A36; background:#F6F8FC; line-height:1.55;">
+    <section style="background:#101A36; color:#ffffff; border-radius:14px; padding:22px 20px; margin-bottom:18px;">
+      <h1 style="font-size:26px; font-weight:800; line-height:1.25; margin:0 0 6px 0; color:#ffffff;">
+        Jobs, Admissions &amp; Citizen Services
       </h1>
-      <p style="font-size:16px; color:#E2E8F0; max-width:780px; margin:0 0 16px 0;">
-        Explore J&amp;K jobs, university admissions, government schemes, CSC e-services, browser document tools and citizen calculators in one fast, lightweight portal.
+      <p style="font-size:15px; color:#E2E8F0; max-width:720px; margin:0 0 14px 0;">
+        Jammu &amp; Kashmir updates, official links and free tools.
       </p>
-      <div style="display:flex; flex-wrap:wrap; gap:10px;">
-        <a href="/jobs" style="background:#F5A623; color:#101A36; font-weight:700; font-size:15px; padding:10px 18px; border-radius:10px; text-decoration:none;">Browse Latest Jobs</a>
-        <a href="/track" style="background:#1F9D6B; color:#ffffff; font-weight:700; font-size:15px; padding:10px 18px; border-radius:10px; text-decoration:none;">Track Application</a>
+      <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:10px;">
+        <a href="/track" style="background:#F5A623; color:#101A36; font-weight:700; font-size:14px; padding:9px 16px; border-radius:10px; text-decoration:none;">Track Application</a>
+        <a href="/deadlines" style="background:rgba(255,255,255,0.12); color:#ffffff; font-weight:600; font-size:14px; padding:9px 16px; border-radius:10px; text-decoration:none;">Closing Deadlines</a>
       </div>
+      <p style="font-size:12px; color:#CBD5E1; margin:0;">Independent portal, not a government website.</p>
     </section>
 
-    ${closingWeekHtml}
-
-    <section aria-labelledby="explore-categories-ssr" style="margin-bottom:28px;">
-      <h2 id="explore-categories-ssr" style="font-size:20px; font-weight:800; color:#101A36; margin:0 0 12px 0;">
-        Explore Core Services
-      </h2>
-      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:12px;">
-        ${categoryCards
-          .map(
-            (card) => `
-          <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:16px;">
-            <h3 style="font-size:17px; font-weight:700; margin:0 0 6px 0;">
-              <a href="${card.href}" style="color:#101A36; text-decoration:none;">${card.title}</a>
-            </h3>
-            <p style="font-size:14px; color:#475569; margin:0;">${card.desc}</p>
-          </article>
-        `
-          )
-          .join('')}
-      </div>
+    <section aria-label="Service Shortcuts" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(175px, 1fr)); gap:10px; margin-bottom:20px;">
+      ${categoryCards
+        .map(
+          (card) => `
+        <a href="${card.href}" style="display:block; background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:12px 14px; text-decoration:none;">
+          <div style="font-size:15px; font-weight:700; color:#101A36; margin:0 0 2px 0;">${card.title}</div>
+          <div style="font-size:12px; color:#475569; margin:0;">${card.desc}</div>
+        </a>
+      `
+        )
+        .join('')}
     </section>
 
-    <section aria-labelledby="ssr-recruitment-heading" style="margin-bottom:28px;">
-      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;">
-        <h2 id="ssr-recruitment-heading" style="font-size:20px; font-weight:800; color:#101A36; margin:0;">
-          Latest Jobs
-        </h2>
-        <a href="/jobs" style="font-size:14px; font-weight:700; color:#1F9D6B; text-decoration:none;">View all jobs →</a>
-      </div>
-      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:14px;">
-        ${recruitmentPosts
-          .map((post) => {
-            const st = computeSarkariStatus(post);
-            const urgent = st.isUrgentUnder7Days;
-            return `
-          <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:16px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; font-size:12px; font-weight:700;">
-              <span style="color:#475569; text-transform:uppercase;">${escapeHtml(post.category?.replace(/_/g, ' '))}</span>
-              <span style="padding:2px 8px; border-radius:6px; background:${urgent ? '#FEF2F2' : '#ECFDF5'}; color:${urgent ? '#B91C1C' : '#1F9D6B'}; border:1px solid ${urgent ? '#FECACA' : '#A7F3D0'};">
-                ${escapeHtml(st.badgeLabel)}${post.lastDate ? ` · ${escapeHtml(post.lastDate)}` : ''}
-              </span>
-            </div>
-            <h3 style="font-size:16px; font-weight:700; margin:0 0 6px 0;">
-              <a href="/post/${escapeHtml(post.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(post.title)}</a>
-            </h3>
-            <p style="font-size:14px; color:#475569; margin:0 0 8px 0;">${escapeHtml((post.shortInfo || '').slice(0, 100))}...</p>
-            <div style="font-size:13px; color:#64748B;">Vacancies: <strong>${escapeHtml(post.totalPosts || 'Open')}</strong></div>
-          </article>
-        `;
-          })
-          .join('')}
-      </div>
-    </section>
+    ${closingSoonHtml}
 
-    <section aria-labelledby="ssr-education-heading" style="margin-bottom:28px;">
-      <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
-        <h2 id="ssr-education-heading" style="font-size:20px; font-weight:800; color:#101A36; margin:0;">
-          Admissions &amp; Universities
-        </h2>
-        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
-          <a href="/education/ignou" style="font-size:14px; font-weight:700; color:#1F9D6B; text-decoration:none;">IGNOU Notifications →</a>
-          <a href="/education" style="font-size:14px; font-weight:700; color:#101A36; text-decoration:none;">View all admissions →</a>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:16px; margin-bottom:20px;">
+      <section aria-labelledby="ssr-recruitment-heading" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h2 id="ssr-recruitment-heading" style="font-size:18px; font-weight:800; color:#101A36; margin:0;">Latest Jobs</h2>
+          <a href="/jobs" style="font-size:13px; font-weight:700; color:#1F9D6B; text-decoration:none;">View all →</a>
         </div>
-      </div>
-      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:14px;">
-        ${educationPosts
-          .map(
-            (post) => `
-          <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:16px;">
-            <h3 style="font-size:16px; font-weight:700; margin:0 0 6px 0;">
-              <a href="/post/${escapeHtml(post.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(post.title)}</a>
-            </h3>
-            <p style="font-size:14px; color:#475569; margin:0;">${escapeHtml((post.shortInfo || '').slice(0, 100))}...</p>
-          </article>
-        `
-          )
-          .join('')}
-      </div>
-    </section>
+        <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
+          ${recruitmentPosts
+            .map(
+              (post) => `
+            <li style="border-bottom:1px solid #F1F5F9; padding-bottom:8px;">
+              <a href="/post/${escapeHtml(post.id)}" style="font-size:14px; font-weight:700; color:#101A36; text-decoration:none;">${escapeHtml(post.title)}</a>
+            </li>
+          `
+            )
+            .join('')}
+        </ul>
+      </section>
 
-    <section aria-labelledby="ssr-schemes-heading" style="margin-bottom:28px;">
-      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;">
-        <h2 id="ssr-schemes-heading" style="font-size:20px; font-weight:800; color:#101A36; margin:0;">
-          Popular Government Schemes
-        </h2>
-        <a href="/schemes" style="font-size:14px; font-weight:700; color:#1F9D6B; text-decoration:none;">All schemes →</a>
-      </div>
-      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:14px;">
-        ${popularSchemes
-          .map(
-            (guide) => `
-          <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:16px;">
-            <h3 style="font-size:16px; font-weight:700; margin:0 0 6px 0;">
-              <a href="/scheme/${escapeHtml(guide.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(guide.title)}</a>
-            </h3>
-            <p style="font-size:14px; color:#475569; margin:0;">${escapeHtml(guide.summary.slice(0, 110))}...</p>
-          </article>
-        `
-          )
-          .join('')}
-      </div>
-    </section>
-
-    <section aria-labelledby="ssr-services-heading" style="margin-bottom:28px;">
-      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;">
-        <h2 id="ssr-services-heading" style="font-size:20px; font-weight:800; color:#101A36; margin:0;">
-          Popular CSC E-Services
-        </h2>
-        <a href="/services" style="font-size:14px; font-weight:700; color:#1F9D6B; text-decoration:none;">Browse all services →</a>
-      </div>
-      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:12px;">
-        ${topServices
-          .map(
-            (service) => `
-          <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:16px;">
-            <h3 style="font-size:16px; font-weight:700; margin:0 0 6px 0;">
-              <a href="/service/${escapeHtml(service.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(service.name)}</a>
-            </h3>
-            <p style="font-size:14px; color:#475569; margin:0;">${escapeHtml(service.description.slice(0, 85))}...</p>
-          </article>
-        `
-          )
-          .join('')}
-      </div>
-    </section>
-
-    <section aria-labelledby="ssr-tools-heading" style="margin-bottom:28px;">
-      <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
-        <h2 id="ssr-tools-heading" style="font-size:20px; font-weight:800; color:#101A36; margin:0;">
-          Document Tools &amp; Citizen Calculators
-        </h2>
-        <div style="display:flex; gap:14px;">
-          <a href="/calculators" style="font-size:14px; font-weight:700; color:#101A36; text-decoration:none;">Citizen Calculators →</a>
-          <a href="/tools" style="font-size:14px; font-weight:700; color:#1F9D6B; text-decoration:none;">All Document Tools →</a>
+      <section aria-labelledby="ssr-education-heading" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h2 id="ssr-education-heading" style="font-size:18px; font-weight:800; color:#101A36; margin:0;">Education &amp; Exams</h2>
+          <a href="/education" style="font-size:13px; font-weight:700; color:#1F9D6B; text-decoration:none;">View all →</a>
         </div>
+        <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
+          ${educationPosts
+            .map(
+              (post) => `
+            <li style="border-bottom:1px solid #F1F5F9; padding-bottom:8px;">
+              <a href="/post/${escapeHtml(post.id)}" style="font-size:14px; font-weight:700; color:#101A36; text-decoration:none;">${escapeHtml(post.title)}</a>
+            </li>
+          `
+            )
+            .join('')}
+        </ul>
+      </section>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:16px; margin-bottom:20px;">
+      <section aria-labelledby="ssr-schemes-heading" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h2 id="ssr-schemes-heading" style="font-size:18px; font-weight:800; color:#101A36; margin:0;">Government Schemes</h2>
+          <a href="/schemes" style="font-size:13px; font-weight:700; color:#1F9D6B; text-decoration:none;">View all →</a>
+        </div>
+        <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
+          ${popularSchemes
+            .map(
+              (guide) => `
+            <li style="border-bottom:1px solid #F1F5F9; padding-bottom:8px;">
+              <a href="/scheme/${escapeHtml(guide.id)}" style="font-size:14px; font-weight:700; color:#101A36; text-decoration:none;">${escapeHtml(guide.title)}</a>
+            </li>
+          `
+            )
+            .join('')}
+        </ul>
+      </section>
+
+      <section aria-labelledby="ssr-tools-heading" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h2 id="ssr-tools-heading" style="font-size:18px; font-weight:800; color:#101A36; margin:0;">Free Document Tools</h2>
+          <a href="/tools" style="font-size:13px; font-weight:700; color:#1F9D6B; text-decoration:none;">View all →</a>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px;">
+          ${topTools
+            .map(
+              (tool) => `
+            <a href="/tools/${escapeHtml(tool.id)}" style="display:block; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:10px; text-decoration:none; font-size:14px; font-weight:700; color:#101A36;">
+              ${escapeHtml(tool.id === 'pdf-merge' ? 'Merge PDF' : tool.name)}
+            </a>
+          `
+            )
+            .join('')}
+        </div>
+      </section>
+    </div>
+
+    <section aria-labelledby="ssr-alerts-heading" style="background:#1F9D6B; color:#ffffff; border-radius:14px; padding:18px 20px; margin-bottom:16px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
+      <div>
+        <h2 id="ssr-alerts-heading" style="font-size:18px; font-weight:800; color:#ffffff; margin:0 0 4px 0;">
+          Get updates on WhatsApp
+        </h2>
+        <p style="font-size:14px; color:#ECFDF5; margin:0;">
+          Receive job alerts, admission updates and important announcements.
+        </p>
       </div>
-      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:12px;">
-        ${topTools
-          .map(
-            (tool) => `
-          <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:16px;">
-            <h3 style="font-size:16px; font-weight:700; margin:0 0 6px 0;">
-              <a href="/tools/${escapeHtml(tool.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(tool.name)}</a>
-            </h3>
-            <p style="font-size:14px; color:#475569; margin:0;">${escapeHtml(tool.shortDescription.slice(0, 95))}...</p>
-          </article>
-        `
-          )
-          .join('')}
+      <a href="${escapeHtml(waUrl)}" target="_blank" rel="noopener noreferrer" style="background:#ffffff; color:#101A36; font-weight:700; font-size:14px; padding:10px 16px; border-radius:10px; text-decoration:none;">
+        ${escapeHtml(waBtnLabel)}
+      </a>
+    </section>
+
+    <section aria-labelledby="ssr-help-heading" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:16px 20px; margin-bottom:20px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
+      <div>
+        <h2 id="ssr-help-heading" style="font-size:17px; font-weight:800; color:#101A36; margin:0 0 4px 0;">
+          Need help with an online form?
+        </h2>
+        <p style="font-size:14px; color:#475569; margin:0;">
+          Sangran Qazigund, Anantnag · Wasim Ahmad Khanday
+        </p>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:8px;">
+        <a href="https://wa.me/917006833767" target="_blank" rel="noopener noreferrer" style="background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:9px 14px; border-radius:10px; text-decoration:none;">WhatsApp Help</a>
+        <a href="tel:+917006833767" style="background:#101A36; color:#ffffff; font-weight:700; font-size:14px; padding:9px 14px; border-radius:10px; text-decoration:none;">Call</a>
       </div>
     </section>
 
-    <section aria-labelledby="ssr-alerts-heading" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:16px; padding:20px; margin-bottom:24px;">
-      <h2 id="ssr-alerts-heading" style="font-size:19px; font-weight:800; color:#101A36; margin:0 0 6px 0;">
-        Get Free Job &amp; Admission Alerts
-      </h2>
-      <p style="font-size:15px; color:#475569; margin:0 0 12px 0;">
-        Receive verified J&amp;K and national updates directly on your phone.
+    <footer style="background:#101A36; color:#E2E8F0; border-radius:14px; padding:16px 18px; text-align:center; font-size:13px; line-height:1.7;">
+      <p style="margin:0 0 6px 0;">
+        CSC DOST © ${new Date().getFullYear()} ·
+        <a href="/about-us" style="color:#ffffff; text-decoration:none; margin:0 6px;">About</a> ·
+        <a href="/contact-us" style="color:#ffffff; text-decoration:none; margin:0 6px;">Contact</a> ·
+        <a href="/privacy-policy" style="color:#ffffff; text-decoration:none; margin:0 6px;">Privacy Policy</a> ·
+        <a href="/terms-of-service" style="color:#ffffff; text-decoration:none; margin:0 6px;">Terms</a> ·
+        <a href="/disclaimer" style="color:#ffffff; text-decoration:none; margin:0 6px;">Disclaimer</a> ·
+        <a href="/refund-policy" style="color:#ffffff; text-decoration:none; margin:0 6px;">Refund Policy</a>
       </p>
-      <div style="display:flex; flex-wrap:wrap; gap:10px;">
-        <a href="https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI" target="_blank" rel="noopener noreferrer" style="background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 16px; border-radius:10px; text-decoration:none;">Join WhatsApp Group</a>
-        <span aria-disabled="true" style="background:#F1F5F9; color:#475569; border:1px solid #CBD5E1; font-weight:600; font-size:14px; padding:10px 16px; border-radius:10px;">Telegram Channel (Coming soon)</span>
-      </div>
-    </section>
-
-    <section aria-labelledby="ssr-help-heading" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:16px; padding:20px; margin-bottom:24px;">
-      <h2 id="ssr-help-heading" style="font-size:20px; font-weight:800; color:#101A36; margin:0 0 8px 0;">
-        Need help applying?
-      </h2>
-      <p style="font-size:15px; color:#475569; margin:0 0 12px 0;">
-        Authorized CSC facilitation support by <strong>Wasim Ahmad Khanday</strong> (VLE ID: <strong>212515670018</strong>) · Sangran Qazigund, Anantnag, Jammu &amp; Kashmir 192221.
-      </p>
-      <div style="display:flex; flex-wrap:wrap; gap:10px;">
-        <a href="tel:+917006833767" style="background:#101A36; color:#ffffff; font-weight:700; font-size:14px; padding:10px 16px; border-radius:10px; text-decoration:none;">Call +91 70068 33767</a>
-        <a href="https://wa.me/917006833767" target="_blank" rel="noopener noreferrer" style="background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 16px; border-radius:10px; text-decoration:none;">WhatsApp CSC DOST</a>
-      </div>
-    </section>
-
-    <section aria-label="Authorized CSC Citizen Facilitation Desk" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:16px; padding:18px 20px; margin-bottom:28px;">
-      <h2 style="font-size:17px; font-weight:800; color:#101A36; margin:0 0 8px 0;">
-        Authorized CSC Citizen Facilitation Desk
-      </h2>
-      <p style="font-size:14px; color:#475569; margin:0 0 6px 0;">
-        <strong>Operator:</strong> Wasim Ahmad Khanday · <strong>Authorized CSC VLE ID:</strong> 212515670018 · <strong>Centre:</strong> Sangran Qazigund, Anantnag, Jammu &amp; Kashmir 192221 · <strong>Helpline:</strong> +91 70068 33767
-      </p>
-      <p style="font-size:13px; color:#64748B; margin:0;">
+      <p style="margin:0; font-size:12px; color:#CBD5E1;">
         CSC DOST is an independent portal, not an official government website. Always confirm details on the official notification.
       </p>
-    </section>
-
-    <footer style="background:#101A36; color:#E2E8F0; border-radius:16px; padding:24px 20px; text-align:center; font-size:14px; line-height:1.8;">
-      <p style="margin:0 0 10px 0;">
-        <a href="/about-us" style="color:#ffffff; text-decoration:none; margin:0 8px;">About</a> ·
-        <a href="/contact-us" style="color:#ffffff; text-decoration:none; margin:0 8px;">Contact</a> ·
-        <a href="/privacy-policy" style="color:#ffffff; text-decoration:none; margin:0 8px;">Privacy Policy</a> ·
-        <a href="/disclaimer" style="color:#ffffff; text-decoration:none; margin:0 8px;">Disclaimer</a> ·
-        <a href="/terms-of-service" style="color:#ffffff; text-decoration:none; margin:0 8px;">Terms of Use</a> ·
-        <a href="/refund-policy" style="color:#ffffff; text-decoration:none; margin:0 8px;">Refund Policy</a>
-      </p>
-      <p style="margin:0 0 4px 0; font-size:13px; color:#CBD5E1;">
-        Sangran Qazigund, Anantnag, Jammu &amp; Kashmir 192221 · Helpline: <a href="tel:+917006833767" style="color:#F5A623; text-decoration:none; font-weight:700;">+91 70068 33767</a>
-      </p>
-      <p style="margin:0; font-size:12px; color:#94A3B8;">© ${new Date().getFullYear()} CSC DOST · Independent Citizen Portal (Not a Government Website)</p>
     </footer>
   </main>
   `;
@@ -1462,7 +1390,7 @@ export function renderToolDetailSubstantiveHtml(tool: ToolItem): string {
 }
 
 export function renderCategorySubstantiveHtml(
-  categoryType: 'jobs' | 'education' | 'ignou' | 'schemes' | 'services' | 'tools' | 'calculators' | 'apply' | 'track' | 'admin',
+  categoryType: 'jobs' | 'education' | 'ignou' | 'deadlines' | 'schemes' | 'services' | 'tools' | 'calculators' | 'apply' | 'track' | 'admin',
   posts: SarkariItem[],
   services: ServiceItem[]
 ): string {
@@ -1477,6 +1405,51 @@ export function renderCategorySubstantiveHtml(
         parseSarkariDateSortValue(b.postDate || b.documentDate) -
         parseSarkariDateSortValue(a.postDate || a.documentDate)
     );
+
+  if (categoryType === 'deadlines') {
+    const activeDeadlines = getActiveClosingDeadlines(posts, { includeAllActive: true });
+    return `
+    ${renderPrimaryCategoryNavHtml('jobs')}
+    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:16px; color:#101A36; line-height:1.6;">
+      <nav aria-label="Breadcrumb" style="font-size:14px; color:#475569; margin-bottom:16px;">
+        <a href="/" style="color:#101A36; font-weight:600; text-decoration:none;">Home</a>
+        <span style="margin:0 6px;">/</span>
+        <span style="color:#101A36; font-weight:700;">Closing Deadlines</span>
+      </nav>
+
+      <header style="border-bottom:1px solid #E2E8F0; padding-bottom:16px; margin-bottom:24px;">
+        <h1 style="font-size:28px; font-weight:800; color:#101A36; margin:0 0 8px 0;">Closing Deadlines – Jobs &amp; Education</h1>
+        <p style="font-size:16px; color:#475569; margin:0; max-width:850px;">
+          Active recruitment forms, university admissions, exam forms, and assignment submission deadlines sorted soonest first (Asia/Kolkata time).
+        </p>
+      </header>
+
+      <section style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:16px;">
+        ${activeDeadlines
+          .map((d) => {
+            const daysText = d.daysRemaining === 0 ? 'Closes today' : `${d.daysRemaining}d left`;
+            return `
+          <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:16px; display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; font-size:12px; font-weight:700;">
+                <span style="color:#475569; text-transform:uppercase;">${escapeHtml(d.institution)}</span>
+                <span style="color:#B45309;">${escapeHtml(daysText)} · ${escapeHtml(d.closingDate)}${d.closingTime ? ` (${escapeHtml(d.closingTime)})` : ''}</span>
+              </div>
+              <h2 style="font-size:16px; font-weight:700; line-height:1.35; margin:0 0 8px 0;">
+                <a href="/post/${escapeHtml(d.item.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(d.item.title)}</a>
+              </h2>
+            </div>
+            <div style="border-top:1px solid #F1F5F9; padding-top:10px; display:flex; justify-content:space-between; align-items:center; font-size:13px;">
+              <span style="color:#475569;">${d.section === 'education' ? 'Education' : 'Jobs'}</span>
+              <a href="/post/${escapeHtml(d.item.id)}" style="color:#1F9D6B; font-weight:700; text-decoration:none;">View Details →</a>
+            </div>
+          </article>`;
+          })
+          .join('')}
+      </section>
+    </main>
+    `;
+  }
 
   if (categoryType === 'jobs') {
     const jobPosts = verifiedPosts.filter((p) => isRecruitmentSarkariItem(p));

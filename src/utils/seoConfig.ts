@@ -87,6 +87,19 @@ export const CATEGORY_META_MAP: Record<CategorySlug, CategoryMetaEntry> = CORE_C
   {} as Record<CategorySlug, CategoryMetaEntry>
 );
 
+export const DEADLINES_SEO: RouteSeoMeta = {
+  title: 'Closing Deadlines – Jobs & Education Forms | CSC DOST',
+  description:
+    'Live Asia/Kolkata closing deadlines for active J&K recruitment jobs, university admissions, exam forms, and assignment submissions on CSC DOST.',
+  canonicalUrl: `${SITE_ORIGIN}/deadlines`,
+  robots: 'index, follow',
+  ogType: 'website',
+  breadcrumbs: [
+    { name: 'Home', url: `${SITE_ORIGIN}/` },
+    { name: 'Closing Deadlines', url: `${SITE_ORIGIN}/deadlines` },
+  ],
+};
+
 export const IGNOU_EDUCATION_SEO: RouteSeoMeta = {
   title: 'IGNOU Latest Notifications, Admissions & Exams | CSC DOST',
   description:

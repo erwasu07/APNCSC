@@ -56,6 +56,7 @@ export function getNowInAsiaKolkata(customDate?: Date): {
     minute: '2-digit',
     second: '2-digit',
     hour12: false,
+    hourCycle: 'h23',
   });
 
   const parts = formatter.formatToParts(target);
@@ -67,7 +68,8 @@ export function getNowInAsiaKolkata(customDate?: Date): {
   const year = parseInt(partMap.year || '2026', 10);
   const month = parseInt(partMap.month || '11', 10);
   const day = parseInt(partMap.day || '14', 10);
-  const hours = parseInt(partMap.hour || '0', 10);
+  const rawHours = parseInt(partMap.hour || '0', 10);
+  const hours = rawHours === 24 ? 0 : rawHours;
   const minutes = parseInt(partMap.minute || '0', 10);
   const seconds = parseInt(partMap.second || '0', 10);
 
@@ -832,4 +834,148 @@ export function computeJobDeadlineStatus(lastDateStr?: string, item?: SarkariIte
     daysRemaining: computed.daysRemaining,
     canApply: computed.canApplyOnline,
   };
+}
+
+const NON_DEADLINE_STAGES: ReadonlySet<NoticeStage> = new Set<NoticeStage>([
+  'date_sheet',
+  'examination',
+  'admit_card',
+  'document_verification',
+  'result',
+  'grade_card',
+  'rc_update',
+]);
+
+export function isDeadlineWindowStage(stage: NoticeStage): boolean {
+  return !NON_DEADLINE_STAGES.has(stage);
+}
+
+export interface ActiveClosingDeadlineItem {
+  item: SarkariItem;
+  status: ComputedSarkariStatus;
+  section: 'jobs' | 'education';
+  institution: string;
+  closingDate: string;
+  closingTime?: string;
+  closingTimestampMs: number;
+  daysRemaining: number;
+  hoursRemaining: number;
+  isUrgent: boolean;
+}
+
+function inferDeadlineSection(item: SarkariItem): 'jobs' | 'education' {
+  if (item.section === 'education') return 'education';
+  if (item.section === 'jobs') return 'jobs';
+  if (
+    item.category === 'ignou' ||
+    item.institution === 'IGNOU' ||
+    item.category === 'admissions' ||
+    item.category === 'exam_forms' ||
+    item.category === 'cluster_univ' ||
+    item.category === 'nta'
+  ) {
+    return 'education';
+  }
+  return 'jobs';
+}
+
+function inferDeadlineInstitution(item: SarkariItem): string {
+  if (item.org && item.org.trim()) return item.org.trim();
+  if (item.category === 'ignou' || item.institution === 'IGNOU') return 'IGNOU';
+  switch (item.category) {
+    case 'jkssb':
+      return 'JKSSB';
+    case 'banking_jobs':
+      return item.department || 'Banking / J&K Bank';
+    case 'army_jobs':
+      return 'Indian Army';
+    case 'ssc_jobs':
+      return 'SSC';
+    case 'rrb_jobs':
+      return 'RRB';
+    case 'cluster_univ':
+      return 'Cluster University Srinagar';
+    case 'exam_forms':
+    case 'admissions':
+      return 'University of Kashmir';
+    case 'nta':
+      return 'NTA';
+    default:
+      return item.institution || item.department || 'Official Authority';
+  }
+}
+
+/**
+ * Returns strictly active closing deadlines across recruitment and education notices
+ * computed in Asia/Kolkata time, sorted by soonest closing timestamp first.
+ */
+export function getActiveClosingDeadlines(
+  items: SarkariItem[],
+  options?: {
+    customNow?: Date;
+    maxDays?: number;
+    section?: 'all' | 'jobs' | 'education';
+    includeAllActive?: boolean;
+  }
+): ActiveClosingDeadlineItem[] {
+  const { nowMs } = getNowInAsiaKolkata(options?.customNow);
+  const maxDays = options?.maxDays ?? 14;
+  const includeAllActive = Boolean(options?.includeAllActive);
+  const sectionFilter = options?.section ?? 'all';
+
+  const results: ActiveClosingDeadlineItem[] = [];
+
+  for (const item of items) {
+    if (item.publicationStatus && item.publicationStatus !== 'published') continue;
+    if (item.isCancelled || item.duplicateOfId) continue;
+
+    const status = computeSarkariStatus(item, options?.customNow);
+    if (status.verificationStatus === 'needs_verification') continue;
+    if (!isDeadlineWindowStage(status.stage)) continue;
+    if (status.isClosed || status.isUpcoming || status.isCancelled) continue;
+
+    if (status.stage === 'answer_key' || status.stage === 'objection_window') {
+      if (!status.isClosingSoon || status.computedStatus !== 'closing_soon') continue;
+    } else if (status.stage === 'correction') {
+      if (!status.isClosingSoon || status.computedStatus !== 'closing_soon') continue;
+    } else if (status.applicationStatus !== 'open') {
+      continue;
+    }
+
+    const closingRaw = item.applyEnd || item.lastDate;
+    const endParsed = parseDateToKolkataMs(closingRaw, item.closingTime, true);
+    if (!endParsed) continue;
+    if (nowMs > endParsed.timestampMs) continue;
+
+    const startParsed = parseDateToKolkataMs(item.applyStart || item.startDate, undefined, false);
+    if (startParsed && nowMs < startParsed.timestampMs) continue;
+
+    const diffMs = endParsed.timestampMs - nowMs;
+    if (diffMs < 0) continue;
+    if (!includeAllActive && diffMs > maxDays * 24 * 60 * 60 * 1000) continue;
+
+    const section = inferDeadlineSection(item);
+    if (sectionFilter !== 'all' && section !== sectionFilter) continue;
+
+    const daysRemaining = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+    const hoursRemaining = Math.max(
+      0,
+      Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+    );
+
+    results.push({
+      item,
+      status,
+      section,
+      institution: inferDeadlineInstitution(item),
+      closingDate: formatCleanDateStr(closingRaw) || status.dateValue,
+      closingTime: endParsed.isTimeExplicit ? item.closingTime : undefined,
+      closingTimestampMs: endParsed.timestampMs,
+      daysRemaining,
+      hoursRemaining,
+      isUrgent: daysRemaining < 7,
+    });
+  }
+
+  return results.sort((a, b) => a.closingTimestampMs - b.closingTimestampMs);
 }

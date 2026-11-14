@@ -1,8 +1,8 @@
 import React from 'react';
-import { Home, Briefcase, LayoutGrid, Wrench, MapPin } from 'lucide-react';
+import { Home, Briefcase, GraduationCap, Wrench } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
-export type BottomNavTab = 'home' | 'jobs' | 'services' | 'tools' | 'track';
+export type BottomNavTab = 'home' | 'jobs' | 'education' | 'tools';
 
 interface MobileBottomNavProps {
   activeTab: BottomNavTab;
@@ -15,15 +15,14 @@ export default function MobileBottomNav({ activeTab, onNavigate }: MobileBottomN
   const navItems: { id: BottomNavTab; label: string; href: string; Icon: React.ElementType }[] = [
     { id: 'home', label: t.navHome, href: '/', Icon: Home },
     { id: 'jobs', label: t.navJobs, href: '/jobs', Icon: Briefcase },
-    { id: 'services', label: t.navServices, href: '/services', Icon: LayoutGrid },
+    { id: 'education', label: t.navEducation, href: '/education', Icon: GraduationCap },
     { id: 'tools', label: t.navTools, href: '/tools', Icon: Wrench },
-    { id: 'track', label: t.navTrack, href: '/track', Icon: MapPin },
   ];
 
   return (
     <nav
       aria-label="Mobile Navigation"
-      className="fixed bottom-0 inset-x-0 z-40 bg-[var(--bg-surface)] border-t border-[var(--border-default)] px-1.5 py-1 md:hidden pb-[max(0.35rem,env(safe-area-inset-bottom))] shadow-[0_-2px_10px_rgba(10,17,36,0.12)] flex items-center justify-around select-none"
+      className="fixed bottom-0 inset-x-0 z-40 bg-[var(--bg-surface)] border-t border-[var(--border-default)] px-2 py-1 md:hidden pb-[max(0.35rem,env(safe-area-inset-bottom))] shadow-[0_-2px_10px_rgba(10,17,36,0.1)] grid grid-cols-4 gap-1 select-none"
     >
       {navItems.map((item) => {
         const IconComponent = item.Icon;
@@ -38,10 +37,10 @@ export default function MobileBottomNav({ activeTab, onNavigate }: MobileBottomN
               onNavigate(item.id);
             }}
             aria-current={isActive ? 'page' : undefined}
-            className={`min-h-[44px] min-w-[56px] flex flex-col items-center justify-center transition-colors cursor-pointer rounded-lg no-underline ${
+            className={`min-h-[44px] flex flex-col items-center justify-center transition-colors cursor-pointer rounded-lg no-underline px-1.5 py-1 ${
               isActive
-                ? 'bg-[#101A36] dark:bg-[#F5A623] text-white dark:text-[#101A36] px-2.5 py-1'
-                : 'text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] px-2 py-1'
+                ? 'bg-[#101A36] dark:bg-[#F5A623] text-white dark:text-[#101A36]'
+                : 'text-[var(--text-primary)] hover:bg-[var(--bg-subtle)]'
             }`}
           >
             <IconComponent
@@ -52,7 +51,7 @@ export default function MobileBottomNav({ activeTab, onNavigate }: MobileBottomN
               }`}
               aria-hidden="true"
             />
-            <span className={`text-[11px] mt-0.5 leading-none ${isActive ? 'font-bold' : 'font-medium'}`}>
+            <span className={`text-[11px] mt-0.5 leading-none truncate max-w-full ${isActive ? 'font-bold' : 'font-medium'}`}>
               {item.label}
             </span>
           </a>

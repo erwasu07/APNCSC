@@ -5,7 +5,11 @@ import type {
   TimelineStep,
 } from '../../data/sarkariData';
 import { SARKARI_CATEGORIES, isIgnouItem } from '../../data/sarkariData';
-import { resolvePostOrg, resolvePostStructuredType } from '../../data/sarkariMigration';
+import {
+  resolvePostOrg,
+  resolvePostSection,
+  resolvePostStructuredType,
+} from '../../data/sarkariMigration';
 import {
   extractDatePattern,
   type ComputedSarkariStatus,
@@ -33,6 +37,22 @@ export function isNonApplicationTemplateType(type: PostStructuredType): boolean 
     type === 'result' ||
     type === 'answer_key'
   );
+}
+
+export function isEducationNotice(item: SarkariItem): boolean {
+  return resolvePostSection(item) === 'education' || isIgnouItem(item);
+}
+
+export function isAssignmentNotice(item: SarkariItem): boolean {
+  return item.stage === 'assignment' || item.noticeType === 'assignment';
+}
+
+export function isDatesheetNotice(item: SarkariItem): boolean {
+  return item.stage === 'date_sheet' || item.noticeType === 'date_sheet';
+}
+
+export function isCounsellingNotice(item: SarkariItem): boolean {
+  return /counsell?ing|spot round/i.test(item.title || '');
 }
 
 export function hasRealDataValue(val?: string | number | null): boolean {
@@ -80,6 +100,27 @@ export function resolvePostPdfUrl(item: SarkariItem, portalUrl: string): string 
   if (!candidate || !candidate.trim()) return undefined;
   const trimmed = candidate.trim();
   return trimmed !== portalUrl ? trimmed : undefined;
+}
+
+export function getOfficialActionLabel(
+  item: SarkariItem,
+  type: PostStructuredType,
+  isDirectPdfPortal: boolean,
+  labels: {
+    viewResultBtn: string;
+    viewAnswerKeyBtn: string;
+    downloadDatesheetBtn: string;
+    viewCounsellingBtn: string;
+    officialPdfBtn: string;
+    officialPortalBtn: string;
+  }
+): string {
+  if (type === 'result') return labels.viewResultBtn;
+  if (type === 'answer_key') return labels.viewAnswerKeyBtn;
+  if (isDatesheetNotice(item)) return labels.downloadDatesheetBtn;
+  if (isCounsellingNotice(item)) return labels.viewCounsellingBtn;
+  if (isDirectPdfPortal) return labels.officialPdfBtn;
+  return labels.officialPortalBtn;
 }
 
 export function splitSummaryParagraphs(summary?: string): {
@@ -138,6 +179,24 @@ export function getDocumentsForPost(
     return explicitDocs;
   }
 
+  // Strictly never invent documents for assignments, exam forms, re-registration,
+  // practicals, correction windows, counselling notices, datesheets, results, or answer keys
+  if (
+    isAssignmentNotice(item) ||
+    isDatesheetNotice(item) ||
+    isCounsellingNotice(item) ||
+    item.stage === 'exam_form' ||
+    item.stage === 're_registration' ||
+    item.stage === 'project_practical' ||
+    item.stage === 'correction' ||
+    item.noticeType === 'exam_form' ||
+    item.noticeType === 're_registration' ||
+    item.noticeType === 'project_practical' ||
+    item.noticeType === 'correction'
+  ) {
+    return [];
+  }
+
   if (type === 'dv') {
     return [
       'Printed copy of online application form & DV call letter / shortlist notice',
@@ -183,7 +242,7 @@ export function getDocumentsForPost(
     ];
   }
 
-  if (type === 'application') {
+  if (type === 'application' && !isEducationNotice(item)) {
     return [
       'Aadhaar Card or valid Government Photo Identity Proof',
       'Class 10th Certificate & Marksheet (for Date of Birth verification)',
@@ -193,7 +252,6 @@ export function getDocumentsForPost(
     ];
   }
 
-  // For result, answer_key, upcoming: do not fabricate a checklist if none was provided
   return [];
 }
 
@@ -214,9 +272,43 @@ export function getProcessSectionConfig(
   steps: ProcessStep[];
 } | null {
   const orgName = item.org || resolvePostOrg(item);
+  const isEdu = isEducationNotice(item);
+
+  if (isAssignmentNotice(item)) {
+    if (!statusInfo.canApplyOnline) {
+      return null;
+    }
+    return {
+      id: 'submission-procedure',
+      title: 'Submission procedure',
+      subtitle: `Follow official ${orgName} assignment submission guidelines${item.session ? ` for ${item.session}` : ''}.`,
+      steps: [
+        {
+          title: 'Prepare Course-Wise Assignment Responses',
+          description: `Prepare your course-wise assignment responses according to the official ${orgName} question paper and programme instructions${item.learnerGroup ? ` (${item.learnerGroup})` : ''}.`,
+        },
+        {
+          title: 'Sign In on the Official Submission Portal',
+          description: `Log in at ${portalUrl} with your active student credentials to access the online assignment submission dashboard.`,
+        },
+        {
+          title: `Upload Assignments Before ${statusInfo.dateValue}`,
+          description:
+            'Upload legible course-wise PDF files once before the closing deadline. Learners who have already submitted assignments offline at their Study Centre or Regional Centre do not need to re-upload.',
+        },
+        {
+          title: 'Save Submission Acknowledgment',
+          description:
+            'Verify uploaded file status and keep a downloaded/printed copy of the submission confirmation slip.',
+        },
+      ],
+    };
+  }
 
   switch (type) {
-    case 'dv':
+    case 'dv': {
+      const hasRealVenue =
+        hasRealDataValue(item.venue) && !isGenericNoticePlaceholder(item.venue);
       return {
         id: 'dv-instructions',
         title: 'Document Verification Instructions',
@@ -233,10 +325,13 @@ export function getProcessSectionConfig(
           },
           {
             title: 'Report at the Prescribed Venue',
-            description: `Attend at ${item.venue || 'the official venue notified in the circular'} as per your reporting schedule. Missing verification may forfeit candidature.`,
+            description: hasRealVenue
+              ? `Attend at ${item.venue} as per your reporting schedule. Missing verification may forfeit candidature.`
+              : 'Attend at the verification venue notified in the official circular on your assigned date. Missing verification may forfeit candidature.',
           },
         ],
       };
+    }
 
     case 'admit_card':
       return {
@@ -261,32 +356,50 @@ export function getProcessSectionConfig(
         ],
       };
 
-    case 'exam':
+    case 'exam': {
+      const hasVenue =
+        hasRealDataValue(item.venue) && !isGenericNoticePlaceholder(item.venue);
+      const hasTime =
+        hasRealDataValue(item.reportingTime) &&
+        !isGenericNoticePlaceholder(item.reportingTime);
+      const steps: ProcessStep[] = [
+        {
+          title: 'Verify Your Paper / Event Schedule',
+          description: `Confirm your exact examination or event date (${statusInfo.dateValue}) from the official ${orgName} notice.`,
+        },
+      ];
+      if (hasVenue || hasTime) {
+        const parts: string[] = [];
+        if (hasVenue) parts.push(`Venue: ${item.venue}`);
+        if (hasTime) parts.push(`Session / Reporting Time: ${item.reportingTime}`);
+        steps.push({
+          title: 'Check Notified Timings & Venue Details',
+          description: `${parts.join('. ')}.`,
+        });
+      }
+      steps.push({
+        title:
+          item.stage === 'rc_update'
+            ? 'Carry ID Card & Required Copies'
+            : 'Confirm Final Centre on Hall Ticket',
+        description:
+          item.stage === 'rc_update'
+            ? 'Carry your IGNOU Student ID card, original photo ID, and supporting CV/academic copies to the venue.'
+            : 'Carry your downloaded hall ticket / admit card and valid original photo ID to the allotted centre.',
+      });
+
       return {
         id: 'exam-day-instructions',
         title:
           item.stage === 'rc_update'
             ? 'Participation & Reporting Steps'
-            : 'Exam Schedule & Reporting Instructions',
-        subtitle: 'Key guidance for candidates covered under this notice.',
-        steps: [
-          {
-            title: 'Verify Your Paper / Event Schedule',
-            description: `Confirm your exact examination or event date (${statusInfo.dateValue}) from the official ${orgName} notice.`,
-          },
-          {
-            title: 'Confirm Venue & Shift Reporting Time',
-            description: `Venue: ${item.venue || 'As per official notice'}. Reporting Time: ${
-              item.reportingTime || 'As per official notice'
-            }.`,
-          },
-          {
-            title: 'Download Hall Ticket Before Exam Day',
-            description:
-              'Carry your downloaded hall ticket / admit card and valid original photo ID to the centre prior to gate closure.',
-          },
-        ],
+            : isDatesheetNotice(item)
+            ? 'Date Sheet Verification Steps'
+            : 'Exam Schedule Instructions',
+        subtitle: 'Key guidance for students and candidates covered under this notice.',
+        steps,
       };
+    }
 
     case 'result':
       return {
@@ -304,8 +417,10 @@ export function getProcessSectionConfig(
               'Download and save a copy of the selection list, grade card, or marksheet published by the authority.',
           },
           {
-            title: 'Monitor Counselling / Document Verification Dates',
-            description: `Shortlisted candidates should keep original certificates ready and watch ${orgName} notices for DV or counselling schedules.`,
+            title: isCounsellingNotice(item)
+              ? 'Follow Counselling & Reporting Schedule'
+              : 'Monitor Next-Stage Notices',
+            description: `Watch official ${orgName} circulars for subsequent counselling, document verification, or admission formalities.`,
           },
         ],
       };
@@ -355,12 +470,15 @@ export function getProcessSectionConfig(
           {
             title: 'Review Eligibility Criteria in Official Notification',
             description:
-              'Check qualification cut-off dates, category certificate requirements, and age limits on the official circular.',
+              'Check qualification cut-off dates, category certificate requirements, and eligibility rules on the official circular.',
           },
           {
-            title: 'Prepare Scanned Documents & OTR Profile',
-            description:
-              'Keep clear scans of your photograph, signature, Class 10th marksheet, qualification certificates, and domicile certificate ready.',
+            title: isEdu
+              ? 'Keep Student Registration & Academic Records Ready'
+              : 'Prepare Scanned Documents & OTR Profile',
+            description: isEdu
+              ? 'Keep your enrollment number, qualifying marksheets, and valid ID ready before the portal opens.'
+              : 'Keep clear scans of your photograph, signature, Class 10th marksheet, qualification certificates, and domicile certificate ready.',
           },
           {
             title: 'Apply Once Official Portal Link Activates',
@@ -375,9 +493,40 @@ export function getProcessSectionConfig(
       if (!statusInfo.canApplyOnline) {
         return null;
       }
+      if (isEdu) {
+        return {
+          id: 'submission-procedure',
+          title: 'Submission procedure',
+          subtitle: 'Follow these steps on the official university/board portal or request CSC DOST assistance.',
+          steps: [
+            {
+              title: `Open Official ${orgName} Portal`,
+              description: `Visit ${portalUrl} and open the active link for "${item.title}".`,
+            },
+            {
+              title: 'Sign In With Student / Candidate Credentials',
+              description:
+                'Log in using your University Registration / Enrollment Number or complete student registration using an active mobile number and email.',
+            },
+            {
+              title: 'Select Programme / Courses & Verify Details',
+              description:
+                'Choose your programme, semester, or courses carefully and confirm all academic details against official student records.',
+            },
+            {
+              title:
+                item.fee?.genObc && /₹0|free|exempt|no application fee/i.test(item.fee.genObc)
+                  ? 'Submit Form & Download Confirmation'
+                  : 'Pay Prescribed Fee & Save Final Receipt',
+              description:
+                'Review your form preview carefully before final submission and save a copy of the acknowledgment receipt.',
+            },
+          ],
+        };
+      }
       return {
         id: 'how-to-apply',
-        title: type === 'admission' ? 'How to Submit Online Form' : 'How to Apply Online',
+        title: 'How to Apply Online',
         subtitle: 'Follow these steps on the official portal or request CSC DOST assistance.',
         steps: [
           {
@@ -387,7 +536,7 @@ export function getProcessSectionConfig(
           {
             title: 'Complete Candidate Registration / Sign In',
             description:
-              'Log in with your OTR / Student Enrollment ID or complete new registration using your active mobile number and email.',
+              'Log in with your OTR / Candidate ID or complete new registration using your active mobile number and email.',
           },
           {
             title: 'Fill Details & Upload Scanned Documents',
@@ -423,6 +572,7 @@ export function buildPostFaqs(
   });
 
   if (
+    !isAssignmentNotice(item) &&
     (type === 'application' || type === 'admission' || type === 'upcoming') &&
     !(item.fee?.genObc && /₹0|free|exempt|no application fee/i.test(item.fee.genObc))
   ) {
@@ -433,7 +583,13 @@ export function buildPostFaqs(
     });
   }
 
-  if (type === 'dv') {
+  if (isAssignmentNotice(item)) {
+    faqs.push({
+      question: 'Do learners who submitted assignments offline at their Study Centre need to upload again?',
+      answer:
+        'No. Learners who have already submitted assignments at their Study Centre or Regional Centre do not need to re-upload online.',
+    });
+  } else if (type === 'dv') {
     faqs.push({
       question: 'Do I need to submit an online application or pay a fee for Document Verification?',
       answer:
@@ -492,7 +648,7 @@ export function deriveTimelineForPost(
     }
     if (item.applyEnd || item.lastDate) {
       steps.push({
-        label: 'Last Date',
+        label: isEducationNotice(item) ? 'Submission deadline' : 'Last Date',
         date: item.applyEnd || item.lastDate,
         status: statusInfo.isClosed ? 'done' : statusInfo.isOpen ? 'active' : 'upcoming',
       });
@@ -510,7 +666,7 @@ export function deriveTimelineForPost(
 export function getCategoryBreadcrumb(
   item: SarkariItem
 ): { sectionLabel: string; sectionPath: string; categoryLabel: string } {
-  const isEdu = item.section === 'education' || isIgnouItem(item);
+  const isEdu = isEducationNotice(item);
   return {
     sectionLabel: isEdu ? 'Education & Admissions' : 'Jobs & Recruitment',
     sectionPath: isEdu ? '/education' : '/jobs',

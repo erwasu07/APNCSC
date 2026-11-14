@@ -176,7 +176,7 @@ export default function Navbar({
 
   return (
     <header className="sticky top-0 z-50 w-full bg-[var(--bg-header)] text-white border-b border-white/15 shadow-sm pt-[env(safe-area-inset-top)]">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 md:h-16 flex items-center justify-between gap-2 sm:gap-3">
+      <div className="max-w-7xl mx-auto px-2.5 sm:px-5 h-14 flex items-center justify-between gap-1.5 sm:gap-2.5 min-w-0">
         {/* Brand Logo */}
         <a
           href="/"
@@ -185,20 +185,20 @@ export default function Navbar({
             handleLogoClick();
           }}
           aria-label={`${cafeName || t.brandName} Home`}
-          className="min-h-[44px] flex items-center gap-2 shrink-0 no-underline rounded-lg px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5A623]"
+          className="min-h-[44px] flex items-center gap-2 shrink-0 no-underline rounded-lg px-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5A623]"
         >
           <img
             src="/csc-dost-header-logo.png"
             alt={`${cafeName || 'CSC DOST'} Emblem`}
-            width={36}
-            height={36}
-            className="w-8 h-8 md:w-9 md:h-9 max-h-[120px] rounded-full bg-white p-0.5 object-contain shrink-0"
+            width={32}
+            height={32}
+            className="w-8 h-8 max-h-[120px] rounded-full bg-white p-0.5 object-contain shrink-0"
           />
           <div className="leading-none text-start">
-            <span className="text-base md:text-lg font-extrabold tracking-tight text-white block whitespace-nowrap">
+            <span className="text-[15px] sm:text-base font-extrabold tracking-tight text-white block whitespace-nowrap">
               CSC <span className="text-[#F5A623]">DOST</span>
             </span>
-            <span className="hidden sm:block text-[11px] text-slate-300 font-medium mt-0.5 whitespace-nowrap">
+            <span className="text-[10px] sm:text-[11px] text-slate-300 font-medium mt-0.5 whitespace-nowrap block">
               {t.brandSubtitle}
             </span>
           </div>
@@ -240,7 +240,7 @@ export default function Navbar({
         <form
           onSubmit={handleSearchSubmit}
           role="search"
-          className="hidden md:flex items-center flex-1 max-w-[210px] xl:max-w-[240px] bg-white/10 border border-white/20 focus-within:border-[#F5A623] focus-within:bg-white/15 rounded-lg px-2.5 h-10 transition-colors"
+          className="hidden md:flex items-center flex-1 max-w-[180px] xl:max-w-[220px] bg-white/10 border border-white/20 focus-within:border-[#F5A623] focus-within:bg-white/15 rounded-lg px-2.5 h-9 transition-colors"
         >
           <Search className="w-4 h-4 text-slate-300 shrink-0 me-2" aria-hidden="true" />
           <label htmlFor="header-search-input" className="sr-only">
@@ -264,27 +264,27 @@ export default function Navbar({
           />
         </form>
 
-        {/* Right Controls: Mobile Search + EN / हिं / اردو + Staff Login + Mobile Menu */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        {/* Right Controls: Mobile Search + EN / हिं / اردو + Subtle Staff Login + Mobile Menu */}
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           {/* Mobile Search Toggle */}
           <button
             type="button"
             onClick={() => setMobileSearchOpen((prev) => !prev)}
             aria-label={mobileSearchOpen ? 'Close search' : 'Search portal'}
             aria-expanded={mobileSearchOpen}
-            className="md:hidden min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white border border-white/15 cursor-pointer"
+            className="md:hidden min-h-[44px] min-w-[40px] inline-flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white border border-white/15 cursor-pointer"
           >
             {mobileSearchOpen ? (
-              <X className="w-5 h-5" aria-hidden="true" />
+              <X className="w-4 h-4" aria-hidden="true" />
             ) : (
-              <Search className="w-5 h-5" aria-hidden="true" />
+              <Search className="w-4 h-4" aria-hidden="true" />
             )}
           </button>
 
           <div
             role="group"
             aria-label="Language switcher"
-            className="inline-flex items-center bg-[#0B1226] border border-white/15 rounded-lg p-0.5"
+            className="inline-flex items-center bg-[#0B1226] border border-white/15 rounded-lg p-0.5 shrink-0"
           >
             {langOptions.map((opt) => {
               const active = language === opt.code;
@@ -295,7 +295,7 @@ export default function Navbar({
                   onClick={() => setLanguage(opt.code)}
                   aria-label={opt.aria}
                   aria-pressed={active}
-                  className={`min-h-[36px] min-w-[34px] px-2 sm:px-2.5 py-1 rounded-md text-xs font-bold transition-colors cursor-pointer ${
+                  className={`min-h-[34px] min-w-[30px] px-1.5 sm:px-2 py-0.5 rounded-md text-[11px] sm:text-xs font-bold transition-colors cursor-pointer whitespace-nowrap ${
                     active
                       ? 'bg-[#F5A623] text-[#101A36]'
                       : 'text-slate-200 hover:text-white hover:bg-white/10'
@@ -313,10 +313,9 @@ export default function Navbar({
               onClick={onOpenAdmin}
               title={t.staffLogin}
               aria-label={t.staffLogin}
-              className="hidden sm:inline-flex items-center gap-1.5 min-h-[40px] px-2.5 rounded-lg bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
+              className="hidden lg:inline-flex items-center justify-center min-h-[36px] min-w-[36px] px-2 rounded-lg text-slate-300/80 hover:text-white hover:bg-white/10 border border-white/10 text-xs font-medium transition-colors cursor-pointer whitespace-nowrap"
             >
-              <Lock className="w-3.5 h-3.5 text-[#F5A623]" aria-hidden="true" />
-              <span className="hidden 2xl:inline">{t.staffLogin}</span>
+              <Lock className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           )}
 
@@ -326,7 +325,7 @@ export default function Navbar({
             onClick={() => setMobileMenuOpen(true)}
             aria-label="Open menu"
             aria-expanded={mobileMenuOpen}
-            className="lg:hidden min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white border border-white/15 cursor-pointer"
+            className="lg:hidden min-h-[44px] min-w-[40px] inline-flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white border border-white/15 cursor-pointer"
           >
             <Menu className="w-5 h-5" aria-hidden="true" />
           </button>

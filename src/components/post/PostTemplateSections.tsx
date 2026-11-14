@@ -12,6 +12,7 @@ import {
   Banknote,
   FileCheck2,
   Sparkles,
+  BookOpen,
 } from 'lucide-react';
 import type {
   DepartmentBreakdown,
@@ -20,7 +21,13 @@ import type {
   TimelineStep,
 } from '../../data/sarkariData';
 import type { ComputedSarkariStatus } from '../../utils/sarkariStatus';
-import { hasRealDataValue, type ProcessStep } from './postHelpers';
+import {
+  hasRealDataValue,
+  isAssignmentNotice,
+  isEducationNotice,
+  isGenericNoticePlaceholder,
+  type ProcessStep,
+} from './postHelpers';
 
 export interface PostFactCardItem {
   label: string;
@@ -53,12 +60,19 @@ export function PostFactsGrid({
     windowOpensLabel: string;
     closingDateLabel: string;
     closedOnLabel: string;
+    programmeLabel: string;
+    eligibleLearnersLabel: string;
+    academicSessionLabel: string;
+    submissionDeadlineLabel: string;
+    examDateLabel: string;
   };
 }) {
   const facts: PostFactCardItem[] = [];
+  const isEdu = isEducationNotice(item);
+  const isAssignment = isAssignmentNotice(item);
 
   facts.push({
-    label: item.section === 'education' ? 'Institution' : 'Organisation',
+    label: isEdu ? 'Institution' : 'Organisation',
     value: orgName,
     icon: <ShieldCheck className="w-4 h-4 text-[#1F9D6B]" aria-hidden="true" />,
   });
@@ -70,17 +84,24 @@ export function PostFactsGrid({
       icon: <Calendar className="w-4 h-4 text-[#2563EB]" aria-hidden="true" />,
       tone: 'exam',
     });
-    facts.push({
-      label: labels.venueLabel,
-      value: item.venue || labels.asPerNotice,
-      icon: <MapPin className="w-4 h-4 text-[#F5A623]" aria-hidden="true" />,
-    });
-    facts.push({
-      label: labels.reportingTimeLabel,
-      value: item.reportingTime || labels.asPerNotice,
-      icon: <Clock className="w-4 h-4 text-[#F5A623]" aria-hidden="true" />,
-    });
-    if (hasRealDataValue(item.posts) && item.posts !== labels.asPerNotice) {
+    if (hasRealDataValue(item.venue) && !isGenericNoticePlaceholder(item.venue)) {
+      facts.push({
+        label: labels.venueLabel,
+        value: String(item.venue),
+        icon: <MapPin className="w-4 h-4 text-[#F5A623]" aria-hidden="true" />,
+      });
+    }
+    if (
+      hasRealDataValue(item.reportingTime) &&
+      !isGenericNoticePlaceholder(item.reportingTime)
+    ) {
+      facts.push({
+        label: labels.reportingTimeLabel,
+        value: String(item.reportingTime),
+        icon: <Clock className="w-4 h-4 text-[#F5A623]" aria-hidden="true" />,
+      });
+    }
+    if (hasRealDataValue(item.posts) && !isGenericNoticePlaceholder(item.posts)) {
       facts.push({
         label: labels.vacanciesLabel,
         value: String(item.posts),
@@ -89,26 +110,43 @@ export function PostFactsGrid({
     }
   } else if (type === 'admit_card' || type === 'exam') {
     facts.push({
-      label: statusInfo.dateLabel || labels.examWindowLabel,
+      label:
+        isEdu && item.stage === 'date_sheet'
+          ? labels.examDateLabel
+          : statusInfo.dateLabel || labels.examWindowLabel,
       value: statusInfo.dateValue,
       icon: <Calendar className="w-4 h-4 text-[#2563EB]" aria-hidden="true" />,
       tone: 'exam',
     });
-    facts.push({
-      label: labels.venueLabel,
-      value: item.venue || labels.asPerNotice,
-      icon: <MapPin className="w-4 h-4 text-[#F5A623]" aria-hidden="true" />,
-    });
-    facts.push({
-      label: labels.reportingTimeLabel,
-      value: item.reportingTime || labels.asPerNotice,
-      icon: <Clock className="w-4 h-4 text-[#F5A623]" aria-hidden="true" />,
-    });
-    if (item.learnerGroup) {
+    if (hasRealDataValue(item.session)) {
       facts.push({
-        label: 'Learner Group',
-        value: item.learnerGroup,
+        label: labels.academicSessionLabel,
+        value: String(item.session),
+        icon: <BookOpen className="w-4 h-4 text-[#1F9D6B]" aria-hidden="true" />,
+      });
+    }
+    if (hasRealDataValue(item.learnerGroup)) {
+      facts.push({
+        label: labels.eligibleLearnersLabel,
+        value: String(item.learnerGroup),
         icon: <GraduationCap className="w-4 h-4 text-[#1F9D6B]" aria-hidden="true" />,
+      });
+    }
+    if (hasRealDataValue(item.venue) && !isGenericNoticePlaceholder(item.venue)) {
+      facts.push({
+        label: labels.venueLabel,
+        value: String(item.venue),
+        icon: <MapPin className="w-4 h-4 text-[#F5A623]" aria-hidden="true" />,
+      });
+    }
+    if (
+      hasRealDataValue(item.reportingTime) &&
+      !isGenericNoticePlaceholder(item.reportingTime)
+    ) {
+      facts.push({
+        label: labels.reportingTimeLabel,
+        value: String(item.reportingTime),
+        icon: <Clock className="w-4 h-4 text-[#F5A623]" aria-hidden="true" />,
       });
     }
   } else if (type === 'result') {
@@ -118,17 +156,24 @@ export function PostFactsGrid({
       icon: <Calendar className="w-4 h-4 text-[#1F9D6B]" aria-hidden="true" />,
       tone: 'open',
     });
-    if (hasRealDataValue(item.posts) && item.posts !== 'As per official notice') {
+    if (hasRealDataValue(item.session)) {
       facts.push({
-        label: 'Shortlisted / Posts',
+        label: labels.academicSessionLabel,
+        value: String(item.session),
+        icon: <BookOpen className="w-4 h-4 text-[#1F9D6B]" aria-hidden="true" />,
+      });
+    }
+    if (hasRealDataValue(item.posts) && !isGenericNoticePlaceholder(item.posts)) {
+      facts.push({
+        label: isEdu ? labels.programmeLabel : 'Shortlisted / Posts',
         value: String(item.posts),
         icon: <Users className="w-4 h-4 text-[#1F9D6B]" aria-hidden="true" />,
       });
     }
-    if (item.advertisementNo) {
+    if (hasRealDataValue(item.advertisementNo)) {
       facts.push({
         label: 'Reference / Advt No.',
-        value: item.advertisementNo,
+        value: String(item.advertisementNo),
         icon: <FileCheck2 className="w-4 h-4 text-[var(--text-muted)]" aria-hidden="true" />,
       });
     }
@@ -139,11 +184,41 @@ export function PostFactsGrid({
       icon: <Calendar className="w-4 h-4 text-[#D97706]" aria-hidden="true" />,
       tone: statusInfo.computedStatus === 'closing_soon' ? 'accent' : 'default',
     });
-    if (item.advertisementNo) {
+    if (hasRealDataValue(item.advertisementNo)) {
       facts.push({
         label: 'Notice Reference',
-        value: item.advertisementNo,
+        value: String(item.advertisementNo),
         icon: <FileCheck2 className="w-4 h-4 text-[var(--text-muted)]" aria-hidden="true" />,
+      });
+    }
+  } else if (isAssignment) {
+    if (hasRealDataValue(item.posts) && !isGenericNoticePlaceholder(item.posts)) {
+      facts.push({
+        label: labels.programmeLabel,
+        value: String(item.posts),
+        icon: <GraduationCap className="w-4 h-4 text-[#1F9D6B]" aria-hidden="true" />,
+      });
+    }
+    if (hasRealDataValue(item.learnerGroup) || hasRealDataValue(item.eligibility)) {
+      facts.push({
+        label: labels.eligibleLearnersLabel,
+        value: String(item.learnerGroup || item.eligibility),
+        icon: <Users className="w-4 h-4 text-[#2563EB]" aria-hidden="true" />,
+      });
+    }
+    if (hasRealDataValue(item.session)) {
+      facts.push({
+        label: labels.academicSessionLabel,
+        value: String(item.session),
+        icon: <BookOpen className="w-4 h-4 text-[#1F9D6B]" aria-hidden="true" />,
+      });
+    }
+    if (item.applyEnd || item.lastDate) {
+      facts.push({
+        label: statusInfo.isClosed ? labels.closedOnLabel : labels.submissionDeadlineLabel,
+        value: `${item.applyEnd || item.lastDate}${item.closingTime ? ` (${item.closingTime})` : ''}`,
+        icon: <Clock className="w-4 h-4 text-[#D97706]" aria-hidden="true" />,
+        tone: statusInfo.isClosingSoon ? 'accent' : 'default',
       });
     }
   } else {
@@ -158,20 +233,42 @@ export function PostFactsGrid({
     }
     if (item.applyEnd || item.lastDate) {
       facts.push({
-        label: statusInfo.isClosed ? labels.closedOnLabel : labels.closingDateLabel,
+        label: statusInfo.isClosed
+          ? labels.closedOnLabel
+          : isEdu
+          ? labels.submissionDeadlineLabel
+          : labels.closingDateLabel,
         value: item.applyEnd || item.lastDate || labels.asPerNotice,
         icon: <Clock className="w-4 h-4 text-[#D97706]" aria-hidden="true" />,
         tone: statusInfo.isClosingSoon ? 'accent' : 'default',
       });
     }
-    if (hasRealDataValue(item.posts)) {
+    if (isEdu && hasRealDataValue(item.session)) {
       facts.push({
-        label: item.section === 'education' ? 'Intake / Eligibility' : labels.vacanciesLabel,
+        label: labels.academicSessionLabel,
+        value: String(item.session),
+        icon: <BookOpen className="w-4 h-4 text-[#1F9D6B]" aria-hidden="true" />,
+      });
+    }
+    if (isEdu && hasRealDataValue(item.learnerGroup)) {
+      facts.push({
+        label: labels.eligibleLearnersLabel,
+        value: String(item.learnerGroup),
+        icon: <Users className="w-4 h-4 text-[#2563EB]" aria-hidden="true" />,
+      });
+    }
+    if (hasRealDataValue(item.posts) && !isGenericNoticePlaceholder(item.posts)) {
+      facts.push({
+        label: isEdu ? labels.programmeLabel : labels.vacanciesLabel,
         value: String(item.posts),
         icon: <Users className="w-4 h-4 text-[#1F9D6B]" aria-hidden="true" />,
       });
     }
-    if (hasRealDataValue(item.qualification)) {
+    if (
+      !isEdu &&
+      hasRealDataValue(item.qualification) &&
+      !isGenericNoticePlaceholder(item.qualification)
+    ) {
       facts.push({
         label: labels.qualificationLabel,
         value: String(item.qualification),

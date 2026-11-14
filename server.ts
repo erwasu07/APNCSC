@@ -53,6 +53,7 @@ import {
   HOMEPAGE_SEO,
   LEGAL_SEO_MAP,
   PRIVATE_NOINDEX_META,
+  DEADLINES_SEO,
   IGNOU_EDUCATION_SEO,
   getCategorySeoMeta,
   getSchemeSeoMeta,
@@ -2346,6 +2347,26 @@ app.get(['/api/whatsapp/readiness', '/api/whatsapp/diagnostics'], authenticateAd
           : 'No official API-managed Group credentials detected. Configure your Group ID in WhatsApp Settings.'
       }
     }
+  });
+});
+
+// Public non-secret alerts configuration for WhatsApp CTA (Channel when configured, otherwise Group)
+app.get('/api/public/alerts-config', (_req: Request, res: Response) => {
+  const cfg = getWhatsAppPublisherConfig();
+  const rawChannel = typeof cfg.channelUrl === 'string' ? cfg.channelUrl.trim() : '';
+  const isChannelConfigured = /^https?:\/\/(www\.)?whatsapp\.com\/channel\//i.test(rawChannel);
+  const rawGroup =
+    typeof cfg.groupInviteUrl === 'string' && cfg.groupInviteUrl.trim()
+      ? cfg.groupInviteUrl.trim()
+      : 'https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI';
+
+  res.setHeader('Cache-Control', 'no-store');
+  return res.json({
+    whatsappUrl: isChannelConfigured ? rawChannel : rawGroup,
+    whatsappType: isChannelConfigured ? 'channel' : 'group',
+    channelUrl: isChannelConfigured ? rawChannel : '',
+    groupInviteUrl: rawGroup,
+    telegramUrl: '',
   });
 });
 
@@ -4699,6 +4720,14 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       canonicalUrl = PRIVATE_NOINDEX_META.track.canonicalUrl;
       robotsContent = PRIVATE_NOINDEX_META.track.robots;
       substantiveBodyHtml = renderCategorySubstantiveHtml('track', [], []);
+    } else if (urlPath.toLowerCase() === '/deadlines') {
+      const allSarkari = getAllMergedSarkariPosts();
+      title = DEADLINES_SEO.title;
+      description = DEADLINES_SEO.description;
+      canonicalUrl = DEADLINES_SEO.canonicalUrl;
+      robotsContent = DEADLINES_SEO.robots;
+      breadcrumbItems = DEADLINES_SEO.breadcrumbs || [];
+      substantiveBodyHtml = renderCategorySubstantiveHtml('deadlines', allSarkari, SERVICES_LIST);
     } else if (urlPath.toLowerCase() === '/education/ignou') {
       const allSarkari = getAllMergedSarkariPosts();
       title = IGNOU_EDUCATION_SEO.title;
@@ -4725,7 +4754,17 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       substantiveBodyHtml = '<h1>Thumbnail Preview Matrix</h1><p>Internal thumbnail review view (noindex).</p>';
     } else if (urlPath === '/') {
       const allSarkari = getAllMergedSarkariPosts();
-      substantiveBodyHtml = renderHomepageSubstantiveHtml(allSarkari, SERVICES_LIST);
+      const waCfg = getWhatsAppPublisherConfig();
+      const rawChannel = typeof waCfg.channelUrl === 'string' ? waCfg.channelUrl.trim() : '';
+      const hasChannel = /^https?:\/\/(www\.)?whatsapp\.com\/channel\//i.test(rawChannel);
+      const rawGroup =
+        typeof waCfg.groupInviteUrl === 'string' && waCfg.groupInviteUrl.trim()
+          ? waCfg.groupInviteUrl.trim()
+          : 'https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI';
+      substantiveBodyHtml = renderHomepageSubstantiveHtml(allSarkari, SERVICES_LIST, {
+        whatsappUrl: hasChannel ? rawChannel : rawGroup,
+        whatsappType: hasChannel ? 'channel' : 'group',
+      });
     } else {
       isNotFound = true;
       title = PRIVATE_NOINDEX_META.notfound.title;
@@ -4923,6 +4962,7 @@ app.get('/sitemap.xml', (req: Request, res: Response) => {
 
     const staticPages = [
       { loc: '/', changefreq: 'daily', priority: '1.0' },
+      { loc: '/deadlines', changefreq: 'daily', priority: '0.9' },
       { loc: '/jobs', changefreq: 'daily', priority: '0.9' },
       { loc: '/education', changefreq: 'daily', priority: '0.9' },
       { loc: '/education/ignou', changefreq: 'daily', priority: '0.9' },
