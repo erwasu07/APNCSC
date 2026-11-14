@@ -211,6 +211,8 @@ export default function SarkariDedicatedPageView({
     const emitJobSchema =
       (effectiveType === 'application' || effectiveType === 'upcoming') &&
       isRecruitmentSarkariItem(item) &&
+      item.noticeType !== 'correction' &&
+      item.stage !== 'correction' &&
       !statusInfo.isClosed &&
       !statusInfo.isCancelled;
 
@@ -530,12 +532,10 @@ export default function SarkariDedicatedPageView({
 
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-[var(--text-muted)] pt-1 tabular-nums">
                 {item.postDate && <span>Published: {item.postDate}</span>}
-                {item.updatedAt && item.updatedAt !== item.postDate && (
-                  <>
-                    <span aria-hidden="true">·</span>
-                    <span>Verified: {item.updatedAt}</span>
-                  </>
-                )}
+                {item.postDate && <span aria-hidden="true">·</span>}
+                <span>
+                  Last updated: {item.updatedAt || item.postDate || item.documentDate}
+                </span>
                 <span aria-hidden="true">·</span>
                 <span>{t.independentChip}</span>
               </div>

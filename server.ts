@@ -14,6 +14,8 @@ import {
   parseSarkariDateSortValue,
 } from './src/data/sarkariData';
 import { computeSarkariStatus } from './src/utils/sarkariStatus';
+import { resolveEffectiveTemplateType, toIsoDate as toIsoPostDate } from './src/components/post/postHelpers';
+import { resolvePostOrg } from './src/data/sarkariMigration';
 import { SERVICES_LIST } from './src/servicesData';
 import { GUIDE_ARTICLES } from './src/data/guidesData';
 import { 
@@ -196,17 +198,27 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     return res.redirect(301, `${SITE_ORIGIN}${req.originalUrl || req.url}`);
   }
 
-  if (
-    (req.method === 'GET' || req.method === 'HEAD') &&
-    !req.path.startsWith('/api/') &&
-    req.path.length > 1 &&
-    req.path.endsWith('/')
-  ) {
-    const normalizedPath = req.path.replace(/\/+$/, '') || '/';
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    const cleanReqPath = req.path.replace(/\/+$/, '').toLowerCase() || '/';
     const rawOriginal = req.originalUrl || req.url || '';
     const queryIndex = rawOriginal.indexOf('?');
     const queryString = queryIndex >= 0 ? rawOriginal.slice(queryIndex) : '';
-    return res.redirect(301, `${normalizedPath}${queryString}`);
+
+    if (cleanReqPath === '/about') {
+      return res.redirect(301, `/about-us${queryString}`);
+    }
+    if (cleanReqPath === '/contact') {
+      return res.redirect(301, `/contact-us${queryString}`);
+    }
+
+    if (
+      !req.path.startsWith('/api/') &&
+      req.path.length > 1 &&
+      req.path.endsWith('/')
+    ) {
+      const normalizedPath = req.path.replace(/\/+$/, '') || '/';
+      return res.redirect(301, `${normalizedPath}${queryString}`);
+    }
   }
 
   next();
@@ -4500,7 +4512,7 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
   let substantiveBodyHtml = '';
   let matchedJobPost: SarkariItem | null = null;
 
-  const legalMatch = urlPath.match(/^\/(privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|about|contact-us|contact|refund-policy|refund)$/i);
+  const legalMatch = urlPath.match(/^\/(privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|contact-us|refund-policy|refund)$/i);
   const adminMatch = urlPath.match(/^\/(admin|staff)$/i);
   const targetPostId = (matchPost ? matchPost[1] : postParam)?.replace(/\.html?$/i, '');
   const targetServiceId = (matchService ? matchService[1] : serviceParam)?.replace(/\.html?$/i, '');
@@ -4572,7 +4584,9 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
     const service = SERVICES_LIST.find(s => s.id === targetServiceId || s.id === decodeURIComponent(targetServiceId));
     if (service) {
       title = `${service.name} | CSC DOST`;
-      description = `${service.description} Processing time: ${service.estimatedTime}. Official fee: ${service.price}.`;
+      const feeText = service.price?.trim() ? ` Fee: ${service.price.trim()}.` : ' Fee: Ask us.';
+      const timeText = service.estimatedTime?.trim() ? ` Typical time: ${service.estimatedTime.trim()}.` : '';
+      description = `${service.description}${timeText}${feeText}`;
       ogImage = `${baseOrigin}/api/og-image/${encodeURIComponent(service.id)}.png?v=srv_v3`;
       canonicalUrl = `${SITE_ORIGIN}/service/${service.id}`;
       robotsContent = 'index, follow';
@@ -4755,6 +4769,9 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
 
   // If article, inject article JSON-LD before </head>
   if (ogType === 'article') {
+    const articleModifiedDate = matchedJobPost
+      ? (toIsoPostDate(matchedJobPost.updatedAt || matchedJobPost.postDate) || articlePublishedDate)
+      : articlePublishedDate;
     const articleLd = {
       "@context": "https://schema.org",
       "@type": "NewsArticle",
@@ -4762,7 +4779,7 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       "description": description,
       "image": [ogImage],
       "datePublished": articlePublishedDate,
-      "dateModified": articlePublishedDate,
+      "dateModified": articleModifiedDate,
       "mainEntityOfPage": canonicalUrl,
       "publisher": {
         "@type": "Organization",
@@ -4782,41 +4799,55 @@ ${JSON.stringify(articleLd, null, 2)}
     html = html.replace(/<\/head>/i, () => articleScript);
   }
 
-  // Inject Schema.org JobPosting JSON-LD for verified recruitment notices
-  if (matchedJobPost && isRecruitmentSarkariItem(matchedJobPost)) {
-    const jobLd: Record<string, unknown> = {
-      "@context": "https://schema.org",
-      "@type": "JobPosting",
-      "title": matchedJobPost.title,
-      "description": matchedJobPost.shortInfo || description,
-      "datePosted": toIsoDate(matchedJobPost.postDate),
-      "employmentType": "FULL_TIME",
-      "hiringOrganization": {
-        "@type": "Organization",
-        "name": matchedJobPost.category ? matchedJobPost.category.replace(/_/g, ' ').toUpperCase() : "Government Recruitment Board",
-        "sameAs": matchedJobPost.officialLink || canonicalUrl
-      },
-      "jobLocation": {
-        "@type": "Place",
-        "address": {
-          "@type": "PostalAddress",
-          "addressRegion": "Jammu and Kashmir",
-          "addressCountry": "IN"
-        }
-      },
-      "directApply": true,
-      "url": canonicalUrl
-    };
-    if (matchedJobPost.lastDate && /^\d{2}\/\d{2}\/\d{4}$/.test(matchedJobPost.lastDate)) {
-      jobLd.validThrough = `${toIsoDate(matchedJobPost.lastDate)}T23:59:59+05:30`;
-    }
-    const jobScript = `
+  // Inject Schema.org JobPosting JSON-LD strictly for active open/upcoming recruitment forms (never results, answer keys, DV, admit cards, exams, or closed/cancelled notices)
+  if (matchedJobPost) {
+    const postStatus = computeSarkariStatus(matchedJobPost);
+    const effectiveType = resolveEffectiveTemplateType(matchedJobPost, postStatus);
+    const emitJobSchema =
+      (effectiveType === 'application' || effectiveType === 'upcoming') &&
+      isRecruitmentSarkariItem(matchedJobPost) &&
+      matchedJobPost.noticeType !== 'correction' &&
+      matchedJobPost.stage !== 'correction' &&
+      !postStatus.isClosed &&
+      !postStatus.isCancelled;
+
+    if (emitJobSchema) {
+      const orgName = matchedJobPost.org || resolvePostOrg(matchedJobPost);
+      const validIso = toIsoPostDate(matchedJobPost.applyEnd || matchedJobPost.lastDate);
+      const jobLd: Record<string, unknown> = {
+        "@context": "https://schema.org",
+        "@type": "JobPosting",
+        "title": matchedJobPost.title,
+        "description": matchedJobPost.summary || matchedJobPost.shortInfo || description,
+        "datePosted": toIsoPostDate(matchedJobPost.postDate) || toIsoDate(matchedJobPost.postDate),
+        "employmentType": "FULL_TIME",
+        "hiringOrganization": {
+          "@type": "Organization",
+          "name": orgName,
+          "sameAs": matchedJobPost.officialLink || canonicalUrl
+        },
+        "jobLocation": {
+          "@type": "Place",
+          "address": {
+            "@type": "PostalAddress",
+            "addressRegion": "Jammu and Kashmir",
+            "addressCountry": "IN"
+          }
+        },
+        "directApply": false,
+        "url": canonicalUrl
+      };
+      if (validIso) {
+        jobLd.validThrough = `${validIso}T23:59:59+05:30`;
+      }
+      const jobScript = `
     <!-- Dynamic JobPosting Structured Data -->
     <script type="application/ld+json">
 ${JSON.stringify(jobLd, null, 2)}
     </script>
   </head>`;
-    html = html.replace(/<\/head>/i, () => jobScript);
+      html = html.replace(/<\/head>/i, () => jobScript);
+    }
   }
 
   // Inject BreadcrumbList JSON-LD if breadcrumbs exist

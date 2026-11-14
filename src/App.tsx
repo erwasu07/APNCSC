@@ -289,9 +289,17 @@ export default function App() {
         if (rawKey === 'privacy-policy' || rawKey === 'privacy') mappedType = 'privacy';
         else if (rawKey === 'terms-of-service' || rawKey === 'terms') mappedType = 'terms';
         else if (rawKey === 'disclaimer') mappedType = 'disclaimer';
-        else if (rawKey === 'about-us' || rawKey === 'about') mappedType = 'about';
-        else if (rawKey === 'contact-us' || rawKey === 'contact') mappedType = 'contact';
-        else if (rawKey === 'refund-policy' || rawKey === 'refund') mappedType = 'refund';
+        else if (rawKey === 'about-us' || rawKey === 'about') {
+          mappedType = 'about';
+          if (rawKey === 'about') {
+            try { window.history.replaceState(null, '', '/about-us'); } catch {}
+          }
+        } else if (rawKey === 'contact-us' || rawKey === 'contact') {
+          mappedType = 'contact';
+          if (rawKey === 'contact') {
+            try { window.history.replaceState(null, '', '/contact-us'); } catch {}
+          }
+        } else if (rawKey === 'refund-policy' || rawKey === 'refund') mappedType = 'refund';
 
         setActiveLegalPage(mappedType);
         setCategoryView(null);
