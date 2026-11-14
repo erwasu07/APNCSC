@@ -14,6 +14,8 @@ import {
   parseSarkariDateSortValue,
 } from './data/sarkariData';
 import { ServiceItem } from './servicesData';
+import { GUIDE_ARTICLES, GuideArticle } from './data/guidesData';
+import { TOOLS_LIST, ToolItem } from './components/tools/toolsData';
 import { computeSarkariStatus } from './utils/sarkariStatus';
 
 function escapeHtml(str: unknown): string {
@@ -707,14 +709,14 @@ function renderPrimaryCategoryNavHtml(activeCategory?: string): string {
   ];
 
   return `
-  <header style="background:#ffffff; border-bottom:1px solid #e2e8f0; margin-bottom:20px;">
-    <div style="max-width:1100px; margin:0 auto; padding:12px 16px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
-      <a href="/" style="font-size:18px; font-weight:800; color:#092442; text-decoration:none;">CSC DOST</a>
-      <nav aria-label="Main Categories" style="display:flex; flex-wrap:wrap; gap:14px; font-size:14px; font-weight:600;">
+  <header style="background:#101A36; color:#ffffff; border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:20px;">
+    <div style="max-width:1100px; margin:0 auto; padding:14px 16px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
+      <a href="/" style="font-size:20px; font-weight:800; color:#ffffff; text-decoration:none;">CSC DOST</a>
+      <nav aria-label="Main Categories" style="display:flex; flex-wrap:wrap; gap:14px; font-size:15px; font-weight:600;">
         ${categories
           .map(
             (cat) =>
-              `<a href="${cat.href}" style="color:${activeCategory === cat.slug ? '#0f172a' : '#1e56c8'}; text-decoration:${activeCategory === cat.slug ? 'underline' : 'none'};">${cat.label}</a>`
+              `<a href="${cat.href}" style="color:${activeCategory === cat.slug ? '#F5A623' : '#E2E8F0'}; text-decoration:${activeCategory === cat.slug ? 'underline' : 'none'};">${cat.label}</a>`
           )
           .join('')}
       </nav>
@@ -741,45 +743,52 @@ export function renderHomepageSubstantiveHtml(posts: SarkariItem[], services: Se
   const educationPosts = verifiedVisiblePosts
     .filter((p) => isEducationSarkariItem(p))
     .slice(0, 4);
+  const popularSchemes = GUIDE_ARTICLES.filter(
+    (g) => g.category === 'Central Scheme' || g.category === 'State Services' || g.category === 'Identity & Tax'
+  ).slice(0, 4);
   const topServices = services.slice(0, 6);
+  const topTools = TOOLS_LIST.filter((t) => t.popular || t.featured).slice(0, 6);
 
   const categoryCards = [
-    { href: '/jobs', title: 'Jobs &amp; Recruitment', desc: 'Latest JKSSB, Banking, Indian Army, SSC and RRB vacancies.' },
-    { href: '/education', title: 'Education &amp; Admissions', desc: 'University of Kashmir, Cluster University and IGNOU admissions, exams and date sheets.' },
-    { href: '/schemes', title: 'Government Schemes', desc: 'PM-KISAN, Ayushman Bharat PM-JAY and citizen welfare guides.' },
-    { href: '/services', title: 'CSC E-Services', desc: 'PAN card, Aadhaar assistance, domicile certificates and digital services.' },
-    { href: '/tools', title: 'Document Tools', desc: 'Client-side photo resizer, signature cropper and PDF utilities.' },
-    { href: '/calculators', title: 'Citizen Calculators', desc: 'Recruitment age eligibility, photo spec rules and fee estimator.' },
+    { href: '/jobs', title: 'Jobs', desc: 'JKSSB, Banking, Indian Army, SSC & RRB openings.' },
+    { href: '/education', title: 'Admissions', desc: 'Kashmir Univ, Cluster Univ & IGNOU notifications.' },
+    { href: '/schemes', title: 'Schemes', desc: 'PM-KISAN, Ayushman PM-JAY & citizen welfare guides.' },
+    { href: '/services', title: 'CSC Services', desc: 'PAN card, domicile, Aadhaar & certificate filing.' },
+    { href: '/tools', title: 'Tools', desc: 'Photo resizer, signature cropper, PDF tools & calculators.' },
   ];
 
   return `
   ${renderPrimaryCategoryNavHtml()}
-  <main class="ssr-homepage-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
-    <section style="background:linear-gradient(135deg, #0a2540 0%, #1e56c8 100%); color:#ffffff; border-radius:16px; padding:28px 24px; margin-bottom:24px;">
-      <div style="font-size:12px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:#bfdbfe; margin-bottom:6px;">
-        CSC DOST · Independent Citizen Portal
+  <main class="ssr-homepage-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:16px; color:#101A36; background:#F6F8FC; line-height:1.6;">
+    <section style="background:#101A36; color:#ffffff; border-radius:16px; padding:28px 24px; margin-bottom:24px;">
+      <div style="display:inline-block; background:rgba(245,166,35,0.18); border:1px solid rgba(245,166,35,0.5); color:#F5A623; font-size:13px; font-weight:700; padding:4px 12px; border-radius:999px; margin-bottom:12px;">
+        Independent portal, not a government website
       </div>
-      <h1 style="font-size:28px; font-weight:800; line-height:1.25; margin:0 0 10px 0;">
-        CSC DOST – Jobs, Admissions &amp; Citizen Services
+      <h1 style="font-size:28px; font-weight:800; line-height:1.25; margin:0 0 10px 0; color:#ffffff;">
+        CSC DOST – J&amp;K Jobs, Admissions, Schemes &amp; Citizen Services
       </h1>
-      <p style="font-size:15px; color:#e0e7ff; max-width:780px; margin:0;">
-        Explore J&amp;K jobs, university admissions, government schemes, CSC e-services, document tools and citizen calculators in one place.
+      <p style="font-size:16px; color:#E2E8F0; max-width:780px; margin:0 0 16px 0;">
+        Explore J&amp;K jobs, university admissions, government schemes, CSC e-services, browser document tools and citizen calculators in one fast, lightweight portal.
       </p>
+      <div style="display:flex; flex-wrap:wrap; gap:10px;">
+        <a href="/jobs" style="background:#F5A623; color:#101A36; font-weight:700; font-size:15px; padding:10px 18px; border-radius:10px; text-decoration:none;">Browse Latest Jobs</a>
+        <a href="/track" style="background:#1F9D6B; color:#ffffff; font-weight:700; font-size:15px; padding:10px 18px; border-radius:10px; text-decoration:none;">Track Application</a>
+      </div>
     </section>
 
     <section aria-labelledby="explore-categories-ssr" style="margin-bottom:28px;">
-      <h2 id="explore-categories-ssr" style="font-size:20px; font-weight:800; color:#0f172a; margin:0 0 12px 0;">
-        Explore CSC DOST Categories
+      <h2 id="explore-categories-ssr" style="font-size:20px; font-weight:800; color:#101A36; margin:0 0 12px 0;">
+        Explore Core Services
       </h2>
-      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:14px;">
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:12px;">
         ${categoryCards
           .map(
             (card) => `
-          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:16px;">
-            <h3 style="font-size:16px; font-weight:700; margin:0 0 6px 0;">
-              <a href="${card.href}" style="color:#1e56c8; text-decoration:none;">${card.title}</a>
+          <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:16px;">
+            <h3 style="font-size:17px; font-weight:700; margin:0 0 6px 0;">
+              <a href="${card.href}" style="color:#101A36; text-decoration:none;">${card.title}</a>
             </h3>
-            <p style="font-size:13px; color:#475569; margin:0;">${card.desc}</p>
+            <p style="font-size:14px; color:#475569; margin:0;">${card.desc}</p>
           </article>
         `
           )
@@ -789,21 +798,55 @@ export function renderHomepageSubstantiveHtml(posts: SarkariItem[], services: Se
 
     <section aria-labelledby="ssr-recruitment-heading" style="margin-bottom:28px;">
       <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;">
-        <h2 id="ssr-recruitment-heading" style="font-size:20px; font-weight:800; color:#0f172a; margin:0;">
-          Latest Recruitment Updates
+        <h2 id="ssr-recruitment-heading" style="font-size:20px; font-weight:800; color:#101A36; margin:0;">
+          Latest Jobs
         </h2>
-        <a href="/jobs" style="font-size:13px; font-weight:700; color:#1e56c8; text-decoration:none;">View all recruitment notices →</a>
+        <a href="/jobs" style="font-size:14px; font-weight:700; color:#1F9D6B; text-decoration:none;">View all jobs →</a>
       </div>
       <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:14px;">
         ${recruitmentPosts
+          .map((post) => {
+            const st = computeSarkariStatus(post);
+            const urgent = st.isUrgentUnder7Days;
+            return `
+          <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; font-size:12px; font-weight:700;">
+              <span style="color:#475569; text-transform:uppercase;">${escapeHtml(post.category?.replace(/_/g, ' '))}</span>
+              <span style="padding:2px 8px; border-radius:6px; background:${urgent ? '#FEF2F2' : '#ECFDF5'}; color:${urgent ? '#B91C1C' : '#1F9D6B'}; border:1px solid ${urgent ? '#FECACA' : '#A7F3D0'};">
+                ${escapeHtml(st.badgeLabel)}${post.lastDate ? ` · ${escapeHtml(post.lastDate)}` : ''}
+              </span>
+            </div>
+            <h3 style="font-size:16px; font-weight:700; margin:0 0 6px 0;">
+              <a href="/post/${escapeHtml(post.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(post.title)}</a>
+            </h3>
+            <p style="font-size:14px; color:#475569; margin:0 0 8px 0;">${escapeHtml((post.shortInfo || '').slice(0, 100))}...</p>
+            <div style="font-size:13px; color:#64748B;">Vacancies: <strong>${escapeHtml(post.totalPosts || 'Open')}</strong></div>
+          </article>
+        `;
+          })
+          .join('')}
+      </div>
+    </section>
+
+    <section aria-labelledby="ssr-education-heading" style="margin-bottom:28px;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+        <h2 id="ssr-education-heading" style="font-size:20px; font-weight:800; color:#101A36; margin:0;">
+          Admissions &amp; Universities
+        </h2>
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+          <a href="/education/ignou" style="font-size:14px; font-weight:700; color:#1F9D6B; text-decoration:none;">IGNOU Notifications →</a>
+          <a href="/education" style="font-size:14px; font-weight:700; color:#101A36; text-decoration:none;">View all admissions →</a>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:14px;">
+        ${educationPosts
           .map(
             (post) => `
-          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:14px;">
-            <h3 style="font-size:15px; font-weight:700; margin:0 0 6px 0;">
-              <a href="/post/${escapeHtml(post.id)}" style="color:#0f172a; text-decoration:none;">${escapeHtml(post.title)}</a>
+          <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:16px;">
+            <h3 style="font-size:16px; font-weight:700; margin:0 0 6px 0;">
+              <a href="/post/${escapeHtml(post.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(post.title)}</a>
             </h3>
-            <p style="font-size:13px; color:#475569; margin:0 0 8px 0;">${escapeHtml((post.shortInfo || '').slice(0, 100))}...</p>
-            <div style="font-size:12px; color:#64748b;">${escapeHtml(computeSarkariStatus(post).badgeLabel)}${post.lastDate ? ` · Last Date: ${escapeHtml(post.lastDate)}` : ''}</div>
+            <p style="font-size:14px; color:#475569; margin:0;">${escapeHtml((post.shortInfo || '').slice(0, 100))}...</p>
           </article>
         `
           )
@@ -811,25 +854,22 @@ export function renderHomepageSubstantiveHtml(posts: SarkariItem[], services: Se
       </div>
     </section>
 
-    <section aria-labelledby="ssr-education-heading" style="margin-bottom:28px;">
-      <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
-        <h2 id="ssr-education-heading" style="font-size:20px; font-weight:800; color:#0f172a; margin:0;">
-          Education &amp; Admissions
+    <section aria-labelledby="ssr-schemes-heading" style="margin-bottom:28px;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;">
+        <h2 id="ssr-schemes-heading" style="font-size:20px; font-weight:800; color:#101A36; margin:0;">
+          Popular Government Schemes
         </h2>
-        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
-          <a href="/education/ignou" style="font-size:13px; font-weight:700; color:#0284c7; text-decoration:none;">IGNOU Notifications →</a>
-          <a href="/education" style="font-size:13px; font-weight:700; color:#1e56c8; text-decoration:none;">View all education notices →</a>
-        </div>
+        <a href="/schemes" style="font-size:14px; font-weight:700; color:#1F9D6B; text-decoration:none;">All schemes →</a>
       </div>
-      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:14px;">
-        ${educationPosts
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:14px;">
+        ${popularSchemes
           .map(
-            (post) => `
-          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:14px;">
-            <h3 style="font-size:15px; font-weight:700; margin:0 0 6px 0;">
-              <a href="/post/${escapeHtml(post.id)}" style="color:#0f172a; text-decoration:none;">${escapeHtml(post.title)}</a>
+            (guide) => `
+          <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:16px;">
+            <h3 style="font-size:16px; font-weight:700; margin:0 0 6px 0;">
+              <a href="/scheme/${escapeHtml(guide.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(guide.title)}</a>
             </h3>
-            <p style="font-size:13px; color:#475569; margin:0;">${escapeHtml((post.shortInfo || '').slice(0, 100))}...</p>
+            <p style="font-size:14px; color:#475569; margin:0;">${escapeHtml(guide.summary.slice(0, 110))}...</p>
           </article>
         `
           )
@@ -839,20 +879,20 @@ export function renderHomepageSubstantiveHtml(posts: SarkariItem[], services: Se
 
     <section aria-labelledby="ssr-services-heading" style="margin-bottom:28px;">
       <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;">
-        <h2 id="ssr-services-heading" style="font-size:20px; font-weight:800; color:#0f172a; margin:0;">
+        <h2 id="ssr-services-heading" style="font-size:20px; font-weight:800; color:#101A36; margin:0;">
           Popular CSC E-Services
         </h2>
-        <a href="/services" style="font-size:13px; font-weight:700; color:#1e56c8; text-decoration:none;">Browse all services →</a>
+        <a href="/services" style="font-size:14px; font-weight:700; color:#1F9D6B; text-decoration:none;">Browse all services →</a>
       </div>
       <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:12px;">
         ${topServices
           .map(
             (service) => `
-          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:14px;">
-            <h3 style="font-size:15px; font-weight:700; margin:0 0 6px 0;">
-              <a href="/service/${escapeHtml(service.id)}" style="color:#0f172a; text-decoration:none;">${escapeHtml(service.name)}</a>
+          <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:16px;">
+            <h3 style="font-size:16px; font-weight:700; margin:0 0 6px 0;">
+              <a href="/service/${escapeHtml(service.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(service.name)}</a>
             </h3>
-            <p style="font-size:12px; color:#64748b; margin:0;">${escapeHtml(service.description.slice(0, 85))}...</p>
+            <p style="font-size:14px; color:#475569; margin:0;">${escapeHtml(service.description.slice(0, 85))}...</p>
           </article>
         `
           )
@@ -860,17 +900,194 @@ export function renderHomepageSubstantiveHtml(posts: SarkariItem[], services: Se
       </div>
     </section>
 
-    <footer style="border-top:1px solid #e2e8f0; padding-top:20px; text-align:center; font-size:13px; color:#64748b; line-height:1.8;">
-      <p style="margin:0 0 8px 0;">
-        <a href="/privacy-policy" style="color:#1e56c8; text-decoration:none; margin:0 8px;">Privacy Policy</a> ·
-        <a href="/terms-of-service" style="color:#1e56c8; text-decoration:none; margin:0 8px;">Terms of Use</a> ·
-        <a href="/disclaimer" style="color:#1e56c8; text-decoration:none; margin:0 8px;">Disclaimer</a> ·
-        <a href="/contact-us" style="color:#1e56c8; text-decoration:none; margin:0 8px;">Contact</a> ·
-        <a href="/about-us" style="color:#1e56c8; text-decoration:none; margin:0 8px;">About Us</a> ·
-        <a href="/refund-policy" style="color:#1e56c8; text-decoration:none; margin:0 8px;">Refund Policy</a>
+    <section aria-labelledby="ssr-tools-heading" style="margin-bottom:28px;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+        <h2 id="ssr-tools-heading" style="font-size:20px; font-weight:800; color:#101A36; margin:0;">
+          Document Tools &amp; Citizen Calculators
+        </h2>
+        <div style="display:flex; gap:14px;">
+          <a href="/calculators" style="font-size:14px; font-weight:700; color:#101A36; text-decoration:none;">Citizen Calculators →</a>
+          <a href="/tools" style="font-size:14px; font-weight:700; color:#1F9D6B; text-decoration:none;">All Document Tools →</a>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:12px;">
+        ${topTools
+          .map(
+            (tool) => `
+          <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:16px;">
+            <h3 style="font-size:16px; font-weight:700; margin:0 0 6px 0;">
+              <a href="/tools/${escapeHtml(tool.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(tool.name)}</a>
+            </h3>
+            <p style="font-size:14px; color:#475569; margin:0;">${escapeHtml(tool.shortDescription.slice(0, 95))}...</p>
+          </article>
+        `
+          )
+          .join('')}
+      </div>
+    </section>
+
+    <section aria-labelledby="ssr-help-heading" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:16px; padding:20px; margin-bottom:28px;">
+      <h2 id="ssr-help-heading" style="font-size:20px; font-weight:800; color:#101A36; margin:0 0 8px 0;">
+        Need help applying?
+      </h2>
+      <p style="font-size:15px; color:#475569; margin:0 0 12px 0;">
+        Authorized CSC facilitation support by <strong>Wasim Ahmad Khanday</strong> (VLE ID: <strong>212515670018</strong>) · Sangran Qazigund, Anantnag, Jammu &amp; Kashmir 192221.
       </p>
-      <p style="margin:0; font-size:12px;">Sangran, Qazigund, Anantnag · CSC DOST Independent Citizen Portal</p>
+      <div style="display:flex; flex-wrap:wrap; gap:10px;">
+        <a href="tel:+917006833767" style="background:#101A36; color:#ffffff; font-weight:700; font-size:14px; padding:10px 16px; border-radius:10px; text-decoration:none;">Call +91 70068 33767</a>
+        <a href="https://wa.me/917006833767" target="_blank" rel="noopener noreferrer" style="background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 16px; border-radius:10px; text-decoration:none;">WhatsApp CSC DOST</a>
+      </div>
+    </section>
+
+    <footer style="background:#101A36; color:#E2E8F0; border-radius:16px; padding:24px 20px; text-align:center; font-size:14px; line-height:1.8;">
+      <p style="margin:0 0 10px 0;">
+        <a href="/about-us" style="color:#ffffff; text-decoration:none; margin:0 8px;">About</a> ·
+        <a href="/contact-us" style="color:#ffffff; text-decoration:none; margin:0 8px;">Contact</a> ·
+        <a href="/privacy-policy" style="color:#ffffff; text-decoration:none; margin:0 8px;">Privacy Policy</a> ·
+        <a href="/disclaimer" style="color:#ffffff; text-decoration:none; margin:0 8px;">Disclaimer</a> ·
+        <a href="/terms-of-service" style="color:#ffffff; text-decoration:none; margin:0 8px;">Terms of Use</a> ·
+        <a href="/refund-policy" style="color:#ffffff; text-decoration:none; margin:0 8px;">Refund Policy</a>
+      </p>
+      <p style="margin:0 0 4px 0; font-size:13px; color:#CBD5E1;">
+        Sangran Qazigund, Anantnag, Jammu &amp; Kashmir 192221 · Helpline: <a href="tel:+917006833767" style="color:#F5A623; text-decoration:none; font-weight:700;">+91 70068 33767</a>
+      </p>
+      <p style="margin:0; font-size:12px; color:#94A3B8;">© ${new Date().getFullYear()} CSC DOST · Independent Citizen Portal (Not a Government Website)</p>
     </footer>
+  </main>
+  `;
+}
+
+export function renderSchemeSubstantiveHtml(guide: GuideArticle): string {
+  const safeTitle = escapeHtml(guide.title);
+  const safeSummary = escapeHtml(guide.summary);
+  const safeCategory = escapeHtml(guide.category);
+  const safePortal = escapeHtml(guide.officialPortal);
+  const safeOfficialUrl = escapeHtml(guide.officialUrl);
+
+  return `
+  ${renderPrimaryCategoryNavHtml('schemes')}
+  <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:12px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:16px; color:#101A36; line-height:1.65;">
+    <nav aria-label="Breadcrumb" style="font-size:14px; color:#475569; margin-bottom:16px;">
+      <a href="/" style="color:#101A36; font-weight:600; text-decoration:none;">Home</a>
+      <span style="margin:0 6px;">/</span>
+      <a href="/schemes" style="color:#101A36; font-weight:600; text-decoration:none;">Government Schemes</a>
+      <span style="margin:0 6px;">/</span>
+      <span style="color:#101A36; font-weight:700;">${safeTitle}</span>
+    </nav>
+
+    <aside style="background:#FFFBEB; border-left:4px solid #F5A623; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:14px; color:#101A36;">
+      <strong>Independent Citizen Guide:</strong> CSC DOST (cscdost.com) is an independent private digital facilitation center operated by Wasim Ahmad Khanday (CSC VLE ID: 212515670018). Apply directly through the official portal linked below.
+    </aside>
+
+    <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:24px;">
+      <header style="border-bottom:1px solid #E2E8F0; padding-bottom:18px; margin-bottom:20px;">
+        <span style="display:inline-block; background:#ECFDF5; color:#1F9D6B; border:1px solid #A7F3D0; font-size:12px; font-weight:700; text-transform:uppercase; padding:4px 10px; border-radius:6px; margin-bottom:10px;">
+          ${safeCategory} · ${escapeHtml(guide.readTime)}
+        </span>
+        <h1 style="font-size:28px; line-height:1.3; font-weight:800; color:#101A36; margin:0 0 12px 0;">
+          ${safeTitle}
+        </h1>
+        <p style="font-size:16px; color:#475569; margin:0 0 10px 0;">${safeSummary}</p>
+        <div style="font-size:13px; color:#64748B;">
+          <strong>Official Portal:</strong> ${safePortal} · <strong>Last Updated:</strong> ${escapeHtml(guide.lastUpdated)}
+        </div>
+      </header>
+
+      ${guide.sections
+        .map(
+          (sec) => `
+      <section style="margin-bottom:22px;">
+        <h2 style="font-size:20px; font-weight:700; color:#101A36; margin:0 0 8px 0;">${escapeHtml(sec.heading)}</h2>
+        <p style="font-size:16px; color:#334155; margin:0 0 10px 0;">${escapeHtml(sec.content)}</p>
+        ${
+          sec.bulletPoints && sec.bulletPoints.length > 0
+            ? `<ul style="padding-left:20px; margin:0; font-size:15px; color:#334155;">${sec.bulletPoints
+                .map((bp) => `<li>${escapeHtml(bp)}</li>`)
+                .join('')}</ul>`
+            : ''
+        }
+      </section>
+      `
+        )
+        .join('')}
+
+      <section style="margin-bottom:22px;">
+        <h2 style="font-size:20px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Eligibility Criteria</h2>
+        <ul style="padding-left:20px; font-size:15px; color:#334155; margin:0;">
+          ${guide.eligibility.map((e) => `<li>${escapeHtml(e)}</li>`).join('')}
+        </ul>
+      </section>
+
+      <section style="margin-bottom:22px;">
+        <h2 style="font-size:20px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Documents Required</h2>
+        <ul style="padding-left:20px; font-size:15px; color:#334155; margin:0;">
+          ${guide.documentsRequired.map((d) => `<li>${escapeHtml(d)}</li>`).join('')}
+        </ul>
+      </section>
+
+      <section style="margin-bottom:24px;">
+        <h2 style="font-size:20px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Step-by-Step Application Process</h2>
+        <ol style="padding-left:20px; font-size:15px; color:#334155; margin:0;">
+          ${guide.stepByStep.map((s) => `<li>${escapeHtml(s)}</li>`).join('')}
+        </ol>
+      </section>
+
+      <section style="background:#F6F8FC; border:1px solid #E2E8F0; border-radius:12px; padding:18px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
+        <div>
+          <div style="font-weight:700; font-size:16px; color:#101A36;">Official Authority Portal &amp; Assisted Filing</div>
+          <div style="font-size:14px; color:#475569;">Verify details on ${safePortal} or request CSC assistance.</div>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <a href="${safeOfficialUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#101A36; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">
+            Official Portal ↗
+          </a>
+          <a href="/apply" style="display:inline-block; background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">
+            Need Help Applying
+          </a>
+        </div>
+      </section>
+    </article>
+  </main>
+  `;
+}
+
+export function renderToolDetailSubstantiveHtml(tool: ToolItem): string {
+  const safeName = escapeHtml(tool.name);
+  const safeDesc = escapeHtml(tool.shortDescription);
+  const safeCat = escapeHtml(tool.categoryLabel);
+  const safeSpecs = escapeHtml(tool.specs || '100% client-side HTML5 Canvas processing');
+
+  return `
+  ${renderPrimaryCategoryNavHtml('tools')}
+  <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:12px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:16px; color:#101A36; line-height:1.65;">
+    <nav aria-label="Breadcrumb" style="font-size:14px; color:#475569; margin-bottom:16px;">
+      <a href="/" style="color:#101A36; font-weight:600; text-decoration:none;">Home</a>
+      <span style="margin:0 6px;">/</span>
+      <a href="/tools" style="color:#101A36; font-weight:600; text-decoration:none;">Document Tools</a>
+      <span style="margin:0 6px;">/</span>
+      <span style="color:#101A36; font-weight:700;">${safeName}</span>
+    </nav>
+
+    <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:24px;">
+      <header style="border-bottom:1px solid #E2E8F0; padding-bottom:18px; margin-bottom:20px;">
+        <span style="display:inline-block; background:#ECFDF5; color:#1F9D6B; border:1px solid #A7F3D0; font-size:12px; font-weight:700; text-transform:uppercase; padding:4px 10px; border-radius:6px; margin-bottom:10px;">
+          ${safeCat} · 100% Browser Private
+        </span>
+        <h1 style="font-size:28px; font-weight:800; color:#101A36; margin:0 0 10px 0;">${safeName}</h1>
+        <p style="font-size:16px; color:#475569; margin:0;">${safeDesc}</p>
+      </header>
+
+      <section style="background:#F6F8FC; border:1px solid #E2E8F0; border-radius:10px; padding:16px; margin-bottom:20px;">
+        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Privacy &amp; Technical Specifications</h2>
+        <p style="font-size:15px; color:#334155; margin:0 0 8px 0;"><strong>Capabilities:</strong> ${safeSpecs}</p>
+        <p style="font-size:15px; color:#334155; margin:0;">All processing happens locally on your device — your photographs, signatures, and certificates are never uploaded to external servers.</p>
+      </section>
+
+      <div style="display:flex; flex-wrap:wrap; gap:10px;">
+        <a href="/tools" style="background:#101A36; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">Browse All Document Tools</a>
+        <a href="/calculators" style="background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">Citizen Calculators</a>
+      </div>
+    </article>
   </main>
   `;
 }
@@ -897,16 +1114,16 @@ export function renderCategorySubstantiveHtml(
 
     return `
     ${renderPrimaryCategoryNavHtml('jobs')}
-    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
-      <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
-        <a href="/" style="color:#1e56c8; text-decoration:none;">Home</a>
+    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:16px; color:#101A36; line-height:1.6;">
+      <nav aria-label="Breadcrumb" style="font-size:14px; color:#475569; margin-bottom:16px;">
+        <a href="/" style="color:#101A36; font-weight:600; text-decoration:none;">Home</a>
         <span style="margin:0 6px;">/</span>
-        <span style="color:#0f172a; font-weight:600;">Jobs &amp; Recruitment</span>
+        <span style="color:#101A36; font-weight:700;">Jobs &amp; Recruitment</span>
       </nav>
 
-      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:16px; margin-bottom:24px;">
-        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Jobs &amp; Recruitment</h1>
-        <p style="font-size:15px; color:#475569; margin:0; max-width:850px;">
+      <header style="border-bottom:1px solid #E2E8F0; padding-bottom:16px; margin-bottom:24px;">
+        <h1 style="font-size:28px; font-weight:800; color:#101A36; margin:0 0 8px 0;">Jobs &amp; Recruitment</h1>
+        <p style="font-size:16px; color:#475569; margin:0; max-width:850px;">
           Latest JKSSB, Banking, Indian Army, SSC and RRB recruitment notifications, eligibility rules and closing dates on CSC DOST.
         </p>
       </header>
@@ -914,27 +1131,28 @@ export function renderCategorySubstantiveHtml(
       <section style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:18px;">
         ${jobPosts.map(post => {
           const st = computeSarkariStatus(post);
+          const urgent = st.isUrgentUnder7Days;
           return `
-          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:18px; display:flex; flex-direction:column; justify-content:space-between;">
+          <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:18px; display:flex; flex-direction:column; justify-content:space-between;">
             <div>
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <span style="font-size:11px; font-weight:700; color:#1e56c8; background:#eff6ff; padding:3px 8px; border-radius:4px; text-transform:uppercase;">
+                <span style="font-size:11px; font-weight:700; color:#101A36; background:#F6F8FC; border:1px solid #E2E8F0; padding:3px 8px; border-radius:4px; text-transform:uppercase;">
                   ${escapeHtml(post.category?.replace(/_/g, ' '))}
                 </span>
-                <span style="font-size:12px; color:${st.canApplyOnline ? '#047857' : '#64748b'}; font-weight:600;">${escapeHtml(st.badgeLabel)}</span>
+                <span style="font-size:12px; color:${urgent ? '#B91C1C' : st.canApplyOnline ? '#1F9D6B' : '#475569'}; font-weight:700;">${escapeHtml(st.badgeLabel)}</span>
               </div>
               <h2 style="font-size:17px; font-weight:700; line-height:1.35; margin:0 0 8px 0;">
-                <a href="/post/${escapeHtml(post.id)}" style="color:#0f172a; text-decoration:none;">
+                <a href="/post/${escapeHtml(post.id)}" style="color:#101A36; text-decoration:none;">
                   ${escapeHtml(post.title)}
                 </a>
               </h2>
-              <p style="font-size:13px; color:#475569; line-height:1.5; margin:0 0 12px 0;">
+              <p style="font-size:14px; color:#475569; line-height:1.5; margin:0 0 12px 0;">
                 ${escapeHtml((post.shortInfo || '').slice(0, 120))}...
               </p>
             </div>
-            <div style="border-top:1px solid #f1f5f9; padding-top:12px; display:flex; justify-content:space-between; align-items:center; font-size:12px;">
-              <span style="color:#64748b;">${post.lastDate ? `Last Date: <strong>${escapeHtml(post.lastDate)}</strong>` : `Vacancies: <strong>${escapeHtml(post.totalPosts || 'Open')}</strong>`}</span>
-              <a href="/post/${escapeHtml(post.id)}" style="color:#1e56c8; font-weight:600; text-decoration:none;">
+            <div style="border-top:1px solid #F1F5F9; padding-top:12px; display:flex; justify-content:space-between; align-items:center; font-size:13px;">
+              <span style="color:#475569;">${post.lastDate ? `Last Date: <strong>${escapeHtml(post.lastDate)}</strong>` : `Vacancies: <strong>${escapeHtml(post.totalPosts || 'Open')}</strong>`}</span>
+              <a href="/post/${escapeHtml(post.id)}" style="color:#1F9D6B; font-weight:700; text-decoration:none;">
                 View Details →
               </a>
             </div>
@@ -951,27 +1169,27 @@ export function renderCategorySubstantiveHtml(
 
     return `
     ${renderPrimaryCategoryNavHtml('education')}
-    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
-      <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
-        <a href="/" style="color:#1e56c8; text-decoration:none;">Home</a>
+    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:16px; color:#101A36; line-height:1.6;">
+      <nav aria-label="Breadcrumb" style="font-size:14px; color:#475569; margin-bottom:16px;">
+        <a href="/" style="color:#101A36; font-weight:600; text-decoration:none;">Home</a>
         <span style="margin:0 6px;">/</span>
-        <a href="/education" style="color:#1e56c8; text-decoration:none;">Education &amp; Admissions</a>
+        <a href="/education" style="color:#101A36; font-weight:600; text-decoration:none;">Education &amp; Admissions</a>
         <span style="margin:0 6px;">/</span>
-        <span style="color:#0f172a; font-weight:600;">IGNOU</span>
+        <span style="color:#101A36; font-weight:700;">IGNOU</span>
       </nav>
 
-      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:16px; margin-bottom:24px;">
+      <header style="border-bottom:1px solid #E2E8F0; padding-bottom:16px; margin-bottom:24px;">
         <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;">
-          <span style="font-size:11px; font-weight:700; color:#0369a1; background:#e0f2fe; padding:4px 10px; border-radius:6px; text-transform:uppercase;">
+          <span style="font-size:12px; font-weight:700; color:#101A36; background:#F6F8FC; border:1px solid #E2E8F0; padding:4px 10px; border-radius:6px; text-transform:uppercase;">
             Education &amp; Admissions · IGNOU (${ignouPosts.length} Notices)
           </span>
-          <a href="/education" style="font-size:13px; font-weight:700; color:#1e56c8; text-decoration:none;">← Back to Education &amp; Admissions</a>
+          <a href="/education" style="font-size:14px; font-weight:700; color:#1F9D6B; text-decoration:none;">← Back to Education &amp; Admissions</a>
         </div>
-        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">IGNOU Latest Notifications</h1>
-        <p style="font-size:15px; color:#475569; margin:0 0 12px 0; max-width:850px;">
+        <h1 style="font-size:28px; font-weight:800; color:#101A36; margin:0 0 8px 0;">IGNOU Latest Notifications</h1>
+        <p style="font-size:16px; color:#475569; margin:0 0 12px 0; max-width:850px;">
           Find IGNOU admission, re-registration, assignment, exam form, datesheet, hall ticket and result updates with official links on CSC DOST.
         </p>
-        <div style="font-size:12px; color:#0c4a6e; background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:10px 14px;">
+        <div style="font-size:14px; color:#101A36; background:#F6F8FC; border:1px solid #E2E8F0; border-radius:8px; padding:10px 14px;">
           <strong>Learner Streams Covered:</strong> ODL (Open &amp; Distance Learning) · Online Programmes · GOAL · E-Vidya Bharti · Regional Centre Srinagar
         </div>
       </header>
@@ -980,32 +1198,32 @@ export function renderCategorySubstantiveHtml(
         ${ignouPosts.map(post => {
           const st = computeSarkariStatus(post);
           return `
-          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:18px; display:flex; flex-direction:column; justify-content:space-between;">
+          <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:18px; display:flex; flex-direction:column; justify-content:space-between;">
             <div>
               <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:10px;">
-                <span style="font-size:11px; font-weight:700; color:#0369a1; background:#f0f9ff; padding:3px 8px; border-radius:4px; text-transform:uppercase;">
+                <span style="font-size:11px; font-weight:700; color:#101A36; background:#F6F8FC; border:1px solid #E2E8F0; padding:3px 8px; border-radius:4px; text-transform:uppercase;">
                   IGNOU${post.learnerGroup ? ` · ${escapeHtml(post.learnerGroup)}` : ''}
                 </span>
-                <span style="font-size:12px; color:${post.isTentative ? '#b45309' : st.canApplyOnline ? '#047857' : '#0f172a'}; font-weight:700;">
+                <span style="font-size:12px; color:${post.isTentative ? '#92400E' : st.isUrgentUnder7Days ? '#B91C1C' : st.canApplyOnline ? '#1F9D6B' : '#101A36'}; font-weight:700;">
                   ${escapeHtml(post.isTentative ? 'Tentative' : st.badgeLabel)}
                 </span>
               </div>
               <h2 style="font-size:17px; font-weight:700; line-height:1.35; margin:0 0 8px 0;">
-                <a href="/post/${escapeHtml(post.id)}" style="color:#0f172a; text-decoration:none;">
+                <a href="/post/${escapeHtml(post.id)}" style="color:#101A36; text-decoration:none;">
                   ${escapeHtml(post.title)}
                 </a>
               </h2>
-              <p style="font-size:13px; color:#475569; line-height:1.5; margin:0 0 12px 0;">
+              <p style="font-size:14px; color:#475569; line-height:1.5; margin:0 0 12px 0;">
                 ${escapeHtml((post.shortInfo || '').slice(0, 130))}...
               </p>
             </div>
-            <div style="border-top:1px solid #f1f5f9; padding-top:12px; display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; font-size:12px;">
-              <span style="color:#64748b;">
+            <div style="border-top:1px solid #F1F5F9; padding-top:12px; display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; font-size:13px;">
+              <span style="color:#475569;">
                 ${post.lastDate ? `Due / Schedule: <strong>${escapeHtml(post.lastDate)}</strong>` : `Date: <strong>${escapeHtml(post.documentDate || post.postDate)}</strong>`}
               </span>
               <div style="display:flex; gap:10px; align-items:center;">
-                <a href="${escapeHtml(post.officialLink)}" target="_blank" rel="noopener noreferrer" style="color:#0369a1; font-weight:600; text-decoration:none;">Official Link ↗</a>
-                <a href="/post/${escapeHtml(post.id)}" style="color:#1e56c8; font-weight:600; text-decoration:none;">View Details →</a>
+                <a href="${escapeHtml(post.officialLink)}" target="_blank" rel="noopener noreferrer" style="color:#101A36; font-weight:600; text-decoration:none;">Official Link ↗</a>
+                <a href="/post/${escapeHtml(post.id)}" style="color:#1F9D6B; font-weight:700; text-decoration:none;">View Details →</a>
               </div>
             </div>
           </article>
@@ -1022,23 +1240,23 @@ export function renderCategorySubstantiveHtml(
 
     return `
     ${renderPrimaryCategoryNavHtml('education')}
-    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
-      <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
-        <a href="/" style="color:#1e56c8; text-decoration:none;">Home</a>
+    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:16px; color:#101A36; line-height:1.6;">
+      <nav aria-label="Breadcrumb" style="font-size:14px; color:#475569; margin-bottom:16px;">
+        <a href="/" style="color:#101A36; font-weight:600; text-decoration:none;">Home</a>
         <span style="margin:0 6px;">/</span>
-        <span style="color:#0f172a; font-weight:600;">Education &amp; Admissions</span>
+        <span style="color:#101A36; font-weight:700;">Education &amp; Admissions</span>
       </nav>
 
-      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:16px; margin-bottom:24px;">
-        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Education &amp; Admissions</h1>
-        <p style="font-size:15px; color:#475569; margin:0 0 14px 0; max-width:850px;">
+      <header style="border-bottom:1px solid #E2E8F0; padding-bottom:16px; margin-bottom:24px;">
+        <h1 style="font-size:28px; font-weight:800; color:#101A36; margin:0 0 8px 0;">Education &amp; Admissions</h1>
+        <p style="font-size:16px; color:#475569; margin:0 0 14px 0; max-width:850px;">
           Official University of Kashmir, Cluster University Srinagar and IGNOU admissions, re-registration, examination forms, date sheets and scholarship notices.
         </p>
-        <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-          <span style="font-size:14px; color:#0c4a6e;">
+        <div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <span style="font-size:14px; color:#101A36;">
             <strong>IGNOU Student Corner:</strong> ODL, Online, GOAL &amp; E-Vidya Bharti circulars (${ignouCount} notices)
           </span>
-          <a href="/education/ignou" style="font-size:13px; font-weight:700; color:#0369a1; text-decoration:none;">IGNOU Latest Notifications →</a>
+          <a href="/education/ignou" style="font-size:14px; font-weight:700; color:#1F9D6B; text-decoration:none;">IGNOU Latest Notifications →</a>
         </div>
       </header>
 
@@ -1046,26 +1264,26 @@ export function renderCategorySubstantiveHtml(
         ${eduPosts.map(post => {
           const st = computeSarkariStatus(post);
           return `
-          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:18px; display:flex; flex-direction:column; justify-content:space-between;">
+          <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:18px; display:flex; flex-direction:column; justify-content:space-between;">
             <div>
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <span style="font-size:11px; font-weight:700; color:#7c3aed; background:#f5f3ff; padding:3px 8px; border-radius:4px; text-transform:uppercase;">
+                <span style="font-size:11px; font-weight:700; color:#101A36; background:#F6F8FC; border:1px solid #E2E8F0; padding:3px 8px; border-radius:4px; text-transform:uppercase;">
                   ${escapeHtml(isIgnouItem(post) ? 'IGNOU' : post.category?.replace(/_/g, ' '))}
                 </span>
-                <span style="font-size:12px; color:#0f172a; font-weight:600;">${post.lastDate ? `Date: ${escapeHtml(post.lastDate)}` : `Published: ${escapeHtml(post.postDate)}`}</span>
+                <span style="font-size:12px; color:#101A36; font-weight:600;">${post.lastDate ? `Date: ${escapeHtml(post.lastDate)}` : `Published: ${escapeHtml(post.postDate)}`}</span>
               </div>
               <h2 style="font-size:17px; font-weight:700; line-height:1.35; margin:0 0 8px 0;">
-                <a href="/post/${escapeHtml(post.id)}" style="color:#0f172a; text-decoration:none;">
+                <a href="/post/${escapeHtml(post.id)}" style="color:#101A36; text-decoration:none;">
                   ${escapeHtml(post.title)}
                 </a>
               </h2>
-              <p style="font-size:13px; color:#475569; line-height:1.5; margin:0 0 12px 0;">
+              <p style="font-size:14px; color:#475569; line-height:1.5; margin:0 0 12px 0;">
                 ${escapeHtml((post.shortInfo || '').slice(0, 120))}...
               </p>
             </div>
-            <div style="border-top:1px solid #f1f5f9; padding-top:12px; display:flex; justify-content:space-between; align-items:center; font-size:12px;">
-              <span style="color:${st.canApplyOnline ? '#047857' : '#7c3aed'}; font-weight:600;">${escapeHtml(st.badgeLabel)}</span>
-              <a href="/post/${escapeHtml(post.id)}" style="color:#1e56c8; font-weight:600; text-decoration:none;">
+            <div style="border-top:1px solid #F1F5F9; padding-top:12px; display:flex; justify-content:space-between; align-items:center; font-size:13px;">
+              <span style="color:${st.isUrgentUnder7Days ? '#B91C1C' : st.canApplyOnline ? '#1F9D6B' : '#475569'}; font-weight:700;">${escapeHtml(st.badgeLabel)}</span>
+              <a href="/post/${escapeHtml(post.id)}" style="color:#1F9D6B; font-weight:700; text-decoration:none;">
                 View Details →
               </a>
             </div>
@@ -1088,35 +1306,50 @@ export function renderCategorySubstantiveHtml(
 
     return `
     ${renderPrimaryCategoryNavHtml('schemes')}
-    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
-      <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
-        <a href="/" style="color:#1e56c8; text-decoration:none;">Home</a>
+    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:16px; color:#101A36; line-height:1.6;">
+      <nav aria-label="Breadcrumb" style="font-size:14px; color:#475569; margin-bottom:16px;">
+        <a href="/" style="color:#101A36; font-weight:600; text-decoration:none;">Home</a>
         <span style="margin:0 6px;">/</span>
-        <span style="color:#0f172a; font-weight:600;">Government Schemes</span>
+        <span style="color:#101A36; font-weight:700;">Government Schemes</span>
       </nav>
 
-      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:16px; margin-bottom:24px;">
-        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Government Schemes &amp; Citizen Guides</h1>
-        <p style="font-size:15px; color:#475569; margin:0; max-width:850px;">
+      <header style="border-bottom:1px solid #E2E8F0; padding-bottom:16px; margin-bottom:24px;">
+        <h1 style="font-size:28px; font-weight:800; color:#101A36; margin:0 0 8px 0;">Government Schemes &amp; Citizen Guides</h1>
+        <p style="font-size:16px; color:#475569; margin:0; max-width:850px;">
           Eligibility criteria, document checklists and application guides for PM-KISAN, Ayushman Bharat PM-JAY, PM Vishwakarma and citizen welfare programs.
         </p>
       </header>
 
+      <section style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px; margin-bottom:28px;">
+        ${GUIDE_ARTICLES.map(g => `
+          <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:18px;">
+            <div style="font-size:11px; font-weight:700; color:#1F9D6B; text-transform:uppercase; margin-bottom:6px;">${escapeHtml(g.category)} · ${escapeHtml(g.readTime)}</div>
+            <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 8px 0;">
+              <a href="/scheme/${escapeHtml(g.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(g.title)}</a>
+            </h2>
+            <p style="font-size:14px; color:#475569; line-height:1.5; margin:0 0 12px 0;">${escapeHtml(g.summary.slice(0, 120))}...</p>
+            <a href="/scheme/${escapeHtml(g.id)}" style="color:#1F9D6B; font-size:13px; font-weight:700; text-decoration:none;">Read Full Scheme Guide →</a>
+          </article>
+        `).join('')}
+      </section>
+
+      ${schemeServices.length > 0 ? `
       <section style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
         ${schemeServices.map(s => `
-          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:18px;">
-            <div style="font-size:11px; font-weight:600; color:#059669; text-transform:uppercase; margin-bottom:4px;">${escapeHtml(s.category)}</div>
-            <h2 style="font-size:16px; font-weight:700; color:#0f172a; margin:0 0 6px 0;">
-              <a href="/service/${escapeHtml(s.id)}" style="color:#0f172a; text-decoration:none;">${escapeHtml(s.name)}</a>
+          <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:18px;">
+            <div style="font-size:11px; font-weight:700; color:#1F9D6B; text-transform:uppercase; margin-bottom:4px;">${escapeHtml(s.category)}</div>
+            <h2 style="font-size:16px; font-weight:700; color:#101A36; margin:0 0 6px 0;">
+              <a href="/service/${escapeHtml(s.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(s.name)}</a>
             </h2>
-            <p style="font-size:13px; color:#64748b; line-height:1.4; margin:0 0 10px 0;">${escapeHtml(s.description)}</p>
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; border-top:1px solid #f1f5f9; padding-top:10px;">
-              <span style="font-weight:700; color:#0f172a;">${escapeHtml(s.price)}</span>
-              <a href="/service/${escapeHtml(s.id)}" style="color:#1e56c8; font-weight:600; text-decoration:none;">View Scheme Details →</a>
+            <p style="font-size:14px; color:#475569; line-height:1.4; margin:0 0 10px 0;">${escapeHtml(s.description)}</p>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; border-top:1px solid #F1F5F9; padding-top:10px;">
+              <span style="font-weight:700; color:#101A36;">${escapeHtml(s.price)}</span>
+              <a href="/service/${escapeHtml(s.id)}" style="color:#1F9D6B; font-weight:700; text-decoration:none;">View Scheme Details →</a>
             </div>
           </article>
         `).join('')}
       </section>
+      ` : ''}
     </main>
     `;
   }
@@ -1124,31 +1357,31 @@ export function renderCategorySubstantiveHtml(
   if (categoryType === 'services') {
     return `
     ${renderPrimaryCategoryNavHtml('services')}
-    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
-      <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
-        <a href="/" style="color:#1e56c8; text-decoration:none;">Home</a>
+    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:16px; color:#101A36; line-height:1.6;">
+      <nav aria-label="Breadcrumb" style="font-size:14px; color:#475569; margin-bottom:16px;">
+        <a href="/" style="color:#101A36; font-weight:600; text-decoration:none;">Home</a>
         <span style="margin:0 6px;">/</span>
-        <span style="color:#0f172a; font-weight:600;">CSC E-Services</span>
+        <span style="color:#101A36; font-weight:700;">CSC E-Services</span>
       </nav>
 
-      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:16px; margin-bottom:24px;">
-        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">CSC E-Services</h1>
-        <p style="font-size:15px; color:#475569; margin:0; max-width:850px;">
+      <header style="border-bottom:1px solid #E2E8F0; padding-bottom:16px; margin-bottom:24px;">
+        <h1 style="font-size:28px; font-weight:800; color:#101A36; margin:0 0 8px 0;">CSC E-Services</h1>
+        <p style="font-size:16px; color:#475569; margin:0; max-width:850px;">
           Complete directory of assisted citizen e-services: PAN card registration, Aadhaar assistance, J&amp;K domicile certificates, income certificates and document services.
         </p>
       </header>
 
       <section style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
         ${services.map(s => `
-          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:18px;">
-            <div style="font-size:11px; font-weight:600; color:#0284c7; text-transform:uppercase; margin-bottom:4px;">${escapeHtml(s.category)}</div>
-            <h2 style="font-size:16px; font-weight:700; color:#0f172a; margin:0 0 6px 0;">
-              <a href="/service/${escapeHtml(s.id)}" style="color:#0f172a; text-decoration:none;">${escapeHtml(s.name)}</a>
+          <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:18px;">
+            <div style="font-size:11px; font-weight:700; color:#1F9D6B; text-transform:uppercase; margin-bottom:4px;">${escapeHtml(s.category)}</div>
+            <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">
+              <a href="/service/${escapeHtml(s.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(s.name)}</a>
             </h2>
-            <p style="font-size:13px; color:#64748b; line-height:1.4; margin:0 0 10px 0;">${escapeHtml(s.description)}</p>
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; border-top:1px solid #f1f5f9; padding-top:10px;">
-              <span style="font-weight:700; color:#0f172a;">${escapeHtml(s.price)}</span>
-              <a href="/service/${escapeHtml(s.id)}" style="color:#1e56c8; font-weight:600; text-decoration:none;">View Requirements →</a>
+            <p style="font-size:14px; color:#475569; line-height:1.45; margin:0 0 10px 0;">${escapeHtml(s.description)}</p>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; border-top:1px solid #F1F5F9; padding-top:10px;">
+              <span style="font-weight:700; color:#101A36;">${escapeHtml(s.price)}</span>
+              <a href="/service/${escapeHtml(s.id)}" style="color:#1F9D6B; font-weight:700; text-decoration:none;">View Requirements →</a>
             </div>
           </article>
         `).join('')}
@@ -1158,41 +1391,32 @@ export function renderCategorySubstantiveHtml(
   }
 
   if (categoryType === 'tools') {
-    const tools = [
-      { id: 'image-compressor', name: 'Image Compressor', desc: 'Compress JPG, PNG and WebP images to target KB sizes locally in your browser.' },
-      { id: 'passport-photo-maker', name: 'Passport Photo Maker', desc: 'Create 35x45 mm or 2x2 inch passport photographs and printable A4 sheets.' },
-      { id: 'signature-resizer', name: 'Signature Resizer', desc: 'Crop whitespace and scale candidate signatures to 10-20 KB for portal uploads.' },
-      { id: 'image-to-pdf', name: 'Image to PDF', desc: 'Combine marksheets, photos and identity scans into a clean multi-page PDF.' },
-      { id: 'pdf-merge', name: 'PDF Merge &amp; Split', desc: 'Merge multiple PDF certificates or extract specific page ranges with zero uploads.' },
-      { id: 'pdf-compressor', name: 'PDF Compressor', desc: 'Optimize PDF file sizes to meet recruitment and admission upload ceilings.' },
-    ];
-
     return `
     ${renderPrimaryCategoryNavHtml('tools')}
-    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
-      <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
-        <a href="/" style="color:#1e56c8; text-decoration:none;">Home</a>
+    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:16px; color:#101A36; line-height:1.6;">
+      <nav aria-label="Breadcrumb" style="font-size:14px; color:#475569; margin-bottom:16px;">
+        <a href="/" style="color:#101A36; font-weight:600; text-decoration:none;">Home</a>
         <span style="margin:0 6px;">/</span>
-        <span style="color:#0f172a; font-weight:600;">Document Tools</span>
+        <span style="color:#101A36; font-weight:700;">Document Tools</span>
       </nav>
 
-      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:16px; margin-bottom:24px;">
-        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Document Tools</h1>
-        <p style="font-size:15px; color:#475569; margin:0; max-width:850px;">
+      <header style="border-bottom:1px solid #E2E8F0; padding-bottom:16px; margin-bottom:24px;">
+        <h1 style="font-size:28px; font-weight:800; color:#101A36; margin:0 0 8px 0;">Document Tools</h1>
+        <p style="font-size:16px; color:#475569; margin:0; max-width:850px;">
           Free browser-based photo resizers, signature crop tools, PDF compressors and image converters processed 100% locally on your device.
         </p>
       </header>
 
       <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:18px;">
-        ${tools
+        ${TOOLS_LIST
           .map(
             (t) => `
-          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:20px;">
-            <h2 style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 8px 0;">
-              <a href="/tools/${t.id}" style="color:#0f172a; text-decoration:none;">${t.name}</a>
+          <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:20px;">
+            <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">
+              <a href="/tools/${escapeHtml(t.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(t.name)}</a>
             </h2>
-            <p style="font-size:13px; color:#475569; line-height:1.5; margin:0 0 12px 0;">${t.desc}</p>
-            <a href="/tools/${t.id}" style="font-size:13px; font-weight:600; color:#1e56c8; text-decoration:none;">Open Tool →</a>
+            <p style="font-size:14px; color:#475569; line-height:1.5; margin:0 0 12px 0;">${escapeHtml(t.shortDescription)}</p>
+            <a href="/tools/${escapeHtml(t.id)}" style="font-size:14px; font-weight:700; color:#1F9D6B; text-decoration:none;">Open Tool →</a>
           </article>
         `
           )

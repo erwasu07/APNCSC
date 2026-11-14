@@ -18,12 +18,14 @@ import {
   RelatedContentItem,
 } from './shared/ContentDesignSystem';
 import WhatsAppChannelPopup, { WhatsAppChannelInPostCard } from './shared/WhatsAppChannelPopup';
+import { HelpApplyingCard } from './ui/HelpApplyingCard';
 
 interface ServiceDedicatedPageViewProps {
   service: ServiceItem;
   onBack: () => void;
   onApplyService: (serviceName: string) => void;
   onShare: (service: ServiceItem) => void;
+  onNavigateRoute?: (path: string) => void;
 }
 
 export default function ServiceDedicatedPageView({
@@ -31,6 +33,7 @@ export default function ServiceDedicatedPageView({
   onBack,
   onApplyService,
   onShare,
+  onNavigateRoute,
 }: ServiceDedicatedPageViewProps) {
   const [activeSectionId, setActiveSectionId] = useState<string>('service-overview');
 
@@ -198,11 +201,16 @@ export default function ServiceDedicatedPageView({
         categoryLabel: CATEGORY_LABELS[rel.category] || 'Citizen Service',
         metaText: `Fee: ${rel.price} · Estimate: ${rel.estimatedTime}`,
         onClick: () => {
-          window.location.hash = `#service/${rel.id}`;
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          if (onNavigateRoute) {
+            onNavigateRoute(`/service/${rel.id}`);
+          } else {
+            window.history.pushState(null, '', `/service/${rel.id}`);
+            window.dispatchEvent(new PopStateEvent('popstate'));
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
         },
       }));
-  }, [service]);
+  }, [service, onNavigateRoute]);
 
   const handleRequestAssistance = () => {
     onApplyService(service.name);
@@ -291,7 +299,12 @@ export default function ServiceDedicatedPageView({
           },
         ]}
         onTrackApplication={() => {
-          window.location.hash = '#track';
+          if (onNavigateRoute) {
+            onNavigateRoute('/track');
+          } else {
+            window.history.pushState(null, '', '/track');
+            window.dispatchEvent(new PopStateEvent('popstate'));
+          }
         }}
         assistanceDisclaimer="CSC DOST provides document preparation and assisted online filing. You may also apply independently on the official government portal linked above."
       />
@@ -314,9 +327,9 @@ export default function ServiceDedicatedPageView({
         title="Service Overview"
         subtitle="What this citizen service covers and how it is processed."
       >
-        <p className="text-xs sm:text-sm text-[#102A43] leading-relaxed">{service.description}</p>
+        <p className="text-base text-[#101A36] leading-relaxed">{service.description}</p>
         {remainder && (
-          <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">{remainder}</p>
+          <p className="text-base text-[#526075] leading-relaxed">{remainder}</p>
         )}
         <KeyValueRows
           rows={[
@@ -470,9 +483,14 @@ export default function ServiceDedicatedPageView({
           <button
             type="button"
             onClick={() => {
-              window.location.hash = '#track';
+              if (onNavigateRoute) {
+                onNavigateRoute('/track');
+              } else {
+                window.history.pushState(null, '', '/track');
+                window.dispatchEvent(new PopStateEvent('popstate'));
+              }
             }}
-            className="min-h-[40px] px-4 py-2 bg-[#F6F8FC] hover:bg-blue-50 text-[#102A43] hover:text-[#2563EB] border border-[#E2E8F0] rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+            className="min-h-[44px] px-4 py-2 bg-[#F6F8FC] hover:bg-slate-200 text-[#101A36] border border-[#DCE3EE] rounded-xl text-sm font-semibold transition-colors cursor-pointer"
           >
             Open Application Status Tracker →
           </button>
@@ -494,6 +512,10 @@ export default function ServiceDedicatedPageView({
         assistanceButtonLabel="Request Assistance"
         onRequestAssistance={handleRequestAssistance}
       />
+
+      <div className="my-5">
+        <HelpApplyingCard contextTitle={service.name} />
+      </div>
 
       {/* WhatsApp Channel Popup Modal & Floating Badge */}
       <WhatsAppChannelPopup postTitle={service.name} />

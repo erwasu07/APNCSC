@@ -1191,56 +1191,56 @@ export default function SarkariResultDesk({
   const selectedItemStatus = selectedItem ? computeSarkariStatus(selectedItem) : null;
 
   return (
-    <section id="sarkari-portal-section" className="pt-0 pb-12 md:pb-16 bg-slate-50 dark:bg-slate-950 transition-colors duration-300 w-full">
+    <section id="sarkari-portal-section" className="pt-0 pb-12 md:pb-16 bg-[#F6F8FC] transition-colors duration-300 w-full">
       
       {/* 1. SUBTLE UPDATE STRIP */}
-      <div className="bg-white border-b border-[#E4E7EC] py-2 px-3 sm:px-4 w-full mb-6 sm:mb-8 text-[#172033]">
-        <div className="flex max-w-7xl mx-auto items-center justify-between gap-3 text-xs">
+      <div className="bg-white border-b border-[#E2E8F0] py-2.5 px-3 sm:px-4 w-full mb-6 sm:mb-8 text-[#101A36]">
+        <div className="flex max-w-7xl mx-auto items-center justify-between gap-3 text-xs sm:text-sm">
           <div className="flex items-center gap-2.5 flex-1 min-w-0 overflow-hidden">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#EFF4FF] border border-[#D1E0FF] rounded-md text-[#155EEF] font-semibold text-xs shrink-0 select-none">
-              <span className="w-2 h-2 rounded-full bg-[#155EEF]" aria-hidden="true" />
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#101A36] border border-[#101A36] rounded-md text-white font-semibold text-xs shrink-0 select-none">
+              <span className="w-2 h-2 rounded-full bg-[#F5A623]" aria-hidden="true" />
               <span>Latest updates</span>
             </div>
-            <div className="overflow-hidden whitespace-nowrap text-xs text-[#172033] flex-1 relative group">
+            <div className="overflow-hidden whitespace-nowrap text-xs sm:text-sm text-[#101A36] flex-1 relative group">
               <div className="animate-marquee whitespace-nowrap group-hover:[animation-play-state:paused] active:[animation-play-state:paused] flex items-center">
                 {/* Primary Ticker Items Copy */}
-                <div className="inline-flex items-center gap-4 sm:gap-6 pr-4 sm:pr-6 shrink-0">
+                <div className="inline-flex items-center gap-4 sm:gap-6 pe-4 sm:pe-6 shrink-0">
                   {latestTickerItems.map(({ item }) => (
                     <React.Fragment key={`ticker-1-${item.id}`}>
                       <button
                         type="button"
                         onClick={() => handleItemClick(item)}
-                        className="inline-flex items-center gap-1.5 hover:text-[#155EEF] hover:underline cursor-pointer text-left font-medium text-[#172033] transition-colors"
+                        className="inline-flex items-center gap-1.5 hover:text-[#1F9D6B] hover:underline cursor-pointer text-start font-medium text-[#101A36] transition-colors"
                       >
                         <span>{item.title}</span>
                         {item.isNew && (
-                          <span className="px-1.5 py-0.2 bg-slate-100 text-[#667085] border border-[#E4E7EC] rounded text-[9.5px] font-medium">
+                          <span className="px-1.5 py-0.5 bg-[#FEF3C7] text-[#101A36] border border-[#F5A623]/40 rounded text-[10px] font-bold">
                             NEW
                           </span>
                         )}
                       </button>
-                      <span className="text-[#667085]">•</span>
+                      <span className="text-[#94A3B8]">•</span>
                     </React.Fragment>
                   ))}
                 </div>
                 {/* Duplicate Copy for Seamless Infinite Scrolling */}
-                <div className="inline-flex items-center gap-4 sm:gap-6 pr-4 sm:pr-6 shrink-0" aria-hidden="true">
+                <div className="inline-flex items-center gap-4 sm:gap-6 pe-4 sm:pe-6 shrink-0" aria-hidden="true">
                   {latestTickerItems.map(({ item }) => (
                     <React.Fragment key={`ticker-2-${item.id}`}>
                       <button
                         type="button"
                         onClick={() => handleItemClick(item)}
                         tabIndex={-1}
-                        className="inline-flex items-center gap-1.5 hover:text-[#155EEF] hover:underline cursor-pointer text-left font-medium text-[#172033] transition-colors"
+                        className="inline-flex items-center gap-1.5 hover:text-[#1F9D6B] hover:underline cursor-pointer text-start font-medium text-[#101A36] transition-colors"
                       >
                         <span>{item.title}</span>
                         {item.isNew && (
-                          <span className="px-1.5 py-0.2 bg-slate-100 text-[#667085] border border-[#E4E7EC] rounded text-[9.5px] font-medium">
+                          <span className="px-1.5 py-0.5 bg-[#FEF3C7] text-[#101A36] border border-[#F5A623]/40 rounded text-[10px] font-bold">
                             NEW
                           </span>
                         )}
                       </button>
-                      <span className="text-[#667085]">•</span>
+                      <span className="text-[#94A3B8]">•</span>
                     </React.Fragment>
                   ))}
                 </div>
@@ -1255,14 +1255,14 @@ export default function SarkariResultDesk({
         <div id="sarkari-board" className="max-w-7xl mx-auto mb-6 scroll-mt-24 space-y-2">
           {mode === 'education' && educationSubRoute ? (
             <>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#172033] tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#101A36] tracking-tight">
                 IGNOU Latest Notifications
               </h1>
-              <p className="text-xs sm:text-sm text-[#667085] leading-relaxed">
+              <p className="text-base text-[#475569] leading-relaxed">
                 Find IGNOU admission, re-registration, assignment, exam form, datesheet, hall ticket and result updates with official links on CSC DOST.
               </p>
-              <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px]">
-                <span className="px-2 py-0.5 rounded-md bg-sky-50 text-sky-800 border border-sky-200 font-semibold">
+              <div className="flex flex-wrap items-center gap-2.5 pt-1 text-xs sm:text-sm">
+                <span className="px-2.5 py-0.5 rounded-md bg-[#F6F8FC] text-[#101A36] border border-[#E2E8F0] font-semibold">
                   Learner Streams: ODL · Online · GOAL · E-Vidya Bharti · RC Srinagar
                 </span>
                 <a
@@ -1273,7 +1273,7 @@ export default function SarkariResultDesk({
                       onNavigateRoute('/education');
                     }
                   }}
-                  className="text-xs font-semibold text-[#155EEF] hover:underline"
+                  className="text-sm font-semibold text-[#101A36] hover:text-[#1F9D6B] hover:underline"
                 >
                   ← View all Education &amp; Admissions
                 </a>
@@ -1281,10 +1281,10 @@ export default function SarkariResultDesk({
             </>
           ) : mode === 'education' ? (
             <>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#172033] tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#101A36] tracking-tight">
                 Education &amp; Admissions
               </h1>
-              <p className="text-xs sm:text-sm text-[#667085]">
+              <p className="text-base text-[#475569]">
                 Official IGNOU, University of Kashmir and Cluster University admissions, re-registration, examination forms, date sheets and scholarship notices.
               </p>
               <div className="pt-1">
@@ -1296,7 +1296,7 @@ export default function SarkariResultDesk({
                       onNavigateRoute('/education/ignou');
                     }
                   }}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#155EEF] hover:underline"
+                  className="inline-flex items-center gap-1.5 text-sm font-bold text-[#101A36] hover:text-[#1F9D6B] hover:underline"
                 >
                   <span>Browse dedicated IGNOU Latest Notifications page</span>
                   <span aria-hidden="true">→</span>
@@ -1305,19 +1305,19 @@ export default function SarkariResultDesk({
             </>
           ) : mode === 'jobs' ? (
             <>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#172033] tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#101A36] tracking-tight">
                 Jobs &amp; Recruitment
               </h1>
-              <p className="text-xs sm:text-sm text-[#667085]">
+              <p className="text-base text-[#475569]">
                 Latest verified JKSSB, Banking, Indian Army, SSC and RRB recruitment notifications across J&amp;K and India.
               </p>
             </>
           ) : (
             <>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#172033] tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#101A36] tracking-tight">
                 Jobs &amp; Recruitment
               </h2>
-              <p className="text-xs sm:text-sm text-[#667085]">
+              <p className="text-base text-[#475569]">
                 Find the latest recruitment, railway, defence and education updates.
               </p>
             </>
@@ -1326,7 +1326,7 @@ export default function SarkariResultDesk({
 
         {/* 3. CATEGORY NAVIGATION (Clean Chips, Mobile Horizontal-Scroll) */}
         <div className="max-w-7xl mx-auto mb-6">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar text-xs">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar text-xs sm:text-sm">
             {[
               { id: 'all', label: 'All', icon: Briefcase },
               { id: 'jkssb', label: 'JKSSB', icon: Briefcase },
@@ -1357,17 +1357,17 @@ export default function SarkariResultDesk({
                     setActiveTab(cat.id as any);
                     setItemsLimit(10);
                   }}
-                  className={`px-3.5 py-2 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap border select-none ${
+                  className={`min-h-[40px] px-3.5 py-2 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap border select-none ${
                     isActive
-                      ? 'bg-[#155EEF] text-white border-[#155EEF] shadow-2xs font-semibold'
-                      : 'bg-white text-[#172033] border-[#E4E7EC] hover:bg-[#F8FAFC]'
+                      ? 'bg-[#101A36] text-white border-[#101A36] shadow-2xs font-semibold'
+                      : 'bg-white text-[#101A36] border-[#E2E8F0] hover:bg-[#F6F8FC]'
                   }`}
                 >
-                  <IconComponent className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-[#667085]'}`} />
+                  <IconComponent className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-[#F5A623]' : 'text-[#64748B]'}`} />
                   <span>{cat.label}</span>
                   {cat.id !== 'all' && (
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                      isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-[#667085]'
+                    <span className={`text-[11px] px-1.5 py-0.5 rounded-full font-mono ${
+                      isActive ? 'bg-white/20 text-white' : 'bg-[#F6F8FC] text-[#475569]'
                     }`}>
                       {modeScopedData.filter(i => matchesCategoryTab(i, cat.id)).length}
                     </span>
@@ -1403,22 +1403,22 @@ export default function SarkariResultDesk({
               <div className="lg:col-span-8 space-y-4">
                 
                 {/* List Header & Quick Filter */}
-                <div className="bg-white border border-[#E4E7EC] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
                   <div>
-                    <h2 className="text-sm sm:text-base font-bold text-[#172033]">
+                    <h2 className="text-base sm:text-lg font-bold text-[#101A36]">
                       {activeTab === 'ignou'
                         ? 'IGNOU Student Notifications'
                         : activeTab === 'all'
                         ? (mode === 'education' ? 'Latest Education & Admission Notices' : 'Latest Recruitment')
                         : SARKARI_CATEGORIES[activeTab as keyof typeof SARKARI_CATEGORIES]?.label || 'Updates'}
                     </h2>
-                    <p className="text-xs text-[#667085]">
+                    <p className="text-xs sm:text-sm text-[#475569]">
                       Showing {displayedItems.length} of {totalFilteredCount} verified updates
                     </p>
                   </div>
 
-                  <div className="relative w-full sm:w-60">
-                    <Search className="w-3.5 h-3.5 text-[#667085] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <div className="relative w-full sm:w-64">
+                    <Search className="w-4 h-4 text-[#64748B] absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
                       type="text"
                       value={searchQuery}
@@ -1427,13 +1427,13 @@ export default function SarkariResultDesk({
                         setItemsLimit(10);
                       }}
                       placeholder="Search recruitment..."
-                      className="w-full pl-8 pr-3 py-1.5 bg-[#F8FAFC] border border-[#E4E7EC] focus:border-[#155EEF] rounded-lg text-xs text-[#172033] placeholder-[#667085] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#155EEF]"
+                      className="w-full min-h-[40px] ps-9 pe-3 py-1.5 bg-[#F6F8FC] border border-[#E2E8F0] focus:border-[#101A36] rounded-lg text-sm text-[#101A36] placeholder-[#64748B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#101A36]/15"
                     />
                     {searchQuery && (
                       <button
                         type="button"
                         onClick={() => setSearchQuery('')}
-                        className="text-[10px] text-[#667085] hover:text-[#172033] absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer font-medium"
+                        className="text-xs text-[#64748B] hover:text-[#101A36] absolute end-2.5 top-1/2 -translate-y-1/2 cursor-pointer font-medium"
                       >
                         Clear
                       </button>
@@ -1449,15 +1449,15 @@ export default function SarkariResultDesk({
                       const isAdmission = isEducationSarkariItem(item);
                       const st = computeSarkariStatus(item);
                       const badgeColorClass =
-                        st.badgeTone === 'emerald'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          : st.badgeTone === 'rose'
-                          ? 'bg-rose-50 text-rose-700 border-rose-200'
+                        st.isUrgentUnder7Days || st.badgeTone === 'rose'
+                          ? 'bg-[#FEF2F2] text-[#B91C1C] border-[#FECACA]'
+                          : st.badgeTone === 'emerald'
+                          ? 'bg-[#ECFDF5] text-[#146C48] border-[#A7F3D0]'
                           : st.badgeTone === 'amber'
-                          ? 'bg-amber-50 text-amber-800 border-amber-200'
+                          ? 'bg-[#FEF3C7] text-[#101A36] border-[#FDE68A]'
                           : st.badgeTone === 'blue'
-                          ? 'bg-blue-50 text-blue-700 border-blue-200'
-                          : 'bg-slate-100 text-slate-600 border-slate-200';
+                          ? 'bg-[#F6F8FC] text-[#101A36] border-[#CBD5E1]'
+                          : 'bg-[#F1F5F9] text-[#475569] border-[#E2E8F0]';
                       return (
                         <ColourAccentCard
                           key={item.id}
@@ -1474,7 +1474,7 @@ export default function SarkariResultDesk({
                           }
                           organisation={getOrgName(item)}
                           statusBadge={
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-bold border ${badgeColorClass}`}>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold border ${badgeColorClass}`}>
                               {st.badgeLabel}
                             </span>
                           }
@@ -1520,16 +1520,16 @@ export default function SarkariResultDesk({
                       );
                     })
                   ) : (
-                    <div className="bg-white border border-[#E4E7EC] rounded-xl p-8 text-center space-y-2">
-                      <p className="text-sm font-semibold text-[#172033]">No recruitment updates found</p>
-                      <p className="text-xs text-[#667085]">Try adjusting your search query or selecting a different category.</p>
+                    <div className="bg-white border border-[#E2E8F0] rounded-xl p-8 text-center space-y-2">
+                      <p className="text-base font-semibold text-[#101A36]">No recruitment updates found</p>
+                      <p className="text-sm text-[#475569]">Try adjusting your search query or selecting a different category.</p>
                       <button
                         type="button"
                         onClick={() => {
                           setSearchQuery('');
                           setActiveTab('all');
                         }}
-                        className="mt-2 px-3 py-1.5 bg-[#EFF4FF] text-[#155EEF] text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors"
+                        className="mt-2 px-4 py-2 bg-[#101A36] text-white text-sm font-semibold rounded-lg hover:bg-[#192852] transition-colors cursor-pointer"
                       >
                         Reset filters
                       </button>
@@ -1543,7 +1543,7 @@ export default function SarkariResultDesk({
                     <button
                       type="button"
                       onClick={() => setItemsLimit((prev) => prev + 10)}
-                      className="px-5 py-2.5 bg-white hover:bg-[#F8FAFC] text-[#155EEF] border border-[#E4E7EC] text-xs font-semibold rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                      className="px-5 py-2.5 bg-white hover:bg-[#F6F8FC] text-[#101A36] border border-[#E2E8F0] text-sm font-semibold rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
                     >
                       <span>View more updates ({totalFilteredCount - displayedItems.length} remaining) →</span>
                     </button>
@@ -1551,14 +1551,14 @@ export default function SarkariResultDesk({
                 )}
 
                 {activeTab !== 'all' && (
-                  <div className="pt-2 text-center sm:text-left">
+                  <div className="pt-2 text-center sm:text-start">
                     <button
                       type="button"
                       onClick={() => {
                         setActiveTab('all');
                         setItemsLimit(10);
                       }}
-                      className="text-xs font-semibold text-[#155EEF] hover:underline inline-flex items-center gap-1 cursor-pointer"
+                      className="text-sm font-semibold text-[#101A36] hover:text-[#1F9D6B] hover:underline inline-flex items-center gap-1 cursor-pointer"
                     >
                       <span>← Back to all recruitment categories</span>
                     </button>
@@ -1571,11 +1571,11 @@ export default function SarkariResultDesk({
               <aside className="lg:col-span-4 space-y-5">
                 
                 {/* Popular Categories Card */}
-                <div className="bg-white border border-[#E4E7EC] rounded-xl p-5 space-y-3 shadow-2xs">
-                  <h3 className="text-xs font-bold text-[#172033] uppercase tracking-wider">
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 space-y-3 shadow-2xs">
+                  <h3 className="text-xs font-bold text-[#101A36] uppercase tracking-wider">
                     Popular Categories
                   </h3>
-                  <div className="divide-y divide-[#E4E7EC] text-xs">
+                  <div className="divide-y divide-[#E2E8F0] text-sm">
                     {popularCategoriesList.map((cat) => {
                       const isCurrent = activeTab === cat.id;
                       return (
@@ -1588,17 +1588,17 @@ export default function SarkariResultDesk({
                             const el = document.getElementById('sarkari-board');
                             if (el) el.scrollIntoView({ behavior: 'smooth' });
                           }}
-                          className={`w-full py-2.5 flex items-center justify-between text-left transition-colors cursor-pointer group ${
-                            isCurrent ? 'text-[#155EEF] font-bold' : 'text-[#172033] hover:text-[#155EEF]'
+                          className={`w-full py-2.5 flex items-center justify-between text-start transition-colors cursor-pointer group ${
+                            isCurrent ? 'text-[#1F9D6B] font-bold' : 'text-[#101A36] hover:text-[#1F9D6B]'
                           }`}
                         >
                           <span className="flex items-center gap-2">
-                            <span className={`w-1.5 h-1.5 rounded-full ${isCurrent ? 'bg-[#155EEF]' : 'bg-[#E4E7EC] group-hover:bg-[#155EEF]'}`} />
+                            <span className={`w-2 h-2 rounded-full ${isCurrent ? 'bg-[#1F9D6B]' : 'bg-[#CBD5E1] group-hover:bg-[#1F9D6B]'}`} />
                             <span>{cat.label}</span>
                           </span>
                           <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-[#667085] font-mono">({cat.count})</span>
-                            <ArrowRight className="w-3.5 h-3.5 text-[#667085] group-hover:text-[#155EEF] group-hover:translate-x-0.5 transition-all" />
+                            <span className="text-xs text-[#64748B] font-mono">({cat.count})</span>
+                            <ArrowRight className="w-3.5 h-3.5 text-[#64748B] group-hover:text-[#1F9D6B] transition-all" />
                           </div>
                         </button>
                       );
@@ -1607,17 +1607,17 @@ export default function SarkariResultDesk({
                 </div>
 
                 {/* Verified Official Portals Card */}
-                <div className="bg-white border border-[#E4E7EC] rounded-xl p-5 space-y-3 shadow-2xs">
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 space-y-3 shadow-2xs">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-bold text-[#172033] uppercase tracking-wider">
+                    <h3 className="text-xs font-bold text-[#101A36] uppercase tracking-wider">
                       Official Portals
                     </h3>
-                    <span className="text-[10px] text-[#667085]">Direct Sources</span>
+                    <span className="text-xs text-[#64748B]">Direct Sources</span>
                   </div>
-                  <p className="text-xs text-[#667085] leading-relaxed">
+                  <p className="text-sm text-[#475569] leading-relaxed">
                     Submit applications and download original gazette notices directly from administering bodies:
                   </p>
-                  <div className="space-y-1.5 pt-1 text-xs">
+                  <div className="space-y-1.5 pt-1 text-sm">
                     {[
                       { label: 'JKSSB Portal', url: 'https://jkssb.nic.in' },
                       { label: 'Join Indian Army', url: 'https://joinindianarmy.nic.in' },
@@ -1632,23 +1632,23 @@ export default function SarkariResultDesk({
                         href={portal.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-between p-2 rounded-lg hover:bg-[#F8FAFC] text-[#172033] hover:text-[#155EEF] transition-colors border border-transparent hover:border-[#E4E7EC]"
+                        className="flex items-center justify-between p-2 rounded-lg hover:bg-[#F6F8FC] text-[#101A36] hover:text-[#1F9D6B] transition-colors border border-transparent hover:border-[#E2E8F0]"
                       >
                         <span className="font-medium truncate">{portal.label}</span>
-                        <ExternalLink className="w-3.5 h-3.5 text-[#667085] shrink-0" />
+                        <ExternalLink className="w-3.5 h-3.5 text-[#64748B] shrink-0" />
                       </a>
                     ))}
                   </div>
                 </div>
 
                 {/* Independent Verification Notice */}
-                <div className="bg-[#F8FAFC] border border-[#E4E7EC] rounded-xl p-4 text-xs text-[#667085] space-y-1.5">
-                  <div className="flex items-center gap-1.5 text-[#172033] font-semibold">
-                    <Info className="w-4 h-4 text-[#155EEF]" />
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 text-sm text-[#475569] space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-[#101A36] font-semibold">
+                    <Info className="w-4 h-4 text-[#F5A623]" />
                     <span>Independent Verification Notice</span>
                   </div>
-                  <p className="leading-relaxed">
-                    CSC DOST is an independent citizen digital assistance desk. Candidates are advised to cross-check eligibility and closing dates with the official notification published by the respective board.
+                  <p className="leading-relaxed text-sm">
+                    CSC DOST is an independent citizen digital assistance desk, not a government website. Always cross-check eligibility and closing dates on the official board portal.
                   </p>
                 </div>
 
@@ -1666,8 +1666,8 @@ export default function SarkariResultDesk({
             className="bg-white rounded-3xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl border border-slate-200 transform scale-100 transition-all duration-300"
             id={`sarkari-detail-modal-${selectedItem.id}`}
           >
-            {/* Top Breadcrumb & Clean High-Contrast Light/Blue Header Banner */}
-            <div className="px-5 sm:px-8 py-4 sm:py-5 border-b border-slate-200 relative bg-gradient-to-r from-[#172554] via-[#1e3a8a] to-[#1e1b4b] text-white shrink-0 shadow-sm">
+            {/* Top Breadcrumb & Clean High-Contrast Navy Header Banner */}
+            <div className="px-5 sm:px-8 py-4 sm:py-5 border-b border-slate-200 relative bg-[#101A36] text-white shrink-0 shadow-sm">
               <div className="space-y-2 pr-10">
                 <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-slate-200">
                   <span className="font-bold text-amber-300">Sarkari Desk</span>
@@ -1920,7 +1920,7 @@ export default function SarkariResultDesk({
                 <button
                   type="button"
                   onClick={() => setSelectedItem(null)}
-                  className="px-4 sm:px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-extrabold uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-slate-300 flex items-center gap-1.5"
+                  className="px-4 sm:px-5 py-2.5 bg-[#F6F8FC] hover:bg-slate-200 text-[#101A36] text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer border border-[#E2E8F0] flex items-center gap-1.5"
                   id="sarkari-post-close-btn"
                 >
                   <X className="w-4 h-4" />
@@ -1930,7 +1930,7 @@ export default function SarkariResultDesk({
                 <button
                   type="button"
                   onClick={() => handleShareSarkari(selectedItem)}
-                  className="px-4 sm:px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-2 shadow-sm hover:scale-[1.01]"
+                  className="px-4 sm:px-5 py-2.5 bg-[#F5A623] hover:bg-[#e59819] text-[#101A36] text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer flex items-center gap-2 shadow-sm"
                   id="sarkari-post-share-btn"
                 >
                   <Share2 className="w-4 h-4" />
@@ -1942,7 +1942,7 @@ export default function SarkariResultDesk({
                 <button
                   type="button"
                   onClick={() => handleApplyNow(selectedItem)}
-                  className="px-6 sm:px-8 py-2.5 bg-[#172554] hover:bg-[#1e3a8a] text-white text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl transition-all flex items-center gap-2.5 shadow-md shadow-blue-900/20 cursor-pointer hover:scale-[1.01]"
+                  className="px-6 sm:px-8 py-2.5 bg-[#1F9D6B] hover:bg-[#19875B] text-white text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-2.5 shadow-sm cursor-pointer"
                   id="sarkari-post-apply-btn"
                 >
                   <span>Apply via CSC Desk</span>

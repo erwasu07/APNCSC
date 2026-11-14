@@ -4,23 +4,14 @@ import {
   GraduationCap,
   ShieldCheck,
   CreditCard,
-  FileText,
-  Calculator,
-  LayoutGrid,
-  BookOpen,
-  MapPin,
-  Bell,
-  ArrowRight,
-  ChevronDown,
-  ChevronUp,
+  Wrench,
   Search,
-  Phone,
+  MapPin,
+  ArrowRight,
+  Calculator,
   Clock,
-  MessageCircle,
-  Fingerprint,
-  CheckCircle,
-  HelpCircle,
-  ExternalLink,
+  Building2,
+  Users,
   X,
 } from 'lucide-react';
 import {
@@ -32,8 +23,14 @@ import {
 import { computeSarkariStatus } from '../utils/sarkariStatus';
 import { useSyncedSarkariPosts, sortByNewestPostDate } from '../utils/postDataSync';
 import { SERVICES_LIST, ServiceItem } from '../servicesData';
-import { GUIDE_ARTICLES } from './GuidesKnowledgeHub';
+import { GUIDE_ARTICLES } from '../data/guidesData';
 import { TOOLS_LIST } from './tools/toolsData';
+import { useLanguage } from '../contexts/LanguageContext';
+import { Card } from './ui/Card';
+import { Badge } from './ui/Badge';
+import { Section } from './ui/Section';
+import { HelpApplyingCard } from './ui/HelpApplyingCard';
+import { AdSlot } from './ui/AdSlot';
 
 export interface PortalHomepageProps {
   onOpenJob: (item: SarkariItem) => void;
@@ -48,81 +45,40 @@ export interface PortalHomepageProps {
 export default function PortalHomepage({
   onOpenJob,
   onOpenService,
-  onApplyService,
   onOpenGuide,
   onOpenTrack,
   onNavigateRoute,
 }: PortalHomepageProps) {
+  const { t, language } = useLanguage();
   const allPosts = useSyncedSarkariPosts();
-
-  // Tabs for Latest Updates: 'recruitment' | 'education' | 'schemes'
-  const [latestUpdatesTab, setLatestUpdatesTab] = useState<'recruitment' | 'education' | 'schemes'>('recruitment');
-  
-  // Collapsible FAQ state (collapsed by default)
-  const [isFaqOpen, setIsFaqOpen] = useState(false);
-
-  // Search state
   const [searchQuery, setSearchQuery] = useState('');
-  const [isSearchActive, setIsSearchActive] = useState(false);
 
-  // Listen for search events from Header and keyboard shortcuts
   useEffect(() => {
-    const handleFocusSearch = () => {
-      setIsSearchActive(true);
-      setTimeout(() => {
-        const el = document.getElementById('portal-inline-search-input');
-        if (el) el.focus();
-      }, 50);
-    };
-
     const handleHeaderSearch = (e: Event) => {
-      const customEvent = e as CustomEvent<{ query?: string; submit?: boolean }>;
-      const q = customEvent.detail?.query ?? '';
-      setSearchQuery(q);
-      setIsSearchActive(Boolean(q.trim()));
-    };
-
-    const handleHashChange = () => {
-      if (window.location.hash === '#faq') {
-        setIsFaqOpen(true);
-        setTimeout(() => {
-          const el = document.getElementById('faq-section');
-          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 80);
+      const custom = e as CustomEvent<{ query?: string }>;
+      if (typeof custom.detail?.query === 'string') {
+        setSearchQuery(custom.detail.query);
       }
     };
 
-    window.addEventListener('focus-csc-search', handleFocusSearch);
-    window.addEventListener('csc-header-search', handleHeaderSearch);
-    window.addEventListener('hashchange', handleHashChange);
-    
-    // Check initial hash
-    if (window.location.hash === '#faq') {
-      setIsFaqOpen(true);
-    }
+    const handleFocusSearch = () => {
+      const el = document.getElementById('portal-inline-search-input');
+      if (el) el.focus();
+    };
 
+    window.addEventListener('csc-header-search', handleHeaderSearch);
+    window.addEventListener('focus-csc-search', handleFocusSearch);
     return () => {
-      window.removeEventListener('focus-csc-search', handleFocusSearch);
       window.removeEventListener('csc-header-search', handleHeaderSearch);
-      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('focus-csc-search', handleFocusSearch);
     };
   }, []);
 
-  const handleNavigate = (path: string) => {
-    if (path === '#faq') {
-      setIsFaqOpen(true);
-      setTimeout(() => {
-        const el = document.getElementById('faq-section');
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 60);
-      return;
-    }
-
+  const navigate = (path: string) => {
     if (onNavigateRoute) {
       onNavigateRoute(path);
       return;
     }
-
     try {
       window.history.pushState(null, '', path);
       window.dispatchEvent(new PopStateEvent('popstate'));
@@ -131,113 +87,77 @@ export default function PortalHomepage({
     }
   };
 
-  // 9 Shortcuts in exact 3x3 row order
-  const exploreShortcuts = [
-    // Row 1
-    {
-      id: 'jobs',
-      title: 'Jobs & Recruitment',
-      shortDesc: 'Latest vacancies & notifications',
-      icon: Briefcase,
-      tintBg: 'bg-blue-50 text-[#1E56C8] border-blue-100/80',
-      path: '/jobs',
-    },
-    {
-      id: 'education',
-      title: 'Education & Admissions',
-      shortDesc: 'University admissions & datesheets',
-      icon: GraduationCap,
-      tintBg: 'bg-purple-50 text-[#7C3AED] border-purple-100/80',
-      path: '/education',
-    },
-    {
-      id: 'schemes',
-      title: 'Government Schemes',
-      shortDesc: 'Central & J&K citizen welfare',
-      icon: ShieldCheck,
-      tintBg: 'bg-emerald-50 text-[#059669] border-emerald-100/80',
-      path: '/schemes',
-    },
-    // Row 2
-    {
-      id: 'services',
-      title: 'CSC E-Services',
-      shortDesc: 'PAN, certificates & applications',
-      icon: CreditCard,
-      tintBg: 'bg-cyan-50 text-[#0284C7] border-cyan-100/80',
-      path: '/services',
-    },
-    {
-      id: 'tools',
-      title: 'Document Tools',
-      shortDesc: 'Photo resize, crop & PDF utils',
-      icon: FileText,
-      tintBg: 'bg-indigo-50 text-[#4F46E5] border-indigo-100/80',
-      path: '/tools',
-    },
-    {
-      id: 'calculators',
-      title: 'Citizen Calculators',
-      shortDesc: 'Age & fee eligibility calculator',
-      icon: Calculator,
-      tintBg: 'bg-amber-50 text-[#D97706] border-amber-100/80',
-      path: '/calculators',
-    },
-    // Row 3
-    {
-      id: 'categories',
-      title: 'Service Categories',
-      shortDesc: 'Browse by department & service type',
-      icon: LayoutGrid,
-      tintBg: 'bg-fuchsia-50 text-[#9333EA] border-fuchsia-100/80',
-      path: '/services',
-    },
-    {
-      id: 'guides',
-      title: 'Citizen Guides',
-      shortDesc: 'Step-by-step application walkthroughs',
-      icon: BookOpen,
-      tintBg: 'bg-rose-50 text-[#E11D48] border-rose-100/80',
-      path: '/schemes',
-    },
-    {
-      id: 'help-faqs',
-      title: 'Local Help & FAQs',
-      shortDesc: 'Centre address, phones & hours',
-      icon: MapPin,
-      tintBg: 'bg-teal-50 text-[#0D9488] border-teal-100/80',
-      path: '#faq',
-    },
-  ];
-
-  // Helper to format organization name for notices
   const getOrganisationLabel = (item: SarkariItem): string => {
-    if (isIgnouItem(item)) return 'Indira Gandhi National Open University (IGNOU)';
+    if (isIgnouItem(item)) return 'IGNOU';
     switch (item.category) {
       case 'jkssb':
-        return 'J&K Services Selection Board (JKSSB)';
+        return 'JKSSB';
       case 'banking_jobs':
-        return item.department || 'J&K Bank / Banking Careers';
+        return item.department || 'Banking / J&K Bank';
       case 'army_jobs':
         return 'Indian Army';
       case 'ssc_jobs':
-        return 'Staff Selection Commission (SSC)';
+        return 'SSC';
       case 'rrb_jobs':
-        return 'Railway Recruitment Board (RRB)';
+        return 'RRB';
       case 'cluster_univ':
         return 'Cluster University Srinagar';
       case 'exam_forms':
       case 'admissions':
         return 'University of Kashmir';
       case 'nta':
-        return 'National Testing Agency (NTA)';
+        return 'NTA';
       default:
-        return item.department || 'Official Public Notice';
+        return item.department || 'Public Notice';
     }
   };
 
-  // Up to 2 recent verified published notices per tab without duplicates (active open first, newest first)
-  const recruitmentNotices = useMemo(() => {
+  // Five required Category Tiles
+  const categoryTiles = [
+    {
+      id: 'jobs',
+      title: t.catJobs,
+      desc: t.catJobsDesc,
+      href: '/jobs',
+      Icon: Briefcase,
+      iconBg: 'bg-[#101A36] text-[#F5A623]',
+    },
+    {
+      id: 'admissions',
+      title: t.catAdmissions,
+      desc: t.catAdmissionsDesc,
+      href: '/education',
+      Icon: GraduationCap,
+      iconBg: 'bg-[#101A36] text-[#F5A623]',
+    },
+    {
+      id: 'schemes',
+      title: t.catSchemes,
+      desc: t.catSchemesDesc,
+      href: '/schemes',
+      Icon: ShieldCheck,
+      iconBg: 'bg-[#1F9D6B] text-white',
+    },
+    {
+      id: 'services',
+      title: t.catServices,
+      desc: t.catServicesDesc,
+      href: '/services',
+      Icon: CreditCard,
+      iconBg: 'bg-[#101A36] text-white',
+    },
+    {
+      id: 'tools',
+      title: t.catTools,
+      desc: t.catToolsDesc,
+      href: '/tools',
+      Icon: Wrench,
+      iconBg: 'bg-[#F5A623] text-[#101A36]',
+    },
+  ];
+
+  // Latest Jobs (open/upcoming sorted first, newest post date)
+  const latestJobs = useMemo(() => {
     return allPosts
       .filter((item) => {
         if (!isRecruitmentSarkariItem(item)) return false;
@@ -248,12 +168,14 @@ export default function PortalHomepage({
         const stA = computeSarkariStatus(a);
         const stB = computeSarkariStatus(b);
         if (stA.canApplyOnline !== stB.canApplyOnline) return stA.canApplyOnline ? -1 : 1;
+        if (stA.isUrgentUnder7Days !== stB.isUrgentUnder7Days) return stA.isUrgentUnder7Days ? -1 : 1;
         return sortByNewestPostDate(a, b);
       })
-      .slice(0, 2);
+      .slice(0, 6);
   }, [allPosts]);
 
-  const educationNotices = useMemo(() => {
+  // Admissions & University updates
+  const admissionNotices = useMemo(() => {
     return allPosts
       .filter((item) => {
         if (!isEducationSarkariItem(item)) return false;
@@ -266,758 +188,623 @@ export default function PortalHomepage({
         if (stA.canApplyOnline !== stB.canApplyOnline) return stA.canApplyOnline ? -1 : 1;
         return sortByNewestPostDate(a, b);
       })
-      .slice(0, 2);
+      .slice(0, 4);
   }, [allPosts]);
 
-  const schemeNotices = useMemo(() => {
-    return GUIDE_ARTICLES.filter((g) => g.category === 'Central Scheme' || g.category === 'State Services').slice(0, 2);
+  // Popular Schemes (prioritize Central Schemes first, then citizen guides)
+  const popularSchemes = useMemo(() => {
+    const central = GUIDE_ARTICLES.filter((g) => g.category === 'Central Scheme');
+    const others = GUIDE_ARTICLES.filter((g) => g.category !== 'Central Scheme');
+    return [...central, ...others].slice(0, 4);
   }, []);
 
-  // 3 Popular Citizen Services mapped to real services
-  const popularServices = useMemo(() => {
-    const findSvc = (id: string, fallbackIdx: number) =>
-      SERVICES_LIST.find((s) => s.id === id) || SERVICES_LIST[fallbackIdx];
+  // Featured Document Tools
+  const featuredTools = useMemo(() => TOOLS_LIST.slice(0, 5), []);
 
-    return [
-      {
-        id: 'csc-pan',
-        title: 'PAN Card Services',
-        icon: CreditCard,
-        service: findSvc('csc-pan', 0),
-      },
-      {
-        id: 'csc-aadhaar',
-        title: 'Aadhaar Assistance',
-        icon: Fingerprint,
-        service: findSvc('csc-aadhaar', 1),
-      },
-      {
-        id: 'jk-domicile-cert',
-        title: 'J&K Domicile & Certificates',
-        icon: FileText,
-        service: findSvc('jk-domicile-cert', 5),
-      },
-    ];
-  }, []);
-
-  // Search Results
+  // Instant Unified Search Results
+  const trimmedSearch = searchQuery.trim().toLowerCase();
   const searchResults = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return null;
+    if (!trimmedSearch) return null;
+    const jobs = allPosts
+      .filter(
+        (p) =>
+          p.title.toLowerCase().includes(trimmedSearch) ||
+          (p.department || '').toLowerCase().includes(trimmedSearch) ||
+          p.shortInfo.toLowerCase().includes(trimmedSearch)
+      )
+      .slice(0, 4);
 
-    const matchedServices = SERVICES_LIST.filter(
-      (s) =>
-        s.name.toLowerCase().includes(q) ||
-        s.description.toLowerCase().includes(q) ||
-        s.category.toLowerCase().includes(q)
-    ).slice(0, 5);
-
-    const matchedJobs = allPosts.filter((j) => {
-      const st = computeSarkariStatus(j);
-      if (st.verificationStatus === 'needs_verification' || j.isCancelled) return false;
-      return (
-        j.title.toLowerCase().includes(q) ||
-        j.shortInfo.toLowerCase().includes(q) ||
-        (j.learnerGroup && j.learnerGroup.toLowerCase().includes(q)) ||
-        (j.eligibility && j.eligibility.toLowerCase().includes(q))
-      );
-    }).slice(0, 5);
-
-    const matchedGuides = GUIDE_ARTICLES.filter(
+    const schemes = GUIDE_ARTICLES.filter(
       (g) =>
-        g.title.toLowerCase().includes(q) ||
-        g.summary.toLowerCase().includes(q)
+        g.title.toLowerCase().includes(trimmedSearch) ||
+        g.summary.toLowerCase().includes(trimmedSearch) ||
+        g.hindiTitle.toLowerCase().includes(trimmedSearch)
     ).slice(0, 3);
 
-    const matchedTools = TOOLS_LIST.filter(
-      (t) =>
-        t.name.toLowerCase().includes(q) ||
-        t.shortDescription.toLowerCase().includes(q)
+    const services = SERVICES_LIST.filter(
+      (s) =>
+        s.name.toLowerCase().includes(trimmedSearch) ||
+        s.description.toLowerCase().includes(trimmedSearch)
+    ).slice(0, 3);
+
+    const tools = TOOLS_LIST.filter(
+      (tool) =>
+        tool.name.toLowerCase().includes(trimmedSearch) ||
+        tool.shortDescription.toLowerCase().includes(trimmedSearch)
     ).slice(0, 3);
 
     return {
-      services: matchedServices,
-      jobs: matchedJobs,
-      guides: matchedGuides,
-      tools: matchedTools,
-      total: matchedServices.length + matchedJobs.length + matchedGuides.length + matchedTools.length,
+      jobs,
+      schemes,
+      services,
+      tools,
+      total: jobs.length + schemes.length + services.length + tools.length,
     };
-  }, [searchQuery, allPosts]);
+  }, [trimmedSearch, allPosts]);
+
+  const handleOpenScheme = (schemeId: string) => {
+    if (onOpenGuide) {
+      onOpenGuide(schemeId);
+    } else {
+      navigate(`/scheme/${schemeId}`);
+    }
+  };
 
   return (
-    <div className="w-full pb-4 sm:pb-8 space-y-3 sm:space-y-4 px-3 sm:px-4 max-w-[1100px] mx-auto select-none">
-      
-      {/* ==================================================================== */}
-      {/* 1. SHORT BLUE WELCOME STRIP                                          */}
-      {/* ==================================================================== */}
-      <section
-        aria-label="Welcome to CSC DOST"
-        className="w-full bg-gradient-to-r from-[#0A2540] via-[#0E3A7E] to-[#1E56C8] text-white rounded-2xl p-4 sm:p-5 shadow-sm overflow-hidden relative"
-      >
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5 text-[10.5px] sm:text-[11px] font-bold uppercase tracking-wider text-blue-200">
-              <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" aria-hidden="true" />
-              <span>CSC DOST · Independent Citizen Portal</span>
-            </div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-white leading-tight">
-              Jobs, Admissions &amp; Citizen Services
-            </h1>
-            <p className="text-xs sm:text-sm text-blue-100 font-normal leading-snug">
-              Explore J&amp;K jobs, admissions, government schemes, CSC e-services, tools and calculators.
-            </p>
-          </div>
+    <div className="w-full space-y-8 sm:space-y-10 pb-6 text-start">
+      {/* ================================================================== */}
+      {/* HERO SECTION (#101A36 Navy, Disclosure Chip, Prominent Search)      */}
+      {/* ================================================================== */}
+      <section className="w-full bg-[#101A36] text-white md:rounded-2xl px-4 py-7 sm:px-8 sm:py-10 shadow-sm">
+        <div className="max-w-3xl space-y-4">
+          <Badge variant="chip" className="text-xs sm:text-sm py-1 px-3">
+            <ShieldCheck className="w-4 h-4 text-[#F5A623] shrink-0" aria-hidden="true" />
+            <span>{t.independentChip}</span>
+          </Badge>
 
-          {/* Actions: Search Button & Track Application Button */}
-          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 mt-2 md:mt-0 flex-wrap">
-            {/* Search Icon & Button */}
-            <button
-              type="button"
-              onClick={() => {
-                setIsSearchActive((prev) => !prev);
-                setTimeout(() => {
-                  const el = document.getElementById('portal-inline-search-input');
-                  if (el) el.focus();
-                }, 50);
+          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight text-white">
+            {t.heroTitle}
+          </h1>
+
+          <p className="text-base sm:text-lg text-slate-200 leading-relaxed max-w-2xl">
+            {t.heroSubtitle}
+          </p>
+
+          {/* Prominent Search Box + Track CTA */}
+          <div className="pt-2 flex flex-col sm:flex-row gap-3">
+            <form
+              role="search"
+              onSubmit={(e) => {
+                e.preventDefault();
               }}
-              className={`h-9 sm:h-10 px-3 sm:px-3.5 rounded-xl border flex items-center gap-2 text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-xs ${
-                isSearchActive
-                  ? 'bg-white text-[#0A2540] border-white'
-                  : 'bg-white/15 hover:bg-white/25 active:scale-95 text-white border-white/25'
-              }`}
-              title="Search jobs, services, schemes"
-              aria-label="Search jobs, services, schemes"
+              className="flex-1 flex items-center bg-white rounded-xl border-2 border-transparent focus-within:border-[#F5A623] px-3.5 min-h-[52px] shadow-xs"
             >
-              <Search className="w-4 h-4 shrink-0" aria-hidden="true" />
-              <span>Search</span>
-            </button>
-
-            {/* Track Application Button */}
-            <button
-              type="button"
-              onClick={() => {
-                if (onOpenTrack) onOpenTrack();
-                else handleNavigate('/track');
-              }}
-              className="h-9 sm:h-10 px-3.5 sm:px-4 rounded-xl bg-amber-400 hover:bg-amber-300 active:scale-95 text-[#071F3D] font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
-              title="Track Application Status"
-              aria-label="Track Application Status"
-            >
-              <svg
-                className="w-4 h-4 shrink-0 text-[#071F3D]"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <circle cx="9.5" cy="14" r="1.5" />
-                <line x1="13" y1="14" x2="16.5" y2="14" />
-                <line x1="8" y1="18" x2="16" y2="18" />
-              </svg>
-              <span className="whitespace-nowrap">Track Application</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Live Search Drawer / Overlay when user searches */}
-        {isSearchActive && (
-          <div className="mt-4 pt-3.5 border-t border-white/20">
-            <div className="flex items-center bg-white rounded-xl px-3 py-1.5 shadow-md">
-              <Search className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
+              <Search className="w-5 h-5 text-[#526075] shrink-0 me-2.5" aria-hidden="true" />
+              <label htmlFor="portal-inline-search-input" className="sr-only">
+                {t.heroSearchPlaceholder}
+              </label>
               <input
                 id="portal-inline-search-input"
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search jobs, admissions, PAN, domicile, tools..."
-                className="w-full text-xs sm:text-sm text-slate-900 placeholder-slate-400 bg-transparent focus:outline-none"
+                placeholder={t.heroSearchPlaceholder}
+                className="w-full bg-transparent text-base text-[#101A36] placeholder:text-[#526075] outline-none border-none py-2.5"
               />
               {searchQuery && (
                 <button
                   type="button"
-                  onClick={() => {
-                    setSearchQuery('');
-                    setIsSearchActive(false);
-                  }}
-                  className="p-1 text-slate-400 hover:text-slate-600 rounded"
+                  onClick={() => setSearchQuery('')}
+                  aria-label={t.clearSearch}
+                  className="p-1.5 text-[#526075] hover:text-[#101A36] cursor-pointer"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-4 h-4" aria-hidden="true" />
                 </button>
               )}
+            </form>
+
+            <a
+              href="/track"
+              onClick={(e) => {
+                e.preventDefault();
+                if (onOpenTrack) onOpenTrack();
+                else navigate('/track');
+              }}
+              className="min-h-[52px] px-5 py-3 rounded-xl bg-[#F5A623] hover:bg-[#E09416] text-[#101A36] font-bold text-base inline-flex items-center justify-center gap-2 transition-colors no-underline shrink-0"
+            >
+              <MapPin className="w-5 h-5 shrink-0" aria-hidden="true" />
+              <span>{t.trackButton}</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ================================================================== */}
+      {/* INSTANT SEARCH RESULTS (SHOWN WHEN USER TYPES IN SEARCH BOX)       */}
+      {/* ================================================================== */}
+      {searchResults && (
+        <div className="px-3 sm:px-0">
+          <Card className="p-4 sm:p-6 space-y-4 border-[#F5A623]">
+            <div className="flex items-center justify-between gap-2 border-b border-[#DCE3EE] pb-3">
+              <h2 className="text-lg font-bold text-[#101A36]">
+                {t.searchResultsTitle} ({searchResults.total})
+              </h2>
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="text-sm font-semibold text-[#101A36] hover:underline cursor-pointer"
+              >
+                {t.clearSearch}
+              </button>
             </div>
 
-            {/* Results dropdown panel */}
-            {searchResults && searchResults.total > 0 && (
-              <div className="mt-2 bg-white rounded-xl p-3 text-slate-900 shadow-xl max-h-80 overflow-y-auto space-y-3 text-left">
-                {searchResults.jobs.length > 0 && (
-                  <div>
-                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                      Recruitment &amp; Notices
+            {searchResults.total === 0 ? (
+              <p className="text-base text-[#526075] py-2">{t.noSearchResults}</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {searchResults.jobs.map((job) => (
+                  <a
+                    key={job.id}
+                    href={`/post/${job.id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onOpenJob(job);
+                    }}
+                    className="p-3.5 rounded-xl bg-[#F6F8FC] hover:bg-[#EEF2FA] border border-[#DCE3EE] flex items-center justify-between gap-3 no-underline"
+                  >
+                    <div className="min-w-0">
+                      <span className="text-xs font-bold text-[#101A36] uppercase">
+                        {getOrganisationLabel(job)}
+                      </span>
+                      <p className="text-base font-bold text-[#101A36] truncate">{job.title}</p>
                     </div>
-                    <div className="divide-y divide-slate-100">
-                      {searchResults.jobs.map((j) => (
-                        <button
-                          key={j.id}
-                          type="button"
-                          onClick={() => {
-                            setIsSearchActive(false);
-                            onOpenJob(j);
-                          }}
-                          className="w-full text-left py-2 hover:bg-slate-50 flex items-center justify-between text-xs"
-                        >
-                          <span className="font-semibold text-slate-800 line-clamp-1">{j.title}</span>
-                          <span className="text-[#1E56C8] font-bold ml-2 shrink-0">→</span>
-                        </button>
-                      ))}
+                    <ArrowRight className="w-4 h-4 text-[#101A36] shrink-0 rtl:rotate-180" />
+                  </a>
+                ))}
+                {searchResults.schemes.map((scheme) => (
+                  <a
+                    key={scheme.id}
+                    href={`/scheme/${scheme.id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleOpenScheme(scheme.id);
+                    }}
+                    className="p-3.5 rounded-xl bg-[#F6F8FC] hover:bg-[#EEF2FA] border border-[#DCE3EE] flex items-center justify-between gap-3 no-underline"
+                  >
+                    <div className="min-w-0">
+                      <span className="text-xs font-bold text-[#146C48] uppercase">
+                        {scheme.category}
+                      </span>
+                      <p className="text-base font-bold text-[#101A36] truncate">{scheme.title}</p>
                     </div>
-                  </div>
-                )}
-
-                {searchResults.services.length > 0 && (
-                  <div>
-                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                      Citizen Services
+                    <ArrowRight className="w-4 h-4 text-[#101A36] shrink-0 rtl:rotate-180" />
+                  </a>
+                ))}
+                {searchResults.services.map((svc) => (
+                  <a
+                    key={svc.id}
+                    href={`/service/${svc.id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onOpenService(svc);
+                    }}
+                    className="p-3.5 rounded-xl bg-[#F6F8FC] hover:bg-[#EEF2FA] border border-[#DCE3EE] flex items-center justify-between gap-3 no-underline"
+                  >
+                    <div className="min-w-0">
+                      <span className="text-xs font-bold text-[#526075] uppercase">
+                        {t.catServices}
+                      </span>
+                      <p className="text-base font-bold text-[#101A36] truncate">{svc.name}</p>
                     </div>
-                    <div className="divide-y divide-slate-100">
-                      {searchResults.services.map((s) => (
-                        <button
-                          key={s.id}
-                          type="button"
-                          onClick={() => {
-                            setIsSearchActive(false);
-                            onOpenService(s);
-                          }}
-                          className="w-full text-left py-2 hover:bg-slate-50 flex items-center justify-between text-xs"
-                        >
-                          <span className="font-semibold text-slate-800 line-clamp-1">{s.name}</span>
-                          <span className="text-[#1E56C8] font-bold ml-2 shrink-0">→</span>
-                        </button>
-                      ))}
+                    <ArrowRight className="w-4 h-4 text-[#101A36] shrink-0 rtl:rotate-180" />
+                  </a>
+                ))}
+                {searchResults.tools.map((tool) => (
+                  <a
+                    key={tool.id}
+                    href={`/tools/${tool.id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate(`/tools/${tool.id}`);
+                    }}
+                    className="p-3.5 rounded-xl bg-[#F6F8FC] hover:bg-[#EEF2FA] border border-[#DCE3EE] flex items-center justify-between gap-3 no-underline"
+                  >
+                    <div className="min-w-0">
+                      <span className="text-xs font-bold text-[#92400E] uppercase">
+                        {t.catTools}
+                      </span>
+                      <p className="text-base font-bold text-[#101A36] truncate">{tool.name}</p>
                     </div>
-                  </div>
-                )}
+                    <ArrowRight className="w-4 h-4 text-[#101A36] shrink-0 rtl:rotate-180" />
+                  </a>
+                ))}
               </div>
             )}
-          </div>
-        )}
-      </section>
-
-      {/* ==================================================================== */}
-      {/* 2. EXPLORE CSC DOST SECTION (9 SHORTCUTS IN 3x3 GRID)               */}
-      {/* ==================================================================== */}
-      <section aria-labelledby="explore-section-title" className="space-y-2">
-        <div className="flex items-center justify-between px-0.5">
-          <h2
-            id="explore-section-title"
-            className="text-base sm:text-lg font-extrabold text-[#0F172A] tracking-tight"
-          >
-            Explore CSC DOST
-          </h2>
-          <span className="text-[11px] sm:text-xs text-slate-500 font-medium">
-            Quick access to every main section
-          </span>
+          </Card>
         </div>
+      )}
 
-        {/* 3x3 GRID ON MOBILE AND DESKTOP */}
-        <nav aria-label="CSC DOST Categories" className="grid grid-cols-3 gap-2 sm:gap-2.5">
-          {exploreShortcuts.map((item) => {
-            const Icon = item.icon;
-            return (
-              <a
-                key={item.id}
-                href={item.path}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleNavigate(item.path);
-                }}
-                className="group p-2 sm:p-3 bg-white border border-[#E2E8F0] hover:border-[#1E56C8] rounded-xl text-center shadow-xs hover:shadow-sm transition-all flex flex-col md:flex-row items-center md:text-left justify-center md:justify-start gap-1.5 md:gap-3 cursor-pointer min-h-[82px] sm:min-h-[88px] no-underline"
-              >
-                {/* Small Tinted Icon */}
-                <span
-                  className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 ${item.tintBg}`}
-                >
-                  <Icon className="w-4 h-4 sm:w-[18px] sm:h-[18px]" aria-hidden="true" />
-                </span>
-
-                {/* Text Label */}
-                <div className="min-w-0 flex-1">
-                  <div className="text-[11px] sm:text-xs md:text-sm font-bold text-[#0F172A] leading-tight line-clamp-2 md:line-clamp-1 group-hover:text-[#1E56C8] transition-colors">
-                    {item.title}
-                  </div>
-                  {/* Short description on desktop */}
-                  <p className="hidden md:block text-[11px] text-slate-500 mt-0.5 line-clamp-1">
-                    {item.shortDesc}
-                  </p>
-                </div>
-
-                {/* Desktop subtle right arrow */}
-                <span className="hidden md:inline text-slate-300 group-hover:text-[#1E56C8] group-hover:translate-x-0.5 transition-all text-xs shrink-0 pr-1">
-                  →
-                </span>
-              </a>
-            );
-          })}
-        </nav>
-      </section>
-
-      {/* ==================================================================== */}
-      {/* 3. LATEST UPDATES & POPULAR SERVICES (SIDE-BY-SIDE ON DESKTOP)       */}
-      {/* ==================================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1.25fr_1fr] gap-3 sm:gap-4 items-start">
-        
-        {/* LATEST UPDATES CARD */}
-        <section
-          aria-labelledby="latest-updates-heading"
-          className="bg-white border border-[#E2E8F0] rounded-2xl p-3.5 sm:p-4 shadow-xs space-y-3"
+      {/* ================================================================== */}
+      {/* 5 CATEGORY TILES (Jobs, Admissions, Schemes, CSC Services, Tools)  */}
+      {/* ================================================================== */}
+      <div className="px-3 sm:px-0">
+        <Section
+          id="categories"
+          title={t.categoriesHeading}
+          subtitle={t.categoriesSubheading}
         >
-          {/* Card Header: Bell + Title */}
-          <div className="flex items-center justify-between border-b border-[#F1F5F9] pb-2.5">
-            <div className="flex items-center gap-2">
-              <span className="w-7 h-7 rounded-lg bg-blue-50 text-[#1E56C8] flex items-center justify-center shrink-0">
-                <Bell className="w-4 h-4" />
-              </span>
-              <h2
-                id="latest-updates-heading"
-                className="text-sm sm:text-base font-extrabold text-[#0F172A] tracking-tight"
-              >
-                Latest Updates
-              </h2>
-            </div>
-
-            {/* Live Indicator */}
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" aria-hidden="true" />
-              <span>Official Notices</span>
-            </span>
-          </div>
-
-          {/* 3 Tabs: Recruitment, Education, Schemes */}
-          <div className="flex items-center gap-1.5 p-1 bg-[#F8FAFC] rounded-xl border border-slate-200/80">
-            <button
-              type="button"
-              onClick={() => setLatestUpdatesTab('recruitment')}
-              className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                latestUpdatesTab === 'recruitment'
-                  ? 'bg-[#EEF4FF] text-[#1E56C8] shadow-2xs font-bold'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Recruitment
-            </button>
-            <button
-              type="button"
-              onClick={() => setLatestUpdatesTab('education')}
-              className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                latestUpdatesTab === 'education'
-                  ? 'bg-[#EEF4FF] text-[#1E56C8] shadow-2xs font-bold'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Education
-            </button>
-            <button
-              type="button"
-              onClick={() => setLatestUpdatesTab('schemes')}
-              className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                latestUpdatesTab === 'schemes'
-                  ? 'bg-[#EEF4FF] text-[#1E56C8] shadow-2xs font-bold'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Schemes
-            </button>
-          </div>
-
-          {/* Tab Content: Up to 2 Items */}
-          <div className="divide-y divide-[#F1F5F9] min-h-[110px] flex flex-col justify-center">
-            {latestUpdatesTab === 'recruitment' && (
-              <>
-                {recruitmentNotices.length > 0 ? (
-                  recruitmentNotices.map((item) => (
-                    <a
-                      key={item.id}
-                      href={`/post/${item.id}`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        onOpenJob(item);
-                      }}
-                      className="group w-full py-2.5 text-left flex items-center justify-between gap-2 hover:bg-slate-50 px-1 rounded-lg transition-colors cursor-pointer no-underline"
-                    >
-                      <div className="flex items-start gap-2.5 min-w-0">
-                        <span className="w-7 h-7 rounded-lg bg-blue-50 text-[#1E56C8] flex items-center justify-center shrink-0 mt-0.5">
-                          <Briefcase className="w-3.5 h-3.5" />
-                        </span>
-                        <div className="min-w-0">
-                          <div className="text-xs sm:text-sm font-bold text-[#0F172A] group-hover:text-[#1E56C8] transition-colors line-clamp-1">
-                            {item.title}
-                          </div>
-                          <div className="text-[11px] text-[#64748B] mt-0.5 line-clamp-1">
-                            {getOrganisationLabel(item)}
-                            {item.lastDate ? ` · ${item.lastDate}` : ''}
-                            {` · ${computeSarkariStatus(item).badgeLabel}`}
-                          </div>
-                        </div>
-                      </div>
-                      <span className="text-slate-400 group-hover:text-[#1E56C8] group-hover:translate-x-0.5 transition-all text-xs shrink-0 pl-1">
-                        →
-                      </span>
-                    </a>
-                  ))
-                ) : (
-                  <div className="py-4 text-center text-xs text-slate-500">
-                    No active recruitment notices found.
-                  </div>
-                )}
-                <div className="pt-2">
-                  <a
-                    href="/jobs"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleNavigate('/jobs');
-                    }}
-                    className="text-xs font-bold text-[#1E56C8] hover:underline inline-flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>View all recruitment notices</span>
-                    <span aria-hidden="true">→</span>
-                  </a>
-                </div>
-              </>
-            )}
-
-            {latestUpdatesTab === 'education' && (
-              <>
-                {educationNotices.length > 0 ? (
-                  educationNotices.map((item) => (
-                    <a
-                      key={item.id}
-                      href={`/post/${item.id}`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        onOpenJob(item);
-                      }}
-                      className="group w-full py-2.5 text-left flex items-center justify-between gap-2 hover:bg-slate-50 px-1 rounded-lg transition-colors cursor-pointer no-underline"
-                    >
-                      <div className="flex items-start gap-2.5 min-w-0">
-                        <span className="w-7 h-7 rounded-lg bg-purple-50 text-[#7C3AED] flex items-center justify-center shrink-0 mt-0.5">
-                          <GraduationCap className="w-3.5 h-3.5" />
-                        </span>
-                        <div className="min-w-0">
-                          <div className="text-xs sm:text-sm font-bold text-[#0F172A] group-hover:text-[#7C3AED] transition-colors line-clamp-1">
-                            {item.title}
-                          </div>
-                          <div className="text-[11px] text-[#64748B] mt-0.5 line-clamp-1">
-                            {getOrganisationLabel(item)}
-                            {item.lastDate ? ` · ${item.lastDate}` : ''}
-                            {` · ${computeSarkariStatus(item).badgeLabel}`}
-                          </div>
-                        </div>
-                      </div>
-                      <span className="text-slate-400 group-hover:text-[#7C3AED] group-hover:translate-x-0.5 transition-all text-xs shrink-0 pl-1">
-                        →
-                      </span>
-                    </a>
-                  ))
-                ) : (
-                  <div className="py-4 text-center text-xs text-slate-500">
-                    No active education notices found.
-                  </div>
-                )}
-                <div className="pt-2 flex flex-wrap items-center justify-between gap-2">
-                  <a
-                    href="/education"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleNavigate('/education');
-                    }}
-                    className="text-xs font-bold text-[#1E56C8] hover:underline inline-flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>View all education notices</span>
-                    <span aria-hidden="true">→</span>
-                  </a>
-                  <a
-                    href="/education/ignou"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleNavigate('/education/ignou');
-                    }}
-                    className="text-xs font-bold text-[#7C3AED] hover:underline inline-flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>IGNOU Notifications</span>
-                    <span aria-hidden="true">→</span>
-                  </a>
-                </div>
-              </>
-            )}
-
-            {latestUpdatesTab === 'schemes' && (
-              <>
-                {schemeNotices.length > 0 ? (
-                  schemeNotices.map((guide) => (
-                    <a
-                      key={guide.id}
-                      href="/schemes"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (onOpenGuide) onOpenGuide(guide.id);
-                        else handleNavigate('/schemes');
-                      }}
-                      className="group w-full py-2.5 text-left flex items-center justify-between gap-2 hover:bg-slate-50 px-1 rounded-lg transition-colors cursor-pointer no-underline"
-                    >
-                      <div className="flex items-start gap-2.5 min-w-0">
-                        <span className="w-7 h-7 rounded-lg bg-emerald-50 text-[#059669] flex items-center justify-center shrink-0 mt-0.5">
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                        </span>
-                        <div className="min-w-0">
-                          <div className="text-xs sm:text-sm font-bold text-[#0F172A] group-hover:text-[#059669] transition-colors line-clamp-1">
-                            {guide.title}
-                          </div>
-                          <div className="text-[11px] text-[#64748B] mt-0.5 line-clamp-1">
-                            {guide.responsibleDepartment || guide.officialPortal || 'Citizen Scheme'}
-                          </div>
-                        </div>
-                      </div>
-                      <span className="text-slate-400 group-hover:text-[#059669] group-hover:translate-x-0.5 transition-all text-xs shrink-0 pl-1">
-                        →
-                      </span>
-                    </a>
-                  ))
-                ) : (
-                  <div className="py-4 text-center text-xs text-slate-500">
-                    No active schemes found.
-                  </div>
-                )}
-                <div className="pt-2">
-                  <a
-                    href="/schemes"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleNavigate('/schemes');
-                    }}
-                    className="text-xs font-bold text-[#1E56C8] hover:underline inline-flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>View all government schemes</span>
-                    <span aria-hidden="true">→</span>
-                  </a>
-                </div>
-              </>
-            )}
-          </div>
-        </section>
-
-        {/* POPULAR CITIZEN SERVICES CARD */}
-        <section
-          aria-labelledby="popular-services-heading"
-          className="bg-white border border-[#E2E8F0] rounded-2xl p-3.5 sm:p-4 shadow-xs space-y-3"
-        >
-          {/* Card Header: CreditCard + Title */}
-          <div className="flex items-center justify-between border-b border-[#F1F5F9] pb-2.5">
-            <div className="flex items-center gap-2">
-              <span className="w-7 h-7 rounded-lg bg-blue-50 text-[#1E56C8] flex items-center justify-center shrink-0">
-                <CreditCard className="w-4 h-4" />
-              </span>
-              <h2
-                id="popular-services-heading"
-                className="text-sm sm:text-base font-extrabold text-[#0F172A] tracking-tight"
-              >
-                Popular Citizen Services
-              </h2>
-            </div>
-          </div>
-
-          {/* 3 Compact Rows */}
-          <div className="divide-y divide-[#F1F5F9]">
-            {popularServices.map((item) => {
-              const Icon = item.icon;
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+            {categoryTiles.map((tile) => {
+              const IconComponent = tile.Icon;
               return (
-                <a
-                  key={item.id}
-                  href={`/service/${item.service.id}`}
+                <Card
+                  key={tile.id}
+                  as="a"
+                  href={tile.href}
+                  interactive
                   onClick={(e) => {
                     e.preventDefault();
-                    onOpenService(item.service);
+                    navigate(tile.href);
                   }}
-                  className="group w-full py-2.5 text-left flex items-center justify-between gap-2 hover:bg-slate-50 px-1 rounded-lg transition-colors cursor-pointer no-underline"
+                  className="p-4 flex flex-col justify-between gap-3"
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="w-7 h-7 rounded-lg bg-slate-100 text-[#1E56C8] flex items-center justify-center shrink-0">
-                      <Icon className="w-4 h-4" />
-                    </span>
-                    <span className="text-xs sm:text-sm font-bold text-[#0F172A] group-hover:text-[#1E56C8] transition-colors truncate">
-                      {item.title}
-                    </span>
+                  <div className="space-y-2.5">
+                    <div
+                      className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${tile.iconBg}`}
+                    >
+                      <IconComponent className="w-5 h-5" aria-hidden="true" />
+                    </div>
+                    <div>
+                      <h3 className="text-base sm:text-lg font-bold text-[#101A36] leading-snug">
+                        {tile.title}
+                      </h3>
+                      <p className="text-sm text-[#526075] mt-1 leading-snug">
+                        {tile.desc}
+                      </p>
+                    </div>
                   </div>
-                  <span className="text-slate-400 group-hover:text-[#1E56C8] group-hover:translate-x-0.5 transition-all text-xs shrink-0 pl-1">
-                    →
-                  </span>
-                </a>
+                </Card>
               );
             })}
           </div>
-
-          {/* Footer Link: Browse all services */}
-          <div className="pt-2">
-            <a
-              href="/services"
-              onClick={(e) => {
-                e.preventDefault();
-                handleNavigate('/services');
-              }}
-              className="text-xs font-bold text-[#1E56C8] hover:underline inline-flex items-center gap-1 cursor-pointer"
-            >
-              <span>Browse all services</span>
-              <span aria-hidden="true">→</span>
-            </a>
-          </div>
-        </section>
+        </Section>
       </div>
 
-      {/* ==================================================================== */}
-      {/* 4. COLLAPSIBLE HELP & FAQS SECTION                                  */}
-      {/* ==================================================================== */}
-      <section
-        id="faq-section"
-        aria-labelledby="faq-section-heading"
-        className="bg-white border border-[#E2E8F0] rounded-2xl p-3.5 sm:p-4 shadow-xs"
-      >
-        <button
-          type="button"
-          onClick={() => setIsFaqOpen((prev) => !prev)}
-          aria-expanded={isFaqOpen}
-          aria-controls="faq-content-panel"
-          className="w-full flex items-center justify-between text-left cursor-pointer"
+      {/* ================================================================== */}
+      {/* LATEST JOBS LIST (Title, Department, Vacancies, Red <7d Badge)     */}
+      {/* ================================================================== */}
+      <div className="px-3 sm:px-0">
+        <Section
+          id="latest-jobs"
+          title={t.latestJobsHeading}
+          subtitle={t.latestJobsSubheading}
+          actionLabel={t.viewAllJobs}
+          actionHref="/jobs"
+          onActionClick={() => navigate('/jobs')}
         >
-          <div className="flex items-center gap-2">
-            <span className="w-7 h-7 rounded-lg bg-teal-50 text-[#0D9488] flex items-center justify-center shrink-0">
-              <HelpCircle className="w-4 h-4" />
-            </span>
-            <div>
-              <h2
-                id="faq-section-heading"
-                className="text-sm sm:text-base font-extrabold text-[#0F172A] tracking-tight"
-              >
-                Help &amp; Frequently Asked Questions
-              </h2>
-              <p className="text-[11px] text-slate-500 font-normal">
-                Application assistance, tracking &amp; local centre details
-              </p>
-            </div>
-          </div>
-          <span className="p-1.5 rounded-lg bg-slate-50 text-slate-500 hover:text-slate-900 shrink-0">
-            {isFaqOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </span>
-        </button>
+          <div className="space-y-3">
+            {latestJobs.map((job) => {
+              const status = computeSarkariStatus(job);
+              const isUrgent = status.isUrgentUnder7Days && status.daysRemaining !== null;
+              const deadlineText = job.lastDate || job.postDate || 'Check Notice';
 
-        {/* Collapsible Content */}
-        {isFaqOpen && (
-          <div id="faq-content-panel" className="mt-4 pt-3 border-t border-[#F1F5F9] space-y-4 animate-fade-in text-left">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-              
-              {/* Question 1: How to request assistance */}
-              <div className="bg-[#F8FAFC] rounded-xl p-3 border border-slate-100">
-                <h3 className="text-xs sm:text-sm font-bold text-[#0F172A] flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#1E56C8]" />
-                  <span>How do I request online application assistance?</span>
-                </h3>
-                <p className="text-[11.5px] text-[#64748B] mt-1.5 leading-relaxed">
-                  Click the <strong>Apply</strong> option on any recruitment or service card, or navigate directly to the application desk to submit your documents and requirements securely.
-                </p>
-                <div className="mt-2.5">
-                  <button
-                    type="button"
-                    onClick={() => handleNavigate('/apply')}
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-[#1E56C8] hover:underline"
-                  >
-                    <span>Open Application Desk</span>
-                    <span>→</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Question 2: How to track application */}
-              <div className="bg-[#F8FAFC] rounded-xl p-3 border border-slate-100">
-                <h3 className="text-xs sm:text-sm font-bold text-[#0F172A] flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#1E56C8]" />
-                  <span>How can I track my submitted application?</span>
-                </h3>
-                <p className="text-[11.5px] text-[#64748B] mt-1.5 leading-relaxed">
-                  Enter your tracking token or phone number on the <strong>Track</strong> page to inspect real-time progress, acknowledgment slips, and download completed forms.
-                </p>
-                <div className="mt-2.5">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (onOpenTrack) onOpenTrack();
-                      else handleNavigate('/track');
-                    }}
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-[#1E56C8] hover:underline"
-                  >
-                    <span>Check Application Status</span>
-                    <span>→</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Centre Contact & Location Box */}
-            <div className="bg-blue-50/50 rounded-xl p-3.5 border border-blue-100/80 space-y-2">
-              <h3 className="text-xs sm:text-sm font-bold text-[#0F172A] flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-[#1E56C8]" />
-                <span>Local CSC DOST Centre Information</span>
-              </h3>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 text-[11.5px]">
-                <div>
-                  <span className="text-slate-500 block font-medium">Physical Address:</span>
-                  <span className="font-semibold text-slate-800">
-                    Sangran, Qazigund, Anantnag, Jammu &amp; Kashmir 192221
-                  </span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block font-medium">Contact Helpline:</span>
-                  <a href="tel:+917006833767" className="font-semibold text-[#1E56C8] hover:underline block">
-                    +91 70068 33767
-                  </a>
-                  <a href="tel:+919682132895" className="font-semibold text-[#1E56C8] hover:underline block">
-                    +91 96821 32895
-                  </a>
-                </div>
-                <div>
-                  <span className="text-slate-500 block font-medium">Office Hours:</span>
-                  <span className="font-semibold text-slate-800 block">
-                    Mon - Sat: 08:30 AM - 08:00 PM
-                  </span>
-                  <span className="text-slate-600 text-[11px] block">
-                    Sun: 10:00 AM - 04:00 PM
-                  </span>
-                </div>
-              </div>
-
-              {/* Direct WhatsApp Helpline */}
-              <div className="pt-2 border-t border-blue-100/80 flex items-center justify-between flex-wrap gap-2">
-                <span className="text-[11px] text-slate-600">
-                  Need direct assistance from our center executive?
-                </span>
-                <a
-                  href="https://wa.me/917006833767?text=Hello%20CSC%20DOST,%20I%20need%20assistance%20with%20an%20online%20service"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#16A34A] hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+              return (
+                <Card
+                  key={job.id}
+                  as="article"
+                  interactive
+                  onClick={() => onOpenJob(job)}
+                  className="p-4 sm:p-5"
                 >
-                  <MessageCircle className="w-3.5 h-3.5" />
-                  <span>Chat on WhatsApp</span>
-                </a>
-              </div>
-            </div>
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div className="space-y-2 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="navy">{getOrganisationLabel(job)}</Badge>
+                        {isUrgent ? (
+                          <Badge variant="urgent">
+                            <Clock className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                            <span>
+                              {t.urgentDaysLeft(status.daysRemaining!)} · {deadlineText}
+                            </span>
+                          </Badge>
+                        ) : status.canApplyOnline ? (
+                          <Badge variant="green">
+                            <span>
+                              {t.lastDateLabel}: {deadlineText}
+                            </span>
+                          </Badge>
+                        ) : (
+                          <Badge variant="neutral">
+                            <span>{status.badgeLabel}</span>
+                          </Badge>
+                        )}
+                      </div>
 
+                      <h3 className="text-base sm:text-lg font-bold text-[#101A36] leading-snug">
+                        <a
+                          href={`/post/${job.id}`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onOpenJob(job);
+                          }}
+                          className="text-[#101A36] hover:underline no-underline"
+                        >
+                          {job.title}
+                        </a>
+                      </h3>
+
+                      <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-[#526075]">
+                        <span className="inline-flex items-center gap-1.5">
+                          <Building2 className="w-4 h-4 text-[#101A36] shrink-0" aria-hidden="true" />
+                          <span>
+                            <strong className="text-[#101A36]">{t.departmentLabel}:</strong>{' '}
+                            {job.department || getOrganisationLabel(job)}
+                          </span>
+                        </span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <Users className="w-4 h-4 text-[#101A36] shrink-0" aria-hidden="true" />
+                          <span>
+                            <strong className="text-[#101A36]">{t.vacanciesLabel}:</strong>{' '}
+                            {job.totalPosts || 'See Notice'}
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 flex items-center gap-2 pt-1 md:pt-0">
+                      <a
+                        href={`/post/${job.id}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onOpenJob(job);
+                        }}
+                        className="min-h-[44px] px-4 py-2 rounded-xl bg-[#1F9D6B] hover:bg-[#178257] text-white font-bold text-sm inline-flex items-center gap-1.5 no-underline transition-colors"
+                      >
+                        <span>View &amp; Apply</span>
+                        <ArrowRight className="w-4 h-4 rtl:rotate-180" aria-hidden="true" />
+                      </a>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
-        )}
-      </section>
+        </Section>
+      </div>
 
+      {/* ================================================================== */}
+      {/* AD SLOT 1 (STRICTLY BETWEEN SECTIONS)                              */}
+      {/* ================================================================== */}
+      <div className="px-3 sm:px-0">
+        <AdSlot />
+      </div>
+
+      {/* ================================================================== */}
+      {/* ADMISSIONS SECTION (KU, Cluster Univ, IGNOU)                       */}
+      {/* ================================================================== */}
+      <div className="px-3 sm:px-0">
+        <Section
+          id="admissions"
+          title={t.admissionsHeading}
+          subtitle={t.admissionsSubheading}
+          secondaryAction={
+            <a
+              href="/education/ignou"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate('/education/ignou');
+              }}
+              className="min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#FFFBEB] text-[#92400E] border border-[#FDE68A] hover:bg-[#FEF3C7] text-sm font-bold no-underline transition-colors"
+            >
+              <span>{t.ignouShortcut}</span>
+              <ArrowRight className="w-4 h-4 rtl:rotate-180" aria-hidden="true" />
+            </a>
+          }
+          actionLabel={t.viewAllAdmissions}
+          actionHref="/education"
+          onActionClick={() => navigate('/education')}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+            {admissionNotices.map((notice) => {
+              const status = computeSarkariStatus(notice);
+              return (
+                <Card
+                  key={notice.id}
+                  as="a"
+                  href={`/post/${notice.id}`}
+                  interactive
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onOpenJob(notice);
+                  }}
+                  className="p-4 sm:p-5 flex flex-col justify-between gap-3"
+                >
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <Badge variant="navy">{getOrganisationLabel(notice)}</Badge>
+                      {status.isUrgentUnder7Days && status.daysRemaining !== null ? (
+                        <Badge variant="urgent">
+                          {t.urgentDaysLeft(status.daysRemaining)}
+                        </Badge>
+                      ) : (
+                        <Badge variant={status.canApplyOnline ? 'green' : 'neutral'}>
+                          {status.badgeLabel}
+                        </Badge>
+                      )}
+                    </div>
+                    <h3 className="text-base sm:text-lg font-bold text-[#101A36] leading-snug">
+                      {notice.title}
+                    </h3>
+                    <p className="text-base text-[#526075] line-clamp-2 leading-relaxed">
+                      {notice.shortInfo}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between text-sm text-[#526075] border-t border-[#DCE3EE] pt-2.5">
+                    <span>
+                      {notice.lastDate ? `${t.lastDateLabel}: ${notice.lastDate}` : `Posted: ${notice.postDate}`}
+                    </span>
+                    <span className="font-bold text-[#101A36] inline-flex items-center gap-1">
+                      <span>Details</span>
+                      <ArrowRight className="w-4 h-4 rtl:rotate-180" aria-hidden="true" />
+                    </span>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </Section>
+      </div>
+
+      {/* ================================================================== */}
+      {/* POPULAR GOVERNMENT SCHEMES (DIRECT /scheme/:id LINKS)              */}
+      {/* ================================================================== */}
+      <div className="px-3 sm:px-0">
+        <Section
+          id="schemes"
+          title={t.schemesHeading}
+          subtitle={t.schemesSubheading}
+          actionLabel={t.viewAllSchemes}
+          actionHref="/schemes"
+          onActionClick={() => navigate('/schemes')}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+            {popularSchemes.map((scheme) => {
+              const displayTitle =
+                language === 'ur' && scheme.urduTitle
+                  ? scheme.urduTitle
+                  : language === 'hi' && scheme.hindiTitle
+                  ? scheme.hindiTitle
+                  : scheme.title;
+
+              return (
+                <Card
+                  key={scheme.id}
+                  as="a"
+                  href={`/scheme/${scheme.id}`}
+                  interactive
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleOpenScheme(scheme.id);
+                  }}
+                  className="p-4 sm:p-5 flex flex-col justify-between gap-3"
+                >
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="green">
+                        {scheme.category === 'Central Scheme' ? t.catSchemes : scheme.category}
+                      </Badge>
+                      {scheme.benefitSummary && (
+                        <Badge variant="amber">{scheme.benefitSummary}</Badge>
+                      )}
+                    </div>
+                    <h3 className="text-base sm:text-lg font-bold text-[#101A36] leading-snug">
+                      {displayTitle}
+                    </h3>
+                    <p className="text-base text-[#526075] line-clamp-2 leading-relaxed">
+                      {scheme.summary}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between text-sm border-t border-[#DCE3EE] pt-2.5">
+                    <span className="text-[#526075] truncate pe-2">{scheme.officialPortal}</span>
+                    <span className="font-bold text-[#1F9D6B] inline-flex items-center gap-1 shrink-0">
+                      <span>{t.exploreScheme}</span>
+                      <ArrowRight className="w-4 h-4 rtl:rotate-180" aria-hidden="true" />
+                    </span>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </Section>
+      </div>
+
+      {/* ================================================================== */}
+      {/* TOOLS & CALCULATORS GRID                                           */}
+      {/* ================================================================== */}
+      <div className="px-3 sm:px-0">
+        <Section
+          id="tools-calculators"
+          title={t.toolsHeading}
+          subtitle={t.toolsSubheading}
+          actionLabel={t.viewAllTools}
+          actionHref="/tools"
+          onActionClick={() => navigate('/tools')}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {featuredTools.map((tool) => (
+              <Card
+                key={tool.id}
+                as="a"
+                href={`/tools/${tool.id}`}
+                interactive
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(`/tools/${tool.id}`);
+                }}
+                className="p-4 flex flex-col justify-between gap-2.5"
+              >
+                <div className="space-y-1.5">
+                  <Badge variant="amber">{tool.category}</Badge>
+                  <h3 className="text-base sm:text-lg font-bold text-[#101A36]">
+                    {tool.name}
+                  </h3>
+                  <p className="text-sm text-[#526075] leading-relaxed">
+                    {tool.shortDescription}
+                  </p>
+                </div>
+                <span className="text-sm font-bold text-[#101A36] inline-flex items-center gap-1 pt-1">
+                  <span>Open Tool</span>
+                  <ArrowRight className="w-4 h-4 rtl:rotate-180" aria-hidden="true" />
+                </span>
+              </Card>
+            ))}
+
+            {/* Citizen Calculators Tile */}
+            <Card
+              as="a"
+              href="/calculators"
+              interactive
+              onClick={(e) => {
+                e.preventDefault();
+                navigate('/calculators');
+              }}
+              className="p-4 bg-[#101A36] text-white border-[#101A36] flex flex-col justify-between gap-2.5 hover:bg-[#18264D]"
+            >
+              <div className="space-y-1.5">
+                <div className="w-10 h-10 rounded-lg bg-[#F5A623] text-[#101A36] flex items-center justify-center">
+                  <Calculator className="w-5 h-5" aria-hidden="true" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white">
+                  {t.calculatorsShortcut}
+                </h3>
+                <p className="text-sm text-slate-200 leading-relaxed">
+                  JKSSB &amp; SSC age eligibility calculator, fee estimator, and exam cutoff helper.
+                </p>
+              </div>
+              <span className="text-sm font-bold text-[#F5A623] inline-flex items-center gap-1 pt-1">
+                <span>Open Calculators</span>
+                <ArrowRight className="w-4 h-4 rtl:rotate-180" aria-hidden="true" />
+              </span>
+            </Card>
+          </div>
+        </Section>
+      </div>
+
+      {/* ================================================================== */}
+      {/* AD SLOT 2 (STRICTLY BETWEEN SECTIONS)                              */}
+      {/* ================================================================== */}
+      <div className="px-3 sm:px-0">
+        <AdSlot />
+      </div>
+
+      {/* ================================================================== */}
+      {/* "NEED HELP APPLYING?" HELPDESK CARD                                */}
+      {/* ================================================================== */}
+      <div className="px-3 sm:px-0">
+        <HelpApplyingCard onTrackClick={onOpenTrack} />
+      </div>
     </div>
   );
 }

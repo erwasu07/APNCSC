@@ -1,5 +1,6 @@
 import React from 'react';
 import { Home, Briefcase, LayoutGrid, Wrench, MapPin } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export type BottomNavTab = 'home' | 'jobs' | 'services' | 'tools' | 'track';
 
@@ -9,18 +10,20 @@ interface MobileBottomNavProps {
 }
 
 export default function MobileBottomNav({ activeTab, onNavigate }: MobileBottomNavProps) {
+  const { t } = useLanguage();
+
   const navItems: { id: BottomNavTab; label: string; href: string; Icon: React.ElementType }[] = [
-    { id: 'home', label: 'Home', href: '/', Icon: Home },
-    { id: 'jobs', label: 'Jobs', href: '/jobs', Icon: Briefcase },
-    { id: 'services', label: 'Services', href: '/services', Icon: LayoutGrid },
-    { id: 'tools', label: 'Tools', href: '/tools', Icon: Wrench },
-    { id: 'track', label: 'Track', href: '/track', Icon: MapPin },
+    { id: 'home', label: t.navHome, href: '/', Icon: Home },
+    { id: 'jobs', label: t.navJobs, href: '/jobs', Icon: Briefcase },
+    { id: 'services', label: t.navServices, href: '/services', Icon: LayoutGrid },
+    { id: 'tools', label: t.navTools, href: '/tools', Icon: Wrench },
+    { id: 'track', label: t.navTrack, href: '/track', Icon: MapPin },
   ];
 
   return (
     <nav
       aria-label="Mobile Navigation"
-      className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-[#E2E8F0] px-1.5 py-1 md:hidden pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-2px_10px_rgba(0,0,0,0.05)] flex items-center justify-around select-none"
+      className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-[#DCE3EE] px-1.5 py-1 md:hidden pb-[max(0.35rem,env(safe-area-inset-bottom))] shadow-[0_-2px_10px_rgba(16,26,54,0.06)] flex items-center justify-around select-none"
     >
       {navItems.map((item) => {
         const IconComponent = item.Icon;
@@ -35,23 +38,19 @@ export default function MobileBottomNav({ activeTab, onNavigate }: MobileBottomN
               onNavigate(item.id);
             }}
             aria-current={isActive ? 'page' : undefined}
-            className={`min-h-[44px] min-w-[58px] flex flex-col items-center justify-center transition-all cursor-pointer rounded-xl no-underline ${
+            className={`min-h-[44px] min-w-[56px] flex flex-col items-center justify-center transition-colors cursor-pointer rounded-lg no-underline ${
               isActive
-                ? 'bg-[#EEF4FF] text-[#1E56C8] px-2.5 py-1'
-                : 'text-[#334155] hover:text-[#1E56C8] hover:bg-slate-50 px-2 py-1'
+                ? 'bg-[#101A36] text-white px-2.5 py-1'
+                : 'text-[#101A36] hover:bg-[#F6F8FC] px-2 py-1'
             }`}
           >
             <IconComponent
-              className={`w-[19px] h-[19px] transition-transform ${
-                isActive ? 'scale-105 stroke-[2.3]' : 'stroke-[1.8]'
+              className={`w-[18px] h-[18px] ${
+                isActive ? 'text-[#F5A623] stroke-[2.2]' : 'text-[#526075] stroke-[1.8]'
               }`}
               aria-hidden="true"
             />
-            <span
-              className={`text-[10.5px] mt-0.5 leading-none tracking-tight ${
-                isActive ? 'font-bold' : 'font-medium'
-              }`}
-            >
+            <span className={`text-[11px] mt-0.5 leading-none ${isActive ? 'font-bold' : 'font-medium'}`}>
               {item.label}
             </span>
           </a>

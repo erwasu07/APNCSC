@@ -211,10 +211,10 @@ export function ContentArticleHeader({
     <header className="space-y-3 pb-4 sm:pb-6 border-b border-[#E2E8F0]">
       {breadcrumbs && breadcrumbs.length > 0 && <ContentBreadcrumbs items={breadcrumbs} />}
 
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 text-start">
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
           {primaryKicker && (
-            <span className="text-xs font-bold uppercase tracking-wider text-[#2563EB]">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#101A36]">
               {primaryKicker}
             </span>
           )}
@@ -224,24 +224,24 @@ export function ContentArticleHeader({
             </span>
           )}
           {secondaryKicker && (
-            <span className="text-xs font-semibold text-[#475569]">{secondaryKicker}</span>
+            <span className="text-xs font-semibold text-[#526075]">{secondaryKicker}</span>
           )}
-          {statusBadge && <div className="ml-auto sm:ml-1">{statusBadge}</div>}
+          {statusBadge && <div className="ms-auto sm:ms-1">{statusBadge}</div>}
         </div>
 
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#102A43] tracking-tight leading-snug break-words">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#101A36] tracking-tight leading-snug break-words">
           {title}
         </h1>
 
         {subtitle && (
-          <p className="text-xs sm:text-sm font-semibold text-[#475569] leading-snug">
+          <p className="text-sm sm:text-base font-semibold text-[#526075] leading-snug">
             {subtitle}
           </p>
         )}
       </div>
 
       {intro && (
-        <p className="text-sm sm:text-base text-[#475569] leading-relaxed max-w-[72ch] break-words">
+        <p className="text-base text-[#526075] leading-relaxed max-w-[72ch] break-words">
           {intro}
         </p>
       )}
@@ -391,10 +391,10 @@ export function PrimaryActionBar({
           <button
             type="button"
             onClick={resolvedPrimaryClick}
-            className="min-h-[44px] px-5 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-semibold rounded-xl transition-colors cursor-pointer inline-flex items-center justify-center gap-2 shadow-2xs"
+            className="min-h-[44px] px-5 py-2.5 bg-[#1F9D6B] hover:bg-[#178257] text-white text-sm sm:text-base font-bold rounded-xl transition-colors cursor-pointer inline-flex items-center justify-center gap-2 shadow-2xs"
           >
             <span>{resolvedPrimaryLabel}</span>
-            <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <ArrowRight className="w-4 h-4 shrink-0 rtl:rotate-180" aria-hidden="true" />
           </button>
         )}
 
@@ -406,10 +406,10 @@ export function PrimaryActionBar({
               href={targetHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="min-h-[44px] px-4 py-2.5 bg-white hover:bg-[#F6F8FC] text-[#102A43] hover:text-[#2563EB] border border-[#CBD5E1] hover:border-[#2563EB] text-xs sm:text-sm font-semibold rounded-xl transition-colors inline-flex items-center justify-center gap-1.5"
+              className="min-h-[44px] px-4 py-2.5 bg-white hover:bg-[#F6F8FC] text-[#101A36] hover:border-[#101A36] border border-[#CBD5E1] text-sm font-semibold rounded-xl transition-colors inline-flex items-center justify-center gap-1.5 no-underline"
             >
               <span>{link.label}</span>
-              <ExternalLink className="w-3.5 h-3.5 text-[#64748B] shrink-0" aria-hidden="true" />
+              <ExternalLink className="w-4 h-4 text-[#526075] shrink-0" aria-hidden="true" />
             </a>
           );
         })}
@@ -418,17 +418,17 @@ export function PrimaryActionBar({
           <button
             type="button"
             onClick={onTrackApplication}
-            className="min-h-[44px] px-4 py-2.5 bg-[#F6F8FC] hover:bg-slate-200/70 text-[#102A43] border border-[#E2E8F0] text-xs sm:text-sm font-semibold rounded-xl transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5"
+            className="min-h-[44px] px-4 py-2.5 bg-[#F6F8FC] hover:bg-slate-200/70 text-[#101A36] border border-[#DCE3EE] text-sm font-semibold rounded-xl transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5"
           >
-            <FileSearch className="w-4 h-4 text-[#2563EB] shrink-0" aria-hidden="true" />
+            <FileSearch className="w-4 h-4 text-[#101A36] shrink-0" aria-hidden="true" />
             <span>Track Application</span>
           </button>
         )}
       </div>
 
       {resolvedDisclaimer && (
-        <p className="text-[11px] sm:text-xs text-[#64748B] leading-relaxed flex items-start gap-1.5">
-          <Info className="w-3.5 h-3.5 text-[#2563EB] shrink-0 mt-0.5" aria-hidden="true" />
+        <p className="text-sm text-[#526075] leading-relaxed flex items-start gap-1.5">
+          <Info className="w-4 h-4 text-[#101A36] shrink-0 mt-0.5" aria-hidden="true" />
           <span>{resolvedDisclaimer}</span>
         </p>
       )}
@@ -461,10 +461,10 @@ export function MobileSectionNav({
   return (
     <nav
       aria-label="On this page"
-      className="lg:hidden -mx-4 px-4 py-2.5 bg-white border-y border-[#E2E8F0] sticky top-16 z-30 overflow-x-auto no-scrollbar my-2"
+      className="lg:hidden -mx-4 px-4 py-2.5 bg-[#F6F8FC] border-y border-[#DCE3EE] overflow-x-auto no-scrollbar my-2"
     >
       <div className="flex items-center gap-1.5 min-w-max">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] mr-1 shrink-0">
+        <span className="text-xs font-bold uppercase tracking-wider text-[#526075] me-1 shrink-0">
           On this page:
         </span>
         {safeSections.map((sec) => {
@@ -475,10 +475,10 @@ export function MobileSectionNav({
               key={sec.id}
               type="button"
               onClick={() => handleSelect(sec.id)}
-              className={`min-h-[34px] px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer border ${
+              className={`min-h-[36px] px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer border ${
                 isActive
-                  ? 'bg-[#102A43] text-white border-[#102A43]'
-                  : 'bg-[#F6F8FC] text-[#475569] border-[#E2E8F0] hover:text-[#102A43]'
+                  ? 'bg-[#101A36] text-white border-[#101A36]'
+                  : 'bg-white text-[#526075] border-[#DCE3EE] hover:text-[#101A36]'
               }`}
             >
               {displayLabel}
@@ -510,20 +510,20 @@ export function ContentSection({
     <section
       id={id}
       aria-labelledby={`${id}-heading`}
-      className={`scroll-mt-28 py-4 sm:py-6 first:pt-2 ${
-        showBottomBorder ? 'border-b border-[#E2E8F0] last:border-b-0' : ''
+      className={`scroll-mt-24 py-5 sm:py-6 first:pt-2 text-start ${
+        showBottomBorder ? 'border-b border-[#DCE3EE] last:border-b-0' : ''
       } space-y-3`}
     >
       <div>
         <h2
           id={`${id}-heading`}
-          className="text-base sm:text-lg font-bold text-[#102A43] tracking-tight"
+          className="text-lg sm:text-xl font-bold text-[#101A36] tracking-tight"
         >
           {title}
         </h2>
-        {subtitle && <p className="text-xs sm:text-sm text-[#64748B] mt-1">{subtitle}</p>}
+        {subtitle && <p className="text-sm sm:text-base text-[#526075] mt-1">{subtitle}</p>}
       </div>
-      <div className="text-xs sm:text-sm text-[#334155] leading-relaxed space-y-3">
+      <div className="text-base text-[#1E293B] leading-relaxed space-y-3">
         {children}
       </div>
     </section>
@@ -617,10 +617,10 @@ export function ContentChecklist({
       {safeItems.map((item, idx) => (
         <li
           key={idx}
-          className="py-2.5 flex items-start gap-2.5 text-xs sm:text-sm text-[#1E293B]"
+          className="py-3 flex items-start gap-2.5 text-sm sm:text-base text-[#101A36]"
         >
           <CheckCircle2
-            className="w-4 h-4 text-[#16A34A] shrink-0 mt-0.5"
+            className="w-5 h-5 text-[#1F9D6B] shrink-0 mt-0.5"
             aria-hidden="true"
           />
           <span className="leading-relaxed break-words">{item}</span>
@@ -642,19 +642,19 @@ export function StepByStepList({
   if (safeSteps.length === 0) return null;
 
   return (
-    <ol className="divide-y divide-[#E2E8F0] border-y border-[#E2E8F0]">
+    <ol className="divide-y divide-[#DCE3EE] border-y border-[#DCE3EE]">
       {safeSteps.map((step, idx) => (
-        <li key={idx} className="py-3 flex items-start gap-3">
-          <span className="w-6 h-6 rounded-full bg-[#F6F8FC] border border-[#CBD5E1] text-[#102A43] font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 tabular-nums">
+        <li key={idx} className="py-3.5 flex items-start gap-3">
+          <span className="w-7 h-7 rounded-lg bg-[#101A36] text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 tabular-nums">
             {idx + 1}
           </span>
-          <div className="space-y-0.5 min-w-0 flex-1">
+          <div className="space-y-1 min-w-0 flex-1">
             {step.title && (
-              <strong className="block text-xs sm:text-sm font-bold text-[#102A43]">
+              <strong className="block text-sm sm:text-base font-bold text-[#101A36]">
                 {step.title}
               </strong>
             )}
-            <p className="text-xs sm:text-sm text-[#475569] leading-relaxed break-words">
+            <p className="text-sm sm:text-base text-[#475569] leading-relaxed break-words">
               {step.description}
             </p>
           </div>
@@ -749,13 +749,13 @@ export function OfficialSourcesAndAssistance({
         </div>
 
         {/* CSC DOST Assistance Column */}
-        <div className="p-4 bg-blue-50/50 border border-blue-200 rounded-xl space-y-2.5 flex flex-col justify-between">
+        <div className="p-4 bg-[#ECFDF5] border border-[#A7F3D0] rounded-xl space-y-2.5 flex flex-col justify-between">
           <div className="space-y-1.5">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#2563EB] block">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#146C48] block">
               Independent Citizen Assistance
             </span>
-            <h3 className="text-sm font-bold text-[#102A43]">{assistanceTitle}</h3>
-            <p className="text-xs text-[#475569] leading-relaxed">{assistanceDescription}</p>
+            <h3 className="text-base font-bold text-[#101A36]">{assistanceTitle}</h3>
+            <p className="text-sm text-[#334155] leading-relaxed">{assistanceDescription}</p>
           </div>
 
           {resolvedAssistanceAction && (
@@ -763,10 +763,10 @@ export function OfficialSourcesAndAssistance({
               <button
                 type="button"
                 onClick={resolvedAssistanceAction}
-                className="min-h-[40px] w-full sm:w-auto px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5"
+                className="min-h-[44px] w-full sm:w-auto px-4 py-2 bg-[#1F9D6B] hover:bg-[#178257] text-white text-sm font-bold rounded-xl transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5"
               >
                 <span>{assistanceButtonLabel}</span>
-                <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                <ArrowRight className="w-4 h-4 rtl:rotate-180" aria-hidden="true" />
               </button>
             </div>
           )}
@@ -983,15 +983,15 @@ export function ContentPageLayout({
             {/* Slim Unboxed Desktop Sidebar with Vertical Hairline Divider */}
             <aside
               aria-label="On this page and related links"
-              className="hidden lg:block lg:col-span-4 lg:border-l lg:border-[#E2E8F0] lg:pl-7 sticky top-24 space-y-7"
+              className="hidden lg:block lg:col-span-4 lg:border-s lg:border-[#DCE3EE] lg:ps-7 sticky top-24 space-y-7 text-start"
             >
               {/* On this page */}
               {navItems.length > 0 && (
                 <div className="space-y-2.5">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#526075] block">
                     On this page
                   </span>
-                  <nav aria-label="On this page" className="space-y-1 border-l border-[#E2E8F0]">
+                  <nav aria-label="On this page" className="space-y-1 border-s border-[#DCE3EE]">
                     {navItems.map((sec) => {
                       const isActive = currentSectionId === sec.id;
                       const displayLabel = sec.title || sec.label || sec.id;
@@ -1000,10 +1000,10 @@ export function ContentPageLayout({
                           key={sec.id}
                           type="button"
                           onClick={() => handleSelectSection(sec.id)}
-                          className={`w-full text-left pl-3 py-1.5 text-xs transition-colors cursor-pointer -ml-px border-l-2 ${
+                          className={`w-full text-start ps-3 py-1.5 text-sm transition-colors cursor-pointer -ms-px border-s-2 ${
                             isActive
-                              ? 'border-[#2563EB] text-[#2563EB] font-bold'
-                              : 'border-transparent text-[#64748B] hover:text-[#102A43] font-medium'
+                              ? 'border-[#101A36] text-[#101A36] font-bold'
+                              : 'border-transparent text-[#526075] hover:text-[#101A36] font-medium'
                           }`}
                         >
                           {displayLabel}
@@ -1016,23 +1016,23 @@ export function ContentPageLayout({
 
               {/* Subtle Assistance Callout */}
               {resolvedSidebarCta && (
-                <div className="pt-5 border-t border-[#E2E8F0] space-y-2.5">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#2563EB] block">
+                <div className="pt-5 border-t border-[#DCE3EE] space-y-2.5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#146C48] block">
                     {resolvedSidebarCta.badge || 'CSC DOST Assistance'}
                   </span>
-                  <h3 className="text-sm font-bold text-[#102A43] leading-snug">
+                  <h3 className="text-base font-bold text-[#101A36] leading-snug">
                     {resolvedSidebarCta.title}
                   </h3>
-                  <p className="text-xs text-[#64748B] leading-relaxed">
+                  <p className="text-sm text-[#526075] leading-relaxed">
                     {resolvedSidebarCta.description}
                   </p>
                   <button
                     type="button"
                     onClick={resolvedSidebarCta.onAction}
-                    className="min-h-[40px] w-full px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5"
+                    className="min-h-[44px] w-full px-4 py-2 bg-[#1F9D6B] hover:bg-[#178257] text-white text-sm font-bold rounded-xl transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5"
                   >
                     <span>{resolvedSidebarCta.buttonLabel}</span>
-                    <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                    <ArrowRight className="w-4 h-4 rtl:rotate-180" aria-hidden="true" />
                   </button>
                 </div>
               )}
@@ -1146,16 +1146,16 @@ export function ContentPageLayout({
 
       {/* Compact Sticky Mobile Action Bar (<= 767px) */}
       {resolvedMobileBar && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xs border-t border-[#E2E8F0] px-4 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] flex items-center gap-2 shadow-lg">
+        <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-xs border-t border-[#DCE3EE] px-4 py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] flex items-center gap-2 shadow-lg">
           {resolvedMobileBar.secondaryLabel && resolvedMobileBar.secondaryHref && (
             <a
               href={resolvedMobileBar.secondaryHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="min-h-[42px] px-3.5 py-2 bg-[#F6F8FC] hover:bg-slate-200 text-[#102A43] border border-[#CBD5E1] text-xs font-semibold rounded-xl transition-colors inline-flex items-center gap-1 shrink-0"
+              className="min-h-[42px] px-3.5 py-2 bg-[#F6F8FC] hover:bg-slate-200 text-[#101A36] border border-[#CBD5E1] text-xs font-semibold rounded-xl transition-colors inline-flex items-center gap-1 shrink-0"
             >
               <span>{resolvedMobileBar.secondaryLabel}</span>
-              <ExternalLink className="w-3 h-3 text-[#64748B]" aria-hidden="true" />
+              <ExternalLink className="w-3 h-3 text-[#526075]" aria-hidden="true" />
             </a>
           )}
           {resolvedMobileBar.secondaryLabel &&
@@ -1164,7 +1164,7 @@ export function ContentPageLayout({
               <button
                 type="button"
                 onClick={resolvedMobileBar.onSecondaryClick}
-                className="min-h-[42px] px-3.5 py-2 bg-[#F6F8FC] hover:bg-slate-200 text-[#102A43] border border-[#CBD5E1] text-xs font-semibold rounded-xl transition-colors cursor-pointer shrink-0"
+                className="min-h-[42px] px-3.5 py-2 bg-[#F6F8FC] hover:bg-slate-200 text-[#101A36] border border-[#CBD5E1] text-xs font-semibold rounded-xl transition-colors cursor-pointer shrink-0"
               >
                 {resolvedMobileBar.secondaryLabel}
               </button>
@@ -1172,10 +1172,10 @@ export function ContentPageLayout({
           <button
             type="button"
             onClick={resolvedMobileBar.onPrimaryClick}
-            className="min-h-[42px] flex-1 px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5"
+            className="min-h-[42px] flex-1 px-4 py-2 bg-[#1F9D6B] hover:bg-[#178257] text-white text-sm font-bold rounded-xl transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5"
           >
             <span className="truncate">{resolvedMobileBar.primaryLabel}</span>
-            <ArrowRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            <ArrowRight className="w-4 h-4 shrink-0 rtl:rotate-180" aria-hidden="true" />
           </button>
         </div>
       )}
@@ -1774,7 +1774,7 @@ export function ColourAccentCard({
                 onPrimaryClick();
               }
             }}
-            className="min-h-[40px] sm:min-h-[42px] px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-[13px] font-semibold rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] inline-flex items-center justify-center gap-1.5 transition-colors shrink-0 ml-auto no-underline"
+            className="min-h-[42px] px-4 py-2 bg-[#101A36] hover:bg-[#1B2A52] text-white text-sm font-semibold rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F5A623] inline-flex items-center justify-center gap-1.5 transition-colors shrink-0 ms-auto no-underline"
           >
             <span>{resolvedActionLabel}</span>
           </a>
@@ -1782,7 +1782,7 @@ export function ColourAccentCard({
           <button
             type="button"
             onClick={onPrimaryClick}
-            className="min-h-[40px] sm:min-h-[42px] px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-[13px] font-semibold rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0 ml-auto"
+            className="min-h-[42px] px-4 py-2 bg-[#101A36] hover:bg-[#1B2A52] text-white text-sm font-semibold rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F5A623] inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0 ms-auto"
           >
             <span>{resolvedActionLabel}</span>
           </button>

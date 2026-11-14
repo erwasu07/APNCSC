@@ -4,12 +4,13 @@ import {
   SARKARI_CATEGORIES,
   isIgnouItem,
   isEducationSarkariItem,
+  isRecruitmentSarkariItem,
 } from '../data/sarkariData';
-import { computeSarkariStatus, ComputedSarkariStatus } from '../utils/sarkariStatus';
+import { computeSarkariStatus, ComputedSarkariStatus, extractDatePattern } from '../utils/sarkariStatus';
 import { useSyncedSarkariPosts, sortByNewestPostDate } from '../utils/postDataSync';
 import SarkariNotificationBanner from './SarkariNotificationBanner';
 import { buildWhatsAppNotification } from '../utils/whatsappFormatter';
-import { AlertCircle, Clock, CheckCircle2, XCircle, FileText, ExternalLink, ShieldCheck } from 'lucide-react';
+import { AlertCircle, Clock, XCircle } from 'lucide-react';
 import {
   ContentPageLayout,
   ContentArticleHeader,
@@ -27,6 +28,16 @@ import {
   RelatedContentItem,
 } from './shared/ContentDesignSystem';
 import WhatsAppChannelPopup, { WhatsAppChannelInPostCard } from './shared/WhatsAppChannelPopup';
+import { HelpApplyingCard } from './ui/HelpApplyingCard';
+import { Badge } from './ui/Badge';
+
+function toIsoDate(raw?: string): string | undefined {
+  const parsed = extractDatePattern(raw);
+  if (!parsed) return undefined;
+  const mm = String(parsed.month).padStart(2, '0');
+  const dd = String(parsed.day).padStart(2, '0');
+  return `${parsed.year}-${mm}-${dd}`;
+}
 
 interface SarkariDedicatedPageViewProps {
   item: SarkariItem;
@@ -370,7 +381,8 @@ export default function SarkariDedicatedPageView({
           if (onNavigateRoute) {
             onNavigateRoute(`/post/${rel.id}`);
           } else {
-            window.location.hash = `#post/${rel.id}`;
+            window.history.pushState(null, '', `/post/${rel.id}`);
+            window.dispatchEvent(new PopStateEvent('popstate'));
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }
         },
@@ -504,23 +516,50 @@ export default function SarkariDedicatedPageView({
               onSecondaryClick: onBack,
             }
       }
-      schemaJson={{
-        '@context': 'https://schema.org',
-        '@type': 'Article',
-        headline: item.title,
-        description: item.shortInfo || item.title,
-        articleSection: SARKARI_CATEGORIES[item.category]?.label || 'Recruitment',
-        datePublished: item.postDate || undefined,
-        author: {
-          '@type': 'Organization',
-          name: 'CSC DOST',
-          url: 'https://www.cscdost.com',
-        },
-        mainEntityOfPage: {
-          '@type': 'WebPage',
-          '@id': `https://www.cscdost.com/#post/${item.id}`,
-        },
-      }}
+      schemaJson={
+        isRecruitmentSarkariItem(item)
+          ? {
+              '@context': 'https://schema.org',
+              '@type': 'JobPosting',
+              title: item.title,
+              description: item.shortInfo || item.title,
+              datePosted: toIsoDate(item.postDate) || '2026-11-01',
+              ...(toIsoDate(item.lastDate) ? { validThrough: toIsoDate(item.lastDate) } : {}),
+              employmentType: 'FULL_TIME',
+              hiringOrganization: {
+                '@type': 'Organization',
+                name: organisationName,
+                sameAs: officialPortalUrl,
+              },
+              jobLocation: {
+                '@type': 'Place',
+                address: {
+                  '@type': 'PostalAddress',
+                  addressRegion: 'Jammu and Kashmir',
+                  addressCountry: 'IN',
+                },
+              },
+              directApply: false,
+              url: `https://www.cscdost.com/post/${item.id}`,
+            }
+          : {
+              '@context': 'https://schema.org',
+              '@type': 'Article',
+              headline: item.title,
+              description: item.shortInfo || item.title,
+              articleSection: SARKARI_CATEGORIES[item.category]?.label || 'Notice',
+              datePublished: toIsoDate(item.postDate) || item.postDate || undefined,
+              author: {
+                '@type': 'Organization',
+                name: 'CSC DOST',
+                url: 'https://www.cscdost.com',
+              },
+              mainEntityOfPage: {
+                '@type': 'WebPage',
+                '@id': `https://www.cscdost.com/post/${item.id}`,
+              },
+            }
+      }
     >
       {/* Explicit Authoritative Status Notice Banner */}
       {isClosed && (
@@ -612,6 +651,15 @@ export default function SarkariDedicatedPageView({
             ? `${SARKARI_CATEGORIES[item.category]?.label || 'Notice'} · ${item.learnerGroup}`
             : SARKARI_CATEGORIES[item.category]?.label
         }
+        statusBadge={
+          statusInfo.isUrgentUnder7Days && statusInfo.daysRemaining !== null ? (
+            <Badge variant="urgent">{statusInfo.badgeLabel}</Badge>
+          ) : statusInfo.canApplyOnline ? (
+            <Badge variant="green">{statusInfo.badgeLabel}</Badge>
+          ) : (
+            <Badge variant="neutral">{statusInfo.badgeLabel}</Badge>
+          )
+        }
         title={item.title}
         subtitle={
           item.advertisementNo ? `Reference / Advertisement No: ${item.advertisementNo}` : undefined
@@ -694,7 +742,12 @@ export default function SarkariDedicatedPageView({
             : []),
         ]}
         onTrackApplication={() => {
-          window.location.hash = '#track';
+          if (onNavigateRoute) {
+            onNavigateRoute('/track');
+          } else {
+            window.history.pushState(null, '', '/track');
+            window.dispatchEvent(new PopStateEvent('popstate'));
+          }
         }}
         assistanceDisclaimer={
           isSscTimetablePost
@@ -1188,6 +1241,11 @@ export default function SarkariDedicatedPageView({
         assistanceButtonLabel={primaryAssistanceLabel}
         onRequestAssistance={canApplyOnline ? handleRequestAssistance : undefined}
       />
+
+      {/* Reusable CSC DOST Helpdesk Contact Card */}
+      <div className="my-5">
+        <HelpApplyingCard contextTitle={item.title} />
+      </div>
 
       {/* 11. FREQUENTLY ASKED QUESTIONS */}
       <ContentSection

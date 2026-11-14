@@ -233,6 +233,26 @@ export function getCategorySeoMeta(slug: CategorySlug): RouteSeoMeta {
   };
 }
 
+export function getSchemeSeoMeta(guide: {
+  id: string;
+  title: string;
+  summary: string;
+}): RouteSeoMeta {
+  const canonicalUrl = `${SITE_ORIGIN}/scheme/${guide.id}`;
+  return {
+    title: `${guide.title} – Eligibility, Documents & Steps | CSC DOST`,
+    description: guide.summary,
+    canonicalUrl,
+    robots: 'index, follow',
+    ogType: 'article',
+    breadcrumbs: [
+      { name: 'Home', url: `${SITE_ORIGIN}/` },
+      { name: 'Government Schemes', url: `${SITE_ORIGIN}/schemes` },
+      { name: guide.title, url: canonicalUrl },
+    ],
+  };
+}
+
 /**
  * Updates browser head metadata dynamically when client-side SPA navigation occurs.
  */

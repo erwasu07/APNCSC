@@ -86,26 +86,26 @@ export default function LegalPageView({ pageType, onNavigate, onBackToHome }: Le
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 pb-16">
-      {/* Top Breadcrumb & Return Bar */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div className="min-h-screen bg-[#F6F8FC] text-[#101A36] pb-16">
+      {/* Top Breadcrumb & Return Bar (non-sticky so mobile sticky height stays <= 15%) */}
+      <div className="bg-white border-b border-[#E2E8F0]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
-          <nav className="flex items-center space-x-2 text-xs sm:text-sm text-slate-500" aria-label="Breadcrumb">
+          <nav className="flex items-center space-x-2 text-xs sm:text-sm text-[#64748B]" aria-label="Breadcrumb">
             <button 
               type="button" 
               onClick={onBackToHome}
-              className="hover:text-blue-600 transition-colors cursor-pointer font-medium"
+              className="hover:text-[#1F9D6B] transition-colors cursor-pointer font-medium"
             >
               Home
             </button>
             <span>/</span>
-            <span className="text-slate-900 font-semibold">{currentConfig.title}</span>
+            <span className="text-[#101A36] font-semibold">{currentConfig.title}</span>
           </nav>
 
           <button
             type="button"
             onClick={onBackToHome}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-semibold text-[#101A36] bg-[#F6F8FC] hover:bg-slate-200 border border-[#E2E8F0] rounded-lg transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Portal
@@ -115,30 +115,30 @@ export default function LegalPageView({ pageType, onNavigate, onBackToHome }: Le
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6">
         {/* Government Non-Affiliation Trust Notice */}
-        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl shadow-xs mb-6 text-sm text-amber-900">
+        <div className="bg-[#FEF3C7] border-s-4 border-[#F5A623] p-4 rounded-e-xl shadow-xs mb-6 text-sm sm:text-base text-[#101A36]">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <AlertTriangle className="w-5 h-5 text-[#B45309] shrink-0 mt-0.5" />
             <div>
-              <p className="font-bold text-amber-950 uppercase tracking-wider text-xs">Official Transparency Notice</p>
-              <p className="mt-1 leading-relaxed">
+              <p className="font-bold text-[#101A36] uppercase tracking-wider text-xs">Official Transparency Notice</p>
+              <p className="mt-1 leading-relaxed text-sm sm:text-base">
                 <strong>CSC DOST (cscdost.com)</strong> is an independent digital facilitation and citizen information portal operated by authorized CSC Village Level Entrepreneur (VLE) <strong>Wasim Ahmad Khanday</strong> (VLE ID: <strong>212515670018</strong>). 
-                We are <strong>NOT</strong> an official government website or a representative of any government department. All official recruitment and scheme notifications are linked to their respective government portals (<code className="bg-amber-100/70 px-1 py-0.5 rounded text-amber-950 font-mono text-xs">.gov.in / .nic.in</code>).
+                We are <strong>NOT</strong> an official government website or a representative of any government department. All official recruitment and scheme notifications are linked to their respective government portals (<code className="bg-amber-200/70 px-1 py-0.5 rounded text-[#101A36] font-mono text-xs">.gov.in / .nic.in</code>).
               </p>
             </div>
           </div>
         </div>
 
         {/* Policy Tab Navigation */}
-        <div className="flex flex-wrap gap-2 pb-4 border-b border-slate-200 mb-8">
+        <div className="flex flex-wrap gap-2 pb-4 border-b border-[#E2E8F0] mb-8">
           {navItems.map((item) => (
             <button
               key={item.type}
               type="button"
               onClick={() => onNavigate(item.type)}
-              className={`inline-flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-medium rounded-lg transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all cursor-pointer ${
                 pageType === item.type
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                  ? 'bg-[#101A36] text-white shadow-sm'
+                  : 'bg-white text-[#101A36] hover:bg-[#F6F8FC] border border-[#E2E8F0]'
               }`}
             >
               {item.icon}
@@ -148,7 +148,7 @@ export default function LegalPageView({ pageType, onNavigate, onBackToHome }: Le
         </div>
 
         {/* Content Container */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-10 shadow-xs">
+        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-10 shadow-xs">
           {pageType === 'about' && <AboutContent />}
           {pageType === 'contact' && <ContactContent />}
           {pageType === 'privacy' && <PrivacyContent />}
@@ -295,7 +295,7 @@ function ContactContent() {
       <section className="space-y-4 text-slate-700 leading-relaxed text-base">
         <h2 className="text-xl font-bold text-slate-900">Application Assistance &amp; Tracking Inquiries</h2>
         <p>
-          If you submitted an appointment or assistance request through our online portal, you can monitor its progress in real-time using our live tracking desk at <code>https://www.cscdost.com/#track</code> using your assigned Application Tracking Token (e.g. <code>CSC-XXXXXXXX</code>).
+          If you submitted an appointment or assistance request through our online portal, you can monitor its progress in real-time using our live tracking desk at <code>https://www.cscdost.com/track</code> using your assigned Application Tracking Token (e.g. <code>CSC-XXXXXXXX</code>).
         </p>
         <p>
           For urgent queries regarding fee payments, document verification, or portal technical errors, please reach out directly via WhatsApp helpline at <strong>+91 70068 33767</strong> with your tracking ID.

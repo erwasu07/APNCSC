@@ -8,6 +8,7 @@ export interface ComputedSarkariStatus {
   badgeTone: 'emerald' | 'amber' | 'slate' | 'rose' | 'blue';
   canApplyOnline: boolean;
   isClosingSoon: boolean;
+  isUrgentUnder7Days: boolean;
   isClosed: boolean;
   isUpcoming: boolean;
   isCancelled: boolean;
@@ -220,7 +221,7 @@ export function inferNoticeStage(item: SarkariItem): NoticeStage {
 /**
  * Authoritative status computation for any SarkariItem using Asia/Kolkata time.
  */
-function rawComputeSarkariStatus(item: SarkariItem, customNow?: Date): Omit<ComputedSarkariStatus, 'isClosed' | 'isUpcoming' | 'isCancelled' | 'isOpen'> {
+function rawComputeSarkariStatus(item: SarkariItem, customNow?: Date): Omit<ComputedSarkariStatus, 'isClosed' | 'isUpcoming' | 'isCancelled' | 'isOpen' | 'isUrgentUnder7Days'> {
   const stage = inferNoticeStage(item);
   const verificationStatus: VerificationStatus =
     item.verification?.verificationStatus || item.verificationStatus || 'verified';
@@ -493,6 +494,7 @@ function rawComputeSarkariStatus(item: SarkariItem, customNow?: Date): Omit<Comp
   const daysRemaining = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
   const hoursRemaining = Math.max(0, Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
 
+  const isUrgentUnder7Days = daysRemaining < 7;
   const isClosingSoon = daysRemaining <= 7;
   const timeRemainingText =
     daysRemaining > 0
@@ -507,8 +509,14 @@ function rawComputeSarkariStatus(item: SarkariItem, customNow?: Date): Omit<Comp
     applicationStatus: 'open',
     stage,
     verificationStatus,
-    badgeLabel: isClosingSoon ? `Closing Soon (${daysRemaining}d left)` : 'Open & Active',
-    badgeTone: isClosingSoon ? 'amber' : 'emerald',
+    badgeLabel: isUrgentUnder7Days
+      ? daysRemaining === 0
+        ? 'Closes Today'
+        : `${daysRemaining}d left`
+      : isClosingSoon
+      ? 'Closing Soon (7d left)'
+      : 'Open & Active',
+    badgeTone: isUrgentUnder7Days ? 'rose' : isClosingSoon ? 'amber' : 'emerald',
     canApplyOnline: true,
     isClosingSoon,
     closingTimeNote,
@@ -523,6 +531,10 @@ export function computeSarkariStatus(item: SarkariItem, customNow?: Date): Compu
   const base = rawComputeSarkariStatus(item, customNow);
   return {
     ...base,
+    isUrgentUnder7Days:
+      base.applicationStatus === 'open' &&
+      base.daysRemaining !== null &&
+      base.daysRemaining < 7,
     isClosed: base.applicationStatus === 'closed',
     isUpcoming: base.applicationStatus === 'upcoming',
     isCancelled: base.applicationStatus === 'cancelled',

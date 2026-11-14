@@ -10,10 +10,12 @@ import {
   isPublishedSarkariItem,
   isIgnouItem,
   isEducationSarkariItem,
+  isRecruitmentSarkariItem,
   parseSarkariDateSortValue,
 } from './src/data/sarkariData';
 import { computeSarkariStatus } from './src/utils/sarkariStatus';
 import { SERVICES_LIST } from './src/servicesData';
+import { GUIDE_ARTICLES } from './src/data/guidesData';
 import { 
   generateOgPng, 
   generateOgSvg, 
@@ -37,6 +39,8 @@ import {
   renderServiceSubstantiveHtml,
   renderLegalPageSubstantiveHtml,
   renderHomepageSubstantiveHtml,
+  renderSchemeSubstantiveHtml,
+  renderToolDetailSubstantiveHtml,
   renderCategorySubstantiveHtml,
   renderNotFoundSubstantiveHtml
 } from './src/serverContentRenderer';
@@ -47,6 +51,7 @@ import {
   PRIVATE_NOINDEX_META,
   IGNOU_EDUCATION_SEO,
   getCategorySeoMeta,
+  getSchemeSeoMeta,
   CategorySlug,
 } from './src/utils/seoConfig';
 import { TOOLS_LIST } from './src/components/tools/toolsData';
@@ -4464,8 +4469,10 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
   const urlPath = rawPath.replace(/\/+$/, '') || '/';
   const matchPost = urlPath.match(/^\/(?:post|job|jobs|sarkari|notice|admissions|notification)\/([^/?#]+)/i);
   const matchService = urlPath.match(/^\/service\/([^/?#]+)/i);
+  const matchScheme = urlPath.match(/^\/scheme\/([^/?#]+)/i);
   const postParam = (req.query.post as string) || (req.query.job as string) || (req.query.id as string) || (req.query.notice as string);
   const serviceParam = req.query.service as string;
+  const schemeParam = req.query.scheme as string;
 
   // Determine host and protocol dynamically for preview/dev OG images
   const host = (req.get('x-forwarded-host') || req.get('host') || 'www.cscdost.com').split(',')[0].trim();
@@ -4491,11 +4498,13 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
   let articlePublishedDate = '';
   let breadcrumbItems: { name: string; url: string }[] = [];
   let substantiveBodyHtml = '';
+  let matchedJobPost: SarkariItem | null = null;
 
   const legalMatch = urlPath.match(/^\/(privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|about|contact-us|contact|refund-policy|refund)$/i);
   const adminMatch = urlPath.match(/^\/(admin|staff)$/i);
   const targetPostId = (matchPost ? matchPost[1] : postParam)?.replace(/\.html?$/i, '');
   const targetServiceId = (matchService ? matchService[1] : serviceParam)?.replace(/\.html?$/i, '');
+  const targetSchemeId = (matchScheme ? matchScheme[1] : schemeParam)?.replace(/\.html?$/i, '');
 
   if (legalMatch) {
     const rawKey = legalMatch[1].toLowerCase();
@@ -4524,6 +4533,7 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
     const allSarkari = getAllMergedSarkariPosts().filter(isPublishedSarkariItem);
     const item = allSarkari.find(i => i.id === targetPostId || i.id === decodeURIComponent(targetPostId));
     if (item) {
+      matchedJobPost = item;
       title = `${item.title} | CSC DOST`;
       description = item.shortInfo || `Apply online for ${item.title}. Last Date: ${item.lastDate || 'Check Notification'}. Vacancies: ${item.totalPosts || 'Open'}. Official updates & application assistance at cscdost.com.`;
       const dateVersion = (item.lastDate || item.postDate || '2026').replace(/[^0-9]/g, '') || '2026';
@@ -4581,6 +4591,26 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       robotsContent = PRIVATE_NOINDEX_META.notfound.robots;
       substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
     }
+  } else if (targetSchemeId) {
+    const guide = GUIDE_ARTICLES.find((g) => g.id === targetSchemeId || g.id === decodeURIComponent(targetSchemeId));
+    if (guide) {
+      const meta = getSchemeSeoMeta(guide);
+      title = meta.title;
+      description = meta.description;
+      canonicalUrl = meta.canonicalUrl;
+      robotsContent = meta.robots;
+      ogType = 'article';
+      articlePublishedDate = '2026-11-14';
+      breadcrumbItems = meta.breadcrumbs || [];
+      substantiveBodyHtml = renderSchemeSubstantiveHtml(guide);
+    } else if (matchScheme) {
+      isNotFound = true;
+      title = PRIVATE_NOINDEX_META.notfound.title;
+      description = PRIVATE_NOINDEX_META.notfound.description;
+      canonicalUrl = PRIVATE_NOINDEX_META.notfound.canonicalUrl;
+      robotsContent = PRIVATE_NOINDEX_META.notfound.robots;
+      substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
+    }
   } else {
     const toolsMatch = urlPath.match(/^\/tools(?:\/([^/?#]+))?$/i);
     const trackMatch = urlPath.match(/^\/track(?:\/([^/?#]+))?$/i);
@@ -4601,7 +4631,7 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
             { name: 'Document Tools', url: `${SITE_ORIGIN}/tools` },
             { name: matchedTool.name, url: canonicalUrl }
           ];
-          substantiveBodyHtml = renderCategorySubstantiveHtml('tools', allSarkari, SERVICES_LIST);
+          substantiveBodyHtml = renderToolDetailSubstantiveHtml(matchedTool);
         } else {
           isNotFound = true;
           title = PRIVATE_NOINDEX_META.notfound.title;
@@ -4752,6 +4782,43 @@ ${JSON.stringify(articleLd, null, 2)}
     html = html.replace(/<\/head>/i, () => articleScript);
   }
 
+  // Inject Schema.org JobPosting JSON-LD for verified recruitment notices
+  if (matchedJobPost && isRecruitmentSarkariItem(matchedJobPost)) {
+    const jobLd: Record<string, unknown> = {
+      "@context": "https://schema.org",
+      "@type": "JobPosting",
+      "title": matchedJobPost.title,
+      "description": matchedJobPost.shortInfo || description,
+      "datePosted": toIsoDate(matchedJobPost.postDate),
+      "employmentType": "FULL_TIME",
+      "hiringOrganization": {
+        "@type": "Organization",
+        "name": matchedJobPost.category ? matchedJobPost.category.replace(/_/g, ' ').toUpperCase() : "Government Recruitment Board",
+        "sameAs": matchedJobPost.officialLink || canonicalUrl
+      },
+      "jobLocation": {
+        "@type": "Place",
+        "address": {
+          "@type": "PostalAddress",
+          "addressRegion": "Jammu and Kashmir",
+          "addressCountry": "IN"
+        }
+      },
+      "directApply": true,
+      "url": canonicalUrl
+    };
+    if (matchedJobPost.lastDate && /^\d{2}\/\d{2}\/\d{4}$/.test(matchedJobPost.lastDate)) {
+      jobLd.validThrough = `${toIsoDate(matchedJobPost.lastDate)}T23:59:59+05:30`;
+    }
+    const jobScript = `
+    <!-- Dynamic JobPosting Structured Data -->
+    <script type="application/ld+json">
+${JSON.stringify(jobLd, null, 2)}
+    </script>
+  </head>`;
+    html = html.replace(/<\/head>/i, () => jobScript);
+  }
+
   // Inject BreadcrumbList JSON-LD if breadcrumbs exist
   if (breadcrumbItems.length > 0) {
     const breadcrumbLd = {
@@ -4849,6 +4916,24 @@ app.get('/sitemap.xml', (req: Request, res: Response) => {
     for (const s of SERVICES_LIST) {
       xml += '  <url>\n';
       xml += `    <loc>${BASE_URL}/service/${encodeURIComponent(s.id)}</loc>\n`;
+      xml += `    <lastmod>${VERIFIED_STATIC_DATE}</lastmod>\n`;
+      xml += '    <changefreq>monthly</changefreq>\n';
+      xml += '    <priority>0.8</priority>\n';
+      xml += '  </url>\n';
+    }
+
+    for (const g of GUIDE_ARTICLES) {
+      xml += '  <url>\n';
+      xml += `    <loc>${BASE_URL}/scheme/${encodeURIComponent(g.id)}</loc>\n`;
+      xml += `    <lastmod>${VERIFIED_STATIC_DATE}</lastmod>\n`;
+      xml += '    <changefreq>monthly</changefreq>\n';
+      xml += '    <priority>0.8</priority>\n';
+      xml += '  </url>\n';
+    }
+
+    for (const t of TOOLS_LIST) {
+      xml += '  <url>\n';
+      xml += `    <loc>${BASE_URL}/tools/${encodeURIComponent(t.id)}</loc>\n`;
       xml += `    <lastmod>${VERIFIED_STATIC_DATE}</lastmod>\n`;
       xml += '    <changefreq>monthly</changefreq>\n';
       xml += '    <priority>0.8</priority>\n';

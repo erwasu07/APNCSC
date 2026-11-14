@@ -27,13 +27,18 @@
       html {
         width: 100%;
         max-width: 100%;
+        font-size: 16px;
         overflow-x: hidden !important;
-        background-color: #f8fafc !important;
-        color: #0f172a !important;
-        font-family: 'Inter', var(--font-fallback);
+        background-color: #F6F8FC !important;
+        color: #101A36 !important;
+        font-family: 'Inter', 'Noto Sans Devanagari', var(--font-fallback);
         text-size-adjust: 100%;
         -webkit-text-size-adjust: 100%;
         scroll-behavior: smooth;
+      }
+      html[dir="rtl"],
+      html[lang="ur"] {
+        font-family: 'Noto Nastaliq Urdu', 'Inter', serif;
       }
       body {
         width: 100%;
@@ -41,27 +46,31 @@
         margin: 0;
         padding: 0;
         overflow-x: hidden !important;
-        background-color: #f8fafc !important;
-        color: #0f172a !important;
-        line-height: 1.5;
+        background-color: #F6F8FC !important;
+        color: #101A36 !important;
+        font-size: 1rem;
+        line-height: 1.6;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+      }
+      html[dir="rtl"] body {
+        line-height: 2.0;
       }
       #root {
         width: 100%;
         max-width: 100%;
         min-height: 100vh;
         overflow-x: hidden !important;
-        background-color: #f8fafc !important;
+        background-color: #F6F8FC !important;
         display: flex;
         flex-direction: column;
       }
 
       /* Critical Header Skeleton (Prevents Layout Shift) */
       .critical-main-header {
-        background-color: #ffffff;
-        border-bottom: 1px solid #dbe4f0;
-        min-height: 72px;
+        background-color: #101A36;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        min-height: 56px;
       }
 
       /* Anti-CLS Dynamic Cards & Module Baseline Heights */
@@ -94,15 +103,15 @@
       }
     </style>
 
-    <!-- 4. Load Non-Critical Google Fonts Asynchronously -->
+    <!-- 4. Load Google Fonts Asynchronously (Inter + Noto Nastaliq Urdu + Noto Sans Devanagari) -->
     <link 
       rel="preload" 
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" 
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Nastaliq+Urdu:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" 
       as="style" 
       onload="this.onload=null;this.rel='stylesheet'" 
     />
     <noscript>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Nastaliq+Urdu:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" />
     </noscript>
 
     <!-- Primary Meta Tags & Search Visibility -->
@@ -152,7 +161,7 @@
     <!-- Google Search Console Verification -->
     <meta name="google-site-verification" content="oli3j7ocQEi5v7m3Z-z5fVai5mS0Z5aA-Z2VqKvuMo0" />
 
-    <!-- 5. Defer Non-Critical JavaScript (AdSense & Third-Party Tools) -->
+    <!-- 5. Defer Non-Critical JavaScript (AdSense) -->
     <meta name="google-adsense-account" content="ca-pub-3600904217061779" />
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3600904217061779" crossorigin="anonymous"></script>
 
@@ -211,22 +220,6 @@
       </div>
     </noscript>
 
-
-    <!-- Hidden Google Translate Element -->
-    <div id="google_translate_element" style="display:none; visibility:hidden; position:absolute; left:-9999px;"></div>
-    <script type="text/javascript">
-      function googleTranslateElementInit() {
-        if (window.google && window.google.translate) {
-          new window.google.translate.TranslateElement({
-            pageLanguage: 'en',
-            includedLanguages: 'en,hi',
-            autoDisplay: false
-          }, 'google_translate_element');
-        }
-      }
-    </script>
-    <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" defer></script>
-    
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

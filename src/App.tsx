@@ -33,9 +33,12 @@ const NotificationCenterModal = lazy(() => import('./components/NotificationCent
 const NotificationPreferencesModal = lazy(() => import('./components/NotificationPreferencesModal'));
 const SarkariResultDesk = lazy(() => import('./components/SarkariResultDesk'));
 import { TOOLS_LIST } from './components/tools/toolsData';
+import { GUIDE_ARTICLES } from './data/guidesData';
+import { LanguageProvider } from './contexts/LanguageContext';
 import {
   applyClientSeo,
   getCategorySeoMeta,
+  getSchemeSeoMeta,
   HOMEPAGE_SEO,
   IGNOU_EDUCATION_SEO,
   LEGAL_SEO_MAP,
@@ -127,6 +130,7 @@ export default function App() {
   const [activeToolId, setActiveToolId] = useState<string | null>(null);
   const [categoryView, setCategoryView] = useState<'jobs' | 'education' | 'schemes' | 'services' | 'calculators' | null>(null);
   const [educationSubRoute, setEducationSubRoute] = useState<'all' | 'ignou'>('all');
+  const [activeSchemeId, setActiveSchemeId] = useState<string | null>(null);
   const [isNotFoundView, setIsNotFoundView] = useState<boolean>(false);
 
   const [activeLegalPage, setActiveLegalPage] = useState<LegalPageType | null>(null);
@@ -215,6 +219,7 @@ export default function App() {
       const searchParams = new URLSearchParams(window.location.search);
       const postParam = searchParams.get('post') || searchParams.get('job') || searchParams.get('notice') || searchParams.get('id');
       const serviceParam = searchParams.get('service');
+      const schemeParam = searchParams.get('scheme');
       const trackParam = searchParams.get('track') || searchParams.get('token') || searchParams.get('id');
       const appParam = searchParams.get('appParams') || searchParams.get('page');
 
@@ -231,8 +236,9 @@ export default function App() {
       // Clean query parameters and trailing slashes for clean route matching
       const cleanPath = (effectivePath.split('?')[0] || '/').replace(/\/+$/, '') || '/';
 
-      // Reset client not found flag before evaluating current path
+      // Reset client not found & scheme flags before evaluating current path
       setIsNotFoundView(false);
+      setActiveSchemeId(null);
 
       // 0. Transparent Migration for Legacy Shared Fragment URLs if supported
       try {
@@ -474,6 +480,33 @@ export default function App() {
         }
       }
 
+      // 7b. Check Dedicated Scheme Guide route (/scheme/:id or ?scheme=:id)
+      const pathSchemeMatch = cleanPath.match(/^\/scheme\/([^/?#]+)$/i);
+      const candidateSchemeId = pathSchemeMatch ? decodeURIComponent(pathSchemeMatch[1]) : schemeParam;
+      if (candidateSchemeId) {
+        const matchScheme = GUIDE_ARTICLES.find((g) => g.id === candidateSchemeId);
+        if (matchScheme) {
+          setActiveSchemeId(matchScheme.id);
+          setCategoryView('schemes');
+          setActiveJobPost(null);
+          setActiveServicePost(null);
+          setIsAdminView(false);
+          setIsApplyView(false);
+          setIsTrackView(false);
+          setIsToolsView(false);
+          setActiveLegalPage(null);
+          try {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } catch {}
+          return;
+        } else if (pathSchemeMatch) {
+          setActiveSchemeId(null);
+          setCategoryView(null);
+          setIsNotFoundView(true);
+          return;
+        }
+      }
+
       // 8. Check Job/Post route (/post/:id, /job/:id, #post/:id, #/post/:id, ?post=:id)
       const pathPostMatch = cleanPath.match(/^\/(?:post|job|jobs|sarkari|notice|admissions|notification)\/([^/?#]+)$/i);
       if (pathPostMatch) {
@@ -595,6 +628,25 @@ export default function App() {
     setActiveServicePost(null);
     try {
       window.history.pushState(null, '', '/');
+    } catch {}
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {}
+  };
+
+  const handleOpenSchemePage = (schemeId: string) => {
+    setActiveSchemeId(schemeId);
+    setCategoryView('schemes');
+    setIsNotFoundView(false);
+    setIsApplyView(false);
+    setIsTrackView(false);
+    setIsToolsView(false);
+    setActiveJobPost(null);
+    setActiveServicePost(null);
+    setIsAdminView(false);
+    setActiveLegalPage(null);
+    try {
+      window.history.pushState(null, '', `/scheme/${encodeURIComponent(schemeId)}`);
     } catch {}
     try {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -745,6 +797,13 @@ export default function App() {
       applyClientSeo(getCategorySeoMeta('tools'));
       return;
     }
+    if (activeSchemeId) {
+      const matchedScheme = GUIDE_ARTICLES.find((g) => g.id === activeSchemeId);
+      if (matchedScheme) {
+        applyClientSeo(getSchemeSeoMeta(matchedScheme));
+        return;
+      }
+    }
     if (categoryView) {
       if (categoryView === 'education' && educationSubRoute === 'ignou') {
         applyClientSeo(IGNOU_EDUCATION_SEO);
@@ -763,6 +822,7 @@ export default function App() {
     activeServicePost,
     isToolsView,
     activeToolId,
+    activeSchemeId,
     categoryView,
     educationSubRoute,
     isNotFoundView,
@@ -801,6 +861,7 @@ export default function App() {
     setIsAdminView(false);
     setIsToolsView(false);
     setCategoryView(null);
+    setActiveSchemeId(null);
     setIsNotFoundView(false);
     setActiveToolId(null);
     setActiveJobPost(null);
@@ -919,7 +980,8 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F8FC] text-[#102A43] flex flex-col justify-between font-sans transition-colors duration-200 w-full max-w-full overflow-x-hidden">
+    <LanguageProvider>
+    <div className="min-h-screen bg-[#F6F8FC] text-[#101A36] text-base flex flex-col justify-between font-sans transition-colors duration-200 w-full max-w-full overflow-x-hidden">
       
       {/* Top Navigation Panel (hidden in Staff Management Console and dedicated Apply/Track pages which use their own compact header) */}
       {!isAdminView && !isApplyView && !isTrackView && (
@@ -1018,6 +1080,7 @@ export default function App() {
               <ServiceDedicatedPageView
                 service={activeServicePost}
                 onBack={handleCloseServicePage}
+                onNavigateRoute={navigateToPath}
                 onApplyService={(service) => {
                   handleCloseServicePage();
                   handleOpenApplyPage(service);
@@ -1042,14 +1105,14 @@ export default function App() {
           /* GENUINE 404 PAGE VIEW FOR UNRECOGNIZED CLIENT ROUTES */
           <div className="animate-fade-in w-full px-4 py-12 flex items-center justify-center">
             <div className="max-w-lg w-full bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-8 text-center shadow-xs space-y-4">
-              <div className="inline-flex items-center px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold">
+              <div className="inline-flex items-center px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-[#101A36] text-xs font-bold">
                 HTTP 404 · Page Not Found
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A]">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#101A36]">
                 Page Could Not Be Found
               </h1>
-              <p className="text-sm text-[#64748B] leading-relaxed">
-                The page or notice you requested does not exist or may have moved. Browse our six main sections below or return to the homepage.
+              <p className="text-base text-[#475569] leading-relaxed">
+                The page or notice you requested does not exist or may have moved. Browse our main sections below or return to the homepage.
               </p>
               <div className="flex flex-wrap justify-center gap-2 pt-2">
                 <a
@@ -1058,7 +1121,7 @@ export default function App() {
                     e.preventDefault();
                     handleGoHome();
                   }}
-                  className="px-4 py-2 bg-[#1E56C8] text-white text-xs font-bold rounded-xl hover:bg-[#1746A8] transition-colors no-underline"
+                  className="px-4 py-2.5 bg-[#101A36] text-white text-sm font-bold rounded-xl hover:bg-[#1E2B4F] transition-colors no-underline"
                 >
                   Return to Homepage
                 </a>
@@ -1068,14 +1131,9 @@ export default function App() {
                     href={cat.path}
                     onClick={(e) => {
                       e.preventDefault();
-                      try {
-                        window.history.pushState(null, '', cat.path);
-                        window.dispatchEvent(new PopStateEvent('popstate'));
-                      } catch {
-                        window.location.href = cat.path;
-                      }
+                      navigateToPath(cat.path);
                     }}
-                    className="px-3.5 py-2 bg-[#F8FAFC] hover:bg-[#EEF4FF] text-[#0F172A] hover:text-[#1E56C8] border border-[#E2E8F0] text-xs font-semibold rounded-xl transition-colors no-underline"
+                    className="px-3.5 py-2.5 bg-[#F6F8FC] hover:bg-white text-[#101A36] hover:text-[#1F9D6B] border border-[#E2E8F0] text-sm font-semibold rounded-xl transition-colors no-underline"
                   >
                     {cat.label}
                   </a>
@@ -1086,30 +1144,29 @@ export default function App() {
         ) : categoryView === 'jobs' ? (
           /* DEDICATED FULL-PAGE VIEW FOR JOBS & RECRUITMENT */
           <div className="animate-fade-in w-full px-3 sm:px-6 py-4 space-y-4">
-            <nav aria-label="Breadcrumb" className="flex items-center justify-between gap-3 pb-1 text-xs sm:text-sm">
-              <div className="flex items-center gap-1.5 text-slate-500">
+            <nav aria-label="Breadcrumb" className="flex items-center justify-between gap-3 pb-1 text-sm">
+              <div className="flex items-center gap-1.5 text-[#475569]">
                 <a
                   href="/"
                   onClick={(e) => {
                     e.preventDefault();
                     handleGoHome();
                   }}
-                  className="font-bold text-[#1E56C8] hover:underline inline-flex items-center gap-1"
+                  className="font-bold text-[#101A36] hover:text-[#1F9D6B] hover:underline inline-flex items-center gap-1"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <ArrowLeft className="w-3.5 h-3.5 rtl:rotate-180" />
                   <span>Home</span>
                 </a>
                 <span aria-hidden="true">/</span>
-                <span className="font-semibold text-[#0F172A]">Jobs &amp; Recruitment</span>
+                <span className="font-semibold text-[#101A36]">Jobs &amp; Recruitment</span>
               </div>
               <a
                 href="/education"
                 onClick={(e) => {
                   e.preventDefault();
-                  setCategoryView('education');
-                  try { window.history.pushState(null, '', '/education'); } catch {}
+                  navigateToPath('/education');
                 }}
-                className="text-xs font-semibold text-[#1E56C8] hover:underline"
+                className="text-sm font-semibold text-[#101A36] hover:text-[#1F9D6B] hover:underline"
               >
                 Education &amp; Admissions →
               </a>
@@ -1125,17 +1182,17 @@ export default function App() {
         ) : categoryView === 'education' ? (
           /* DEDICATED FULL-PAGE VIEW FOR EDUCATION & ADMISSIONS (INCLUDING /education/ignou) */
           <div className="animate-fade-in w-full px-3 sm:px-6 py-4 space-y-4">
-            <nav aria-label="Breadcrumb" className="flex items-center justify-between gap-3 pb-1 text-xs sm:text-sm">
-              <div className="flex items-center gap-1.5 text-slate-500 flex-wrap">
+            <nav aria-label="Breadcrumb" className="flex items-center justify-between gap-3 pb-1 text-sm">
+              <div className="flex items-center gap-1.5 text-[#475569] flex-wrap">
                 <a
                   href="/"
                   onClick={(e) => {
                     e.preventDefault();
                     handleGoHome();
                   }}
-                  className="font-bold text-[#1E56C8] hover:underline inline-flex items-center gap-1"
+                  className="font-bold text-[#101A36] hover:text-[#1F9D6B] hover:underline inline-flex items-center gap-1"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <ArrowLeft className="w-3.5 h-3.5 rtl:rotate-180" />
                   <span>Home</span>
                 </a>
                 <span aria-hidden="true">/</span>
@@ -1147,15 +1204,15 @@ export default function App() {
                         e.preventDefault();
                         navigateToPath('/education');
                       }}
-                      className="font-semibold text-[#1E56C8] hover:underline"
+                      className="font-semibold text-[#101A36] hover:text-[#1F9D6B] hover:underline"
                     >
                       Education &amp; Admissions
                     </a>
                     <span aria-hidden="true">/</span>
-                    <span className="font-semibold text-[#0F172A]">IGNOU</span>
+                    <span className="font-semibold text-[#101A36]">IGNOU</span>
                   </>
                 ) : (
-                  <span className="font-semibold text-[#0F172A]">Education &amp; Admissions</span>
+                  <span className="font-semibold text-[#101A36]">Education &amp; Admissions</span>
                 )}
               </div>
               <a
@@ -1164,7 +1221,7 @@ export default function App() {
                   e.preventDefault();
                   navigateToPath('/jobs');
                 }}
-                className="text-xs font-semibold text-[#1E56C8] hover:underline shrink-0"
+                className="text-sm font-semibold text-[#101A36] hover:text-[#1F9D6B] hover:underline shrink-0"
               >
                 Jobs &amp; Recruitment →
               </a>
@@ -1180,45 +1237,52 @@ export default function App() {
               />
             </Suspense>
           </div>
-        ) : categoryView === 'schemes' ? (
-          /* DEDICATED FULL-PAGE VIEW FOR GOVERNMENT SCHEMES */
+        ) : categoryView === 'schemes' || activeSchemeId !== null ? (
+          /* DEDICATED FULL-PAGE VIEW FOR GOVERNMENT SCHEMES & GUIDES */
           <div className="animate-fade-in w-full px-3 sm:px-6 py-4 space-y-4">
-            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 pb-1 text-xs sm:text-sm text-slate-500">
-              <a
-                href="/"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleGoHome();
-                }}
-                className="font-bold text-[#1E56C8] hover:underline inline-flex items-center gap-1"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Home</span>
-              </a>
-              <span aria-hidden="true">/</span>
-              <span className="font-semibold text-[#0F172A]">Government Schemes</span>
-            </nav>
+            {!activeSchemeId && (
+              <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 pb-1 text-sm text-[#475569]">
+                <a
+                  href="/"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleGoHome();
+                  }}
+                  className="font-bold text-[#101A36] hover:text-[#1F9D6B] hover:underline inline-flex items-center gap-1"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 rtl:rotate-180" />
+                  <span>Home</span>
+                </a>
+                <span aria-hidden="true">/</span>
+                <span className="font-semibold text-[#101A36]">Government Schemes</span>
+              </nav>
+            )}
             <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Government Schemes & Guides..." />}>
-              <GuidesKnowledgeHub onSelectService={handleServiceSelect} />
+              <GuidesKnowledgeHub
+                initialArticleId={activeSchemeId}
+                onClearInitialArticle={() => navigateToPath('/schemes')}
+                onOpenArticle={(articleId) => handleOpenSchemePage(articleId)}
+                onSelectService={handleServiceSelect}
+              />
             </Suspense>
           </div>
         ) : categoryView === 'services' ? (
           /* DEDICATED FULL-PAGE VIEW FOR CSC E-SERVICES */
           <div className="animate-fade-in w-full px-3 sm:px-6 py-4 space-y-4">
-            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 pb-1 text-xs sm:text-sm text-slate-500">
+            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 pb-1 text-sm text-[#475569]">
               <a
                 href="/"
                 onClick={(e) => {
                   e.preventDefault();
                   handleGoHome();
                 }}
-                className="font-bold text-[#1E56C8] hover:underline inline-flex items-center gap-1"
+                className="font-bold text-[#101A36] hover:text-[#1F9D6B] hover:underline inline-flex items-center gap-1"
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
+                <ArrowLeft className="w-3.5 h-3.5 rtl:rotate-180" />
                 <span>Home</span>
               </a>
               <span aria-hidden="true">/</span>
-              <span className="font-semibold text-[#0F172A]">CSC E-Services</span>
+              <span className="font-semibold text-[#101A36]">CSC E-Services</span>
             </nav>
             <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Citizen Services Catalogue..." />}>
               <ExploreServicesDesk 
@@ -1231,21 +1295,21 @@ export default function App() {
         ) : categoryView === 'calculators' ? (
           /* DEDICATED FULL-PAGE VIEW FOR CITIZEN CALCULATORS */
           <div className="animate-fade-in w-full px-3 sm:px-6 py-4 space-y-4">
-            <nav aria-label="Breadcrumb" className="flex items-center justify-between gap-3 pb-1 text-xs sm:text-sm">
-              <div className="flex items-center gap-1.5 text-slate-500">
+            <nav aria-label="Breadcrumb" className="flex items-center justify-between gap-3 pb-1 text-sm">
+              <div className="flex items-center gap-1.5 text-[#475569]">
                 <a
                   href="/"
                   onClick={(e) => {
                     e.preventDefault();
                     handleGoHome();
                   }}
-                  className="font-bold text-[#1E56C8] hover:underline inline-flex items-center gap-1"
+                  className="font-bold text-[#101A36] hover:text-[#1F9D6B] hover:underline inline-flex items-center gap-1"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <ArrowLeft className="w-3.5 h-3.5 rtl:rotate-180" />
                   <span>Home</span>
                 </a>
                 <span aria-hidden="true">/</span>
-                <span className="font-semibold text-[#0F172A]">Citizen Calculators</span>
+                <span className="font-semibold text-[#101A36]">Citizen Calculators</span>
               </div>
               <a
                 href="/tools"
@@ -1253,7 +1317,7 @@ export default function App() {
                   e.preventDefault();
                   handleOpenToolsPage();
                 }}
-                className="text-xs font-semibold text-[#1E56C8] hover:underline"
+                className="text-sm font-semibold text-[#101A36] hover:text-[#1F9D6B] hover:underline"
               >
                 Document Tools →
               </a>
@@ -1266,24 +1330,21 @@ export default function App() {
             </Suspense>
           </div>
         ) : (
-          /* COMPACT HOMEPAGE (MATCHES APPROVED MOBILE REFERENCE) */
+          /* MOBILE-FIRST CSC DOST HOMEPAGE */
           <div className="animate-fade-in space-y-0 w-full">
             <Suspense fallback={<SectionSkeleton height="min-h-[520px]" title="Loading CSC DOST Citizen Portal..." />}>
               <PortalHomepage
                 onOpenJob={handleOpenJobPage}
                 onOpenService={handleOpenServicePage}
                 onApplyService={handleServiceSelect}
-                onOpenGuide={(guideId) => {
-                  setCategoryView('schemes');
-                  try {
-                    window.history.pushState(null, '', '/schemes');
-                  } catch {}
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
+                onOpenGuide={(guideId) => handleOpenSchemePage(guideId)}
                 onOpenTrack={() => handleOpenTrackPage()}
                 onOpenLegal={openLegalModal}
                 onNavigateRoute={(route) => {
-                  if (route === '/jobs') {
+                  if (route.startsWith('/scheme/')) {
+                    const id = route.slice('/scheme/'.length);
+                    if (id) handleOpenSchemePage(id);
+                  } else if (route === '/jobs') {
                     navigateToPath('/jobs');
                   } else if (route === '/education') {
                     navigateToPath('/education');
@@ -1374,10 +1435,10 @@ export default function App() {
       {/* Global Share Options Modal */}
       {showShareModal && shareData && (
         <div className="fixed inset-0 bg-slate-950/70 flex items-center justify-center p-4 z-[70]">
-          <div className="bg-white border border-[#E2E8F0] rounded-2xl max-w-md w-full p-5 sm:p-6 space-y-4 shadow-xl relative text-[#102A43]">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl max-w-md w-full p-5 sm:p-6 space-y-4 shadow-xl relative text-[#101A36]">
             <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
               <div className="flex items-center gap-2">
-                <Share2 className="w-5 h-5 text-[#2563EB]" />
+                <Share2 className="w-5 h-5 text-[#101A36]" />
                 <h3 className="font-bold text-base">Share Notification</h3>
               </div>
               <button
@@ -1389,12 +1450,12 @@ export default function App() {
               </button>
             </div>
 
-            <p className="text-xs text-[#64748B] font-medium">
-              Share <strong className="text-[#102A43]">{shareData.name}</strong> with candidates or on WhatsApp:
+            <p className="text-sm text-[#475569] font-medium">
+              Share <strong className="text-[#101A36]">{shareData.name}</strong> with candidates or on WhatsApp:
             </p>
 
             {/* Formatted WhatsApp Notification Preview */}
-            <div className="p-3 bg-[#E8F8F0] border border-emerald-300/60 rounded-xl text-[11.5px] text-[#102A43] font-sans whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed">
+            <div className="p-3 bg-[#ECFDF5] border border-[#1F9D6B]/40 rounded-xl text-xs text-[#101A36] font-sans whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed">
               {shareData.text}
             </div>
 
@@ -1404,13 +1465,13 @@ export default function App() {
                 href={shareData.whatsappShareUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between p-3.5 bg-[#16A34A] hover:bg-emerald-700 text-white rounded-xl font-semibold text-xs transition-colors cursor-pointer"
+                className="flex items-center justify-between p-3.5 bg-[#1F9D6B] hover:bg-[#198258] text-white rounded-xl font-semibold text-sm transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   <MessageCircle className="w-4 h-4" />
                   <span>Share on WhatsApp</span>
                 </div>
-                <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Formatted Alert</span>
+                <span className="text-[11px] bg-white/20 px-2 py-0.5 rounded-full">Formatted Alert</span>
               </a>
 
               {/* PATH B — NATIVE SHARE (Other Apps) */}
@@ -1428,13 +1489,13 @@ export default function App() {
                       // User cancelled native share sheet
                     }
                   }}
-                  className="flex items-center justify-between p-3.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl font-semibold text-xs transition-colors cursor-pointer"
+                  className="flex items-center justify-between p-3.5 bg-[#101A36] hover:bg-[#1E2B4F] text-white rounded-xl font-semibold text-sm transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
                     <Share2 className="w-4 h-4" />
                     <span>Share via Other Apps (System Share)</span>
                   </div>
-                  <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Native</span>
+                  <span className="text-[11px] bg-white/20 px-2 py-0.5 rounded-full">Native</span>
                 </button>
               )}
 
@@ -1446,13 +1507,13 @@ export default function App() {
                   setCopyMessageSuccess(true);
                   setTimeout(() => setCopyMessageSuccess(false), 2500);
                 }}
-                className="flex items-center justify-between p-3.5 bg-emerald-50 hover:bg-emerald-100/80 text-emerald-950 rounded-xl font-semibold text-xs transition-colors border border-emerald-200 cursor-pointer"
+                className="flex items-center justify-between p-3.5 bg-[#ECFDF5] hover:bg-[#D1FAE5] text-[#101A36] rounded-xl font-semibold text-sm transition-colors border border-[#1F9D6B]/30 cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   {copyMessageSuccess ? (
-                    <Check className="w-4 h-4 text-[#16A34A]" />
+                    <Check className="w-4 h-4 text-[#1F9D6B]" />
                   ) : (
-                    <Copy className="w-4 h-4 text-[#16A34A]" />
+                    <Copy className="w-4 h-4 text-[#1F9D6B]" />
                   )}
                   <span>
                     {copyMessageSuccess
@@ -1460,7 +1521,7 @@ export default function App() {
                       : 'Copy Formatted WhatsApp Message'}
                   </span>
                 </div>
-                <span className="text-[10px] text-emerald-700 font-mono">Text</span>
+                <span className="text-[11px] text-[#1F9D6B] font-mono">Text</span>
               </button>
 
               {/* Copy Direct Page Link Fallback */}
@@ -1471,13 +1532,13 @@ export default function App() {
                   setCopySuccess(true);
                   setTimeout(() => setCopySuccess(false), 2500);
                 }}
-                className="flex items-center justify-between p-3.5 bg-[#F6F8FC] hover:bg-slate-200/70 text-[#102A43] rounded-xl font-semibold text-xs transition-colors border border-[#E2E8F0] cursor-pointer"
+                className="flex items-center justify-between p-3.5 bg-[#F6F8FC] hover:bg-slate-200/70 text-[#101A36] rounded-xl font-semibold text-sm transition-colors border border-[#E2E8F0] cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  {copySuccess ? <Check className="w-4 h-4 text-[#16A34A]" /> : <Copy className="w-4 h-4 text-[#64748B]" />}
+                  {copySuccess ? <Check className="w-4 h-4 text-[#1F9D6B]" /> : <Copy className="w-4 h-4 text-[#64748B]" />}
                   <span>{copySuccess ? 'Link Copied to Clipboard!' : 'Copy Direct Page Link'}</span>
                 </div>
-                <span className="text-[10px] text-[#64748B] font-mono">URL</span>
+                <span className="text-[11px] text-[#64748B] font-mono">URL</span>
               </button>
             </div>
           </div>
@@ -1489,11 +1550,11 @@ export default function App() {
         <button
           type="button"
           onClick={handleWhatsAppFloating}
-          className={`fixed bottom-[calc(68px+max(0.75rem,env(safe-area-inset-bottom)))] right-3.5 sm:bottom-6 sm:right-6 w-12 h-12 sm:w-auto sm:h-11 sm:px-4 bg-[#16A34A] hover:bg-emerald-700 text-white rounded-full shadow-md transition-colors z-30 ${
+          className={`fixed bottom-[calc(68px+max(0.75rem,env(safe-area-inset-bottom)))] end-3.5 sm:bottom-6 sm:end-6 w-12 h-12 sm:w-auto sm:h-11 sm:px-4 bg-[#1F9D6B] hover:bg-[#198258] text-white rounded-full shadow-md transition-colors z-30 ${
             activeJobPost || activeServicePost
               ? 'hidden md:flex'
               : 'flex'
-          } items-center justify-center sm:gap-2 cursor-pointer border border-emerald-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#16A34A]`}
+          } items-center justify-center sm:gap-2 cursor-pointer border border-[#198258] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1F9D6B]`}
           title="Join CSC DOST WhatsApp Updates Group"
           id="whatsapp-floating-badge"
           aria-label="Join CSC DOST WhatsApp Updates Group"
@@ -1514,5 +1575,6 @@ export default function App() {
       )}
 
     </div>
+    </LanguageProvider>
   );
 }

@@ -200,17 +200,17 @@ export default function ExploreServicesDesk({
         className="flex flex-col md:flex-row md:items-end justify-between gap-3 border-b border-[#E2E8F0] pb-3 scroll-mt-20 px-1 sm:px-0"
       >
         <div>
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0284C7] uppercase tracking-wider mb-1">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1F9D6B] uppercase tracking-wider mb-1">
             <FileCheck className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Complete Service Directory</span>
           </div>
           <h1
             id="services-board-heading"
-            className="text-xl sm:text-3xl font-bold text-[#102A43] tracking-tight"
+            className="text-2xl sm:text-3xl font-extrabold text-[#101A36] tracking-tight"
           >
             CSC E-Services
           </h1>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-1.5">
+          <p className="text-base text-[#475569] mt-1.5">
             Search and browse all {SERVICES_LIST.length} citizen services, required documents, and fee details.
           </p>
         </div>
@@ -220,7 +220,7 @@ export default function ExploreServicesDesk({
             Search services in directory
           </label>
           <Search
-            className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+            className="w-4 h-4 text-[#64748B] absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
             aria-hidden="true"
           />
           <input
@@ -229,14 +229,14 @@ export default function ExploreServicesDesk({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Filter services by name or document…"
-            className="w-full min-h-[44px] pl-9 pr-8 py-2 bg-white border border-[#E2E8F0] focus:border-[#2563EB] rounded-xl text-xs sm:text-sm text-[#102A43] placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15"
+            className="w-full min-h-[44px] ps-9 pe-8 py-2 bg-white border border-[#E2E8F0] focus:border-[#101A36] rounded-xl text-sm text-[#101A36] placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#101A36]/15"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery('')}
               aria-label="Clear service filter"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#102A43] cursor-pointer"
+              className="absolute end-2.5 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#101A36] cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -248,7 +248,7 @@ export default function ExploreServicesDesk({
       <div
         role="tablist"
         aria-label="Service categories"
-        className="flex flex-wrap sm:flex-nowrap items-center gap-x-1.5 gap-y-2 sm:overflow-x-auto text-xs font-medium px-1 sm:px-0"
+        className="flex flex-wrap sm:flex-nowrap items-center gap-x-1.5 gap-y-2 sm:overflow-x-auto text-xs sm:text-sm font-medium px-1 sm:px-0"
       >
         {DIRECTORY_TABS.map((tab) => (
           <button
@@ -261,10 +261,10 @@ export default function ExploreServicesDesk({
               setSelectedCategory(tab.id);
               setShowAllServices(false);
             }}
-            className={`min-h-[38px] px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors cursor-pointer border ${
+            className={`min-h-[40px] px-3.5 py-1.5 rounded-xl whitespace-nowrap transition-colors cursor-pointer border ${
               selectedCategory === tab.id
-                ? 'bg-[#2563EB] text-white border-[#2563EB] font-semibold'
-                : 'bg-white text-[#102A43] border-[#E2E8F0] hover:bg-[#F6F8FC]'
+                ? 'bg-[#101A36] text-white border-[#101A36] font-semibold'
+                : 'bg-white text-[#101A36] border-[#E2E8F0] hover:bg-[#F6F8FC]'
             }`}
           >
             {tab.label}
@@ -275,8 +275,8 @@ export default function ExploreServicesDesk({
       {/* Services Colour-Accent Cards Grid */}
       {displayedServices.length === 0 ? (
         <div className="bg-white border border-[#E2E8F0] rounded-xl py-6 px-4 text-center space-y-2">
-          <p className="text-sm font-bold text-[#102A43]">No matching services found</p>
-          <p className="text-xs text-[#64748B]">
+          <p className="text-base font-bold text-[#101A36]">No matching services found</p>
+          <p className="text-sm text-[#475569]">
             Try clearing your search filter or switching to &ldquo;All Services&rdquo;.
           </p>
           <button
@@ -285,7 +285,7 @@ export default function ExploreServicesDesk({
               setSearchQuery('');
               setSelectedCategory('all');
             }}
-            className="min-h-[40px] mt-2 px-4 py-2 bg-[#2563EB] text-white text-xs font-semibold rounded-xl cursor-pointer"
+            className="min-h-[40px] mt-2 px-4 py-2 bg-[#101A36] text-white text-sm font-semibold rounded-xl cursor-pointer"
           >
             Reset Filters
           </button>
@@ -338,7 +338,7 @@ export default function ExploreServicesDesk({
           <button
             type="button"
             onClick={() => setShowAllServices((prev) => !prev)}
-            className="min-h-[44px] px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-white text-[#102A43] border border-[#E2E8F0] hover:border-[#2563EB] hover:text-[#2563EB] transition-colors cursor-pointer inline-flex items-center gap-2"
+            className="min-h-[44px] px-5 py-2.5 rounded-xl text-sm font-semibold bg-white text-[#101A36] border border-[#E2E8F0] hover:border-[#101A36] transition-colors cursor-pointer inline-flex items-center gap-2"
           >
             <span>
               {showAllServices
@@ -360,9 +360,9 @@ export default function ExploreServicesDesk({
             className="bg-white rounded-none md:rounded-2xl w-full max-w-2xl h-full md:h-auto max-h-screen md:max-h-[90vh] overflow-hidden flex flex-col shadow-xl border-0 md:border border-[#E2E8F0]"
             id={`explore-modal-${selectedServiceItem.id}`}
           >
-            <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-[#E2E8F0] bg-[#102A43] text-white flex items-start justify-between gap-4 shrink-0">
+            <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-[#E2E8F0] bg-[#101A36] text-white flex items-start justify-between gap-4 shrink-0">
               <div className="space-y-1 min-w-0">
-                <span className="text-xs font-semibold text-blue-200">
+                <span className="text-xs font-semibold text-[#F5A623]">
                   {CATEGORY_LABELS[selectedServiceItem.category]}
                 </span>
                 <h3 className="text-lg sm:text-xl font-bold text-white">
@@ -392,12 +392,12 @@ export default function ExploreServicesDesk({
               </div>
             </div>
 
-            <div className="p-0 md:p-6 overflow-y-auto flex-1 divide-y divide-[#E2E8F0] md:divide-y-0 md:space-y-5 text-sm bg-white md:bg-[#F6F8FC]">
+            <div className="p-0 md:p-6 overflow-y-auto flex-1 divide-y divide-[#E2E8F0] md:divide-y-0 md:space-y-5 text-base bg-white md:bg-[#F6F8FC]">
               <div className="bg-white md:border md:border-[#E2E8F0] md:rounded-xl px-4 py-4 md:p-4 space-y-1.5">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
                   Service Overview
                 </h4>
-                <p className="text-[#102A43] text-sm leading-relaxed">
+                <p className="text-[#101A36] text-base leading-relaxed">
                   {selectedServiceItem.description}
                 </p>
               </div>
@@ -405,38 +405,38 @@ export default function ExploreServicesDesk({
               <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x md:divide-x-0 divide-[#E2E8F0] md:gap-3">
                 <div className="px-4 py-3.5 md:p-4 bg-white md:border md:border-[#E2E8F0] md:rounded-xl flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B]">
-                    <Tag className="w-4 h-4 text-[#2563EB]" />
+                    <Tag className="w-4 h-4 text-[#101A36]" />
                     <span>Fee Details</span>
                   </div>
-                  <span className="font-bold text-[#102A43] text-xs">
+                  <span className="font-bold text-[#101A36] text-sm">
                     {selectedServiceItem.price}
                   </span>
                 </div>
 
                 <div className="px-4 py-3.5 md:p-4 bg-white md:border md:border-[#E2E8F0] md:rounded-xl flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B]">
-                    <Clock className="w-4 h-4 text-[#2563EB]" />
+                    <Clock className="w-4 h-4 text-[#101A36]" />
                     <span>Estimated Time</span>
                   </div>
-                  <span className="font-bold text-[#102A43] text-xs">
+                  <span className="font-bold text-[#101A36] text-sm">
                     {selectedServiceItem.estimatedTime}
                   </span>
                 </div>
               </div>
 
               <div className="bg-white md:border md:border-[#E2E8F0] md:rounded-xl px-4 py-4 md:p-4 space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#102A43] flex items-center gap-2">
-                  <FileCheck className="w-4 h-4 text-[#16A34A]" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#101A36] flex items-center gap-2">
+                  <FileCheck className="w-4 h-4 text-[#1F9D6B]" />
                   <span>Required Documents</span>
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                   {selectedServiceItem.requirements.map((req, idx) => (
                     <div
                       key={idx}
                       className="flex items-center gap-2 p-2.5 bg-[#F6F8FC] rounded-lg border border-[#E2E8F0]"
                     >
-                      <CheckCircle className="w-4 h-4 text-[#16A34A] shrink-0" />
-                      <span className="font-medium text-[#102A43]">{req}</span>
+                      <CheckCircle className="w-4 h-4 text-[#1F9D6B] shrink-0" />
+                      <span className="font-medium text-[#101A36]">{req}</span>
                     </div>
                   ))}
                 </div>
@@ -447,7 +447,7 @@ export default function ExploreServicesDesk({
               <button
                 type="button"
                 onClick={() => setSelectedServiceItem(null)}
-                className="px-4 py-2 bg-[#F6F8FC] hover:bg-slate-200/70 text-[#102A43] text-xs font-semibold rounded-xl border border-[#E2E8F0] cursor-pointer"
+                className="px-4 py-2 bg-[#F6F8FC] hover:bg-slate-200/70 text-[#101A36] text-sm font-semibold rounded-xl border border-[#E2E8F0] cursor-pointer"
                 id="eservice-modal-close-btn"
               >
                 Close
@@ -456,7 +456,7 @@ export default function ExploreServicesDesk({
               <button
                 type="button"
                 onClick={() => handleApply(selectedServiceItem)}
-                className="px-5 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold rounded-xl flex items-center gap-2 cursor-pointer"
+                className="px-5 py-2.5 bg-[#1F9D6B] hover:bg-[#19875B] text-white text-sm font-semibold rounded-xl flex items-center gap-2 cursor-pointer"
                 id="eservice-modal-apply-btn"
               >
                 <span>Request Service Assistance</span>
