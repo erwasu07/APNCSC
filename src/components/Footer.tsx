@@ -36,7 +36,7 @@ export default function Footer({ cafeName = 'CSC DOST' }: FooterProps) {
           <div className="flex items-center gap-2.5">
             <img
               src="/csc-dost-header-logo.png"
-              alt="CSC DOST Logo"
+              alt=""
               className="w-8 h-8 rounded-full object-contain shrink-0"
               loading="lazy"
             />

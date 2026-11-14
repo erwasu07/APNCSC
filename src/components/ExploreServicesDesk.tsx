@@ -204,12 +204,12 @@ export default function ExploreServicesDesk({
             <FileCheck className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Complete Service Directory</span>
           </div>
-          <h2
+          <h1
             id="services-board-heading"
-            className="text-xl sm:text-2xl font-bold text-[#102A43] tracking-tight"
+            className="text-xl sm:text-3xl font-bold text-[#102A43] tracking-tight"
           >
-            CSC E-SERVICES
-          </h2>
+            CSC E-Services
+          </h1>
           <p className="text-xs sm:text-sm text-[#64748B] mt-1.5">
             Search and browse all {SERVICES_LIST.length} citizen services, required documents, and fee details.
           </p>

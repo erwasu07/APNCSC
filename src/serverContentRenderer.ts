@@ -7,6 +7,7 @@
 
 import { SarkariItem } from './data/sarkariData';
 import { ServiceItem } from './servicesData';
+import { computeSarkariStatus } from './utils/sarkariStatus';
 
 function escapeHtml(str: unknown): string {
   if (str === null || str === undefined) return '';
@@ -19,6 +20,7 @@ function escapeHtml(str: unknown): string {
 }
 
 export function renderPostSubstantiveHtml(item: SarkariItem): string {
+  const computed = computeSarkariStatus(item);
   const safeTitle = escapeHtml(item.title);
   const safeCategory = escapeHtml(item.category?.replace(/_/g, ' ').toUpperCase() || 'RECRUITMENT NOTICE');
   const safePostDate = escapeHtml(item.postDate || 'Recent');
@@ -70,6 +72,21 @@ export function renderPostSubstantiveHtml(item: SarkariItem): string {
     <aside style="background:#fffbeb; border-left:4px solid #f59e0b; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:13px; color:#92400e;">
       <strong>Official Transparency Notice:</strong> CSC DOST (cscdost.com) is an independent private digital facilitation center operated by authorized CSC VLE Wasim Ahmad Khanday (VLE ID: 212515670018). We are <strong>not</strong> an official government recruitment board. All notifications are linked directly to official government portals.
     </aside>
+    ${!computed.canApplyOnline ? `
+    <aside style="background:${computed.verificationStatus === 'needs_verification' ? '#fffbeb' : computed.isCancelled ? '#fff1f2' : '#f8fafc'}; border:1px solid ${computed.verificationStatus === 'needs_verification' ? '#fde68a' : computed.isCancelled ? '#fecdd3' : '#cbd5e1'}; border-left:4px solid ${computed.verificationStatus === 'needs_verification' ? '#d97706' : computed.isCancelled ? '#e11d48' : '#475569'}; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:13px; color:#0f172a;">
+      <strong>Status Alert (${escapeHtml(computed.badgeLabel)}):</strong> ${
+        computed.verificationStatus === 'needs_verification'
+          ? 'This notice could not be freshly corroborated from the official portal and is paused for assisted application requests. Verify directly on the authority website.'
+          : computed.isCancelled
+          ? 'This notification has been cancelled or withdrawn by the issuing authority.'
+          : computed.isClosed
+          ? escapeHtml(computed.closingTimeNote || `The application window concluded on ${safeLastDate}. Assisted applications are closed.`)
+          : computed.isUpcoming
+          ? `Online applications are scheduled to commence on ${safeStartDate}.`
+          : 'Check the official authority portal link below for downloads, schedules, or post-application instructions.'
+      }
+    </aside>
+    ` : ''}
 
     <!-- Article Header -->
     <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:24px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
@@ -103,7 +120,7 @@ export function renderPostSubstantiveHtml(item: SarkariItem): string {
             <li><strong>Notification Released:</strong> ${safePostDate}</li>
             <li><strong>${isDateSheet ? 'Commencement Date:' : 'Online Application Start:'}</strong> ${safeStartDate}</li>
             <li><strong>${isDateSheet ? 'Examination Concluding Date:' : 'Last Date to Apply Online:'}</strong> <span style="color:#b91c1c; font-weight:700;">${safeLastDate}</span></li>
-            <li><strong>Status:</strong> ${isDateSheet ? 'Official Examination Timetable Active' : 'Official Recruitment Notification'}</li>
+            <li><strong>Status:</strong> ${escapeHtml(computed.badgeLabel)}</li>
           </ul>
         </div>
 
@@ -197,7 +214,7 @@ export function renderPostSubstantiveHtml(item: SarkariItem): string {
           <a href="${safeOfficialLink}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#2563eb; color:#ffffff; font-weight:600; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
             ${isDateSheet ? 'Official Portal (ssc.gov.in) ↗' : 'Official Portal / Gazette ↗'}
           </a>
-          ${isDateSheet ? `
+          ${!computed.canApplyOnline ? `
           <a href="/" style="display:inline-block; background:#ffffff; color:#0f172a; border:1px solid #cbd5e1; font-weight:600; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
             Return to Portal Homepage
           </a>
@@ -645,181 +662,235 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
   `;
 }
 
-export function renderHomepageSubstantiveHtml(posts: SarkariItem[], services: ServiceItem[]): string {
-  const topPosts = posts.slice(0, 15);
-  const topServices = services.slice(0, 8);
+function renderPrimaryCategoryNavHtml(activeCategory?: string): string {
+  const categories = [
+    { slug: 'jobs', href: '/jobs', label: 'Jobs &amp; Recruitment' },
+    { slug: 'education', href: '/education', label: 'Education &amp; Admissions' },
+    { slug: 'schemes', href: '/schemes', label: 'Government Schemes' },
+    { slug: 'services', href: '/services', label: 'CSC E-Services' },
+    { slug: 'tools', href: '/tools', label: 'Document Tools' },
+    { slug: 'calculators', href: '/calculators', label: 'Citizen Calculators' },
+  ];
 
   return `
-  <main class="ssr-homepage-wrapper" style="max-width:1100px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
-    <!-- Hero Banner -->
-    <header style="background:linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color:#ffffff; border-radius:16px; padding:32px 24px; margin-bottom:28px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);">
-      <div style="font-size:13px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#93c5fd; margin-bottom:8px;">
-        Authorized CSC Village Level Entrepreneur • VLE ID: 212515670018
+  <header style="background:#ffffff; border-bottom:1px solid #e2e8f0; margin-bottom:20px;">
+    <div style="max-width:1100px; margin:0 auto; padding:12px 16px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
+      <a href="/" style="font-size:18px; font-weight:800; color:#092442; text-decoration:none;">CSC DOST</a>
+      <nav aria-label="Main Categories" style="display:flex; flex-wrap:wrap; gap:14px; font-size:14px; font-weight:600;">
+        ${categories
+          .map(
+            (cat) =>
+              `<a href="${cat.href}" style="color:${activeCategory === cat.slug ? '#0f172a' : '#1e56c8'}; text-decoration:${activeCategory === cat.slug ? 'underline' : 'none'};">${cat.label}</a>`
+          )
+          .join('')}
+      </nav>
+    </div>
+  </header>`;
+}
+
+export function renderHomepageSubstantiveHtml(posts: SarkariItem[], services: ServiceItem[]): string {
+  const verifiedVisiblePosts = posts.filter((p) => {
+    const st = computeSarkariStatus(p);
+    return st.verificationStatus !== 'needs_verification' && !p.isCancelled;
+  });
+
+  const recruitmentPosts = verifiedVisiblePosts
+    .filter(
+      (p) =>
+        p.noticeType === 'recruitment' ||
+        p.postType === 'Job' ||
+        ['jkssb', 'banking_jobs', 'army_jobs', 'ssc_jobs', 'rrb_jobs', 'jobs'].includes(p.category)
+    )
+    .sort((a, b) => Number(computeSarkariStatus(b).canApplyOnline) - Number(computeSarkariStatus(a).canApplyOnline))
+    .slice(0, 6);
+  const educationPosts = verifiedVisiblePosts
+    .filter(
+      (p) =>
+        p.noticeType !== 'recruitment' &&
+        p.postType !== 'Job' &&
+        (p.noticeType === 'admission' ||
+          p.noticeType === 'exam_form' ||
+          p.noticeType === 'date_sheet' ||
+          ['admissions', 'exam_forms', 'cluster_univ', 'nta'].includes(p.category))
+    )
+    .sort((a, b) => Number(computeSarkariStatus(b).canApplyOnline) - Number(computeSarkariStatus(a).canApplyOnline))
+    .slice(0, 4);
+  const topServices = services.slice(0, 6);
+
+  const categoryCards = [
+    { href: '/jobs', title: 'Jobs &amp; Recruitment', desc: 'Latest JKSSB, Banking, Indian Army, SSC and RRB vacancies.' },
+    { href: '/education', title: 'Education &amp; Admissions', desc: 'University of Kashmir and Cluster University admissions, exams and date sheets.' },
+    { href: '/schemes', title: 'Government Schemes', desc: 'PM-KISAN, Ayushman Bharat PM-JAY and citizen welfare guides.' },
+    { href: '/services', title: 'CSC E-Services', desc: 'PAN card, Aadhaar assistance, domicile certificates and digital services.' },
+    { href: '/tools', title: 'Document Tools', desc: 'Client-side photo resizer, signature cropper and PDF utilities.' },
+    { href: '/calculators', title: 'Citizen Calculators', desc: 'Recruitment age eligibility, photo spec rules and fee estimator.' },
+  ];
+
+  return `
+  ${renderPrimaryCategoryNavHtml()}
+  <main class="ssr-homepage-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
+    <section style="background:linear-gradient(135deg, #0a2540 0%, #1e56c8 100%); color:#ffffff; border-radius:16px; padding:28px 24px; margin-bottom:24px;">
+      <div style="font-size:12px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:#bfdbfe; margin-bottom:6px;">
+        CSC DOST · Independent Citizen Portal
       </div>
-      <h1 style="font-size:32px; font-weight:800; line-height:1.2; margin:0 0 12px 0;">
-        CSC DOST – Independent Digital Assistance &amp; Citizen Information Portal
+      <h1 style="font-size:28px; font-weight:800; line-height:1.25; margin:0 0 10px 0;">
+        CSC DOST – Jobs, Admissions &amp; Citizen Services
       </h1>
-      <p style="font-size:16px; color:#e0e7ff; max-width:800px; line-height:1.6; margin:0 0 20px 0;">
-        Fast, verified recruitment updates (JKSSB, Indian Army, SSC, RRB), central scheme guides (PM-KISAN, Ayushman Bharat PM-JAY, Aadhaar, PAN card), and free citizen document preparation tools.
+      <p style="font-size:15px; color:#e0e7ff; max-width:780px; margin:0;">
+        Explore J&amp;K jobs, university admissions, government schemes, CSC e-services, document tools and citizen calculators in one place.
       </p>
-      <div style="display:flex; flex-wrap:wrap; gap:12px; font-size:14px;">
-        <a href="#sarkari-board" style="background:#ffffff; color:#1e3a8a; font-weight:700; padding:10px 20px; border-radius:8px; text-decoration:none;">
-          Browse Latest Jobs
-        </a>
-        <a href="/tools" style="background:rgba(255,255,255,0.15); color:#ffffff; font-weight:600; padding:10px 20px; border-radius:8px; text-decoration:none; border:1px solid rgba(255,255,255,0.3);">
-          Online Document Tools
-        </a>
-        <a href="/track" style="background:rgba(255,255,255,0.15); color:#ffffff; font-weight:600; padding:10px 20px; border-radius:8px; text-decoration:none; border:1px solid rgba(255,255,255,0.3);">
-          Track Application
-        </a>
-      </div>
-    </header>
+    </section>
 
-    <!-- Government Transparency Notice -->
-    <aside style="background:#fffbeb; border-left:4px solid #f59e0b; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:28px; font-size:13px; color:#92400e;">
-      <strong>Official Transparency Notice:</strong> CSC DOST (cscdost.com) is an independent private digital facilitation center operated by CSC VLE Wasim Ahmad Khanday in Sangran Qazigund, Anantnag, J&amp;K. We are <strong>NOT</strong> an official government website. Official portals end with <code style="background:#fef3c7; padding:2px 4px; border-radius:3px;">.gov.in</code> or <code style="background:#fef3c7; padding:2px 4px; border-radius:3px;">.nic.in</code>.
-    </aside>
-
-    <!-- Latest Recruitment Notifications -->
-    <section id="sarkari-board" style="margin-bottom:36px;">
-      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px;">
-        <h2 style="font-size:22px; font-weight:800; color:#0f172a; margin:0;">
-          Latest Sarkari Jobs &amp; Notifications
-        </h2>
-        <span style="font-size:13px; color:#64748b;">Updated Daily</span>
-      </div>
-
-      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:16px;">
-        ${topPosts.map(post => `
-          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:16px; display:flex; flex-direction:column; justify-content:space-between;">
-            <div>
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <span style="font-size:11px; font-weight:700; color:#2563eb; background:#eff6ff; padding:3px 8px; border-radius:4px; text-transform:uppercase;">
-                  ${escapeHtml(post.category?.replace(/_/g, ' '))}
-                </span>
-                <span style="font-size:12px; color:#b91c1c; font-weight:600;">Last Date: ${escapeHtml(post.lastDate)}</span>
-              </div>
-              <h3 style="font-size:16px; font-weight:700; line-height:1.35; margin:0 0 8px 0;">
-                <a href="/post/${escapeHtml(post.id)}" style="color:#0f172a; text-decoration:none;">
-                  ${escapeHtml(post.title)}
-                </a>
-              </h3>
-              <p style="font-size:13px; color:#475569; line-height:1.5; margin:0 0 12px 0;">
-                ${escapeHtml((post.shortInfo || '').slice(0, 110))}...
-              </p>
-            </div>
-            <div style="border-top:1px solid #f1f5f9; padding-top:10px; display:flex; justify-content:space-between; align-items:center; font-size:12px;">
-              <span style="color:#64748b;">Posts: <strong>${escapeHtml(post.totalPosts || 'Open')}</strong></span>
-              <a href="/post/${escapeHtml(post.id)}" style="color:#2563eb; font-weight:600; text-decoration:none;">
-                View Details &amp; Apply →
-              </a>
-            </div>
+    <section aria-labelledby="explore-categories-ssr" style="margin-bottom:28px;">
+      <h2 id="explore-categories-ssr" style="font-size:20px; font-weight:800; color:#0f172a; margin:0 0 12px 0;">
+        Explore CSC DOST Categories
+      </h2>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:14px;">
+        ${categoryCards
+          .map(
+            (card) => `
+          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:16px;">
+            <h3 style="font-size:16px; font-weight:700; margin:0 0 6px 0;">
+              <a href="${card.href}" style="color:#1e56c8; text-decoration:none;">${card.title}</a>
+            </h3>
+            <p style="font-size:13px; color:#475569; margin:0;">${card.desc}</p>
           </article>
-        `).join('')}
+        `
+          )
+          .join('')}
       </div>
     </section>
 
-    <!-- Core Citizen Services -->
-    <section id="services" style="margin-bottom:36px;">
-      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px;">
-        <h2 style="font-size:22px; font-weight:800; color:#0f172a; margin:0;">
-          Citizen E-Governance Services
+    <section aria-labelledby="ssr-recruitment-heading" style="margin-bottom:28px;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;">
+        <h2 id="ssr-recruitment-heading" style="font-size:20px; font-weight:800; color:#0f172a; margin:0;">
+          Latest Recruitment Updates
         </h2>
-        <span style="font-size:13px; color:#64748b;">Assisted Digital Counter</span>
+        <a href="/jobs" style="font-size:13px; font-weight:700; color:#1e56c8; text-decoration:none;">View all recruitment notices →</a>
       </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:14px;">
+        ${recruitmentPosts
+          .map(
+            (post) => `
+          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:14px;">
+            <h3 style="font-size:15px; font-weight:700; margin:0 0 6px 0;">
+              <a href="/post/${escapeHtml(post.id)}" style="color:#0f172a; text-decoration:none;">${escapeHtml(post.title)}</a>
+            </h3>
+            <p style="font-size:13px; color:#475569; margin:0 0 8px 0;">${escapeHtml((post.shortInfo || '').slice(0, 100))}...</p>
+            <div style="font-size:12px; color:#64748b;">${escapeHtml(computeSarkariStatus(post).badgeLabel)}${post.lastDate ? ` · Last Date: ${escapeHtml(post.lastDate)}` : ''}</div>
+          </article>
+        `
+          )
+          .join('')}
+      </div>
+    </section>
 
-      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:14px;">
-        ${topServices.map(service => `
-          <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:16px;">
-            <div style="font-size:11px; font-weight:600; color:#15803d; text-transform:uppercase; margin-bottom:4px;">${escapeHtml(service.category)}</div>
-            <h3 style="font-size:15px; font-weight:700; color:#0f172a; margin:0 0 6px 0;">
+    <section aria-labelledby="ssr-education-heading" style="margin-bottom:28px;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;">
+        <h2 id="ssr-education-heading" style="font-size:20px; font-weight:800; color:#0f172a; margin:0;">
+          Education &amp; Admissions
+        </h2>
+        <a href="/education" style="font-size:13px; font-weight:700; color:#1e56c8; text-decoration:none;">View all education notices →</a>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:14px;">
+        ${educationPosts
+          .map(
+            (post) => `
+          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:14px;">
+            <h3 style="font-size:15px; font-weight:700; margin:0 0 6px 0;">
+              <a href="/post/${escapeHtml(post.id)}" style="color:#0f172a; text-decoration:none;">${escapeHtml(post.title)}</a>
+            </h3>
+            <p style="font-size:13px; color:#475569; margin:0;">${escapeHtml((post.shortInfo || '').slice(0, 100))}...</p>
+          </article>
+        `
+          )
+          .join('')}
+      </div>
+    </section>
+
+    <section aria-labelledby="ssr-services-heading" style="margin-bottom:28px;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;">
+        <h2 id="ssr-services-heading" style="font-size:20px; font-weight:800; color:#0f172a; margin:0;">
+          Popular CSC E-Services
+        </h2>
+        <a href="/services" style="font-size:13px; font-weight:700; color:#1e56c8; text-decoration:none;">Browse all services →</a>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:12px;">
+        ${topServices
+          .map(
+            (service) => `
+          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:14px;">
+            <h3 style="font-size:15px; font-weight:700; margin:0 0 6px 0;">
               <a href="/service/${escapeHtml(service.id)}" style="color:#0f172a; text-decoration:none;">${escapeHtml(service.name)}</a>
             </h3>
-            <p style="font-size:12px; color:#64748b; line-height:1.4; margin:0 0 10px 0;">${escapeHtml(service.description.slice(0, 85))}...</p>
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px;">
-              <span style="font-weight:700; color:#0f172a;">${escapeHtml(service.price)}</span>
-              <a href="/service/${escapeHtml(service.id)}" style="color:#2563eb; font-weight:600; text-decoration:none;">View Service →</a>
-            </div>
-          </div>
-        `).join('')}
+            <p style="font-size:12px; color:#64748b; margin:0;">${escapeHtml(service.description.slice(0, 85))}...</p>
+          </article>
+        `
+          )
+          .join('')}
       </div>
     </section>
 
-    <!-- Frequently Asked Questions -->
-    <section style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:24px; margin-bottom:36px;">
-      <h2 style="font-size:20px; font-weight:800; color:#0f172a; margin:0 0 16px 0;">Frequently Asked Questions</h2>
-      <div style="space-y:14px;">
-        <div style="margin-bottom:14px;">
-          <h3 style="font-size:15px; font-weight:700; color:#1e293b; margin:0 0 4px 0;">What is CSC DOST?</h3>
-          <p style="font-size:14px; color:#475569; margin:0;">
-            CSC DOST (cscdost.com) is an independent citizen assistance portal and information desk operated by authorized CSC Village Level Entrepreneur Wasim Ahmad Khanday in Sangran Qazigund, Anantnag, Jammu &amp; Kashmir.
-          </p>
-        </div>
-        <div>
-          <h3 style="font-size:15px; font-weight:700; color:#1e293b; margin:0 0 4px 0;">Is CSC DOST an official government website?</h3>
-          <p style="font-size:14px; color:#475569; margin:0;">
-            No. CSC DOST is a private digital facilitation center and information portal. We are NOT an official government website. Official government portals include csc.gov.in, digitalseva.csc.gov.in, and jkssb.nic.in.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Footer Links -->
     <footer style="border-top:1px solid #e2e8f0; padding-top:20px; text-align:center; font-size:13px; color:#64748b; line-height:1.8;">
       <p style="margin:0 0 8px 0;">
-        <a href="/about-us" style="color:#2563eb; text-decoration:none; margin:0 8px;">About Us</a> |
-        <a href="/contact-us" style="color:#2563eb; text-decoration:none; margin:0 8px;">Contact Helpdesk</a> |
-        <a href="/privacy-policy" style="color:#2563eb; text-decoration:none; margin:0 8px;">Privacy Policy (DPDP Act)</a> |
-        <a href="/terms-of-service" style="color:#2563eb; text-decoration:none; margin:0 8px;">Terms of Service</a> |
-        <a href="/disclaimer" style="color:#2563eb; text-decoration:none; margin:0 8px;">Disclaimer</a> |
-        <a href="/refund-policy" style="color:#2563eb; text-decoration:none; margin:0 8px;">Refund Policy</a>
+        <a href="/privacy-policy" style="color:#1e56c8; text-decoration:none; margin:0 8px;">Privacy Policy</a> ·
+        <a href="/terms-of-service" style="color:#1e56c8; text-decoration:none; margin:0 8px;">Terms of Use</a> ·
+        <a href="/disclaimer" style="color:#1e56c8; text-decoration:none; margin:0 8px;">Disclaimer</a> ·
+        <a href="/contact-us" style="color:#1e56c8; text-decoration:none; margin:0 8px;">Contact</a> ·
+        <a href="/about-us" style="color:#1e56c8; text-decoration:none; margin:0 8px;">About Us</a> ·
+        <a href="/refund-policy" style="color:#1e56c8; text-decoration:none; margin:0 8px;">Refund Policy</a>
       </p>
-      <p style="margin:0; font-size:12px;">© 2026 CSC DOST • Operator: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) • Sangran Qazigund, Anantnag, J&amp;K 192221</p>
+      <p style="margin:0; font-size:12px;">Sangran, Qazigund, Anantnag · CSC DOST Independent Citizen Portal</p>
     </footer>
   </main>
   `;
 }
 
 export function renderCategorySubstantiveHtml(
-  categoryType: 'jobs' | 'education' | 'schemes' | 'services' | 'tools' | 'apply' | 'track',
+  categoryType: 'jobs' | 'education' | 'schemes' | 'services' | 'tools' | 'calculators' | 'apply' | 'track' | 'admin',
   posts: SarkariItem[],
   services: ServiceItem[]
 ): string {
+  const verifiedPosts = posts.filter((p) => {
+    const st = computeSarkariStatus(p);
+    return st.verificationStatus !== 'needs_verification' && !p.isCancelled;
+  });
+
   if (categoryType === 'jobs') {
-    const jobPosts = posts.filter(
+    const jobPosts = verifiedPosts.filter(
       p =>
         p.noticeType === 'recruitment' ||
-        ['army_jobs', 'rrb_jobs', 'ssc_jobs', 'jkssb', 'banking_jobs', 'jobs'].includes(p.category) ||
-        !p.noticeType
+        p.postType === 'Job' ||
+        ['army_jobs', 'rrb_jobs', 'ssc_jobs', 'jkssb', 'banking_jobs', 'jobs'].includes(p.category)
     );
 
     return `
-    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
+    ${renderPrimaryCategoryNavHtml('jobs')}
+    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
       <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
-        <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+        <a href="/" style="color:#1e56c8; text-decoration:none;">Home</a>
         <span style="margin:0 6px;">/</span>
-        <span style="color:#0f172a; font-weight:600;">Government Jobs &amp; Recruitment</span>
+        <span style="color:#0f172a; font-weight:600;">Jobs &amp; Recruitment</span>
       </nav>
 
-      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:20px; margin-bottom:24px;">
-        <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
-          Recruitment Desk
-        </span>
-        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Latest Government Jobs &amp; Recruitment Bulletins</h1>
+      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:16px; margin-bottom:24px;">
+        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Jobs &amp; Recruitment</h1>
         <p style="font-size:15px; color:#475569; margin:0; max-width:850px;">
-          Verified sarkari job notifications, eligibility criteria, advertisement details, and direct official application portals for JKSSB, Indian Army, SSC, and RRB Railways.
+          Latest JKSSB, Banking, Indian Army, SSC and RRB recruitment notifications, eligibility rules and closing dates on CSC DOST.
         </p>
       </header>
 
       <section style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:18px;">
-        ${jobPosts.map(post => `
-          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:18px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+        ${jobPosts.map(post => {
+          const st = computeSarkariStatus(post);
+          return `
+          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:18px; display:flex; flex-direction:column; justify-content:space-between;">
             <div>
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <span style="font-size:11px; font-weight:700; color:#2563eb; background:#eff6ff; padding:3px 8px; border-radius:4px; text-transform:uppercase;">
+                <span style="font-size:11px; font-weight:700; color:#1e56c8; background:#eff6ff; padding:3px 8px; border-radius:4px; text-transform:uppercase;">
                   ${escapeHtml(post.category?.replace(/_/g, ' '))}
                 </span>
-                <span style="font-size:12px; color:#b91c1c; font-weight:600;">Last Date: ${escapeHtml(post.lastDate)}</span>
+                <span style="font-size:12px; color:${st.canApplyOnline ? '#047857' : '#64748b'}; font-weight:600;">${escapeHtml(st.badgeLabel)}</span>
               </div>
               <h2 style="font-size:17px; font-weight:700; line-height:1.35; margin:0 0 8px 0;">
                 <a href="/post/${escapeHtml(post.id)}" style="color:#0f172a; text-decoration:none;">
@@ -831,60 +902,60 @@ export function renderCategorySubstantiveHtml(
               </p>
             </div>
             <div style="border-top:1px solid #f1f5f9; padding-top:12px; display:flex; justify-content:space-between; align-items:center; font-size:12px;">
-              <span style="color:#64748b;">Vacancies: <strong>${escapeHtml(post.totalPosts || 'Open')}</strong></span>
-              <a href="/post/${escapeHtml(post.id)}" style="color:#2563eb; font-weight:600; text-decoration:none;">
-                View Notification &amp; Apply →
+              <span style="color:#64748b;">${post.lastDate ? `Last Date: <strong>${escapeHtml(post.lastDate)}</strong>` : `Vacancies: <strong>${escapeHtml(post.totalPosts || 'Open')}</strong>`}</span>
+              <a href="/post/${escapeHtml(post.id)}" style="color:#1e56c8; font-weight:600; text-decoration:none;">
+                View Details →
               </a>
             </div>
           </article>
-        `).join('')}
+        `;
+        }).join('')}
       </section>
-
-      <footer style="margin-top:40px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
-        <p>CSC DOST | Operator: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) | Sangran Qazigund, Anantnag, J&amp;K 192221</p>
-      </footer>
     </main>
     `;
   }
 
   if (categoryType === 'education') {
-    const eduPosts = posts.filter(
+    const eduPosts = verifiedPosts.filter(
       p =>
-        p.noticeType === 'date_sheet' ||
-        p.noticeType === 'exam_form' ||
-        p.noticeType === 'admission' ||
-        p.category === 'exam_forms' ||
-        p.category === 'admissions' ||
-        p.category === 'cluster_univ'
+        p.noticeType !== 'recruitment' &&
+        p.postType !== 'Job' &&
+        (p.noticeType === 'date_sheet' ||
+          p.noticeType === 'exam_form' ||
+          p.noticeType === 'admission' ||
+          p.category === 'exam_forms' ||
+          p.category === 'admissions' ||
+          p.category === 'cluster_univ' ||
+          p.category === 'nta')
     );
 
     return `
-    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
+    ${renderPrimaryCategoryNavHtml('education')}
+    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
       <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
-        <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+        <a href="/" style="color:#1e56c8; text-decoration:none;">Home</a>
         <span style="margin:0 6px;">/</span>
-        <span style="color:#0f172a; font-weight:600;">Higher Education &amp; Examinations</span>
+        <span style="color:#0f172a; font-weight:600;">Education &amp; Admissions</span>
       </nav>
 
-      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:20px; margin-bottom:24px;">
-        <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
-          University &amp; Board Bulletins
-        </span>
-        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">University Admissions, Date Sheets &amp; Exam Forms</h1>
+      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:16px; margin-bottom:24px;">
+        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Education &amp; Admissions</h1>
         <p style="font-size:15px; color:#475569; margin:0; max-width:850px;">
-          Official semester examination date sheets, entrance test schedules, admission notices, and form deadlines for University of Kashmir, Cluster University Srinagar, and state higher education institutions.
+          Official University of Kashmir and Cluster University Srinagar admissions, semester examination forms, date sheets and scholarship notices.
         </p>
       </header>
 
       <section style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:18px;">
-        ${eduPosts.map(post => `
-          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:18px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+        ${eduPosts.map(post => {
+          const st = computeSarkariStatus(post);
+          return `
+          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:18px; display:flex; flex-direction:column; justify-content:space-between;">
             <div>
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <span style="font-size:11px; font-weight:700; color:#0284c7; background:#f0f9ff; padding:3px 8px; border-radius:4px; text-transform:uppercase;">
+                <span style="font-size:11px; font-weight:700; color:#7c3aed; background:#f5f3ff; padding:3px 8px; border-radius:4px; text-transform:uppercase;">
                   ${escapeHtml(post.category?.replace(/_/g, ' '))}
                 </span>
-                <span style="font-size:12px; color:#0f172a; font-weight:600;">Date: ${escapeHtml(post.lastDate)}</span>
+                <span style="font-size:12px; color:#0f172a; font-weight:600;">${post.lastDate ? `Date: ${escapeHtml(post.lastDate)}` : `Published: ${escapeHtml(post.postDate)}`}</span>
               </div>
               <h2 style="font-size:17px; font-weight:700; line-height:1.35; margin:0 0 8px 0;">
                 <a href="/post/${escapeHtml(post.id)}" style="color:#0f172a; text-decoration:none;">
@@ -896,18 +967,15 @@ export function renderCategorySubstantiveHtml(
               </p>
             </div>
             <div style="border-top:1px solid #f1f5f9; padding-top:12px; display:flex; justify-content:space-between; align-items:center; font-size:12px;">
-              <span style="color:#0284c7; font-weight:600;">${post.noticeType === 'date_sheet' ? 'Date Sheet Active' : 'Active Notice'}</span>
-              <a href="/post/${escapeHtml(post.id)}" style="color:#2563eb; font-weight:600; text-decoration:none;">
-                View Gazette &amp; Details →
+              <span style="color:${st.canApplyOnline ? '#047857' : '#7c3aed'}; font-weight:600;">${escapeHtml(st.badgeLabel)}</span>
+              <a href="/post/${escapeHtml(post.id)}" style="color:#1e56c8; font-weight:600; text-decoration:none;">
+                View Details →
               </a>
             </div>
           </article>
-        `).join('')}
+        `;
+        }).join('')}
       </section>
-
-      <footer style="margin-top:40px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
-        <p>CSC DOST | Operator: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) | Sangran Qazigund, Anantnag, J&amp;K 192221</p>
-      </footer>
     </main>
     `;
   }
@@ -922,159 +990,189 @@ export function renderCategorySubstantiveHtml(
     );
 
     return `
-    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
+    ${renderPrimaryCategoryNavHtml('schemes')}
+    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
       <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
-        <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+        <a href="/" style="color:#1e56c8; text-decoration:none;">Home</a>
         <span style="margin:0 6px;">/</span>
-        <span style="color:#0f172a; font-weight:600;">Government Welfare Schemes</span>
+        <span style="color:#0f172a; font-weight:600;">Government Schemes</span>
       </nav>
 
-      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:20px; margin-bottom:24px;">
-        <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
-          Welfare &amp; Subsidies
-        </span>
-        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Government Welfare Schemes &amp; Citizen Benefits</h1>
+      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:16px; margin-bottom:24px;">
+        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Government Schemes &amp; Citizen Guides</h1>
         <p style="font-size:15px; color:#475569; margin:0; max-width:850px;">
-          Complete verified guides and assisted enrollment for PM-KISAN Samman Nidhi, Ayushman Bharat PM-JAY SEHAT Golden Card, and citizen welfare entitlements.
+          Eligibility criteria, document checklists and application guides for PM-KISAN, Ayushman Bharat PM-JAY, PM Vishwakarma and citizen welfare programs.
         </p>
       </header>
 
       <section style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
         ${schemeServices.map(s => `
           <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:18px;">
-            <div style="font-size:11px; font-weight:600; color:#15803d; text-transform:uppercase; margin-bottom:4px;">${escapeHtml(s.category)}</div>
+            <div style="font-size:11px; font-weight:600; color:#059669; text-transform:uppercase; margin-bottom:4px;">${escapeHtml(s.category)}</div>
             <h2 style="font-size:16px; font-weight:700; color:#0f172a; margin:0 0 6px 0;">
               <a href="/service/${escapeHtml(s.id)}" style="color:#0f172a; text-decoration:none;">${escapeHtml(s.name)}</a>
             </h2>
             <p style="font-size:13px; color:#64748b; line-height:1.4; margin:0 0 10px 0;">${escapeHtml(s.description)}</p>
             <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; border-top:1px solid #f1f5f9; padding-top:10px;">
               <span style="font-weight:700; color:#0f172a;">${escapeHtml(s.price)}</span>
-              <a href="/service/${escapeHtml(s.id)}" style="color:#2563eb; font-weight:600; text-decoration:none;">View Scheme Details →</a>
+              <a href="/service/${escapeHtml(s.id)}" style="color:#1e56c8; font-weight:600; text-decoration:none;">View Scheme Details →</a>
             </div>
           </article>
         `).join('')}
       </section>
-
-      <footer style="margin-top:40px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
-        <p>CSC DOST | Operator: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) | Sangran Qazigund, Anantnag, J&amp;K 192221</p>
-      </footer>
     </main>
     `;
   }
 
   if (categoryType === 'services') {
     return `
-    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
+    ${renderPrimaryCategoryNavHtml('services')}
+    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
       <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
-        <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+        <a href="/" style="color:#1e56c8; text-decoration:none;">Home</a>
         <span style="margin:0 6px;">/</span>
-        <span style="color:#0f172a; font-weight:600;">Citizen Services Directory</span>
+        <span style="color:#0f172a; font-weight:600;">CSC E-Services</span>
       </nav>
 
-      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:20px; margin-bottom:24px;">
-        <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
-          Digital Seva Facilitation
-        </span>
-        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Citizen E-Governance Services Directory</h1>
+      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:16px; margin-bottom:24px;">
+        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">CSC E-Services</h1>
         <p style="font-size:15px; color:#475569; margin:0; max-width:850px;">
-          Assisted online service filing, document preparation, identity registrations, and certificate applications conducted through our certified CSC center.
+          Complete directory of assisted citizen e-services: PAN card registration, Aadhaar assistance, J&amp;K domicile certificates, income certificates and document services.
         </p>
       </header>
 
       <section style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
         ${services.map(s => `
           <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:18px;">
-            <div style="font-size:11px; font-weight:600; color:#15803d; text-transform:uppercase; margin-bottom:4px;">${escapeHtml(s.category)}</div>
+            <div style="font-size:11px; font-weight:600; color:#0284c7; text-transform:uppercase; margin-bottom:4px;">${escapeHtml(s.category)}</div>
             <h2 style="font-size:16px; font-weight:700; color:#0f172a; margin:0 0 6px 0;">
               <a href="/service/${escapeHtml(s.id)}" style="color:#0f172a; text-decoration:none;">${escapeHtml(s.name)}</a>
             </h2>
             <p style="font-size:13px; color:#64748b; line-height:1.4; margin:0 0 10px 0;">${escapeHtml(s.description)}</p>
             <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; border-top:1px solid #f1f5f9; padding-top:10px;">
               <span style="font-weight:700; color:#0f172a;">${escapeHtml(s.price)}</span>
-              <a href="/service/${escapeHtml(s.id)}" style="color:#2563eb; font-weight:600; text-decoration:none;">View Requirements →</a>
+              <a href="/service/${escapeHtml(s.id)}" style="color:#1e56c8; font-weight:600; text-decoration:none;">View Requirements →</a>
             </div>
           </article>
         `).join('')}
       </section>
-
-      <footer style="margin-top:40px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
-        <p>CSC DOST | Operator: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) | Sangran Qazigund, Anantnag, J&amp;K 192221</p>
-      </footer>
     </main>
     `;
   }
 
   if (categoryType === 'tools') {
+    const tools = [
+      { id: 'image-compressor', name: 'Image Compressor', desc: 'Compress JPG, PNG and WebP images to target KB sizes locally in your browser.' },
+      { id: 'passport-photo-maker', name: 'Passport Photo Maker', desc: 'Create 35x45 mm or 2x2 inch passport photographs and printable A4 sheets.' },
+      { id: 'signature-resizer', name: 'Signature Resizer', desc: 'Crop whitespace and scale candidate signatures to 10-20 KB for portal uploads.' },
+      { id: 'image-to-pdf', name: 'Image to PDF', desc: 'Combine marksheets, photos and identity scans into a clean multi-page PDF.' },
+      { id: 'pdf-merge', name: 'PDF Merge &amp; Split', desc: 'Merge multiple PDF certificates or extract specific page ranges with zero uploads.' },
+      { id: 'pdf-compressor', name: 'PDF Compressor', desc: 'Optimize PDF file sizes to meet recruitment and admission upload ceilings.' },
+    ];
+
     return `
-    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
+    ${renderPrimaryCategoryNavHtml('tools')}
+    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
       <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
-        <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+        <a href="/" style="color:#1e56c8; text-decoration:none;">Home</a>
         <span style="margin:0 6px;">/</span>
-        <span style="color:#0f172a; font-weight:600;">Citizen Document Preparation Tools</span>
+        <span style="color:#0f172a; font-weight:600;">Document Tools</span>
       </nav>
 
-      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:20px; margin-bottom:24px;">
-        <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
-          100% Client-Side • Zero Data Upload
-        </span>
-        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Free Citizen Document Preparation Tools</h1>
+      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:16px; margin-bottom:24px;">
+        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Document Tools</h1>
         <p style="font-size:15px; color:#475569; margin:0; max-width:850px;">
-          Crop, resize, and convert recruitment passport photos, signature slips, and application PDFs to precise government specifications. All files remain securely inside your local browser.
+          Free browser-based photo resizers, signature crop tools, PDF compressors and image converters processed 100% locally on your device.
         </p>
       </header>
 
       <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:18px;">
-        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:20px;">
-          <h2 style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 8px 0;">📸 Passport Photo Resizer</h2>
-          <p style="font-size:13px; color:#475569; line-height:1.5; margin:0 0 12px 0;">
-            Resize portrait photographs to exact 20 KB - 50 KB limits and standard 3.5 cm x 4.5 cm (200 x 230 px) dimensions required by SSC, UPSC, and JKSSB portals.
-          </p>
-        </div>
-        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:20px;">
-          <h2 style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 8px 0;">✍️ Signature Crop &amp; Joiner</h2>
-          <p style="font-size:13px; color:#475569; line-height:1.5; margin:0 0 12px 0;">
-            Standardize signature images to 10 KB - 20 KB with crisp white backgrounds and optional name/date timestamp imprint beneath the photograph.
-          </p>
-        </div>
-        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:20px;">
-          <h2 style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 8px 0;">📅 Benchmark Age Calculator</h2>
-          <p style="font-size:13px; color:#475569; line-height:1.5; margin:0 0 12px 0;">
-            Determine exact chronological age in years, months, and days against any specific official cutoff date specified in recruitment notifications.
-          </p>
-        </div>
-        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:20px;">
-          <h2 style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 8px 0;">📄 Government PDF Optimizer</h2>
-          <p style="font-size:13px; color:#475569; line-height:1.5; margin:0 0 12px 0;">
-            Compress educational marks cards and domicile certificates under 200 KB or 500 KB thresholds with optimized visual clarity for successful portal uploads.
-          </p>
-        </div>
+        ${tools
+          .map(
+            (t) => `
+          <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:20px;">
+            <h2 style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 8px 0;">
+              <a href="/tools/${t.id}" style="color:#0f172a; text-decoration:none;">${t.name}</a>
+            </h2>
+            <p style="font-size:13px; color:#475569; line-height:1.5; margin:0 0 12px 0;">${t.desc}</p>
+            <a href="/tools/${t.id}" style="font-size:13px; font-weight:600; color:#1e56c8; text-decoration:none;">Open Tool →</a>
+          </article>
+        `
+          )
+          .join('')}
       </section>
-
-      <footer style="margin-top:40px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
-        <p>CSC DOST | Operator: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) | Sangran Qazigund, Anantnag, J&amp;K 192221</p>
-      </footer>
     </main>
     `;
   }
 
-  // Fallback for apply or track
+  if (categoryType === 'calculators') {
+    return `
+    ${renderPrimaryCategoryNavHtml('calculators')}
+    <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
+      <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
+        <a href="/" style="color:#1e56c8; text-decoration:none;">Home</a>
+        <span style="margin:0 6px;">/</span>
+        <span style="color:#0f172a; font-weight:600;">Citizen Calculators</span>
+      </nav>
+
+      <header style="border-bottom:1px solid #e2e8f0; padding-bottom:16px; margin-bottom:24px;">
+        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Citizen Calculators</h1>
+        <p style="font-size:15px; color:#475569; margin:0; max-width:850px;">
+          Calculate recruitment age eligibility against cutoff dates, inspect photo and signature size rules, and check regulated CSC service fees.
+        </p>
+      </header>
+
+      <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:18px;">
+        <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:20px;">
+          <h2 style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 8px 0;">Recruitment Age Eligibility Calculator</h2>
+          <p style="font-size:13px; color:#475569; line-height:1.5; margin:0;">
+            Calculate exact age in years, months and days against JKSSB, SSC, Railway RRB and Indian Army cutoff dates with category benchmarks.
+          </p>
+        </article>
+        <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:20px;">
+          <h2 style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 8px 0;">Photo &amp; Signature Spec Inspector</h2>
+          <p style="font-size:13px; color:#475569; line-height:1.5; margin:0;">
+            Verify pixel dimensions and KB file limits locally in your browser before uploading photographs or signatures to exam portals.
+          </p>
+        </article>
+        <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:20px;">
+          <h2 style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 8px 0;">CSC Regulated Fee Breakdown</h2>
+          <p style="font-size:13px; color:#475569; line-height:1.5; margin:0;">
+            View transparent statutory department fee and facilitation charge breakdowns for PAN card, domicile, Aadhaar updates and exam applications.
+          </p>
+        </article>
+      </section>
+    </main>
+    `;
+  }
+
+  if (categoryType === 'admin') {
+    return `
+    <main class="ssr-category-wrapper" style="max-width:720px; margin:0 auto; padding:32px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a;">
+      <h1 style="font-size:24px; font-weight:800; margin:0 0 10px 0;">CSC DOST Staff Portal</h1>
+      <p style="font-size:14px; color:#475569;">Authorized operator login required.</p>
+    </main>
+    `;
+  }
+
+  // Apply or Track transactional pages (marked noindex in meta)
   return `
   <main class="ssr-category-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.6;">
     <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
-      <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+      <a href="/" style="color:#1e56c8; text-decoration:none;">Home</a>
       <span style="margin:0 6px;">/</span>
-      <span style="color:#0f172a; font-weight:600;">${categoryType === 'apply' ? 'Assisted Application Desk' : 'Application Tracking'}</span>
+      <span style="color:#0f172a; font-weight:600;">${categoryType === 'apply' ? 'Assisted Application Desk' : 'Track Application Status'}</span>
     </nav>
     <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:28px;">
       <h1 style="font-size:26px; font-weight:800; color:#0f172a; margin:0 0 10px 0;">
-        ${categoryType === 'apply' ? 'Assisted Online Application Counter' : 'Application Tracking &amp; Receipts'}
+        ${categoryType === 'apply' ? 'Assisted Online Application Desk' : 'Track Application Status'}
       </h1>
       <p style="font-size:15px; color:#475569; line-height:1.7;">
-        ${categoryType === 'apply' ? 'Citizens needing assistance with complex online forms can submit an assistance request directly to our authorized CSC center in Sangran Qazigund, Anantnag. Our team reviews submissions and prepares applications accurately.' : 'Enter your unique 14-digit CSC application reference number to check the processing stage, payment status, and download filing receipts.'}
+        ${categoryType === 'apply' ? 'Submit an assisted form request to the CSC DOST facilitation desk in Sangran Qazigund, Anantnag.' : 'Check your CSC DOST application processing progress and payment status using your tracking token.'}
       </p>
       <div style="margin-top:20px;">
-        <a href="/" style="display:inline-block; background:#2563eb; color:#ffffff; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:600; font-size:14px;">
-          Return to Portal Homepage
+        <a href="/" style="display:inline-block; background:#1e56c8; color:#ffffff; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:600; font-size:14px;">
+          Return to Homepage
         </a>
       </div>
     </article>

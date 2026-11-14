@@ -244,7 +244,24 @@ function rawComputeSarkariStatus(item: SarkariItem, customNow?: Date): Omit<Comp
     };
   }
 
-  // 2. Informational stages (Admit card, Result, Answer key, Exam date sheets, DV schedule)
+  // 2. Verification check: If marked "needs_verification", do NOT show as active/open
+  if (verificationStatus === 'needs_verification') {
+    return {
+      applicationStatus: 'unknown',
+      stage,
+      verificationStatus: 'needs_verification',
+      badgeLabel: 'Needs Verification',
+      badgeTone: 'amber',
+      canApplyOnline: false,
+      isClosingSoon: false,
+      closingTimeNote: item.verification?.verificationReason || 'Information requires authoritative verification from the issuing portal before assisted applications can be accepted.',
+      daysRemaining: null,
+      officialNotificationUrl,
+      officialApplicationUrl,
+    };
+  }
+
+  // 3. Informational stages (Admit card, Result, Answer key, Objection window, Exam date sheets, DV schedule)
   // These notices do NOT have an open recruitment application window for new applicants.
   if (stage === 'date_sheet') {
     return {
@@ -358,17 +375,16 @@ function rawComputeSarkariStatus(item: SarkariItem, customNow?: Date): Omit<Comp
     };
   }
 
-  // 3. Verification check: If marked "needs_verification", do NOT show as open
-  if (verificationStatus === 'needs_verification') {
+  if (stage === 'objection_window') {
     return {
-      applicationStatus: 'unknown',
-      stage,
-      verificationStatus: 'needs_verification',
-      badgeLabel: 'Needs Verification',
+      applicationStatus: 'closed',
+      stage: 'objection_window',
+      verificationStatus,
+      badgeLabel: 'Objection Window',
       badgeTone: 'amber',
       canApplyOnline: false,
       isClosingSoon: false,
-      closingTimeNote: item.verification?.verificationReason || 'Information requires authoritative verification from the issuing portal before assisted applications can be accepted.',
+      closingTimeNote: 'New applications are not accepted. Notice covers answer key / screening objection representations.',
       daysRemaining: null,
       officialNotificationUrl,
       officialApplicationUrl,
@@ -526,6 +542,14 @@ export function computeJobDeadlineStatus(lastDateStr?: string, item?: SarkariIte
       return {
         code: 'document_verification',
         label: 'DV Schedule',
+        daysRemaining: null,
+        canApply: false,
+      };
+    }
+    if (computed.stage === 'objection_window') {
+      return {
+        code: 'objection_window',
+        label: 'Objection Window',
         daysRemaining: null,
         canApply: false,
       };

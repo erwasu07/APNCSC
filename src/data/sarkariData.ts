@@ -121,7 +121,595 @@ export const SARKARI_CATEGORIES = {
 };
 
 export const SARKARI_DATA: SarkariItem[] = [
-  // 🏛️ UNIVERSITY OF KASHMIR CALLIGRAPHIST RECRUITMENT (ADVT NO. 18 OF 2026) - OPEN TODAY (Dated: 10.11.2026)
+  // 🏛️ JKSSB JUNIOR ASSISTANT DOCUMENT VERIFICATION SCHEDULE (Dated: 12.11.2026)
+  {
+    id: 'jkssb-junior-assistant-dv-schedule-nov-2026',
+    title: 'JKSSB Advt 08 of 2025: Junior Assistant Document Verification Schedule (18–20 Nov 2026)',
+    category: 'jkssb',
+    noticeType: 'document_verification',
+    stage: 'document_verification',
+    postDate: '12/11/2026',
+    startDate: '18/11/2026',
+    lastDate: '20/11/2026',
+    advertisementNo: 'Notice No. JKSSB-COE0EXAM(UT)/1/2026 (7827645) | Advt No. 08 of 2025',
+    recruitmentYear: '2026',
+    department: 'J&K Services Selection Board (JKSSB)',
+    postType: 'Job',
+    status: 'Informational',
+    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) has notified the Document Verification (DV) schedule for candidates shortlisted for the post of Junior Assistant (Advt No. 08 of 2025). Verification will be conducted from 18th November to 20th November 2026 at designated JKSSB centres with original certificates.',
+    ageLimit: 'As per Advt No. 08 of 2025 eligibility norms',
+    eligibility: 'Candidates shortlisted for Junior Assistant Document Verification under Advt No. 08 of 2025.',
+    totalPosts: 'Junior Assistant DV Schedule (Advt 08/2025)',
+    officialLink: 'https://jkssb.nic.in/Pdf/DV_Notice_JrAssistant_12112026.pdf',
+    officialNotificationUrl: 'https://jkssb.nic.in/Pdf/DV_Notice_JrAssistant_12112026.pdf',
+    officialApplicationUrl: 'https://jkssb.nic.in',
+    fees: {
+      genObc: '₹0/- (Document Verification Stage)',
+      scSt: '₹0/- (Exempted)'
+    },
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://jkssb.nic.in/Pdf/DV_Notice_JrAssistant_12112026.pdf',
+      officialApplicationUrl: 'https://jkssb.nic.in',
+      advertisementNo: 'No. JKSSB-COE0EXAM(UT)/1/2026 (7827645)',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '18/11/2026',
+      verifiedClosingDate: '20/11/2026',
+      sourceHistory: [
+        'Verified direct official PDF DV_Notice_JrAssistant_12112026.pdf dated 12/11/2026 from jkssb.nic.in (HTTP 200).'
+      ]
+    },
+    isNew: true
+  },
+
+  // 🏛️ JKSSB STATISTICAL ASSISTANT FINAL & FOREMAN PROVISIONAL SELECTION LISTS (Dated: 12.11.2026)
+  {
+    id: 'jkssb-statistical-assistant-foreman-selection-lists-nov-2026',
+    title: 'JKSSB Statistical Assistant Final Selection List & Foreman Provisional Selection List 2026',
+    category: 'jkssb',
+    noticeType: 'result',
+    stage: 'result',
+    postDate: '12/11/2026',
+    startDate: '12/11/2026',
+    lastDate: '12/11/2026',
+    advertisementNo: 'Selection List Notifications (12/11/2026)',
+    recruitmentYear: '2026',
+    department: 'J&K Services Selection Board (JKSSB)',
+    postType: 'Result',
+    status: 'Result',
+    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) has published the Final Selection List for Statistical Assistant and Provisional Selection List for Foreman on 12th November 2026. Selected candidates can verify their merit rank and category allocation in the official selection list PDFs.',
+    ageLimit: 'As per respective recruitment advertisements',
+    eligibility: 'Candidates who appeared in JKSSB selection stages for Statistical Assistant and Foreman.',
+    totalPosts: 'Statistical Assistant Final & Foreman Provisional Lists',
+    officialLink: 'https://jkssb.nic.in/Pdf/Final_Selection_List_Statistical_Asstt_12112026.pdf',
+    officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Final_Selection_List_Statistical_Asstt_12112026.pdf',
+    officialApplicationUrl: 'https://jkssb.nic.in',
+    fees: {
+      genObc: '₹0/- (Result / Selection List)',
+      scSt: '₹0/- (Exempted)'
+    },
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Final_Selection_List_Statistical_Asstt_12112026.pdf',
+      amendmentUrls: [
+        'https://jkssb.nic.in/Pdf/Provisional_selection_List_Foreman_12112026.pdf'
+      ],
+      advertisementNo: 'JKSSB Selection Lists (12/11/2026)',
+      recruitmentYear: '2026',
+      sourceHistory: [
+        'Verified direct official PDFs Final_Selection_List_Statistical_Asstt_12112026.pdf and Provisional_selection_List_Foreman_12112026.pdf (HTTP 200) on 14/11/2026.'
+      ]
+    },
+    isNew: true
+  },
+
+  // 🏛️ JKSSB EDIT OPTION NOTICE FOR ADVT 06, 07 & 08 OF 2026 (Dated: 11.11.2026)
+  {
+    id: 'jkssb-edit-option-advt-06-07-08-of-2026',
+    title: 'JKSSB Advt 06, 07 & 08 of 2026: Online Application Edit Option Window (16–20 Nov 2026)',
+    category: 'jkssb',
+    noticeType: 'correction',
+    stage: 'correction',
+    postDate: '11/11/2026',
+    startDate: '16/11/2026',
+    lastDate: '20/11/2026',
+    closingTime: '23:59 IST',
+    correctionWindow: '16/11/2026 (00:00 IST) to 20/11/2026 (23:59 IST)',
+    advertisementNo: 'Edit Option Notices: Advt 06/2026 (Items 93–96), 07/2026 (Items 97–103), 08/2026 (Items 104–181)',
+    recruitmentYear: '2026',
+    department: 'J&K Services Selection Board (JKSSB)',
+    postType: 'Job',
+    status: 'Informational',
+    shortInfo: 'JKSSB has activated a 5-day online Edit Option window from 16th November 2026 (00:00 IST) to 20th November 2026 (23:59 IST) exclusively for already registered applicants of Advt No. 06/2026 (Items 93–96), Advt No. 07/2026 (Items 97–103), and Advt No. 08/2026 (Items 104–181). New applications are not accepted.',
+    ageLimit: 'As per original Advt 06, 07 & 08 of 2026 rules',
+    eligibility: 'Candidates who already submitted valid online forms under Advt 06/2026, 07/2026, or 08/2026.',
+    totalPosts: 'Registered Applicants Correction Window Only',
+    officialLink: 'https://jkssb.nic.in/Pdf/Edit_option_08OF2026_11112026.pdf',
+    officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Edit_option_08OF2026_11112026.pdf',
+    officialApplicationUrl: 'https://jkssb.nic.in',
+    fees: {
+      genObc: '₹0/- (Correction Window for Registered Applicants)',
+      scSt: '₹0/- (Exempted)'
+    },
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Edit_option_08OF2026_11112026.pdf',
+      amendmentUrls: [
+        'https://jkssb.nic.in/Pdf/Edit_option_06OF2026_11112026.pdf',
+        'https://jkssb.nic.in/Pdf/Edit_option_07OF2026_11112026.pdf'
+      ],
+      advertisementNo: 'Edit Option Notices (11/11/2026) — Advt 06, 07 & 08 of 2026',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '16/11/2026',
+      verifiedClosingDate: '20/11/2026',
+      closingTime: '23:59 IST',
+      correctionWindow: '16/11/2026 to 20/11/2026',
+      sourceHistory: [
+        'Verified direct official PDFs Edit_option_06OF2026_11112026.pdf, Edit_option_07OF2026_11112026.pdf, and Edit_option_08OF2026_11112026.pdf dated 11/11/2026 (HTTP 200).'
+      ]
+    },
+    isNew: true
+  },
+
+  // 🏛️ JKSSB HEALTH EDUCATOR RESULT & FINAL ANSWER KEY (Exam: 01.11.2026)
+  {
+    id: 'jkssb-health-educator-result-final-key-nov-2026',
+    title: 'JKSSB Health Educator Written Exam 2026: Result & Final Answer Key Published',
+    category: 'jkssb',
+    noticeType: 'result',
+    stage: 'result',
+    postDate: '11/11/2026',
+    startDate: '11/11/2026',
+    lastDate: '11/11/2026',
+    advertisementNo: 'Advt No. 07 of 2025 (Item No. 137) | Exam Held: 01.11.2026',
+    recruitmentYear: '2026',
+    department: 'J&K Services Selection Board (JKSSB)',
+    postType: 'Result',
+    status: 'Result',
+    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) has released the Final Answer Key and Result/Scorecard for the OMR-based Written Examination conducted on 01.11.2026 for Health Educator (Health & Medical Education Department) after disposal of representations.',
+    ageLimit: 'Not Applicable (Result & Final Answer Key)',
+    eligibility: 'Candidates who appeared in the JKSSB Health Educator OMR exam held on 01/11/2026.',
+    totalPosts: 'Health Educator OMR Exam Result & Final Key',
+    officialLink: 'https://jkssb.nic.in/Pdf/Result_01112026.pdf',
+    officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Result_01112026.pdf',
+    officialApplicationUrl: 'https://jkssb.nic.in',
+    fees: {
+      genObc: '₹0/- (Result / Final Answer Key Download)',
+      scSt: '₹0/- (Exempted)'
+    },
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Result_01112026.pdf',
+      amendmentUrls: [
+        'https://jkssb.nic.in/Pdf/Final_Answer_Key_01112026.pdf'
+      ],
+      advertisementNo: 'Advt No. 07 of 2025 (Item No. 137)',
+      recruitmentYear: '2026',
+      sourceHistory: [
+        'Verified official JKSSB PDFs Result_01112026.pdf and Final_Answer_Key_01112026.pdf (HTTP 200) on 14/11/2026.'
+      ]
+    },
+    isNew: true
+  },
+
+  // 🏛️ JKSSB SUPPLEMENTARY DV NOTICE (WILDLIFE GUARD / FPF GUARD / INSPECTOR) (Dated: 10.11.2026)
+  {
+    id: 'jkssb-forest-supplementary-dv-notice-nov-2026',
+    title: 'JKSSB Forest Dept Posts (Wildlife Guard, FPF Guard, Inspector): Last Opportunity Supplementary DV on 17 Nov 2026',
+    category: 'jkssb',
+    noticeType: 'document_verification',
+    stage: 'document_verification',
+    postDate: '10/11/2026',
+    startDate: '17/11/2026',
+    lastDate: '17/11/2026',
+    closingTime: '16:00 IST',
+    advertisementNo: 'No. JKSSB-COEOEXAM(UT)/14/2026-03(7842028) | Advt 03/2021 & 04/2022',
+    recruitmentYear: '2026',
+    department: 'J&K Services Selection Board (JKSSB)',
+    postType: 'Job',
+    status: 'Informational',
+    shortInfo: 'JKSSB has granted a final supplementary Document Verification opportunity on 17th November 2026 (11:00 AM to 4:00 PM) for absentee shortlisted candidates of Wildlife Guard, Inspector, FPF Guard, Social Forestry Worker, and Field Assistant under Advt 03/2021 & 04/2022.',
+    ageLimit: 'As per Advt 03/2021 & 04/2022',
+    eligibility: 'Absentee candidates called for Supplementary DV under Forest, Ecology & Environment Dept notifications.',
+    totalPosts: 'Supplementary Document Verification (17/11/2026)',
+    officialLink: 'https://jkssb.nic.in/Pdf/notice_10112026.pdf',
+    officialNotificationUrl: 'https://jkssb.nic.in/Pdf/notice_10112026.pdf',
+    officialApplicationUrl: 'https://jkssb.nic.in',
+    fees: {
+      genObc: '₹0/- (Document Verification)',
+      scSt: '₹0/- (Exempted)'
+    },
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://jkssb.nic.in/Pdf/notice_10112026.pdf',
+      advertisementNo: 'No. JKSSB-COEOEXAM(UT)/14/2026-03(7842028)',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '17/11/2026',
+      verifiedClosingDate: '17/11/2026',
+      closingTime: '16:00 IST',
+      sourceHistory: [
+        'Verified direct official PDF notice_10112026.pdf dated 10/11/2026 on jkssb.nic.in (HTTP 200).'
+      ]
+    },
+    isNew: true
+  },
+
+  // 🎓 CLUSTER UNIVERSITY SRINAGAR RESULT NOTIFICATION NO. 471 (UG 2ND SEM BATCH 2025) (Dated: 11.11.2026)
+  {
+    id: 'cus-result-notification-471-ug-2nd-sem-2025',
+    title: 'Cluster University Srinagar Result Notification No. 471: UG 2nd Semester Regular Batch 2025',
+    category: 'cluster_univ',
+    noticeType: 'result',
+    stage: 'result',
+    postDate: '11/11/2026',
+    startDate: '11/11/2026',
+    lastDate: '25/11/2026',
+    advertisementNo: 'No.: CUS/Result/1/II/471/26 (Dated: 11.11.2026)',
+    recruitmentYear: '2026',
+    department: 'Office of the Controller of Examinations, Cluster University Srinagar',
+    postType: 'Result',
+    status: 'Result',
+    shortInfo: 'Cluster University Srinagar has declared Result Notification No. 471 for UG 2nd Semester Regular Batch 2025 students across constituent colleges. Candidates can download the official result gazette PDF and inspect individual marksheets on cusrinagar.edu.in.',
+    ageLimit: 'Not Applicable (University Semester Result)',
+    eligibility: 'Regular enrolled candidates of UG 2nd Semester Batch 2025 under Cluster University Srinagar.',
+    totalPosts: 'UG 2nd Semester Result Gazette',
+    officialLink: 'https://www.cusrinagar.edu.in/FolderManager/Notification/093352996f96422fafaf809933d0745e.pdf',
+    officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/093352996f96422fafaf809933d0745e.pdf',
+    officialApplicationUrl: 'https://www.cusrinagar.edu.in',
+    fees: {
+      genObc: '₹0/- (Result Notification)',
+      scSt: '₹0/- (Exempted)'
+    },
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/093352996f96422fafaf809933d0745e.pdf',
+      advertisementNo: 'CUS/Result/1/II/471/26',
+      recruitmentYear: '2026',
+      sourceHistory: [
+        'Verified Result Notification No. 471 (093352996f96422fafaf809933d0745e.pdf) directly from cusrinagar.edu.in on 14/11/2026.'
+      ]
+    },
+    isNew: true
+  },
+
+  // 🏛️ CLUSTER UNIVERSITY SRINAGAR INTEGRATED B.ED-M.ED 5TH SEM BACKLOG EXAM FORMS (Dated: 10.11.2026)
+  {
+    id: 'cus-integrated-bed-med-5th-sem-exam-form-nov-2026',
+    title: 'Cluster University Srinagar: Integrated B.Ed.-M.Ed. 5th Semester Backlog Exam Forms (Batch 2020–2022 Open till 16 Nov)',
+    category: 'cluster_univ',
+    noticeType: 'exam_form',
+    stage: 'exam_form',
+    postDate: '10/11/2026',
+    startDate: '14/11/2026',
+    lastDate: '16/11/2026',
+    advertisementNo: 'No. CUS/Exam/26/1817-21 (Dated: 10.11.2026)',
+    recruitmentYear: '2026',
+    department: 'Controller of Examinations, Cluster University Srinagar',
+    postType: 'Admission',
+    status: 'Open',
+    shortInfo: 'Cluster University Srinagar has notified online examination form submission for backlog students of Integrated B.Ed.-M.Ed. 5th Semester. Batch 2020–2022 candidates can submit forms from 14th November to 16th November 2026 (Batch 2019 window concluded on 13th November 2026).',
+    ageLimit: 'Not Applicable (Enrolled Students)',
+    eligibility: 'Backlog students of Integrated B.Ed.-M.Ed. 5th Semester (Batch 2020–2022 active window; Batch 2019 concluded 13/11/2026).',
+    totalPosts: 'Integrated B.Ed.-M.Ed. 5th Sem Backlog Exam Forms',
+    officialLink: 'https://www.cusrinagar.edu.in/FolderManager/Notification/41883576c4594b0e92bb28b6486c8728.pdf',
+    officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/41883576c4594b0e92bb28b6486c8728.pdf',
+    officialApplicationUrl: 'https://www.cusrinagar.edu.in',
+    fees: {
+      genObc: 'As prescribed per backlog paper on CUS student portal',
+      scSt: 'As prescribed per University norms'
+    },
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/41883576c4594b0e92bb28b6486c8728.pdf',
+      advertisementNo: 'No. CUS/Exam/26/1817-21',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '14/11/2026',
+      verifiedClosingDate: '16/11/2026',
+      sourceHistory: [
+        'Verified circular CUS/Exam/26/1817-21 (41883576c4594b0e92bb28b6486c8728.pdf) dated 10/11/2026 on cusrinagar.edu.in (Batch 2019: 11–13/11; Batch 2020–2022: 14–16/11/2026).'
+      ]
+    },
+    isNew: true
+  },
+
+  // 🏛️ CLUSTER UNIVERSITY SRINAGAR BACKLOG EXAM FORMS INTEGRATED/HONORS/PROF NON-NEP (Dated: 09.11.2026)
+  {
+    id: 'cus-backlog-exam-form-integrated-honors-non-nep-nov-2026',
+    title: 'Cluster University Srinagar: Backlog Exam Forms for Integrated/Honours/Professional (Non-NEP) 1st, 3rd, 5th & 7th Sem',
+    category: 'cluster_univ',
+    noticeType: 'exam_form',
+    stage: 'exam_form',
+    postDate: '09/11/2026',
+    startDate: '11/11/2026',
+    lastDate: '18/11/2026',
+    advertisementNo: 'No. CUS/Exam/26/1784-90 (Dated: 09.11.2026)',
+    recruitmentYear: '2026',
+    department: 'Controller of Examinations, Cluster University Srinagar',
+    postType: 'Admission',
+    status: 'Open',
+    shortInfo: 'Cluster University Srinagar invites online examination forms from backlog students of Integrated, Honours, and Professional (Non-NEP) 1st, 3rd, 5th & 7th Semesters (Batch 2017–2022). Phase-I (IG 2017 / Hons 2018–19) runs 11–14 Nov 2026; Phase-II (IG 2018–22 / Hons 2020–22) runs 15–18 Nov 2026.',
+    ageLimit: 'Not Applicable (Enrolled Backlog Students)',
+    eligibility: 'Backlog students of Integrated/Honours/Professional Non-NEP 1st, 3rd, 5th and 7th Semesters (Batch 2017–2022).',
+    totalPosts: 'Non-NEP Odd Semester Backlog Exam Forms',
+    officialLink: 'https://www.cusrinagar.edu.in/FolderManager/Notification/97725711bb8148a7a40c28f85129c40d.pdf',
+    officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/97725711bb8148a7a40c28f85129c40d.pdf',
+    officialApplicationUrl: 'https://www.cusrinagar.edu.in',
+    fees: {
+      genObc: 'As prescribed per backlog subject on CUS student portal',
+      scSt: 'As prescribed per University norms'
+    },
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/97725711bb8148a7a40c28f85129c40d.pdf',
+      advertisementNo: 'No. CUS/Exam/26/1784-90',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '11/11/2026',
+      verifiedClosingDate: '18/11/2026',
+      sourceHistory: [
+        'Verified circular CUS/Exam/26/1784-90 (97725711bb8148a7a40c28f85129c40d.pdf) dated 09/11/2026 on cusrinagar.edu.in.'
+      ]
+    },
+    isNew: true
+  },
+
+  // 📅 CLUSTER UNIVERSITY SRINAGAR B.TECH 8TH SEM DATE SHEET (Dated: 09.11.2026)
+  {
+    id: 'cus-btech-8th-sem-datesheet-batch-2022-nov-2026',
+    title: 'Cluster University Srinagar: Date Sheet for B.Tech 8th Semester (Batch 2022 & Backlog) — Exams 16–23 Nov 2026',
+    category: 'cluster_univ',
+    noticeType: 'date_sheet',
+    stage: 'date_sheet',
+    postDate: '09/11/2026',
+    startDate: '16/11/2026',
+    lastDate: '23/11/2026',
+    closingTime: '13:00 IST',
+    advertisementNo: 'CUS B.Tech 8th Semester Date Sheet (Dated: 09.11.2026)',
+    recruitmentYear: '2026',
+    department: 'Controller of Examinations, Cluster University Srinagar',
+    postType: 'Admission',
+    status: 'Informational',
+    shortInfo: 'Controller of Examinations, Cluster University Srinagar has released the theory examination Date Sheet for B.Tech 8th Semester Regular Batch 2022 and Backlog Batches 2018–2021. Examinations are scheduled on 16th, 19th, and 23rd November 2026 at 01:00 PM.',
+    ageLimit: 'Not Applicable (Examination Date Sheet)',
+    eligibility: 'Regular Batch 2022 and Backlog Batch 2018–2021 B.Tech 8th Semester candidates.',
+    totalPosts: 'B.Tech 8th Sem Exam Dates: 16, 19 & 23 Nov 2026',
+    officialLink: 'https://www.cusrinagar.edu.in/FolderManager/Notification/93ddb35c45bc4727bd90a89a70582dc3.pdf',
+    officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/93ddb35c45bc4727bd90a89a70582dc3.pdf',
+    officialApplicationUrl: 'https://www.cusrinagar.edu.in',
+    fees: {
+      genObc: '₹0/- (Official Date Sheet Notice)',
+      scSt: '₹0/- (Exempted)'
+    },
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/93ddb35c45bc4727bd90a89a70582dc3.pdf',
+      advertisementNo: 'CUS B.Tech 8th Semester Date Sheet (09/11/2026)',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '16/11/2026',
+      verifiedClosingDate: '23/11/2026',
+      closingTime: '13:00 IST',
+      sourceHistory: [
+        'Verified direct official Date Sheet PDF 93ddb35c45bc4727bd90a89a70582dc3.pdf dated 09/11/2026 on cusrinagar.edu.in.'
+      ]
+    },
+    isNew: true
+  },
+
+  // 📝 CLUSTER UNIVERSITY SRINAGAR UG 2ND SEM XEROX & RE-EVALUATION NOTICE (Dated: 09.11.2026)
+  {
+    id: 'cus-ug-2nd-sem-xerox-reevaluation-batch-2022-2024',
+    title: 'Cluster University Srinagar: Xerox & Re-Evaluation Notice for UG 2nd Sem NEP Backlog (Batch 2022–2024)',
+    category: 'cluster_univ',
+    noticeType: 'correction',
+    stage: 'correction',
+    postDate: '09/11/2026',
+    startDate: '10/11/2026',
+    lastDate: '03/12/2026',
+    advertisementNo: 'No.: CUS/Exam/RS/402-11/26 (Dated: 09.11.2026)',
+    recruitmentYear: '2026',
+    department: 'Controller of Examinations, Cluster University Srinagar',
+    postType: 'Admission',
+    status: 'Informational',
+    shortInfo: 'Cluster University Srinagar notified the Xerox and Re-evaluation schedule for UG 2nd Semester NEP Backlog (Batch 2022–2024): Xerox online registration ran 10–13 Nov (closed), Xerox collection runs 23–26 Nov 2026, and Re-evaluation online registration opens 30 Nov to 03 Dec 2026.',
+    ageLimit: 'Not Applicable (Xerox & Re-evaluation Schedule)',
+    eligibility: 'UG 2nd Semester NEP Backlog candidates (Batch 2022–2024).',
+    totalPosts: 'Xerox Collection 23–26 Nov | Re-eval 30 Nov–03 Dec 2026',
+    officialLink: 'https://www.cusrinagar.edu.in/FolderManager/Notification/85d646e4a7f748edbf6cbbcc69f1fb5f.pdf',
+    officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/85d646e4a7f748edbf6cbbcc69f1fb5f.pdf',
+    officialApplicationUrl: 'https://www.cusrinagar.edu.in',
+    fees: {
+      genObc: 'As prescribed per paper for Xerox / Re-evaluation',
+      scSt: 'As prescribed per University norms'
+    },
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/85d646e4a7f748edbf6cbbcc69f1fb5f.pdf',
+      advertisementNo: 'No.: CUS/Exam/RS/402-11/26',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '10/11/2026',
+      verifiedClosingDate: '03/12/2026',
+      sourceHistory: [
+        'Verified direct official PDF 85d646e4a7f748edbf6cbbcc69f1fb5f.pdf dated 09/11/2026 on cusrinagar.edu.in.'
+      ]
+    },
+    isNew: true
+  },
+
+  // 🎓 CLUSTER UNIVERSITY SRINAGAR RESULT NOTIFICATION NO. 470 (B.ED 1ST SEM BATCH 2026) (Dated: 09.11.2026)
+  {
+    id: 'cus-result-notification-470-bed-1st-sem-2026',
+    title: 'Cluster University Srinagar Result Notification No. 470: B.Ed. 1st Semester Regular Batch 2026 & Backlog',
+    category: 'cluster_univ',
+    noticeType: 'result',
+    stage: 'result',
+    postDate: '09/11/2026',
+    startDate: '09/11/2026',
+    lastDate: '23/11/2026',
+    advertisementNo: 'No.: CUS/Result/4/I/26/470 (Dated: 09.11.2026)',
+    recruitmentYear: '2026',
+    department: 'Controller of Examinations, Cluster University Srinagar',
+    postType: 'Result',
+    status: 'Result',
+    shortInfo: 'Cluster University Srinagar has declared Result Notification No. 470 for B.Ed. 1st Semester Regular Batch 2026 and previous backlog batches. Candidates can check their result status directly in the official PDF gazette.',
+    ageLimit: 'Not Applicable (University Result)',
+    eligibility: 'Regular Batch 2026 and Backlog candidates of B.Ed. 1st Semester under Cluster University Srinagar.',
+    totalPosts: 'B.Ed. 1st Semester Result Gazette',
+    officialLink: 'https://www.cusrinagar.edu.in/FolderManager/Notification/224b9d82dc264319a1a04370779d1a39.pdf',
+    officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/224b9d82dc264319a1a04370779d1a39.pdf',
+    officialApplicationUrl: 'https://www.cusrinagar.edu.in',
+    fees: {
+      genObc: '₹0/- (Result Gazette)',
+      scSt: '₹0/- (Exempted)'
+    },
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/224b9d82dc264319a1a04370779d1a39.pdf',
+      advertisementNo: 'No.: CUS/Result/4/I/26/470',
+      recruitmentYear: '2026',
+      sourceHistory: [
+        'Verified direct official PDF 224b9d82dc264319a1a04370779d1a39.pdf dated 09/11/2026 on cusrinagar.edu.in.'
+      ]
+    },
+    isNew: true
+  },
+
+  // 🇮🇳 SSC CHT 2025 FRTA IDENTITY VERIFICATION & SLIDING NOTICE (Dated: 07.11.2026)
+  {
+    id: 'ssc-cht-2025-frta-identity-verification-nov-2026',
+    title: 'SSC Combined Hindi Translators Exam 2025 (FRTA): Identity Verification on 18 Nov 2026 (Call Slip Live)',
+    category: 'ssc_jobs',
+    noticeType: 'document_verification',
+    stage: 'document_verification',
+    postDate: '07/11/2026',
+    startDate: '13/11/2026',
+    lastDate: '18/11/2026',
+    closingTime: '17:00 IST',
+    advertisementNo: 'No. HQ-C11017/3/2025-C-1 (E-12770)',
+    recruitmentYear: '2026',
+    department: 'Staff Selection Commission (SSC HQ)',
+    postType: 'Job',
+    status: 'Informational',
+    shortInfo: 'Staff Selection Commission (SSC) has released the Identity Verification (IV) & Sliding Process schedule for candidates shortlisted in the First Round of Tentative Allocation (FRTA) of Combined Hindi Translators (CHT) Examination 2025. IV slips went live from 13th November 2026 (17:00 IST) on ssc.gov.in ahead of physical Regional Office IV on 18th November 2026.',
+    ageLimit: 'As per CHT 2025 recruitment notice',
+    eligibility: 'Candidates shortlisted in CHT 2025 First Round of Tentative Allocation (FRTA) declared on 05/11/2026.',
+    totalPosts: 'CHT 2025 FRTA Identity Verification Stage',
+    officialLink: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/CHT%202025%20FRTA%20notice%2007112026.pdf',
+    officialNotificationUrl: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/CHT%202025%20FRTA%20notice%2007112026.pdf',
+    officialApplicationUrl: 'https://ssc.gov.in',
+    fees: {
+      genObc: '₹0/- (Document & Identity Verification)',
+      scSt: '₹0/- (Exempted)'
+    },
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/CHT%202025%20FRTA%20notice%2007112026.pdf',
+      amendmentUrls: [
+        'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/writeup_05112026.pdf'
+      ],
+      advertisementNo: 'No. HQ-C11017/3/2025-C-1 (E-12770)',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '13/11/2026',
+      verifiedClosingDate: '18/11/2026',
+      sourceHistory: [
+        'Verified direct official SSC notice PDF CHT%202025%20FRTA%20notice%2007112026.pdf (07/11/2026) and FRTA writeup writeup_05112026.pdf (05/11/2026) via ssc.gov.in (HTTP 200).'
+      ]
+    },
+    isNew: true
+  },
+
+  // 🇮🇳 SSC COAST GUARD CGEPT 01/2027 & 02/2027 CITY INTIMATION & ADMIT CARD (Dated: 06.11.2026)
+  {
+    id: 'ssc-cgept-01-27-02-27-city-admit-card-nov-2026',
+    title: 'SSC Coast Guard CGEPT 01/2027 & 02/2027: Exam City Intimation & Admit Card Notice (Exam: 17–18 Nov 2026)',
+    category: 'ssc_jobs',
+    noticeType: 'admit_card',
+    stage: 'admit_card',
+    postDate: '06/11/2026',
+    startDate: '06/11/2026',
+    lastDate: '18/11/2026',
+    advertisementNo: 'CGEPT-01/2027 & 02/2027 City/Admit Card Notice (06.11.2026)',
+    recruitmentYear: '2026',
+    department: 'Staff Selection Commission (SSC) / Indian Coast Guard',
+    postType: 'Job',
+    status: 'Informational',
+    shortInfo: 'Staff Selection Commission has issued the examination city intimation and admit card notice for Coast Guard Enrolled Personnel Test (CGEPT) Batches 01/2027 and 02/2027 scheduled on 17th & 18th November 2026. City slips are live and e-Admit Cards become downloadable 2–3 days before the exam via cgept.parikshasaarthi.in.',
+    ageLimit: 'As per CGEPT 01/2027 & 02/2027 eligibility',
+    eligibility: 'Registered candidates of Indian Coast Guard CGEPT 01/2027 & 02/2027 batches.',
+    totalPosts: 'CBE Schedule: 17–18 Nov 2026',
+    officialLink: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Englishnotice_06112026.pdf',
+    officialNotificationUrl: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Englishnotice_06112026.pdf',
+    officialApplicationUrl: 'https://cgept.parikshasaarthi.in/',
+    fees: {
+      genObc: '₹0/- (Admit Card Download)',
+      scSt: '₹0/- (Exempted)'
+    },
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Englishnotice_06112026.pdf',
+      officialApplicationUrl: 'https://cgept.parikshasaarthi.in/',
+      advertisementNo: 'CGEPT 01/2027 & 02/2027 Notice (06/11/2026)',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '06/11/2026',
+      verifiedClosingDate: '18/11/2026',
+      sourceHistory: [
+        'Verified direct official SSC notice PDF Englishnotice_06112026.pdf dated 06/11/2026 (HTTP 200).'
+      ]
+    },
+    isNew: true
+  },
+
+  // 🏛️ UNIVERSITY OF KASHMIR CALLIGRAPHIST RECRUITMENT (ADVT NO. 18 OF 2026) - PORTAL TIMEOUT ON 14/11/2026
   {
     id: 'ku-calligraphist-recruitment-advt-18-2026',
     title: 'University of Kashmir Calligraphist Recruitment 2026 (Advt No. 18 of 2026) - Department of Persian',
@@ -171,10 +759,10 @@ export const SARKARI_DATA: SarkariItem[] = [
       'Diploma in Calligraphy from a recognized Govt Institution.',
       'Reserved Category Certificate if applicable.'
     ],
-    verificationStatus: 'verified',
+    verificationStatus: 'needs_verification',
     verification: {
-      status: 'verified',
-      verificationStatus: 'verified',
+      status: 'needs_verification',
+      verificationStatus: 'needs_verification',
       verifiedAt: '12/11/2026',
       lastVerified: '12/11/2026',
       officialNotificationUrl: 'https://www.kashmiruniversity.net/',
@@ -184,38 +772,38 @@ export const SARKARI_DATA: SarkariItem[] = [
       verifiedOpeningDate: '12/11/2026',
       verifiedClosingDate: '30/11/2026',
       closingTime: '16:00 IST',
+      verificationReason: 'kashmiruniversity.net timed out (403/connection timeout) during the 14/11/2026 official portal check; requires live portal verification before re-listing in active open postings.',
       sourceHistory: [
-        'Official Advertisement Notice No. 18 of 2026 dated 10-11-2026 issued by University of Kashmir Recruitment Wing.',
-        'Online submission window: 12-11-2026 to 30-11-2026 (16:00 hrs).'
+        'Prior record dated 10-11-2026; live check on 14/11/2026 could not reach kashmiruniversity.net directly.'
       ]
     },
-    isNew: true
+    isNew: false
   },
 
-  // 🎓 CLUSTER UNIVERSITY SRINAGAR NEP UG 1ST SEMESTER REGISTRATION (BATCH 2026) (Dated: 08.11.2026)
+  // 🎓 CLUSTER UNIVERSITY SRINAGAR NEP UG 1ST SEMESTER REGISTRATION (BATCH 2026) (Dated: 11.11.2026)
   {
     id: 'cus-nep-ug-1st-sem-registration-batch-2026',
     title: 'Cluster University Srinagar NEP UG 1st Semester Online Registration 2026 (Batch 2026)',
     category: 'cluster_univ',
     noticeType: 'admission',
     stage: 'admission',
-    postDate: '08/11/2026',
-    startDate: '08/11/2026',
+    postDate: '11/11/2026',
+    startDate: '11/11/2026',
     lastDate: '16/11/2026',
-    closingTime: '16:30 IST',
-    advertisementNo: 'Notice No. CUS/Acad/NEP-UG-Reg/2026/1042',
+    closingTime: '23:59 IST',
+    advertisementNo: 'No: CUS/Adm-Reg/2026/6377-94 (Dated: 11.11.2026)',
     recruitmentYear: '2026',
     session: '2026-27',
-    department: 'Academic Section, Cluster University of Srinagar',
+    department: 'Academic / Registration Section, Cluster University Srinagar',
     postType: 'Admission',
     status: 'Open',
-    shortInfo: 'Cluster University Srinagar has issued notification for online submission of registration forms for newly admitted students of NEP-2020 Undergraduate 1st Semester (Batch 2026) across constituent and affiliated colleges. Students must complete their registration profile and form submission on cusrinagar.edu.in by 16th November 2026.',
+    shortInfo: 'Cluster University Srinagar has issued Circular No. CUS/Adm-Reg/2026/6377-94 dated 11/11/2026 for online submission of registration forms by NEP UG 1st Semester Students (Batch 2026) across all Constituent and Affiliated Colleges EXCEPT Abdul Ahad Azad Memorial Degree College, Bemina, Srinagar. Deadline is 16th November 2026 via the registration portal.',
     ageLimit: 'As per University Admission Guidelines',
-    eligibility: 'Enrolled 1st Semester FYUGP students of Cluster University constituent colleges (GDC Bemina, SP College, Amar Singh College, Women\'s College MA Road, GDC Hyderpora) admitted under NEP 2020 for Batch 2026.',
-    totalPosts: 'NEP-2020 UG 1st Semester Batch 2026 Enrolled Students',
-    officialLink: 'https://www.cusrinagar.edu.in/',
-    officialNotificationUrl: 'https://www.cusrinagar.edu.in/',
-    officialApplicationUrl: 'https://www.cusrinagar.edu.in/',
+    eligibility: 'Newly admitted NEP-2020 UG 1st Semester students (Batch 2026) across Constituent & Affiliated Colleges of Cluster University Srinagar, EXCEPT Abdul Ahad Azad Memorial Degree College, Bemina, Srinagar.',
+    totalPosts: 'NEP-2020 UG 1st Semester Batch 2026 Registration',
+    officialLink: 'https://www.cusrinagar.edu.in/FolderManager/Notification/1b472c59ced84af495e041289b41db1d.pdf',
+    officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/1b472c59ced84af495e041289b41db1d.pdf',
+    officialApplicationUrl: 'https://www.cusrinagar.edu.in/registration/instructions/',
     fees: {
       genObc: 'As per University Registration Fee schedule on student portal',
       scSt: 'As per University Registration Fee schedule on student portal'
@@ -224,17 +812,18 @@ export const SARKARI_DATA: SarkariItem[] = [
     verification: {
       status: 'verified',
       verificationStatus: 'verified',
-      verifiedAt: '12/11/2026',
-      lastVerified: '12/11/2026',
-      officialNotificationUrl: 'https://www.cusrinagar.edu.in/',
-      advertisementNo: 'Notice No. CUS/Acad/NEP-UG-Reg/2026/1042',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/1b472c59ced84af495e041289b41db1d.pdf',
+      officialApplicationUrl: 'https://www.cusrinagar.edu.in/registration/instructions/',
+      advertisementNo: 'No: CUS/Adm-Reg/2026/6377-94',
       recruitmentYear: '2026',
-      verifiedOpeningDate: '08/11/2026',
+      verifiedOpeningDate: '11/11/2026',
       verifiedClosingDate: '16/11/2026',
-      closingTime: '16:30 IST',
+      closingTime: '23:59 IST',
       sourceHistory: [
-        'Cluster University Srinagar Academic notification for NEP UG 1st Sem Registration (Batch 2026).',
-        'Submission deadline set to 16th November 2026 via online student portal.'
+        'Corrected on 14/11/2026 directly from official PDF 1b472c59ced84af495e041289b41db1d.pdf (CUS/Adm-Reg/2026/6377-94 dated 11/11/2026).',
+        'Updated exception clause: applies to all constituent and affiliated colleges except Abdul Ahad Azad Memorial Degree College, Bemina, Srinagar.'
       ]
     },
     isNew: true
@@ -270,10 +859,10 @@ export const SARKARI_DATA: SarkariItem[] = [
       scSt: '₹250/- (For SC/ST/Ex-SM/PwBD/Female/EBC — Fully refunded after CBT)'
     },
     paymentInstructions: 'Online payment via Internet Banking, Debit Cards, Credit Cards, or UPI on rrbapply.gov.in until 27/11/2026 23:59 IST.',
-    verificationStatus: 'verified',
+    verificationStatus: 'needs_verification',
     verification: {
-      status: 'verified',
-      verificationStatus: 'verified',
+      status: 'needs_verification',
+      verificationStatus: 'needs_verification',
       verifiedAt: '12/11/2026',
       lastVerified: '12/11/2026',
       officialNotificationUrl: 'https://www.rrbapply.gov.in',
@@ -282,12 +871,12 @@ export const SARKARI_DATA: SarkariItem[] = [
       verifiedOpeningDate: '27/10/2026',
       verifiedClosingDate: '25/11/2026',
       closingTime: '23:59 IST',
+      verificationReason: 'rrbapply.gov.in returned 404 SPA bundle errors and regional RRB portals timed out during the 14/11/2026 check; excluded from active listings pending direct official verification.',
       sourceHistory: [
-        'Centralised Employment Notice CEN 08/2026 published by Railway Recruitment Boards.',
-        'Online portal active on rrbapply.gov.in from 27.10.2026 to 25.11.2026.'
+        'Prior record CEN 08/2026; portal unverified on 14/11/2026 check.'
       ]
     },
-    isNew: true
+    isNew: false
   },
 
   // 🚆 RAILWAY RECRUITMENT BOARDS (RRB) ISOLATED & MINISTERIAL CATEGORIES (CEN 09/2026)
@@ -319,10 +908,10 @@ export const SARKARI_DATA: SarkariItem[] = [
       genObc: '₹500/- (₹400 refunded after appearing in CBT)',
       scSt: '₹250/- (For SC/ST/Ex-SM/Female/PwBD/EBC — Fully refunded after CBT)'
     },
-    verificationStatus: 'verified',
+    verificationStatus: 'needs_verification',
     verification: {
-      status: 'verified',
-      verificationStatus: 'verified',
+      status: 'needs_verification',
+      verificationStatus: 'needs_verification',
       verifiedAt: '12/11/2026',
       lastVerified: '12/11/2026',
       officialNotificationUrl: 'https://www.rrbapply.gov.in',
@@ -331,12 +920,12 @@ export const SARKARI_DATA: SarkariItem[] = [
       verifiedOpeningDate: '05/11/2026',
       verifiedClosingDate: '04/12/2026',
       closingTime: '23:59 IST',
+      verificationReason: 'rrbapply.gov.in returned 404 SPA bundle errors and regional RRB portals timed out during the 14/11/2026 check; excluded from active listings pending direct official verification.',
       sourceHistory: [
-        'Centralised Employment Notice CEN 09/2026 for Isolated & Ministerial Posts on rrbapply.gov.in.',
-        'Online application window open 05.11.2026 to 04.12.2026.'
+        'Prior record CEN 09/2026; portal unverified on 14/11/2026 check.'
       ]
     },
-    isNew: true
+    isNew: false
   },
 
   // 📖 UNIVERSITY OF KASHMIR CERTIFICATE COURSE IN KASHMIRI (ADMISSIONS - CDOE) (Dated: 09.11.2026)
@@ -367,10 +956,10 @@ export const SARKARI_DATA: SarkariItem[] = [
       genObc: '₹250/- (Application & Processing Fee)',
       scSt: '₹250/-'
     },
-    verificationStatus: 'verified',
+    verificationStatus: 'needs_verification',
     verification: {
-      status: 'verified',
-      verificationStatus: 'verified',
+      status: 'needs_verification',
+      verificationStatus: 'needs_verification',
       verifiedAt: '12/11/2026',
       lastVerified: '12/11/2026',
       officialNotificationUrl: 'https://www.kashmiruniversity.net/',
@@ -379,65 +968,64 @@ export const SARKARI_DATA: SarkariItem[] = [
       verifiedOpeningDate: '10/11/2026',
       verifiedClosingDate: '25/11/2026',
       closingTime: '16:00 IST',
+      verificationReason: 'kashmiruniversity.net timed out (403/connection timeout) during the 14/11/2026 check; requires live portal verification before active display.',
       sourceHistory: [
-        'Directorate of Admissions & Competitive Examinations Notification No. 36 of 2026.',
-        'Online admissions for Kashmiri Certificate Course via CDOE.'
+        'Prior record dated 09-11-2026; University of Kashmir portal unreachable during 14/11/2026 check.'
       ]
     },
-    isNew: true
+    isNew: false
   },
 
-  // 📝 STAFF SELECTION COMMISSION (SSC) CGL 2026 TIER-I TENTATIVE ANSWER KEY & RESPONSE SHEET
+  // 📝 STAFF SELECTION COMMISSION (SSC) CGL 2026 TIER-I TENTATIVE ANSWER KEY & RESPONSE SHEET (CLOSED 07.11.2026)
   {
     id: 'ssc-cgl-2026-tier-1-answer-key',
-    title: 'SSC Combined Graduate Level (CGL) 2026 Tier-I Tentative Answer Key & Response Sheets Released',
+    title: 'SSC Combined Graduate Level (CGL) 2026 Tier-I Tentative Answer Key & Response Sheets (Challenge Window Closed)',
     category: 'ssc_jobs',
     noticeType: 'answer_key',
     stage: 'answer_key',
     postDate: '04/11/2026',
     startDate: '04/11/2026',
-    lastDate: '14/11/2026',
-    closingTime: '18:00 IST',
-    advertisementNo: 'Notice No. HQ-C1101/1/2026-C-1',
+    lastDate: '07/11/2026',
+    closingTime: '21:00 IST',
+    advertisementNo: 'No. HQ-C11018/5/2026-C-1 (E-16368)',
     recruitmentYear: '2026',
     department: 'Staff Selection Commission (SSC HQ, New Delhi)',
     postType: 'Result',
-    status: 'Open',
-    shortInfo: 'Staff Selection Commission (SSC) has uploaded the Tentative Answer Keys along with Candidates\' Response Sheets for the Combined Graduate Level Examination (Tier-I), 2026 on ssc.gov.in. Candidates can verify their answers and submit online representations/objections through the candidate portal upon payment of ₹100 per question challenged until 14th November 2026 (18:00 hrs).',
+    status: 'Closed',
+    shortInfo: 'Staff Selection Commission (SSC) uploaded the Tentative Answer Keys along with Candidates\' Response Sheets for Combined Graduate Level Examination (Tier-I), 2026 on 04/11/2026 (21:00 IST). The online challenge window on payment of ₹50 per question officially concluded on 07th November 2026 at 21:00 IST.',
     ageLimit: 'Not Applicable (Answer Key & Challenge Stage)',
     eligibility: 'Candidates who appeared in the Computer Based Examination for SSC CGL 2026 Tier-I.',
     totalPosts: 'SSC CGL 2026 Tier-I Examination',
-    officialLink: 'https://ssc.gov.in',
-    officialNotificationUrl: 'https://ssc.gov.in',
+    officialLink: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/writeup_04112026.pdf',
+    officialNotificationUrl: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/writeup_04112026.pdf',
     officialApplicationUrl: 'https://ssc.gov.in',
     fees: {
-      genObc: '₹100/- per challenge / objection submitted',
-      scSt: '₹100/- per challenge / objection submitted'
+      genObc: '₹50/- per challenge / objection submitted (Window Closed)',
+      scSt: '₹50/- per challenge / objection submitted (Window Closed)'
     },
     verificationStatus: 'verified',
     verification: {
       status: 'verified',
       verificationStatus: 'verified',
-      verifiedAt: '12/11/2026',
-      lastVerified: '12/11/2026',
-      officialNotificationUrl: 'https://ssc.gov.in',
-      advertisementNo: 'Notice No. HQ-C1101/1/2026-C-1',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/writeup_04112026.pdf',
+      advertisementNo: 'No. HQ-C11018/5/2026-C-1 (E-16368)',
       recruitmentYear: '2026',
       verifiedOpeningDate: '04/11/2026',
-      verifiedClosingDate: '14/11/2026',
-      closingTime: '18:00 IST',
+      verifiedClosingDate: '07/11/2026',
+      closingTime: '21:00 IST',
       sourceHistory: [
-        'Official notice published on ssc.gov.in uploading CGL 2026 Tier-I Tentative Answer Keys and Response Sheets.',
-        'Challenge portal active up to 14.11.2026 (18:00 hrs).'
+        'Corrected on 14/11/2026 directly from official SSC writeup PDF writeup_04112026.pdf: challenge window was 04/11/2026 (21:00 IST) to 07/11/2026 (21:00 IST) at ₹50/- per question (now closed).'
       ]
     },
-    isNew: true
+    isNew: false
   },
 
-  // ⚔️ JOIN INDIAN ARMY 10+2 TECHNICAL ENTRY SCHEME (TES-57) COURSE - CLOSING TODAY (Dated: 12.11.2026)
+  // ⚔️ JOIN INDIAN ARMY 10+2 TECHNICAL ENTRY SCHEME (TES-57) COURSE - CLOSED ON 12.11.2026
   {
     id: 'indian-army-tes-57-course-closing-today',
-    title: 'Indian Army 10+2 Technical Entry Scheme (TES-57) Course: Online Application Closing Today',
+    title: 'Indian Army 10+2 Technical Entry Scheme (TES-57) Course 2026 (Applications Closed)',
     category: 'army_jobs',
     noticeType: 'recruitment',
     stage: 'recruitment',
@@ -450,8 +1038,8 @@ export const SARKARI_DATA: SarkariItem[] = [
     recruitmentYear: '2026',
     department: 'Join Indian Army (Directorate General of Recruiting, IHQ of MoD (Army))',
     postType: 'Job',
-    status: 'Open',
-    shortInfo: 'Indian Army online registration window for 10+2 Technical Entry Scheme (TES-57) Course commencing in July 2027 concludes today, 12th November 2026 (15:00 hrs) on joinindianarmy.nic.in. Unmarried male candidates who passed 10+2 with minimum 60% aggregate in Physics, Chemistry, and Mathematics and appeared in JEE (Mains) 2026 are eligible for Grant of Permanent Commission.',
+    status: 'Closed',
+    shortInfo: 'Indian Army online registration window for 10+2 Technical Entry Scheme (TES-57) Course commencing in July 2027 concluded on 12th November 2026 (15:00 hrs IST) on joinindianarmy.nic.in. Unmarried male candidates with minimum 60% aggregate in 10+2 PCM and JEE (Mains) 2026 score were eligible for Permanent Commission.',
     ageLimit: '16½ to 19½ Years (Born between 02 Jan 2008 and 01 Jan 2011, both dates inclusive).',
     eligibility: '10+2 passed with minimum 60% aggregate in Physics, Chemistry, and Mathematics from recognized boards. Mandatory participation in JEE (Mains) 2026.',
     totalPosts: '90 Posts (Tentative)',
@@ -488,10 +1076,10 @@ export const SARKARI_DATA: SarkariItem[] = [
       closingTime: '15:00 IST',
       sourceHistory: [
         'Official recruitment notice on joinindianarmy.nic.in for TES-57 Course commencing July 2027.',
-        'Online application portal closing today: 12.11.2026 at 15:00 hrs.'
+        'Online application portal concluded on 12.11.2026 at 15:00 hrs IST (marked Closed on 14/11/2026).'
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🏦 JAMMU & KASHMIR BANK LTD. BANKING ASSOCIATES RECRUITMENT 2026 (Dated: 07.11.2026)
   {
@@ -663,21 +1251,21 @@ export const SARKARI_DATA: SarkariItem[] = [
     category: 'ssc_jobs',
     postDate: '03/11/2026',
     startDate: '03/11/2026',
-    lastDate: '18/11/2026',
-    closingTime: '18:00 IST',
-    advertisementNo: 'Notice: Constable (GD) in CAPFs, SSF & Rifleman (GD) in Assam Rifles Exam 2026 (F. No. HQ-C1101/FinalKey-GD/2026)',
+    lastDate: '17/11/2026',
+    closingTime: '17:00 IST',
+    advertisementNo: 'No. HQ-C-3/2/2026-C-3 (Dated: 03.11.2026)',
     recruitmentYear: '2026',
     noticeType: 'answer_key',
     stage: 'answer_key',
     department: 'Staff Selection Commission (SSC)',
     postType: 'Result',
-    status: 'Open',
-    shortInfo: 'Staff Selection Commission (SSC) has uploaded the Final Answer Keys along with Question Papers and candidate marks for the Computer Based Examination of Constable (GD) in Central Armed Police Forces (CAPFs), SSF, and Rifleman (GD) in Assam Rifles Examination, 2026. Qualified and non-qualified candidates can download their scorecards and final answer keys through the official portal ssc.gov.in up to 18th November 2026 (18:00 hrs).',
+    status: 'Informational',
+    shortInfo: 'Staff Selection Commission (SSC) has uploaded the Final Answer Keys along with Question Papers and candidate marks for the Computer Based Examination of Constable (GD) in Central Armed Police Forces (CAPFs), SSF, and Rifleman (GD) in Assam Rifles Examination, 2026. Candidates can download their scorecards and final answer keys through ssc.gov.in from 03/11/2026 (17:00 IST) to 17/11/2026 (17:00 IST).',
     ageLimit: 'Not Applicable (Final Answer Key & Scorecard Download)',
     eligibility: 'All candidates who appeared in the Computer-Based Examination for Constable (GD) 2026.',
     totalPosts: 'Constable (GD) 2026 Final Keys & Marks Portal',
-    officialLink: 'https://ssc.gov.in',
-    officialNotificationUrl: 'https://ssc.gov.in',
+    officialLink: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/writeup_03112026.pdf',
+    officialNotificationUrl: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/writeup_03112026.pdf',
     officialApplicationUrl: 'https://ssc.gov.in',
     fees: {
       genObc: '₹0/- (Exempted — Scorecard & Final Key Download)',
@@ -686,7 +1274,7 @@ export const SARKARI_DATA: SarkariItem[] = [
     paymentInstructions: 'Not Applicable. Downloading official scorecards and final question papers is free of charge.',
     selectionProcess: [
       'Computer Based Examination (CBE) completed.',
-      'Final Answer Keys, Question Papers, and normalized marks hosted from 03/11/2026 to 18/11/2026 (18:00 hrs).',
+      'Final Answer Keys, Question Papers, and normalized marks hosted from 03/11/2026 (17:00 IST) to 17/11/2026 (17:00 IST).',
       'Shortlisted candidates proceed to Physical Standard Test (PST) and Physical Efficiency Test (PET) conducted by CAPFs.'
     ],
     documentsRequired: [
@@ -697,17 +1285,17 @@ export const SARKARI_DATA: SarkariItem[] = [
     verification: {
       status: 'verified',
       verificationStatus: 'verified',
-      verifiedAt: '08/11/2026',
-      lastVerified: '08/11/2026',
-      officialNotificationUrl: 'https://ssc.gov.in',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/writeup_03112026.pdf',
       officialApplicationUrl: 'https://ssc.gov.in',
-      advertisementNo: 'F. No. HQ-C1101/FinalKey-GD/2026',
+      advertisementNo: 'No. HQ-C-3/2/2026-C-3',
       recruitmentYear: '2026',
       verifiedOpeningDate: '03/11/2026',
-      verifiedClosingDate: '18/11/2026',
-      closingTime: '18:00 IST',
+      verifiedClosingDate: '17/11/2026',
+      closingTime: '17:00 IST',
       sourceHistory: [
-        'Verified official notification published on ssc.gov.in on 03/11/2026 releasing final answer keys, candidate responses, and marks for Constable GD 2026.'
+        'Verified direct official SSC PDF writeup_03112026.pdf on 14/11/2026: final keys & marks facility runs 03/11/2026 (17:00 IST) to 17/11/2026 (17:00 IST).'
       ]
     },
     isNew: true
@@ -728,7 +1316,7 @@ export const SARKARI_DATA: SarkariItem[] = [
     stage: 'admit_card',
     department: 'University of Kashmir (Recruitment Section)',
     postType: 'Job',
-    status: 'Open',
+    status: 'Informational',
     shortInfo: 'University of Kashmir has officially issued notice regarding the activation of the online download link for E-Admit Cards for the OMR-based written examination for the post of Public Relations Officer (PRO). Candidates who have submitted online applications can download their admit card using their Form Number and Date of Birth from the university website kashmiruniversity.net.',
     ageLimit: 'As per original advertisement criteria',
     eligibility: 'Applicants who successfully submitted application forms for Public Relations Officer (PRO) position at University of Kashmir.',
@@ -750,10 +1338,10 @@ export const SARKARI_DATA: SarkariItem[] = [
       'Valid Original Government Photo ID Proof (Aadhaar, Voter ID, Passport, or Driving License).',
       'Recent passport-size photograph.'
     ],
-    verificationStatus: 'verified',
+    verificationStatus: 'needs_verification',
     verification: {
-      status: 'verified',
-      verificationStatus: 'verified',
+      status: 'needs_verification',
+      verificationStatus: 'needs_verification',
       verifiedAt: '08/11/2026',
       lastVerified: '08/11/2026',
       officialNotificationUrl: 'https://kashmiruniversity.net',
@@ -763,35 +1351,36 @@ export const SARKARI_DATA: SarkariItem[] = [
       verifiedOpeningDate: '07/11/2026',
       verifiedClosingDate: '15/11/2026',
       closingTime: '17:00 IST',
+      verificationReason: 'kashmiruniversity.net was unreachable (403/connection timeout) on 14/11/2026; retained for historical link access and flagged for re-verification.',
       sourceHistory: [
-        'Verified official notification released on 07/11/2026 on kashmiruniversity.net regarding admit cards for PRO examination.'
+        'Prior record released 07/11/2026; kashmiruniversity.net unreachable during 14/11/2026 audit.'
       ]
     },
-    isNew: true
+    isNew: false
   },
 
-  // 🏫 CLUSTER UNIVERSITY SRINAGAR PH.D COURSE WORK DATE SHEET (Dated: 06.11.2026)
+  // 🏫 CLUSTER UNIVERSITY SRINAGAR PH.D COURSE WORK DATE SHEET & RESCHEDULE (Amended 10.11.2026)
   {
     id: 'cus-phd-coursework-datesheet-nov-2026',
-    title: 'Cluster University Srinagar: Official Date Sheet for Ph.D. Course Work Examination (Batch 2026)',
+    title: 'Cluster University Srinagar: Ph.D. Course Work Date Sheet (Batch 2026) — Specialized Paper-II Rescheduled to 25 Nov',
     category: 'cluster_univ',
     postDate: '06/11/2026',
-    startDate: '06/11/2026',
-    lastDate: '24/11/2026',
-    closingTime: '14:00 IST',
-    advertisementNo: 'Notice No. CUS/Exam/Datesheet-PhD/2026 (Dated: 06.11.2026)',
+    startDate: '12/11/2026',
+    lastDate: '25/11/2026',
+    closingTime: '14:15 IST',
+    advertisementNo: 'CUS Ph.D. Date Sheet (06.11.2026) & Reschedule No. CUS/Exam/26/1811-16 (10.11.2026)',
     recruitmentYear: '2026',
     noticeType: 'date_sheet',
     stage: 'date_sheet',
     department: 'Office of the Controller of Examinations, Cluster University Srinagar',
     postType: 'Admission',
     status: 'Informational',
-    shortInfo: 'Office of the Controller of Examinations, Cluster University of Srinagar has released the official Date Sheet for the Ph.D. Course Work examination (Batch 2026) across constituent schools. Written papers will be conducted from 18th November to 24th November 2026 at designated examination centres.',
+    shortInfo: 'Cluster University Srinagar issued the Ph.D. Course Work Batch 2026 Date Sheet (papers on 12, 19, 23 Nov at 01:00 PM / Fri 02:15 PM) and via Notice No. CUS/Exam/26/1811-16 dated 10/11/2026 officially rescheduled Specialized Paper-II from 16th November 2026 to 25th November 2026.',
     ageLimit: 'Not Applicable (Doctoral Examination Date Sheet)',
     eligibility: 'Enrolled research scholars of Ph.D. Programme (Batch 2026) having submitted coursework examination forms.',
-    totalPosts: 'Ph.D. Course Work Examination (Batch 2026)',
-    officialLink: 'https://www.cusrinagar.edu.in',
-    officialNotificationUrl: 'https://www.cusrinagar.edu.in',
+    totalPosts: 'Ph.D. Course Work Exams (12, 19, 23 & Rescheduled 25 Nov 2026)',
+    officialLink: 'https://www.cusrinagar.edu.in/FolderManager/Notification/22ec304e3af34b32b59893e2ee4b3c63.pdf',
+    officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/22ec304e3af34b32b59893e2ee4b3c63.pdf',
     officialApplicationUrl: 'https://www.cusrinagar.edu.in',
     fees: {
       genObc: '₹0/- (Date Sheet Notification)',
@@ -799,7 +1388,7 @@ export const SARKARI_DATA: SarkariItem[] = [
     },
     paymentInstructions: 'Not Applicable. This is an official examination timetable; no fee is required.',
     selectionProcess: [
-      'Written theory examinations as per the notified course work timetable.',
+      'Written theory examinations on 12/11, 19/11, 23/11, and rescheduled Specialized Paper-II on 25/11/2026.',
       'Subsequent Research Advisory Committee (RAC) assessment.'
     ],
     documentsRequired: [
@@ -810,23 +1399,27 @@ export const SARKARI_DATA: SarkariItem[] = [
     verification: {
       status: 'verified',
       verificationStatus: 'verified',
-      verifiedAt: '08/11/2026',
-      lastVerified: '08/11/2026',
-      officialNotificationUrl: 'https://www.cusrinagar.edu.in',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/22ec304e3af34b32b59893e2ee4b3c63.pdf',
+      amendmentUrls: [
+        'https://www.cusrinagar.edu.in/FolderManager/Notification/fa3ab5f9deea4e78968c394cce98916c.pdf',
+        'https://www.cusrinagar.edu.in/FolderManager/Notification/22ec304e3af34b32b59893e2ee4b3c63.pdf'
+      ],
       officialApplicationUrl: 'https://www.cusrinagar.edu.in',
-      advertisementNo: 'CUS/Exam/Datesheet-PhD/2026',
+      advertisementNo: 'CUS/Exam/26/1811-16',
       recruitmentYear: '2026',
-      verifiedOpeningDate: '06/11/2026',
-      verifiedClosingDate: '24/11/2026',
-      closingTime: '14:00 IST',
+      verifiedOpeningDate: '12/11/2026',
+      verifiedClosingDate: '25/11/2026',
+      closingTime: '14:15 IST',
       sourceHistory: [
-        'Verified official Ph.D. course work examination date sheet on cusrinagar.edu.in notifications portal.'
+        'Updated on 14/11/2026 directly from fa3ab5f9deea4e78968c394cce98916c.pdf (06/11/2026) and amendment 22ec304e3af34b32b59893e2ee4b3c63.pdf (CUS/Exam/26/1811-16 dated 10/11/2026 moving Specialized Paper-II from 16/11 to 25/11/2026).'
       ]
     },
     isNew: true
   },
 
-  // 🏫 CLUSTER UNIVERSITY SRINAGAR B.TECH 8TH SEM EXAM FORM NOTICE (Dated: 04.11.2026)
+  // 🏫 CLUSTER UNIVERSITY SRINAGAR B.TECH 8TH SEM EXAM FORM NOTICE (UNCORROBORATED - NEEDS VERIFICATION)
   {
     id: 'cus-btech-8th-sem-exam-form-nov-2026',
     title: 'Cluster University Srinagar: Online Examination Form & Fee Notice for B.Tech 8th Semester (Batch 2021 & Backlog)',
@@ -841,10 +1434,12 @@ export const SARKARI_DATA: SarkariItem[] = [
     stage: 'exam_form',
     department: 'Cluster University Srinagar (Controller of Examinations)',
     postType: 'Admission',
-    status: 'Open',
-    shortInfo: 'Cluster University Srinagar has invited online examination forms from regular students of B.Tech 8th Semester (Batch 2021) and eligible backlog candidates of previous batches at Government College of Engineering and Technology (GCET Safapora). The online student portal is active for form submission and semester examination fee clearance up to 14th November 2026.',
+    status: 'Informational',
+    editorialReviewRequired: true,
+    editorialNotes: 'Live cusrinagar.edu.in examination archive check on 14/11/2026 found Result Notification No. 469 (B.Tech 2nd Sem) on 04/11/2026 and Date Sheet B.Tech 8th Sem Batch 2022 on 09/11/2026, with no 04/11/2026 B.Tech 8th Sem Exam Form notice.',
+    shortInfo: 'Legacy record for Cluster University Srinagar B.Tech 8th Semester Examination Form. Official CUS live notification archives verified on 14/11/2026 do not confirm a 04/11/2026 exam form notice; please refer to the verified B.Tech 8th Semester Date Sheet (09/11/2026) and official student portal.',
     ageLimit: 'Not Applicable (Enrolled Engineering Students)',
-    eligibility: 'Regular B.Tech 8th Semester students (Batch 2021) and backlog candidates of previous batches with minimum prescribed attendance.',
+    eligibility: 'Regular B.Tech 8th Semester students and backlog candidates as notified on cusrinagar.edu.in.',
     totalPosts: 'B.Tech 8th Semester Examination Intake',
     officialLink: 'https://www.cusrinagar.edu.in',
     officialNotificationUrl: 'https://www.cusrinagar.edu.in',
@@ -862,12 +1457,12 @@ export const SARKARI_DATA: SarkariItem[] = [
       'Student Registration ID & Password',
       'Previous semester marks clearance receipts'
     ],
-    verificationStatus: 'verified',
+    verificationStatus: 'needs_verification',
     verification: {
-      status: 'verified',
-      verificationStatus: 'verified',
+      status: 'needs_verification',
+      verificationStatus: 'needs_verification',
       verifiedAt: '08/11/2026',
-      lastVerified: '08/11/2026',
+      lastVerified: '14/11/2026',
       officialNotificationUrl: 'https://www.cusrinagar.edu.in',
       officialApplicationUrl: 'https://www.cusrinagar.edu.in',
       advertisementNo: 'CUS/Exam-Form/BTech-8thSem/2026',
@@ -875,11 +1470,12 @@ export const SARKARI_DATA: SarkariItem[] = [
       verifiedOpeningDate: '04/11/2026',
       verifiedClosingDate: '14/11/2026',
       closingTime: '23:59 IST',
+      verificationReason: 'No 04/11/2026 B.Tech 8th Sem Exam Form notice exists in the live cusrinagar.edu.in notification feeds inspected on 14/11/2026 (dcbd095b92104bba84f67c4fc083891e.pdf on 04/11/2026 was Result Notification No. 469 B.Tech 2nd Sem). Marked needs_verification and excluded from active listings.',
       sourceHistory: [
-        'Verified official B.Tech 8th semester examination form notification on cusrinagar.edu.in notifications wing.'
+        'Flagged needs_verification on 14/11/2026 after direct inspection of live CUS JSON/HTML notification archives.'
       ]
     },
-    isNew: true
+    isNew: false
   },
 
   // 🎓 UNIVERSITY OF KASHMIR FYUGP ADMISSIONS CLOSURE NOTICE (Dated: 05.11.2026)
@@ -912,19 +1508,19 @@ export const SARKARI_DATA: SarkariItem[] = [
     startDate: '04/11/2026',
     lastDate: '07/11/2026',
     closingTime: '21:00 IST',
-    advertisementNo: 'Notice: Combined Graduate Level Examination (Tier-I) 2026 (F.No. HQ-C1101/AnswerKey/2026)',
+    advertisementNo: 'No. HQ-C11018/5/2026-C-1 (E-16368)',
     recruitmentYear: '2026',
     noticeType: 'answer_key',
     stage: 'answer_key',
     department: 'Staff Selection Commission (SSC)',
     postType: 'Result',
     status: 'Closed',
-    shortInfo: 'Staff Selection Commission (SSC) uploaded the Tentative Answer Keys along with candidates’ Response Sheets for the Combined Graduate Level Examination (Tier-I), 2026. The online representation and objection challenge window officially closed on 07th November 2026 at 21:00 hrs IST. Final evaluation is now in progress.',
+    shortInfo: 'Staff Selection Commission (SSC) uploaded the Tentative Answer Keys along with candidates’ Response Sheets for the Combined Graduate Level Examination (Tier-I), 2026. The online representation and objection challenge window (₹50 per question) officially closed on 07th November 2026 at 21:00 hrs IST.',
     ageLimit: 'Not Applicable (Answer Key & Challenge Window Closed)',
     eligibility: 'All candidates who appeared in the SSC Combined Graduate Level (Tier-I) Computer Based Examination 2026.',
     totalPosts: '17,727 Posts Tier-I Exam Key & Response Sheets',
-    officialLink: 'https://ssc.gov.in',
-    officialNotificationUrl: 'https://ssc.gov.in',
+    officialLink: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/writeup_04112026.pdf',
+    officialNotificationUrl: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/writeup_04112026.pdf',
     officialApplicationUrl: 'https://ssc.gov.in',
     fees: {
       genObc: '₹50 per question/answer challenged (Window Closed)',
@@ -934,23 +1530,23 @@ export const SARKARI_DATA: SarkariItem[] = [
     verification: {
       status: 'verified',
       verificationStatus: 'verified',
-      verifiedAt: '08/11/2026',
-      lastVerified: '08/11/2026',
-      officialNotificationUrl: 'https://ssc.gov.in',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/writeup_04112026.pdf',
       officialApplicationUrl: 'https://ssc.gov.in',
-      advertisementNo: 'F.No. HQ-C1101/AnswerKey/2026',
+      advertisementNo: 'No. HQ-C11018/5/2026-C-1 (E-16368)',
       recruitmentYear: '2026',
       verifiedOpeningDate: '04/11/2026',
       verifiedClosingDate: '07/11/2026',
       closingTime: '21:00 IST',
       sourceHistory: [
-        'Verified online challenge submission window closed on 07/11/2026 at 21:00 hrs IST as per official SSC notification.'
+        'Verified direct official SSC PDF writeup_04112026.pdf on 14/11/2026 (window closed 07/11/2026 at 21:00 IST).'
       ]
     },
     isNew: false
   },
 
-  // 🏛️ JKSSB ACCOUNTS ASSISTANT (FINANCE DEPT) E-ADMIT CARD RELEASED (Dated: 11.11.2026)
+  // 🏛️ JKSSB ACCOUNTS ASSISTANT (FINANCE DEPT) E-ADMIT CARD RELEASED (Exam: 15.11.2026)
   {
     id: 'jkssb-accounts-assistant-finance-exam-date-admit-card-2026',
     title: 'JKSSB Accounts Assistant (Finance Dept) OMR Exam E-Admit Card 2026 Released (Exam: 15 Nov 2026)',
@@ -961,12 +1557,14 @@ export const SARKARI_DATA: SarkariItem[] = [
     startDate: '11/11/2026',
     lastDate: '15/11/2026',
     advertisementNo: 'Notification No. 10 of 2025 (Item No. 271) | Notice No. JKSSB-COE0EXAM(UT)/10/2026',
-    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) has officially uploaded the E-Admit Cards on 11th November 2026 for the OMR-based written examination for the post of Accounts Assistant (Finance Department) under Notification No. 10 of 2025 (Item No. 271). The examination will be held on 15th November 2026 across designated centers. Candidates can download their hall tickets by logging in with their registered credentials on jkssb.nic.in.',
+    postType: 'Job',
+    status: 'Informational',
+    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) has officially uploaded the E-Admit Cards on 11th November 2026 for the OMR-based written examination for the post of Accounts Assistant (Finance Department) under Notification No. 10 of 2025 (Item No. 271). The examination will be held on 15th November 2026 across designated centers.',
     ageLimit: 'Open Merit: 40 Years, Reserved Categories: 43 Years, PwD: 42 Years (as per advertisement)',
     eligibility: 'Graduation in Commerce or any discipline with minimum 50% marks from a recognized university, having applied under Item No. 271.',
     totalPosts: 'Accounts Assistant (Finance Dept) Examination',
-    officialLink: 'https://jkssb.nic.in',
-    officialNotificationUrl: 'https://jkssb.nic.in',
+    officialLink: 'https://jkssb.nic.in/Pdf/Admit_Card_Notice_15112026.pdf',
+    officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Admit_Card_Notice_15112026.pdf',
     officialApplicationUrl: 'https://jkssb.nic.in',
     fees: {
       genObc: 'Not Applicable (Admit Card Download — No Fee)',
@@ -976,15 +1574,14 @@ export const SARKARI_DATA: SarkariItem[] = [
     verification: {
       status: 'verified',
       verificationStatus: 'verified',
-      verifiedAt: '12/11/2026',
-      lastVerified: '12/11/2026',
-      officialNotificationUrl: 'https://jkssb.nic.in',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Admit_Card_Notice_15112026.pdf',
       advertisementNo: 'Notification No. 10 of 2025 (Item No. 271)',
       verifiedOpeningDate: '11/11/2026',
       verifiedClosingDate: '15/11/2026',
       sourceHistory: [
-        'Official notice by Controller of Examinations, JKSSB regarding issuance of E-Admit Cards for OMR examination on 15.11.2026.',
-        'Admit cards active from 11.11.2026 onwards on jkssb.nic.in.'
+        'Verified official PDF Admit_Card_Notice_15112026.pdf (HTTP 200) on jkssb.nic.in during 14/11/2026 audit.'
       ]
     },
     isNew: true
@@ -1011,7 +1608,7 @@ export const SARKARI_DATA: SarkariItem[] = [
     isNew: true
   },
 
-  // 🏫 CLUSTER UNIVERSITY SRINAGAR PRE-PH.D COURSEWORK EXAM FORM NOTICE (Dated: 03.11.2026)
+  // 🏫 CLUSTER UNIVERSITY SRINAGAR PRE-PH.D COURSEWORK EXAM FORM NOTICE (Dated: 03.11.2026 - CLOSED)
   {
     id: 'cus-pre-phd-coursework-exam-form-2026',
     title: 'Cluster University Srinagar: Online Examination Form Notice for Pre-Ph.D Course Work (Batch 2026)',
@@ -1019,8 +1616,9 @@ export const SARKARI_DATA: SarkariItem[] = [
     postDate: '03/11/2026',
     startDate: '04/11/2026',
     lastDate: '12/11/2026',
+    status: 'Closed',
     advertisementNo: 'Notice No. CUS/Exam-Form/Pre-PhD/2026 (Dated: 03.11.2026)',
-    shortInfo: 'Cluster University Srinagar has issued an official notification for the online submission of Examination Forms for Pre-Ph.D Course Work candidates belonging to Batch 2026 across various university faculties. Eligible research scholars must complete the form through their student login and clear all requisite examination fees before the prescribed deadline.',
+    shortInfo: 'Cluster University Srinagar issued notification for the online submission of Examination Forms for Pre-Ph.D Course Work candidates belonging to Batch 2026. The deadline concluded on 12th November 2026.',
     ageLimit: 'Not Applicable (Postgraduate Research Examination)',
     eligibility: 'Registered Pre-Ph.D Course Work research scholars (Batch 2026) in Cluster University Srinagar faculties.',
     totalPosts: 'Pre-Ph.D Course Work Examination (Batch 2026)',
@@ -1029,7 +1627,7 @@ export const SARKARI_DATA: SarkariItem[] = [
       genObc: 'As prescribed by University Examination Wing',
       scSt: 'As prescribed by University Examination Wing'
     },
-    isNew: true
+    isNew: false
   },
 
   // 🇮🇳 STAFF SELECTION COMMISSION (SSC) NOVEMBER 2026 EXAMINATIONS SCHEDULE
@@ -1041,16 +1639,16 @@ export const SARKARI_DATA: SarkariItem[] = [
     startDate: '17/11/2026',
     lastDate: '28/11/2026',
     closingTime: '18:00 IST',
-    advertisementNo: 'F. No. HQ-C1101/9/2026-C1/1 (Important Notice: Examination Schedule)',
+    advertisementNo: 'F.No. HQ-EC033/7/2025-EC (Important Notice: Examination Schedule)',
     recruitmentYear: '2026',
     noticeType: 'date_sheet',
     stage: 'date_sheet',
-    shortInfo: 'Staff Selection Commission (SSC) has officially issued Important Notice F. No. HQ-C1101/9/2026-C1/1 announcing the examination schedule for November 2026. The schedule covers three major examinations: Coast Guard Enrolled Persons Test (CGEPT) Batches 01/2027 & 02/2027 (17–18 Nov 2026), Annual Departmental Typing Test & Stenographer Skill Test 2025 (20–21 Nov 2026), and Sub-Inspector in Delhi Police & CAPFs Examination Paper-II (28 Nov 2026). This notification is strictly an official examination timetable for previously registered and shortlisted candidates.',
+    shortInfo: 'Staff Selection Commission (SSC) has officially issued Important Notice F.No. HQ-EC033/7/2025-EC announcing the examination schedule for November 2026. The schedule covers three major examinations: Coast Guard Enrolled Persons Test (CGEPT) Batches 01/2027 & 02/2027 (17–18 Nov 2026), Annual Departmental Typing Test & Stenographer Skill Test 2025 (20–21 Nov 2026), and Sub-Inspector in Delhi Police & CAPFs Examination Paper-II (28 Nov 2026). This notification is strictly an official examination timetable for previously registered and shortlisted candidates.',
     ageLimit: 'Not Applicable (Official Examination Schedule Notice)',
     eligibility: 'Candidates enrolled for Coast Guard CGEPT, eligible central departmental candidates for Typing/Steno tests, and candidates qualified in Paper-I & PET/PST for Sub-Inspector in Delhi Police & CAPFs.',
     totalPosts: 'Not Applicable (Examination Timetable for Registered Candidates)',
-    officialLink: 'https://ssc.gov.in',
-    officialNotificationUrl: 'https://ssc.gov.in',
+    officialLink: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Exams_notice_02112026.pdf',
+    officialNotificationUrl: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Exams_notice_02112026.pdf',
     officialApplicationUrl: 'https://ssc.gov.in',
     fees: {
       genObc: 'Not Applicable (Examination Timetable — No Fee)',
@@ -1099,17 +1697,22 @@ export const SARKARI_DATA: SarkariItem[] = [
     verification: {
       status: 'verified',
       verificationStatus: 'verified',
-      verifiedAt: '08/11/2026',
-      lastVerified: '08/11/2026',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
       officialNotificationUrl: 'https://jkssb.nic.in',
       officialApplicationUrl: 'https://jkssb.nic.in',
+      amendmentUrls: [
+        'https://jkssb.nic.in/Pdf/Final_Answer_Key_01112026.pdf',
+        'https://jkssb.nic.in/Pdf/Result_01112026.pdf'
+      ],
       advertisementNo: 'Advt No. 07 of 2025 (Item No. 137)',
       recruitmentYear: '2026',
       verifiedOpeningDate: '02/11/2026',
       verifiedClosingDate: '05/11/2026',
       closingTime: '17:00 IST',
       sourceHistory: [
-        'Verified offline representation submission closed on 05/11/2026 at 17:00 hrs IST at JKSSB central offices.'
+        'Verified offline representation submission closed on 05/11/2026 at 17:00 hrs IST at JKSSB central offices.',
+        'Amended 14/11/2026: Final Answer Key & Result subsequently released (Final_Answer_Key_01112026.pdf & Result_01112026.pdf).'
       ]
     },
     isNew: false
@@ -1123,18 +1726,33 @@ export const SARKARI_DATA: SarkariItem[] = [
     startDate: '03/11/2026',
     lastDate: '18/11/2026',
     closingTime: '23:59 IST',
-    advertisementNo: 'Notice No. CUS/Adm/Reg-Returns/PG-PhD/2026 (Dated: 02.11.2026)',
+    advertisementNo: 'No. CUS/Adm-Reg/2026/6227-42 (Dated: 02.11.2026)',
     session: '2026-27',
     shortInfo: 'Cluster University of Srinagar (CUS) has officially opened the online portal for submitting Registration Returns for 1st Semester students of 2-Year PG Programme (Batch 2026), 3rd Semester students of 1-Year PG Programme (Batch 2026), 3rd Semester of 2-Year PG Programme (Batch 2025), and 1st Year Ph.D Programme (Batch 2026) from 03.11.2026 to 18.11.2026.',
     ageLimit: 'As per University Admission Guidelines',
     eligibility: 'Enrolled students admitted to 2-Year PG, 1-Year PG, and Ph.D programmes across constituent colleges and university departments.',
     totalPosts: 'University Academic Registration',
-    officialLink: 'https://cusrinagar.edu.in',
-    officialNotificationUrl: 'https://cusrinagar.edu.in',
+    officialLink: 'https://www.cusrinagar.edu.in/FolderManager/Notification/9bba701340f34c71b4e8ab6f12015058.pdf',
+    officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/9bba701340f34c71b4e8ab6f12015058.pdf',
     officialApplicationUrl: 'https://cusrinagar.edu.in',
     fees: {
       genObc: 'As prescribed by University for Registration Return submission',
       scSt: 'As prescribed by University'
+    },
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/9bba701340f34c71b4e8ab6f12015058.pdf',
+      advertisementNo: 'No. CUS/Adm-Reg/2026/6227-42',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '03/11/2026',
+      verifiedClosingDate: '18/11/2026',
+      sourceHistory: [
+        'Verified direct official PDF 9bba701340f34c71b4e8ab6f12015058.pdf (CUS/Adm-Reg/2026/6227-42) on 14/11/2026.'
+      ]
     },
     stage: 'admission',
     status: 'Open',
@@ -1182,38 +1800,40 @@ export const SARKARI_DATA: SarkariItem[] = [
     startDate: '30/10/2026',
     lastDate: '28/11/2026',
     closingTime: '17:00 IST',
-    advertisementNo: 'F. No. 08/01/2025-C-1/2 (SI in Delhi Police & CAPFs)',
+    advertisementNo: 'F.No- E/13/2025-C-2 (SI in Delhi Police & CAPFs)',
     recruitmentYear: '2026',
     shortInfo: 'Staff Selection Commission (SSC) has officially declared the Physical Endurance Test (PET) and Physical Standard Test (PST) results for Sub-Inspector in Delhi Police and Central Armed Police Forces (CAPFs) Examination. A total of 10,676 candidates have qualified for Paper-II, which is scheduled to be conducted on 28th November 2026 in Computer-Based Examination mode.',
     ageLimit: '20 to 25 Years (As per original recruitment rules)',
     eligibility: 'Candidates who qualified both Paper-I and PET/PST stages of Sub-Inspector in Delhi Police & CAPFs Examination.',
     totalPosts: '10,676 Qualified Candidates for Paper-II (4,187 Total Vacancies)',
-    officialLink: 'https://ssc.gov.in',
-    officialNotificationUrl: 'https://ssc.gov.in',
+    officialLink: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/writeup_29102026.pdf',
+    officialNotificationUrl: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/writeup_29102026.pdf',
     officialApplicationUrl: 'https://ssc.gov.in',
     fees: {
       genObc: '₹0/- (Exempted - Result & Exam Schedule Notice)',
       scSt: '₹0/- (Exempted)'
     },
     stage: 'examination',
+    status: 'Informational',
     verificationStatus: 'verified',
     verification: {
       status: 'verified',
-      verifiedAt: '2026-11-01T10:15:00+05:30',
-      officialNotificationUrl: 'https://ssc.gov.in',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/writeup_29102026.pdf',
       officialApplicationUrl: 'https://ssc.gov.in',
-      advertisementNo: 'F. No. 08/01/2025-C-1/2',
+      advertisementNo: 'F.No- E/13/2025-C-2',
       recruitmentYear: '2026',
       verifiedOpeningDate: '30/10/2026',
       verifiedClosingDate: '28/11/2026',
       closingTime: '17:00 IST',
       correctionHistory: [
-        'Verified PET/PST results and Paper-II Computer-Based Examination schedule on ssc.gov.in.'
+        'Verified direct official SSC PDF writeup_29102026.pdf on 14/11/2026 (10,676 qualified for Paper-II on 28/11/2026).'
       ]
     },
     isNew: true
   },
-  // 🎓 KASHMIR UNIVERSITY FACULTY SCREENING & DEFICIENCY NOTICE (30 OCTOBER 2026)
+  // 🎓 KASHMIR UNIVERSITY FACULTY SCREENING & DEFICIENCY NOTICE (30 OCTOBER 2026 - CLOSED)
   {
     id: 'ku-faculty-recruitment-advt-17-api-score-objection-2026',
     title: 'University of Kashmir Assistant Professor Recruitment (Advt No. 17 of 2026) Provisional API Scores & Deficiency Notice',
@@ -1224,7 +1844,7 @@ export const SARKARI_DATA: SarkariItem[] = [
     closingTime: '16:00 IST',
     advertisementNo: 'Advertisement Notice No. 17 of 2026 (Dated: 06.08.2026)',
     recruitmentYear: '2026',
-    shortInfo: 'University of Kashmir (Recruitment Wing) has published the provisional screening lists and claimed Academic Performance Indicator (API) scores for Assistant Professor positions under Advt Notice No. 17 of 2026 across departments including Law, Education, History, Persian, Home Science, and Iqbal Institute. Candidates with deficiencies or objections must submit documentary clarification by 10th November 2026.',
+    shortInfo: 'University of Kashmir (Recruitment Wing) published the provisional screening lists and claimed Academic Performance Indicator (API) scores for Assistant Professor positions under Advt Notice No. 17 of 2026. The deficiency/objection clearance deadline concluded on 10th November 2026 (16:00 IST).',
     ageLimit: 'As per UGC Regulations 2018 and University Statutes',
     eligibility: 'Applicants who applied for Assistant Professor positions under Advt Notice 17 of 2026 with Master Degree (minimum 55% marks) and NET/SET or Ph.D.',
     totalPosts: 'Assistant Professor & Equivalent Posts across Campuses',
@@ -1235,7 +1855,8 @@ export const SARKARI_DATA: SarkariItem[] = [
       genObc: '₹0/- (Deficiency Clearance / Screening Verification)',
       scSt: '₹0/- (Exempted)'
     },
-    stage: 'recruitment',
+    stage: 'objection_window',
+    status: 'Closed',
     verificationStatus: 'verified',
     verification: {
       status: 'verified',
@@ -1248,12 +1869,12 @@ export const SARKARI_DATA: SarkariItem[] = [
       verifiedClosingDate: '10/11/2026',
       closingTime: '16:00 IST',
       correctionHistory: [
-        'Verified provisional API scores, department-wise screening lists, and deficiency notice on kashmiruniversity.net.'
+        'Verified provisional API scores, department-wise screening lists, and deficiency notice on kashmiruniversity.net (closed 10/11/2026).'
       ]
     },
-    isNew: true
+    isNew: false
   },
-  // 🏛️ CLUSTER UNIVERSITY SRINAGAR B.ED 4TH SEM SUPPLEMENTARY EXAM (31 OCTOBER 2026)
+  // 🏛️ CLUSTER UNIVERSITY SRINAGAR B.ED 4TH SEM SUPPLEMENTARY EXAM (31 OCTOBER 2026 - CLOSED)
   {
     id: 'cus-bed-4th-sem-supplementary-exam-2026',
     title: 'Cluster University Srinagar B.Ed 4th Semester Supplementary Examination Form & Date Sheet Notice (Batch 2024)',
@@ -1264,7 +1885,7 @@ export const SARKARI_DATA: SarkariItem[] = [
     closingTime: '16:30 IST',
     advertisementNo: 'CUS/Exam/B.Ed-4thSem-Suppl/2026/942',
     recruitmentYear: '2026',
-    shortInfo: 'Cluster University of Srinagar Controller of Examinations has notified the online examination form submission schedule and date sheet for B.Ed 4th Semester Supplementary / Backlog candidates (Batch 2024). Eligible enrolled teacher-trainees must submit online examination forms through cusrinagar.edu.in.',
+    shortInfo: 'Cluster University of Srinagar Controller of Examinations notified the online examination form submission schedule for B.Ed 4th Semester Supplementary / Backlog candidates (Batch 2024). Submission closed on 12th November 2026.',
     ageLimit: 'N/A (Enrolled B.Ed Students)',
     eligibility: 'Students of constituent colleges enrolled in 2-Year B.Ed Programme (Batch 2024) with backlogs or supplementary status in 4th Semester.',
     totalPosts: 'B.Ed 4th Semester Supplementary Candidates',
@@ -1276,6 +1897,7 @@ export const SARKARI_DATA: SarkariItem[] = [
       scSt: '₹1,200/- per semester examination fee'
     },
     stage: 'exam_form',
+    status: 'Closed',
     verificationStatus: 'verified',
     verification: {
       status: 'verified',
@@ -1288,91 +1910,53 @@ export const SARKARI_DATA: SarkariItem[] = [
       verifiedClosingDate: '12/11/2026',
       closingTime: '16:30 IST',
       correctionHistory: [
-        'Verified B.Ed 4th Semester Supplementary examination notice and form schedule on cusrinagar.edu.in examination notifications.'
+        'Verified B.Ed 4th Semester Supplementary examination notice and form schedule concluded 12/11/2026.'
       ]
     },
-    isNew: true
+    isNew: false
   },
-  // 🚆 RAILWAY RECRUITMENT BOARDS (RRB) NOTIFICATION (CEN 08/2026)
-  {
-    id: 'rrb-station-master-cen-08-2026',
-    title: 'Railway RRB Station Master Recruitment 2026 (CEN 08/2026) - 1,265 Graduate Level Posts',
-    category: 'rrb_jobs',
-    postDate: '27/10/2026',
-    startDate: '27/10/2026',
-    lastDate: '25/11/2026',
-    closingTime: '23:59 IST',
-    feeDeadline: '27/11/2026 (23:59 IST)',
-    correctionWindow: '28/11/2026 to 07/12/2026',
-    advertisementNo: 'CEN No. 08/2026 (Station Master)',
-    recruitmentYear: '2026',
-    shortInfo: 'Railway Recruitment Boards (RRB) invite online applications on rrbapply.gov.in for direct recruitment to 1,265 posts of Station Master in Pay Level 6 across various Zonal Railways. Selection involves 2-Stage CBT followed by Computer Based Aptitude Test (CBAT), Document Verification, and Medical Examination.',
-    ageLimit: '18 to 36 Years as on 01.01.2027 (SC/ST: +5 Years, OBC-NCL: +3 Years relaxation)',
-    eligibility: 'Bachelor Degree in any discipline from a recognized University or its equivalent.',
-    totalPosts: '1,265 Posts (Pay Level 6)',
-    officialLink: 'https://www.rrbapply.gov.in',
-    officialNotificationUrl: 'https://www.rrbapply.gov.in',
-    officialApplicationUrl: 'https://www.rrbapply.gov.in',
-    fees: {
-      genObc: '₹500/- (₹400 refunded duly deducting bank charges upon appearing in 1st Stage CBT)',
-      scSt: '₹250/- (For SC, ST, Ex-SM, PwBD, Female, Transgender & EBC - Fully refunded after CBT)'
-    },
-    stage: 'recruitment',
-    verificationStatus: 'verified',
-    verification: {
-      status: 'verified',
-      verifiedAt: '2026-10-30T19:30:00+05:30',
-      officialNotificationUrl: 'https://www.rrbapply.gov.in',
-      officialApplicationUrl: 'https://www.rrbapply.gov.in',
-      advertisementNo: 'CEN 08/2026',
-      recruitmentYear: '2026',
-      verifiedOpeningDate: '27/10/2026',
-      verifiedClosingDate: '25/11/2026',
-      closingTime: '23:59 IST',
-      feePaymentDeadline: '27/11/2026 (23:59 IST)',
-      correctionWindow: '28/11/2026 to 07/12/2026',
-      correctionHistory: [
-        'Verified Centralized Employment Notice CEN 08/2026 on rrbapply.gov.in.'
-      ]
-    },
-    isNew: true
-  },
-  // 🏛️ CLUSTER UNIVERSITY SRINAGAR SENIOR FACULTY RECRUITMENT (28 OCTOBER 2026)
+  // 🏛️ CLUSTER UNIVERSITY SRINAGAR SENIOR FACULTY RECRUITMENT (28 OCTOBER 2026 - VERIFIED 14/11/2026)
   {
     id: 'cus-faculty-recruitment-advt-07-2026',
     title: 'Cluster University Srinagar Faculty Recruitment 2026 (Advt No. 07-CUS of 2026) - 22 Associate Professor & Professor Posts',
     category: 'cluster_univ',
+    noticeType: 'recruitment',
+    postType: 'Job',
+    status: 'Open',
     postDate: '28/10/2026',
     startDate: '01/11/2026',
     lastDate: '21/11/2026',
-    closingTime: '23:59 IST',
-    advertisementNo: 'Notification No. 07-CUS of 2026 (Dated: 28.10.2026)',
+    closingTime: '23:55 IST',
+    feeDeadline: '21/11/2026 (23:55 IST); Hard Copy by 27/11/2026',
+    advertisementNo: 'Advt No. 07-CUS OF 2026 (No: CUS/Advt/2026/6085-96, Dated: 28.10.2026)',
     recruitmentYear: '2026',
-    shortInfo: 'Cluster University Srinagar invites online applications from eligible candidates for direct recruitment to 22 senior faculty positions (14 Associate Professors and 8 Professors) across departments of AI & Machine Learning, Data Science, Botany, Chemistry, Economics, English, and Zoology in constituent colleges.',
+    shortInfo: 'Cluster University Srinagar invites online applications from 01/11/2026 to 21/11/2026 (23:55 IST) for direct recruitment to 22 senior faculty positions (Associate Professors and Professors) across constituent colleges. Hard copies of submitted application forms must reach the University by 27/11/2026.',
     ageLimit: 'As per UGC Regulations and University Statutes',
     eligibility: 'Good academic record with a Ph.D. Degree in the concerned/allied/relevant disciplines and requisite teaching/research experience as per UGC Regulations 2018.',
-    totalPosts: '22 Posts (14 Associate Professors | 8 Professors)',
-    officialLink: 'https://cusrinagar.edu.in',
-    officialNotificationUrl: 'https://cusrinagar.edu.in',
+    totalPosts: '22 Posts (Associate Professors & Professors)',
+    officialLink: 'https://www.cusrinagar.edu.in/FolderManager/Notification/c57984ba332c426cb8226e8af66bb39d.pdf',
+    officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/c57984ba332c426cb8226e8af66bb39d.pdf',
     officialApplicationUrl: 'https://cusrinagar.edu.in',
     fees: {
-      genObc: '₹1,500/- (For General / OBC / Open Merit Candidates)',
-      scSt: '₹750/- (For SC / ST / EWS / PwD Candidates)'
+      genObc: '₹2,000/- (For General / UR / Open Merit Candidates)',
+      scSt: '₹1,500/- (For Reserved Category Candidates)'
     },
     stage: 'recruitment',
     verificationStatus: 'verified',
     verification: {
       status: 'verified',
-      verifiedAt: '2026-10-30T19:30:00+05:30',
-      officialNotificationUrl: 'https://cusrinagar.edu.in',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/c57984ba332c426cb8226e8af66bb39d.pdf',
       officialApplicationUrl: 'https://cusrinagar.edu.in',
-      advertisementNo: '07-CUS of 2026',
+      advertisementNo: 'Advt No. 07-CUS OF 2026 (CUS/Advt/2026/6085-96)',
       recruitmentYear: '2026',
       verifiedOpeningDate: '01/11/2026',
       verifiedClosingDate: '21/11/2026',
-      closingTime: '23:59 IST',
+      closingTime: '23:55 IST',
       correctionHistory: [
-        'Verified faculty recruitment notification 07-CUS on cusrinagar.edu.in.'
+        'Verified directly from official PDF c57984ba332c426cb8226e8af66bb39d.pdf on 14/11/2026: fees corrected to ₹2,000 (General/UR) and ₹1,500 (Reserved), closing time 23:55 IST on 21/11/2026, hard copy due 27/11/2026.'
       ]
     },
     isNew: true
@@ -1594,6 +2178,7 @@ export const SARKARI_DATA: SarkariItem[] = [
       scSt: '₹1,000/- (Migration Application Processing Fee)'
     },
     stage: 'admission',
+    status: 'Closed',
     verificationStatus: 'verified',
     verification: {
       status: 'verified',
@@ -1606,10 +2191,10 @@ export const SARKARI_DATA: SarkariItem[] = [
       verifiedClosingDate: '10/11/2026',
       closingTime: '16:30 IST',
       correctionHistory: [
-        'Verified migration notice published on cusrinagar.edu.in notification portal.'
+        'Verified migration notice published on cusrinagar.edu.in (closed 10/11/2026).'
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🇮🇳 INDIAN ARMY RECRUITMENT (30 OCTOBER 2026)
   {
@@ -1704,7 +2289,13 @@ export const SARKARI_DATA: SarkariItem[] = [
       "genObc": "₹500/- Online Application Processing & Counselling Fee",
       "scSt": "₹500/- Online Application Processing & Counselling Fee"
     },
-    "isNew": true
+    verificationStatus: 'needs_verification',
+    verification: {
+      status: 'needs_verification',
+      verificationStatus: 'needs_verification',
+      verificationReason: 'kashmiruniversity.net was unreachable (403/connection timeout) on 14/11/2026; flagged needs_verification before showing in active open listings.'
+    },
+    "isNew": false
   },
   {
     "id": "cus-btech-7th-8th-sem-exam-form-2026",
@@ -1713,8 +2304,9 @@ export const SARKARI_DATA: SarkariItem[] = [
     "postDate": "26/10/2026",
     "startDate": "27/10/2026",
     "lastDate": "08/11/2026",
+    "status": "Closed",
     "advertisementNo": "Exam Notice No. CUS/Exam/BTech/2026/412",
-    "shortInfo": "Cluster University Srinagar has issued an urgent notification for submission of online examination forms for B.Tech Engineering 7th and 8th Semester (Regular Batch and Previous Backlog Batches). Eligible engineering students must submit forms and verify course subjects online via cusrinagar.edu.in.",
+    "shortInfo": "Cluster University Srinagar issued notification for submission of online examination forms for B.Tech Engineering 7th and 8th Semester. Deadline concluded on 08/11/2026.",
     "ageLimit": "As per University Examination Statutes",
     "eligibility": "Enrolled candidates of B.Tech Engineering courses in GCET Safapora / affiliated engineering constituent colleges with requisite attendance.",
     "totalPosts": "Engineering Examination Session 2026",
@@ -1723,7 +2315,7 @@ export const SARKARI_DATA: SarkariItem[] = [
       "genObc": "₹1,275/- per semester (or prescribed fee per backlog paper)",
       "scSt": "₹1,275/- per semester"
     },
-    "isNew": true
+    "isNew": false
   },
   {
     "id": "army-rvc-captain-entry-2026",
@@ -1733,7 +2325,7 @@ export const SARKARI_DATA: SarkariItem[] = [
     "startDate": "22/10/2026",
     "lastDate": "18/11/2026",
     "advertisementNo": "RVC/SSC/2026 Direct Entry Notice",
-    "shortInfo": "Join Indian Army invites applications from qualified male and female veterinary graduates for grant of Short Service Commission (SSC) in the Remount Veterinary Corps (RVC) as Captain. Selected candidates receive handsome military pay and allowances under Pay Level 10B with Military Service Pay.",
+    "shortInfo": "Join Indian Army invites applications from qualified male and female veterinary graduates for grant of Short Service Commission (SSC) in the Remount Veterinary Corps (RVC) as Captain.",
     "ageLimit": "21 to 32 Years (Candidate must not be born earlier than 19 Nov 1994 and not later than 18 Nov 2005)",
     "eligibility": "BVSc / BVSc & AH degree from any recognized Indian University or its equivalent foreign qualification included in the First or Second Schedule to the IVC Act.",
     "totalPosts": "Various Commissioned Officer Posts",
@@ -1742,25 +2334,70 @@ export const SARKARI_DATA: SarkariItem[] = [
       "genObc": "₹0/- (No Application Fee)",
       "scSt": "₹0/- (Exempted)"
     },
-    "isNew": true
+    "verificationStatus": "needs_verification",
+    "verification": {
+      "status": "needs_verification",
+      "verificationStatus": "needs_verification",
+      "verificationReason": "joinindianarmy.nic.in timed out during the 14/11/2026 check and lacks verified official PDF URL; flagged needs_verification and excluded from active listings."
+    },
+    "isNew": false
   },
-  // 🏛️ JKSSB OFFICIAL PORTAL UPDATE (27 OCTOBER 2026)
+  // 🏛️ JKSSB OFFICIAL PORTAL UPDATE (27 OCTOBER 2026 - VERIFIED 14/11/2026)
   {
     id: 'jkssb-advt-11-of-2026-je-civil-pwd',
-    title: 'JKSSB Advt 11 of 2026: Recruitment for 458 Junior Engineer (Civil) Posts in Public Works (R&B) Department',
+    title: 'JKSSB Advt 11 of 2026: Recruitment for 458 Junior Engineer (Civil) Posts (Jal Shakti & PW R&B Dept)',
     category: 'jkssb',
+    noticeType: 'recruitment',
+    stage: 'recruitment',
     postDate: '27/10/2026',
     startDate: '30/11/2026',
     lastDate: '29/12/2026',
-    advertisementNo: 'Advt No. 11 of 2026',
-    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) has released Advertisement Notification No. 11 of 2026 inviting online applications for 458 posts of Junior Engineer (Civil) in the Public Works (R&B) Department. Eligible candidates holding a 3-year Diploma or Degree in Civil Engineering can apply online through the official portal jkssb.nic.in.',
-    ageLimit: 'Open Merit (OM): 40 Years | SC / ST / RBA / ALC/IB / EWS / PSP: 43 Years | PWD: 42 Years | Ex-Servicemen: 48 Years (as on 01/01/2026)',
-    eligibility: '03 Years Diploma in Civil Engineering from Government recognized Institute/Indian University or Degree in Civil Engineering or AMIE Section (A&B) India.',
-    totalPosts: '458 Posts (UT Cadre)',
-    officialLink: 'https://jkssb.nic.in',
+    advertisementNo: 'Advt No. 11 of 2026 (Dated: 27.10.2026)',
+    recruitmentYear: '2026',
+    postType: 'Job',
+    status: 'Open',
+    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) has released Advertisement Notification No. 11 of 2026 inviting online applications from 30/11/2026 to 29/12/2026 for 458 UT Cadre posts of Junior Engineer (Civil) across Jal Shakti Department (282 posts) and Public Works (R&B) Department (176 posts).',
+    ageLimit: 'Open Merit (OM): 40 Years | SC / ST-1 / ST-2 / RBA / ALC/IB / EWS / OBC: 43 Years | PwBD: 42 Years | Ex-Servicemen: 48 Years (as on 01/01/2026)',
+    eligibility: '03 Years Diploma in Civil Engineering from Government recognized Institute/Indian University or Degree in Civil Engineering or AMIE Section (A&B) India. J&K UT Domicile required.',
+    totalPosts: '458 Posts (282 Jal Shakti + 176 PW R&B)',
+    officialLink: 'https://jkssb.nic.in/Pdf/Advertisement_11OF2026_27102026.pdf',
+    officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Advertisement_11OF2026_27102026.pdf',
+    officialApplicationUrl: 'https://jkssb.nic.in',
     fees: {
-      genObc: '₹550/- (Rupees Five Hundred Fifty Only)',
-      scSt: '₹450/- (For SC, ST, PWD & EWS Candidates)'
+      genObc: '₹600/- (Rupees Six Hundred Only)',
+      scSt: '₹500/- (For SC, ST-1, ST-2, EWS & PwBD Candidates)'
+    },
+    departmentBreakdown: [
+      {
+        department: 'Jal Shakti Department',
+        postName: 'Junior Engineer (Civil) — UT Cadre',
+        posts: 282,
+        qualification: '03 Years Diploma or Degree in Civil Engineering / AMIE (A&B); J&K Domicile.',
+        fee: '₹600 (General) / ₹500 (SC/ST-1/ST-2/EWS/PwBD)'
+      },
+      {
+        department: 'Public Works (R&B) Department',
+        postName: 'Junior Engineer (Civil) — UT Cadre',
+        posts: 176,
+        qualification: '03 Years Diploma or Degree in Civil Engineering / AMIE (A&B); J&K Domicile.',
+        fee: '₹600 (General) / ₹500 (SC/ST-1/ST-2/EWS/PwBD)'
+      }
+    ],
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Advertisement_11OF2026_27102026.pdf',
+      officialApplicationUrl: 'https://jkssb.nic.in',
+      advertisementNo: 'Advt No. 11 of 2026',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '30/11/2026',
+      verifiedClosingDate: '29/12/2026',
+      sourceHistory: [
+        'Verified directly from official PDF Advertisement_11OF2026_27102026.pdf on 14/11/2026: corrected department split (282 Jal Shakti + 176 PW R&B) and fees (₹600 General / ₹500 SC/ST-1/ST-2/EWS/PwBD).'
+      ]
     },
     isNew: true
   },
@@ -1774,8 +2411,9 @@ export const SARKARI_DATA: SarkariItem[] = [
     startDate: '14/10/2026',
     lastDate: '12/11/2026',
     closingTime: '12:00 IST',
+    status: 'Closed',
     advertisementNo: 'TES-57 Course Notification (Commencing July 2027)',
-    shortInfo: 'Join Indian Army invites online applications from unmarried male candidates who have passed 10+2 examination with Physics, Chemistry, and Mathematics (PCM) and appeared in JEE (Mains) 2026 for the 10+2 Technical Entry Scheme (TES-57) course for grant of Permanent Commission in the Indian Army. Applications close at 12:00 hrs IST.',
+    shortInfo: 'Join Indian Army invited online applications from unmarried male candidates with 10+2 PCM and JEE (Mains) 2026 for TES-57 Course. Online applications closed on 12/11/2026 at 12:00 hrs IST.',
     ageLimit: '16½ to 19½ Years (Candidates must not be born before 02.01.2008 and not after 01.01.2011, both days inclusive)',
     ageRelaxationDetails: 'Strict uniform age criteria: 16½ to 19½ years. Candidates must not be born before 02.01.2008 and not after 01.01.2011 (both days inclusive). No category age relaxation applies to any category under Indian Army Commissioned Officer Technical Entry Scheme rules.',
     eligibility: 'Minimum 60% aggregate marks in Physics, Chemistry & Mathematics (PCM) in Class 12th (10+2) from a recognized Education Board, and mandatory appearance in JEE (Mains) 2026.',
@@ -1811,9 +2449,9 @@ export const SARKARI_DATA: SarkariItem[] = [
       verifiedOpeningDate: '14/10/2026',
       verifiedClosingDate: '12/11/2026',
       closingTime: '12:00 IST',
-      correctionHistory: ['Verified official notification brochure on joinindianarmy.nic.in. Selection is via JEE Main rank cutoff + SSB interview (no CEE/rally). No category age relaxation or application fee.']
+      correctionHistory: ['Verified official notification brochure on joinindianarmy.nic.in. Registration closed 12/11/2026 at 12:00 IST.']
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'rrb-ntpc-undergraduate-cen-07-2026',
@@ -1823,8 +2461,9 @@ export const SARKARI_DATA: SarkariItem[] = [
     startDate: '15/10/2026',
     lastDate: '13/11/2026',
     closingTime: '23:59 IST',
+    status: 'Closed',
     advertisementNo: 'CEN No. 07/2026 (NTPC-UG)',
-    shortInfo: 'Railway Recruitment Boards (RRB) invite online applications on rrbapply.gov.in for Non-Technical Popular Categories (Undergraduate Level) including Commercial-cum-Ticket Clerk, Accounts Clerk-cum-Typist, Junior Clerk-cum-Typist, and Trains Clerk across various Zonal Railways and Production Units.',
+    shortInfo: 'Railway Recruitment Boards (RRB) invited online applications on rrbapply.gov.in for 3,445 Non-Technical Popular Categories (Undergraduate Level) posts. The application deadline concluded on 13th November 2026 (23:59 IST).',
     ageLimit: '18 to 30 Years as on 01.01.2027 (Age relaxation of 3 years for OBC-NCL and 5 years for SC/ST candidates as per Railway rules)',
     eligibility: '12th (+2 Stage) or its equivalent examination passed with minimum 50% marks in aggregate (pass marks for SC/ST/PwBD/Ex-SM candidates). Typing proficiency required for Clerk-cum-Typist posts.',
     totalPosts: '3,445 Vacancies Across All RRB Zones',
@@ -1845,28 +2484,53 @@ export const SARKARI_DATA: SarkariItem[] = [
       verifiedOpeningDate: '15/10/2026',
       verifiedClosingDate: '13/11/2026',
       closingTime: '23:59 IST',
-      correctionHistory: ['Verified CEN 07/2026 notification on rrbapply.gov.in.']
+      correctionHistory: ['Verified CEN 07/2026 notification; closed on 13/11/2026 at 23:59 IST.']
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ssc-chsl-10-plus-2-exam-2026-tier1',
-    title: 'SSC Combined Higher Secondary (10+2) Level (CHSL) Examination 2026 & Revised Vacancy Notice',
+    title: 'SSC Combined Higher Secondary (10+2) Level (CHSL) Examination 2026 (Applications Closed)',
     category: 'ssc_jobs',
-    postDate: '25/10/2026',
+    noticeType: 'recruitment',
+    stage: 'recruitment',
+    postDate: '07/09/2026',
     startDate: '07/09/2026',
-    lastDate: '30/11/2026',
-    advertisementNo: 'F.No. HQ-PPII01/2/2026-PP_II (SSC CHSL 2026)',
-    shortInfo: 'Staff Selection Commission (SSC) has released the notification and revised vacancy breakdown for the Combined Higher Secondary (10+2) Level Examination 2026 for recruitment to Lower Divisional Clerk (LDC) / Junior Secretariat Assistant (JSA), and Data Entry Operator (DEO / DEO Grade A) across Central Government Ministries and Departments.',
-    ageLimit: '18 to 27 Years as on 01.08.2026 (Candidates born not before 02.08.1999 and not later than 01.08.2008; SC/ST: +5 Years, OBC: +3 Years)',
-    eligibility: 'Candidates must have passed 12th Standard or equivalent examination from a recognized Board or University. For DEO Grade A in specific departments, 12th pass in Science stream with Mathematics as a subject is required.',
+    lastDate: '07/10/2026',
+    closingTime: '23:00 IST',
+    feeDeadline: '08/10/2026 (23:00 IST)',
+    correctionWindow: '14/10/2026 to 16/10/2026 (23:00 IST)',
+    status: 'Closed',
+    advertisementNo: 'F. No. HQ-C1102/5/2026-C-1 (SSC CHSL 2026)',
+    shortInfo: 'Staff Selection Commission (SSC) published the Combined Higher Secondary (10+2) Level Examination 2026 notification on 07/09/2026. Online applications closed on 07/10/2026 (23:00 IST), fee payment on 08/10/2026 (23:00 IST), and correction window on 16/10/2026 (23:00 IST).',
+    ageLimit: '18 to 27 Years as on 01.08.2026 (SC/ST: +5 Years, OBC: +3 Years)',
+    eligibility: 'Candidates must have passed 12th Standard or equivalent examination from a recognized Board or University.',
     totalPosts: '2,536 Vacancies (LDC/JSA & DEO Cadres)',
-    officialLink: 'https://ssc.gov.in',
+    officialLink: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_chsle_2026.pdf',
+    officialNotificationUrl: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_chsle_2026.pdf',
     fees: {
-      genObc: '₹100/- (Payable online via BHIM UPI, Net Banking, or Debit/Credit Cards)',
-      scSt: '₹0/- (Women, SC, ST, PwBD and Ex-Servicemen candidates are exempted from fee payment)'
+      genObc: '₹100/- (Closed)',
+      scSt: '₹0/- (Women, SC, ST, PwBD and Ex-Servicemen candidates exempted)'
     },
-    isNew: true
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_chsle_2026.pdf',
+      advertisementNo: 'F. No. HQ-C1102/5/2026-C-1',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '07/09/2026',
+      verifiedClosingDate: '07/10/2026',
+      closingTime: '23:00 IST',
+      feePaymentDeadline: '08/10/2026 (23:00 IST)',
+      correctionWindow: '14/10/2026 to 16/10/2026 (23:00 IST)',
+      sourceHistory: [
+        'Corrected on 14/11/2026 from official PDF Notice_of_adv_chsle_2026.pdf: registration ran 07/09/2026 to 07/10/2026 (23:00 IST), fee 08/10/2026, correction 14–16/10/2026. Replaced inaccurate 30/11/2026 deadline.'
+      ]
+    },
+    isNew: false
   },
   {
     id: 'cus-bed-supplementary-4th-sem-exam-dyd-2026',
@@ -1875,8 +2539,9 @@ export const SARKARI_DATA: SarkariItem[] = [
     postDate: '25/10/2026',
     startDate: '20/10/2026',
     lastDate: '10/11/2026',
+    status: 'Closed',
     advertisementNo: 'CUS/Exam/B.Ed-4th-Supp/2026',
-    shortInfo: 'Controller of Examinations, Cluster University Srinagar has issued the online examination form submission notice and date sheet schedule for B.Ed 4th Semester (Regular Batch 2024 & Backlog/Supplementary candidates) along with NEP-2020 Design Your Degree (DYD) 3rd & 4th Semester assessment updates.',
+    shortInfo: 'Controller of Examinations, Cluster University Srinagar issued the online examination form submission notice for B.Ed 4th Semester (Batch 2024 & Backlog). Form submission closed on 10/11/2026.',
     ageLimit: 'No Age Bar (Enrolled University Candidates)',
     eligibility: 'Students enrolled in B.Ed 4th Semester (Regular Batch 2024 & eligible backlog batches) at IAES / Constituent Colleges and DYD NEP-2020 Undergraduate streams of Cluster University Srinagar.',
     totalPosts: 'Semester Examination Notice',
@@ -1885,24 +2550,46 @@ export const SARKARI_DATA: SarkariItem[] = [
       genObc: 'As per prescribed CUS Semester Examination Fee structure on student portal',
       scSt: 'Exempted for Specially-Abled (PwD) & Orphan Category students as per University norms'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'jkssb-advt-10-of-2026-je-mechanical-pwd',
     title: 'JKSSB Advt 10 of 2026: Recruitment for 127 Junior Engineer (Mechanical) Posts in Public Works (R&B) Department',
     category: 'jkssb',
+    noticeType: 'recruitment',
+    stage: 'recruitment',
     postDate: '21/10/2026',
     startDate: '16/11/2026',
     lastDate: '15/12/2026',
+    postType: 'Job',
+    status: 'Open',
     advertisementNo: 'Advertisement Notification No. 10 of 2026 (Dated: 21.10.2026)',
-    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) invites online applications from eligible Domiciles of UT of Jammu & Kashmir for direct recruitment to 127 UT Cadre posts of Junior Engineer (Mechanical) in Pay Level-6 (₹35,400 - ₹1,12,400) under Public Works (R&B) Department.',
+    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) invites online applications from 16/11/2026 to 15/12/2026 for 127 UT Cadre posts of Junior Engineer (Mechanical) in Pay Level-6 (₹35,400 - ₹1,12,400) under Public Works (R&B) Department.',
     ageLimit: 'Open Merit (OM): 40 Years (as on 01.01.2026) | SC / ST-1 / ST-2 / RBA / ALC-IB / EWS / OBC: 43 Years | PwBD: 42 Years | In-Service / Contractual: 40 Years',
     eligibility: 'Three Years Diploma in Mechanical Engineering from a Government recognized Institute / Indian University, OR Degree in Mechanical Engineering / AMIE Section (A&B) in Mechanical Engineering. Candidate must be a Domicile of UT of J&K.',
     totalPosts: '127 Posts (OM: 51 | SC: 11 | ST-1: 12 | ST-2: 13 | OBC: 10 | ALC/IB: 05 | RBA: 13 | EWS: 12)',
-    officialLink: 'https://www.jkssb.nic.in',
+    officialLink: 'https://jkssb.nic.in/Pdf/Advt_notification_10OF2026_21102026.pdf',
+    officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Advt_notification_10OF2026_21102026.pdf',
+    officialApplicationUrl: 'https://jkssb.nic.in',
     fees: {
       genObc: '₹600/- (For Open Merit, RBA, ALC/IB, OBC Categories)',
       scSt: '₹500/- (For SC, ST-1, ST-2, EWS & PwBD Categories)'
+    },
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Advt_notification_10OF2026_21102026.pdf',
+      officialApplicationUrl: 'https://jkssb.nic.in',
+      advertisementNo: 'Advt No. 10 of 2026',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '16/11/2026',
+      verifiedClosingDate: '15/12/2026',
+      sourceHistory: [
+        'Verified direct official PDF Advt_notification_10OF2026_21102026.pdf dated 21/10/2026 on 14/11/2026 (applications open 16/11/2026 to 15/12/2026).'
+      ]
     },
     isNew: true
   },
@@ -1913,8 +2600,9 @@ export const SARKARI_DATA: SarkariItem[] = [
     postDate: '25/10/2026',
     startDate: '22/10/2026',
     lastDate: '12/11/2026',
+    status: 'Closed',
     advertisementNo: 'F(Exam-Integrated-UG-PG)/KU/2026',
-    shortInfo: 'Office of the Controller of Examinations, University of Kashmir has released the online examination form submission link and center-wise date sheets for 5-Year Integrated, Honours, Professional, and PG Semester examinations (Regular & Fresh Private batches) for the October–November 2026 session.',
+    shortInfo: 'Office of the Controller of Examinations, University of Kashmir issued the Oct–Nov 2026 online examination form notice (closed 12/11/2026).',
     ageLimit: 'As per University of Kashmir Examination Statutes',
     eligibility: 'Regular and eligible backlog students of 5-Year Integrated Programmes, UG NEP Semesters, and Postgraduate Courses enrolled at Main Campus, Satellite Campuses, and Affiliated Colleges of University of Kashmir.',
     totalPosts: 'University Exam Form & Date Sheet',
@@ -1923,7 +2611,7 @@ export const SARKARI_DATA: SarkariItem[] = [
       genObc: '₹750/- to ₹1,250/- (Depending on course & number of subjects via KU Student Portal)',
       scSt: 'Fee concession applicable for Orphan & Visually Impaired / PwD students'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ku-ddoe-distance-education-pg-admissions-2026',
@@ -1933,50 +2621,66 @@ export const SARKARI_DATA: SarkariItem[] = [
     startDate: '18/10/2026',
     lastDate: '15/11/2026',
     advertisementNo: 'Adm/DDOE-PG/KU/2026',
-    shortInfo: 'Directorate of Distance & Online Education (DDOE), University of Kashmir invites online admission applications for Postgraduate programmes in Distance Mode including MA (English, Urdu, Kashmiri, Islamic Studies, Education, Economics), M.Com, and M.Sc Mathematics for the Academic Session 2026.',
+    shortInfo: 'Directorate of Distance & Online Education (DDOE), University of Kashmir invites online admission applications for Postgraduate programmes in Distance Mode including MA, M.Com, and M.Sc Mathematics for Session 2026.',
     ageLimit: 'No Upper Age Limit for Distance Mode PG Admissions',
-    eligibility: 'Bachelor’s Degree (10+2+3 pattern) in the relevant or allied discipline from University of Kashmir or any other UGC-recognized University with minimum required aggregate marks (45% for Open Merit and 40% for Reserved Categories).',
+    eligibility: 'Bachelor’s Degree (10+2+3 pattern) in the relevant or allied discipline from University of Kashmir or any other UGC-recognized University with minimum required aggregate marks.',
     totalPosts: 'Distance Mode PG Seats (All Study Centres)',
     officialLink: 'https://www.kashmiruniversity.net',
     fees: {
       genObc: '₹400/- (Online Application & Processing Fee per Programme)',
       scSt: '₹400/- (Online Application & Processing Fee per Programme)'
     },
-    isNew: true
+    verificationStatus: 'needs_verification',
+    verification: {
+      status: 'needs_verification',
+      verificationStatus: 'needs_verification',
+      verificationReason: 'kashmiruniversity.net was unreachable (403/connection timeout) on 14/11/2026 and no direct PDF URL was corroborated; flagged needs_verification and excluded from active listings.'
+    },
+    isNew: false
   },
-  // 🇮🇳 MEGA RECRUITMENT NOTIFICATION (01 SEPTEMBER 2026 - JKSSB ADVT 09 OF 2026)
+  // 🇮🇳 MEGA RECRUITMENT NOTIFICATION (01 SEPTEMBER 2026 - JKSSB ADVT 09 OF 2026 - EXTENDED TO 27.11.2026)
   {
     id: 'jkssb-advt-09-of-2026-class-iv-mts-recruitment',
-    title: 'JKSSB Advt 09 of 2026: Mega Recruitment for 2,863 Class-IV (MTS) & Sanitation Worker Posts (UT, Divisional & District Cadres)',
+    title: 'JKSSB Advt 09 of 2026: Mega Recruitment for 2,863 Class-IV (MTS) & Sanitation Worker Posts (Extended till 27 Nov 2026)',
     category: 'jkssb',
+    noticeType: 'recruitment',
+    postType: 'Job',
+    status: 'Open',
     postDate: '01/09/2026',
     startDate: '14/10/2026',
-    lastDate: '12/11/2026',
+    lastDate: '27/11/2026',
     closingTime: '23:59 IST',
-    advertisementNo: 'Advertisement Notification No. 09 of 2026 (Dated: 01.09.2026)',
+    advertisementNo: 'Advt No. 09 of 2026 (Dated: 01.09.2026) & Extension No. JKSSB-PLAN/6/2025-03(E-7661495) Dated 11.11.2026',
     recruitmentYear: '2026',
     stage: 'recruitment',
     verificationStatus: 'verified',
     verification: {
       status: 'verified',
-      verifiedAt: '2026-11-01T10:15:00+05:30',
-      officialNotificationUrl: 'https://www.jkssb.nic.in',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://jkssb.nic.in/Pdf/ADVT_09OF2026_01092026.pdf',
       officialApplicationUrl: 'https://www.jkssb.nic.in',
       advertisementNo: 'Advt No. 09 of 2026',
       recruitmentYear: '2026',
       verifiedOpeningDate: '14/10/2026',
-      verifiedClosingDate: '12/11/2026',
+      verifiedClosingDate: '27/11/2026',
       closingTime: '23:59 IST',
-      amendmentUrls: ['https://www.jkssb.nic.in'],
+      amendmentUrls: [
+        'https://jkssb.nic.in/Pdf/Corrigendum_advt_09OF2026_01102026.pdf',
+        'https://jkssb.nic.in/Pdf/Extension_notice_09OF2026_11112026.pdf'
+      ],
       correctionHistory: [
-        'Verified Corrigendum Notice on jkssb.nic.in: Online application window rescheduled to 14/10/2026 through 12/11/2026 (23:59 IST).'
+        'Verified Extension Notice No. JKSSB-PLAN/6/2025-03(E-7661495) dated 11/11/2026 directly from jkssb.nic.in PDF (HTTP 200) on 14/11/2026: last date extended from 12/11/2026 to 27/11/2026.'
       ]
     },
-    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) notifies a mega direct recruitment drive for 2,863 Class-IV (MTS) and Sanitation Worker vacancies in Pay Level SL1 (₹14,800 - ₹47,100) under General Administration Department across UT Cadre (105 Posts), Divisional Cadre Jammu (1093 Posts), Divisional Cadre Kashmir (897 Posts), and 20 District Cadres (768 Posts). As per official corrigendum, the online application window is active from 14.10.2026 to 12.11.2026.',
+    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) has formally extended the last date for online applications under Advt No. 09 of 2026 (2,863 Class-IV MTS & Sanitation Worker vacancies) from 12/11/2026 to 27/11/2026 vide Extension Notice dated 11/11/2026.',
     ageLimit: 'Open Merit (OM): 40 Years (Not born before 01.01.1986 / after 01.01.2008) | SC / ST-1 / ST-2 / RBA / ALC-IB / EWS / OBC: 43 Years | PwBD: 42 Years | Ex-Servicemen: 48 Years | Casual Workers: 5 Years Upper Age Relaxation',
-    eligibility: 'Class-IV (MTS): Minimum Matric (10th) & Maximum 10+2 (Higher Secondary) as per S.O. 184 of 2020 & SRO 99 of 2008. Sanitation Worker: Minimum 8th Pass & Maximum 10+2 as per S.O. 132 of 2022. (Important: Higher qualifications above 10+2 are not eligible as per extant recruitment rules). Valid J&K Domicile Certificate required on or before 12.11.2026.',
+    eligibility: 'Class-IV (MTS): Minimum Matric (10th) & Maximum 10+2 as per S.O. 184 of 2020 & SRO 99 of 2008. Sanitation Worker: Minimum 8th Pass & Maximum 10+2 as per S.O. 132 of 2022. (Higher qualifications above 10+2 are not eligible). Valid J&K Domicile Certificate required.',
     totalPosts: '2,863 Vacancies (UT: 105 | Div Jammu: 1093 | Div Kashmir: 897 | District Cadres: 768)',
-    officialLink: 'https://www.jkssb.nic.in',
+    officialLink: 'https://jkssb.nic.in/Pdf/Extension_notice_09OF2026_11112026.pdf',
+    officialNotificationUrl: 'https://jkssb.nic.in/Pdf/ADVT_09OF2026_01092026.pdf',
+    officialApplicationUrl: 'https://www.jkssb.nic.in',
     fees: {
       genObc: '₹600/- (For OM, RBA, ALC/IB, OBC Candidates via Net Banking / Cards)',
       scSt: '₹500/- (For SC, ST-1, ST-2, EWS & PwBD Candidates)'
@@ -3405,7 +4109,13 @@ export const SARKARI_DATA: SarkariItem[] = [
     feePerSubject: 'Paper 1 or Paper 2: Male Gen ₹1000, Female Gen ₹800, Gen-EWS/OBC Male ₹900, SC/ST/PwD Male ₹500',
     fees: { genObc: '₹1000 (Gen Male) / ₹900 (OBC/EWS)', scSt: '₹500' },
     officialLink: 'https://jeemain.nta.ac.in/',
-    isNew: true,
+    verificationStatus: 'needs_verification',
+    verification: {
+      status: 'needs_verification',
+      verificationStatus: 'needs_verification',
+      verificationReason: 'jeemain.nta.ac.in failed TLS/reachability check on 14/11/2026; flagged needs_verification pending direct NTA bulletin verification.'
+    },
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Engineering Stream (Paper 1)',
@@ -3518,7 +4228,13 @@ export const SARKARI_DATA: SarkariItem[] = [
     feePerSubject: 'To be notified in detailed information bulletin',
     fees: { genObc: 'Standard NTA Slab', scSt: 'Standard NTA Slab' },
     officialLink: 'https://www.nta.ac.in/',
-    isNew: true,
+    verificationStatus: 'needs_verification',
+    verification: {
+      status: 'needs_verification',
+      verificationStatus: 'needs_verification',
+      verificationReason: 'nta.ac.in connection reset during the 14/11/2026 check; flagged needs_verification pending direct NTA advisory verification.'
+    },
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Undergraduate Entrance Stream (CUET UG)',
@@ -3549,8 +4265,27 @@ export const SARKARI_DATA: SarkariItem[] = [
     eligibility: 'Must be a Domicile of UT of Jammu & Kashmir. Academic / Professional Qualifications vary by post (Degree, Diploma, Matriculation, etc. in concerned discipline).',
     totalPosts: '518 Posts',
     fees: { genObc: '₹500', scSt: '₹400' },
-    officialLink: 'https://jkssb.nic.in/Advertisement.html',
-    isNew: true,
+    officialLink: 'https://jkssb.nic.in/Pdf/Edit_option_08OF2026_11112026.pdf',
+    status: 'Closed',
+    correctionWindow: '16/11/2026 (00:00 IST) to 20/11/2026 (23:59 IST) — Items 104–181',
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://jkssb.nic.in/Advertisement.html',
+      amendmentUrls: [
+        'https://jkssb.nic.in/Pdf/Edit_option_08OF2026_11112026.pdf'
+      ],
+      advertisementNo: 'Notification No. 08 of 2026',
+      recruitmentYear: '2026',
+      correctionWindow: '16/11/2026 to 20/11/2026',
+      sourceHistory: [
+        'Amended 14/11/2026: Edit_option_08OF2026_11112026.pdf opens Edit Option 16/11–20/11/2026 (Items 104–181); new registration remains closed.'
+      ]
+    },
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Health and Medical Education Department',
@@ -3590,8 +4325,27 @@ export const SARKARI_DATA: SarkariItem[] = [
     eligibility: 'Must be a Domicile of UT of Jammu & Kashmir. 2-Year Diploma in Draftsman (Civil) from ITI / Recognized Polytechnic or 10th Pass with ITI Certificate in relevant trade.',
     totalPosts: '357 Posts',
     fees: { genObc: '₹500', scSt: '₹400' },
-    officialLink: 'https://jkssb.nic.in/Advertisement.html',
-    isNew: true,
+    officialLink: 'https://jkssb.nic.in/Pdf/Edit_option_06OF2026_11112026.pdf',
+    status: 'Closed',
+    correctionWindow: '16/11/2026 (00:00 IST) to 20/11/2026 (23:59 IST) — Items 93–96',
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://jkssb.nic.in/Advertisement.html',
+      amendmentUrls: [
+        'https://jkssb.nic.in/Pdf/Edit_option_06OF2026_11112026.pdf'
+      ],
+      advertisementNo: 'Notification No. 06 of 2026',
+      recruitmentYear: '2026',
+      correctionWindow: '16/11/2026 to 20/11/2026',
+      sourceHistory: [
+        'Amended 14/11/2026: Edit_option_06OF2026_11112026.pdf opens Edit Option 16/11–20/11/2026 (Items 93–96); new registration remains closed.'
+      ]
+    },
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Public Works (R&B) Department',
@@ -4073,7 +4827,22 @@ export const SARKARI_DATA: SarkariItem[] = [
     lastDate: '30/11/2026',
     shortInfo: 'National Scholarship Portal (NSP) online registration and renewal for Centrally Sponsored Post-Matric Scholarships (SC/ST/OBC/Minority/EBC) and AICTE Pragati/Saksham Scholarships for students studying in Class 11th, 12th, UG, PG, and Technical/Professional courses.',
     eligibility: 'Class 11th to Post-Graduation Students with Min 50% Marks & Family Income below ₹2.50 Lakh/year',
-    officialLink: 'https://scholarships.gov.in',
+    officialLink: 'https://scholarships.gov.in/All-Scholarships',
+    officialNotificationUrl: 'https://scholarships.gov.in/All-Scholarships',
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '14/11/2026',
+      lastVerified: '14/11/2026',
+      officialNotificationUrl: 'https://scholarships.gov.in/All-Scholarships',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '01/10/2026',
+      verifiedClosingDate: '30/11/2026',
+      sourceHistory: [
+        'Verified live on scholarships.gov.in/All-Scholarships on 14/11/2026 (Academic Year 2026-27 Student Application Open till 30-11-2026).'
+      ]
+    },
     isNew: true
   },
   {

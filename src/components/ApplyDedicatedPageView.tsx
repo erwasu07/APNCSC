@@ -225,7 +225,9 @@ export default function ApplyDedicatedPageView({
         }
       }
     } else if (!formData.selectedService && SARKARI_DATA.length > 0) {
-      handleServiceChange(SARKARI_DATA[0].title);
+      const firstActive =
+        SARKARI_DATA.find((item) => computeSarkariStatus(item).canApplyOnline) || SARKARI_DATA[0];
+      handleServiceChange(firstActive.title);
       setIsChangingService(false);
     }
   }, [initialService]);
@@ -404,13 +406,15 @@ export default function ApplyDedicatedPageView({
 
     if (currentSarkariItem && currentSarkariStatus && !currentSarkariStatus.canApplyOnline) {
       setStepBannerError(
-        currentSarkariStatus.isClosed
-          ? `Applications for "${currentSarkariItem.title}" officially concluded on ${currentSarkariItem.lastDate}. Assisted application requests cannot be accepted for closed cycles.`
+        currentSarkariStatus.verificationStatus === 'needs_verification'
+          ? `Official portal verification is pending for "${currentSarkariItem.title}". Assisted application requests are temporarily paused until confirmed directly on the authority website.`
+          : currentSarkariStatus.isClosed
+          ? `Applications for "${currentSarkariItem.title}" officially concluded${currentSarkariItem.lastDate ? ` on ${currentSarkariItem.lastDate}` : ''}. Assisted application requests cannot be accepted for closed cycles.`
           : currentSarkariStatus.isUpcoming
           ? `Applications for "${currentSarkariItem.title}" commence on ${currentSarkariItem.startDate}. Please check back when the official window opens.`
           : currentSarkariStatus.isCancelled
           ? `This recruitment notice has been formally cancelled by the authority.`
-          : `Applications are currently unavailable or pending verification for this notice.`
+          : `Online applications are not applicable or currently unavailable for "${currentSarkariItem.title}" (${currentSarkariStatus.badgeLabel}).`
       );
       return false;
     }
@@ -1141,7 +1145,7 @@ export default function ApplyDedicatedPageView({
           >
             <img
               src="/favicon.svg"
-              alt="CSC DOST Logo"
+              alt=""
               className="w-8 h-8 rounded-lg shrink-0 object-contain"
             />
             <div className="min-w-0">
@@ -1307,24 +1311,30 @@ export default function ApplyDedicatedPageView({
                       </button>
                     </div>
 
-                    {/* Applications Closed / Concluded Warning Alert */}
+                    {/* Applications Closed / Concluded / Verification Warning Alert */}
                     {currentSarkariStatus && !currentSarkariStatus.canApplyOnline && (
                       <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-900 space-y-1">
                         <div className="font-bold flex items-center gap-1.5 text-rose-700">
                           <AlertCircle className="w-4 h-4 shrink-0" />
                           <span>
-                            {currentSarkariStatus.isClosed
+                            {currentSarkariStatus.verificationStatus === 'needs_verification'
+                              ? 'Pending Official Portal Verification'
+                              : currentSarkariStatus.isClosed
                               ? 'Applications Closed for this Notification'
                               : currentSarkariStatus.isUpcoming
                               ? 'Upcoming Application Window'
                               : currentSarkariStatus.isCancelled
                               ? 'Notification Cancelled'
-                              : 'Applications Inactive'}
+                              : `${currentSarkariStatus.badgeLabel} (Non-Application Notice)`}
                           </span>
                         </div>
                         <p className="leading-relaxed text-rose-800">
-                          {currentSarkariStatus.closingTimeNote ||
-                            `The online application window officially closed on ${currentSarkariItem?.lastDate}. Assisted application filing cannot be processed for concluded cycles.`}
+                          {currentSarkariStatus.verificationStatus === 'needs_verification'
+                            ? 'This notice could not be freshly corroborated from the official portal today and is paused for new applications.'
+                            : currentSarkariStatus.closingTimeNote ||
+                              (currentSarkariStatus.isClosed && currentSarkariItem?.lastDate
+                                ? `The online application window officially closed on ${currentSarkariItem.lastDate}. Assisted application filing cannot be processed for concluded cycles.`
+                                : `This update (${currentSarkariStatus.badgeLabel}) does not accept new online applications.`)}
                           {' '}Please click &ldquo;Change&rdquo; above to select an active service or recruitment.
                         </p>
                       </div>
@@ -1451,12 +1461,15 @@ export default function ApplyDedicatedPageView({
                                 </option>
                               ))}
                             </optgroup>
-                            <optgroup label="Concluded / Historical Notices (Applications Closed)">
-                              {SARKARI_DATA.filter((item) => !computeSarkariStatus(item).canApplyOnline).map((item) => (
-                                <option key={item.id} value={item.title}>
-                                  {item.title} [Applications Closed]
-                                </option>
-                              ))}
+                            <optgroup label="Closed / Informational / Unverified Notices (Unavailable)">
+                              {SARKARI_DATA.filter((item) => !computeSarkariStatus(item).canApplyOnline).map((item) => {
+                                const st = computeSarkariStatus(item);
+                                return (
+                                  <option key={item.id} value={item.title} disabled>
+                                    {item.title} [{st.badgeLabel}]
+                                  </option>
+                                );
+                              })}
                             </optgroup>
                             <optgroup label="CSC E-Governance & Citizen Services">
                               {SERVICES_LIST.map((svc) => (
@@ -1770,7 +1783,7 @@ export default function ApplyDedicatedPageView({
                       >
                         <span>
                           {currentSarkariStatus && !currentSarkariStatus.canApplyOnline
-                            ? 'Applications Closed'
+                            ? currentSarkariStatus.badgeLabel
                             : 'Continue to Documents'}
                         </span>
                         <ArrowRight className="w-4 h-4" aria-hidden="true" />

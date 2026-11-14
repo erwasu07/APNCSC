@@ -6,115 +6,433 @@
 
   <url>
     <loc>https://www.cscdost.com/</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://www.cscdost.com/about-us</loc>
-    <lastmod>2026-10-28</lastmod>
+    <loc>https://www.cscdost.com/jobs</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/education</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/schemes</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/services</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/tools</loc>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/calculators</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/about-us</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/contact-us</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/privacy-policy</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/terms-of-service</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/disclaimer</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/refund-policy</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/jkssb-junior-assistant-dv-schedule-nov-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/jkssb-statistical-assistant-foreman-selection-lists-nov-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/jkssb-edit-option-advt-06-07-08-of-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/jkssb-health-educator-result-final-key-nov-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/jkssb-forest-supplementary-dv-notice-nov-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/cus-result-notification-471-ug-2nd-sem-2025</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/cus-integrated-bed-med-5th-sem-exam-form-nov-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/cus-backlog-exam-form-integrated-honors-non-nep-nov-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/cus-btech-8th-sem-datesheet-batch-2022-nov-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/cus-ug-2nd-sem-xerox-reevaluation-batch-2022-2024</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/cus-result-notification-470-bed-1st-sem-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/ssc-cht-2025-frta-identity-verification-nov-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/ssc-cgept-01-27-02-27-city-admit-card-nov-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/ku-calligraphist-recruitment-advt-18-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/cus-nep-ug-1st-sem-registration-batch-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/rrb-station-master-cen-08-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/rrb-isolated-ministerial-cen-09-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/ku-certificate-course-kashmiri-cdoe-admission-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/ssc-cgl-2026-tier-1-answer-key</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/indian-army-tes-57-course-closing-today</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/jk-bank-banking-associates-recruitment-2026</loc>
+    <lastmod>2026-11-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/rrb-ntpc-graduate-level-cen-06-2026</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/ssc-constable-gd-final-answer-key-marks-nov-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/ku-pro-written-exam-admit-card-nov-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/cus-phd-coursework-datesheet-nov-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/cus-btech-8th-sem-exam-form-nov-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/ku-admission-closure-fyugp-nep2020-pvt-colleges-2026</loc>
+    <lastmod>2026-11-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/ssc-cgl-tier-1-tentative-answer-key-objection-notice-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/jkssb-accounts-assistant-finance-exam-date-admit-card-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/ku-bums-practical-exam-datesheet-nov-2026</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/cus-pre-phd-coursework-exam-form-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/ssc-examination-schedule-cgept-dept-steno-cpo-nov-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/jkssb-health-educator-provisional-answer-key-exam-01-nov-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/cus-registration-returns-pg-phd-programmes-nov-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/ku-bed-3rd-4th-sem-revised-datesheet-nov-2026</loc>
+    <lastmod>2026-11-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/ssc-cpo-pet-pst-result-paper-2-exam-date-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/ku-faculty-recruitment-advt-17-api-score-objection-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/cus-bed-4th-sem-supplementary-exam-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/cus-faculty-recruitment-advt-07-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/ku-junior-accounts-assistant-answer-key-2026</loc>
+    <lastmod>2026-10-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/ku-bed-selection-list-v-2026</loc>
+    <lastmod>2026-10-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/jkssb-driver-final-answer-key-result-2026</loc>
+    <lastmod>2026-10-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/jkssb-answer-key-theatre-tech-2026</loc>
+    <lastmod>2026-10-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/ku-bed-special-center-notice-2026</loc>
+    <lastmod>2026-10-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/cus-fyugp-inter-univ-migration-2026</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/army-tgc-145-course-2026</loc>
+    <lastmod>2026-10-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.cscdost.com/post/ssc-je-paper-1-admit-card-2026</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/post/ku-bed-2year-distance-admissions-2026</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/post/cus-btech-7th-8th-sem-exam-form-2026</loc>
-    <lastmod>2026-10-26</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/post/army-rvc-captain-entry-2026</loc>
-    <lastmod>2026-10-26</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/post/jkssb-advt-11-of-2026-je-civil-pwd</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/post/army-tes-57-course-2026</loc>
-    <lastmod>2026-10-25</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/post/rrb-ntpc-undergraduate-cen-07-2026</loc>
-    <lastmod>2026-10-25</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/post/ssc-chsl-10-plus-2-exam-2026-tier1</loc>
-    <lastmod>2026-10-25</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/post/cus-bed-supplementary-4th-sem-exam-dyd-2026</loc>
-    <lastmod>2026-10-25</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/post/jkssb-advt-10-of-2026-je-mechanical-pwd</loc>
-    <lastmod>2026-10-21</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/post/ku-ug-5yr-integrated-pg-exam-datesheet-oct-2026</loc>
-    <lastmod>2026-10-25</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/post/ku-ddoe-distance-education-pg-admissions-2026</loc>
-    <lastmod>2026-10-25</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/post/jkssb-advt-09-of-2026-class-iv-mts-recruitment</loc>
-    <lastmod>2026-09-01</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -558,7 +876,7 @@
   </url>
   <url>
     <loc>https://www.cscdost.com/post/job-ssc-cgl-2026</loc>
-    <lastmod>2026-08-01</lastmod>
+    <lastmod>2024-06-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -834,457 +1152,457 @@
   </url>
   <url>
     <loc>https://www.cscdost.com/service/csc-pan</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/csc-aadhaar</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/csc-voter</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/csc-ayushman</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/csc-pmkisan</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/csc-eshram</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/csc-certificates</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/csc-ration</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/csc-passport</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/csc-dl</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/csc-utility</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/dig-print</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/dig-photo</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/dig-form</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/edu-admissions</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/edu-scholarship</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/edu-exams</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/biz-gst</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/biz-udyam</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/biz-dsc</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/rev-attestation-mutation</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/rev-clu</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/rev-copy-mutation</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/rev-encumbrance-cert</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/rev-aks-masavi</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/rev-chulah-chowkidara</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/rev-girdawari</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/rev-jamabandi</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/rev-fard</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/rev-field-book</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/rev-court-files</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/rev-income-cert</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/rev-income-dependency</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/rev-land-passbook</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/rev-legal-heir</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/rev-demarcation</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/rev-prc-files</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/rev-property-cert</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/rev-shajra-nasab</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-domicile-cert</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-rba-cert</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-obc-cert</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-st-cert</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-sc-cert</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-alc-ib-cert</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-pahari-cert</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-ews-cert</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-birth-cert</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-death-cert</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-marriage-cert</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-character-cert</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-dependent-cert</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-unemployment-cert</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-pension-isss</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-ladli-beti</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-mgnrega-jobcard</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-trade-license</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-building-licenses</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-drone-permission</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-assistive-aids</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-senior-citizen</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/jk-horticulture-passbook</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/ca-ayushman-pvc</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/ca-dl-pvc</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/ca-epan-download</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/ca-lost-pan-find</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/ca-vehicle-rc-pvc</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/ca-aadhaar-pvc</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/ca-voter-pvc</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/ca-voter-mobile-link</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/ca-dsc-class3</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/ca-nsdl-instant-pan</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/ca-agri-stack</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/ca-ration-rice-pvc</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/ca-gst-registration</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.cscdost.com/service/ca-tn-birth-cert</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

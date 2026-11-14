@@ -657,7 +657,7 @@ export default function TrackDedicatedPageView({
           >
             <img
               src="/favicon.svg"
-              alt="CSC DOST Logo"
+              alt=""
               className="w-8 h-8 rounded-lg shrink-0 object-contain"
             />
             <div className="min-w-0">

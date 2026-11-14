@@ -997,9 +997,9 @@ export default function GuidesKnowledgeHub({
                   <BookOpen className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>Knowledge Hub &amp; Scheme Guides</span>
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-[#102A43] tracking-tight">
-                  Citizen Knowledge &amp; Government Scheme Guides
-                </h2>
+                <h1 className="text-xl sm:text-3xl font-bold text-[#102A43] tracking-tight">
+                  Government Schemes &amp; Citizen Guides
+                </h1>
                 <p className="text-xs sm:text-sm text-[#64748B] max-w-2xl">
                   Step-by-step citizen walkthroughs, scheme eligibility rules, document checklists,
                   and official portal references.

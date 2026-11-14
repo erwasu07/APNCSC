@@ -27,9 +27,20 @@ const Footer = lazy(() => import('./components/Footer'));
 const PrivacyPolicyModal = lazy(() => import('./components/PrivacyPolicyModal'));
 import LegalPageView, { LEGAL_PAGE_CONFIG, type LegalPageType } from './components/LegalPageView';
 const ToolsHub = lazy(() => import('./components/tools/ToolsHub'));
+const CitizenToolsDesk = lazy(() => import('./components/CitizenToolsDesk'));
 const NotificationCenterModal = lazy(() => import('./components/NotificationCenterModal'));
 const NotificationPreferencesModal = lazy(() => import('./components/NotificationPreferencesModal'));
 const SarkariResultDesk = lazy(() => import('./components/SarkariResultDesk'));
+import { TOOLS_LIST } from './components/tools/toolsData';
+import {
+  applyClientSeo,
+  getCategorySeoMeta,
+  HOMEPAGE_SEO,
+  LEGAL_SEO_MAP,
+  PRIVATE_NOINDEX_META,
+  SITE_ORIGIN,
+  CORE_CATEGORIES,
+} from './utils/seoConfig';
 
 // Lightweight Skeleton Fallback for Section Containers (Prevents Layout Shift)
 function SectionSkeleton({ height = 'min-h-[360px]', title = 'Loading Desk...' }: { height?: string; title?: string }) {
@@ -111,7 +122,8 @@ export default function App() {
   const [trackInitialToken, setTrackInitialToken] = useState<string>('');
   const [isToolsView, setIsToolsView] = useState<boolean>(false);
   const [activeToolId, setActiveToolId] = useState<string | null>(null);
-  const [categoryView, setCategoryView] = useState<'jobs' | 'education' | 'schemes' | 'services' | null>(null);
+  const [categoryView, setCategoryView] = useState<'jobs' | 'education' | 'schemes' | 'services' | 'calculators' | null>(null);
+  const [isNotFoundView, setIsNotFoundView] = useState<boolean>(false);
 
   const [activeLegalPage, setActiveLegalPage] = useState<LegalPageType | null>(null);
 
@@ -212,6 +224,9 @@ export default function App() {
       // Clean query parameters and trailing slashes for clean route matching
       const cleanPath = (effectivePath.split('?')[0] || '/').replace(/\/+$/, '') || '/';
 
+      // Reset client not found flag before evaluating current path
+      setIsNotFoundView(false);
+
       // 0. Transparent Migration for Legacy Shared Fragment URLs if supported
       try {
         if (rawHash.match(/^#(?:|\/)(post|job)\//)) {
@@ -230,6 +245,8 @@ export default function App() {
         } else if (rawHash.match(/^#(?:|\/)track/)) {
           const token = rawHash.replace(/^#(?:|\/)track\/?/, '').split('?')[0];
           window.history.replaceState(null, '', token ? `/track/${token}` : '/track');
+        } else if (rawHash.match(/^#(?:|\/)calculators/)) {
+          window.history.replaceState(null, '', '/calculators');
         } else if (rawHash.match(/^#(?:|\/)tools/)) {
           const tool = rawHash.replace(/^#(?:|\/)tools\/?/, '').split('?')[0];
           window.history.replaceState(null, '', tool ? `/tools/${tool}` : '/tools');
@@ -241,6 +258,7 @@ export default function App() {
       if (['privacy', 'terms', 'disclaimer', 'hyperlink', 'copyright', 'help', 'refund'].includes(cleanHash) && (rawPathname === '/' || rawPathname === '')) {
         openLegalModal(cleanHash as PolicyTab);
         setActiveLegalPage(null);
+        setCategoryView(null);
         setIsAdminView(false);
         setIsApplyView(false);
         setIsTrackView(false);
@@ -263,6 +281,7 @@ export default function App() {
         else if (rawKey === 'refund-policy' || rawKey === 'refund') mappedType = 'refund';
 
         setActiveLegalPage(mappedType);
+        setCategoryView(null);
         setIsAdminView(false);
         setIsApplyView(false);
         setIsTrackView(false);
@@ -287,16 +306,19 @@ export default function App() {
         rawHash === '#/staff'
       ) {
         setIsAdminView(true);
+        setCategoryView(null);
         setIsApplyView(false);
         setIsTrackView(false);
         setIsToolsView(false);
         setActiveJobPost(null);
         setActiveServicePost(null);
         return;
+      } else {
+        setIsAdminView(false);
       }
 
-      // 3. Dedicated category routes: /jobs, /education, /schemes, /services
-      if (['/jobs', '/education', '/schemes', '/services'].includes(cleanPath)) {
+      // 3. Dedicated category routes: /jobs, /education, /schemes, /services, /calculators
+      if (['/jobs', '/education', '/schemes', '/services', '/calculators'].includes(cleanPath)) {
         setIsApplyView(false);
         setIsTrackView(false);
         setIsToolsView(false);
@@ -309,6 +331,7 @@ export default function App() {
         else if (cleanPath === '/education') setCategoryView('education');
         else if (cleanPath === '/schemes') setCategoryView('schemes');
         else if (cleanPath === '/services') setCategoryView('services');
+        else if (cleanPath === '/calculators') setCategoryView('calculators');
 
         try {
           window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -319,7 +342,7 @@ export default function App() {
       }
 
       // 4. Check Apply route (/apply, #apply, #/apply)
-      const pathApplyMatch = cleanPath.startsWith('/apply');
+      const pathApplyMatch = cleanPath === '/apply';
       if (pathApplyMatch || rawHash.startsWith('#apply') || rawHash.startsWith('#/apply')) {
         const queryFromHash = rawHash.includes('?') ? rawHash.split('?')[1] : '';
         const applyParams = new URLSearchParams(queryFromHash);
@@ -340,7 +363,7 @@ export default function App() {
       }
 
       // 5. Check Track route (/track, /track/:token, #track, #/track)
-      const pathTrackMatch = cleanPath.match(/^\/track(?:\/([^/?#]+))?/i);
+      const pathTrackMatch = cleanPath.match(/^\/track(?:\/([^/?#]+))?$/i);
       if (pathTrackMatch || rawHash.startsWith('#track') || rawHash.startsWith('#/track')) {
         const cleanHash = rawHash.replace(/^#(?:|\/)track\/?/, '');
         const trackToken = (pathTrackMatch ? pathTrackMatch[1] : null) || cleanHash.split('?')[0] || trackParam || '';
@@ -360,13 +383,19 @@ export default function App() {
       }
 
       // 6. Check Tools route (/tools, /tools/:toolId, #tools, #/tools)
-      const pathToolsMatch = cleanPath.match(/^\/tools(?:\/([^/?#]+))?/i);
+      const pathToolsMatch = cleanPath.match(/^\/tools(?:\/([^/?#]+))?$/i);
       if (pathToolsMatch || rawHash.startsWith('#tools') || rawHash.startsWith('#/tools')) {
         let toolParam = null;
         if (pathToolsMatch && pathToolsMatch[1]) {
           toolParam = pathToolsMatch[1];
         } else if (rawHash.match(/^#(?:|\/)tools\//)) {
           toolParam = rawHash.replace(/^#(?:|\/)tools\//, '').split('?')[0];
+        }
+        if (toolParam && !TOOLS_LIST.some((t) => t.id === toolParam)) {
+          setIsToolsView(false);
+          setActiveToolId(null);
+          setIsNotFoundView(true);
+          return;
         }
         setIsToolsView(true);
         setActiveToolId(toolParam || null);
@@ -384,7 +413,7 @@ export default function App() {
       }
 
       // 7. Check Service route (/service/:id, #service/:id, #/service/:id, ?service=:id)
-      const pathServiceMatch = cleanPath.match(/^\/service\/([^/?#]+)/i);
+      const pathServiceMatch = cleanPath.match(/^\/service\/([^/?#]+)$/i);
       if (pathServiceMatch) {
         const serviceId = decodeURIComponent(pathServiceMatch[1]);
         const matchService = SERVICES_LIST.find(s => s.id === serviceId);
@@ -398,6 +427,11 @@ export default function App() {
           try {
             window.scrollTo({ top: 0, behavior: 'smooth' });
           } catch {}
+          return;
+        } else {
+          setActiveServicePost(null);
+          setActiveJobPost(null);
+          setIsNotFoundView(true);
           return;
         }
       }
@@ -419,7 +453,7 @@ export default function App() {
       }
 
       // 8. Check Job/Post route (/post/:id, /job/:id, #post/:id, #/post/:id, ?post=:id)
-      const pathPostMatch = cleanPath.match(/^\/(?:post|job|jobs|sarkari|notice|admissions|notification)\/([^/?#]+)/i);
+      const pathPostMatch = cleanPath.match(/^\/(?:post|job|jobs|sarkari|notice|admissions|notification)\/([^/?#]+)$/i);
       if (pathPostMatch) {
         const postId = decodeURIComponent(pathPostMatch[1]);
         const match = SARKARI_DATA.find(i => i.id === postId);
@@ -433,6 +467,11 @@ export default function App() {
           try {
             window.scrollTo({ top: 0, behavior: 'smooth' });
           } catch {}
+          return;
+        } else {
+          setActiveJobPost(null);
+          setActiveServicePost(null);
+          setIsNotFoundView(true);
           return;
         }
       }
@@ -453,6 +492,10 @@ export default function App() {
         }
       }
 
+      // Reset post/service states when returning to homepage
+      setActiveJobPost(null);
+      setActiveServicePost(null);
+
       // 9. Legacy fallback modals if any hash remains
       if (rawHash === '#hyperlink') {
         openLegalModal('hyperlink');
@@ -462,6 +505,11 @@ export default function App() {
         openLegalModal('disclaimer');
       } else if (rawHash === '#help') {
         openLegalModal('help');
+      }
+
+      // 10. Genuine unknown path check (anything other than / displays 404)
+      if (cleanPath !== '/' && cleanPath !== '') {
+        setIsNotFoundView(true);
       }
     };
 
@@ -605,11 +653,84 @@ export default function App() {
     setShowShareModal(true);
   };
 
+  // Sync document head SEO metadata accurately across all routes
   useEffect(() => {
-    if (settings?.seoTitle) {
-      document.title = settings.seoTitle;
+    if (isNotFoundView) {
+      applyClientSeo(PRIVATE_NOINDEX_META.notfound);
+      return;
     }
-  }, [settings]);
+    if (isAdminView) {
+      applyClientSeo(PRIVATE_NOINDEX_META.admin);
+      return;
+    }
+    if (isApplyView) {
+      applyClientSeo(PRIVATE_NOINDEX_META.apply);
+      return;
+    }
+    if (isTrackView) {
+      applyClientSeo(PRIVATE_NOINDEX_META.track);
+      return;
+    }
+    if (activeLegalPage) {
+      applyClientSeo(LEGAL_SEO_MAP[activeLegalPage] || LEGAL_SEO_MAP.privacy);
+      return;
+    }
+    if (activeJobPost) {
+      applyClientSeo({
+        title: `${activeJobPost.title} | CSC DOST`,
+        description:
+          activeJobPost.shortInfo ||
+          `View official notification dates, eligibility and application details for ${activeJobPost.title} on CSC DOST.`,
+        canonicalUrl: `${SITE_ORIGIN}/post/${activeJobPost.id}`,
+        robots: 'index, follow',
+        ogType: 'article',
+      });
+      return;
+    }
+    if (activeServicePost) {
+      applyClientSeo({
+        title: `${activeServicePost.name} | CSC DOST`,
+        description: `${activeServicePost.description} Estimated time: ${activeServicePost.estimatedTime}.`,
+        canonicalUrl: `${SITE_ORIGIN}/service/${activeServicePost.id}`,
+        robots: 'index, follow',
+        ogType: 'website',
+      });
+      return;
+    }
+    if (isToolsView) {
+      if (activeToolId) {
+        const matchedTool = TOOLS_LIST.find((t) => t.id === activeToolId);
+        if (matchedTool) {
+          applyClientSeo({
+            title: `${matchedTool.name} – Document Tools | CSC DOST`,
+            description: matchedTool.shortDescription,
+            canonicalUrl: `${SITE_ORIGIN}/tools/${matchedTool.id}`,
+            robots: 'index, follow',
+            ogType: 'website',
+          });
+          return;
+        }
+      }
+      applyClientSeo(getCategorySeoMeta('tools'));
+      return;
+    }
+    if (categoryView) {
+      applyClientSeo(getCategorySeoMeta(categoryView));
+      return;
+    }
+    applyClientSeo(HOMEPAGE_SEO);
+  }, [
+    activeLegalPage,
+    isAdminView,
+    isApplyView,
+    isTrackView,
+    activeJobPost,
+    activeServicePost,
+    isToolsView,
+    activeToolId,
+    categoryView,
+    isNotFoundView,
+  ]);
 
   // Enforce portal light white theme mode always
   useEffect(() => {
@@ -644,6 +765,7 @@ export default function App() {
     setIsAdminView(false);
     setIsToolsView(false);
     setCategoryView(null);
+    setIsNotFoundView(false);
     setActiveToolId(null);
     setActiveJobPost(null);
     setActiveServicePost(null);
@@ -665,6 +787,7 @@ export default function App() {
     setIsToolsView(true);
     setActiveToolId(toolId || null);
     setCategoryView(null);
+    setIsNotFoundView(false);
     setIsApplyView(false);
     setIsTrackView(false);
     setActiveJobPost(null);
@@ -673,6 +796,24 @@ export default function App() {
     setActiveLegalPage(null);
     try {
       window.history.pushState(null, '', toolId ? `/tools/${toolId}` : '/tools');
+    } catch {}
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {}
+  };
+
+  const handleOpenCalculatorsPage = () => {
+    setCategoryView('calculators');
+    setIsToolsView(false);
+    setIsNotFoundView(false);
+    setIsApplyView(false);
+    setIsTrackView(false);
+    setActiveJobPost(null);
+    setActiveServicePost(null);
+    setIsAdminView(false);
+    setActiveLegalPage(null);
+    try {
+      window.history.pushState(null, '', '/calculators');
     } catch {}
     try {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -860,21 +1001,85 @@ export default function App() {
               />
             </Suspense>
           </div>
+        ) : isNotFoundView ? (
+          /* GENUINE 404 PAGE VIEW FOR UNRECOGNIZED CLIENT ROUTES */
+          <div className="animate-fade-in w-full px-4 py-12 flex items-center justify-center">
+            <div className="max-w-lg w-full bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-8 text-center shadow-xs space-y-4">
+              <div className="inline-flex items-center px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold">
+                HTTP 404 · Page Not Found
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A]">
+                Page Could Not Be Found
+              </h1>
+              <p className="text-sm text-[#64748B] leading-relaxed">
+                The page or notice you requested does not exist or may have moved. Browse our six main sections below or return to the homepage.
+              </p>
+              <div className="flex flex-wrap justify-center gap-2 pt-2">
+                <a
+                  href="/"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleGoHome();
+                  }}
+                  className="px-4 py-2 bg-[#1E56C8] text-white text-xs font-bold rounded-xl hover:bg-[#1746A8] transition-colors no-underline"
+                >
+                  Return to Homepage
+                </a>
+                {CORE_CATEGORIES.map((cat) => (
+                  <a
+                    key={cat.slug}
+                    href={cat.path}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      try {
+                        window.history.pushState(null, '', cat.path);
+                        window.dispatchEvent(new PopStateEvent('popstate'));
+                      } catch {
+                        window.location.href = cat.path;
+                      }
+                    }}
+                    className="px-3.5 py-2 bg-[#F8FAFC] hover:bg-[#EEF4FF] text-[#0F172A] hover:text-[#1E56C8] border border-[#E2E8F0] text-xs font-semibold rounded-xl transition-colors no-underline"
+                  >
+                    {cat.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
         ) : categoryView === 'jobs' ? (
           /* DEDICATED FULL-PAGE VIEW FOR JOBS & RECRUITMENT */
           <div className="animate-fade-in w-full px-3 sm:px-6 py-4 space-y-4">
-            <div className="flex items-center justify-between pb-1">
-              <button
-                type="button"
-                onClick={handleGoHome}
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#1E56C8] hover:underline cursor-pointer"
+            <nav aria-label="Breadcrumb" className="flex items-center justify-between gap-3 pb-1 text-xs sm:text-sm">
+              <div className="flex items-center gap-1.5 text-slate-500">
+                <a
+                  href="/"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleGoHome();
+                  }}
+                  className="font-bold text-[#1E56C8] hover:underline inline-flex items-center gap-1"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Home</span>
+                </a>
+                <span aria-hidden="true">/</span>
+                <span className="font-semibold text-[#0F172A]">Jobs &amp; Recruitment</span>
+              </div>
+              <a
+                href="/education"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCategoryView('education');
+                  try { window.history.pushState(null, '', '/education'); } catch {}
+                }}
+                className="text-xs font-semibold text-[#1E56C8] hover:underline"
               >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Back to Home</span>
-              </button>
-            </div>
+                Education &amp; Admissions →
+              </a>
+            </nav>
             <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Recruitment Notifications..." />}>
               <SarkariResultDesk
+                mode="jobs"
                 onApplyService={handleServiceSelect}
                 onOpenDedicatedPage={handleOpenJobPage}
               />
@@ -883,18 +1088,37 @@ export default function App() {
         ) : categoryView === 'education' ? (
           /* DEDICATED FULL-PAGE VIEW FOR EDUCATION & ADMISSIONS */
           <div className="animate-fade-in w-full px-3 sm:px-6 py-4 space-y-4">
-            <div className="flex items-center justify-between pb-1">
-              <button
-                type="button"
-                onClick={handleGoHome}
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#1E56C8] hover:underline cursor-pointer"
+            <nav aria-label="Breadcrumb" className="flex items-center justify-between gap-3 pb-1 text-xs sm:text-sm">
+              <div className="flex items-center gap-1.5 text-slate-500">
+                <a
+                  href="/"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleGoHome();
+                  }}
+                  className="font-bold text-[#1E56C8] hover:underline inline-flex items-center gap-1"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Home</span>
+                </a>
+                <span aria-hidden="true">/</span>
+                <span className="font-semibold text-[#0F172A]">Education &amp; Admissions</span>
+              </div>
+              <a
+                href="/jobs"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCategoryView('jobs');
+                  try { window.history.pushState(null, '', '/jobs'); } catch {}
+                }}
+                className="text-xs font-semibold text-[#1E56C8] hover:underline"
               >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Back to Home</span>
-              </button>
-            </div>
+                Jobs &amp; Recruitment →
+              </a>
+            </nav>
             <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Education & Admissions..." />}>
               <SarkariResultDesk
+                mode="education"
                 onApplyService={handleServiceSelect}
                 onOpenDedicatedPage={handleOpenJobPage}
               />
@@ -903,16 +1127,21 @@ export default function App() {
         ) : categoryView === 'schemes' ? (
           /* DEDICATED FULL-PAGE VIEW FOR GOVERNMENT SCHEMES */
           <div className="animate-fade-in w-full px-3 sm:px-6 py-4 space-y-4">
-            <div className="flex items-center justify-between pb-1">
-              <button
-                type="button"
-                onClick={handleGoHome}
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#1E56C8] hover:underline cursor-pointer"
+            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 pb-1 text-xs sm:text-sm text-slate-500">
+              <a
+                href="/"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleGoHome();
+                }}
+                className="font-bold text-[#1E56C8] hover:underline inline-flex items-center gap-1"
               >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Back to Home</span>
-              </button>
-            </div>
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Home</span>
+              </a>
+              <span aria-hidden="true">/</span>
+              <span className="font-semibold text-[#0F172A]">Government Schemes</span>
+            </nav>
             <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Government Schemes & Guides..." />}>
               <GuidesKnowledgeHub onSelectService={handleServiceSelect} />
             </Suspense>
@@ -920,21 +1149,63 @@ export default function App() {
         ) : categoryView === 'services' ? (
           /* DEDICATED FULL-PAGE VIEW FOR CSC E-SERVICES */
           <div className="animate-fade-in w-full px-3 sm:px-6 py-4 space-y-4">
-            <div className="flex items-center justify-between pb-1">
-              <button
-                type="button"
-                onClick={handleGoHome}
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#1E56C8] hover:underline cursor-pointer"
+            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 pb-1 text-xs sm:text-sm text-slate-500">
+              <a
+                href="/"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleGoHome();
+                }}
+                className="font-bold text-[#1E56C8] hover:underline inline-flex items-center gap-1"
               >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Back to Home</span>
-              </button>
-            </div>
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Home</span>
+              </a>
+              <span aria-hidden="true">/</span>
+              <span className="font-semibold text-[#0F172A]">CSC E-Services</span>
+            </nav>
             <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Citizen Services Catalogue..." />}>
               <ExploreServicesDesk 
                 onApplyService={handleServiceSelect} 
                 selectedService={selectedService}
                 onOpenDedicatedServicePage={handleOpenServicePage}
+              />
+            </Suspense>
+          </div>
+        ) : categoryView === 'calculators' ? (
+          /* DEDICATED FULL-PAGE VIEW FOR CITIZEN CALCULATORS */
+          <div className="animate-fade-in w-full px-3 sm:px-6 py-4 space-y-4">
+            <nav aria-label="Breadcrumb" className="flex items-center justify-between gap-3 pb-1 text-xs sm:text-sm">
+              <div className="flex items-center gap-1.5 text-slate-500">
+                <a
+                  href="/"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleGoHome();
+                  }}
+                  className="font-bold text-[#1E56C8] hover:underline inline-flex items-center gap-1"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Home</span>
+                </a>
+                <span aria-hidden="true">/</span>
+                <span className="font-semibold text-[#0F172A]">Citizen Calculators</span>
+              </div>
+              <a
+                href="/tools"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleOpenToolsPage();
+                }}
+                className="text-xs font-semibold text-[#1E56C8] hover:underline"
+              >
+                Document Tools →
+              </a>
+            </nav>
+            <Suspense fallback={<SectionSkeleton height="min-h-[420px]" title="Loading Citizen Calculators..." />}>
+              <CitizenToolsDesk
+                isStandalonePage
+                onApplyService={handleServiceSelect}
               />
             </Suspense>
           </div>
@@ -972,6 +1243,8 @@ export default function App() {
                     setCategoryView('services');
                     try { window.history.pushState(null, '', '/services'); } catch {}
                     window.scrollTo({ top: 0, behavior: 'smooth' });
+                  } else if (route === '/calculators') {
+                    handleOpenCalculatorsPage();
                   } else if (route === '/tools' || route.startsWith('/tools#')) {
                     handleOpenToolsPage();
                   } else if (route === '/apply') {

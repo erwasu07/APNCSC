@@ -5,6 +5,7 @@ import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import sharp from 'sharp';
 import { SARKARI_DATA } from './src/data/sarkariData';
+import { computeSarkariStatus } from './src/utils/sarkariStatus';
 import { SERVICES_LIST } from './src/servicesData';
 import { 
   generateOgPng, 
@@ -32,6 +33,15 @@ import {
   renderCategorySubstantiveHtml,
   renderNotFoundSubstantiveHtml
 } from './src/serverContentRenderer';
+import {
+  SITE_ORIGIN,
+  HOMEPAGE_SEO,
+  LEGAL_SEO_MAP,
+  PRIVATE_NOINDEX_META,
+  getCategorySeoMeta,
+  CategorySlug,
+} from './src/utils/seoConfig';
+import { TOOLS_LIST } from './src/components/tools/toolsData';
 import { 
   getDb, 
   saveDb, 
@@ -162,12 +172,30 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Canonical domain redirection (cscdost.com -> https://www.cscdost.com)
+// Canonical domain, HTTPS, and trailing-slash redirection
 app.use((req: Request, res: Response, next: NextFunction) => {
-  const host = req.get('x-forwarded-host') || req.get('host') || '';
-  if (host === 'cscdost.com') {
-    return res.redirect(301, `https://www.cscdost.com${req.originalUrl || req.url}`);
+  const host = (req.get('x-forwarded-host') || req.get('host') || '').split(',')[0].trim();
+  const forwardedProto = (req.get('x-forwarded-proto') || '').split(',')[0].trim();
+  const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
+  const isPreviewHost = host.includes('.run.app') || host.includes('.vercel.app');
+
+  if (!isLocal && !isPreviewHost && (host === 'cscdost.com' || forwardedProto === 'http')) {
+    return res.redirect(301, `${SITE_ORIGIN}${req.originalUrl || req.url}`);
   }
+
+  if (
+    (req.method === 'GET' || req.method === 'HEAD') &&
+    !req.path.startsWith('/api/') &&
+    req.path.length > 1 &&
+    req.path.endsWith('/')
+  ) {
+    const normalizedPath = req.path.replace(/\/+$/, '') || '/';
+    const rawOriginal = req.originalUrl || req.url || '';
+    const queryIndex = rawOriginal.indexOf('?');
+    const queryString = queryIndex >= 0 ? rawOriginal.slice(queryIndex) : '';
+    return res.redirect(301, `${normalizedPath}${queryString}`);
+  }
+
   next();
 });
 
@@ -3449,18 +3477,23 @@ app.get(['/api/notifications/center', '/notifications/center'], (_req: Request, 
       badge: 'Announcement'
     }));
 
-    // Latest 10 Sarkari items from memory
-    const topSarkari = SARKARI_DATA.slice(0, 10).map(item => ({
-      id: item.id,
-      type: 'post' as const,
-      category: item.category === 'exam_forms' ? 'exams' : item.category === 'admissions' ? 'exams' : 'jobs',
-      title: item.title,
-      description: item.shortInfo,
-      date: item.postDate || 'Recent',
-      url: `/#post/${item.id}`,
-      badge: item.category.toUpperCase().replace('_', ' '),
-      thumbnailUrl: item.thumbnailUrl
-    }));
+    // Latest 10 verified & non-cancelled Sarkari items from memory
+    const topSarkari = SARKARI_DATA.filter((item) => {
+      const st = computeSarkariStatus(item);
+      return st.verificationStatus !== 'needs_verification' && !item.isCancelled;
+    })
+      .slice(0, 10)
+      .map(item => ({
+        id: item.id,
+        type: 'post' as const,
+        category: item.category === 'exam_forms' ? 'exams' : item.category === 'admissions' ? 'exams' : 'jobs',
+        title: item.title,
+        description: item.shortInfo,
+        date: item.postDate || 'Recent',
+        url: `/post/${item.id}`,
+        badge: computeSarkariStatus(item).badgeLabel,
+        thumbnailUrl: item.thumbnailUrl
+      }));
 
     // Merge and return
     res.json({
@@ -4188,90 +4221,71 @@ app.get(['/og-banner.svg', '/og-image.svg'], (req: Request, res: Response) => {
   return res.send(svg);
 });
 
-// Helper to inject rich Open Graph tags for WhatsApp / Facebook / Twitter scrapers and users
+// Helper to inject rich Open Graph, SEO, robots, JSON-LD, and SSR semantic body HTML
 function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; isNotFound: boolean } {
   let isNotFound = false;
   const rawUrl = req.originalUrl || req.url || req.path || '/';
-  const urlPath = rawUrl.split('?')[0];
+  const rawPath = rawUrl.split('?')[0] || '/';
+  const urlPath = rawPath.replace(/\/+$/, '') || '/';
   const matchPost = urlPath.match(/^\/(?:post|job|jobs|sarkari|notice|admissions|notification)\/([^/?#]+)/i);
   const matchService = urlPath.match(/^\/service\/([^/?#]+)/i);
   const postParam = (req.query.post as string) || (req.query.job as string) || (req.query.id as string) || (req.query.notice as string);
   const serviceParam = req.query.service as string;
 
-  // Determine host and protocol dynamically
-  const host = req.get('x-forwarded-host') || req.get('host') || 'www.cscdost.com';
+  // Determine host and protocol dynamically for preview/dev OG images
+  const host = (req.get('x-forwarded-host') || req.get('host') || 'www.cscdost.com').split(',')[0].trim();
   const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
-  const baseOrigin = isLocal ? `http://${host}` : (host.includes('.run.app') ? `https://${host}` : 'https://www.cscdost.com');
+  const baseOrigin = isLocal ? `http://${host}` : (host.includes('.run.app') ? `https://${host}` : SITE_ORIGIN);
 
-  let title = 'CSC DOST – Guide to Government Services, Schemes & Recruitment';
-  let description = 'CSC DOST is an independent citizen assistance and information portal. Explore recruitment updates, government schemes, Aadhaar, PAN card, and direct official links.';
+  const toIsoDate = (dateStr?: string): string => {
+    if (!dateStr) return '2026-11-14';
+    if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) return dateStr.slice(0, 10);
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+      const [d, m, y] = dateStr.split('/');
+      return `${y}-${m}-${d}`;
+    }
+    return '2026-11-14';
+  };
+
+  let title = HOMEPAGE_SEO.title;
+  let description = HOMEPAGE_SEO.description;
   let ogImage = `${baseOrigin}/og-banner.png?v=2026_v3`;
-  let canonicalUrl = `https://www.cscdost.com${urlPath === '/' ? '' : urlPath}`;
-  let ogType = 'website';
+  let canonicalUrl = HOMEPAGE_SEO.canonicalUrl;
+  let robotsContent: 'index, follow' | 'noindex, nofollow' = HOMEPAGE_SEO.robots;
+  let ogType: 'website' | 'article' = 'website';
   let articlePublishedDate = '';
   let breadcrumbItems: { name: string; url: string }[] = [];
-
   let substantiveBodyHtml = '';
 
-  const legalMatch = urlPath.match(/^\/(privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|about|contact-us|contact|refund-policy|refund)(?:\/)?$/i);
-  if (legalMatch) {
-    const rawKey = legalMatch[1].toLowerCase();
-    substantiveBodyHtml = renderLegalPageSubstantiveHtml(rawKey);
-    if (rawKey === 'privacy-policy' || rawKey === 'privacy') {
-      title = 'Privacy Policy | CSC DOST - Digital Assistance & Information Portal';
-      description = 'Read the Privacy Policy of CSC DOST (cscdost.com). Learn how citizen data, form documents, and personal details are handled securely in compliance with the DPDP Act 2023.';
-      canonicalUrl = 'https://www.cscdost.com/privacy-policy';
-      breadcrumbItems = [
-        { name: 'Home', url: 'https://www.cscdost.com/' },
-        { name: 'Privacy Policy', url: 'https://www.cscdost.com/privacy-policy' }
-      ];
-    } else if (rawKey === 'terms-of-service' || rawKey === 'terms') {
-      title = 'Terms of Service | CSC DOST - Citizen E-Governance Assistance';
-      description = 'Read the Terms of Service and User Agreement for CSC DOST (cscdost.com). Understand our scope as an independent CSC facilitation center and user responsibilities.';
-      canonicalUrl = 'https://www.cscdost.com/terms-of-service';
-      breadcrumbItems = [
-        { name: 'Home', url: 'https://www.cscdost.com/' },
-        { name: 'Terms of Service', url: 'https://www.cscdost.com/terms-of-service' }
-      ];
-    } else if (rawKey === 'disclaimer') {
-      title = 'Disclaimer & Government Non-Affiliation | CSC DOST';
-      description = 'Important legal disclaimer: CSC DOST (cscdost.com) is an independent private digital facilitation center operated by CSC VLE Wasim Ahmad Khanday and is NOT an official government website.';
-      canonicalUrl = 'https://www.cscdost.com/disclaimer';
-      breadcrumbItems = [
-        { name: 'Home', url: 'https://www.cscdost.com/' },
-        { name: 'Disclaimer', url: 'https://www.cscdost.com/disclaimer' }
-      ];
-    } else if (rawKey === 'about-us' || rawKey === 'about') {
-      title = 'About Us | CSC DOST - Authorized CSC VLE Digital Assistance Center';
-      description = 'Learn about CSC DOST, founded by Authorized CSC VLE Wasim Ahmad Khanday (VLE ID: 212515670018) in Qazigund, Anantnag, J&K to assist citizens with e-governance applications.';
-      canonicalUrl = 'https://www.cscdost.com/about-us';
-      breadcrumbItems = [
-        { name: 'Home', url: 'https://www.cscdost.com/' },
-        { name: 'About Us', url: 'https://www.cscdost.com/about-us' }
-      ];
-    } else if (rawKey === 'contact-us' || rawKey === 'contact') {
-      title = 'Contact Us & Help Desk | CSC DOST Support Center';
-      description = 'Get in touch with CSC DOST Helpdesk. Call +91-7006833767 or email support@cscdost.com. Physical Center: Sangran Qazigund, Anantnag, Jammu & Kashmir 192221.';
-      canonicalUrl = 'https://www.cscdost.com/contact-us';
-      breadcrumbItems = [
-        { name: 'Home', url: 'https://www.cscdost.com/' },
-        { name: 'Contact Us', url: 'https://www.cscdost.com/contact-us' }
-      ];
-    } else if (rawKey === 'refund-policy' || rawKey === 'refund') {
-      title = 'Refund & Cancellation Policy | CSC DOST';
-      description = "Review CSC DOST's transparent refund and fee policies for online application processing, appointment assistance, and citizen digital services.";
-      canonicalUrl = 'https://www.cscdost.com/refund-policy';
-      breadcrumbItems = [
-        { name: 'Home', url: 'https://www.cscdost.com/' },
-        { name: 'Refund Policy', url: 'https://www.cscdost.com/refund-policy' }
-      ];
-    }
-  }
-
+  const legalMatch = urlPath.match(/^\/(privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|about|contact-us|contact|refund-policy|refund)$/i);
+  const adminMatch = urlPath.match(/^\/(admin|staff)$/i);
   const targetPostId = (matchPost ? matchPost[1] : postParam)?.replace(/\.html?$/i, '');
   const targetServiceId = (matchService ? matchService[1] : serviceParam)?.replace(/\.html?$/i, '');
 
-  if (targetPostId) {
+  if (legalMatch) {
+    const rawKey = legalMatch[1].toLowerCase();
+    let legalKey: keyof typeof LEGAL_SEO_MAP = 'privacy';
+    if (rawKey === 'privacy-policy' || rawKey === 'privacy') legalKey = 'privacy';
+    else if (rawKey === 'terms-of-service' || rawKey === 'terms') legalKey = 'terms';
+    else if (rawKey === 'disclaimer') legalKey = 'disclaimer';
+    else if (rawKey === 'about-us' || rawKey === 'about') legalKey = 'about';
+    else if (rawKey === 'contact-us' || rawKey === 'contact') legalKey = 'contact';
+    else if (rawKey === 'refund-policy' || rawKey === 'refund') legalKey = 'refund';
+
+    const meta = LEGAL_SEO_MAP[legalKey];
+    title = meta.title;
+    description = meta.description;
+    canonicalUrl = meta.canonicalUrl;
+    robotsContent = meta.robots;
+    breadcrumbItems = meta.breadcrumbs || [];
+    substantiveBodyHtml = renderLegalPageSubstantiveHtml(rawKey);
+  } else if (adminMatch) {
+    title = PRIVATE_NOINDEX_META.admin.title;
+    description = PRIVATE_NOINDEX_META.admin.description;
+    canonicalUrl = PRIVATE_NOINDEX_META.admin.canonicalUrl;
+    robotsContent = PRIVATE_NOINDEX_META.admin.robots;
+    substantiveBodyHtml = renderCategorySubstantiveHtml('admin', [], []);
+  } else if (targetPostId) {
     const allSarkari = [...SARKARI_DATA, ...getCustomSarkariPosts()];
     const item = allSarkari.find(i => i.id === targetPostId || i.id === decodeURIComponent(targetPostId));
     if (item) {
@@ -4279,111 +4293,124 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       description = item.shortInfo || `Apply online for ${item.title}. Last Date: ${item.lastDate || 'Check Notification'}. Vacancies: ${item.totalPosts || 'Open'}. Official updates & application assistance at cscdost.com.`;
       const dateVersion = (item.lastDate || item.postDate || '2026').replace(/[^0-9]/g, '') || '2026';
       ogImage = `${baseOrigin}/api/og-image/${encodeURIComponent(item.id)}.png?v=${dateVersion}_v3`;
-      canonicalUrl = `https://www.cscdost.com/post/${item.id}`;
+      canonicalUrl = `${SITE_ORIGIN}/post/${item.id}`;
+      robotsContent = 'index, follow';
       ogType = 'article';
-      articlePublishedDate = item.postDate || '2026-02-20';
+      articlePublishedDate = toIsoDate(item.postDate);
+      const isEducationPost =
+        item.noticeType === 'date_sheet' ||
+        item.noticeType === 'exam_form' ||
+        item.noticeType === 'admission' ||
+        ['admissions', 'exam_forms', 'cluster_univ', 'nta'].includes(item.category);
       breadcrumbItems = [
-        { name: 'Home', url: 'https://www.cscdost.com/' },
-        { name: 'Recruitment', url: 'https://www.cscdost.com/#sarkari-board' },
+        { name: 'Home', url: `${SITE_ORIGIN}/` },
+        {
+          name: isEducationPost ? 'Education & Admissions' : 'Jobs & Recruitment',
+          url: `${SITE_ORIGIN}${isEducationPost ? '/education' : '/jobs'}`,
+        },
         { name: item.title, url: canonicalUrl }
       ];
       substantiveBodyHtml = renderPostSubstantiveHtml(item);
     } else if (matchPost) {
       isNotFound = true;
-      title = 'Notification Not Found (404) | CSC DOST';
-      description = 'The requested recruitment notification or examination update could not be found or has expired. Please check active recruitment updates on the CSC DOST portal.';
-      canonicalUrl = `${baseOrigin}/#sarkari-board`;
+      title = PRIVATE_NOINDEX_META.notfound.title;
+      description = PRIVATE_NOINDEX_META.notfound.description;
+      canonicalUrl = PRIVATE_NOINDEX_META.notfound.canonicalUrl;
+      robotsContent = PRIVATE_NOINDEX_META.notfound.robots;
       substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
     }
   } else if (targetServiceId) {
     const service = SERVICES_LIST.find(s => s.id === targetServiceId || s.id === decodeURIComponent(targetServiceId));
     if (service) {
-      title = `${service.name} Online Application | CSC DOST`;
-      description = `${service.description} Processing time: ${service.estimatedTime}. Official fee: ${service.price}. Fast & reliable application assistance at cscdost.com.`;
+      title = `${service.name} | CSC DOST`;
+      description = `${service.description} Processing time: ${service.estimatedTime}. Official fee: ${service.price}.`;
       ogImage = `${baseOrigin}/api/og-image/${encodeURIComponent(service.id)}.png?v=srv_v3`;
-      canonicalUrl = `https://www.cscdost.com/service/${service.id}`;
+      canonicalUrl = `${SITE_ORIGIN}/service/${service.id}`;
+      robotsContent = 'index, follow';
       ogType = 'website';
       breadcrumbItems = [
-        { name: 'Home', url: 'https://www.cscdost.com/' },
-        { name: 'Services', url: 'https://www.cscdost.com/services' },
+        { name: 'Home', url: `${SITE_ORIGIN}/` },
+        { name: 'CSC E-Services', url: `${SITE_ORIGIN}/services` },
         { name: service.name, url: canonicalUrl }
       ];
       substantiveBodyHtml = renderServiceSubstantiveHtml(service);
     } else if (matchService) {
       isNotFound = true;
-      title = 'Service Not Found (404) | CSC DOST';
-      description = 'The requested citizen service could not be found. Please check our complete service directory on the CSC DOST portal.';
-      canonicalUrl = `${baseOrigin}/services`;
+      title = PRIVATE_NOINDEX_META.notfound.title;
+      description = PRIVATE_NOINDEX_META.notfound.description;
+      canonicalUrl = PRIVATE_NOINDEX_META.notfound.canonicalUrl;
+      robotsContent = PRIVATE_NOINDEX_META.notfound.robots;
       substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
     }
   } else {
-    const categoryMatch = urlPath.match(/^\/(jobs|education|schemes|services|tools|apply|track)(?:\/)?$/i);
-    if (categoryMatch) {
-      const catKey = categoryMatch[1].toLowerCase() as 'jobs' | 'education' | 'schemes' | 'services' | 'tools' | 'apply' | 'track';
-      const allSarkari = [...SARKARI_DATA, ...getCustomSarkariPosts()];
-      substantiveBodyHtml = renderCategorySubstantiveHtml(catKey, allSarkari, SERVICES_LIST);
-      canonicalUrl = `https://www.cscdost.com/${catKey}`;
-      ogType = 'website';
+    const toolsMatch = urlPath.match(/^\/tools(?:\/([^/?#]+))?$/i);
+    const trackMatch = urlPath.match(/^\/track(?:\/([^/?#]+))?$/i);
+    const categoryMatch = urlPath.match(/^\/(jobs|education|schemes|services|calculators)$/i);
 
-      if (catKey === 'jobs') {
-        title = 'Latest Government Jobs & Recruitment Bulletins (JKSSB, Army, SSC, RRB) | CSC DOST';
-        description = 'Browse verified government jobs, recruitment notifications, defense vacancies, and application deadlines across Jammu & Kashmir and India on CSC DOST.';
-        breadcrumbItems = [
-          { name: 'Home', url: 'https://www.cscdost.com/' },
-          { name: 'Government Jobs', url: canonicalUrl }
-        ];
-      } else if (catKey === 'education') {
-        title = 'University Admissions, Date Sheets & Examination Notices | CSC DOST';
-        description = 'Official exam date sheets, college admissions, UG/PG entrance updates for University of Kashmir, Cluster University Srinagar, and state higher education institutions.';
-        breadcrumbItems = [
-          { name: 'Home', url: 'https://www.cscdost.com/' },
-          { name: 'Higher Education', url: canonicalUrl }
-        ];
-      } else if (catKey === 'schemes') {
-        title = 'Government Welfare Schemes & Digital Services Guide | CSC DOST';
-        description = 'Comprehensive eligibility criteria and application guides for PM-KISAN, Ayushman Bharat PM-JAY Golden Card, PM Vishwakarma, and citizen welfare schemes.';
-        breadcrumbItems = [
-          { name: 'Home', url: 'https://www.cscdost.com/' },
-          { name: 'Welfare Schemes', url: canonicalUrl }
-        ];
-      } else if (catKey === 'services') {
-        title = 'Citizen E-Governance Services Directory | CSC DOST';
-        description = 'Direct access to assisted online services: PAN card registration, Aadhaar address correction, Ayushman Card, state certificates, and document printing.';
-        breadcrumbItems = [
-          { name: 'Home', url: 'https://www.cscdost.com/' },
-          { name: 'Services Directory', url: canonicalUrl }
-        ];
-      } else if (catKey === 'tools') {
-        title = 'Free Citizen Document Preparation Tools (100% Client-Side) | CSC DOST';
-        description = 'Resize recruitment photos, crop signatures, calculate age against benchmark cutoff dates, and compress government PDFs securely in your browser.';
-        breadcrumbItems = [
-          { name: 'Home', url: 'https://www.cscdost.com/' },
-          { name: 'Document Tools', url: canonicalUrl }
-        ];
-      } else if (catKey === 'apply') {
-        title = 'Assisted Online Application Counter | CSC DOST';
-        description = 'Submit an assisted application request to our authorized CSC Village Level Entrepreneur desk in Sangran Qazigund, Anantnag for error-free form submission.';
-        breadcrumbItems = [
-          { name: 'Home', url: 'https://www.cscdost.com/' },
-          { name: 'Assisted Application', url: canonicalUrl }
-        ];
-      } else if (catKey === 'track') {
-        title = 'Track Application Status | CSC DOST';
-        description = 'Track your assisted application, document status, and payment receipts using your unique token ID.';
-        breadcrumbItems = [
-          { name: 'Home', url: 'https://www.cscdost.com/' },
-          { name: 'Track Application', url: canonicalUrl }
-        ];
+    if (toolsMatch) {
+      const allSarkari = [...SARKARI_DATA, ...getCustomSarkariPosts()];
+      const toolSlug = toolsMatch[1] ? decodeURIComponent(toolsMatch[1]) : null;
+      if (toolSlug) {
+        const matchedTool = TOOLS_LIST.find((t) => t.id === toolSlug);
+        if (matchedTool) {
+          title = `${matchedTool.name} – Document Tools | CSC DOST`;
+          description = matchedTool.shortDescription;
+          canonicalUrl = `${SITE_ORIGIN}/tools/${matchedTool.id}`;
+          robotsContent = 'index, follow';
+          breadcrumbItems = [
+            { name: 'Home', url: `${SITE_ORIGIN}/` },
+            { name: 'Document Tools', url: `${SITE_ORIGIN}/tools` },
+            { name: matchedTool.name, url: canonicalUrl }
+          ];
+          substantiveBodyHtml = renderCategorySubstantiveHtml('tools', allSarkari, SERVICES_LIST);
+        } else {
+          isNotFound = true;
+          title = PRIVATE_NOINDEX_META.notfound.title;
+          description = PRIVATE_NOINDEX_META.notfound.description;
+          canonicalUrl = PRIVATE_NOINDEX_META.notfound.canonicalUrl;
+          robotsContent = PRIVATE_NOINDEX_META.notfound.robots;
+          substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
+        }
+      } else {
+        const meta = getCategorySeoMeta('tools');
+        title = meta.title;
+        description = meta.description;
+        canonicalUrl = meta.canonicalUrl;
+        robotsContent = meta.robots;
+        breadcrumbItems = meta.breadcrumbs || [];
+        substantiveBodyHtml = renderCategorySubstantiveHtml('tools', allSarkari, SERVICES_LIST);
       }
+    } else if (urlPath === '/apply') {
+      title = PRIVATE_NOINDEX_META.apply.title;
+      description = PRIVATE_NOINDEX_META.apply.description;
+      canonicalUrl = PRIVATE_NOINDEX_META.apply.canonicalUrl;
+      robotsContent = PRIVATE_NOINDEX_META.apply.robots;
+      substantiveBodyHtml = renderCategorySubstantiveHtml('apply', [], []);
+    } else if (trackMatch) {
+      title = PRIVATE_NOINDEX_META.track.title;
+      description = PRIVATE_NOINDEX_META.track.description;
+      canonicalUrl = PRIVATE_NOINDEX_META.track.canonicalUrl;
+      robotsContent = PRIVATE_NOINDEX_META.track.robots;
+      substantiveBodyHtml = renderCategorySubstantiveHtml('track', [], []);
+    } else if (categoryMatch) {
+      const catKey = categoryMatch[1].toLowerCase() as CategorySlug;
+      const meta = getCategorySeoMeta(catKey);
+      const allSarkari = [...SARKARI_DATA, ...getCustomSarkariPosts()];
+      title = meta.title;
+      description = meta.description;
+      canonicalUrl = meta.canonicalUrl;
+      robotsContent = meta.robots;
+      breadcrumbItems = meta.breadcrumbs || [];
+      substantiveBodyHtml = renderCategorySubstantiveHtml(catKey, allSarkari, SERVICES_LIST);
     } else if (urlPath === '/') {
       const allSarkari = [...SARKARI_DATA, ...getCustomSarkariPosts()];
       substantiveBodyHtml = renderHomepageSubstantiveHtml(allSarkari, SERVICES_LIST);
-    } else if (!legalMatch) {
-      // Unrecognized route: return 404
+    } else {
       isNotFound = true;
-      title = 'Page Not Found (404) | CSC DOST';
-      description = 'The requested page or document could not be found on CSC DOST. Please check the URL or return to our homepage for verified recruitment and citizen services.';
-      canonicalUrl = `${baseOrigin}/`;
+      title = PRIVATE_NOINDEX_META.notfound.title;
+      description = PRIVATE_NOINDEX_META.notfound.description;
+      canonicalUrl = PRIVATE_NOINDEX_META.notfound.canonicalUrl;
+      robotsContent = PRIVATE_NOINDEX_META.notfound.robots;
       substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
     }
   }
@@ -4401,73 +4428,81 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
   let html = rawHtml;
 
   // Replace <title>
-  html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${safeTitle}</title>`);
-  
+  html = html.replace(/<title>[\s\S]*?<\/title>/i, () => `<title>${safeTitle}</title>`);
+
   // Replace <meta name="title">
-  html = html.replace(/<meta\s+name=["']title["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta name="title" content="${safeAttrTitle}" />`);
-  
+  html = html.replace(/<meta\s+name=["']title["']\s+content=["'][\s\S]*?["']\s*\/?>/i, () => `<meta name="title" content="${safeAttrTitle}" />`);
+
   // Replace <meta name="description">
-  html = html.replace(/<meta\s+name=["']description["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta name="description" content="${safeAttrDesc}" />`);
-  
+  html = html.replace(/<meta\s+name=["']description["']\s+content=["'][\s\S]*?["']\s*\/?>/i, () => `<meta name="description" content="${safeAttrDesc}" />`);
+
+  // Replace <meta name="robots">
+  if (/<meta\s+name=["']robots["']\s+content=["'][\s\S]*?["']\s*\/?>/i.test(html)) {
+    html = html.replace(/<meta\s+name=["']robots["']\s+content=["'][\s\S]*?["']\s*\/?>/i, () => `<meta name="robots" content="${robotsContent}" />`);
+  } else {
+    html = html.replace(/<\/head>/i, () => `    <meta name="robots" content="${robotsContent}" />\n  </head>`);
+  }
+
   // Replace <link rel="canonical">
-  html = html.replace(/<link\s+rel=["']canonical["']\s+href=["'][\s\S]*?["']\s*\/?>/i, `<link rel="canonical" href="${safeCanonical}" />`);
+  html = html.replace(/<link\s+rel=["']canonical["']\s+href=["'][\s\S]*?["']\s*\/?>/i, () => `<link rel="canonical" href="${safeCanonical}" />`);
 
   // Replace og:type
-  html = html.replace(/<meta\s+property=["']og:type["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta property="og:type" content="${ogType}" />`);
+  html = html.replace(/<meta\s+property=["']og:type["']\s+content=["'][\s\S]*?["']\s*\/?>/i, () => `<meta property="og:type" content="${ogType}" />`);
 
   // Replace og:url
-  html = html.replace(/<meta\s+property=["']og:url["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta property="og:url" content="${safeCanonical}" />`);
+  html = html.replace(/<meta\s+property=["']og:url["']\s+content=["'][\s\S]*?["']\s*\/?>/i, () => `<meta property="og:url" content="${safeCanonical}" />`);
 
   // Replace og:title
-  html = html.replace(/<meta\s+property=["']og:title["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta property="og:title" content="${safeAttrTitle}" />`);
+  html = html.replace(/<meta\s+property=["']og:title["']\s+content=["'][\s\S]*?["']\s*\/?>/i, () => `<meta property="og:title" content="${safeAttrTitle}" />`);
 
   // Replace og:description
-  html = html.replace(/<meta\s+property=["']og:description["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta property="og:description" content="${safeAttrDesc}" />`);
+  html = html.replace(/<meta\s+property=["']og:description["']\s+content=["'][\s\S]*?["']\s*\/?>/i, () => `<meta property="og:description" content="${safeAttrDesc}" />`);
 
   // Replace og:image & og:image:secure_url & og:image:alt
-  html = html.replace(/<meta\s+property=["']og:image["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta property="og:image" content="${safeOgImage}" />`);
-  html = html.replace(/<meta\s+property=["']og:image:secure_url["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta property="og:image:secure_url" content="${safeOgImage}" />`);
-  html = html.replace(/<meta\s+property=["']og:image:alt["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta property="og:image:alt" content="${safeAttrTitle}" />`);
+  html = html.replace(/<meta\s+property=["']og:image["']\s+content=["'][\s\S]*?["']\s*\/?>/i, () => `<meta property="og:image" content="${safeOgImage}" />`);
+  html = html.replace(/<meta\s+property=["']og:image:secure_url["']\s+content=["'][\s\S]*?["']\s*\/?>/i, () => `<meta property="og:image:secure_url" content="${safeOgImage}" />`);
+  html = html.replace(/<meta\s+property=["']og:image:alt["']\s+content=["'][\s\S]*?["']\s*\/?>/i, () => `<meta property="og:image:alt" content="${safeAttrTitle}" />`);
 
   // Replace twitter:card
-  html = html.replace(/<meta\s+name=["']twitter:card["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta name="twitter:card" content="summary_large_image" />`);
+  html = html.replace(/<meta\s+name=["']twitter:card["']\s+content=["'][\s\S]*?["']\s*\/?>/i, () => `<meta name="twitter:card" content="summary_large_image" />`);
 
   // Replace twitter:title
-  html = html.replace(/<meta\s+name=["']twitter:title["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta name="twitter:title" content="${safeAttrTitle}" />`);
+  html = html.replace(/<meta\s+name=["']twitter:title["']\s+content=["'][\s\S]*?["']\s*\/?>/i, () => `<meta name="twitter:title" content="${safeAttrTitle}" />`);
 
   // Replace twitter:description
-  html = html.replace(/<meta\s+name=["']twitter:description["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta name="twitter:description" content="${safeAttrDesc}" />`);
+  html = html.replace(/<meta\s+name=["']twitter:description["']\s+content=["'][\s\S]*?["']\s*\/?>/i, () => `<meta name="twitter:description" content="${safeAttrDesc}" />`);
 
   // Replace twitter:image & twitter:image:alt
-  html = html.replace(/<meta\s+name=["']twitter:image["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta name="twitter:image" content="${safeOgImage}" />`);
-  html = html.replace(/<meta\s+name=["']twitter:image:alt["']\s+content=["'][\s\S]*?["']\s*\/?>/i, `<meta name="twitter:image:alt" content="${safeAttrTitle}" />`);
+  html = html.replace(/<meta\s+name=["']twitter:image["']\s+content=["'][\s\S]*?["']\s*\/?>/i, () => `<meta name="twitter:image" content="${safeOgImage}" />`);
+  html = html.replace(/<meta\s+name=["']twitter:image:alt["']\s+content=["'][\s\S]*?["']\s*\/?>/i, () => `<meta name="twitter:image:alt" content="${safeAttrTitle}" />`);
 
   // If article, inject article JSON-LD before </head>
   if (ogType === 'article') {
-    const articleLd = `
-    <!-- Dynamic Post Article Structured Data -->
-    <script type="application/ld+json">
-    {
+    const articleLd = {
       "@context": "https://schema.org",
       "@type": "NewsArticle",
-      "headline": "${safeAttrTitle}",
-      "description": "${safeAttrDesc}",
-      "image": ["${safeOgImage}"],
-      "datePublished": "${articlePublishedDate}",
-      "dateModified": "${articlePublishedDate}",
-      "mainEntityOfPage": "${safeCanonical}",
+      "headline": title,
+      "description": description,
+      "image": [ogImage],
+      "datePublished": articlePublishedDate,
+      "dateModified": articlePublishedDate,
+      "mainEntityOfPage": canonicalUrl,
       "publisher": {
         "@type": "Organization",
         "name": "CSC DOST",
         "logo": {
           "@type": "ImageObject",
-          "url": "https://www.cscdost.com/favicon.png"
+          "url": `${SITE_ORIGIN}/favicon.png`
         }
       }
-    }
+    };
+    const articleScript = `
+    <!-- Dynamic Post Article Structured Data -->
+    <script type="application/ld+json">
+${JSON.stringify(articleLd, null, 2)}
     </script>
   </head>`;
-    html = html.replace(/<\/head>/i, articleLd);
+    html = html.replace(/<\/head>/i, () => articleScript);
   }
 
   // Inject BreadcrumbList JSON-LD if breadcrumbs exist
@@ -4488,17 +4523,17 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
 ${JSON.stringify(breadcrumbLd, null, 2)}
     </script>
   </head>`;
-    html = html.replace(/<\/head>/i, breadcrumbScript);
+    html = html.replace(/<\/head>/i, () => breadcrumbScript);
   }
 
   if (isNotFound && !substantiveBodyHtml) {
     substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
   }
 
-  // Preserve <div id="root"></div> for regular routes so the complete interactive React application mounts cleanly.
-  // Only inject fallback HTML if this is a genuine 404 not found page.
-  if (isNotFound && substantiveBodyHtml) {
-    html = html.replace('<div id="root"></div>', `<div id="root">${substantiveBodyHtml}</div>`);
+  // Inject server-rendered semantic HTML into <div id="root"></div> for crawlers & initial HTML visibility;
+  // React createRoot replaces this container on client hydration.
+  if (substantiveBodyHtml) {
+    html = html.replace(/<div\s+id=["']root["']\s*>\s*<\/div>/i, () => `<div id="root">${substantiveBodyHtml}</div>`);
   }
 
   return { html, isNotFound };
@@ -4507,24 +4542,23 @@ ${JSON.stringify(breadcrumbLd, null, 2)}
 // Dynamically serve up-to-date sitemap.xml with correct MIME headers & canonical URLs
 app.get('/sitemap.xml', (req: Request, res: Response) => {
   try {
-    const BASE_URL = 'https://www.cscdost.com';
-    const TODAY = new Date().toISOString().split('T')[0];
+    const BASE_URL = SITE_ORIGIN;
+    const VERIFIED_STATIC_DATE = '2026-11-14';
 
     const staticPages = [
-      { loc: '/', priority: '1.0', changefreq: 'daily' },
-      { loc: '/jobs', priority: '0.9', changefreq: 'daily' },
-      { loc: '/education', priority: '0.9', changefreq: 'daily' },
-      { loc: '/schemes', priority: '0.9', changefreq: 'weekly' },
-      { loc: '/services', priority: '0.9', changefreq: 'weekly' },
-      { loc: '/tools', priority: '0.8', changefreq: 'monthly' },
-      { loc: '/apply', priority: '0.7', changefreq: 'monthly' },
-      { loc: '/track', priority: '0.7', changefreq: 'monthly' },
-      { loc: '/about-us', priority: '0.8', changefreq: 'monthly' },
-      { loc: '/contact-us', priority: '0.8', changefreq: 'monthly' },
-      { loc: '/privacy-policy', priority: '0.7', changefreq: 'monthly' },
-      { loc: '/terms-of-service', priority: '0.7', changefreq: 'monthly' },
-      { loc: '/disclaimer', priority: '0.7', changefreq: 'monthly' },
-      { loc: '/refund-policy', priority: '0.7', changefreq: 'monthly' }
+      { loc: '/', changefreq: 'daily', priority: '1.0' },
+      { loc: '/jobs', changefreq: 'daily', priority: '0.9' },
+      { loc: '/education', changefreq: 'daily', priority: '0.9' },
+      { loc: '/schemes', changefreq: 'weekly', priority: '0.9' },
+      { loc: '/services', changefreq: 'weekly', priority: '0.9' },
+      { loc: '/tools', changefreq: 'monthly', priority: '0.9' },
+      { loc: '/calculators', changefreq: 'monthly', priority: '0.9' },
+      { loc: '/about-us', changefreq: 'monthly', priority: '0.7' },
+      { loc: '/contact-us', changefreq: 'monthly', priority: '0.7' },
+      { loc: '/privacy-policy', changefreq: 'monthly', priority: '0.5' },
+      { loc: '/terms-of-service', changefreq: 'monthly', priority: '0.5' },
+      { loc: '/disclaimer', changefreq: 'monthly', priority: '0.5' },
+      { loc: '/refund-policy', changefreq: 'monthly', priority: '0.5' }
     ];
 
     const allSarkari = [...SARKARI_DATA, ...getCustomSarkariPosts()];
@@ -4539,7 +4573,7 @@ app.get('/sitemap.xml', (req: Request, res: Response) => {
     for (const p of staticPages) {
       xml += '  <url>\n';
       xml += `    <loc>${BASE_URL}${p.loc}</loc>\n`;
-      xml += `    <lastmod>${TODAY}</lastmod>\n`;
+      xml += `    <lastmod>${VERIFIED_STATIC_DATE}</lastmod>\n`;
       xml += `    <changefreq>${p.changefreq}</changefreq>\n`;
       xml += `    <priority>${p.priority}</priority>\n`;
       xml += '  </url>\n';
@@ -4548,7 +4582,7 @@ app.get('/sitemap.xml', (req: Request, res: Response) => {
     for (const post of allSarkari) {
       if (!post.id || seenPostIds.has(post.id)) continue;
       seenPostIds.add(post.id);
-      let safeDate = TODAY;
+      let safeDate = VERIFIED_STATIC_DATE;
       if (post.postDate && /^\d{2}\/\d{2}\/\d{4}$/.test(post.postDate)) {
         const [d, m, y] = post.postDate.split('/');
         safeDate = `${y}-${m}-${d}`;
@@ -4567,7 +4601,7 @@ app.get('/sitemap.xml', (req: Request, res: Response) => {
     for (const s of SERVICES_LIST) {
       xml += '  <url>\n';
       xml += `    <loc>${BASE_URL}/service/${encodeURIComponent(s.id)}</loc>\n`;
-      xml += `    <lastmod>${TODAY}</lastmod>\n`;
+      xml += `    <lastmod>${VERIFIED_STATIC_DATE}</lastmod>\n`;
       xml += '    <changefreq>monthly</changefreq>\n';
       xml += '    <priority>0.8</priority>\n';
       xml += '  </url>\n';

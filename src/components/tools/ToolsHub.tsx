@@ -54,17 +54,23 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
     }
   }, [initialToolId]);
 
-  // Sync with browser URL / hash
+  // Sync with browser clean path URL
   const selectTool = (toolId: string | null) => {
     setActiveToolId(toolId);
     if (onSelectTool) onSelectTool(toolId);
 
-    if (toolId) {
-      window.location.hash = `#tools/${toolId}`;
-    } else {
-      window.location.hash = '#tools';
+    const targetPath = toolId ? `/tools/${toolId}` : '/tools';
+    try {
+      if (window.location.pathname !== targetPath) {
+        window.history.pushState(null, '', targetPath);
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      }
+    } catch {
+      window.location.href = targetPath;
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {}
   };
 
   const filteredTools = useMemo(() => {
@@ -155,18 +161,37 @@ export default function ToolsHub({ initialToolId, onSelectTool }: ToolsHubProps)
       {/* 1. HERO & SEARCH */}
       {/* ================================================================ */}
       <section className="text-center max-w-4xl mx-auto px-4 py-4 md:p-0 bg-white md:bg-transparent border-b border-[#E2E8F0] md:border-0 space-y-3">
-        
+        <nav aria-label="Breadcrumb" className="flex items-center justify-center gap-1.5 text-xs text-[#64748B]">
+          <a
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              try {
+                window.history.pushState(null, '', '/');
+                window.dispatchEvent(new PopStateEvent('popstate'));
+              } catch {
+                window.location.href = '/';
+              }
+            }}
+            className="text-[#0759E8] font-medium hover:underline"
+          >
+            Home
+          </a>
+          <span aria-hidden="true">/</span>
+          <span className="text-[#0B1F49] font-semibold">Document Tools</span>
+        </nav>
+
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#EAF4FF] border border-[#BFDBFE] rounded-full text-xs font-bold text-[#0759E8]">
           <Zap className="w-3.5 h-3.5 text-[#0759E8]" />
           <span>100% Client-Side Processing • No Sign-Up Needed</span>
         </div>
 
         <h1 className="text-2xl sm:text-5xl font-black text-[#0B1F49] tracking-tight leading-tight">
-          Free Online Tools — Fast, Simple &amp; Secure
+          Document Tools — Fast, Simple &amp; Secure
         </h1>
 
         <p className="text-xs sm:text-base text-[#64748B] max-w-2xl mx-auto leading-relaxed">
-          Compress images, create PDFs, resize photos, remove backgrounds and manage documents — all in one place.
+          Compress images, create PDFs, resize passport photos and signatures, and clean document files in your browser.
         </p>
 
         {/* Universal Tool Search Input */}

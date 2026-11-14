@@ -15,9 +15,10 @@ import {
 
 interface CitizenToolsDeskProps {
   onApplyService?: (serviceName: string) => void;
+  isStandalonePage?: boolean;
 }
 
-export default function CitizenToolsDesk({ onApplyService }: CitizenToolsDeskProps) {
+export default function CitizenToolsDesk({ onApplyService, isStandalonePage = false }: CitizenToolsDeskProps) {
   const [activeTab, setActiveTab] = useState<'age' | 'photo' | 'fee'>('age');
 
   // -------------------------------------------------------------
@@ -240,11 +241,17 @@ export default function CitizenToolsDesk({ onApplyService }: CitizenToolsDeskPro
             <Sparkles className="w-3.5 h-3.5" />
             <span>Interactive Citizen Utility Suite</span>
           </div>
-          <h2 id="tools-heading" className="text-xl sm:text-2xl font-extrabold text-[#102A56] tracking-tight">
-            Digital Tools &amp; Citizen Calculators
-          </h2>
+          {isStandalonePage ? (
+            <h1 id="tools-heading" className="text-xl sm:text-3xl font-extrabold text-[#102A56] tracking-tight">
+              Citizen Calculators
+            </h1>
+          ) : (
+            <h2 id="tools-heading" className="text-xl sm:text-2xl font-extrabold text-[#102A56] tracking-tight">
+              Citizen Calculators
+            </h2>
+          )}
           <p className="text-xs sm:text-sm text-[#64748B] mt-1.5">
-            Instant calculators to verify age eligibility, file upload compliance, and regulated CSC service fees.
+            Instant calculators to verify recruitment age eligibility, photo and signature upload rules, and regulated CSC service fees.
           </p>
         </div>
 

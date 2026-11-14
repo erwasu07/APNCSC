@@ -24,6 +24,7 @@ import {
   X,
 } from 'lucide-react';
 import { SARKARI_DATA, SarkariItem } from '../data/sarkariData';
+import { computeSarkariStatus } from '../utils/sarkariStatus';
 import { SERVICES_LIST, ServiceItem } from '../servicesData';
 import { GUIDE_ARTICLES } from './GuidesKnowledgeHub';
 import { TOOLS_LIST } from './tools/toolsData';
@@ -172,7 +173,7 @@ export default function PortalHomepage({
       shortDesc: 'Age & fee eligibility calculator',
       icon: Calculator,
       tintBg: 'bg-amber-50 text-[#D97706] border-amber-100/80',
-      path: '/tools#calculators',
+      path: '/calculators',
     },
     // Row 3
     {
@@ -181,7 +182,7 @@ export default function PortalHomepage({
       shortDesc: 'Browse by department & service type',
       icon: LayoutGrid,
       tintBg: 'bg-fuchsia-50 text-[#9333EA] border-fuchsia-100/80',
-      path: '/services#services-catalogue',
+      path: '/services',
     },
     {
       id: 'guides',
@@ -189,7 +190,7 @@ export default function PortalHomepage({
       shortDesc: 'Step-by-step application walkthroughs',
       icon: BookOpen,
       tintBg: 'bg-rose-50 text-[#E11D48] border-rose-100/80',
-      path: '/schemes#knowledge-hub',
+      path: '/schemes',
     },
     {
       id: 'help-faqs',
@@ -226,24 +227,56 @@ export default function PortalHomepage({
     }
   };
 
-  // Up to 2 recent published notices per tab without duplicates
+  // Up to 2 recent verified published notices per tab without duplicates (active open first)
   const recruitmentNotices = useMemo(() => {
     const isRecruitment = (item: SarkariItem) =>
+      item.noticeType === 'recruitment' ||
+      item.postType === 'Job' ||
       item.category === 'jkssb' ||
       item.category === 'banking_jobs' ||
       item.category === 'army_jobs' ||
       item.category === 'ssc_jobs' ||
-      item.category === 'rrb_jobs';
-    return SARKARI_DATA.filter(isRecruitment).slice(0, 2);
+      item.category === 'rrb_jobs' ||
+      item.category === 'jobs';
+
+    return SARKARI_DATA.filter((item) => {
+      if (!isRecruitment(item)) return false;
+      const st = computeSarkariStatus(item);
+      return st.verificationStatus !== 'needs_verification' && !item.isCancelled;
+    })
+      .sort((a, b) => {
+        const stA = computeSarkariStatus(a);
+        const stB = computeSarkariStatus(b);
+        if (stA.canApplyOnline !== stB.canApplyOnline) return stA.canApplyOnline ? -1 : 1;
+        return 0;
+      })
+      .slice(0, 2);
   }, []);
 
   const educationNotices = useMemo(() => {
     const isEducation = (item: SarkariItem) =>
-      item.category === 'cluster_univ' ||
-      item.category === 'exam_forms' ||
-      item.category === 'admissions' ||
-      item.category === 'nta';
-    return SARKARI_DATA.filter(isEducation).slice(0, 2);
+      item.noticeType !== 'recruitment' &&
+      item.postType !== 'Job' &&
+      (item.category === 'cluster_univ' ||
+        item.category === 'exam_forms' ||
+        item.category === 'admissions' ||
+        item.category === 'nta' ||
+        item.noticeType === 'admission' ||
+        item.noticeType === 'exam_form' ||
+        item.noticeType === 'date_sheet');
+
+    return SARKARI_DATA.filter((item) => {
+      if (!isEducation(item)) return false;
+      const st = computeSarkariStatus(item);
+      return st.verificationStatus !== 'needs_verification' && !item.isCancelled;
+    })
+      .sort((a, b) => {
+        const stA = computeSarkariStatus(a);
+        const stB = computeSarkariStatus(b);
+        if (stA.canApplyOnline !== stB.canApplyOnline) return stA.canApplyOnline ? -1 : 1;
+        return 0;
+      })
+      .slice(0, 2);
   }, []);
 
   const schemeNotices = useMemo(() => {
@@ -289,12 +322,15 @@ export default function PortalHomepage({
         s.category.toLowerCase().includes(q)
     ).slice(0, 5);
 
-    const matchedJobs = SARKARI_DATA.filter(
-      (j) =>
+    const matchedJobs = SARKARI_DATA.filter((j) => {
+      const st = computeSarkariStatus(j);
+      if (st.verificationStatus === 'needs_verification' || j.isCancelled) return false;
+      return (
         j.title.toLowerCase().includes(q) ||
         j.shortInfo.toLowerCase().includes(q) ||
         (j.eligibility && j.eligibility.toLowerCase().includes(q))
-    ).slice(0, 5);
+      );
+    }).slice(0, 5);
 
     const matchedGuides = GUIDE_ARTICLES.filter(
       (g) =>
@@ -331,13 +367,13 @@ export default function PortalHomepage({
           <div className="space-y-1">
             <div className="flex items-center gap-1.5 text-[10.5px] sm:text-[11px] font-bold uppercase tracking-wider text-blue-200">
               <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" aria-hidden="true" />
-              <span>Independent Citizen Assistance</span>
+              <span>CSC DOST · Independent Citizen Portal</span>
             </div>
             <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-white leading-tight">
-              Find what you need
+              Jobs, Admissions &amp; Citizen Services
             </h1>
             <p className="text-xs sm:text-sm text-blue-100 font-normal leading-snug">
-              Jobs, admissions, schemes and online services in one place.
+              Explore J&amp;K jobs, admissions, government schemes, CSC e-services, tools and calculators.
             </p>
           </div>
 
@@ -497,15 +533,18 @@ export default function PortalHomepage({
         </div>
 
         {/* 3x3 GRID ON MOBILE AND DESKTOP */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
+        <nav aria-label="CSC DOST Categories" className="grid grid-cols-3 gap-2 sm:gap-2.5">
           {exploreShortcuts.map((item) => {
             const Icon = item.icon;
             return (
-              <button
+              <a
                 key={item.id}
-                type="button"
-                onClick={() => handleNavigate(item.path)}
-                className="group p-2 sm:p-3 bg-white border border-[#E2E8F0] hover:border-[#1E56C8] rounded-xl text-center shadow-xs hover:shadow-sm transition-all flex flex-col md:flex-row items-center md:text-left justify-center md:justify-start gap-1.5 md:gap-3 cursor-pointer min-h-[82px] sm:min-h-[88px]"
+                href={item.path}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleNavigate(item.path);
+                }}
+                className="group p-2 sm:p-3 bg-white border border-[#E2E8F0] hover:border-[#1E56C8] rounded-xl text-center shadow-xs hover:shadow-sm transition-all flex flex-col md:flex-row items-center md:text-left justify-center md:justify-start gap-1.5 md:gap-3 cursor-pointer min-h-[82px] sm:min-h-[88px] no-underline"
               >
                 {/* Small Tinted Icon */}
                 <span
@@ -529,10 +568,10 @@ export default function PortalHomepage({
                 <span className="hidden md:inline text-slate-300 group-hover:text-[#1E56C8] group-hover:translate-x-0.5 transition-all text-xs shrink-0 pr-1">
                   →
                 </span>
-              </button>
+              </a>
             );
           })}
-        </div>
+        </nav>
       </section>
 
       {/* ==================================================================== */}
@@ -609,11 +648,14 @@ export default function PortalHomepage({
               <>
                 {recruitmentNotices.length > 0 ? (
                   recruitmentNotices.map((item) => (
-                    <button
+                    <a
                       key={item.id}
-                      type="button"
-                      onClick={() => onOpenJob(item)}
-                      className="group w-full py-2.5 text-left flex items-center justify-between gap-2 hover:bg-slate-50 px-1 rounded-lg transition-colors cursor-pointer"
+                      href={`/post/${item.id}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onOpenJob(item);
+                      }}
+                      className="group w-full py-2.5 text-left flex items-center justify-between gap-2 hover:bg-slate-50 px-1 rounded-lg transition-colors cursor-pointer no-underline"
                     >
                       <div className="flex items-start gap-2.5 min-w-0">
                         <span className="w-7 h-7 rounded-lg bg-blue-50 text-[#1E56C8] flex items-center justify-center shrink-0 mt-0.5">
@@ -625,14 +667,15 @@ export default function PortalHomepage({
                           </div>
                           <div className="text-[11px] text-[#64748B] mt-0.5 line-clamp-1">
                             {getOrganisationLabel(item)}
-                            {item.lastDate && ` · Last Date: ${item.lastDate}`}
+                            {item.lastDate ? ` · ${item.lastDate}` : ''}
+                            {` · ${computeSarkariStatus(item).badgeLabel}`}
                           </div>
                         </div>
                       </div>
                       <span className="text-slate-400 group-hover:text-[#1E56C8] group-hover:translate-x-0.5 transition-all text-xs shrink-0 pl-1">
                         →
                       </span>
-                    </button>
+                    </a>
                   ))
                 ) : (
                   <div className="py-4 text-center text-xs text-slate-500">
@@ -640,14 +683,17 @@ export default function PortalHomepage({
                   </div>
                 )}
                 <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={() => handleNavigate('/jobs')}
+                  <a
+                    href="/jobs"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleNavigate('/jobs');
+                    }}
                     className="text-xs font-bold text-[#1E56C8] hover:underline inline-flex items-center gap-1 cursor-pointer"
                   >
                     <span>View all recruitment notices</span>
                     <span aria-hidden="true">→</span>
-                  </button>
+                  </a>
                 </div>
               </>
             )}
@@ -656,11 +702,14 @@ export default function PortalHomepage({
               <>
                 {educationNotices.length > 0 ? (
                   educationNotices.map((item) => (
-                    <button
+                    <a
                       key={item.id}
-                      type="button"
-                      onClick={() => onOpenJob(item)}
-                      className="group w-full py-2.5 text-left flex items-center justify-between gap-2 hover:bg-slate-50 px-1 rounded-lg transition-colors cursor-pointer"
+                      href={`/post/${item.id}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onOpenJob(item);
+                      }}
+                      className="group w-full py-2.5 text-left flex items-center justify-between gap-2 hover:bg-slate-50 px-1 rounded-lg transition-colors cursor-pointer no-underline"
                     >
                       <div className="flex items-start gap-2.5 min-w-0">
                         <span className="w-7 h-7 rounded-lg bg-purple-50 text-[#7C3AED] flex items-center justify-center shrink-0 mt-0.5">
@@ -672,14 +721,15 @@ export default function PortalHomepage({
                           </div>
                           <div className="text-[11px] text-[#64748B] mt-0.5 line-clamp-1">
                             {getOrganisationLabel(item)}
-                            {item.lastDate && ` · Date: ${item.lastDate}`}
+                            {item.lastDate ? ` · ${item.lastDate}` : ''}
+                            {` · ${computeSarkariStatus(item).badgeLabel}`}
                           </div>
                         </div>
                       </div>
                       <span className="text-slate-400 group-hover:text-[#7C3AED] group-hover:translate-x-0.5 transition-all text-xs shrink-0 pl-1">
                         →
                       </span>
-                    </button>
+                    </a>
                   ))
                 ) : (
                   <div className="py-4 text-center text-xs text-slate-500">
@@ -687,14 +737,17 @@ export default function PortalHomepage({
                   </div>
                 )}
                 <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={() => handleNavigate('/education')}
+                  <a
+                    href="/education"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleNavigate('/education');
+                    }}
                     className="text-xs font-bold text-[#1E56C8] hover:underline inline-flex items-center gap-1 cursor-pointer"
                   >
                     <span>View all education notices</span>
                     <span aria-hidden="true">→</span>
-                  </button>
+                  </a>
                 </div>
               </>
             )}
@@ -703,14 +756,15 @@ export default function PortalHomepage({
               <>
                 {schemeNotices.length > 0 ? (
                   schemeNotices.map((guide) => (
-                    <button
+                    <a
                       key={guide.id}
-                      type="button"
-                      onClick={() => {
+                      href="/schemes"
+                      onClick={(e) => {
+                        e.preventDefault();
                         if (onOpenGuide) onOpenGuide(guide.id);
                         else handleNavigate('/schemes');
                       }}
-                      className="group w-full py-2.5 text-left flex items-center justify-between gap-2 hover:bg-slate-50 px-1 rounded-lg transition-colors cursor-pointer"
+                      className="group w-full py-2.5 text-left flex items-center justify-between gap-2 hover:bg-slate-50 px-1 rounded-lg transition-colors cursor-pointer no-underline"
                     >
                       <div className="flex items-start gap-2.5 min-w-0">
                         <span className="w-7 h-7 rounded-lg bg-emerald-50 text-[#059669] flex items-center justify-center shrink-0 mt-0.5">
@@ -728,7 +782,7 @@ export default function PortalHomepage({
                       <span className="text-slate-400 group-hover:text-[#059669] group-hover:translate-x-0.5 transition-all text-xs shrink-0 pl-1">
                         →
                       </span>
-                    </button>
+                    </a>
                   ))
                 ) : (
                   <div className="py-4 text-center text-xs text-slate-500">
@@ -736,14 +790,17 @@ export default function PortalHomepage({
                   </div>
                 )}
                 <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={() => handleNavigate('/schemes')}
+                  <a
+                    href="/schemes"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleNavigate('/schemes');
+                    }}
                     className="text-xs font-bold text-[#1E56C8] hover:underline inline-flex items-center gap-1 cursor-pointer"
                   >
                     <span>View all government schemes</span>
                     <span aria-hidden="true">→</span>
-                  </button>
+                  </a>
                 </div>
               </>
             )}
@@ -775,11 +832,14 @@ export default function PortalHomepage({
             {popularServices.map((item) => {
               const Icon = item.icon;
               return (
-                <button
+                <a
                   key={item.id}
-                  type="button"
-                  onClick={() => onOpenService(item.service)}
-                  className="group w-full py-2.5 text-left flex items-center justify-between gap-2 hover:bg-slate-50 px-1 rounded-lg transition-colors cursor-pointer"
+                  href={`/service/${item.service.id}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onOpenService(item.service);
+                  }}
+                  className="group w-full py-2.5 text-left flex items-center justify-between gap-2 hover:bg-slate-50 px-1 rounded-lg transition-colors cursor-pointer no-underline"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span className="w-7 h-7 rounded-lg bg-slate-100 text-[#1E56C8] flex items-center justify-center shrink-0">
@@ -792,21 +852,24 @@ export default function PortalHomepage({
                   <span className="text-slate-400 group-hover:text-[#1E56C8] group-hover:translate-x-0.5 transition-all text-xs shrink-0 pl-1">
                     →
                   </span>
-                </button>
+                </a>
               );
             })}
           </div>
 
           {/* Footer Link: Browse all services */}
           <div className="pt-2">
-            <button
-              type="button"
-              onClick={() => handleNavigate('/services')}
+            <a
+              href="/services"
+              onClick={(e) => {
+                e.preventDefault();
+                handleNavigate('/services');
+              }}
               className="text-xs font-bold text-[#1E56C8] hover:underline inline-flex items-center gap-1 cursor-pointer"
             >
               <span>Browse all services</span>
               <span aria-hidden="true">→</span>
-            </button>
+            </a>
           </div>
         </section>
       </div>

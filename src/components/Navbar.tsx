@@ -12,8 +12,7 @@ import {
   Compass,
   ChevronRight,
   Bell,
-  MapPin,
-  ClipboardCheck,
+  Calculator,
 } from 'lucide-react';
 import { LegalTab } from './PrivacyPolicyModal';
 
@@ -62,74 +61,42 @@ export default function Navbar({
     };
   }, [mobileMenuOpen]);
 
-  const navigateToSection = (sectionId: string, urlPath?: string) => {
+  const navigateToPath = (urlPath: string) => {
     setMobileMenuOpen(false);
-
-    if (urlPath && window.location.pathname !== urlPath) {
-      window.history.pushState(null, '', urlPath);
-    }
-
-    if (
-      window.location.hash === '#tools' ||
-      window.location.hash.startsWith('#tools/') ||
-      window.location.hash.startsWith('#apply' ) ||
-      window.location.hash.startsWith('#track') ||
-      window.location.pathname.startsWith('/post/') ||
-      window.location.pathname.startsWith('/service/')
-    ) {
-      if (onHomeClick) onHomeClick();
-      window.location.hash = '';
-      setTimeout(() => {
-        const el = document.getElementById(sectionId);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 150);
-    } else {
-      const el = document.getElementById(sectionId);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    try {
+      if (window.location.pathname !== urlPath || window.location.hash) {
+        window.history.pushState(null, '', urlPath);
       }
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    } catch {
+      window.location.href = urlPath;
     }
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {}
   };
 
-  const handleOpenTools = () => {
-    setMobileMenuOpen(false);
-    if (window.location.pathname !== '/tools') {
-      window.history.pushState(null, '', '/tools');
-    }
-    window.location.hash = '#tools';
-  };
-
-  const handleTrackApplication = () => {
-    setMobileMenuOpen(false);
-    if (window.location.pathname !== '/track') {
-      window.history.pushState(null, '', '/track');
-    }
-    window.location.hash = '#track';
-  };
+  const handleOpenTools = () => navigateToPath('/tools');
+  const handleTrackApplication = () => navigateToPath('/track');
 
   const handleLogoClick = () => {
     setMobileMenuOpen(false);
-    if (window.location.pathname !== '/') {
-      window.history.pushState(null, '', '/');
-    }
+    try {
+      if (window.location.pathname !== '/' || window.location.hash) {
+        window.history.pushState(null, '', '/');
+      }
+    } catch {}
     if (onHomeClick) {
       onHomeClick();
     } else {
-      window.location.hash = '';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      try {
+        window.dispatchEvent(new PopStateEvent('popstate'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch {}
     }
   };
 
   const navItems = [
-    {
-      id: 'online-services',
-      href: '/services',
-      line1: 'Online',
-      line2: 'Services',
-      fullLabel: 'Online Services',
-      Icon: FileText,
-      onClick: () => navigateToSection('services', '/services'),
-    },
     {
       id: 'jobs-recruitment',
       href: '/jobs',
@@ -137,16 +104,7 @@ export default function Navbar({
       line2: 'Recruitment',
       fullLabel: 'Jobs & Recruitment',
       Icon: BriefcaseBusiness,
-      onClick: () => navigateToSection('recruitment-section', '/jobs'),
-    },
-    {
-      id: 'government-schemes',
-      href: '/schemes',
-      line1: 'Government',
-      line2: 'Schemes',
-      fullLabel: 'Government Schemes',
-      Icon: UsersRound,
-      onClick: () => navigateToSection('schemes-section', '/schemes'),
+      onClick: () => navigateToPath('/jobs'),
     },
     {
       id: 'education-admissions',
@@ -155,16 +113,43 @@ export default function Navbar({
       line2: 'Admissions',
       fullLabel: 'Education & Admissions',
       Icon: GraduationCap,
-      onClick: () => navigateToSection('education-resources', '/education'),
+      onClick: () => navigateToPath('/education'),
     },
     {
-      id: 'citizen-tools',
+      id: 'government-schemes',
+      href: '/schemes',
+      line1: 'Government',
+      line2: 'Schemes',
+      fullLabel: 'Government Schemes',
+      Icon: UsersRound,
+      onClick: () => navigateToPath('/schemes'),
+    },
+    {
+      id: 'csc-e-services',
+      href: '/services',
+      line1: 'CSC',
+      line2: 'E-Services',
+      fullLabel: 'CSC E-Services',
+      Icon: FileText,
+      onClick: () => navigateToPath('/services'),
+    },
+    {
+      id: 'document-tools',
       href: '/tools',
-      line1: 'Citizen',
+      line1: 'Document',
       line2: 'Tools',
-      fullLabel: 'Citizen Tools',
+      fullLabel: 'Document Tools',
       Icon: Wrench,
       onClick: handleOpenTools,
+    },
+    {
+      id: 'citizen-calculators',
+      href: '/calculators',
+      line1: 'Citizen',
+      line2: 'Calculators',
+      fullLabel: 'Citizen Calculators',
+      Icon: Calculator,
+      onClick: () => navigateToPath('/calculators'),
     },
   ];
 
@@ -255,15 +240,18 @@ export default function Navbar({
         <div className="relative z-10 w-full h-full grid grid-cols-[20.2%_60.1%_19.7%] items-center">
           {/* SECTION 1: LEFT — WHITE BRANDING SECTION */}
           <div className="h-full flex items-center pl-3.5 xl:pl-6 2xl:pl-8 pr-6">
-            <button
-              type="button"
-              onClick={handleLogoClick}
-              aria-label={`${cafeName || 'CSC DOST'} - Go to Home`}
-              className="flex items-center gap-2.5 xl:gap-3 2xl:gap-3.5 text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#175CEE] rounded-xl cursor-pointer"
+            <a
+              href="/"
+              onClick={(e) => {
+                e.preventDefault();
+                handleLogoClick();
+              }}
+              aria-label={`${cafeName || 'CSC DOST'} - Home`}
+              className="flex items-center gap-2.5 xl:gap-3 2xl:gap-3.5 text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#175CEE] rounded-xl cursor-pointer no-underline"
             >
               <img
                 src="/csc-dost-header-logo.png"
-                alt="CSC DOST Logo"
+                alt=""
                 className="w-[50px] h-[50px] xl:w-[58px] xl:h-[58px] 2xl:w-[70px] 2xl:h-[70px] rounded-full shrink-0 object-contain"
               />
               <div className="flex flex-col justify-center">
@@ -275,14 +263,14 @@ export default function Navbar({
                   Citizen Service Portal
                 </span>
               </div>
-            </button>
+            </a>
           </div>
 
           {/* SECTION 2: CENTER — BLUE GRADIENT NAVIGATION */}
-          <div className="h-full flex items-center justify-center gap-2 xl:gap-3.5 2xl:gap-5 pl-2 xl:pl-3.5 pr-2.5 xl:pr-4">
+          <div className="h-full flex items-center justify-center gap-1 xl:gap-2 2xl:gap-3 pl-2 xl:pl-3 pr-2 xl:pr-3">
             <nav
               aria-label="Main Navigation"
-              className="flex items-center gap-1.5 xl:gap-3 2xl:gap-4 shrink-0"
+              className="flex items-center gap-0.5 xl:gap-1.5 2xl:gap-2.5 shrink-0"
             >
               {navItems.map((item, idx) => {
                 const IconComponent = item.Icon;
@@ -294,13 +282,13 @@ export default function Navbar({
                         e.preventDefault();
                         item.onClick();
                       }}
-                      className="group flex items-center gap-1.5 xl:gap-2.5 px-2 xl:px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 no-underline"
+                      className="group flex items-center gap-1.5 xl:gap-2 px-1.5 xl:px-2.5 py-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 no-underline"
                     >
                       <IconComponent
-                        className="w-[20px] h-[20px] xl:w-[23px] xl:h-[23px] 2xl:w-[27px] 2xl:h-[27px] text-white stroke-[1.9] shrink-0 transition-transform duration-150 group-hover:scale-105"
+                        className="w-[17px] h-[17px] xl:w-[20px] xl:h-[20px] 2xl:w-[24px] 2xl:h-[24px] text-white stroke-[1.9] shrink-0 transition-transform duration-150 group-hover:scale-105"
                         aria-hidden="true"
                       />
-                      <span className="text-white text-[11.5px] xl:text-[13px] 2xl:text-[15px] font-medium leading-[1.24] text-left whitespace-nowrap">
+                      <span className="text-white text-[10.5px] xl:text-[12px] 2xl:text-[14px] font-medium leading-[1.2] text-left whitespace-nowrap">
                         <span className="block">{item.line1}</span>
                         <span className="block">{item.line2}</span>
                       </span>
@@ -362,16 +350,19 @@ export default function Navbar({
             )}
           </div>
 
-          {/* Centered Brand: CSC DOST Logo + Wordmark + Citizen Service Portal */}
-          <button
-            type="button"
-            onClick={handleLogoClick}
-            aria-label={`${cafeName || 'CSC DOST'} - Go to Home`}
-            className="flex items-center justify-center gap-2 text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#175CEE] rounded-xl cursor-pointer"
+          {/* Centered Brand: CSC DOST + Citizen Service Portal */}
+          <a
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              handleLogoClick();
+            }}
+            aria-label={`${cafeName || 'CSC DOST'} - Home`}
+            className="flex items-center justify-center gap-2 text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#175CEE] rounded-xl cursor-pointer no-underline"
           >
             <img
               src="/csc-dost-header-logo.png"
-              alt="CSC DOST Logo"
+              alt=""
               className="w-9 h-9 rounded-full shrink-0 object-contain drop-shadow-2xs"
             />
             <div className="flex flex-col items-start justify-center leading-none text-left">
@@ -383,7 +374,7 @@ export default function Navbar({
                 Citizen Service Portal
               </span>
             </div>
-          </button>
+          </a>
 
           {/* Right Slot: Balanced spacer */}
           <div className="w-10 flex items-center justify-end" aria-hidden="true" />
@@ -414,7 +405,7 @@ export default function Navbar({
                 <div className="flex items-center gap-2.5">
                   <img
                     src="/csc-dost-header-logo.png"
-                    alt="CSC DOST Logo"
+                    alt=""
                     className="w-9 h-9 rounded-full shrink-0 object-contain"
                   />
                   <div>
@@ -467,19 +458,22 @@ export default function Navbar({
                 )}
 
                 {/* 1. Home */}
-                <button
-                  type="button"
-                  onClick={handleLogoClick}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[14px] font-medium text-white hover:bg-white/12 active:bg-white/20 transition-colors cursor-pointer text-left"
+                <a
+                  href="/"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleLogoClick();
+                  }}
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[14px] font-medium text-white hover:bg-white/12 active:bg-white/20 transition-colors cursor-pointer text-left no-underline"
                 >
                   <span className="flex items-center gap-3">
                     <Home className="w-[19px] h-[19px] text-white/90 stroke-[1.9] shrink-0" aria-hidden="true" />
                     <span>Home</span>
                   </span>
                   <ChevronRight className="w-4 h-4 text-white/50" aria-hidden="true" />
-                </button>
+                </a>
 
-                {/* 2–6. Five Primary Service Categories */}
+                {/* 2–7. Six Primary Categories */}
                 {navItems.map((item) => {
                   const IconComponent = item.Icon;
                   return (
@@ -504,18 +498,21 @@ export default function Navbar({
                   );
                 })}
 
-                {/* 7. More */}
-                <button
-                  type="button"
-                  onClick={() => navigateToSection('knowledge-hub')}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[14px] font-medium text-white hover:bg-white/12 active:bg-white/20 transition-colors cursor-pointer text-left"
+                {/* More */}
+                <a
+                  href="/schemes"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigateToPath('/schemes');
+                  }}
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[14px] font-medium text-white hover:bg-white/12 active:bg-white/20 transition-colors cursor-pointer text-left no-underline"
                 >
                   <span className="flex items-center gap-3">
                     <Compass className="w-[19px] h-[19px] text-white/90 stroke-[1.9] shrink-0" aria-hidden="true" />
-                    <span>More</span>
+                    <span>Citizen Guides</span>
                   </span>
                   <ChevronRight className="w-4 h-4 text-white/50" aria-hidden="true" />
-                </button>
+                </a>
               </div>
             </div>
 

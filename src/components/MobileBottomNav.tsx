@@ -9,12 +9,12 @@ interface MobileBottomNavProps {
 }
 
 export default function MobileBottomNav({ activeTab, onNavigate }: MobileBottomNavProps) {
-  const navItems: { id: BottomNavTab; label: string; Icon: React.ElementType }[] = [
-    { id: 'home', label: 'Home', Icon: Home },
-    { id: 'jobs', label: 'Jobs', Icon: Briefcase },
-    { id: 'services', label: 'Services', Icon: LayoutGrid },
-    { id: 'tools', label: 'Tools', Icon: Wrench },
-    { id: 'track', label: 'Track', Icon: MapPin },
+  const navItems: { id: BottomNavTab; label: string; href: string; Icon: React.ElementType }[] = [
+    { id: 'home', label: 'Home', href: '/', Icon: Home },
+    { id: 'jobs', label: 'Jobs', href: '/jobs', Icon: Briefcase },
+    { id: 'services', label: 'Services', href: '/services', Icon: LayoutGrid },
+    { id: 'tools', label: 'Tools', href: '/tools', Icon: Wrench },
+    { id: 'track', label: 'Track', href: '/track', Icon: MapPin },
   ];
 
   return (
@@ -27,12 +27,15 @@ export default function MobileBottomNav({ activeTab, onNavigate }: MobileBottomN
         const isActive = activeTab === item.id;
 
         return (
-          <button
+          <a
             key={item.id}
-            type="button"
-            onClick={() => onNavigate(item.id)}
+            href={item.href}
+            onClick={(e) => {
+              e.preventDefault();
+              onNavigate(item.id);
+            }}
             aria-current={isActive ? 'page' : undefined}
-            className={`min-h-[44px] min-w-[58px] flex flex-col items-center justify-center transition-all cursor-pointer rounded-xl ${
+            className={`min-h-[44px] min-w-[58px] flex flex-col items-center justify-center transition-all cursor-pointer rounded-xl no-underline ${
               isActive
                 ? 'bg-[#EEF4FF] text-[#1E56C8] px-2.5 py-1'
                 : 'text-[#334155] hover:text-[#1E56C8] hover:bg-slate-50 px-2 py-1'
@@ -51,7 +54,7 @@ export default function MobileBottomNav({ activeTab, onNavigate }: MobileBottomN
             >
               {item.label}
             </span>
-          </button>
+          </a>
         );
       })}
     </nav>

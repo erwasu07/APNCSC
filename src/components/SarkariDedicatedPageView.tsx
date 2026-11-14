@@ -303,11 +303,14 @@ export default function SarkariDedicatedPageView({
     }
   };
 
-  // Related items from same category or related board
+  // Related items from same category or related board (exclude unverified & cancelled)
   const relatedItems: RelatedContentItem[] = useMemo(() => {
-    return SARKARI_DATA.filter(
-      (i) => i.id !== item.id && (i.category === item.category || i.category === 'jkssb')
-    )
+    return SARKARI_DATA.filter((i) => {
+      if (i.id === item.id) return false;
+      const st = computeSarkariStatus(i);
+      if (st.verificationStatus === 'needs_verification' || i.isCancelled) return false;
+      return i.category === item.category || i.category === 'jkssb';
+    })
       .slice(0, 4)
       .map((rel) => ({
         id: rel.id,
@@ -375,25 +378,35 @@ export default function SarkariDedicatedPageView({
               onAction: handleRequestAssistance,
             }
           : {
-              badge: isClosed
-                ? 'Applications Closed'
-                : isUpcoming
-                ? 'Upcoming Notice'
-                : isCancelled
-                ? 'Notice Cancelled'
-                : 'Notice Archived',
-              title: isClosed
-                ? 'Application Window Concluded'
-                : isUpcoming
-                ? 'Application Window Not Yet Open'
-                : isCancelled
-                ? 'Recruitment Cancelled'
-                : 'Notice Information',
+              badge:
+                statusInfo.verificationStatus === 'needs_verification'
+                  ? 'Needs Verification'
+                  : isClosed
+                  ? 'Applications Closed'
+                  : isUpcoming
+                  ? 'Upcoming Notice'
+                  : isCancelled
+                  ? 'Notice Cancelled'
+                  : statusInfo.badgeLabel,
+              title:
+                statusInfo.verificationStatus === 'needs_verification'
+                  ? 'Pending Official Verification'
+                  : isClosed
+                  ? 'Application Window Concluded'
+                  : isUpcoming
+                  ? 'Application Window Not Yet Open'
+                  : isCancelled
+                  ? 'Recruitment Cancelled'
+                  : 'Official Notice Update',
               description:
-                statusInfo.closingTimeNote ||
-                (isClosed
-                  ? 'The official submission window for this recruitment has ended. CSC DOST cannot accept assisted applications for closed notices.'
-                  : 'Online applications will open on the announced date.'),
+                statusInfo.verificationStatus === 'needs_verification'
+                  ? 'This notice could not be freshly corroborated from the official portal today. Check the official portal directly.'
+                  : statusInfo.closingTimeNote ||
+                    (isClosed
+                      ? 'The official submission window for this recruitment has ended. CSC DOST cannot accept assisted applications for closed notices.'
+                      : isUpcoming
+                      ? 'Online applications will open on the announced date.'
+                      : 'Check the official authority link directly for downloads, instructions, or objection/DV schedules.'),
               buttonLabel: 'Official Authority Portal',
               onAction: () => window.open(officialPortalUrl, '_blank', 'noopener,noreferrer'),
             }
@@ -523,10 +536,19 @@ export default function SarkariDedicatedPageView({
                   : []),
                 { label: 'Closing Time', value: item.closingTime || 'Inclusive through 23:59 IST' },
               ]),
-          { label: 'Last Verified', value: item.verification?.lastVerified || '04/11/2026 IST' },
+          {
+            label: 'Last Verified',
+            value:
+              statusInfo.verificationStatus === 'needs_verification'
+                ? 'Pending Verification'
+                : item.verification?.verifiedAt || item.verification?.lastVerified || '14/11/2026 IST',
+          },
           {
             label: 'Verification',
-            value: item.verification?.verificationStatus === 'needs_verification' ? 'Needs Verification' : 'Verified (Official Portal)',
+            value:
+              statusInfo.verificationStatus === 'needs_verification'
+                ? 'Needs Verification'
+                : 'Verified (Official Portal)',
           },
           { label: 'Source', value: organisationName },
         ]}

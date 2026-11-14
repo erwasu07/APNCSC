@@ -11,18 +11,6 @@
       "destination": "/api"
     },
     {
-      "source": "/(post|job|jobs|sarkari|notice|admissions|notification|service)/:path*",
-      "destination": "/api"
-    },
-    {
-      "source": "/(privacy-policy|terms-of-service|disclaimer|about-us|contact-us|refund-policy)",
-      "destination": "/api"
-    },
-    {
-      "source": "/(privacy-policy|terms-of-service|disclaimer|about-us|contact-us|refund-policy)/:path*",
-      "destination": "/api"
-    },
-    {
       "source": "/(sitemap\\.xml|robots\\.txt)",
       "destination": "/api"
     },
@@ -39,8 +27,8 @@
       "destination": "/api"
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "source": "/((?!assets/|csc-dost|favicon|apple-touch-icon|og-banner|manifest\\.json|site\\.webmanifest|sw\\.js|ads\\.txt|google[a-zA-Z0-9_-]+\\.html|.*\\.(?:js|mjs|css|png|jpg|jpeg|gif|webp|avif|svg|ico|woff|woff2|ttf|eot|map|pdf|txt|json|webmanifest)$).*)",
+      "destination": "/api"
     }
   ]
 }
