@@ -210,6 +210,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     if (cleanReqPath === '/contact') {
       return res.redirect(301, `/contact-us${queryString}`);
     }
+    if (cleanReqPath === '/scheme/army-agniveer-rally-guide-2026') {
+      return res.redirect(301, `/post/army-agniveer-rally-guide-2026${queryString}`);
+    }
 
     if (
       !req.path.startsWith('/api/') &&
@@ -4805,6 +4808,7 @@ ${JSON.stringify(articleLd, null, 2)}
     const effectiveType = resolveEffectiveTemplateType(matchedJobPost, postStatus);
     const emitJobSchema =
       (effectiveType === 'application' || effectiveType === 'upcoming') &&
+      (postStatus.applicationStatus === 'open' || postStatus.applicationStatus === 'upcoming') &&
       isRecruitmentSarkariItem(matchedJobPost) &&
       matchedJobPost.noticeType !== 'correction' &&
       matchedJobPost.stage !== 'correction' &&

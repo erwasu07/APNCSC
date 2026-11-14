@@ -141,6 +141,12 @@ export function renderPostSubstantiveHtml(item: SarkariItem): string {
     </aside>
     ` : ''}
 
+    ${item.id === 'army-agniveer-rally-guide-2026' ? `
+    <aside role="note" style="background:#FFFFFF; border:2px solid #D97706; padding:12px 16px; border-radius:10px; margin-bottom:16px; font-size:14px; font-weight:600; color:#101A36;">
+      Last updated 13 Aug 2026. Confirm the latest details on the official site (<a href="https://joinindianarmy.nic.in" target="_blank" rel="noopener noreferrer" style="color:#1F9D6B; font-weight:700;">joinindianarmy.nic.in</a>).
+    </aside>
+    ` : ''}
+
     ${item.isTentative ? `
     <aside style="background:#fffbeb; border:1px solid #fde68a; border-left:4px solid #d97706; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:13px; color:#92400e;">
       <strong>Tentative Date Sheet Notice:</strong> This schedule is explicitly marked as <strong>Tentative</strong>${item.learnerGroup ? ` for <strong>${escapeHtml(item.learnerGroup)}</strong>` : ''}. Verify clash adjustments and the final date sheet directly on the official portal before examinations.

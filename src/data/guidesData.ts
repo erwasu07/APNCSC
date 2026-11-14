@@ -476,6 +476,12 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
       },
     ],
   },
+];
+
+/**
+ * Archived guide entries moved to /post/<slug> (kept intact for rollback).
+ */
+export const ARCHIVED_GUIDE_ARTICLES: GuideArticle[] = [
   {
     id: 'army-agniveer-rally-guide-2026',
     title: 'Indian Army Agniveer Rally 2026: Physical Standards, Online CEE & Registration Guide',

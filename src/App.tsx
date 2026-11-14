@@ -491,6 +491,23 @@ export default function App() {
       // 7b. Check Dedicated Scheme Guide route (/scheme/:id or ?scheme=:id)
       const pathSchemeMatch = cleanPath.match(/^\/scheme\/([^/?#]+)$/i);
       const candidateSchemeId = pathSchemeMatch ? decodeURIComponent(pathSchemeMatch[1]) : schemeParam;
+      if (candidateSchemeId === 'army-agniveer-rally-guide-2026') {
+        try { window.history.replaceState(null, '', '/post/army-agniveer-rally-guide-2026'); } catch {}
+        const movedPost = syncedPosts.find(i => i.id === 'army-agniveer-rally-guide-2026' && isPublishedSarkariItem(i));
+        if (movedPost) {
+          setActiveSchemeId(null);
+          setActiveJobPost(movedPost);
+          setActiveServicePost(null);
+          setCategoryView(null);
+          setIsAdminView(false);
+          setIsApplyView(false);
+          setIsTrackView(false);
+          setIsToolsView(false);
+          setActiveLegalPage(null);
+          try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
+          return;
+        }
+      }
       if (candidateSchemeId) {
         const matchScheme = GUIDE_ARTICLES.find((g) => g.id === candidateSchemeId);
         if (matchScheme) {

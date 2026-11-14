@@ -6055,6 +6055,53 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         fee: '₹500 / Paper'
       }
     ]
+  },
+  {
+    id: 'army-agniveer-rally-guide-2026',
+    title: 'Indian Army Agniveer Rally 2026: Physical Standards, Online CEE & Registration Guide',
+    category: 'army_jobs',
+    section: 'jobs',
+    org: 'Indian Army',
+    noticeType: 'recruitment',
+    stage: 'recruitment',
+    status: 'Informational',
+    postDate: '13/08/2026',
+    updatedAt: '13/08/2026',
+    shortInfo: 'A detailed handbook for defence aspirants applying for Indian Army Agniveer General Duty (GD), Technical, Clerk/Store Keeper Technical, and Tradesmen. Complete coverage of Common Entrance Exam (CEE), 1.6 KM Physical Fitness Test (PFT), and documentation norms.',
+    ageLimit: '17.5 years to 21 years across all Agniveer categories.',
+    eligibility: 'Agniveer GD: 10th / Matric (45% aggregate, 33% per subject); Technical: 10+2 Science (50% aggregate); Clerk/SKT: 10+2 (60% aggregate, 50% English & Maths/Accounts); Tradesmen: 10th/8th pass.',
+    totalPosts: 'As per official notice',
+    fees: {
+      genObc: '₹250 + GST (per 13 Aug 2026 guide — confirm on official portal)',
+      scSt: '₹250 + GST (per 13 Aug 2026 guide — confirm on official portal)',
+    },
+    officialLink: 'https://joinindianarmy.nic.in',
+    selectionProcess: [
+      'Phase I: Online Computer Based Common Entrance Examination (CEE) at designated test centres.',
+      'Phase II: Physical Fitness Test (1.6 KM run: Group I up to 5m 30s = 60 marks; Group II 5m 31s–5m 45s = 48 marks; Beam pull-ups), Physical Measurement Test (PMT), Adaptability Test & Medical Exam at ARO rally grounds.',
+    ],
+    documentsRequired: [
+      'Admit Card printed on Laser Printer on good quality paper',
+      'Twenty (20) copies of unattested recent passport-sized color photographs',
+      'Original Education Certificates & Marksheets (Matric / 10+2)',
+      'Domicile / Residence Certificate with photograph issued by Tehsildar',
+      'Caste Certificate with photograph (for candidates belonging to SC/ST/OBC)',
+      'Religion Certificate / Character Certificate from Village Sarpanch / Ward Member',
+      'Unmarried Certificate for candidates under 21 years of age',
+      'Affidavit duly signed on non-judicial stamp paper of ₹10 as per format in notification',
+    ],
+    faq: [
+      {
+        question: 'What is the 1.6 KM run timing and scoring criteria for Indian Army Rally?',
+        answer:
+          'Group I (Up to 5 Min 30 Sec): 60 Marks; Group II (5 Min 31 Sec to 5 Min 45 Sec): 48 Marks. Push-ups / Beam Pull-ups: 10 pull-ups = 40 Marks, 9 pull-ups = 33 Marks, 8 pull-ups = 27 Marks, 7 pull-ups = 21 Marks, 6 pull-ups = 16 Marks.',
+      },
+      {
+        question: 'Is Aadhaar authentication mandatory on JoinIndianArmy portal?',
+        answer:
+          'Yes. UIDAI Aadhaar verification via OTP or Digilocker is mandatory to prevent proxy candidate registration and verify candidate date of birth accurately.',
+      },
+    ],
   }
 ];
 

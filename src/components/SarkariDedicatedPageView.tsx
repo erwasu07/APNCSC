@@ -210,6 +210,7 @@ export default function SarkariDedicatedPageView({
 
     const emitJobSchema =
       (effectiveType === 'application' || effectiveType === 'upcoming') &&
+      (statusInfo.isOpen || statusInfo.isUpcoming) &&
       isRecruitmentSarkariItem(item) &&
       item.noticeType !== 'correction' &&
       item.stage !== 'correction' &&
@@ -418,6 +419,30 @@ export default function SarkariDedicatedPageView({
                   'Please verify live dates and eligibility directly on the official authority website.'}
               </p>
             </div>
+          </div>
+        )}
+
+        {item.id === 'army-agniveer-rally-guide-2026' && (
+          <div
+            role="note"
+            className="rounded-2xl border border-[var(--border-strong)] bg-[var(--bg-card)] p-3.5 sm:p-4 flex items-start gap-3 text-start shadow-2xs"
+          >
+            <AlertCircle
+              className="w-5 h-5 text-[#D97706] shrink-0 mt-0.5"
+              aria-hidden="true"
+            />
+            <p className="text-xs sm:text-sm font-semibold text-[var(--text-primary)] leading-relaxed m-0">
+              Last updated 13 Aug 2026. Confirm the latest details on the official site (
+              <a
+                href="https://joinindianarmy.nic.in"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold text-[#1F9D6B] underline"
+              >
+                joinindianarmy.nic.in
+              </a>
+              ).
+            </p>
           </div>
         )}
 
