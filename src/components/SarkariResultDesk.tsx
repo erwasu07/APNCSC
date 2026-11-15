@@ -6,9 +6,10 @@ interface SarkariResultDeskProps {
   onApplyService: (serviceName: string) => void;
   selectedService?: string;
   onOpenDedicatedPage?: (item: SarkariItem) => void;
-  mode?: 'all' | 'jobs' | 'education';
+  mode?: 'all' | 'jobs' | 'education' | 'deadlines';
   initialTab?: 'all' | 'jkssb' | 'banking_jobs' | 'jobs' | 'admissions' | 'exam_forms' | 'cluster_univ' | 'ignou' | 'ssc_jobs' | 'rrb_jobs' | 'army_jobs';
   educationSubRoute?: boolean;
+  routeSearch?: string;
   onNavigateRoute?: (path: string) => void;
 }
 
@@ -236,6 +237,7 @@ export default function SarkariResultDesk({
   mode = 'all',
   initialTab,
   educationSubRoute = false,
+  routeSearch,
   onNavigateRoute,
 }: SarkariResultDeskProps) {
   return (
@@ -243,6 +245,7 @@ export default function SarkariResultDesk({
       mode={mode}
       initialTab={initialTab}
       educationSubRoute={educationSubRoute}
+      routeSearch={routeSearch}
       onNavigateRoute={onNavigateRoute}
       onOpenDedicatedPage={onOpenDedicatedPage}
       onApplyService={onApplyService}

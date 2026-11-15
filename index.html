@@ -3,6 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <script>
+      (function () {
+        try {
+          if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
     
     <!-- 1. Preload the Largest Contentful Paint (LCP) Image -->
     <link rel="preload" as="image" href="/favicon.svg" fetchpriority="high" type="image/svg+xml" />
@@ -19,26 +28,28 @@
       /* Critical Layout Base & Theme Tokens (Light + Dark) */
       :root {
         --font-fallback: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-        --bg-page: #F6F8FC;
+        --bg-outer: #DFE5F2;
+        --bg-page: #F4F6FB;
         --bg-surface: #FFFFFF;
         --bg-card: #FFFFFF;
-        --bg-subtle: #EEF2F8;
+        --bg-subtle: #EEF2FF;
         --bg-header: #101A36;
-        --bg-header-dark: #0B1226;
+        --bg-header-dark: #101A36;
         --text-primary: #101A36;
         --text-secondary: #475569;
-        --text-muted: #64748B;
-        --border-default: #DCE3EE;
+        --text-muted: #5B6478;
+        --border-default: #E3E8F2;
         color-scheme: light dark;
       }
       @media (prefers-color-scheme: dark) {
         :root:not(.light) {
+          --bg-outer: #05080F;
           --bg-page: #0B1120;
           --bg-surface: #111A2E;
           --bg-card: #16213A;
           --bg-subtle: #1E2C4A;
           --bg-header: #0A1124;
-          --bg-header-dark: #060B18;
+          --bg-header-dark: #070C1A;
           --text-primary: #F1F5F9;
           --text-secondary: #CBD5E1;
           --text-muted: #94A3B8;
@@ -46,12 +57,13 @@
         }
       }
       html.dark {
+        --bg-outer: #05080F;
         --bg-page: #0B1120;
         --bg-surface: #111A2E;
         --bg-card: #16213A;
         --bg-subtle: #1E2C4A;
         --bg-header: #0A1124;
-        --bg-header-dark: #060B18;
+        --bg-header-dark: #070C1A;
         --text-primary: #F1F5F9;
         --text-secondary: #CBD5E1;
         --text-muted: #94A3B8;
@@ -64,9 +76,9 @@
       html {
         width: 100%;
         max-width: 100%;
-        font-size: 16px;
-        overflow-x: hidden !important;
-        background-color: var(--bg-page);
+        font-size: 14px;
+        overflow-x: clip;
+        background-color: var(--bg-outer);
         color: var(--text-primary);
         font-family: 'Inter', 'Noto Sans Devanagari', var(--font-fallback);
         text-size-adjust: 100%;
@@ -82,23 +94,23 @@
         max-width: 100%;
         margin: 0;
         padding: 0;
-        overflow-x: hidden !important;
-        background-color: var(--bg-page);
+        overflow-x: clip;
+        background-color: var(--bg-outer);
         color: var(--text-primary);
-        font-size: 1rem;
-        line-height: 1.6;
+        font-size: 14px;
+        line-height: 1.55;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
       html[dir="rtl"] body {
-        line-height: 2.0;
+        line-height: 1.9;
       }
       #root {
         width: 100%;
         max-width: 100%;
         min-height: 100vh;
-        overflow-x: hidden !important;
-        background-color: var(--bg-page);
+        overflow-x: clip;
+        background-color: var(--bg-outer);
         display: flex;
         flex-direction: column;
       }

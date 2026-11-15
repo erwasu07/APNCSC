@@ -7,19 +7,20 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
   --color-navy: #101A36;
-  --color-surface: #F6F8FC;
-  --color-accent: #F5A623;
-  --color-verified: #1F9D6B;
+  --color-surface: #F4F6FB;
+  --color-accent: #F59E0B;
+  --color-verified: #0F9D6B;
 
   --color-brand-primary: #101A36;
+  --color-brand-blue: #2455E6;
   --color-brand-dark: #101A36;
   --color-brand-bg: var(--bg-page);
   --color-brand-card: var(--bg-card);
   --color-brand-text: var(--text-primary);
   --color-brand-muted: var(--text-secondary);
   --color-brand-border: var(--border-default);
-  --color-brand-success: #1F9D6B;
-  --color-brand-warning: #F5A623;
+  --color-brand-success: #0F9D6B;
+  --color-brand-warning: #F59E0B;
 }
 
 /* ============================================================================
@@ -29,46 +30,49 @@
   color-scheme: light dark;
 
   /* Core Surfaces & Text */
-  --bg-page: #F6F8FC;
+  --bg-outer: #DFE5F2;
+  --bg-page: #F4F6FB;
   --bg-surface: #FFFFFF;
   --bg-card: #FFFFFF;
-  --bg-subtle: #EEF2F8;
+  --bg-subtle: #EEF2FF;
   --bg-header: #101A36;
-  --bg-header-dark: #0B1226;
+  --bg-header-dark: #101A36;
 
   --text-primary: #101A36;
   --text-secondary: #475569;
-  --text-muted: #64748B;
+  --text-muted: #5B6478;
   --text-inverse: #FFFFFF;
 
-  --border-default: #DCE3EE;
-  --border-strong: #B8C5DB;
+  --border-default: #E3E8F2;
+  --border-strong: #C5D0E4;
 
   /* Brand & Interactive Accents */
-  --brand-accent: #F5A623;
-  --brand-accent-hover: #E09112;
+  --brand-blue: #2455E6;
+  --brand-accent: #F59E0B;
+  --brand-accent-hover: #D97706;
   --brand-accent-ink: #101A36;
-  --brand-verified: #1F9D6B;
-  --brand-verified-hover: #178257;
-  --focus-ring: #F5A623;
+  --brand-verified: #0F9D6B;
+  --brand-verified-hover: #0B7F56;
+  --brand-red: #E5484D;
+  --focus-ring: #2455E6;
 
   /* 1. Open (Green) */
   --status-open-bg: #ECFDF5;
-  --status-open-text: #0F5E3F;
+  --status-open-text: #0A6B49;
   --status-open-border: #A7F3D0;
-  --status-open-stripe: #1F9D6B;
+  --status-open-stripe: #0F9D6B;
 
-  /* 2. Closing Soon / Correction Window (Amber) */
+  /* 2. Closing Soon / Correction Window (Amber / Red) */
   --status-closing-bg: #FFFBEB;
   --status-closing-text: #92400E;
   --status-closing-border: #FCD34D;
-  --status-closing-stripe: #D97706;
+  --status-closing-stripe: #F59E0B;
 
   /* 3. Exam / Admit Card / DV (Blue) */
-  --status-exam-bg: #EFF6FF;
+  --status-exam-bg: #EEF2FF;
   --status-exam-text: #1E40AF;
-  --status-exam-border: #BFDBFE;
-  --status-exam-stripe: #2563EB;
+  --status-exam-border: #C7D2FE;
+  --status-exam-stripe: #2455E6;
 
   /* 4. Result / Answer Key (Purple) */
   --status-result-bg: #F5F3FF;
@@ -86,17 +90,18 @@
   --status-closed-bg: #F1F5F9;
   --status-closed-text: #475569;
   --status-closed-border: #CBD5E1;
-  --status-closed-stripe: #64748B;
+  --status-closed-stripe: #5B6478;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
+    --bg-outer: #05080F;
     --bg-page: #0B1120;
     --bg-surface: #111A2E;
     --bg-card: #16213A;
     --bg-subtle: #1E2C4A;
     --bg-header: #0A1124;
-    --bg-header-dark: #060B18;
+    --bg-header-dark: #070C1A;
 
     --text-primary: #F1F5F9;
     --text-secondary: #CBD5E1;
@@ -107,7 +112,7 @@
     --border-strong: #3B4F78;
 
     /* 1. Open (Green) */
-    --status-open-bg: rgba(31, 157, 107, 0.18);
+    --status-open-bg: rgba(15, 157, 107, 0.2);
     --status-open-text: #6EE7B7;
     --status-open-border: rgba(52, 211, 153, 0.35);
     --status-open-stripe: #34D399;
@@ -116,10 +121,10 @@
     --status-closing-bg: rgba(245, 158, 11, 0.18);
     --status-closing-text: #FCD34D;
     --status-closing-border: rgba(251, 191, 36, 0.38);
-    --status-closing-stripe: #FBBF24;
+    --status-closing-stripe: #F59E0B;
 
     /* 3. Exam / Admit Card / DV (Blue) */
-    --status-exam-bg: rgba(59, 130, 246, 0.2);
+    --status-exam-bg: rgba(36, 85, 230, 0.22);
     --status-exam-text: #93C5FD;
     --status-exam-border: rgba(96, 165, 250, 0.38);
     --status-exam-stripe: #60A5FA;
@@ -146,12 +151,13 @@
 
 html.dark {
   color-scheme: dark;
+  --bg-outer: #05080F;
   --bg-page: #0B1120;
   --bg-surface: #111A2E;
   --bg-card: #16213A;
   --bg-subtle: #1E2C4A;
   --bg-header: #0A1124;
-  --bg-header-dark: #060B18;
+  --bg-header-dark: #070C1A;
 
   --text-primary: #F1F5F9;
   --text-secondary: #CBD5E1;
@@ -161,7 +167,7 @@ html.dark {
   --border-default: #283757;
   --border-strong: #3B4F78;
 
-  --status-open-bg: rgba(31, 157, 107, 0.18);
+  --status-open-bg: rgba(15, 157, 107, 0.2);
   --status-open-text: #6EE7B7;
   --status-open-border: rgba(52, 211, 153, 0.35);
   --status-open-stripe: #34D399;
@@ -169,9 +175,9 @@ html.dark {
   --status-closing-bg: rgba(245, 158, 11, 0.18);
   --status-closing-text: #FCD34D;
   --status-closing-border: rgba(251, 191, 36, 0.38);
-  --status-closing-stripe: #FBBF24;
+  --status-closing-stripe: #F59E0B;
 
-  --status-exam-bg: rgba(59, 130, 246, 0.2);
+  --status-exam-bg: rgba(36, 85, 230, 0.22);
   --status-exam-text: #93C5FD;
   --status-exam-border: rgba(96, 165, 250, 0.38);
   --status-exam-stripe: #60A5FA;
@@ -196,12 +202,12 @@ html.dark {
   html {
     width: 100%;
     max-width: 100%;
-    font-size: 16px;
-    overflow-x: hidden !important;
+    font-size: 14px;
+    overflow-x: clip;
     position: relative;
     touch-action: manipulation;
     overscroll-behavior-x: none;
-    background-color: var(--bg-page);
+    background-color: var(--bg-outer);
     color: var(--text-primary);
     font-family: var(--font-sans);
   }
@@ -214,33 +220,33 @@ html.dark {
   body {
     width: 100%;
     max-width: 100%;
-    overflow-x: hidden !important;
+    overflow-x: clip;
     position: relative;
     margin: 0;
     padding: 0;
     touch-action: manipulation;
     overscroll-behavior-x: none;
-    background-color: var(--bg-page);
+    background-color: var(--bg-outer);
     color: var(--text-primary);
-    font-size: 1rem;
-    line-height: 1.6;
+    font-size: 14px;
+    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   html[dir="rtl"] body {
-    line-height: 2.0;
+    line-height: 1.9;
   }
 
   #root {
     width: 100%;
     max-width: 100%;
     min-height: 100vh;
-    overflow-x: hidden !important;
+    overflow-x: clip;
     scroll-behavior: smooth;
     font-family: inherit;
     position: relative;
-    background-color: inherit;
+    background-color: var(--bg-outer);
   }
 
   /* Accessibility: Respect Reduced Motion Preferences */

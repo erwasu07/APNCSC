@@ -279,9 +279,9 @@ export default function ServiceDedicatedPageView({
   return (
     <article
       aria-labelledby="service-page-h1"
-      className="w-full bg-[var(--bg-page)] text-[var(--text-primary)] pb-28 md:pb-12"
+      className="w-full bg-[var(--bg-page)] text-[var(--text-primary)] pb-24"
     >
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 space-y-5 sm:space-y-6">
+      <div className="px-3 pt-4 space-y-4">
         <Breadcrumbs
           items={[
             { label: t.navHome, href: '/' },
@@ -325,17 +325,17 @@ export default function ServiceDedicatedPageView({
           <div className="space-y-2">
             <h1
               id="service-page-h1"
-              className="text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] leading-snug tracking-tight m-0 break-words"
+              className="text-xl font-extrabold text-[var(--text-primary)] leading-snug tracking-tight m-0 break-words"
             >
               {service.name}
             </h1>
-            <p className="text-base text-[var(--text-secondary)] leading-relaxed m-0 max-w-3xl break-words">
+            <p className="text-sm text-[var(--text-secondary)] leading-relaxed m-0 break-words">
               {service.description}
             </p>
           </div>
 
           {/* Summary Strip: Fee (or "Ask us"), Typical Time (only if present), Documents Count, Official Portal */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+          <div className="grid grid-cols-1 gap-2.5 pt-1">
             <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-3.5">
               <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
                 <Banknote className="w-4 h-4 text-[#1F9D6B] shrink-0" aria-hidden="true" />
@@ -448,8 +448,8 @@ export default function ServiceDedicatedPageView({
 
         <AdSlot />
 
-        {/* Main 2-Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start">
+        {/* Main Content Stack */}
+        <div className="grid grid-cols-1 gap-5 items-start">
           {/* LEFT MAIN COLUMN */}
           <div className="min-w-0 space-y-5">
             {/* Documents Checklist (Strictly from data; shows Ask us if none listed) */}
@@ -540,8 +540,8 @@ export default function ServiceDedicatedPageView({
             <AdSlot />
           </div>
 
-          {/* RIGHT STICKY SIDEBAR */}
-          <aside className="space-y-5 lg:sticky lg:top-20">
+          {/* SUPPORT & RELATED SIDEBAR */}
+          <aside className="space-y-4">
             <Card className="p-4 sm:p-5 space-y-3.5 text-start">
               <div className="space-y-1">
                 <h2 className="text-base font-extrabold text-[var(--text-primary)] m-0">

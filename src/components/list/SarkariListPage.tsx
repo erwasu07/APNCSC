@@ -48,9 +48,10 @@ export type QualificationFilterId = 'all' | '10th' | '12th' | 'diploma' | 'gradu
 export type SortOptionId = 'nearest' | 'newest';
 
 export interface SarkariListPageProps {
-  mode?: 'all' | 'jobs' | 'education';
+  mode?: 'all' | 'jobs' | 'education' | 'deadlines';
   initialTab?: string;
   educationSubRoute?: boolean;
+  routeSearch?: string;
   onNavigateRoute?: (path: string) => void;
   onOpenDedicatedPage?: (item: SarkariItem) => void;
   onApplyService?: (serviceName: string) => void;
@@ -63,7 +64,7 @@ const EDU_PRIMARY_ORGS = ['IGNOU', 'University of Kashmir', 'Cluster University 
 
 function mapInitialTabToOrg(
   initialTab?: string,
-  mode?: 'all' | 'jobs' | 'education',
+  mode?: 'all' | 'jobs' | 'education' | 'deadlines',
   educationSubRoute?: boolean
 ): string {
   if (educationSubRoute || initialTab === 'ignou') return 'IGNOU';
@@ -333,6 +334,7 @@ export default function SarkariListPage({
   mode = 'jobs',
   initialTab,
   educationSubRoute = false,
+  routeSearch,
   onNavigateRoute,
   onOpenDedicatedPage,
 }: SarkariListPageProps) {
@@ -343,29 +345,58 @@ export default function SarkariListPage({
 
   const effectiveSection: 'jobs' | 'education' = mode === 'education' ? 'education' : 'jobs';
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const parsedSearchParams = useMemo(() => {
+    const raw = routeSearch !== undefined ? routeSearch : typeof window !== 'undefined' ? window.location.search : '';
+    return new URLSearchParams(raw);
+  }, [routeSearch]);
+
+  const initialStatusTabFromUrl = (): ListStatusTabId => {
+    const tParam = parsedSearchParams.get('tab');
+    if (tParam === 'exams' || tParam === 'results' || tParam === 'upcoming' || tParam === 'archive' || tParam === 'open_now') {
+      return tParam;
+    }
+    return 'open_now';
+  };
+
+  const [searchQuery, setSearchQuery] = useState(() => parsedSearchParams.get('q') || '');
   const [orgFilter, setOrgFilter] = useState<string>(() =>
-    mapInitialTabToOrg(initialTab, mode, educationSubRoute)
+    parsedSearchParams.get('org') || mapInitialTabToOrg(initialTab, mode, educationSubRoute)
   );
   const [qualificationFilter, setQualificationFilter] = useState<QualificationFilterId>('all');
   const [jkOnly, setJkOnly] = useState(false);
-  const [activeStatusTab, setActiveStatusTab] = useState<ListStatusTabId>('open_now');
+  const [answerKeyOnly, setAnswerKeyOnly] = useState(() => parsedSearchParams.get('filter') === 'answer_key');
+  const [activeStatusTab, setActiveStatusTab] = useState<ListStatusTabId>(initialStatusTabFromUrl);
   const [sortOption, setSortOption] = useState<SortOptionId>('nearest');
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
+    const params = new URLSearchParams(
+      routeSearch !== undefined ? routeSearch : typeof window !== 'undefined' ? window.location.search : ''
+    );
+    const urlTab = params.get('tab');
+    const urlOrg = params.get('org');
+    const urlQ = params.get('q');
+    const urlFilter = params.get('filter');
+
     if (pendingOrgRef.current !== null) {
       setOrgFilter(pendingOrgRef.current);
       pendingOrgRef.current = null;
+    } else if (urlOrg) {
+      setOrgFilter(urlOrg);
     } else {
       setOrgFilter(mapInitialTabToOrg(initialTab, mode, educationSubRoute));
     }
     setCurrentPage(1);
-    setActiveStatusTab('open_now');
-    setSearchQuery('');
+    if (urlTab === 'exams' || urlTab === 'results' || urlTab === 'upcoming' || urlTab === 'archive' || urlTab === 'open_now') {
+      setActiveStatusTab(urlTab);
+    } else {
+      setActiveStatusTab('open_now');
+    }
+    setAnswerKeyOnly(urlFilter === 'answer_key');
+    setSearchQuery(urlQ || '');
     setQualificationFilter('all');
     setJkOnly(false);
-  }, [mode, initialTab, educationSubRoute]);
+  }, [mode, initialTab, educationSubRoute, routeSearch]);
 
   useEffect(() => {
     setSortOption(activeStatusTab === 'open_now' || activeStatusTab === 'upcoming' ? 'nearest' : 'newest');
@@ -388,7 +419,18 @@ export default function SarkariListPage({
         const bucket = getBucketForPost(st);
         return { item, st, orgKey, bucket };
       })
-      .filter((entry) => entry.st.verificationStatus !== 'needs_verification');
+      .filter((entry) => {
+        if (entry.st.verificationStatus === 'needs_verification') return false;
+        if (mode === 'deadlines') {
+          const isActiveCountdown =
+            entry.st.isOpen ||
+            entry.st.stage === 'answer_key' ||
+            entry.st.stage === 'objection_window' ||
+            entry.st.stage === 'correction';
+          return !entry.st.isArchiveBucket && isActiveCountdown;
+        }
+        return true;
+      });
   }, [allPosts, mode, effectiveSection]);
 
   // 2. Closing-within-7-days highlight rail (scoped to section, and to IGNOU when on /education/ignou)
@@ -409,8 +451,9 @@ export default function SarkariListPage({
   // 3. Apply Search + Qualification + J&K filters (used for org counts & combined pipeline)
   const baseSearchQualJkFiltered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return evaluatedPosts.filter(({ item }) => {
+    return evaluatedPosts.filter(({ item, st }) => {
       if (jkOnly && !item.jkDomicile) return false;
+      if (answerKeyOnly && st.stage !== 'answer_key' && st.stage !== 'objection_window') return false;
       if (!matchesQualificationFilter(item, qualificationFilter)) return false;
       if (!q) return true;
       const haystack = [
@@ -572,6 +615,7 @@ export default function SarkariListPage({
     setSearchQuery('');
     setQualificationFilter('all');
     setJkOnly(false);
+    setAnswerKeyOnly(false);
     setCurrentPage(1);
     if (educationSubRoute && onNavigateRoute) {
       pendingOrgRef.current = 'all';
@@ -585,6 +629,7 @@ export default function SarkariListPage({
     Boolean(searchQuery.trim()) ||
     qualificationFilter !== 'all' ||
     jkOnly ||
+    answerKeyOnly ||
     orgFilter !== (educationSubRoute ? 'IGNOU' : 'all');
 
   const handlePostClick = (e: React.MouseEvent<HTMLElement>, item: SarkariItem) => {
@@ -631,14 +676,18 @@ export default function SarkariListPage({
   const crossLinkLabel = mode === 'education' ? t.jobsPageTitle : t.educationPageTitle;
 
   const pageTitle =
-    mode === 'education'
+    mode === 'deadlines'
+      ? 'Closing Deadlines'
+      : mode === 'education'
       ? educationSubRoute
         ? t.ignouPageTitle
         : t.educationPageTitle
       : t.jobsPageTitle;
 
   const pageSubtitle =
-    mode === 'education'
+    mode === 'deadlines'
+      ? 'Active application forms, correction windows, and objection deadlines closing soon across J&K and central boards.'
+      : mode === 'education'
       ? educationSubRoute
         ? t.ignouPageSubtitle
         : t.educationPageSubtitle
@@ -658,9 +707,9 @@ export default function SarkariListPage({
   return (
     <section
       aria-labelledby="list-page-heading"
-      className="w-full bg-[var(--bg-page)] text-[var(--text-primary)] pb-12 sm:pb-16"
+      className="w-full bg-[var(--bg-page)] text-[var(--text-primary)] pb-12"
     >
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 space-y-5 sm:space-y-6">
+      <div className="px-3 pt-4 space-y-4">
         {/* 1. Single Breadcrumb Bar + Cross-link */}
         <Breadcrumbs
           items={breadcrumbItems}
@@ -811,10 +860,10 @@ export default function SarkariListPage({
         {/* 4. Filter Bar (Search + Org Chips + Qualification + J&K Toggle) */}
         <div
           ref={listTopRef}
-          className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-3.5 sm:p-4 space-y-3.5 shadow-2xs scroll-mt-20"
+          className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-3.5 space-y-3 shadow-2xs scroll-mt-20"
         >
           {/* Search + Qualification + J&K Toggle Row */}
-          <div className="flex flex-col md:flex-row gap-2.5 sm:gap-3 items-stretch md:items-center">
+          <div className="flex flex-col gap-2.5 items-stretch">
             <div className="relative flex-1 min-w-0">
               <Search
                 className="w-4 h-4 text-[var(--text-muted)] absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
@@ -920,8 +969,8 @@ export default function SarkariListPage({
           />
         </div>
 
-        {/* 6. Main 2-Column Layout (List + 320px Sticky Desktop Sidebar) */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start">
+        {/* 6. Main Stack (List + Support Cards in 480px shell) */}
+        <div className="grid grid-cols-1 gap-5 items-start">
           {/* MAIN LIST COLUMN */}
           <div className="min-w-0 space-y-4">
             {/* Results Count + Sort Bar */}
@@ -1001,7 +1050,7 @@ export default function SarkariListPage({
                         </div>
 
                         {/* Thumbnail (600x315 WebP, <=120px tall on mobile) + Title + Summary + DateBlock */}
-                        <div className="flex flex-col sm:flex-row gap-3.5 items-start text-start">
+                        <div className="flex flex-col gap-3 items-start text-start">
                           <a
                             href={`/post/${item.id}`}
                             onClick={(e) => handlePostClick(e, item)}
@@ -1014,11 +1063,11 @@ export default function SarkariListPage({
                               height={315}
                               loading="lazy"
                               decoding="async"
-                              className="w-[168px] h-[88px] sm:w-[184px] sm:h-[97px] max-h-[120px] object-cover block"
+                              className="w-[184px] h-[97px] max-h-[120px] object-cover block"
                             />
                           </a>
 
-                          <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_172px] gap-3 items-start w-full">
+                          <div className="flex-1 min-w-0 grid grid-cols-1 gap-3 items-start w-full">
                             <div className="space-y-1.5 min-w-0">
                               <h3 className="text-base sm:text-lg font-bold leading-snug m-0">
                                 <a
@@ -1199,8 +1248,8 @@ export default function SarkariListPage({
             )}
           </div>
 
-          {/* DESKTOP STICKY SIDEBAR (320px) / MOBILE BOTTOM STACK */}
-          <aside className="space-y-5 lg:sticky lg:top-20">
+          {/* BOTTOM STACK IN 480PX FRAME */}
+          <aside className="space-y-4">
             <AlertsBox compact />
 
             <HelpApplyingCard

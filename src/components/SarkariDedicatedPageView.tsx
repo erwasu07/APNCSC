@@ -332,9 +332,9 @@ export default function SarkariDedicatedPageView({
   return (
     <article
       aria-labelledby="post-page-h1"
-      className="w-full bg-[var(--bg-page)] text-[var(--text-primary)] pb-28 md:pb-12"
+      className="w-full bg-[var(--bg-page)] text-[var(--text-primary)] pb-24"
     >
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 space-y-5 sm:space-y-6">
+      <div className="px-3 pt-4 space-y-4">
         {/* Top Breadcrumbs + Back Action */}
         <Breadcrumbs
           items={breadcrumbItems}
@@ -543,20 +543,20 @@ export default function SarkariDedicatedPageView({
 
               <h1
                 id="post-page-h1"
-                className="text-xl sm:text-3xl font-extrabold text-[var(--text-primary)] leading-snug tracking-tight m-0 break-words"
+                className="text-xl font-extrabold text-[var(--text-primary)] leading-snug tracking-tight m-0 break-words"
               >
                 {item.title}
               </h1>
 
               {item.advertisementNo && (
-                <p className="text-xs sm:text-sm font-semibold text-[var(--text-secondary)] m-0">
+                <p className="text-xs font-semibold text-[var(--text-secondary)] m-0">
                   {item.advertisementNo}
                 </p>
               )}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_220px] gap-4 items-start">
+          <div className="grid grid-cols-1 gap-3 items-start">
             <div className="space-y-2 min-w-0">
               {intro && (
                 <p className="text-sm sm:text-base text-[var(--text-secondary)] leading-relaxed m-0 max-w-3xl break-words">
@@ -629,10 +629,10 @@ export default function SarkariDedicatedPageView({
         {/* Fixed-height AdSlot below At a glance card (never adjacent to CTAs or inside forms) */}
         <AdSlot />
 
-        {/* Main 2-Column Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start">
+        {/* Main Content Stack (480px mobile-shell) */}
+        <div className="grid grid-cols-1 gap-5 items-start">
           {/* MAIN CONTENT COLUMN */}
-          <div className="min-w-0 space-y-5">
+          <div className="min-w-0 space-y-4">
             {/* Key Facts Grid tailored per template type */}
             <PostFactsGrid
               item={item}
@@ -652,6 +652,11 @@ export default function SarkariDedicatedPageView({
                 windowOpensLabel: t.windowOpensLabel,
                 closingDateLabel: t.closingDateLabel,
                 closedOnLabel: t.closedOnLabel,
+                programmeLabel: t.programmeLabel,
+                eligibleLearnersLabel: t.eligibleLearnersLabel,
+                academicSessionLabel: t.academicSessionLabel,
+                submissionDeadlineLabel: t.submissionDeadlineLabel,
+                examDateLabel: t.examDateLabel,
               }}
             />
 
@@ -807,8 +812,8 @@ export default function SarkariDedicatedPageView({
             <AdSlot />
           </div>
 
-          {/* STICKY RIGHT SIDEBAR (320px Desktop, Stacked on Mobile) */}
-          <aside className="space-y-5 lg:sticky lg:top-20">
+          {/* SUPPORT & RELATED SIDEBAR (Stacked in 480px frame) */}
+          <aside className="space-y-4">
             {/* Primary Portal & Assisted Application Card */}
             <Card className="p-4 sm:p-5 space-y-3.5 text-start">
               <div className="space-y-1">

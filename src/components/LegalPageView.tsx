@@ -94,7 +94,7 @@ export default function LegalPageView({
   ];
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-3 sm:px-0 py-4 sm:py-2 space-y-6 text-start text-[var(--text-primary)]">
+    <div className="w-full px-3 py-4 space-y-5 text-start text-[var(--text-primary)]">
       {/* Shared Breadcrumbs & Back to Portal */}
       <Breadcrumbs
         items={[
@@ -177,7 +177,7 @@ export default function LegalPageView({
       </nav>
 
       {/* Main Content Card */}
-      <Card className="p-5 sm:p-8 lg:p-10 shadow-xs">
+      <Card className="p-4 sm:p-5 shadow-xs">
         {safePageType === 'about' && <AboutContent />}
         {safePageType === 'contact' && <ContactContent />}
         {safePageType === 'privacy' && <PrivacyContent />}
@@ -225,7 +225,7 @@ function AboutContent() {
           authorities.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+        <div className="grid grid-cols-1 gap-3.5 my-5">
           <div className="bg-[var(--status-exam-bg)] border border-[var(--status-exam-border)] p-5 rounded-xl">
             <div className="flex items-center gap-2 text-[var(--status-exam-text)] font-bold mb-2">
               <Award className="w-5 h-5 shrink-0" aria-hidden="true" />
@@ -356,7 +356,7 @@ function ContactContent() {
         </p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 gap-4 mb-6">
         <div className="bg-[var(--bg-subtle)] border border-[var(--border-default)] p-6 rounded-xl space-y-4">
           <h2 className="text-lg font-bold text-[var(--text-primary)] flex items-center gap-2 m-0">
             <Building2 className="w-5 h-5 text-[var(--status-exam-text)] shrink-0" aria-hidden="true" />

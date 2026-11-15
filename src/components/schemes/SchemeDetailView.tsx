@@ -173,9 +173,9 @@ export default function SchemeDetailView({
   return (
     <article
       aria-labelledby="scheme-page-h1"
-      className="w-full bg-[var(--bg-page)] text-[var(--text-primary)] pb-28 md:pb-12"
+      className="w-full bg-[var(--bg-page)] text-[var(--text-primary)] pb-24"
     >
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 space-y-5 sm:space-y-6">
+      <div className="px-3 pt-4 space-y-4">
         {/* Top Breadcrumbs & Back Link */}
         <Breadcrumbs
           items={[
@@ -359,7 +359,7 @@ export default function SchemeDetailView({
             </a>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-2.5">
             {summaryRows.map((row) => {
               const hasValue = Boolean(row.value && row.value.trim());
               return (
@@ -404,8 +404,8 @@ export default function SchemeDetailView({
         {/* Ad Slot between top summary and detailed guide */}
         <AdSlot />
 
-        {/* Main 2-Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start">
+        {/* Main Content Stack */}
+        <div className="grid grid-cols-1 gap-5 items-start">
           {/* LEFT MAIN CONTENT */}
           <div className="min-w-0 space-y-5">
             {/* Overview & Detailed Guideline Sections */}
@@ -555,8 +555,8 @@ export default function SchemeDetailView({
             <AdSlot />
           </div>
 
-          {/* RIGHT STICKY SIDEBAR (320px Desktop, Stacked on Mobile) */}
-          <aside className="space-y-5 lg:sticky lg:top-20">
+          {/* SUPPORT & RELATED SIDEBAR */}
+          <aside className="space-y-4">
             {/* Official Link + Need Help Applying CTA Card */}
             <Card className="p-4 sm:p-5 space-y-3.5 text-start">
               <div className="space-y-1">

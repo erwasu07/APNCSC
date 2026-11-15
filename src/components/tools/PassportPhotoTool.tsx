@@ -250,10 +250,10 @@ export default function PassportPhotoTool() {
         </div>
       ) : (
         /* Interactive Editor Layout */
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="grid grid-cols-1 gap-4 items-start">
           
           {/* Left Canvas Preview */}
-          <div className="lg:col-span-6 bg-white border border-[#E2E8F0] rounded-2xl p-5 space-y-4 shadow-xs text-center">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 space-y-4 shadow-xs text-center">
             <div className="flex items-center justify-between text-xs border-b border-[#E2E8F0] pb-2">
               <span className="font-bold text-[#102A56]">Interactive Crop Canvas</span>
               <span className="text-[#64748B]">Click &amp; drag photo to center face</span>
@@ -318,7 +318,7 @@ export default function PassportPhotoTool() {
           </div>
 
           {/* Right Controls & Sheet Generator */}
-          <div className="lg:col-span-6 bg-white border border-[#E2E8F0] rounded-2xl p-6 space-y-6 shadow-xs">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 space-y-5 shadow-xs">
             
             {/* Presets */}
             <div className="space-y-2">

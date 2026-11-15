@@ -1,21 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  Menu,
-  X,
-  Lock,
-  Search,
-  Home,
-  BriefcaseBusiness,
-  GraduationCap,
-  ShieldCheck,
-  FileText,
-  Wrench,
-  Calculator,
-  MapPin,
-  ChevronRight,
-} from 'lucide-react';
+import { X } from 'lucide-react';
 import { LegalTab } from './PrivacyPolicyModal';
-import { useLanguage, Language } from '../contexts/LanguageContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface NavbarProps {
   cafeName: string;
@@ -29,72 +15,33 @@ interface NavbarProps {
 
 export default function Navbar({
   cafeName,
-  currentPath,
-  onOpenAdmin,
   onHomeClick,
+  onOpenNotificationCenter,
+  unreadNotificationCount = 0,
 }: NavbarProps) {
-  const { language, setLanguage, t } = useLanguage();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const { t } = useLanguage();
+  const [quickSearchOpen, setQuickSearchOpen] = useState(false);
   const [headerSearch, setHeaderSearch] = useState('');
-  const [pathname, setPathname] = useState<string>(() => {
-    if (currentPath) return currentPath;
-    if (typeof window !== 'undefined') return window.location.pathname || '/';
-    return '/';
-  });
-  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
-  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (currentPath) {
-      setPathname(currentPath);
-    }
-  }, [currentPath]);
-
-  useEffect(() => {
-    const syncPath = () => {
-      try {
-        setPathname(window.location.pathname || '/');
-      } catch {}
-    };
-    window.addEventListener('popstate', syncPath);
-    return () => window.removeEventListener('popstate', syncPath);
-  }, []);
+  const quickSearchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        if (mobileMenuOpen) {
-          setMobileMenuOpen(false);
-          mobileMenuButtonRef.current?.focus();
-        } else if (mobileSearchOpen) {
-          setMobileSearchOpen(false);
-        }
+      if (event.key === 'Escape' && quickSearchOpen) {
+        setQuickSearchOpen(false);
       }
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [mobileMenuOpen, mobileSearchOpen]);
+  }, [quickSearchOpen]);
 
   useEffect(() => {
-    if (!mobileMenuOpen) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [mobileMenuOpen]);
-
-  useEffect(() => {
-    if (mobileSearchOpen) {
-      setTimeout(() => mobileSearchInputRef.current?.focus(), 40);
+    if (quickSearchOpen) {
+      setTimeout(() => quickSearchInputRef.current?.focus(), 40);
     }
-  }, [mobileSearchOpen]);
+  }, [quickSearchOpen]);
 
   const navigateToPath = (urlPath: string) => {
-    setMobileMenuOpen(false);
-    setMobileSearchOpen(false);
-    setPathname(urlPath);
+    setQuickSearchOpen(false);
     try {
       if (window.location.pathname !== urlPath || window.location.hash) {
         window.history.pushState(null, '', urlPath);
@@ -109,14 +56,7 @@ export default function Navbar({
   };
 
   const handleLogoClick = () => {
-    setMobileMenuOpen(false);
-    setMobileSearchOpen(false);
-    setPathname('/');
-    try {
-      if (window.location.pathname !== '/' || window.location.hash) {
-        window.history.pushState(null, '', '/');
-      }
-    } catch {}
+    setQuickSearchOpen(false);
     if (onHomeClick) {
       onHomeClick();
     } else {
@@ -124,60 +64,43 @@ export default function Navbar({
     }
   };
 
+  const handleSearchButtonClick = () => {
+    const isHome = typeof window !== 'undefined' && window.location.pathname === '/';
+    const inlineInput = document.getElementById('portal-inline-search-input');
+    if (isHome && inlineInput) {
+      inlineInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => inlineInput.focus(), 80);
+      return;
+    }
+    setQuickSearchOpen((prev) => !prev);
+  };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = headerSearch.trim();
-    setMobileSearchOpen(false);
-    if (window.location.pathname !== '/') {
+    setQuickSearchOpen(false);
+    if (typeof window !== 'undefined' && window.location.pathname !== '/') {
       navigateToPath('/');
       setTimeout(() => {
         window.dispatchEvent(
-          new CustomEvent('csc-header-search', { detail: { query: trimmed, submit: true } })
+          new CustomEvent('csc-header-search', {
+            detail: { query: trimmed, submit: true },
+          })
         );
-      }, 120);
+      }, 140);
     } else {
       window.dispatchEvent(
-        new CustomEvent('csc-header-search', { detail: { query: trimmed, submit: true } })
+        new CustomEvent('csc-header-search', {
+          detail: { query: trimmed, submit: true },
+        })
       );
-      const heroInput = document.getElementById('portal-inline-search-input');
-      if (heroInput) {
-        heroInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
     }
   };
 
-  const isNavItemActive = (href: string) => {
-    if (href === '/') return pathname === '/';
-    if (href === '/jobs') return pathname === '/jobs' || pathname.startsWith('/post/');
-    if (href === '/education') return pathname.startsWith('/education');
-    if (href === '/schemes') return pathname === '/schemes' || pathname.startsWith('/scheme/');
-    if (href === '/services') return pathname === '/services' || pathname.startsWith('/service/');
-    if (href === '/tools') return pathname === '/tools' || pathname.startsWith('/tools/');
-    if (href === '/calculators') return pathname.startsWith('/calculators');
-    return pathname === href;
-  };
-
-  // Strict 7-item primary navigation
-  const navItems = [
-    { id: 'home', href: '/', label: t.navHome, Icon: Home },
-    { id: 'jobs', href: '/jobs', label: t.navJobs, Icon: BriefcaseBusiness },
-    { id: 'education', href: '/education', label: t.navEducation, Icon: GraduationCap },
-    { id: 'schemes', href: '/schemes', label: t.navSchemes, Icon: ShieldCheck },
-    { id: 'services', href: '/services', label: t.navServices, Icon: FileText },
-    { id: 'tools', href: '/tools', label: t.navTools, Icon: Wrench },
-    { id: 'calculators', href: '/calculators', label: t.navCalculators, Icon: Calculator },
-  ];
-
-  const langOptions: { code: Language; label: string; aria: string }[] = [
-    { code: 'en', label: 'EN', aria: 'Switch language to English' },
-    { code: 'hi', label: 'हिं', aria: 'Switch language to Hindi' },
-    { code: 'ur', label: 'اردو', aria: 'Switch language to Urdu' },
-  ];
-
   return (
-    <header className="sticky top-0 z-50 w-full bg-[var(--bg-header)] text-white border-b border-white/15 shadow-sm pt-[env(safe-area-inset-top)]">
-      <div className="max-w-7xl mx-auto px-2.5 sm:px-5 h-14 flex items-center justify-between gap-1.5 sm:gap-2.5 min-w-0">
-        {/* Brand Logo */}
+    <header className="sticky top-0 z-40 w-full bg-white dark:bg-[#111A2E] text-[#101A36] dark:text-white border-b border-[#E3E8F2] dark:border-[#283757] pt-[env(safe-area-inset-top)]">
+      <div className="px-3 h-[54px] flex items-center justify-between gap-2">
+        {/* Left: 30px rounded-9px blue-to-purple CD square + bold 17px CSC DOST */}
         <a
           href="/"
           onClick={(e) => {
@@ -185,303 +108,84 @@ export default function Navbar({
             handleLogoClick();
           }}
           aria-label={`${cafeName || t.brandName} Home`}
-          className="min-h-[44px] flex items-center gap-2 shrink-0 no-underline rounded-lg px-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5A623]"
+          className="min-h-[40px] inline-flex items-center gap-2 no-underline rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6]"
         >
-          <img
-            src="/csc-dost-header-logo.png"
-            alt={`${cafeName || 'CSC DOST'} Emblem`}
-            width={32}
-            height={32}
-            className="w-8 h-8 max-h-[120px] rounded-full bg-white p-0.5 object-contain shrink-0"
-          />
-          <div className="leading-none text-start">
-            <span className="text-[15px] sm:text-base font-extrabold tracking-tight text-white block whitespace-nowrap">
-              CSC <span className="text-[#F5A623]">DOST</span>
-            </span>
-            <span className="text-[10px] sm:text-[11px] text-slate-300 font-medium mt-0.5 whitespace-nowrap block">
-              {t.brandSubtitle}
-            </span>
-          </div>
+          <span
+            aria-hidden="true"
+            className="w-[30px] h-[30px] rounded-[9px] bg-gradient-to-br from-[#2455E6] to-[#7C3AED] text-white font-extrabold text-[12px] tracking-tight flex items-center justify-center shrink-0 shadow-xs"
+          >
+            CD
+          </span>
+          <span className="text-[17px] font-extrabold tracking-tight text-[#101A36] dark:text-white whitespace-nowrap">
+            CSC DOST
+          </span>
         </a>
 
-        {/* Desktop 7-Item Primary Links */}
-        <nav
-          aria-label="Primary Navigation"
-          className="hidden lg:flex items-center gap-0.5 xl:gap-1 min-w-0"
-        >
-          {navItems.map((item) => {
-            const active = isNavItemActive(item.href);
-            return (
-              <a
-                key={item.id}
-                href={item.href}
-                aria-current={active ? 'page' : undefined}
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (item.href === '/') {
-                    handleLogoClick();
-                  } else {
-                    navigateToPath(item.href);
-                  }
-                }}
-                className={`min-h-[40px] inline-flex items-center px-2 xl:px-2.5 py-2 rounded-lg text-[13px] xl:text-sm font-semibold transition-colors whitespace-nowrap no-underline ${
-                  active
-                    ? 'bg-white/15 text-[#F5A623] shadow-2xs'
-                    : 'text-slate-100 hover:bg-white/10 hover:text-[#F5A623]'
-                }`}
-              >
-                {item.label}
-              </a>
-            );
-          })}
-        </nav>
-
-        {/* Compact Header Search (md+) */}
-        <form
-          onSubmit={handleSearchSubmit}
-          role="search"
-          className="hidden md:flex items-center flex-1 max-w-[180px] xl:max-w-[220px] bg-white/10 border border-white/20 focus-within:border-[#F5A623] focus-within:bg-white/15 rounded-lg px-2.5 h-9 transition-colors"
-        >
-          <Search className="w-4 h-4 text-slate-300 shrink-0 me-2" aria-hidden="true" />
-          <label htmlFor="header-search-input" className="sr-only">
-            {t.searchPlaceholder}
-          </label>
-          <input
-            id="header-search-input"
-            type="search"
-            value={headerSearch}
-            onChange={(e) => {
-              const val = e.target.value;
-              setHeaderSearch(val);
-              if (window.location.pathname === '/') {
-                window.dispatchEvent(
-                  new CustomEvent('csc-header-search', { detail: { query: val } })
-                );
-              }
-            }}
-            placeholder={t.searchPlaceholder}
-            className="w-full bg-transparent text-sm text-white placeholder:text-slate-300 outline-none border-none"
-          />
-        </form>
-
-        {/* Right Controls: Mobile Search + EN / हिं / اردو + Subtle Staff Login + Mobile Menu */}
-        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-          {/* Mobile Search Toggle */}
+        {/* Right: Two 34px rounded-10px soft-blue icon buttons (tap area >=40px) */}
+        <div className="flex items-center gap-1 shrink-0">
           <button
             type="button"
-            onClick={() => setMobileSearchOpen((prev) => !prev)}
-            aria-label={mobileSearchOpen ? 'Close search' : 'Search portal'}
-            aria-expanded={mobileSearchOpen}
-            className="md:hidden min-h-[44px] min-w-[40px] inline-flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white border border-white/15 cursor-pointer"
+            onClick={handleSearchButtonClick}
+            aria-label={quickSearchOpen ? 'Close search' : 'Search portal'}
+            aria-expanded={quickSearchOpen}
+            className="min-w-[40px] min-h-[40px] inline-flex items-center justify-center rounded-[10px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6]"
           >
-            {mobileSearchOpen ? (
-              <X className="w-4 h-4" aria-hidden="true" />
-            ) : (
-              <Search className="w-4 h-4" aria-hidden="true" />
-            )}
+            <span className="w-[34px] h-[34px] rounded-[10px] bg-[#EEF2FF] dark:bg-[#1E2C4A] hover:bg-[#DFE7FF] dark:hover:bg-[#293B61] text-[#101A36] dark:text-white inline-flex items-center justify-center text-[15px] leading-none transition-colors">
+              {quickSearchOpen ? (
+                <X className="w-4 h-4" aria-hidden="true" />
+              ) : (
+                <span aria-hidden="true">🔍</span>
+              )}
+            </span>
           </button>
 
-          <div
-            role="group"
-            aria-label="Language switcher"
-            className="inline-flex items-center bg-[#0B1226] border border-white/15 rounded-lg p-0.5 shrink-0"
-          >
-            {langOptions.map((opt) => {
-              const active = language === opt.code;
-              return (
-                <button
-                  key={opt.code}
-                  type="button"
-                  onClick={() => setLanguage(opt.code)}
-                  aria-label={opt.aria}
-                  aria-pressed={active}
-                  className={`min-h-[34px] min-w-[30px] px-1.5 sm:px-2 py-0.5 rounded-md text-[11px] sm:text-xs font-bold transition-colors cursor-pointer whitespace-nowrap ${
-                    active
-                      ? 'bg-[#F5A623] text-[#101A36]'
-                      : 'text-slate-200 hover:text-white hover:bg-white/10'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {onOpenAdmin && (
-            <button
-              type="button"
-              onClick={onOpenAdmin}
-              title={t.staffLogin}
-              aria-label={t.staffLogin}
-              className="hidden lg:inline-flex items-center justify-center min-h-[36px] min-w-[36px] px-2 rounded-lg text-slate-300/80 hover:text-white hover:bg-white/10 border border-white/10 text-xs font-medium transition-colors cursor-pointer whitespace-nowrap"
-            >
-              <Lock className="w-3.5 h-3.5" aria-hidden="true" />
-            </button>
-          )}
-
           <button
-            ref={mobileMenuButtonRef}
             type="button"
-            onClick={() => setMobileMenuOpen(true)}
-            aria-label="Open menu"
-            aria-expanded={mobileMenuOpen}
-            className="lg:hidden min-h-[44px] min-w-[40px] inline-flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white border border-white/15 cursor-pointer"
+            onClick={() => {
+              if (onOpenNotificationCenter) onOpenNotificationCenter();
+            }}
+            aria-label={
+              unreadNotificationCount > 0
+                ? `Notifications (${unreadNotificationCount} unread)`
+                : 'Notifications'
+            }
+            className="min-w-[40px] min-h-[40px] inline-flex items-center justify-center rounded-[10px] cursor-pointer relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6]"
           >
-            <Menu className="w-5 h-5" aria-hidden="true" />
+            <span className="w-[34px] h-[34px] rounded-[10px] bg-[#EEF2FF] dark:bg-[#1E2C4A] hover:bg-[#DFE7FF] dark:hover:bg-[#293B61] text-[#101A36] dark:text-white inline-flex items-center justify-center text-[15px] leading-none transition-colors relative">
+              <span aria-hidden="true">🔔</span>
+              {unreadNotificationCount > 0 && (
+                <span className="absolute -top-1 -end-1 min-w-[16px] h-[16px] px-1 rounded-full bg-[#E5484D] text-white text-[9px] font-extrabold leading-none flex items-center justify-center tabular-nums">
+                  {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+                </span>
+              )}
+            </span>
           </button>
         </div>
       </div>
 
-      {/* Expandable Compact Mobile Search Bar */}
-      {mobileSearchOpen && (
-        <div className="md:hidden border-t border-white/15 bg-[#0B1226] px-3 py-2">
+      {/* Expandable Compact Quick Search Bar (for sub-pages) */}
+      {quickSearchOpen && (
+        <div className="border-t border-[#E3E8F2] dark:border-[#283757] bg-[#F4F6FB] dark:bg-[#0B1120] px-3 py-2">
           <form onSubmit={handleSearchSubmit} role="search" className="flex items-center gap-2">
-            <label htmlFor="mobile-header-search-input" className="sr-only">
-              {t.searchPlaceholder}
+            <label htmlFor="header-quick-search-input" className="sr-only">
+              Search JKSSB, SSC, Aadhaar
             </label>
-            <div className="flex items-center flex-1 bg-white/10 border border-white/20 focus-within:border-[#F5A623] rounded-lg px-3 min-h-[44px]">
-              <Search className="w-4 h-4 text-slate-300 shrink-0 me-2" aria-hidden="true" />
-              <input
-                ref={mobileSearchInputRef}
-                id="mobile-header-search-input"
-                type="search"
-                value={headerSearch}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setHeaderSearch(val);
-                  if (window.location.pathname === '/') {
-                    window.dispatchEvent(
-                      new CustomEvent('csc-header-search', { detail: { query: val } })
-                    );
-                  }
-                }}
-                placeholder={t.searchPlaceholder}
-                className="w-full bg-transparent text-base text-white placeholder:text-slate-300 outline-none border-none"
-              />
-            </div>
+            <input
+              ref={quickSearchInputRef}
+              id="header-quick-search-input"
+              type="search"
+              value={headerSearch}
+              onChange={(e) => setHeaderSearch(e.target.value)}
+              placeholder="Search JKSSB, SSC, Aadhaar…"
+              className="flex-1 min-h-[40px] px-3 bg-white dark:bg-[#16213A] border border-[#E3E8F2] dark:border-[#283757] rounded-[10px] text-[13px] text-[#101A36] dark:text-white placeholder:text-[#5B6478] dark:placeholder:text-[#94A3B8] outline-none focus:border-[#2455E6]"
+            />
             <button
               type="submit"
-              className="min-h-[44px] px-4 rounded-lg bg-[#F5A623] text-[#101A36] text-sm font-bold shrink-0 cursor-pointer"
+              className="min-h-[40px] px-4 rounded-[9px] bg-[#2455E6] hover:bg-[#1D4ED8] text-white text-[13px] font-bold shrink-0 cursor-pointer"
             >
-              {t.searchButton}
+              Go
             </button>
           </form>
-        </div>
-      )}
-
-      {/* Mobile Navigation Drawer */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex justify-end">
-          <div
-            className="fixed inset-0 bg-[#101A36]/70 backdrop-blur-[2px]"
-            onClick={() => setMobileMenuOpen(false)}
-            aria-hidden="true"
-          />
-
-          <nav
-            aria-label="Mobile Menu"
-            className="relative z-10 w-[85%] max-w-[330px] h-full bg-[var(--bg-header)] text-white flex flex-col justify-between shadow-2xl border-s border-white/15 overflow-y-auto"
-          >
-            <div>
-              <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/15">
-                <span className="text-base font-extrabold tracking-tight">
-                  CSC <span className="text-[#F5A623]">DOST</span>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    mobileMenuButtonRef.current?.focus();
-                  }}
-                  aria-label="Close menu"
-                  className="min-h-[44px] min-w-[44px] rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center cursor-pointer"
-                >
-                  <X className="w-5 h-5" aria-hidden="true" />
-                </button>
-              </div>
-
-              <div className="p-3 space-y-1">
-                {navItems.map((item) => {
-                  const IconComponent = item.Icon;
-                  const active = isNavItemActive(item.href);
-                  return (
-                    <a
-                      key={item.id}
-                      href={item.href}
-                      aria-current={active ? 'page' : undefined}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (item.href === '/') {
-                          handleLogoClick();
-                        } else {
-                          navigateToPath(item.href);
-                        }
-                      }}
-                      className={`min-h-[44px] flex items-center justify-between px-3 py-2.5 rounded-lg text-base font-semibold no-underline transition-colors ${
-                        active
-                          ? 'bg-white/15 text-[#F5A623]'
-                          : 'text-white hover:bg-white/10'
-                      }`}
-                    >
-                      <span className="flex items-center gap-3">
-                        <IconComponent className="w-5 h-5 text-[#F5A623]" aria-hidden="true" />
-                        <span>{item.label}</span>
-                      </span>
-                      <ChevronRight className="w-4 h-4 text-slate-400 rtl:rotate-180" aria-hidden="true" />
-                    </a>
-                  );
-                })}
-
-                <a
-                  href="/education/ignou"
-                  aria-current={pathname === '/education/ignou' ? 'page' : undefined}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigateToPath('/education/ignou');
-                  }}
-                  className={`min-h-[44px] flex items-center justify-between px-3 py-2.5 rounded-lg text-base font-semibold no-underline transition-colors ${
-                    pathname === '/education/ignou'
-                      ? 'bg-white/15 text-[#F5A623]'
-                      : 'text-white hover:bg-white/10'
-                  }`}
-                >
-                  <span className="flex items-center gap-3">
-                    <GraduationCap className="w-5 h-5 text-[#F5A623]" aria-hidden="true" />
-                    <span>{t.ignouShortcut}</span>
-                  </span>
-                  <ChevronRight className="w-4 h-4 text-slate-400 rtl:rotate-180" aria-hidden="true" />
-                </a>
-              </div>
-            </div>
-
-            <div className="p-4 border-t border-white/15 space-y-2.5 pb-[max(1rem,env(safe-area-inset-bottom))]">
-              <a
-                href="/track"
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigateToPath('/track');
-                }}
-                className="min-h-[44px] w-full px-4 py-2.5 bg-[#1F9D6B] hover:bg-[#178257] text-white rounded-xl font-bold text-sm inline-flex items-center justify-center gap-2 no-underline"
-              >
-                <MapPin className="w-4 h-4" aria-hidden="true" />
-                <span>{t.trackButton}</span>
-              </a>
-
-              {onOpenAdmin && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    onOpenAdmin();
-                  }}
-                  className="min-h-[44px] w-full px-4 py-2.5 bg-white text-[#101A36] rounded-xl font-bold text-sm inline-flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Lock className="w-4 h-4" aria-hidden="true" />
-                  <span>{t.staffLogin}</span>
-                </button>
-              )}
-            </div>
-          </nav>
         </div>
       )}
     </header>

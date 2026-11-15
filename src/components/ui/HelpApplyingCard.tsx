@@ -28,12 +28,8 @@ export function HelpApplyingCard({
         compact ? 'p-4' : 'p-5 sm:p-6'
       } shadow-2xs text-start ${className}`}
     >
-      <div
-        className={`flex flex-col ${
-          compact ? 'gap-4' : 'lg:flex-row lg:items-center justify-between gap-5'
-        }`}
-      >
-        <div className={`space-y-3 ${compact ? '' : 'max-w-2xl'}`}>
+      <div className="flex flex-col gap-4">
+        <div className="space-y-3">
           <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-[var(--status-open-bg)] text-[var(--status-open-text)] border border-[var(--status-open-border)] text-xs font-bold uppercase tracking-wide">
             <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>CSC DOST Citizen Helpdesk</span>
@@ -42,21 +38,17 @@ export function HelpApplyingCard({
           <div className="space-y-1">
             <h2
               className={`${
-                compact ? 'text-lg' : 'text-xl sm:text-2xl'
+                compact ? 'text-lg' : 'text-xl'
               } font-bold text-[var(--text-primary)] tracking-tight m-0`}
             >
               {t.helpTitle}
             </h2>
-            <p className="text-sm sm:text-base text-[var(--text-secondary)] leading-relaxed m-0">
+            <p className="text-sm text-[var(--text-secondary)] leading-relaxed m-0">
               {t.helpSubtitle}
             </p>
           </div>
 
-          <div
-            className={`grid grid-cols-1 ${
-              compact ? '' : 'sm:grid-cols-3'
-            } gap-2.5 pt-1 text-sm text-[var(--text-primary)]`}
-          >
+          <div className="grid grid-cols-1 gap-2 pt-1 text-sm text-[var(--text-primary)]">
             <div className="flex items-center gap-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] rounded-lg px-3 py-2">
               <UserCheck className="w-4 h-4 text-[var(--text-primary)] shrink-0" aria-hidden="true" />
               <div className="min-w-0">
@@ -95,11 +87,7 @@ export function HelpApplyingCard({
           </div>
         </div>
 
-        <div
-          className={`flex flex-col ${
-            compact ? 'gap-2.5' : 'sm:flex-row lg:flex-col gap-3 shrink-0 sm:min-w-[260px]'
-          }`}
-        >
+        <div className="grid grid-cols-2 gap-2.5">
           <a
             href={whatsappUrl}
             target="_blank"

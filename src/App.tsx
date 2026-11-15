@@ -1,4 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
+import LiveTickerBar from './components/LiveTickerBar';
 import Navbar from './components/Navbar';
 import MobileBottomNav, { BottomNavTab } from './components/MobileBottomNav';
 import type { PolicyTab } from './components/PrivacyPolicyModal';
@@ -10,7 +11,7 @@ import {
   buildWhatsAppNotification,
   buildServiceWhatsAppNotification,
 } from './utils/whatsappFormatter';
-import { MessageSquare, ArrowLeft, Share2, X, MessageCircle, Copy, Check } from 'lucide-react';
+import { Share2, X, MessageCircle, Copy, Check } from 'lucide-react';
 
 // Route-Level & Component-Level Lazy Loading (Code Splitting)
 const PortalHomepage = lazy(() => import('./components/PortalHomepage'));
@@ -41,6 +42,7 @@ import {
   applyClientSeo,
   getCategorySeoMeta,
   getSchemeSeoMeta,
+  DEADLINES_SEO,
   HOMEPAGE_SEO,
   IGNOU_EDUCATION_SEO,
   LEGAL_SEO_MAP,
@@ -52,19 +54,18 @@ import {
 // Lightweight Skeleton Fallback for Section Containers (Prevents Layout Shift)
 function SectionSkeleton({ height = 'min-h-[360px]', title = 'Loading Desk...' }: { height?: string; title?: string }) {
   return (
-    <div className={`w-full ${height} bg-[var(--bg-card)] border-b md:border border-[var(--border-default)] rounded-none md:rounded-2xl px-4 py-6 sm:p-6 shadow-none md:shadow-xs flex flex-col justify-between animate-pulse font-sans`}>
+    <div className={`w-full ${height} bg-[var(--bg-card)] border-b border-[var(--border-default)] px-3 py-5 flex flex-col justify-between animate-pulse font-sans`}>
       <div className="space-y-3">
         <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-3">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-[var(--bg-subtle)]" />
-            <div className="h-4 w-36 sm:w-48 bg-[var(--bg-subtle)] rounded" />
+            <div className="h-4 w-36 bg-[var(--bg-subtle)] rounded" />
           </div>
-          <div className="h-3 w-16 bg-[var(--bg-subtle)] rounded hidden sm:block" />
+          <div className="h-3 w-16 bg-[var(--bg-subtle)] rounded" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-2">
+        <div className="grid grid-cols-1 gap-3 pt-2">
           <div className="h-24 bg-[var(--bg-subtle)] rounded-xl" />
-          <div className="h-24 bg-[var(--bg-subtle)] rounded-xl hidden sm:block" />
-          <div className="h-24 bg-[var(--bg-subtle)] rounded-xl hidden md:block" />
+          <div className="h-24 bg-[var(--bg-subtle)] rounded-xl" />
         </div>
       </div>
       <div className="flex items-center justify-center gap-2 text-[var(--text-muted)] text-xs py-2">
@@ -78,12 +79,12 @@ function SectionSkeleton({ height = 'min-h-[360px]', title = 'Loading Desk...' }
 // Lightweight Full Page Skeleton (For dedicated service/job routes)
 function PageRouteSkeleton({ message = 'Loading Official Notification...' }: { message?: string }) {
   return (
-    <div className="w-full min-h-[500px] bg-[var(--bg-card)] border-b md:border border-[var(--border-default)] rounded-none md:rounded-2xl px-4 py-6 sm:p-6 shadow-none md:shadow-sm animate-pulse space-y-6">
+    <div className="w-full min-h-[420px] bg-[var(--bg-card)] border-b border-[var(--border-default)] px-3 py-5 animate-pulse space-y-5">
       <div className="flex items-center gap-3 border-b border-[var(--border-default)] pb-4">
         <div className="w-10 h-10 rounded-xl bg-[var(--bg-subtle)]" />
         <div className="space-y-2">
-          <div className="h-5 w-48 sm:w-64 bg-[var(--bg-subtle)] rounded" />
-          <div className="h-3 w-36 sm:w-40 bg-[var(--bg-subtle)] rounded" />
+          <div className="h-5 w-48 bg-[var(--bg-subtle)] rounded" />
+          <div className="h-3 w-36 bg-[var(--bg-subtle)] rounded" />
         </div>
       </div>
       <div className="space-y-3">
@@ -91,11 +92,11 @@ function PageRouteSkeleton({ message = 'Loading Official Notification...' }: { m
         <div className="h-4 bg-[var(--bg-subtle)] rounded w-5/6" />
         <div className="h-4 bg-[var(--bg-subtle)] rounded w-4/6" />
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-        <div className="h-32 bg-[var(--bg-subtle)] rounded-xl" />
-        <div className="h-32 bg-[var(--bg-subtle)] rounded-xl" />
+      <div className="grid grid-cols-1 gap-3 pt-2">
+        <div className="h-28 bg-[var(--bg-subtle)] rounded-xl" />
+        <div className="h-28 bg-[var(--bg-subtle)] rounded-xl" />
       </div>
-      <div className="flex items-center justify-center gap-2 pt-4 text-[var(--text-muted)] text-xs">
+      <div className="flex items-center justify-center gap-2 pt-3 text-[var(--text-muted)] text-xs">
         <div className="w-4 h-4 border-2 border-[var(--brand-verified)] border-t-transparent rounded-full animate-spin" />
         <span className="font-mono text-xs">{message}</span>
       </div>
@@ -117,7 +118,6 @@ const FALLBACK_SETTINGS: WebsiteSettings = {
 };
 
 export default function App() {
-  const [darkMode] = useState<boolean>(false);
   const [isAdminView, setIsAdminView] = useState<boolean>(false);
 
   const syncedPosts = useSyncedSarkariPosts(true);
@@ -130,7 +130,10 @@ export default function App() {
   const [trackInitialToken, setTrackInitialToken] = useState<string>('');
   const [isToolsView, setIsToolsView] = useState<boolean>(false);
   const [activeToolId, setActiveToolId] = useState<string | null>(null);
-  const [categoryView, setCategoryView] = useState<'jobs' | 'education' | 'schemes' | 'services' | 'calculators' | null>(null);
+  const [categoryView, setCategoryView] = useState<'jobs' | 'education' | 'schemes' | 'services' | 'calculators' | 'deadlines' | null>(null);
+  const [routeSearch, setRouteSearch] = useState<string>(() =>
+    typeof window !== 'undefined' ? window.location.search : ''
+  );
   const [educationSubRoute, setEducationSubRoute] = useState<'all' | 'ignou'>('all');
   const [activeSchemeId, setActiveSchemeId] = useState<string | null>(null);
   const [isNotFoundView, setIsNotFoundView] = useState<boolean>(false);
@@ -188,7 +191,6 @@ export default function App() {
   const [settings, setSettings] = useState<WebsiteSettings>(FALLBACK_SETTINGS);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
-  const [serverLoading, setServerLoading] = useState(true);
 
   // Sync public parameters on mount and load settings
   const fetchPublicData = async () => {
@@ -203,8 +205,6 @@ export default function App() {
       }
     } catch (err) {
       console.warn('Backend server connection not established yet. Utilizing fallback mock settings.');
-    } finally {
-      setServerLoading(false);
     }
   };
 
@@ -219,6 +219,7 @@ export default function App() {
     const parseRoute = () => {
       const rawHash = window.location.hash || '';
       const rawPathname = window.location.pathname || '/';
+      setRouteSearch(window.location.search || '');
       const searchParams = new URLSearchParams(window.location.search);
       const postParam = searchParams.get('post') || searchParams.get('job') || searchParams.get('notice') || searchParams.get('id');
       const serviceParam = searchParams.get('service');
@@ -237,7 +238,7 @@ export default function App() {
       }
 
       // Clean query parameters and trailing slashes for clean route matching
-      const cleanPath = (effectivePath.split('?')[0] || '/').replace(/\/+$/, '') || '/';
+      const cleanPath = (effectivePath.split('#')[0].split('?')[0] || '/').replace(/\/+$/, '') || '/';
 
       // Reset client not found & scheme flags before evaluating current path
       setIsNotFoundView(false);
@@ -359,8 +360,8 @@ export default function App() {
         setIsDevThumbnailsView(false);
       }
 
-      // 3. Dedicated category routes: /jobs, /education, /education/ignou, /schemes, /services, /calculators
-      if (['/jobs', '/education', '/education/ignou', '/schemes', '/services', '/calculators'].includes(cleanPath)) {
+      // 3. Dedicated category routes: /jobs, /education, /education/ignou, /schemes, /services, /calculators, /deadlines
+      if (['/jobs', '/education', '/education/ignou', '/schemes', '/services', '/calculators', '/deadlines'].includes(cleanPath)) {
         setIsApplyView(false);
         setIsTrackView(false);
         setIsToolsView(false);
@@ -371,6 +372,9 @@ export default function App() {
 
         if (cleanPath === '/jobs') {
           setCategoryView('jobs');
+          setEducationSubRoute('all');
+        } else if (cleanPath === '/deadlines') {
+          setCategoryView('deadlines');
           setEducationSubRoute('all');
         } else if (cleanPath === '/education') {
           setCategoryView('education');
@@ -862,7 +866,9 @@ export default function App() {
       }
     }
     if (categoryView) {
-      if (categoryView === 'education' && educationSubRoute === 'ignou') {
+      if (categoryView === 'deadlines') {
+        applyClientSeo(DEADLINES_SEO);
+      } else if (categoryView === 'education' && educationSubRoute === 'ignou') {
         applyClientSeo(IGNOU_EDUCATION_SEO);
       } else {
         applyClientSeo(getCategorySeoMeta(categoryView));
@@ -886,7 +892,7 @@ export default function App() {
     isNotFoundView,
   ]);
 
-  // Respect system prefers-color-scheme instead of forcing light mode
+  // Respect system prefers-color-scheme and sync Tailwind .dark class
   useEffect(() => {
     try {
       const savedTheme = localStorage.getItem('theme');
@@ -894,6 +900,16 @@ export default function App() {
         localStorage.removeItem('theme');
       }
       document.documentElement.classList.remove('light');
+      if (typeof window.matchMedia === 'function') {
+        const mq = window.matchMedia('(prefers-color-scheme: dark)');
+        const applySystemTheme = (matches: boolean) => {
+          document.documentElement.classList.toggle('dark', matches);
+        };
+        applySystemTheme(mq.matches);
+        const onChange = (e: MediaQueryListEvent) => applySystemTheme(e.matches);
+        mq.addEventListener('change', onChange);
+        return () => mq.removeEventListener('change', onChange);
+      }
     } catch {}
   }, []);
 
@@ -911,11 +927,6 @@ export default function App() {
         window.history.replaceState(null, '', window.location.pathname);
       }
     } catch {}
-  };
-
-  // Scrolls to Digital Application & Appointment Desk or opens apply page
-  const handleVisitClick = () => {
-    handleOpenApplyPage();
   };
 
   const handleGoHome = () => {
@@ -942,102 +953,40 @@ export default function App() {
     } catch {}
   };
 
-  const handleOpenToolsPage = (toolId?: string) => {
-    setIsToolsView(true);
-    setActiveToolId(toolId || null);
-    setCategoryView(null);
-    setIsNotFoundView(false);
-    setIsApplyView(false);
-    setIsTrackView(false);
-    setActiveJobPost(null);
-    setActiveServicePost(null);
-    setIsAdminView(false);
-    setActiveLegalPage(null);
-    try {
-      window.history.pushState(null, '', toolId ? `/tools/${toolId}` : '/tools');
-    } catch {}
-    try {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch {}
-  };
-
-  const handleOpenCalculatorsPage = () => {
-    setCategoryView('calculators');
-    setIsToolsView(false);
-    setIsNotFoundView(false);
-    setIsApplyView(false);
-    setIsTrackView(false);
-    setActiveJobPost(null);
-    setActiveServicePost(null);
-    setIsAdminView(false);
-    setActiveLegalPage(null);
-    try {
-      window.history.pushState(null, '', '/calculators');
-    } catch {}
-    try {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch {}
-  };
-
-  // WhatsApp Group / Community click trigger
-  const handleWhatsAppFloating = () => {
-    window.open('https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI', '_blank');
-  };
-
   const [activeBottomTab, setActiveBottomTab] = useState<BottomNavTab>('home');
 
   useEffect(() => {
-    if (isTrackView || window.location.pathname.startsWith('/track')) {
-      setActiveBottomTab('track');
-    } else if (isToolsView || window.location.pathname.startsWith('/tools')) {
-      setActiveBottomTab('tools');
-    } else if (categoryView === 'jobs' || window.location.pathname === '/jobs') {
+    const searchLower = routeSearch.toLowerCase();
+    const pathLower = typeof window !== 'undefined' ? window.location.pathname : '';
+    if (isNotificationCenterOpen) {
+      setActiveBottomTab('alerts');
+    } else if (
+      (categoryView === 'jobs' || pathLower === '/jobs') &&
+      searchLower.includes('tab=results')
+    ) {
+      setActiveBottomTab('results');
+    } else if (categoryView === 'jobs' || pathLower === '/jobs' || categoryView === 'deadlines') {
       setActiveBottomTab('jobs');
-    } else if (categoryView === 'services' || window.location.pathname === '/services') {
+    } else if (categoryView === 'services' || pathLower === '/services' || activeServicePost) {
       setActiveBottomTab('services');
     } else {
       setActiveBottomTab('home');
     }
-  }, [isTrackView, isToolsView, categoryView, isApplyView, activeJobPost, activeServicePost, activeLegalPage]);
+  }, [isNotificationCenterOpen, categoryView, routeSearch, activeServicePost, isTrackView, isToolsView, isApplyView, activeJobPost, activeLegalPage]);
 
   const handleBottomNavNavigate = (tab: BottomNavTab) => {
     setActiveBottomTab(tab);
     if (tab === 'home') {
       handleGoHome();
     } else if (tab === 'jobs') {
-      setCategoryView('jobs');
-      setIsApplyView(false);
-      setIsTrackView(false);
-      setIsToolsView(false);
-      setActiveJobPost(null);
-      setActiveServicePost(null);
-      setActiveLegalPage(null);
-      setIsAdminView(false);
-      try {
-        if (window.location.pathname !== '/jobs') {
-          window.history.pushState(null, '', '/jobs');
-        }
-      } catch {}
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      navigateToPath('/jobs');
+    } else if (tab === 'results') {
+      navigateToPath('/jobs?tab=results');
     } else if (tab === 'services') {
-      setCategoryView('services');
-      setIsApplyView(false);
-      setIsTrackView(false);
-      setIsToolsView(false);
-      setActiveJobPost(null);
-      setActiveServicePost(null);
-      setActiveLegalPage(null);
-      setIsAdminView(false);
-      try {
-        if (window.location.pathname !== '/services') {
-          window.history.pushState(null, '', '/services');
-        }
-      } catch {}
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (tab === 'tools') {
-      handleOpenToolsPage();
-    } else if (tab === 'track') {
-      handleOpenTrackPage();
+      navigateToPath('/services');
+    } else if (tab === 'alerts') {
+      setIsNotificationCenterOpen(true);
+      refreshUnreadCount();
     }
   };
 
@@ -1059,36 +1008,66 @@ export default function App() {
     ? `/${categoryView}`
     : '/';
 
+  const isHomepageView =
+    !isAdminView &&
+    !isDevThumbnailsView &&
+    !activeLegalPage &&
+    !isApplyView &&
+    !isTrackView &&
+    !activeJobPost &&
+    !activeServicePost &&
+    !isToolsView &&
+    !isNotFoundView &&
+    !categoryView &&
+    activeSchemeId === null;
+
   return (
     <LanguageProvider>
-    <div className="min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)] text-base flex flex-col justify-between font-sans transition-colors duration-200 w-full max-w-full overflow-x-hidden">
-      
-      {/* Top Navigation Panel (hidden in Staff Management Console and dedicated Apply/Track pages which use their own compact header) */}
-      {!isAdminView && !isApplyView && !isTrackView && (
-        <Navbar
-          cafeName={settings.cafeName}
-          currentPath={currentNavPath}
-          onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
-          onOpenAdmin={handleOpenStaffPortal}
-          onHomeClick={handleGoHome}
-          onOpenNotificationCenter={() => {
-            setIsNotificationCenterOpen(true);
-            refreshUnreadCount();
-          }}
-          unreadNotificationCount={unreadNotificationCount}
-        />
-      )}
-
-      {/* Main Container */}
-      <main
+    <div
+      className={
+        isAdminView
+          ? 'min-h-screen w-full bg-[var(--bg-page)] text-[var(--text-primary)] font-sans'
+          : 'min-h-screen w-full bg-[#DFE5F2] dark:bg-[#05080F] text-[#101A36] dark:text-[#F1F5F9] font-sans transition-colors duration-200'
+      }
+    >
+      <div
         className={
           isAdminView
-            ? 'flex-grow w-full min-h-screen bg-[var(--bg-page)] overflow-x-hidden'
-            : isApplyView || isTrackView
-            ? 'flex-grow w-full bg-[var(--bg-surface)] overflow-x-hidden pb-20 md:pb-6'
-            : 'flex-grow w-full max-w-7xl mx-auto px-0 md:px-6 py-0 md:py-6 pb-20 md:pb-6 overflow-x-hidden'
+            ? 'w-full min-h-screen flex flex-col justify-between'
+            : 'max-w-[480px] w-full mx-auto min-h-screen bg-[#F4F6FB] dark:bg-[#0B1120] text-[#101A36] dark:text-[#F1F5F9] text-[14px] flex flex-col justify-between shadow-[0_0_32px_rgba(16,26,54,0.12)] relative overflow-x-clip'
         }
       >
+        {/* Top LIVE Ticker Bar (Homepage) */}
+        {isHomepageView && (
+          <LiveTickerBar posts={syncedPosts} onOpenPost={handleOpenJobPage} />
+        )}
+
+        {/* Top Sticky Header */}
+        {!isAdminView && !isApplyView && !isTrackView && (
+          <Navbar
+            cafeName={settings.cafeName}
+            currentPath={currentNavPath}
+            onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
+            onOpenAdmin={handleOpenStaffPortal}
+            onHomeClick={handleGoHome}
+            onOpenNotificationCenter={() => {
+              setIsNotificationCenterOpen(true);
+              refreshUnreadCount();
+            }}
+            unreadNotificationCount={unreadNotificationCount}
+          />
+        )}
+
+        {/* Main Container */}
+        <main
+          className={
+            isAdminView
+              ? 'flex-grow w-full min-h-screen bg-[var(--bg-page)] overflow-x-hidden'
+              : isApplyView || isTrackView
+              ? 'flex-grow w-full bg-[var(--bg-surface)] overflow-x-clip pb-20'
+              : 'flex-grow w-full overflow-x-clip pb-4'
+          }
+        >
         {isDevThumbnailsView ? (
           <Suspense fallback={<PageRouteSkeleton message="Loading Thumbnail Preview Matrix..." />}>
             <DevThumbnailsPreview
@@ -1237,6 +1216,20 @@ export default function App() {
             <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Recruitment Notifications..." />}>
               <SarkariResultDesk
                 mode="jobs"
+                routeSearch={routeSearch}
+                onNavigateRoute={navigateToPath}
+                onApplyService={handleServiceSelect}
+                onOpenDedicatedPage={handleOpenJobPage}
+              />
+            </Suspense>
+          </div>
+        ) : categoryView === 'deadlines' ? (
+          /* DEDICATED FULL-PAGE VIEW FOR CLOSING DEADLINES */
+          <div className="animate-fade-in w-full">
+            <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Closing Deadlines..." />}>
+              <SarkariResultDesk
+                mode="deadlines"
+                routeSearch={routeSearch}
                 onNavigateRoute={navigateToPath}
                 onApplyService={handleServiceSelect}
                 onOpenDedicatedPage={handleOpenJobPage}
@@ -1251,6 +1244,7 @@ export default function App() {
                 mode="education"
                 initialTab={educationSubRoute === 'ignou' ? 'ignou' : 'all'}
                 educationSubRoute={educationSubRoute === 'ignou'}
+                routeSearch={routeSearch}
                 onNavigateRoute={navigateToPath}
                 onApplyService={handleServiceSelect}
                 onOpenDedicatedPage={handleOpenJobPage}
@@ -1304,30 +1298,7 @@ export default function App() {
                 onOpenGuide={(guideId) => handleOpenSchemePage(guideId)}
                 onOpenTrack={() => handleOpenTrackPage()}
                 onOpenLegal={openLegalModal}
-                onNavigateRoute={(route) => {
-                  if (route.startsWith('/scheme/')) {
-                    const id = route.slice('/scheme/'.length);
-                    if (id) handleOpenSchemePage(id);
-                  } else if (route === '/jobs') {
-                    navigateToPath('/jobs');
-                  } else if (route === '/education') {
-                    navigateToPath('/education');
-                  } else if (route === '/education/ignou') {
-                    navigateToPath('/education/ignou');
-                  } else if (route === '/schemes' || route.startsWith('/schemes#')) {
-                    navigateToPath('/schemes');
-                  } else if (route === '/services' || route.startsWith('/services#')) {
-                    navigateToPath('/services');
-                  } else if (route === '/calculators') {
-                    handleOpenCalculatorsPage();
-                  } else if (route === '/tools' || route.startsWith('/tools#')) {
-                    handleOpenToolsPage();
-                  } else if (route === '/apply') {
-                    handleOpenApplyPage();
-                  } else if (route === '/track') {
-                    handleOpenTrackPage();
-                  }
-                }}
+                onNavigateRoute={(route) => navigateToPath(route)}
               />
             </Suspense>
           </div>
@@ -1509,35 +1480,16 @@ export default function App() {
         </div>
       )}
 
-      {/* Floating WhatsApp Updates Group Button - Compact 48px circle on mobile with safe-area and bottom nav clearance */}
-      {!isAdminView && !isApplyView && !isTrackView && !isPrivacyModalOpen && !showShareModal && (
-        <button
-          type="button"
-          onClick={handleWhatsAppFloating}
-          className={`fixed bottom-[calc(68px+max(0.75rem,env(safe-area-inset-bottom)))] end-3.5 sm:bottom-6 sm:end-6 w-12 h-12 sm:w-auto sm:h-11 sm:px-4 bg-[#1F9D6B] hover:bg-[#198258] text-white rounded-full shadow-md transition-colors z-30 ${
-            activeJobPost || activeServicePost
-              ? 'hidden md:flex'
-              : 'flex'
-          } items-center justify-center sm:gap-2 cursor-pointer border border-[#198258] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1F9D6B]`}
-          title="Join CSC DOST WhatsApp Updates Group"
-          id="whatsapp-floating-badge"
-          aria-label="Join CSC DOST WhatsApp Updates Group"
-        >
-          <MessageCircle className="w-5 h-5 sm:w-4 sm:h-4 shrink-0" aria-hidden="true" />
-          <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">
-            Join WhatsApp Updates Group
-          </span>
-        </button>
-      )}
-
-      {/* Fixed Mobile Bottom Navigation Bar (4 items: Home, Services, Jobs, Track) */}
+      {/* Fixed Mobile Bottom Navigation Bar (5 items: Home, Jobs, Results, Services, Alerts) */}
       {!isAdminView && (
         <MobileBottomNav
           activeTab={activeBottomTab}
           onNavigate={handleBottomNavNavigate}
+          unreadAlertsCount={unreadNotificationCount}
         />
       )}
 
+      </div>
     </div>
     </LanguageProvider>
   );

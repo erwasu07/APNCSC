@@ -325,10 +325,10 @@ export default function ImageSignatureResizerTool({ initialMode = 'signature' }:
         </div>
       ) : (
         /* Workspace Editor */
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="grid grid-cols-1 gap-4 items-start">
           
           {/* Left Preview */}
-          <div className="lg:col-span-5 bg-white border border-[#E2E8F0] rounded-2xl p-5 space-y-4 shadow-xs text-center">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 space-y-4 shadow-xs text-center">
             <div className="flex items-center justify-between text-xs border-b border-[#E2E8F0] pb-2">
               <span className="font-bold text-[#102A56]">Live Scaled Preview</span>
               <span className="text-[#2563EB] font-bold">
@@ -372,7 +372,7 @@ export default function ImageSignatureResizerTool({ initialMode = 'signature' }:
           </div>
 
           {/* Right Controls */}
-          <div className="lg:col-span-7 bg-white border border-[#E2E8F0] rounded-2xl p-6 space-y-5 shadow-xs">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 space-y-5 shadow-xs">
             
             {/* Presets for Signatures */}
             {activeTab === 'signature' && (

@@ -193,7 +193,7 @@ export default function ToolsHub({
 
     return (
       <div className="w-full bg-[var(--bg-page)] text-[var(--text-primary)] pb-12">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 space-y-5 sm:space-y-6">
+        <div className="px-3 pt-4 space-y-4">
           <Breadcrumbs
             items={[
               { label: t.navHome, href: '/' },
@@ -276,7 +276,7 @@ export default function ToolsHub({
           <AdSlot />
 
           {/* 3. SHORT EXPLANATION & 4. PRIVACY NOTE */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+          <div className="grid grid-cols-1 gap-4 items-stretch">
             <Card className="p-5 space-y-3 text-start flex flex-col justify-between">
               <div className="space-y-2.5">
                 <div className="flex items-center gap-2">
@@ -356,7 +356,7 @@ export default function ToolsHub({
                   {t.viewAllTools}
                 </a>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-3.5">
                 {relatedTools.map((rel) => {
                   const RelIcon = getToolIcon(rel.iconName);
                   return (
@@ -401,7 +401,7 @@ export default function ToolsHub({
   // =========================================================================
   return (
     <div className="w-full bg-[var(--bg-page)] text-[var(--text-primary)] pb-12">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 space-y-5 sm:space-y-6">
+      <div className="px-3 pt-4 space-y-4">
         <Breadcrumbs
           items={[{ label: t.navHome, href: '/' }, { label: t.toolsHubTitle }]}
           onNavigate={navigateRoute}
@@ -528,7 +528,7 @@ export default function ToolsHub({
             </button>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-3.5">
             {filteredTools.map((tool) => {
               const IconComponent = getToolIcon(tool.iconName);
               return (

@@ -938,8 +938,8 @@ function renderPrimaryCategoryNavHtml(activeCategory?: string): string {
 
 export function renderHomepageSubstantiveHtml(
   posts: SarkariItem[],
-  _services: ServiceItem[],
-  alertsConfig?: { whatsappUrl: string; whatsappType: 'channel' | 'group' }
+  services: ServiceItem[],
+  alertsConfig?: { whatsappUrl: string; whatsappType: 'channel' | 'group'; telegramUrl?: string }
 ): string {
   const verifiedVisiblePosts = posts
     .filter((p) => {
@@ -953,7 +953,7 @@ export function renderHomepageSubstantiveHtml(
         parseSarkariDateSortValue(a.postDate || a.documentDate)
     );
 
-  const closingSoonDeadlines = getActiveClosingDeadlines(posts, { maxDays: 14 }).slice(0, 6);
+  const closingSoonDeadlines = getActiveClosingDeadlines(posts, { maxDays: 7 }).slice(0, 4);
 
   const recruitmentPosts = verifiedVisiblePosts
     .filter((p) => isRecruitmentSarkariItem(p))
@@ -965,204 +965,204 @@ export function renderHomepageSubstantiveHtml(
     (g) => g.category === 'Central Scheme' || g.category === 'State Services' || g.category === 'Identity & Tax'
   ).slice(0, 4);
 
-  const featuredToolIds = ['image-compressor', 'image-resizer', 'pdf-merge', 'image-to-pdf'];
+  const featuredToolIds = ['image-compressor', 'passport-photo-maker', 'signature-resizer', 'pdf-merge'];
   const topTools = featuredToolIds
     .map((id) => TOOLS_LIST.find((t) => t.id === id))
     .filter((t): t is ToolItem => Boolean(t));
 
+  const featuredServices = services.slice(0, 6);
   const waUrl = alertsConfig?.whatsappUrl || 'https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI';
-  const waBtnLabel = alertsConfig?.whatsappType === 'channel' ? 'Join Channel' : 'Join Group';
+  const telegramUrl = alertsConfig?.telegramUrl || '';
 
   const categoryCards = [
-    { href: '/jobs', title: 'Jobs', desc: 'JKSSB, Army, SSC & RRB' },
-    { href: '/education', title: 'Admissions', desc: 'KU, Cluster Univ & IGNOU' },
-    { href: '/schemes', title: 'Schemes', desc: 'PM-KISAN & Welfare' },
-    { href: '/services', title: 'CSC Services', desc: 'PAN, Domicile & Forms' },
-    { href: '/tools', title: 'Document Tools', desc: 'Resize, Merge & Convert' },
+    { href: '/jobs', title: 'Jobs' },
+    { href: '/jobs?tab=exams', title: 'Admit Card' },
+    { href: '/jobs?tab=results', title: 'Results' },
+    { href: '/jobs?tab=results&filter=answer_key', title: 'Answer Key' },
+    { href: '/education', title: 'Admission' },
+    { href: '/schemes', title: 'Schemes' },
+    { href: '/tools', title: 'Tools' },
+    { href: '/deadlines', title: 'News' },
   ];
 
   const closingSoonHtml =
     closingSoonDeadlines.length > 0
       ? `
-    <section aria-labelledby="ssr-closing-soon-heading" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:18px; margin-bottom:20px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
-        <h2 id="ssr-closing-soon-heading" style="font-size:19px; font-weight:800; color:#101A36; margin:0;">
-          Closing soon
-        </h2>
-        <a href="/deadlines" style="font-size:13px; font-weight:700; color:#101A36; text-decoration:none;">View all deadlines →</a>
-      </div>
-      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:10px;">
+    <section aria-label="Closing Today &amp; Soon" style="background:#FEF2F2; border:1px solid #FECACA; border-radius:12px; padding:10px 12px; margin-bottom:14px;">
+      <div style="font-size:12px; font-weight:800; color:#E5484D; margin-bottom:6px;">Today:</div>
+      <div style="display:flex; flex-wrap:wrap; gap:6px;">
         ${closingSoonDeadlines
-          .map((d) => {
-            const daysText = d.daysRemaining === 0 ? 'Closes today' : `${d.daysRemaining}d left`;
-            return `
-          <article style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:12px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:4px; font-size:12px; font-weight:700;">
-              <span style="color:#475569;">${escapeHtml(d.institution)}</span>
-              <span style="color:#B45309;">${escapeHtml(daysText)} · ${escapeHtml(d.closingDate)}</span>
-            </div>
-            <h3 style="font-size:14px; font-weight:700; margin:0;">
-              <a href="/post/${escapeHtml(d.item.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(d.item.title)}</a>
-            </h3>
-          </article>`;
-          })
+          .map(
+            (d) => `
+          <a href="/post/${escapeHtml(d.item.id)}" style="background:#ffffff; border:1px solid #FECACA; border-radius:8px; padding:4px 8px; font-size:11px; font-weight:700; color:#101A36; text-decoration:none;">
+            ${escapeHtml(d.institution)} · ${escapeHtml(d.daysRemaining === 0 ? 'Today' : `${d.daysRemaining}d left`)}
+          </a>`
+          )
           .join('')}
       </div>
     </section>`
       : '';
 
   return `
-  ${renderPrimaryCategoryNavHtml()}
-  <main class="ssr-homepage-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:16px; color:#101A36; background:#F6F8FC; line-height:1.55;">
-    <section style="background:#101A36; color:#ffffff; border-radius:14px; padding:22px 20px; margin-bottom:18px;">
-      <h1 style="font-size:26px; font-weight:800; line-height:1.25; margin:0 0 6px 0; color:#ffffff;">
-        Jobs, Admissions &amp; Citizen Services
+  <div style="min-height:100vh; background:#DFE5F2;">
+  <div style="max-width:480px; margin:0 auto; background:#F4F6FB; box-shadow:0 0 32px rgba(16,26,54,0.12); font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:14px; color:#101A36; line-height:1.5;">
+  <header style="background:#ffffff; border-bottom:1px solid #E3E8F2; padding:10px 12px; display:flex; align-items:center; justify-content:space-between;">
+    <a href="/" style="display:inline-flex; align-items:center; gap:8px; font-size:17px; font-weight:800; color:#101A36; text-decoration:none;">CSC DOST</a>
+    <nav aria-label="Primary sections" style="display:flex; gap:10px; font-size:12px; font-weight:700;">
+      <a href="/jobs" style="color:#2455E6; text-decoration:none;">Jobs</a>
+      <a href="/services" style="color:#2455E6; text-decoration:none;">Services</a>
+      <a href="/schemes" style="color:#2455E6; text-decoration:none;">Schemes</a>
+    </nav>
+  </header>
+
+  <main class="ssr-homepage-wrapper" style="padding:0 0 24px 0;">
+    <section style="background:linear-gradient(135deg,#101A36,#1C2C66); color:#ffffff; padding:20px 14px 44px 14px;">
+      <h1 style="font-size:21px; font-weight:800; line-height:1.25; margin:0 0 6px 0; color:#ffffff;">
+        Every government update, <span style="color:#F59E0B;">one trusted place</span>
       </h1>
-      <p style="font-size:15px; color:#E2E8F0; max-width:720px; margin:0 0 14px 0;">
-        Jammu &amp; Kashmir updates, official links and free tools.
+      <p style="font-size:13px; color:#CBD5E1; margin:0 0 12px 0;">
+        J&amp;K and all-India jobs, results and CSC services.
       </p>
-      <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:10px;">
-        <a href="/track" style="background:#F5A623; color:#101A36; font-weight:700; font-size:14px; padding:9px 16px; border-radius:10px; text-decoration:none;">Track Application</a>
-        <a href="/deadlines" style="background:rgba(255,255,255,0.12); color:#ffffff; font-weight:600; font-size:14px; padding:9px 16px; border-radius:10px; text-decoration:none;">Closing Deadlines</a>
+      <div style="display:flex; flex-wrap:wrap; gap:6px;">
+        <a href="/jobs?org=JKSSB" style="background:rgba(255,255,255,0.14); color:#ffffff; font-size:11px; font-weight:600; padding:4px 10px; border-radius:999px; text-decoration:none;">JKSSB</a>
+        <a href="/jobs?org=SSC" style="background:rgba(255,255,255,0.14); color:#ffffff; font-size:11px; font-weight:600; padding:4px 10px; border-radius:999px; text-decoration:none;">SSC</a>
+        <a href="/jobs?org=RRB" style="background:rgba(255,255,255,0.14); color:#ffffff; font-size:11px; font-weight:600; padding:4px 10px; border-radius:999px; text-decoration:none;">Railway</a>
+        <a href="/jobs?org=Indian+Army" style="background:rgba(255,255,255,0.14); color:#ffffff; font-size:11px; font-weight:600; padding:4px 10px; border-radius:999px; text-decoration:none;">Army</a>
+        <a href="/service/csc-pmkisan" style="background:rgba(255,255,255,0.14); color:#ffffff; font-size:11px; font-weight:600; padding:4px 10px; border-radius:999px; text-decoration:none;">PM-KISAN</a>
+        <a href="/service/csc-aadhaar" style="background:rgba(255,255,255,0.14); color:#ffffff; font-size:11px; font-weight:600; padding:4px 10px; border-radius:999px; text-decoration:none;">Aadhaar</a>
       </div>
-      <p style="font-size:12px; color:#CBD5E1; margin:0;">Independent portal, not a government website.</p>
     </section>
 
-    <section aria-label="Service Shortcuts" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(175px, 1fr)); gap:10px; margin-bottom:20px;">
-      ${categoryCards
-        .map(
-          (card) => `
-        <a href="${card.href}" style="display:block; background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:12px 14px; text-decoration:none;">
-          <div style="font-size:15px; font-weight:700; color:#101A36; margin:0 0 2px 0;">${card.title}</div>
-          <div style="font-size:12px; color:#475569; margin:0;">${card.desc}</div>
-        </a>
-      `
-        )
-        .join('')}
-    </section>
+    <div style="padding:0 12px;">
+      <section aria-label="Highlights" style="margin-top:-32px; margin-bottom:14px; display:grid; grid-template-columns:repeat(4,1fr); gap:6px; text-align:center;">
+        <div style="background:#ffffff; border:1px solid #E3E8F2; border-radius:12px; padding:8px 4px;"><strong style="display:block; font-size:12px;">1,200+</strong><span style="font-size:10px; color:#5B6478;">Vacancies</span></div>
+        <div style="background:#ffffff; border:1px solid #E3E8F2; border-radius:12px; padding:8px 4px;"><strong style="display:block; font-size:12px;">Daily</strong><span style="font-size:10px; color:#5B6478;">Updates</span></div>
+        <div style="background:#ffffff; border:1px solid #E3E8F2; border-radius:12px; padding:8px 4px;"><strong style="display:block; font-size:12px;">40+</strong><span style="font-size:10px; color:#5B6478;">Services</span></div>
+        <div style="background:#ffffff; border:1px solid #E3E8F2; border-radius:12px; padding:8px 4px;"><strong style="display:block; font-size:12px;">Free</strong><span style="font-size:10px; color:#5B6478;">Alerts</span></div>
+      </section>
 
-    ${closingSoonHtml}
+      <section aria-label="Categories" style="margin-bottom:14px;">
+        <h2 style="font-size:15px; font-weight:800; margin:0 0 8px 0;">Categories</h2>
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px;">
+          ${categoryCards
+            .map(
+              (card) => `
+            <a href="${card.href}" style="display:block; text-align:center; background:#ffffff; border:1px solid #E3E8F2; border-radius:12px; padding:10px 4px; text-decoration:none; font-size:11px; font-weight:700; color:#101A36;">
+              ${card.title}
+            </a>`
+            )
+            .join('')}
+        </div>
+      </section>
 
-    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:16px; margin-bottom:20px;">
-      <section aria-labelledby="ssr-recruitment-heading" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <h2 id="ssr-recruitment-heading" style="font-size:18px; font-weight:800; color:#101A36; margin:0;">Latest Jobs</h2>
-          <a href="/jobs" style="font-size:13px; font-weight:700; color:#1F9D6B; text-decoration:none;">View all →</a>
+      ${closingSoonHtml}
+
+      <section aria-labelledby="ssr-recruitment-heading" style="background:#ffffff; border:1px solid #E3E8F2; border-radius:14px; padding:12px; margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <h2 id="ssr-recruitment-heading" style="font-size:15px; font-weight:800; margin:0;">Latest updates</h2>
+          <a href="/jobs" style="font-size:12px; font-weight:700; color:#2455E6; text-decoration:none;">All →</a>
         </div>
         <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
-          ${recruitmentPosts
+          ${[...recruitmentPosts.slice(0, 3), ...educationPosts.slice(0, 2)]
             .map(
               (post) => `
-            <li style="border-bottom:1px solid #F1F5F9; padding-bottom:8px;">
-              <a href="/post/${escapeHtml(post.id)}" style="font-size:14px; font-weight:700; color:#101A36; text-decoration:none;">${escapeHtml(post.title)}</a>
-            </li>
-          `
+            <li style="border-bottom:1px solid #E3E8F2; padding-bottom:6px;">
+              <a href="/post/${escapeHtml(post.id)}" style="font-size:13px; font-weight:600; color:#101A36; text-decoration:none;">${escapeHtml(post.title)}</a>
+            </li>`
             )
             .join('')}
         </ul>
       </section>
 
-      <section aria-labelledby="ssr-education-heading" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <h2 id="ssr-education-heading" style="font-size:18px; font-weight:800; color:#101A36; margin:0;">Education &amp; Exams</h2>
-          <a href="/education" style="font-size:13px; font-weight:700; color:#1F9D6B; text-decoration:none;">View all →</a>
+      <section aria-labelledby="ssr-services-heading" style="margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <h2 id="ssr-services-heading" style="font-size:15px; font-weight:800; margin:0;">CSC services</h2>
+          <a href="/services" style="font-size:12px; font-weight:700; color:#2455E6; text-decoration:none;">All →</a>
         </div>
-        <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
-          ${educationPosts
+        <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px;">
+          ${featuredServices
+            .slice(0, 4)
             .map(
-              (post) => `
-            <li style="border-bottom:1px solid #F1F5F9; padding-bottom:8px;">
-              <a href="/post/${escapeHtml(post.id)}" style="font-size:14px; font-weight:700; color:#101A36; text-decoration:none;">${escapeHtml(post.title)}</a>
-            </li>
-          `
+              (svc) => `
+            <a href="/service/${escapeHtml(svc.id)}" style="background:#ffffff; border:1px solid #E3E8F2; border-radius:12px; padding:10px; text-decoration:none; font-size:12px; font-weight:700; color:#101A36;">
+              ${escapeHtml(svc.name)}
+            </a>`
             )
             .join('')}
-        </ul>
-      </section>
-    </div>
-
-    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:16px; margin-bottom:20px;">
-      <section aria-labelledby="ssr-schemes-heading" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <h2 id="ssr-schemes-heading" style="font-size:18px; font-weight:800; color:#101A36; margin:0;">Government Schemes</h2>
-          <a href="/schemes" style="font-size:13px; font-weight:700; color:#1F9D6B; text-decoration:none;">View all →</a>
         </div>
-        <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
-          ${popularSchemes
-            .map(
-              (guide) => `
-            <li style="border-bottom:1px solid #F1F5F9; padding-bottom:8px;">
-              <a href="/scheme/${escapeHtml(guide.id)}" style="font-size:14px; font-weight:700; color:#101A36; text-decoration:none;">${escapeHtml(guide.title)}</a>
-            </li>
-          `
-            )
-            .join('')}
-        </ul>
       </section>
 
-      <section aria-labelledby="ssr-tools-heading" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <h2 id="ssr-tools-heading" style="font-size:18px; font-weight:800; color:#101A36; margin:0;">Free Document Tools</h2>
-          <a href="/tools" style="font-size:13px; font-weight:700; color:#1F9D6B; text-decoration:none;">View all →</a>
+      <section aria-labelledby="ssr-tools-heading" style="margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <h2 id="ssr-tools-heading" style="font-size:15px; font-weight:800; margin:0;">Free tools</h2>
+          <a href="/tools" style="font-size:12px; font-weight:700; color:#2455E6; text-decoration:none;">All →</a>
         </div>
-        <div style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px;">
+        <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px;">
           ${topTools
             .map(
               (tool) => `
-            <a href="/tools/${escapeHtml(tool.id)}" style="display:block; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:10px; text-decoration:none; font-size:14px; font-weight:700; color:#101A36;">
-              ${escapeHtml(tool.id === 'pdf-merge' ? 'Merge PDF' : tool.name)}
-            </a>
-          `
+            <a href="/tools/${escapeHtml(tool.id)}" style="background:#ffffff; border:1px solid #E3E8F2; border-radius:12px; padding:10px; text-decoration:none; font-size:12px; font-weight:700; color:#101A36;">
+              ${escapeHtml(tool.name)}
+            </a>`
             )
             .join('')}
         </div>
       </section>
+
+      <section aria-labelledby="ssr-schemes-heading" style="background:#ffffff; border:1px solid #E3E8F2; border-radius:14px; padding:12px; margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <h2 id="ssr-schemes-heading" style="font-size:15px; font-weight:800; margin:0;">Government schemes</h2>
+          <a href="/schemes" style="font-size:12px; font-weight:700; color:#2455E6; text-decoration:none;">All →</a>
+        </div>
+        <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px;">
+          ${popularSchemes
+            .map(
+              (guide) => `
+            <li>
+              <a href="/scheme/${escapeHtml(guide.id)}" style="font-size:13px; font-weight:600; color:#101A36; text-decoration:none;">${escapeHtml(guide.title)}</a>
+            </li>`
+            )
+            .join('')}
+        </ul>
+      </section>
+
+      <section aria-labelledby="ssr-alerts-heading" style="background:#101A36; color:#ffffff; border-radius:14px; padding:16px; margin-bottom:14px;">
+        <h2 id="ssr-alerts-heading" style="font-size:16px; font-weight:800; color:#ffffff; margin:0 0 4px 0;">
+          Free instant alerts
+        </h2>
+        <p style="font-size:12px; color:#CBD5E1; margin:0 0 12px 0;">
+          Join our WhatsApp group for daily job notices, results and J&amp;K updates.
+        </p>
+        <div style="display:flex; gap:8px;">
+          <a href="${escapeHtml(waUrl)}" target="_blank" rel="noopener noreferrer" style="background:#0F9D6B; color:#ffffff; font-weight:700; font-size:13px; padding:9px 14px; border-radius:10px; text-decoration:none;">WhatsApp</a>
+          ${
+            telegramUrl
+              ? `<a href="${escapeHtml(telegramUrl)}" target="_blank" rel="noopener noreferrer" style="background:rgba(255,255,255,0.14); color:#ffffff; font-weight:700; font-size:13px; padding:9px 14px; border-radius:10px; text-decoration:none;">Telegram</a>`
+              : `<span style="background:rgba(255,255,255,0.1); color:#CBD5E1; font-weight:700; font-size:12px; padding:9px 12px; border-radius:10px;">Telegram Coming soon</span>`
+          }
+        </div>
+      </section>
+
+      <footer style="background:#101A36; color:#E2E8F0; border-radius:14px; padding:14px; font-size:12px; line-height:1.6;">
+        <p style="margin:0 0 6px 0; font-weight:700;">
+          CSC DOST © ${new Date().getFullYear()} · Wasim Ahmad Khanday · VLE ID: 212515670018 · Sangran Qazigund, Anantnag, J&amp;K 192221 · +91 70068 33767
+        </p>
+        <p style="margin:0 0 6px 0;">
+          <a href="/about-us" style="color:#ffffff; text-decoration:none; margin-right:8px;">About</a>
+          <a href="/contact-us" style="color:#ffffff; text-decoration:none; margin-right:8px;">Contact</a>
+          <a href="/privacy-policy" style="color:#ffffff; text-decoration:none; margin-right:8px;">Privacy Policy</a>
+          <a href="/terms-of-service" style="color:#ffffff; text-decoration:none; margin-right:8px;">Terms</a>
+          <a href="/disclaimer" style="color:#ffffff; text-decoration:none; margin-right:8px;">Disclaimer</a>
+          <a href="/refund-policy" style="color:#ffffff; text-decoration:none;">Refund Policy</a>
+        </p>
+        <p style="margin:0; font-size:11px; color:#CBD5E1;">
+          CSC DOST is an independent portal, not an official government website. Always confirm details on the official notification.
+        </p>
+      </footer>
     </div>
-
-    <section aria-labelledby="ssr-alerts-heading" style="background:#1F9D6B; color:#ffffff; border-radius:14px; padding:18px 20px; margin-bottom:16px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
-      <div>
-        <h2 id="ssr-alerts-heading" style="font-size:18px; font-weight:800; color:#ffffff; margin:0 0 4px 0;">
-          Get updates on WhatsApp
-        </h2>
-        <p style="font-size:14px; color:#ECFDF5; margin:0;">
-          Receive job alerts, admission updates and important announcements.
-        </p>
-      </div>
-      <a href="${escapeHtml(waUrl)}" target="_blank" rel="noopener noreferrer" style="background:#ffffff; color:#101A36; font-weight:700; font-size:14px; padding:10px 16px; border-radius:10px; text-decoration:none;">
-        ${escapeHtml(waBtnLabel)}
-      </a>
-    </section>
-
-    <section aria-labelledby="ssr-help-heading" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:16px 20px; margin-bottom:20px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
-      <div>
-        <h2 id="ssr-help-heading" style="font-size:17px; font-weight:800; color:#101A36; margin:0 0 4px 0;">
-          Need help with an online form?
-        </h2>
-        <p style="font-size:14px; color:#475569; margin:0;">
-          Sangran Qazigund, Anantnag · Wasim Ahmad Khanday
-        </p>
-      </div>
-      <div style="display:flex; flex-wrap:wrap; gap:8px;">
-        <a href="https://wa.me/917006833767" target="_blank" rel="noopener noreferrer" style="background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:9px 14px; border-radius:10px; text-decoration:none;">WhatsApp Help</a>
-        <a href="tel:+917006833767" style="background:#101A36; color:#ffffff; font-weight:700; font-size:14px; padding:9px 14px; border-radius:10px; text-decoration:none;">Call</a>
-      </div>
-    </section>
-
-    <footer style="background:#101A36; color:#E2E8F0; border-radius:14px; padding:16px 18px; text-align:center; font-size:13px; line-height:1.7;">
-      <p style="margin:0 0 6px 0;">
-        CSC DOST © ${new Date().getFullYear()} ·
-        <a href="/about-us" style="color:#ffffff; text-decoration:none; margin:0 6px;">About</a> ·
-        <a href="/contact-us" style="color:#ffffff; text-decoration:none; margin:0 6px;">Contact</a> ·
-        <a href="/privacy-policy" style="color:#ffffff; text-decoration:none; margin:0 6px;">Privacy Policy</a> ·
-        <a href="/terms-of-service" style="color:#ffffff; text-decoration:none; margin:0 6px;">Terms</a> ·
-        <a href="/disclaimer" style="color:#ffffff; text-decoration:none; margin:0 6px;">Disclaimer</a> ·
-        <a href="/refund-policy" style="color:#ffffff; text-decoration:none; margin:0 6px;">Refund Policy</a>
-      </p>
-      <p style="margin:0; font-size:12px; color:#CBD5E1;">
-        CSC DOST is an independent portal, not an official government website. Always confirm details on the official notification.
-      </p>
-    </footer>
   </main>
+  </div>
+  </div>
   `;
 }
 

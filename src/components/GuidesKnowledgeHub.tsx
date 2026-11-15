@@ -188,7 +188,7 @@ export default function GuidesKnowledgeHub({
       aria-labelledby="schemes-hub-h1"
       className="w-full bg-[var(--bg-page)] text-[var(--text-primary)] pb-12"
     >
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 space-y-5">
+      <div className="px-3 pt-4 space-y-4">
         <Breadcrumbs
           items={[
             { label: t.navHome, href: '/' },
@@ -331,7 +331,7 @@ export default function GuidesKnowledgeHub({
             </button>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-3.5">
             {filteredArticles.map((article) => {
               const isScheme = article.category === 'Central Scheme';
               const localizedTitle = getLocalizedArticleTitle(article);

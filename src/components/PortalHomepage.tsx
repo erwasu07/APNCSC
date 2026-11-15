@@ -1,40 +1,18 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  Briefcase,
-  GraduationCap,
-  ShieldCheck,
-  CreditCard,
-  Wrench,
-  Search,
-  MapPin,
-  ArrowRight,
-  Calculator,
-  Clock,
-  Building2,
-  Users,
-  PhoneCall,
-  UserCheck,
-  X,
-} from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import {
   SarkariItem,
   isPublishedSarkariItem,
-  isIgnouItem,
   isEducationSarkariItem,
   isRecruitmentSarkariItem,
 } from '../data/sarkariData';
-import { computeSarkariStatus } from '../utils/sarkariStatus';
-import { getPostListThumbnailUrl } from '../utils/postThumbnailMeta';
+import { getDeduplicatedSarkariPosts, resolvePostOrg } from '../data/sarkariMigration';
+import { computeSarkariStatus, getActiveClosingDeadlines } from '../utils/sarkariStatus';
 import { useSyncedSarkariPosts, sortByNewestPostDate } from '../utils/postDataSync';
 import { SERVICES_LIST, ServiceItem } from '../servicesData';
 import { GUIDE_ARTICLES } from '../data/guidesData';
 import { TOOLS_LIST } from './tools/toolsData';
-import { useLanguage } from '../contexts/LanguageContext';
-import { Card } from './ui/Card';
-import { Badge } from './ui/Badge';
-import { Section } from './ui/Section';
-import { AlertsBox } from './ui/AlertsBox';
-import { HelpApplyingCard } from './ui/HelpApplyingCard';
+import { usePublicAlertsConfig } from './ui/AlertsBox';
 import { AdSlot } from './ui/AdSlot';
 
 export interface PortalHomepageProps {
@@ -47,37 +25,116 @@ export interface PortalHomepageProps {
   onNavigateRoute?: (route: string) => void;
 }
 
+type UpdatesTabId = 'jobs' | 'admit_card' | 'results' | 'answer_key' | 'admission';
+
+const UPDATES_TABS: { id: UpdatesTabId; label: string; viewAllLabel: string; href: string }[] = [
+  { id: 'jobs', label: 'Jobs', viewAllLabel: 'View all jobs', href: '/jobs' },
+  { id: 'admit_card', label: 'Admit Card', viewAllLabel: 'View all admit cards', href: '/jobs?tab=exams' },
+  { id: 'results', label: 'Results', viewAllLabel: 'View all results', href: '/jobs?tab=results' },
+  { id: 'answer_key', label: 'Answer Key', viewAllLabel: 'View all answer keys', href: '/jobs?tab=results&filter=answer_key' },
+  { id: 'admission', label: 'Admission', viewAllLabel: 'View all admissions', href: '/education' },
+];
+
+const HERO_CHIPS = ['JKSSB', 'SSC', 'Railway', 'Army', 'PM-KISAN', 'Aadhaar'] as const;
+
+const CATEGORY_GRID_ITEMS = [
+  { id: 'jobs', emoji: '💼', label: 'Jobs', href: '/jobs' },
+  { id: 'admit', emoji: '🪪', label: 'Admit Card', href: '/jobs?tab=exams' },
+  { id: 'results', emoji: '📊', label: 'Results', href: '/jobs?tab=results' },
+  { id: 'keys', emoji: '🔑', label: 'Answer Key', href: '/jobs?tab=results&filter=answer_key' },
+  { id: 'admission', emoji: '🎓', label: 'Admission', href: '/education' },
+  { id: 'schemes', emoji: '🏛️', label: 'Schemes', href: '/schemes' },
+  { id: 'tools', emoji: '🧮', label: 'Tools', href: '/tools' },
+  { id: 'news', emoji: '📰', label: 'News', href: '/deadlines' },
+] as const;
+
+const SERVICE_CARD_META: Record<string, { emoji: string; shortTitle: string; shortDesc: string }> = {
+  'csc-pan': { emoji: '🪪', shortTitle: 'PAN Card', shortDesc: 'New & e-KYC' },
+  'csc-aadhaar': { emoji: '📱', shortTitle: 'Aadhaar', shortDesc: 'Address & ASK' },
+  'csc-ayushman': { emoji: '🏥', shortTitle: 'Ayushman', shortDesc: '₹5L Health Card' },
+  'csc-certificates': { emoji: '📜', shortTitle: 'Certificates', shortDesc: 'Domicile & Caste' },
+  'csc-pmkisan': { emoji: '🌾', shortTitle: 'PM-KISAN', shortDesc: 'e-KYC & Status' },
+  'csc-passport': { emoji: '🛂', shortTitle: 'Passport', shortDesc: 'Fresh & Renewal' },
+  'csc-ration': { emoji: '🍚', shortTitle: 'Ration Card', shortDesc: 'Add & Updates' },
+  'csc-dl': { emoji: '🚗', shortTitle: 'Driving Licence', shortDesc: 'LL & Renewal' },
+};
+
+const TOOL_CARD_META: Record<string, { emoji: string; shortTitle: string; shortDesc: string }> = {
+  'image-compressor': { emoji: '🖼️', shortTitle: 'Photo Resize', shortDesc: '20KB / 50KB KB' },
+  'passport-photo-maker': { emoji: '📸', shortTitle: 'Passport Photo', shortDesc: 'A4 Print Sheet' },
+  'signature-resizer': { emoji: '✍️', shortTitle: 'Sign Resizer', shortDesc: '10–20 KB Crop' },
+  'pdf-merge': { emoji: '📑', shortTitle: 'Merge PDF', shortDesc: 'Combine files' },
+  'image-to-pdf': { emoji: '📄', shortTitle: 'JPG to PDF', shortDesc: 'A4 Document' },
+  'pdf-compressor': { emoji: '📦', shortTitle: 'Compress PDF', shortDesc: 'Reduce MB size' },
+  'background-remover': { emoji: '✂️', shortTitle: 'Remove BG', shortDesc: 'White backdrop' },
+};
+
+const HOMEPAGE_FAQS = [
+  {
+    q: 'Is CSC DOST an official government website?',
+    a: 'No. CSC DOST is an independent citizen portal run by Authorized CSC VLE Wasim Ahmad Khanday (VLE ID: 212515670018, Sangran Qazigund, Anantnag, J&K). Always confirm final dates and eligibility on the official authority website linked on every page.',
+  },
+  {
+    q: 'How can I apply or get help with an online form?',
+    a: 'Every notification includes the official portal link and step-by-step instructions. For assisted CSC form filling, document scanning, or status tracking, call +91 70068 33767 or visit Sangran Qazigund.',
+  },
+];
+
+function isJkPriorityItem(item: SarkariItem): boolean {
+  if (item.jkDomicile) return true;
+  if (
+    item.category === 'jkssb' ||
+    item.category === 'banking_jobs' ||
+    item.category === 'cluster_univ' ||
+    item.category === 'admissions' ||
+    item.category === 'exam_forms'
+  ) {
+    return true;
+  }
+  const haystack = `${item.title} ${item.org || ''} ${item.department || ''} ${item.institution || ''}`.toLowerCase();
+  return /jkssb|j&k|jammu|kashmir|srinagar|cluster\s*univ|skuast|jkpsc|jk\s*bank|bopee/.test(haystack);
+}
+
+function matchesSearchTerm(text: string, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  const normalized = text.toLowerCase();
+  if (normalized.includes(q)) return true;
+  if (q === 'railway' && /\brrb\b|railway/.test(normalized)) return true;
+  if (q === 'army' && /agniveer|join\s*indian\s*army|\barmy\b/.test(normalized)) return true;
+  if (q === 'pm-kisan' && /pm[\s-]*kisan|kisan/.test(normalized)) return true;
+  return false;
+}
+
+function postMatchesQuery(item: SarkariItem, query: string): boolean {
+  if (!query.trim()) return true;
+  const hay = [
+    item.title,
+    item.org,
+    item.department,
+    item.institution,
+    item.shortInfo,
+    item.summary,
+    item.category,
+  ]
+    .filter(Boolean)
+    .join(' ');
+  return matchesSearchTerm(hay, query);
+}
+
 export default function PortalHomepage({
   onOpenJob,
   onOpenService,
   onOpenGuide,
-  onOpenTrack,
   onNavigateRoute,
 }: PortalHomepageProps) {
-  const { t, language } = useLanguage();
   const allPosts = useSyncedSarkariPosts();
-  const [searchQuery, setSearchQuery] = useState('');
+  const alertsConfig = usePublicAlertsConfig();
 
-  useEffect(() => {
-    const handleHeaderSearch = (e: Event) => {
-      const custom = e as CustomEvent<{ query?: string }>;
-      if (typeof custom.detail?.query === 'string') {
-        setSearchQuery(custom.detail.query);
-      }
-    };
-
-    const handleFocusSearch = () => {
-      const el = document.getElementById('portal-inline-search-input');
-      if (el) el.focus();
-    };
-
-    window.addEventListener('csc-header-search', handleHeaderSearch);
-    window.addEventListener('focus-csc-search', handleFocusSearch);
-    return () => {
-      window.removeEventListener('csc-header-search', handleHeaderSearch);
-      window.removeEventListener('focus-csc-search', handleFocusSearch);
-    };
-  }, []);
+  const [searchInput, setSearchInput] = useState('');
+  const [activeFilterQuery, setActiveFilterQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<UpdatesTabId>('jobs');
+  const [openFaqIdx, setOpenFaqIdx] = useState<number | null>(0);
 
   const navigate = (path: string) => {
     if (onNavigateRoute) {
@@ -92,329 +149,530 @@ export default function PortalHomepage({
     }
   };
 
-  const getOrganisationLabel = (item: SarkariItem): string => {
-    if (isIgnouItem(item)) return 'IGNOU';
-    switch (item.category) {
-      case 'jkssb':
-        return 'JKSSB';
-      case 'banking_jobs':
-        return item.department || 'Banking / J&K Bank';
-      case 'army_jobs':
-        return 'Indian Army';
-      case 'ssc_jobs':
-        return 'SSC';
-      case 'rrb_jobs':
-        return 'RRB';
-      case 'cluster_univ':
-        return 'Cluster University Srinagar';
-      case 'exam_forms':
-      case 'admissions':
-        return 'University of Kashmir';
-      case 'nta':
-        return 'NTA';
-      default:
-        return item.department || 'Public Notice';
+  // Verified, deduplicated posts
+  const verifiedPosts = useMemo(() => {
+    return getDeduplicatedSarkariPosts(allPosts).filter((item) => {
+      if (!isPublishedSarkariItem(item) || item.isCancelled) return false;
+      const st = computeSarkariStatus(item);
+      return st.verificationStatus !== 'needs_verification';
+    });
+  }, [allPosts]);
+
+  // Bucketed lists sorted J&K-first, then urgency/open status, then newest postDate
+  const bucketedLists = useMemo(() => {
+    const compareJkFirst = (a: SarkariItem, b: SarkariItem, prioritizeOpen: boolean) => {
+      const jkA = isJkPriorityItem(a) ? 1 : 0;
+      const jkB = isJkPriorityItem(b) ? 1 : 0;
+      if (jkA !== jkB) return jkB - jkA;
+
+      const stA = computeSarkariStatus(a);
+      const stB = computeSarkariStatus(b);
+
+      if (prioritizeOpen && stA.canApplyOnline !== stB.canApplyOnline) {
+        return stA.canApplyOnline ? -1 : 1;
+      }
+      if (stA.isUrgentUnder7Days !== stB.isUrgentUnder7Days) {
+        return stA.isUrgentUnder7Days ? -1 : 1;
+      }
+      return sortByNewestPostDate(a, b);
+    };
+
+    const jobs: SarkariItem[] = [];
+    const admit_card: SarkariItem[] = [];
+    const results: SarkariItem[] = [];
+    const answer_key: SarkariItem[] = [];
+    const admission: SarkariItem[] = [];
+
+    for (const item of verifiedPosts) {
+      const st = computeSarkariStatus(item);
+      if (st.stage === 'answer_key' || st.stage === 'objection_window') {
+        answer_key.push(item);
+      } else if (st.stage === 'result' || st.stage === 'grade_card') {
+        results.push(item);
+      } else if (
+        st.stage === 'admit_card' ||
+        st.stage === 'examination' ||
+        st.stage === 'document_verification' ||
+        st.stage === 'date_sheet'
+      ) {
+        admit_card.push(item);
+      } else if (isEducationSarkariItem(item)) {
+        admission.push(item);
+      } else if (isRecruitmentSarkariItem(item)) {
+        jobs.push(item);
+      }
+    }
+
+    return {
+      jobs: jobs.sort((a, b) => compareJkFirst(a, b, true)),
+      admit_card: admit_card.sort((a, b) => compareJkFirst(a, b, false)),
+      results: results.sort((a, b) => compareJkFirst(a, b, false)),
+      answer_key: answer_key.sort((a, b) => compareJkFirst(a, b, false)),
+      admission: admission.sort((a, b) => compareJkFirst(a, b, true)),
+    };
+  }, [verifiedPosts]);
+
+  // Execute cross-list search ("Go" or quick chip) and jump to the first matching tab
+  const applySearchAndJump = (rawQuery: string) => {
+    const trimmed = rawQuery.trim();
+    setSearchInput(trimmed);
+    setActiveFilterQuery(trimmed);
+
+    if (trimmed) {
+      const tabOrder: UpdatesTabId[] = [
+        activeTab,
+        ...(['jobs', 'admit_card', 'results', 'answer_key', 'admission'] as UpdatesTabId[]).filter(
+          (id) => id !== activeTab
+        ),
+      ];
+      const firstMatchingTab = tabOrder.find((tabId) =>
+        bucketedLists[tabId].some((item) => postMatchesQuery(item, trimmed))
+      );
+      if (firstMatchingTab) {
+        setActiveTab(firstMatchingTab);
+      }
+
+      const sectionEl = document.getElementById('latest-updates-section');
+      if (sectionEl) {
+        sectionEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
   };
 
-  // Five required Category Tiles (Jobs, Education, Schemes, Services, Tools & Calculators)
-  const categoryTiles = [
-    {
-      id: 'jobs',
-      title: t.catJobs,
-      desc: t.catJobsDesc,
-      href: '/jobs',
-      Icon: Briefcase,
-      iconBg: 'bg-[#101A36] text-[#F5A623]',
-    },
-    {
-      id: 'admissions',
-      title: t.catAdmissions,
-      desc: t.catAdmissionsDesc,
-      href: '/education',
-      Icon: GraduationCap,
-      iconBg: 'bg-[#101A36] text-[#F5A623]',
-    },
-    {
-      id: 'schemes',
-      title: t.catSchemes,
-      desc: t.catSchemesDesc,
-      href: '/schemes',
-      Icon: ShieldCheck,
-      iconBg: 'bg-[#1F9D6B] text-white',
-    },
-    {
-      id: 'services',
-      title: t.catServices,
-      desc: t.catServicesDesc,
-      href: '/services',
-      Icon: CreditCard,
-      iconBg: 'bg-[#101A36] text-white',
-    },
-    {
-      id: 'tools',
-      title: t.catTools,
-      desc: t.catToolsDesc,
-      href: '/tools',
-      Icon: Wrench,
-      iconBg: 'bg-[#F5A623] text-[#101A36]',
-    },
-  ];
+  useEffect(() => {
+    const handleHeaderSearch = (e: Event) => {
+      const custom = e as CustomEvent<{ query?: string; submit?: boolean }>;
+      if (typeof custom.detail?.query === 'string') {
+        setSearchInput(custom.detail.query);
+        setActiveFilterQuery(custom.detail.query.trim());
+        if (custom.detail.submit) {
+          applySearchAndJump(custom.detail.query);
+        }
+      }
+    };
+    window.addEventListener('csc-header-search', handleHeaderSearch);
+    return () => window.removeEventListener('csc-header-search', handleHeaderSearch);
+  });
 
-  // Computed "Closing this week" items: strictly 0 <= daysRemaining <= 7
-  const closingThisWeek = useMemo(() => {
-    return allPosts
-      .filter((item) => {
-        if (!isPublishedSarkariItem(item) || item.isCancelled || item.duplicateOfId) return false;
-        const st = computeSarkariStatus(item);
-        return (
-          st.verificationStatus !== 'needs_verification' &&
-          st.isUrgentUnder7Days &&
-          st.daysRemaining !== null &&
-          st.daysRemaining >= 0 &&
-          st.daysRemaining <= 7
-        );
-      })
-      .sort((a, b) => {
-        const stA = computeSarkariStatus(a);
-        const stB = computeSarkariStatus(b);
-        const diff = (stA.daysRemaining ?? 99) - (stB.daysRemaining ?? 99);
-        if (diff !== 0) return diff;
-        return sortByNewestPostDate(a, b);
-      })
-      .slice(0, 6);
+  // Closing soon notices (within 7 days, computed dynamically)
+  const closingSoonChips = useMemo(() => {
+    return getActiveClosingDeadlines(allPosts, { maxDays: 7 }).slice(0, 4);
   }, [allPosts]);
 
-  // Latest Jobs (open/upcoming sorted first, newest post date)
-  const latestJobs = useMemo(() => {
-    return allPosts
-      .filter((item) => {
-        if (!isPublishedSarkariItem(item) || !isRecruitmentSarkariItem(item)) return false;
-        const st = computeSarkariStatus(item);
-        return st.verificationStatus !== 'needs_verification' && !item.isCancelled;
-      })
-      .sort((a, b) => {
-        const stA = computeSarkariStatus(a);
-        const stB = computeSarkariStatus(b);
-        if (stA.canApplyOnline !== stB.canApplyOnline) return stA.canApplyOnline ? -1 : 1;
-        if (stA.isUrgentUnder7Days !== stB.isUrgentUnder7Days) return stA.isUrgentUnder7Days ? -1 : 1;
-        return sortByNewestPostDate(a, b);
-      })
-      .slice(0, 6);
-  }, [allPosts]);
+  // Active tab list (filtered by search query if present, max 5 rows)
+  const visibleTabPosts = useMemo(() => {
+    const source = bucketedLists[activeTab];
+    const filtered = activeFilterQuery
+      ? source.filter((item) => postMatchesQuery(item, activeFilterQuery))
+      : source;
+    return filtered.slice(0, 5);
+  }, [bucketedLists, activeTab, activeFilterQuery]);
 
-  // Admissions & University updates
-  const admissionNotices = useMemo(() => {
-    return allPosts
-      .filter((item) => {
-        if (!isPublishedSarkariItem(item) || !isEducationSarkariItem(item)) return false;
-        const st = computeSarkariStatus(item);
-        return st.verificationStatus !== 'needs_verification' && !item.isCancelled;
-      })
-      .sort((a, b) => {
-        const stA = computeSarkariStatus(a);
-        const stB = computeSarkariStatus(b);
-        if (stA.canApplyOnline !== stB.canApplyOnline) return stA.canApplyOnline ? -1 : 1;
-        return sortByNewestPostDate(a, b);
-      })
-      .slice(0, 4);
-  }, [allPosts]);
+  // Extra cross-portal matches for Services / Schemes / Tools when filtering (e.g. PM-KISAN, Aadhaar)
+  const extraSearchMatches = useMemo(() => {
+    if (!activeFilterQuery) return null;
+    const services = SERVICES_LIST.filter((s) =>
+      matchesSearchTerm(`${s.name} ${s.description}`, activeFilterQuery)
+    ).slice(0, 3);
+    const schemes = GUIDE_ARTICLES.filter((g) =>
+      matchesSearchTerm(`${g.title} ${g.summary}`, activeFilterQuery)
+    ).slice(0, 3);
+    const tools = TOOLS_LIST.filter((t) =>
+      matchesSearchTerm(`${t.name} ${t.shortDescription}`, activeFilterQuery)
+    ).slice(0, 2);
+    if (services.length === 0 && schemes.length === 0 && tools.length === 0) return null;
+    return { services, schemes, tools };
+  }, [activeFilterQuery]);
 
-  // Popular Schemes (prioritize Central Schemes first, then citizen guides)
-  const popularSchemes = useMemo(() => {
-    const central = GUIDE_ARTICLES.filter((g) => g.category === 'Central Scheme');
-    const others = GUIDE_ARTICLES.filter((g) => g.category !== 'Central Scheme');
-    return [...central, ...others].slice(0, 4);
+  // Featured horizontal CSC services row
+  const swipeServices = useMemo(() => {
+    const orderedIds = Object.keys(SERVICE_CARD_META);
+    return orderedIds
+      .map((id) => SERVICES_LIST.find((s) => s.id === id))
+      .filter((s): s is ServiceItem => Boolean(s));
   }, []);
 
-  // Featured Document Tools
-  const featuredTools = useMemo(() => TOOLS_LIST.slice(0, 5), []);
+  // Featured horizontal Tools row
+  const swipeTools = useMemo(() => {
+    const orderedIds = Object.keys(TOOL_CARD_META);
+    return orderedIds
+      .map((id) => TOOLS_LIST.find((t) => t.id === id))
+      .filter((t): t is NonNullable<typeof t> => Boolean(t));
+  }, []);
 
-  // Instant Unified Search Results
-  const trimmedSearch = searchQuery.trim().toLowerCase();
-  const searchResults = useMemo(() => {
-    if (!trimmedSearch) return null;
-    const jobs = allPosts
-      .filter(
-        (p) =>
-          isPublishedSarkariItem(p) &&
-          (p.title.toLowerCase().includes(trimmedSearch) ||
-            (p.department || '').toLowerCase().includes(trimmedSearch) ||
-            p.shortInfo.toLowerCase().includes(trimmedSearch))
-      )
-      .slice(0, 4);
+  const currentTabConfig = UPDATES_TABS.find((t) => t.id === activeTab) || UPDATES_TABS[0];
 
-    const schemes = GUIDE_ARTICLES.filter(
-      (g) =>
-        g.title.toLowerCase().includes(trimmedSearch) ||
-        g.summary.toLowerCase().includes(trimmedSearch) ||
-        g.hindiTitle.toLowerCase().includes(trimmedSearch)
-    ).slice(0, 3);
-
-    const services = SERVICES_LIST.filter(
-      (s) =>
-        s.name.toLowerCase().includes(trimmedSearch) ||
-        s.description.toLowerCase().includes(trimmedSearch)
-    ).slice(0, 3);
-
-    const tools = TOOLS_LIST.filter(
-      (tool) =>
-        tool.name.toLowerCase().includes(trimmedSearch) ||
-        tool.shortDescription.toLowerCase().includes(trimmedSearch)
-    ).slice(0, 3);
-
-    return {
-      jobs,
-      schemes,
-      services,
-      tools,
-      total: jobs.length + schemes.length + services.length + tools.length,
-    };
-  }, [trimmedSearch, allPosts]);
-
-  const handleOpenScheme = (schemeId: string) => {
-    if (onOpenGuide) {
-      onOpenGuide(schemeId);
-    } else {
-      navigate(`/scheme/${schemeId}`);
+  const getRowBadge = (item: SarkariItem) => {
+    const st = computeSarkariStatus(item);
+    if (st.daysRemaining === 0 && (st.isOpen || st.isClosingSoon)) {
+      return {
+        label: 'TODAY',
+        cls: 'bg-[#E5484D]/12 text-[#C81E24] dark:bg-[#E5484D]/25 dark:text-[#FCA5A5]',
+      };
     }
+    if (
+      st.stage === 'result' ||
+      st.stage === 'grade_card' ||
+      st.stage === 'admit_card' ||
+      st.stage === 'answer_key' ||
+      st.stage === 'objection_window'
+    ) {
+      return {
+        label: 'OUT',
+        cls: 'bg-[#0F9D6B]/12 text-[#0A6B49] dark:bg-[#0F9D6B]/25 dark:text-[#6EE7B7]',
+      };
+    }
+    if (item.isNew) {
+      return {
+        label: 'NEW',
+        cls: 'bg-[#0F9D6B]/12 text-[#0A6B49] dark:bg-[#0F9D6B]/25 dark:text-[#6EE7B7]',
+      };
+    }
+    if (st.canApplyOnline) {
+      return {
+        label: 'FORM',
+        cls: 'bg-[#EEF2FF] text-[#2455E6] dark:bg-[#2455E6]/25 dark:text-[#93C5FD]',
+      };
+    }
+    return {
+      label: st.isClosed ? 'CLOSED' : 'INFO',
+      cls: 'bg-[#F1F5F9] text-[#5B6478] dark:bg-slate-800 dark:text-slate-300',
+    };
+  };
+
+  const formatShortChipTitle = (item: SarkariItem) => {
+    const org = item.org || resolvePostOrg(item);
+    const shortTitle = item.title.length > 26 ? `${item.title.slice(0, 24).trim()}…` : item.title;
+    return org && !shortTitle.toUpperCase().startsWith(org.toUpperCase())
+      ? `${org} · ${shortTitle}`
+      : shortTitle;
   };
 
   return (
-    <div className="w-full space-y-8 sm:space-y-10 pb-6 text-start">
+    <div className="w-full pb-4 text-start">
       {/* ================================================================== */}
-      {/* HERO SECTION (#101A36 Navy, Disclosure Chip, Prominent Search)      */}
+      {/* 3. HERO SECTION (Navy diagonal gradient, top-right glow, pb-44px)  */}
       {/* ================================================================== */}
-      <section className="w-full bg-[#101A36] text-white md:rounded-2xl px-4 py-7 sm:px-8 sm:py-10 shadow-sm">
-        <div className="max-w-3xl space-y-4">
-          <Badge variant="chip" className="text-xs sm:text-sm py-1 px-3">
-            <ShieldCheck className="w-4 h-4 text-[#F5A623] shrink-0" aria-hidden="true" />
-            <span>{t.independentChip}</span>
-          </Badge>
+      <section className="relative overflow-hidden bg-[linear-gradient(135deg,#101A36_0%,#1C2C66_100%)] text-white px-3 pt-4 pb-[44px]">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-12 -end-10 w-44 h-44 rounded-full bg-[#2455E6]/30 blur-2xl"
+        />
 
-          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight text-white">
-            {t.heroTitle}
+        <div className="relative z-10 space-y-2.5">
+          <h1 className="text-[21px] font-extrabold leading-[1.25] tracking-tight text-white m-0">
+            Every government update,{' '}
+            <span className="text-[#F59E0B]">one trusted place</span>
           </h1>
 
-          <p className="text-base sm:text-lg text-slate-200 leading-relaxed max-w-2xl">
-            {t.heroSubtitle}
+          <p className="text-[13px] text-[#CBD5E1] leading-snug m-0">
+            J&amp;K and all-India jobs, results and CSC services.
           </p>
 
-          {/* Prominent Search Box + Track CTA */}
-          <div className="pt-2 flex flex-col sm:flex-row gap-3">
-            <form
-              role="search"
-              onSubmit={(e) => {
-                e.preventDefault();
+          {/* Search Bar */}
+          <form
+            role="search"
+            onSubmit={(e) => {
+              e.preventDefault();
+              applySearchAndJump(searchInput);
+            }}
+            className="bg-white rounded-[12px] p-1 ps-3 flex items-center gap-1.5 shadow-sm"
+          >
+            <label htmlFor="portal-inline-search-input" className="sr-only">
+              Search JKSSB, SSC, Aadhaar
+            </label>
+            <input
+              id="portal-inline-search-input"
+              type="search"
+              value={searchInput}
+              onChange={(e) => {
+                setSearchInput(e.target.value);
+                setActiveFilterQuery(e.target.value.trim());
               }}
-              className="flex-1 flex items-center bg-white rounded-xl border-2 border-transparent focus-within:border-[#F5A623] px-3.5 min-h-[52px] shadow-xs"
+              placeholder="Search JKSSB, SSC, Aadhaar…"
+              className="flex-1 min-w-0 bg-transparent text-[13.5px] text-[#101A36] placeholder:text-[#5B6478] outline-none border-none py-1.5"
+            />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchInput('');
+                  setActiveFilterQuery('');
+                }}
+                aria-label="Clear search"
+                className="min-w-[32px] min-h-[36px] text-xs font-bold text-[#5B6478] hover:text-[#101A36] cursor-pointer px-1"
+              >
+                ✕
+              </button>
+            )}
+            <button
+              type="submit"
+              className="bg-[#2455E6] hover:bg-[#1D4ED8] text-white font-bold text-[13px] rounded-[9px] px-4 min-h-[40px] shrink-0 cursor-pointer transition-colors"
             >
-              <Search className="w-5 h-5 text-[#526075] shrink-0 me-2.5" aria-hidden="true" />
-              <label htmlFor="portal-inline-search-input" className="sr-only">
-                {t.heroSearchPlaceholder}
-              </label>
-              <input
-                id="portal-inline-search-input"
-                type="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t.heroSearchPlaceholder}
-                className="w-full bg-transparent text-base text-[#101A36] placeholder:text-[#526075] outline-none border-none py-2.5"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  aria-label={t.clearSearch}
-                  className="p-1.5 text-[#526075] hover:text-[#101A36] cursor-pointer"
-                >
-                  <X className="w-4 h-4" aria-hidden="true" />
-                </button>
-              )}
-            </form>
+              Go
+            </button>
+          </form>
 
-            <a
-              href="/track"
-              onClick={(e) => {
-                e.preventDefault();
-                if (onOpenTrack) onOpenTrack();
-                else navigate('/track');
-              }}
-              className="min-h-[52px] px-5 py-3 rounded-xl bg-[#F5A623] hover:bg-[#E09416] text-[#101A36] font-bold text-base inline-flex items-center justify-center gap-2 transition-colors no-underline shrink-0"
-            >
-              <MapPin className="w-5 h-5 shrink-0" aria-hidden="true" />
-              <span>{t.trackButton}</span>
-            </a>
+          {/* Horizontal Scrollable Translucent Filter Chips */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-0.5">
+            {HERO_CHIPS.map((chip) => {
+              const active = activeFilterQuery.toLowerCase() === chip.toLowerCase();
+              return (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => {
+                    if (active) {
+                      setSearchInput('');
+                      setActiveFilterQuery('');
+                    } else {
+                      applySearchAndJump(chip);
+                    }
+                  }}
+                  className={`min-h-[36px] px-3 py-1 rounded-full text-[12px] font-semibold whitespace-nowrap shrink-0 border transition-colors cursor-pointer ${
+                    active
+                      ? 'bg-[#F59E0B] text-[#101A36] border-[#F59E0B]'
+                      : 'bg-white/12 hover:bg-white/20 text-white border-white/30'
+                  }`}
+                >
+                  {chip}
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* ================================================================== */}
-      {/* INSTANT SEARCH RESULTS (SHOWN WHEN USER TYPES IN SEARCH BOX)       */}
+      {/* 4. STATS STRIP (4 cards overlapping hero bottom by 32px)           */}
       {/* ================================================================== */}
-      {searchResults && (
-        <div className="px-3 sm:px-0">
-          <Card className="p-4 sm:p-6 space-y-4 border-[#F5A623]">
-            <div className="flex items-center justify-between gap-2 border-b border-[var(--border-default)] pb-3">
-              <h2 className="text-lg font-bold text-[var(--text-primary)] m-0">
-                {t.searchResultsTitle} ({searchResults.total})
-              </h2>
+      <div className="px-3 -mt-8 relative z-20">
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { value: '1,200+', label: 'Vacancies' },
+            { value: 'Daily', label: 'Updates' },
+            { value: '40+', label: 'Services' },
+            { value: 'Free', label: 'Alerts' },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className="bg-white dark:bg-[#16213A] border border-[#E3E8F2] dark:border-[#283757] rounded-[12px] py-2.5 px-1 text-center shadow-[0_4px_14px_rgba(16,26,54,0.08)]"
+            >
+              <div className="text-[15px] font-extrabold text-[#101A36] dark:text-white leading-tight tabular-nums">
+                {stat.value}
+              </div>
+              <div className="text-[10px] font-semibold text-[#5B6478] dark:text-[#94A3B8] mt-0.5 leading-tight truncate">
+                {stat.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Content Stack (12px page padding) */}
+      <div className="p-3 space-y-4">
+        {/* ================================================================ */}
+        {/* 5. CATEGORIES GRID (4x2 emoji tiles)                             */}
+        {/* ================================================================ */}
+        <section aria-labelledby="categories-heading">
+          <h2
+            id="categories-heading"
+            className="text-[15px] font-extrabold text-[#101A36] dark:text-white mb-2 m-0"
+          >
+            Categories
+          </h2>
+          <div className="grid grid-cols-4 gap-2">
+            {CATEGORY_GRID_ITEMS.map((cat) => (
+              <a
+                key={cat.id}
+                href={cat.href}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(cat.href);
+                }}
+                className="bg-white dark:bg-[#16213A] border border-[#E3E8F2] dark:border-[#283757] hover:border-[#2455E6] rounded-[12px] py-2.5 px-1 min-h-[68px] flex flex-col items-center justify-center gap-1 shadow-[0_2px_8px_rgba(16,26,54,0.04)] no-underline transition-colors"
+              >
+                <span className="text-[20px] leading-none" aria-hidden="true">
+                  {cat.emoji}
+                </span>
+                <span className="text-[11px] font-bold text-[#101A36] dark:text-white leading-tight text-center">
+                  {cat.label}
+                </span>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        {/* ================================================================ */}
+        {/* 6. CLOSING SOON STRIP (Light red tint, "⏰ Today:" + chips)      */}
+        {/* ================================================================ */}
+        {closingSoonChips.length > 0 && (
+          <section
+            aria-label="Closing soon deadlines"
+            className="rounded-[12px] border border-[#E5484D]/35 bg-[#E5484D]/[0.08] dark:bg-[#E5484D]/15 px-3 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar"
+          >
+            <span className="text-[12px] font-extrabold text-[#C81E24] dark:text-[#FCA5A5] shrink-0 whitespace-nowrap">
+              ⏰ Today:
+            </span>
+            {closingSoonChips.map((d) => (
+              <a
+                key={d.item.id}
+                href={`/post/${d.item.id}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onOpenJob(d.item);
+                }}
+                className="min-h-[36px] px-2.5 py-1 bg-white dark:bg-[#16213A] border border-[#E5484D]/30 hover:border-[#E5484D] rounded-[8px] inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-[#101A36] dark:text-white whitespace-nowrap shrink-0 no-underline transition-colors"
+              >
+                <span>{formatShortChipTitle(d.item)}</span>
+                <span className="text-[10px] font-extrabold text-[#C81E24] dark:text-[#FCA5A5] tabular-nums">
+                  {d.daysRemaining === 0 ? 'Today' : `${d.daysRemaining}d`}
+                </span>
+              </a>
+            ))}
+          </section>
+        )}
+
+        {/* AdSense Slot 1 (between sections) */}
+        <AdSlot />
+
+        {/* ================================================================ */}
+        {/* 7. LATEST UPDATES CARD (Pill tabs + single active list)          */}
+        {/* ================================================================ */}
+        <section id="latest-updates-section" aria-labelledby="latest-updates-heading" className="scroll-mt-16">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <h2
+              id="latest-updates-heading"
+              className="text-[15px] font-extrabold text-[#101A36] dark:text-white m-0"
+            >
+              Latest updates
+            </h2>
+            <a
+              href={currentTabConfig.href}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate(currentTabConfig.href);
+              }}
+              className="min-h-[40px] inline-flex items-center text-[12.5px] font-bold text-[#2455E6] dark:text-[#60A5FA] no-underline hover:underline"
+            >
+              All →
+            </a>
+          </div>
+
+          {activeFilterQuery && (
+            <div className="flex items-center justify-between gap-2 mb-2 px-3 py-1.5 rounded-[10px] bg-[#EEF2FF] dark:bg-[#1E2C4A] border border-[#2455E6]/25 text-[12px]">
+              <span className="font-semibold text-[#101A36] dark:text-white truncate">
+                Filtering: <strong>{activeFilterQuery}</strong>
+              </span>
               <button
                 type="button"
-                onClick={() => setSearchQuery('')}
-                className="min-h-[44px] md:min-h-0 px-2 text-sm font-semibold text-[var(--text-primary)] hover:underline cursor-pointer"
+                onClick={() => {
+                  setSearchInput('');
+                  setActiveFilterQuery('');
+                }}
+                className="font-bold text-[#2455E6] dark:text-[#60A5FA] cursor-pointer shrink-0 min-h-[32px] px-1"
               >
-                {t.clearSearch}
+                Clear
               </button>
             </div>
+          )}
 
-            {searchResults.total === 0 ? (
-              <p className="text-base text-[var(--text-secondary)] py-2 m-0">{t.noSearchResults}</p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {searchResults.jobs.map((job) => (
+          {/* Horizontal Pill Tabs */}
+          <div
+            role="tablist"
+            aria-label="Latest update categories"
+            className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2.5"
+          >
+            {UPDATES_TABS.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  role="tab"
+                  type="button"
+                  aria-selected={isActive}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`min-h-[40px] px-3.5 rounded-full text-[12px] font-bold whitespace-nowrap shrink-0 border transition-colors cursor-pointer ${
+                    isActive
+                      ? 'bg-[#2455E6] text-white border-[#2455E6]'
+                      : 'bg-white dark:bg-[#16213A] text-[#5B6478] dark:text-[#CBD5E1] border-[#E3E8F2] dark:border-[#283757] hover:border-[#2455E6]/50'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Single Active List Card */}
+          <div className="bg-white dark:bg-[#16213A] border border-[#E3E8F2] dark:border-[#283757] rounded-[14px] shadow-[0_2px_10px_rgba(16,26,54,0.05)] overflow-hidden divide-y divide-[#E3E8F2] dark:divide-[#283757]">
+            {visibleTabPosts.length > 0 ? (
+              visibleTabPosts.map((item) => {
+                const badge = getRowBadge(item);
+                return (
                   <a
-                    key={job.id}
-                    href={`/post/${job.id}`}
+                    key={item.id}
+                    href={`/post/${item.id}`}
                     onClick={(e) => {
                       e.preventDefault();
-                      onOpenJob(job);
+                      onOpenJob(item);
                     }}
-                    className="p-3.5 rounded-xl bg-[var(--bg-subtle)] hover:border-[var(--border-strong)] border border-[var(--border-default)] flex items-center justify-between gap-3 no-underline transition-colors"
+                    className="min-h-[48px] px-3.5 py-2.5 flex items-center justify-between gap-2.5 hover:bg-[#EEF2FF]/60 dark:hover:bg-[#1E2C4A]/60 transition-colors no-underline"
                   >
-                    <div className="min-w-0">
-                      <span className="text-xs font-bold text-[var(--text-secondary)] uppercase">
-                        {getOrganisationLabel(job)}
-                      </span>
-                      <p className="text-base font-bold text-[var(--text-primary)] truncate m-0">
-                        {job.title}
-                      </p>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-[var(--text-primary)] shrink-0 rtl:rotate-180" />
+                    <span className="text-[13px] font-semibold text-[#101A36] dark:text-[#F1F5F9] leading-snug line-clamp-2 flex-1 min-w-0">
+                      {item.title}
+                    </span>
+                    <span
+                      className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-[6px] shrink-0 leading-tight ${badge.cls}`}
+                    >
+                      {badge.label}
+                    </span>
                   </a>
-                ))}
-                {searchResults.schemes.map((scheme) => (
+                );
+              })
+            ) : (
+              <div className="px-4 py-5 text-center text-[13px] text-[#5B6478] dark:text-[#94A3B8]">
+                No updates match &ldquo;{activeFilterQuery}&rdquo; under {currentTabConfig.label}.
+              </div>
+            )}
+
+            <a
+              href={currentTabConfig.href}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate(currentTabConfig.href);
+              }}
+              className="min-h-[44px] px-3.5 py-2 flex items-center justify-center text-[13px] font-bold text-[#2455E6] dark:text-[#60A5FA] hover:bg-[#EEF2FF]/40 dark:hover:bg-[#1E2C4A]/40 no-underline transition-colors"
+            >
+              {currentTabConfig.viewAllLabel} →
+            </a>
+          </div>
+
+          {/* Matching Services / Schemes / Tools when Search Query is Active */}
+          {extraSearchMatches && (
+            <div className="mt-2.5 bg-white dark:bg-[#16213A] border border-[#E3E8F2] dark:border-[#283757] rounded-[14px] p-3 space-y-2">
+              <div className="text-[11px] font-extrabold uppercase tracking-wider text-[#5B6478] dark:text-[#94A3B8]">
+                Matching Services, Schemes &amp; Tools
+              </div>
+              <div className="space-y-1.5">
+                {extraSearchMatches.schemes.map((scheme) => (
                   <a
                     key={scheme.id}
                     href={`/scheme/${scheme.id}`}
                     onClick={(e) => {
                       e.preventDefault();
-                      handleOpenScheme(scheme.id);
+                      if (onOpenGuide) onOpenGuide(scheme.id);
+                      else navigate(`/scheme/${scheme.id}`);
                     }}
-                    className="p-3.5 rounded-xl bg-[var(--bg-subtle)] hover:border-[var(--border-strong)] border border-[var(--border-default)] flex items-center justify-between gap-3 no-underline transition-colors"
+                    className="min-h-[40px] px-2.5 py-1.5 rounded-[10px] bg-[#F4F6FB] dark:bg-[#1E2C4A] flex items-center justify-between gap-2 text-[12.5px] font-semibold text-[#101A36] dark:text-white no-underline"
                   >
-                    <div className="min-w-0">
-                      <span className="text-xs font-bold text-[var(--status-open-text)] uppercase">
-                        {scheme.category}
-                      </span>
-                      <p className="text-base font-bold text-[var(--text-primary)] truncate m-0">
-                        {scheme.title}
-                      </p>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-[var(--text-primary)] shrink-0 rtl:rotate-180" />
+                    <span className="truncate">{scheme.title}</span>
+                    <span className="text-[10px] font-extrabold text-[#0A6B49] dark:text-[#6EE7B7] uppercase shrink-0">
+                      SCHEME
+                    </span>
                   </a>
                 ))}
-                {searchResults.services.map((svc) => (
+                {extraSearchMatches.services.map((svc) => (
                   <a
                     key={svc.id}
                     href={`/service/${svc.id}`}
@@ -422,20 +680,15 @@ export default function PortalHomepage({
                       e.preventDefault();
                       onOpenService(svc);
                     }}
-                    className="p-3.5 rounded-xl bg-[var(--bg-subtle)] hover:border-[var(--border-strong)] border border-[var(--border-default)] flex items-center justify-between gap-3 no-underline transition-colors"
+                    className="min-h-[40px] px-2.5 py-1.5 rounded-[10px] bg-[#F4F6FB] dark:bg-[#1E2C4A] flex items-center justify-between gap-2 text-[12.5px] font-semibold text-[#101A36] dark:text-white no-underline"
                   >
-                    <div className="min-w-0">
-                      <span className="text-xs font-bold text-[var(--text-secondary)] uppercase">
-                        {t.catServices}
-                      </span>
-                      <p className="text-base font-bold text-[var(--text-primary)] truncate m-0">
-                        {svc.name}
-                      </p>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-[var(--text-primary)] shrink-0 rtl:rotate-180" />
+                    <span className="truncate">{svc.name}</span>
+                    <span className="text-[10px] font-extrabold text-[#2455E6] dark:text-[#93C5FD] uppercase shrink-0">
+                      CSC
+                    </span>
                   </a>
                 ))}
-                {searchResults.tools.map((tool) => (
+                {extraSearchMatches.tools.map((tool) => (
                   <a
                     key={tool.id}
                     href={`/tools/${tool.id}`}
@@ -443,578 +696,249 @@ export default function PortalHomepage({
                       e.preventDefault();
                       navigate(`/tools/${tool.id}`);
                     }}
-                    className="p-3.5 rounded-xl bg-[var(--bg-subtle)] hover:border-[var(--border-strong)] border border-[var(--border-default)] flex items-center justify-between gap-3 no-underline transition-colors"
+                    className="min-h-[40px] px-2.5 py-1.5 rounded-[10px] bg-[#F4F6FB] dark:bg-[#1E2C4A] flex items-center justify-between gap-2 text-[12.5px] font-semibold text-[#101A36] dark:text-white no-underline"
                   >
-                    <div className="min-w-0">
-                      <span className="text-xs font-bold text-[var(--status-closing-text)] uppercase">
-                        {t.catTools}
-                      </span>
-                      <p className="text-base font-bold text-[var(--text-primary)] truncate m-0">
-                        {tool.name}
-                      </p>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-[var(--text-primary)] shrink-0 rtl:rotate-180" />
+                    <span className="truncate">{tool.name}</span>
+                    <span className="text-[10px] font-extrabold text-[#92400E] dark:text-[#FCD34D] uppercase shrink-0">
+                      TOOL
+                    </span>
                   </a>
                 ))}
               </div>
-            )}
-          </Card>
-        </div>
-      )}
-
-      {/* ================================================================== */}
-      {/* CLOSING THIS WEEK STRIP (COMPUTED <= 7 DAYS FROM OFFICIAL DATES)   */}
-      {/* ================================================================== */}
-      {closingThisWeek.length > 0 && (
-        <div className="px-3 sm:px-0">
-          <Section
-            id="closing-this-week"
-            title={t.closingThisWeekTitle}
-            subtitle={t.closingThisWeekSubtitle}
-            actionLabel={t.viewAllJobs}
-            actionHref="/jobs"
-            onActionClick={() => navigate('/jobs')}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {closingThisWeek.map((item) => {
-                const st = computeSarkariStatus(item);
-                return (
-                  <Card
-                    key={item.id}
-                    as="a"
-                    href={`/post/${item.id}`}
-                    interactive
-                    statusStripe="closing_soon"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onOpenJob(item);
-                    }}
-                    className="p-4 flex flex-col justify-between gap-2.5"
-                  >
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <Badge variant="navy">{getOrganisationLabel(item)}</Badge>
-                        <Badge variant="urgent">
-                          <Clock className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                          <span>
-                            {t.urgentDaysLeft(st.daysRemaining!)}
-                            {item.lastDate ? ` · ${item.lastDate}` : ''}
-                          </span>
-                        </Badge>
-                      </div>
-                      <h3 className="text-base font-bold text-[var(--text-primary)] leading-snug line-clamp-2 m-0">
-                        {item.title}
-                      </h3>
-                    </div>
-                    <div className="flex items-center justify-between text-sm text-[var(--text-secondary)] pt-1 border-t border-[var(--border-default)]">
-                      <span className="truncate pe-2">
-                        {item.noticeType === 'answer_key'
-                          ? `${t.objectionsTillPrefix} ${item.lastDate || t.asPerOfficialNotice}`
-                          : `${t.lastDateLabel}: ${item.lastDate || t.asPerOfficialNotice}`}
-                      </span>
-                      <span className="font-bold text-[var(--text-primary)] inline-flex items-center gap-1 shrink-0">
-                        <span>{t.viewDetails}</span>
-                        <ArrowRight className="w-4 h-4 rtl:rotate-180" aria-hidden="true" />
-                      </span>
-                    </div>
-                  </Card>
-                );
-              })}
             </div>
-          </Section>
-        </div>
-      )}
+          )}
+        </section>
 
-      {/* ================================================================== */}
-      {/* 5 CATEGORY TILES (Jobs, Admissions, Schemes, Services, Tools/Calc) */}
-      {/* ================================================================== */}
-      <div className="px-3 sm:px-0">
-        <Section
-          id="categories"
-          title={t.categoriesHeading}
-          subtitle={t.categoriesSubheading}
-        >
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-            {categoryTiles.map((tile) => {
-              const IconComponent = tile.Icon;
-              return (
-                <Card
-                  key={tile.id}
-                  as="a"
-                  href={tile.href}
-                  interactive
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate(tile.href);
-                  }}
-                  className="p-4 flex flex-col justify-between gap-3"
-                >
-                  <div className="space-y-2.5">
-                    <div
-                      className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${tile.iconBg}`}
-                    >
-                      <IconComponent className="w-5 h-5" aria-hidden="true" />
-                    </div>
-                    <div>
-                      <h3 className="text-base sm:text-lg font-bold text-[var(--text-primary)] leading-snug m-0">
-                        {tile.title}
-                      </h3>
-                      <p className="text-sm text-[var(--text-secondary)] mt-1 leading-snug m-0">
-                        {tile.desc}
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        </Section>
-      </div>
-
-      {/* ================================================================== */}
-      {/* LATEST JOBS LIST (Title, Department, Vacancies, Red <7d Badge)     */}
-      {/* ================================================================== */}
-      <div className="px-3 sm:px-0">
-        <Section
-          id="latest-jobs"
-          title={t.latestJobsHeading}
-          subtitle={t.latestJobsSubheading}
-          actionLabel={t.viewAllJobs}
-          actionHref="/jobs"
-          onActionClick={() => navigate('/jobs')}
-        >
-          <div className="space-y-3">
-            {latestJobs.map((job) => {
-              const status = computeSarkariStatus(job);
-              const isUrgent = status.isUrgentUnder7Days && status.daysRemaining !== null;
-              const deadlineText = job.lastDate || job.postDate || t.asPerOfficialNotice;
-
-              return (
-                <Card
-                  key={job.id}
-                  as="article"
-                  interactive
-                  statusStripe={isUrgent ? 'closing_soon' : status.canApplyOnline ? 'open' : undefined}
-                  onClick={() => onOpenJob(job)}
-                  className="p-4 sm:p-5"
-                >
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-3.5 min-w-0 flex-1">
-                      <img
-                        src={getPostListThumbnailUrl(job, 'webp')}
-                        alt={`${job.title} — ${getOrganisationLabel(job)} summary`}
-                        width={600}
-                        height={315}
-                        loading="lazy"
-                        decoding="async"
-                        className="w-[168px] h-[88px] sm:w-[176px] sm:h-[92px] max-h-[120px] rounded-xl border border-[var(--border-default)] object-cover shrink-0 block bg-[var(--bg-subtle)]"
-                      />
-
-                      <div className="space-y-2 min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="navy">{getOrganisationLabel(job)}</Badge>
-                          {isUrgent ? (
-                            <Badge variant="urgent">
-                              <Clock className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                              <span>
-                                {t.urgentDaysLeft(status.daysRemaining!)} · {deadlineText}
-                              </span>
-                            </Badge>
-                          ) : status.canApplyOnline ? (
-                            <Badge variant="green">
-                              <span>
-                                {t.lastDateLabel}: {deadlineText}
-                              </span>
-                            </Badge>
-                          ) : (
-                            <Badge variant="neutral">
-                              <span>{status.badgeLabel}</span>
-                            </Badge>
-                          )}
-                        </div>
-
-                        <h3 className="text-base sm:text-lg font-bold text-[var(--text-primary)] leading-snug m-0">
-                          <a
-                            href={`/post/${job.id}`}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              onOpenJob(job);
-                            }}
-                            className="text-[var(--text-primary)] hover:underline no-underline"
-                          >
-                            {job.title}
-                          </a>
-                        </h3>
-
-                        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-[var(--text-secondary)]">
-                          <span className="inline-flex items-center gap-1.5">
-                            <Building2 className="w-4 h-4 text-[var(--text-primary)] shrink-0" aria-hidden="true" />
-                            <span>
-                              <strong className="text-[var(--text-primary)]">{t.departmentLabel}:</strong>{' '}
-                              {job.department || getOrganisationLabel(job)}
-                            </span>
-                          </span>
-                          <span className="inline-flex items-center gap-1.5">
-                            <Users className="w-4 h-4 text-[var(--text-primary)] shrink-0" aria-hidden="true" />
-                            <span>
-                              <strong className="text-[var(--text-primary)]">{t.vacanciesLabel}:</strong>{' '}
-                              {job.totalPosts || t.asPerOfficialNotice}
-                            </span>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="shrink-0 flex items-center gap-2 pt-1 md:pt-0">
-                      <a
-                        href={`/post/${job.id}`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          onOpenJob(job);
-                        }}
-                        className="min-h-[44px] px-4 py-2 rounded-xl bg-[#1F9D6B] hover:bg-[#178257] text-white font-bold text-sm inline-flex items-center gap-1.5 no-underline transition-colors"
-                      >
-                        <span>{t.viewDetails}</span>
-                        <ArrowRight className="w-4 h-4 rtl:rotate-180" aria-hidden="true" />
-                      </a>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        </Section>
-      </div>
-
-      {/* ================================================================== */}
-      {/* AD SLOT 1 (STRICTLY BETWEEN SECTIONS)                              */}
-      {/* ================================================================== */}
-      <div className="px-3 sm:px-0">
-        <AdSlot />
-      </div>
-
-      {/* ================================================================== */}
-      {/* ADMISSIONS SECTION (KU, Cluster Univ, IGNOU)                       */}
-      {/* ================================================================== */}
-      <div className="px-3 sm:px-0">
-        <Section
-          id="admissions"
-          title={t.admissionsHeading}
-          subtitle={t.admissionsSubheading}
-          secondaryAction={
+        {/* ================================================================ */}
+        {/* 8a. CSC SERVICES HORIZONTAL SWIPE CARDS (w-[118px])              */}
+        {/* ================================================================ */}
+        <section aria-labelledby="csc-services-heading">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <h2
+              id="csc-services-heading"
+              className="text-[15px] font-extrabold text-[#101A36] dark:text-white m-0"
+            >
+              CSC services
+            </h2>
             <a
-              href="/education/ignou"
+              href="/services"
               onClick={(e) => {
                 e.preventDefault();
-                navigate('/education/ignou');
+                navigate('/services');
               }}
-              className="min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[var(--status-closing-bg)] text-[var(--status-closing-text)] border border-[var(--status-closing-border)] hover:opacity-90 text-sm font-bold no-underline transition-opacity"
+              className="min-h-[40px] inline-flex items-center text-[12.5px] font-bold text-[#2455E6] dark:text-[#60A5FA] no-underline hover:underline"
             >
-              <span>{t.ignouShortcut}</span>
-              <ArrowRight className="w-4 h-4 rtl:rotate-180" aria-hidden="true" />
+              All →
             </a>
-          }
-          actionLabel={t.viewAllAdmissions}
-          actionHref="/education"
-          onActionClick={() => navigate('/education')}
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-            {admissionNotices.map((notice) => {
-              const status = computeSarkariStatus(notice);
+          </div>
+
+          <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1">
+            {swipeServices.map((svc) => {
+              const meta = SERVICE_CARD_META[svc.id] || {
+                emoji: '🏛️',
+                shortTitle: svc.name,
+                shortDesc: svc.estimatedTime || 'CSC Help',
+              };
               return (
-                <Card
-                  key={notice.id}
-                  as="a"
-                  href={`/post/${notice.id}`}
-                  interactive
+                <a
+                  key={svc.id}
+                  href={`/service/${svc.id}`}
                   onClick={(e) => {
                     e.preventDefault();
-                    onOpenJob(notice);
+                    onOpenService(svc);
                   }}
-                  className="p-4 sm:p-5 flex flex-col justify-between gap-3"
+                  className="w-[118px] shrink-0 bg-white dark:bg-[#16213A] border border-[#E3E8F2] dark:border-[#283757] hover:border-[#2455E6] rounded-[12px] p-2.5 flex flex-col justify-between gap-1.5 shadow-[0_2px_8px_rgba(16,26,54,0.04)] no-underline transition-colors"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-start gap-3">
-                    <img
-                      src={getPostListThumbnailUrl(notice, 'webp')}
-                      alt={`${notice.title} — ${getOrganisationLabel(notice)} summary`}
-                      width={600}
-                      height={315}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-[168px] h-[88px] sm:w-[160px] sm:h-[84px] max-h-[120px] rounded-xl border border-[var(--border-default)] object-cover shrink-0 block bg-[var(--bg-subtle)]"
-                    />
-                    <div className="space-y-2 min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <Badge variant="navy">{getOrganisationLabel(notice)}</Badge>
-                        {status.isUrgentUnder7Days && status.daysRemaining !== null ? (
-                          <Badge variant="urgent">
-                            {t.urgentDaysLeft(status.daysRemaining)}
-                          </Badge>
-                        ) : (
-                          <Badge variant={status.canApplyOnline ? 'green' : 'neutral'}>
-                            {status.badgeLabel}
-                          </Badge>
-                        )}
-                      </div>
-                      <h3 className="text-base sm:text-lg font-bold text-[var(--text-primary)] leading-snug m-0">
-                        {notice.title}
-                      </h3>
-                      <p className="text-sm sm:text-base text-[var(--text-secondary)] line-clamp-2 leading-relaxed m-0">
-                        {notice.shortInfo}
-                      </p>
+                  <span className="text-[20px] leading-none" aria-hidden="true">
+                    {meta.emoji}
+                  </span>
+                  <div className="space-y-0.5">
+                    <div className="text-[12px] font-bold text-[#101A36] dark:text-white leading-tight line-clamp-2">
+                      {meta.shortTitle}
+                    </div>
+                    <div className="text-[10.5px] text-[#5B6478] dark:text-[#94A3B8] leading-snug line-clamp-2">
+                      {meta.shortDesc}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between text-sm text-[var(--text-secondary)] border-t border-[var(--border-default)] pt-2.5">
-                    <span>
-                      {notice.lastDate ? `${t.lastDateLabel}: ${notice.lastDate}` : `Posted: ${notice.postDate}`}
-                    </span>
-                    <span className="font-bold text-[var(--text-primary)] inline-flex items-center gap-1">
-                      <span>{t.viewDetails}</span>
-                      <ArrowRight className="w-4 h-4 rtl:rotate-180" aria-hidden="true" />
-                    </span>
-                  </div>
-                </Card>
+                </a>
               );
             })}
           </div>
-        </Section>
-      </div>
+        </section>
 
-      {/* ================================================================== */}
-      {/* POPULAR GOVERNMENT SCHEMES (DIRECT /scheme/:id LINKS)              */}
-      {/* ================================================================== */}
-      <div className="px-3 sm:px-0">
-        <Section
-          id="schemes"
-          title={t.schemesHeading}
-          subtitle={t.schemesSubheading}
-          actionLabel={t.viewAllSchemes}
-          actionHref="/schemes"
-          onActionClick={() => navigate('/schemes')}
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-            {popularSchemes.map((scheme) => {
-              const displayTitle =
-                language === 'ur' && scheme.urduTitle
-                  ? scheme.urduTitle
-                  : language === 'hi' && scheme.hindiTitle
-                  ? scheme.hindiTitle
-                  : scheme.title;
+        {/* ================================================================ */}
+        {/* 8b. FREE TOOLS HORIZONTAL SWIPE CARDS (w-[118px])                */}
+        {/* ================================================================ */}
+        <section aria-labelledby="free-tools-heading">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <h2
+              id="free-tools-heading"
+              className="text-[15px] font-extrabold text-[#101A36] dark:text-white m-0"
+            >
+              Free tools
+            </h2>
+            <a
+              href="/tools"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate('/tools');
+              }}
+              className="min-h-[40px] inline-flex items-center text-[12.5px] font-bold text-[#2455E6] dark:text-[#60A5FA] no-underline hover:underline"
+            >
+              All →
+            </a>
+          </div>
 
+          <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1">
+            {swipeTools.map((tool) => {
+              const meta = TOOL_CARD_META[tool.id] || {
+                emoji: '🛠️',
+                shortTitle: tool.name,
+                shortDesc: 'Browser tool',
+              };
               return (
-                <Card
-                  key={scheme.id}
-                  as="a"
-                  href={`/scheme/${scheme.id}`}
-                  interactive
+                <a
+                  key={tool.id}
+                  href={`/tools/${tool.id}`}
                   onClick={(e) => {
                     e.preventDefault();
-                    handleOpenScheme(scheme.id);
+                    navigate(`/tools/${tool.id}`);
                   }}
-                  className="p-4 sm:p-5 flex flex-col justify-between gap-3"
+                  className="w-[118px] shrink-0 bg-white dark:bg-[#16213A] border border-[#E3E8F2] dark:border-[#283757] hover:border-[#2455E6] rounded-[12px] p-2.5 flex flex-col justify-between gap-1.5 shadow-[0_2px_8px_rgba(16,26,54,0.04)] no-underline transition-colors"
                 >
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="green">
-                        {scheme.category === 'Central Scheme' ? t.catSchemes : scheme.category}
-                      </Badge>
-                      {scheme.benefitSummary && (
-                        <Badge variant="amber">{scheme.benefitSummary}</Badge>
-                      )}
+                  <span className="text-[20px] leading-none" aria-hidden="true">
+                    {meta.emoji}
+                  </span>
+                  <div className="space-y-0.5">
+                    <div className="text-[12px] font-bold text-[#101A36] dark:text-white leading-tight line-clamp-2">
+                      {meta.shortTitle}
                     </div>
-                    <h3 className="text-base sm:text-lg font-bold text-[var(--text-primary)] leading-snug m-0">
-                      {displayTitle}
-                    </h3>
-                    <p className="text-base text-[var(--text-secondary)] line-clamp-2 leading-relaxed m-0">
-                      {scheme.summary}
-                    </p>
+                    <div className="text-[10.5px] text-[#5B6478] dark:text-[#94A3B8] leading-snug line-clamp-2">
+                      {meta.shortDesc}
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between text-sm border-t border-[var(--border-default)] pt-2.5">
-                    <span className="text-[var(--text-secondary)] truncate pe-2">{scheme.officialPortal}</span>
-                    <span className="font-bold text-[var(--status-open-text)] inline-flex items-center gap-1 shrink-0">
-                      <span>{t.exploreScheme}</span>
-                      <ArrowRight className="w-4 h-4 rtl:rotate-180" aria-hidden="true" />
-                    </span>
-                  </div>
-                </Card>
+                </a>
               );
             })}
-          </div>
-        </Section>
-      </div>
 
-      {/* ================================================================== */}
-      {/* TOOLS & CALCULATORS GRID                                           */}
-      {/* ================================================================== */}
-      <div className="px-3 sm:px-0">
-        <Section
-          id="tools-calculators"
-          title={t.toolsHeading}
-          subtitle={t.toolsSubheading}
-          actionLabel={t.viewAllTools}
-          actionHref="/tools"
-          onActionClick={() => navigate('/tools')}
-        >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-            {featuredTools.map((tool) => (
-              <Card
-                key={tool.id}
-                as="a"
-                href={`/tools/${tool.id}`}
-                interactive
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate(`/tools/${tool.id}`);
-                }}
-                className="p-4 flex flex-col justify-between gap-2.5"
-              >
-                <div className="space-y-1.5">
-                  <Badge variant="amber">{tool.category}</Badge>
-                  <h3 className="text-base sm:text-lg font-bold text-[var(--text-primary)] m-0">
-                    {tool.name}
-                  </h3>
-                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed m-0">
-                    {tool.shortDescription}
-                  </p>
-                </div>
-                <span className="text-sm font-bold text-[var(--text-primary)] inline-flex items-center gap-1 pt-1">
-                  <span>{t.toolsLaunchBtn}</span>
-                  <ArrowRight className="w-4 h-4 rtl:rotate-180" aria-hidden="true" />
-                </span>
-              </Card>
-            ))}
-
-            {/* Citizen Calculators Tile */}
-            <Card
-              as="a"
+            <a
               href="/calculators"
-              interactive
               onClick={(e) => {
                 e.preventDefault();
                 navigate('/calculators');
               }}
-              className="p-4 bg-[#101A36] text-white border-[#101A36] flex flex-col justify-between gap-2.5 hover:bg-[#18264D]"
+              className="w-[118px] shrink-0 bg-white dark:bg-[#16213A] border border-[#E3E8F2] dark:border-[#283757] hover:border-[#2455E6] rounded-[12px] p-2.5 flex flex-col justify-between gap-1.5 shadow-[0_2px_8px_rgba(16,26,54,0.04)] no-underline transition-colors"
             >
-              <div className="space-y-1.5">
-                <div className="w-10 h-10 rounded-lg bg-[#F5A623] text-[#101A36] flex items-center justify-center">
-                  <Calculator className="w-5 h-5" aria-hidden="true" />
-                </div>
-                <h3 className="text-base sm:text-lg font-bold text-white m-0">
-                  {t.calculatorsShortcut}
-                </h3>
-                <p className="text-sm text-slate-200 leading-relaxed m-0">
-                  JKSSB &amp; SSC age eligibility calculator, photo/signature spec check, and CSC fee estimator.
-                </p>
-              </div>
-              <span className="text-sm font-bold text-[#F5A623] inline-flex items-center gap-1 pt-1">
-                <span>{t.calculatorsShortcut}</span>
-                <ArrowRight className="w-4 h-4 rtl:rotate-180" aria-hidden="true" />
+              <span className="text-[20px] leading-none" aria-hidden="true">
+                🧮
               </span>
-            </Card>
+              <div className="space-y-0.5">
+                <div className="text-[12px] font-bold text-[#101A36] dark:text-white leading-tight line-clamp-2">
+                  Age Calculator
+                </div>
+                <div className="text-[10.5px] text-[#5B6478] dark:text-[#94A3B8] leading-snug line-clamp-2">
+                  JKSSB &amp; SSC
+                </div>
+              </div>
+            </a>
           </div>
-        </Section>
-      </div>
+        </section>
 
-      {/* ================================================================== */}
-      {/* AD SLOT 2 (STRICTLY BETWEEN SECTIONS)                              */}
-      {/* ================================================================== */}
-      <div className="px-3 sm:px-0">
+        {/* AdSense Slot 2 (between Free Tools and WhatsApp CTA card) */}
         <AdSlot />
-      </div>
 
-      {/* ================================================================== */}
-      {/* WHATSAPP ALERTS BOX (TELEGRAM KEPT AS "Coming soon")               */}
-      {/* ================================================================== */}
-      <div className="px-3 sm:px-0">
-        <AlertsBox />
-      </div>
-
-      {/* ================================================================== */}
-      {/* "NEED HELP APPLYING?" HELPDESK CARD                                */}
-      {/* ================================================================== */}
-      <div className="px-3 sm:px-0">
-        <HelpApplyingCard onTrackClick={onOpenTrack} />
-      </div>
-
-      {/* ================================================================== */}
-      {/* OPERATOR TRUST STRIP (ONLY VERIFIED FACTS FROM USER DATA)          */}
-      {/* ================================================================== */}
-      <div className="px-3 sm:px-0">
+        {/* ================================================================ */}
+        {/* 8c. NAVY WHATSAPP + TELEGRAM CTA CARD                            */}
+        {/* ================================================================ */}
         <section
-          aria-label={t.trustStripTitle}
-          className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-4 sm:p-5 space-y-3"
+          aria-label="Free job and result alerts"
+          className="bg-[#101A36] text-white rounded-[14px] p-4 shadow-[0_4px_16px_rgba(16,26,54,0.12)] space-y-3"
         >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border-default)] pb-3">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-[#1F9D6B] shrink-0" aria-hidden="true" />
-              <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] m-0">
-                {t.trustStripTitle}
-              </h2>
-            </div>
-            <span className="text-xs sm:text-sm font-semibold text-[var(--text-secondary)]">
-              {t.independentChip}
-            </span>
+          <div className="space-y-1">
+            <h2 className="text-[15px] font-extrabold text-white m-0 leading-snug">
+              Get instant J&amp;K job &amp; result alerts
+            </h2>
+            <p className="text-[12.5px] text-[#CBD5E1] m-0 leading-relaxed">
+              Daily official notifications, admit cards and closing reminders straight on your phone.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
-            <div className="flex items-start gap-2.5 bg-[var(--bg-subtle)] rounded-xl px-3 py-2.5 border border-[var(--border-default)]">
-              <UserCheck className="w-4 h-4 text-[var(--text-primary)] shrink-0 mt-0.5" aria-hidden="true" />
-              <div className="min-w-0">
-                <span className="block text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-                  {t.helpOperatorLabel}
-                </span>
-                <span className="font-bold text-[var(--text-primary)] block">
-                  Wasim Ahmad Khanday
-                </span>
-              </div>
-            </div>
+          <div className="grid grid-cols-2 gap-2">
+            <a
+              href={alertsConfig.whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="min-h-[44px] px-3 py-2 rounded-[10px] bg-[#0F9D6B] hover:bg-[#0B7F56] text-white font-bold text-[12.5px] inline-flex items-center justify-center gap-1.5 no-underline transition-colors"
+            >
+              <span aria-hidden="true">💬</span>
+              <span>
+                {alertsConfig.whatsappType === 'channel' ? 'WhatsApp Channel' : 'WhatsApp Group'}
+              </span>
+            </a>
 
-            <div className="flex items-start gap-2.5 bg-[var(--bg-subtle)] rounded-xl px-3 py-2.5 border border-[var(--border-default)]">
-              <ShieldCheck className="w-4 h-4 text-[#1F9D6B] shrink-0 mt-0.5" aria-hidden="true" />
-              <div className="min-w-0">
-                <span className="block text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-                  Authorized CSC {t.helpVleLabel}
-                </span>
-                <span className="font-mono font-bold text-[var(--text-primary)] block tabular-nums">
-                  212515670018
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2.5 bg-[var(--bg-subtle)] rounded-xl px-3 py-2.5 border border-[var(--border-default)]">
-              <MapPin className="w-4 h-4 text-[#F5A623] shrink-0 mt-0.5" aria-hidden="true" />
-              <div className="min-w-0">
-                <span className="block text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-                  {t.helpLocationLabel}
-                </span>
-                <span className="font-semibold text-[var(--text-primary)] block">
-                  {t.footerAddress}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2.5 bg-[var(--bg-subtle)] rounded-xl px-3 py-2.5 border border-[var(--border-default)]">
-              <PhoneCall className="w-4 h-4 text-[#1F9D6B] shrink-0 mt-0.5" aria-hidden="true" />
-              <div className="min-w-0">
-                <span className="block text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-                  Helpline
-                </span>
-                <a
-                  href="tel:+917006833767"
-                  dir="ltr"
-                  className="font-bold text-[var(--text-primary)] hover:text-[#1F9D6B] tabular-nums no-underline"
-                >
-                  +91 70068 33767
-                </a>
-              </div>
-            </div>
+            {alertsConfig.telegramUrl ? (
+              <a
+                href={alertsConfig.telegramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="min-h-[44px] px-3 py-2 rounded-[10px] bg-white/12 hover:bg-white/20 border border-white/20 text-white font-bold text-[12.5px] inline-flex items-center justify-center gap-1.5 no-underline transition-colors"
+              >
+                <span aria-hidden="true">✈️</span>
+                <span>Telegram Alerts</span>
+              </a>
+            ) : (
+              <span
+                aria-label="Telegram channel coming soon"
+                className="min-h-[44px] px-3 py-2 rounded-[10px] bg-white/10 border border-white/15 text-slate-200 font-bold text-[12px] inline-flex items-center justify-center gap-1.5 text-center"
+              >
+                <span aria-hidden="true">✈️</span>
+                <span>Telegram · Soon</span>
+              </span>
+            )}
           </div>
+        </section>
 
-          <p className="text-xs sm:text-sm text-[var(--text-secondary)] m-0 leading-relaxed">
-            {t.footerDisclaimerNote}
-          </p>
+        {/* ================================================================ */}
+        {/* 8d. 2-ITEM FAQ ACCORDION                                         */}
+        {/* ================================================================ */}
+        <section aria-labelledby="homepage-faq-heading">
+          <h2
+            id="homepage-faq-heading"
+            className="text-[15px] font-extrabold text-[#101A36] dark:text-white mb-2 m-0"
+          >
+            Quick FAQ
+          </h2>
+
+          <div className="bg-white dark:bg-[#16213A] border border-[#E3E8F2] dark:border-[#283757] rounded-[14px] shadow-[0_2px_10px_rgba(16,26,54,0.04)] overflow-hidden divide-y divide-[#E3E8F2] dark:divide-[#283757]">
+            {HOMEPAGE_FAQS.map((faq, idx) => {
+              const isOpen = openFaqIdx === idx;
+              return (
+                <div key={faq.q}>
+                  <button
+                    type="button"
+                    aria-expanded={isOpen}
+                    onClick={() => setOpenFaqIdx(isOpen ? null : idx)}
+                    className="w-full min-h-[44px] px-3.5 py-3 flex items-center justify-between gap-2 text-start cursor-pointer hover:bg-[#F4F6FB]/70 dark:hover:bg-[#1E2C4A]/50 transition-colors"
+                  >
+                    <span className="text-[13px] font-bold text-[#101A36] dark:text-white leading-snug">
+                      {faq.q}
+                    </span>
+                    <ChevronDown
+                      className={`w-4 h-4 text-[#5B6478] dark:text-[#94A3B8] shrink-0 transition-transform ${
+                        isOpen ? 'rotate-180' : ''
+                      }`}
+                      aria-hidden="true"
+                    />
+                  </button>
+                  {isOpen && (
+                    <p className="px-3.5 pb-3 pt-0 text-[12.5px] text-[#5B6478] dark:text-[#CBD5E1] leading-relaxed m-0">
+                      {faq.a}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </section>
       </div>
     </div>
