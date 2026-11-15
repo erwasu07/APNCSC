@@ -1,51 +1,17 @@
 import React, { useEffect, useMemo } from 'react';
 import {
-  AlertCircle,
-  ArrowLeft,
-  ArrowRight,
-  CheckCircle2,
-  Clock,
-  ExternalLink,
-  FileText,
-  Info,
-  MessageCircle,
-  Printer,
-  Share2,
-  XCircle,
-} from 'lucide-react';
-import {
-  SarkariItem,
   isIgnouItem,
   isRecruitmentSarkariItem,
+  type SarkariItem,
 } from '../data/sarkariData';
-import {
-  getDeduplicatedSarkariPosts,
-  resolvePostOrg,
-} from '../data/sarkariMigration';
-import { computeSarkariStatus, type ComputedSarkariStatus } from '../utils/sarkariStatus';
-import { useSyncedSarkariPosts, sortByNewestPostDate } from '../utils/postDataSync';
-import { useLanguage, type Language } from '../contexts/LanguageContext';
+import { resolvePostOrg } from '../data/sarkariMigration';
+import { computeSarkariStatus } from '../utils/sarkariStatus';
+import { useLanguage } from '../contexts/LanguageContext';
 import { buildWhatsAppNotification } from '../utils/whatsappFormatter';
-import {
-  AdSlot,
-  AlertsBox,
-  Breadcrumbs,
-  Card,
-  ChecklistWithProgress,
-  Chip,
-  DateBlock,
-  FaqAccordion,
-  HelpApplyingCard,
-  OrgBadge,
-  StatusPill,
-  StickyMobileActionBar,
-  type BreadcrumbItem,
-} from './ui';
+import { AdSlot } from './ui';
 import {
   buildPostFaqs,
-  deriveTimelineForPost,
   getCategoryBreadcrumb,
-  getChecklistTitleForType,
   getDocumentsForPost,
   getProcessSectionConfig,
   hasRealDataValue,
@@ -58,14 +24,17 @@ import {
   toIsoDate,
 } from './post/postHelpers';
 import {
-  PostExternalCtaRow,
-  PostFactsGrid,
-  PostFeeSection,
-  PostProcessSteps,
-  PostSscTimetableTable,
-  PostTimelineCard,
-  PostVacancyTable,
-} from './post/PostTemplateSections';
+  buildBulletinKeyFacts,
+  buildFeeNoticeBox,
+  buildImportantDateRows,
+  computeBulletinSeal,
+  extractVacancyTotalLabel,
+  formatLongDate,
+  getShortOrgName,
+  parseAgeLimitRows,
+  parseEligibilityBlocks,
+} from './post/postBulletinHelpers';
+import './post/post-bulletin.css';
 
 interface SarkariDedicatedPageViewProps {
   item: SarkariItem;
@@ -75,31 +44,35 @@ interface SarkariDedicatedPageViewProps {
   onNavigateRoute?: (path: string) => void;
 }
 
-function getPostStatusBadgeLabel(
-  st: ComputedSarkariStatus,
-  language: Language
-): string {
-  if (
-    !st.isArchiveBucket &&
-    st.computedStatus === 'closing_soon' &&
-    (st.stage === 'answer_key' || st.stage === 'objection_window')
-  ) {
-    if (language === 'hi') return `आपत्ति तक ${st.dateValue}`;
-    if (language === 'ur') return `اعتراض تک ${st.dateValue}`;
-    return `Objections till ${st.dateValue}`;
-  }
-  return st.badgeLabel;
-}
+const PB_FONT_LINK_ID = 'pb-google-fonts';
+const PB_FONT_HREF =
+  'https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Libre+Franklin:wght@400;500;600;700&display=swap';
+
+const SSC_TIMETABLE_ROWS = [
+  {
+    exam: 'Coast Guard Enrolled Persons Test (CGEPT) 01/2027 & 02/2027',
+    dates: '17 – 18 November 2026',
+    mode: 'Computer Based Exam',
+  },
+  {
+    exam: 'Annual Departmental Typing & Stenographer Skill Test 2025',
+    dates: '20 – 21 November 2026',
+    mode: 'Skill / Typing Test',
+  },
+  {
+    exam: 'Sub-Inspector in Delhi Police & CAPFs Examination (Paper-II)',
+    dates: '28 November 2026',
+    mode: 'Computer Based Exam',
+  },
+];
 
 export default function SarkariDedicatedPageView({
   item,
-  onBack,
   onApplyService,
   onShare,
   onNavigateRoute,
 }: SarkariDedicatedPageViewProps) {
-  const { language, t } = useLanguage();
-  const allPosts = useSyncedSarkariPosts();
+  const { t } = useLanguage();
 
   const statusInfo = useMemo(() => computeSarkariStatus(item), [item]);
   const effectiveType = useMemo(
@@ -109,6 +82,7 @@ export default function SarkariDedicatedPageView({
   const nonAppTemplate = isNonApplicationTemplateType(effectiveType);
 
   const orgName = useMemo(() => item.org || resolvePostOrg(item), [item]);
+  const shortOrg = useMemo(() => getShortOrgName(orgName), [orgName]);
   const isIgnou = isIgnouItem(item);
   const isEducation = item.section === 'education' || isIgnou;
   const isSscTimetablePost =
@@ -119,7 +93,6 @@ export default function SarkariDedicatedPageView({
     () => resolvePostPdfUrl(item, portalUrl),
     [item, portalUrl]
   );
-  const isDirectPdfPortal = /\.pdf($|\?)/i.test(portalUrl);
 
   const { intro, remainder } = useMemo(
     () => splitSummaryParagraphs(item.summary || item.shortInfo),
@@ -131,9 +104,47 @@ export default function SarkariDedicatedPageView({
     [item]
   );
 
-  const timelineSteps = useMemo(
-    () => deriveTimelineForPost(item, effectiveType, statusInfo),
+  const seal = useMemo(
+    () => computeBulletinSeal(item, effectiveType, statusInfo),
     [item, effectiveType, statusInfo]
+  );
+
+  const keyFacts = useMemo(
+    () => buildBulletinKeyFacts(item, effectiveType, statusInfo, orgName),
+    [item, effectiveType, statusInfo, orgName]
+  );
+
+  const dateRows = useMemo(
+    () => buildImportantDateRows(item, effectiveType, statusInfo),
+    [item, effectiveType, statusInfo]
+  );
+
+  const feeNotice = useMemo(
+    () => buildFeeNoticeBox(item, effectiveType),
+    [item, effectiveType]
+  );
+
+  const vacancyRows = item.vacancyTable || item.departmentBreakdown || [];
+  const hasFeeCol = useMemo(
+    () => vacancyRows.some((r) => hasRealDataValue(r.fee)),
+    [vacancyRows]
+  );
+  const vacancyTotalLabel = useMemo(
+    () => extractVacancyTotalLabel(item, vacancyRows),
+    [item, vacancyRows]
+  );
+
+  const parsedEligibility = useMemo(
+    () => parseEligibilityBlocks(item.eligibility, item.qualification),
+    [item.eligibility, item.qualification]
+  );
+
+  const ageRows = useMemo(
+    () =>
+      !nonAppTemplate
+        ? parseAgeLimitRows(item.ageLimit, item.ageRelaxationDetails)
+        : [],
+    [nonAppTemplate, item.ageLimit, item.ageRelaxationDetails]
   );
 
   const checklistItems = useMemo(
@@ -151,50 +162,51 @@ export default function SarkariDedicatedPageView({
     [item, effectiveType, orgName, portalUrl, statusInfo]
   );
 
-  const vacancyRows = item.vacancyTable || item.departmentBreakdown || [];
-
-  // Breadcrumbs via / -> /jobs or /education (-> /education/ignou) -> category/org
-  const breadcrumbItems: BreadcrumbItem[] = useMemo(() => {
+  const breadcrumbSegments = useMemo(() => {
     const { sectionLabel, sectionPath, categoryLabel } = getCategoryBreadcrumb(item);
     if (isIgnou) {
       return [
-        { label: t.navHome, href: '/' },
-        { label: t.educationPageTitle, href: '/education' },
+        { label: t.educationPageTitle || 'Education', href: '/education' },
         { label: 'IGNOU', href: '/education/ignou' },
         { label: item.learnerGroup || orgName },
       ];
     }
     return [
-      { label: t.navHome, href: '/' },
       { label: sectionLabel, href: sectionPath },
       { label: categoryLabel },
     ];
-  }, [item, isIgnou, orgName, t.navHome, t.educationPageTitle]);
+  }, [item, isIgnou, orgName, t.educationPageTitle]);
 
-  // Deduplicated related posts in the same section / org
-  const relatedPosts = useMemo(() => {
-    const deduped = getDeduplicatedSarkariPosts(allPosts);
-    return [...deduped]
-      .sort(sortByNewestPostDate)
-      .filter((rel) => {
-        if (rel.id === item.id || rel.isCancelled) return false;
-        const relSt = computeSarkariStatus(rel);
-        if (relSt.verificationStatus === 'needs_verification') return false;
-        if (isIgnou) return isIgnouItem(rel);
-        return (
-          (rel.org || resolvePostOrg(rel)) === orgName ||
-          rel.section === item.section ||
-          rel.category === item.category
-        );
-      })
-      .slice(0, 4)
-      .map((rel) => ({
-        item: rel,
-        st: computeSarkariStatus(rel),
-      }));
-  }, [allPosts, item.id, item.section, item.category, isIgnou, orgName]);
+  const publishedDateText = useMemo(
+    () => formatLongDate(item.postDate),
+    [item.postDate]
+  );
+  const lastUpdatedText = useMemo(
+    () =>
+      formatLongDate(
+        item.updatedAt || item.verification?.lastVerified || item.postDate || item.documentDate
+      ),
+    [item.updatedAt, item.verification?.lastVerified, item.postDate, item.documentDate]
+  );
 
-  // Document title & Schema.org JSON-LD (JobPosting ONLY on active open/upcoming recruitment forms)
+  // Load Google Fonts (Libre Baskerville + Libre Franklin) ONLY while post route is active
+  useEffect(() => {
+    let fontLink = document.getElementById(PB_FONT_LINK_ID) as HTMLLinkElement | null;
+    if (!fontLink) {
+      fontLink = document.createElement('link');
+      fontLink.id = PB_FONT_LINK_ID;
+      fontLink.rel = 'stylesheet';
+      fontLink.href = PB_FONT_HREF;
+      document.head.appendChild(fontLink);
+    }
+    return () => {
+      try {
+        document.getElementById(PB_FONT_LINK_ID)?.remove();
+      } catch {}
+    };
+  }, []);
+
+  // Document title & Schema.org JSON-LD (JobPosting ONLY on active recruitment; Article otherwise + FAQPage)
   useEffect(() => {
     const prevTitle = document.title;
     document.title = `${item.title} | CSC DOST`;
@@ -265,13 +277,50 @@ export default function SarkariDedicatedPageView({
 
     scriptEl.textContent = JSON.stringify(schemaPayload);
 
+    // Emit FAQPage JSON-LD strictly for FAQ section visibility
+    const faqScriptId = 'csc-post-faq-schema';
+    let faqScriptEl = document.getElementById(faqScriptId) as HTMLScriptElement | null;
+    if (faqItems.length > 0) {
+      if (!faqScriptEl) {
+        faqScriptEl = document.createElement('script');
+        faqScriptEl.id = faqScriptId;
+        faqScriptEl.type = 'application/ld+json';
+        document.head.appendChild(faqScriptEl);
+      }
+      faqScriptEl.textContent = JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: faqItems.map((fq) => ({
+          '@type': 'Question',
+          name: fq.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: fq.answer,
+          },
+        })),
+      });
+    } else if (faqScriptEl) {
+      faqScriptEl.remove();
+    }
+
     return () => {
       document.title = prevTitle;
       try {
         document.getElementById(scriptId)?.remove();
+        document.getElementById(faqScriptId)?.remove();
       } catch {}
     };
-  }, [item, effectiveType, orgName, portalUrl, statusInfo.isClosed, statusInfo.isCancelled]);
+  }, [
+    item,
+    effectiveType,
+    orgName,
+    portalUrl,
+    statusInfo.isClosed,
+    statusInfo.isCancelled,
+    statusInfo.isOpen,
+    statusInfo.isUpcoming,
+    faqItems,
+  ]);
 
   const navigateInternal = (path: string) => {
     if (onNavigateRoute) {
@@ -283,7 +332,12 @@ export default function SarkariDedicatedPageView({
     }
   };
 
-  const handleRequestAssistance = () => {
+  const handleAssistedApply = (e?: React.MouseEvent) => {
+    if (e && !e.metaKey && !e.ctrlKey && e.button === 0) {
+      e.preventDefault();
+    } else if (e) {
+      return;
+    }
     onApplyService(
       isEducation
         ? `Admission / Exam Form Assistance: ${item.title}`
@@ -291,312 +345,561 @@ export default function SarkariDedicatedPageView({
     );
   };
 
-  const applyButtonLabel = isEducation
-    ? t.getAdmissionHelp
-    : t.getApplicationHelp;
-  const officialButtonLabel = isDirectPdfPortal
-    ? t.officialPdfBtn
-    : t.officialPortalBtn;
+  // Sequential section numbering (1, 2, 3...) without skipping gaps if optional sections omit
+  let sectionCounter = 0;
+  const nextSectionNumber = () => ++sectionCounter;
 
-  const eligibilityText =
-    item.eligibility && !isGenericNoticePlaceholder(item.eligibility)
-      ? item.eligibility
-      : !isGenericNoticePlaceholder(item.qualification)
-      ? item.qualification
-      : undefined;
-
-  const showEligibilityAgeCard =
+  const showEligibilitySection =
     !nonAppTemplate &&
-    (Boolean(eligibilityText) ||
-      (!isEducation && hasRealDataValue(item.ageLimit)) ||
-      (hasRealDataValue(item.ageLimit) && !isGenericNoticePlaceholder(item.ageLimit)));
+    (Boolean(parsedEligibility) ||
+      ageRows.length > 0 ||
+      Boolean(item.selectionProcess && item.selectionProcess.length > 0));
 
-  const showSelectionProcess =
-    !nonAppTemplate || Boolean(item.selectionProcess && item.selectionProcess.length > 0);
-
-  const selectionSteps =
-    item.selectionProcess && item.selectionProcess.length > 0
-      ? item.selectionProcess
-      : isEducation
-      ? [
-          'Verification of submitted online registration / examination form.',
-          'Merit evaluation, entrance score, or term-end assessment per university rules.',
-          'Publication of selection / result status on the official portal.',
-        ]
-      : [
-          'Written / Computer-Based Examination as prescribed in the official advertisement.',
-          'Skill, Physical, or Trade Test (wherever applicable per recruitment rules).',
-          'Document Verification of original educational, DOB, domicile, and category records.',
-        ];
+  const showVacancySection = vacancyRows.length > 0 || isSscTimetablePost;
+  const showDatesSection =
+    dateRows.length > 0 ||
+    Boolean(feeNotice) ||
+    (!nonAppTemplate && statusInfo.isClosed && !statusInfo.isCancelled) ||
+    statusInfo.isUpcoming;
 
   return (
     <article
       aria-labelledby="post-page-h1"
-      className="w-full bg-[var(--bg-page)] text-[var(--text-primary)] pb-24"
+      className="post-bulletin"
     >
-      <div className="max-w-[1180px] mx-auto px-3 sm:px-4 lg:px-6 pt-4 lg:pt-6 space-y-4">
-        {/* Top Breadcrumbs + Back Action */}
-        <Breadcrumbs
-          items={breadcrumbItems}
-          onNavigate={onNavigateRoute}
-          rightSlot={
-            <button
-              type="button"
-              onClick={() => {
-                if (isIgnou && onNavigateRoute) {
-                  onNavigateRoute('/education/ignou');
-                } else {
-                  onBack();
-                }
-              }}
-              className="min-h-[40px] inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--text-primary)] hover:text-[#1F9D6B] cursor-pointer"
-            >
-              <ArrowLeft className="w-4 h-4 rtl:rotate-180 shrink-0" aria-hidden="true" />
-              <span>{t.backToNotices}</span>
-            </button>
-          }
-        />
+      <div className="pb-sheet">
+        {/* 1. LETTERHEAD STRIP */}
+        <div className="pb-letterhead">
+          <div className="pb-lh-left">
+            <div className="pb-crest" aria-hidden="true">
+              CD
+            </div>
+            <div className="pb-lh-brand-wrap">
+              <div className="pb-lh-brand">CSC DOST</div>
+              <div className="pb-lh-sub">
+                Independent citizen information portal · cscdost.com
+              </div>
+            </div>
+          </div>
 
-        {/* Duplicate Entry Continuity Notice (keeps legacy /post/<slug> alive cleanly) */}
-        {item.duplicateOfId && (
-          <div className="rounded-2xl border border-[var(--status-closing-border)] bg-[var(--status-closing-bg)] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-start">
-            <div className="flex items-start gap-2.5 min-w-0">
-              <Info
-                className="w-5 h-5 text-[var(--status-closing-text)] shrink-0 mt-0.5"
-                aria-hidden="true"
-              />
-              <div className="min-w-0 space-y-0.5">
-                <div className="text-sm font-bold text-[var(--status-closing-text)]">
-                  {t.duplicateNoticeBannerTitle}
-                </div>
-                <p className="text-xs sm:text-sm text-[var(--text-primary)] m-0 leading-relaxed">
+          <div className="pb-lh-right">
+            <div className="pb-lh-doc-type">Information Bulletin</div>
+            {lastUpdatedText && (
+              <div className="pb-lh-updated">Updated {lastUpdatedText}</div>
+            )}
+          </div>
+        </div>
+
+        <div className="pb-body">
+          {/* Contextual Callouts (Duplicate continuity / Cancellation / Verification / Agniveer guide notice) */}
+          {(item.duplicateOfId ||
+            statusInfo.isCancelled ||
+            statusInfo.verificationStatus === 'needs_verification' ||
+            item.id === 'army-agniveer-rally-guide-2026' ||
+            item.isTentative) && (
+            <div className="pb-status-stack">
+              {item.duplicateOfId && (
+                <div className="pb-notice pb-notice--info" role="note">
+                  <strong>Updated notice available.</strong>{' '}
                   {item.duplicateNote ||
-                    'This entry refers to the same official notice as our primary updated post.'}
-                </p>
-              </div>
+                    'This archive entry refers to the same notification as the primary notice.'}{' '}
+                  <a
+                    href={`/post/${item.duplicateOfId}`}
+                    onClick={(e) => {
+                      if (!e.metaKey && !e.ctrlKey && e.button === 0) {
+                        e.preventDefault();
+                        navigateInternal(`/post/${item.duplicateOfId}`);
+                      }
+                    }}
+                  >
+                    {t.viewCanonicalNotice || 'View updated notice'}
+                  </a>
+                </div>
+              )}
+
+              {statusInfo.isCancelled && (
+                <div className="pb-notice pb-notice--warn" role="alert">
+                  <strong>Notification Cancelled / Withdrawn.</strong> This notice has
+                  been cancelled or superseded by the issuing authority.
+                </div>
+              )}
+
+              {statusInfo.verificationStatus === 'needs_verification' && (
+                <div className="pb-notice pb-notice--warn" role="note">
+                  <strong>Pending Official Portal Verification.</strong>{' '}
+                  {statusInfo.closingTimeNote ||
+                    'Please verify live dates and eligibility directly on the official authority website.'}
+                </div>
+              )}
+
+              {item.id === 'army-agniveer-rally-guide-2026' && (
+                <div className="pb-notice pb-notice--warn" role="note">
+                  Last updated 13 Aug 2026. Confirm the latest details on the official site (
+                  <a
+                    href="https://joinindianarmy.nic.in"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    joinindianarmy.nic.in
+                  </a>
+                  ).
+                </div>
+              )}
+
+              {item.isTentative && (
+                <div className="pb-notice pb-notice--warn" role="note">
+                  <strong>Tentative Schedule.</strong> This schedule is tentative for
+                  advance planning. Confirm final dates on your official hall ticket.
+                </div>
+              )}
             </div>
-            <a
-              href={`/post/${item.duplicateOfId}`}
-              onClick={(e) => {
-                e.preventDefault();
-                navigateInternal(`/post/${item.duplicateOfId}`);
-              }}
-              className="min-h-[44px] px-4 py-2 rounded-xl bg-[#101A36] dark:bg-[#F5A623] text-white dark:text-[#101A36] text-sm font-bold inline-flex items-center justify-center gap-1.5 no-underline shrink-0"
-            >
-              <span>{t.viewCanonicalNotice}</span>
-              <ArrowRight className="w-4 h-4 rtl:rotate-180 shrink-0" aria-hidden="true" />
-            </a>
-          </div>
-        )}
+          )}
 
-        {/* Contextual Status Callouts */}
-        {statusInfo.isCancelled && (
-          <div className="rounded-2xl border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 p-4 flex items-start gap-3 text-start">
-            <XCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" aria-hidden="true" />
-            <div className="space-y-1 min-w-0">
-              <div className="text-sm font-bold text-rose-900 dark:text-rose-100">
-                Notification Cancelled / Withdrawn
-              </div>
-              <p className="text-sm text-rose-800 dark:text-rose-200 m-0 leading-relaxed">
-                This notice has been cancelled or superseded by the issuing authority.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {statusInfo.verificationStatus === 'needs_verification' && (
-          <div className="rounded-2xl border border-[var(--status-closing-border)] bg-[var(--status-closing-bg)] p-4 flex items-start gap-3 text-start">
-            <AlertCircle
-              className="w-5 h-5 text-[var(--status-closing-text)] shrink-0 mt-0.5"
-              aria-hidden="true"
-            />
-            <div className="space-y-1 min-w-0">
-              <div className="text-sm font-bold text-[var(--status-closing-text)]">
-                Pending Official Portal Verification
-              </div>
-              <p className="text-sm text-[var(--text-primary)] m-0 leading-relaxed">
-                {statusInfo.closingTimeNote ||
-                  'Please verify live dates and eligibility directly on the official authority website.'}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {item.id === 'army-agniveer-rally-guide-2026' && (
-          <div
-            role="note"
-            className="rounded-2xl border border-[var(--border-strong)] bg-[var(--bg-card)] p-3.5 sm:p-4 flex items-start gap-3 text-start shadow-2xs"
-          >
-            <AlertCircle
-              className="w-5 h-5 text-[#D97706] shrink-0 mt-0.5"
-              aria-hidden="true"
-            />
-            <p className="text-xs sm:text-sm font-semibold text-[var(--text-primary)] leading-relaxed m-0">
-              Last updated 13 Aug 2026. Confirm the latest details on the official site (
-              <a
-                href="https://joinindianarmy.nic.in"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold text-[#1F9D6B] underline"
-              >
-                joinindianarmy.nic.in
-              </a>
-              ).
-            </p>
-          </div>
-        )}
-
-        {effectiveType === 'upcoming' && (
-          <div className="rounded-2xl border border-[var(--status-upcoming-border)] bg-[var(--status-upcoming-bg)] p-4 flex items-start gap-3 text-start">
-            <Clock
-              className="w-5 h-5 text-[var(--status-upcoming-text)] shrink-0 mt-0.5"
-              aria-hidden="true"
-            />
-            <div className="space-y-1 min-w-0">
-              <div className="text-sm font-bold text-[var(--status-upcoming-text)]">
-                Upcoming Registration Window · {statusInfo.badgeLabel}
-              </div>
-              <p className="text-sm text-[var(--text-primary)] m-0 leading-relaxed">
-                {statusInfo.closingTimeNote ||
-                  `Registration is scheduled to open on ${item.applyStart || item.startDate}.`}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {!nonAppTemplate && statusInfo.isClosed && !statusInfo.isCancelled && (
-          <div className="rounded-2xl border border-[var(--status-closed-border)] bg-[var(--status-closed-bg)] p-4 flex items-start gap-3 text-start">
-            <AlertCircle
-              className="w-5 h-5 text-[var(--status-closed-text)] shrink-0 mt-0.5"
-              aria-hidden="true"
-            />
-            <div className="space-y-1 min-w-0">
-              <div className="text-sm font-bold text-[var(--text-primary)]">
-                Application Window Closed ({item.applyEnd || item.lastDate || statusInfo.dateValue})
-              </div>
-              <p className="text-sm text-[var(--text-secondary)] m-0 leading-relaxed">
-                {statusInfo.closingTimeNote ||
-                  'The online submission deadline for this notification has passed. Official archive details remain available below.'}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {effectiveType === 'answer_key' && statusInfo.computedStatus === 'closing_soon' && (
-          <div className="rounded-2xl border border-[var(--status-closing-border)] bg-[var(--status-closing-bg)] p-4 flex items-start gap-3 text-start">
-            <Clock
-              className="w-5 h-5 text-[var(--status-closing-text)] shrink-0 mt-0.5"
-              aria-hidden="true"
-            />
-            <div className="space-y-1 min-w-0">
-              <div className="text-sm font-bold text-[var(--status-closing-text)]">
-                {getPostStatusBadgeLabel(statusInfo, language)}
-              </div>
-              <p className="text-sm text-[var(--text-primary)] m-0 leading-relaxed">
-                {statusInfo.closingTimeNote ||
-                  `Answer key challenge window closes on ${statusInfo.dateValue}.`}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {item.isTentative && (
-          <div className="rounded-2xl border border-[var(--status-closing-border)] bg-[var(--status-closing-bg)] p-4 flex items-start gap-3 text-start">
-            <Info
-              className="w-5 h-5 text-[var(--status-closing-text)] shrink-0 mt-0.5"
-              aria-hidden="true"
-            />
-            <div className="space-y-1 min-w-0">
-              <div className="text-sm font-bold text-[var(--status-closing-text)]">
-                Tentative Date Sheet Notice
-              </div>
-              <p className="text-sm text-[var(--text-primary)] m-0 leading-relaxed">
-                This schedule is tentative for advance student planning. Confirm final examination dates on your official hall ticket.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* At a glance Header Card (Compact CSS Org Badge + StatusPill + Title + DateBlock; NO large inline image) */}
-        <header
-          aria-label="At a glance"
-          className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-4 sm:p-6 space-y-4 text-start shadow-2xs"
-        >
-          <div className="flex items-start gap-3.5 sm:gap-4">
-            <OrgBadge item={item} />
-
-            <div className="flex-1 min-w-0 space-y-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusPill
-                  status={statusInfo.computedStatus}
-                  label={getPostStatusBadgeLabel(statusInfo, language)}
-                  size="md"
-                />
-                <Chip>{orgName}</Chip>
-                {item.jkDomicile && (
-                  <Chip variant="verified">{t.jkDomicileBadge}</Chip>
+          {/* 2. TITLE BLOCK (Breadcrumb + H1 + CSS 150px Circular Seal) */}
+          <nav aria-label="Breadcrumb" className="pb-breadcrumb">
+            {breadcrumbSegments.map((seg, idx) => (
+              <React.Fragment key={`${seg.label}-${idx}`}>
+                {idx > 0 && (
+                  <span className="pb-breadcrumb-sep" aria-hidden="true">
+                    ›
+                  </span>
                 )}
-                {isIgnou && item.learnerGroup && (
-                  <Chip variant="accent">{item.learnerGroup}</Chip>
+                {seg.href ? (
+                  <a
+                    href={seg.href}
+                    onClick={(e) => {
+                      if (!e.metaKey && !e.ctrlKey && e.button === 0) {
+                        e.preventDefault();
+                        navigateInternal(seg.href!);
+                      }
+                    }}
+                  >
+                    {seg.label}
+                  </a>
+                ) : (
+                  <span>{seg.label}</span>
                 )}
-              </div>
+              </React.Fragment>
+            ))}
+          </nav>
 
-              <h1
-                id="post-page-h1"
-                className="text-xl font-extrabold text-[var(--text-primary)] leading-snug tracking-tight m-0 break-words"
-              >
+          <div className="pb-title-grid">
+            <div className="pb-title-text">
+              <h1 id="post-page-h1" className="pb-h1">
                 {item.title}
               </h1>
 
-              {item.advertisementNo && (
-                <p className="text-xs font-semibold text-[var(--text-secondary)] m-0">
-                  {item.advertisementNo}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-3 lg:gap-6 items-start">
-            <div className="space-y-2 min-w-0">
-              {intro && (
-                <p className="text-sm sm:text-base text-[var(--text-secondary)] leading-relaxed m-0 max-w-3xl break-words">
-                  {intro}
-                </p>
-              )}
-
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-[var(--text-muted)] pt-1 tabular-nums">
-                {item.postDate && <span>Published: {item.postDate}</span>}
-                {item.postDate && <span aria-hidden="true">·</span>}
-                <span>
-                  Last updated: {item.updatedAt || item.postDate || item.documentDate}
-                </span>
-                <span aria-hidden="true">·</span>
-                <span>{t.independentChip}</span>
+              <div className="pb-title-meta">
+                {publishedDateText && <span>Published {publishedDateText}</span>}
+                {lastUpdatedText && (
+                  <span>Last updated {lastUpdatedText}</span>
+                )}
+                {hasRealDataValue(item.advertisementNo) && (
+                  <span className="pb-advt-tag">{item.advertisementNo}</span>
+                )}
               </div>
             </div>
 
-            <DateBlock
-              tone={statusInfo.computedStatus}
-              label={statusInfo.dateLabel}
-              dateText={statusInfo.dateValue}
-              hint={statusInfo.dateHint}
-              className="w-full lg:w-auto lg:min-w-[210px]"
-            />
+            <div className="pb-seal-wrap">
+              <div
+                className={`pb-seal ${seal.isClosed ? 'pb-seal--closed' : ''}`}
+                aria-label={`${seal.kicker} ${seal.main} ${seal.sub}`}
+              >
+                <span className="pb-seal-kicker">{seal.kicker}</span>
+                <span
+                  className={`pb-seal-main ${
+                    seal.compactMain ? 'pb-seal-main--compact' : ''
+                  }`}
+                >
+                  {seal.main}
+                </span>
+                <span className="pb-seal-sub">{seal.sub}</span>
+              </div>
+            </div>
           </div>
 
-          {/* Primary Actions Bar */}
-          <div className="pt-3 border-t border-[var(--border-default)] flex flex-wrap items-center justify-between gap-3">
-            <PostExternalCtaRow
-              portalUrl={portalUrl}
-              pdfUrl={pdfUrl}
-              portalLabel={officialButtonLabel}
-              pdfLabel={t.officialPdfBtn}
-              canApplyOnline={statusInfo.canApplyOnline}
-              applyLabel={applyButtonLabel}
-              onApplyClick={handleRequestAssistance}
-            />
+          {/* 3. SUBJECT BOX */}
+          {intro && (
+            <div className="pb-subject">
+              <span className="pb-subject-label">Subject:</span> {intro}
+              {remainder && <p>{remainder}</p>}
+            </div>
+          )}
 
-            <div className="flex items-center gap-2">
+          {/* 4. KEY-FACTS GRID (4 cells: 2x2 mobile, 4-col desktop) */}
+          <section aria-label="Key notification facts" className="pb-facts">
+            {keyFacts.map((fact) => (
+              <div key={fact.label} className="pb-fact-cell">
+                <div className="pb-fact-label">{fact.label}</div>
+                <div className="pb-fact-value">{fact.value}</div>
+              </div>
+            ))}
+          </section>
+
+          {/* 5+. NUMBERED SECTION 1: IMPORTANT DATES & FEE NOTICE */}
+          {showDatesSection && (
+            <section className="pb-section" aria-labelledby="pb-sec-dates">
+              <h2 id="pb-sec-dates" className="pb-h2">
+                <span className="pb-sec-num">{nextSectionNumber()}.</span>
+                <span>Important dates</span>
+              </h2>
+
+              {dateRows.length > 0 && (
+                <div className="pb-table-wrap">
+                  <table className="pb-table">
+                    <thead>
+                      <tr>
+                        <th scope="col" style={{ width: '48%' }}>
+                          Event
+                        </th>
+                        <th scope="col" style={{ width: '52%' }}>
+                          Date
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dateRows.map((row) => (
+                        <tr
+                          key={`${row.event}-${row.date}`}
+                          className={row.highlight ? 'pb-row-highlight' : undefined}
+                        >
+                          <td>{row.event}</td>
+                          <td>{row.date}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {feeNotice && (
+                <div className={`pb-notice pb-notice--${feeNotice.variant}`}>
+                  <strong>{feeNotice.strongPrefix}</strong> {feeNotice.body}
+                </div>
+              )}
+
+              {!nonAppTemplate && statusInfo.isClosed && !statusInfo.isCancelled && (
+                <div className="pb-notice pb-notice--warn">
+                  <strong>Window closed.</strong>{' '}
+                  {statusInfo.closingTimeNote ||
+                    `The online submission deadline (${
+                      item.applyEnd || item.lastDate || statusInfo.dateValue
+                    }) has passed.`}
+                </div>
+              )}
+
+              {effectiveType === 'upcoming' && (
+                <div className="pb-notice pb-notice--info">
+                  <strong>Upcoming window.</strong>{' '}
+                  {statusInfo.closingTimeNote ||
+                    `Online registration opens on ${formatLongDate(
+                      item.applyStart || item.startDate || statusInfo.dateValue
+                    )}.`}
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* Overflow-safe AdSense Slot between Important Dates & Vacancy/Details */}
+          <div className="pb-ad-wrap">
+            <AdSlot />
+          </div>
+
+          {/* NUMBERED SECTION: VACANCY DETAILS / SSC TIMETABLE */}
+          {showVacancySection && (
+            <section className="pb-section" aria-labelledby="pb-sec-vacancy">
+              <h2 id="pb-sec-vacancy" className="pb-h2">
+                <span className="pb-sec-num">{nextSectionNumber()}.</span>
+                <span>
+                  {isSscTimetablePost
+                    ? 'Examination timetable'
+                    : isEducation
+                    ? 'Programme & seat details'
+                    : 'Vacancy details'}
+                </span>
+              </h2>
+
+              {isSscTimetablePost ? (
+                <div className="pb-table-wrap">
+                  <table className="pb-table pb-table--multi">
+                    <thead>
+                      <tr>
+                        <th scope="col" style={{ width: '48%' }}>
+                          Examination
+                        </th>
+                        <th scope="col" style={{ width: '28%' }}>
+                          Scheduled Dates
+                        </th>
+                        <th scope="col" style={{ width: '24%' }}>
+                          Stage / Mode
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {SSC_TIMETABLE_ROWS.map((r) => (
+                        <tr key={r.exam}>
+                          <td data-label="Examination">{r.exam}</td>
+                          <td data-label="Scheduled Dates">{r.dates}</td>
+                          <td data-label="Stage / Mode">{r.mode}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="pb-table-wrap">
+                  <table className="pb-table pb-table--multi">
+                    <thead>
+                      <tr>
+                        <th scope="col" style={{ width: '28%' }}>
+                          {isEducation ? 'Department' : 'Department / Cadre'}
+                        </th>
+                        <th scope="col" style={{ width: hasFeeCol ? '28%' : '34%' }}>
+                          {isEducation ? 'Programme' : 'Post Name'}
+                        </th>
+                        <th
+                          scope="col"
+                          className="pb-col-num"
+                          style={{ width: '14%' }}
+                        >
+                          {isEducation ? 'Seats' : 'Posts'}
+                        </th>
+                        <th scope="col" style={{ width: hasFeeCol ? '16%' : '24%' }}>
+                          Qualification
+                        </th>
+                        {hasFeeCol && (
+                          <th scope="col" style={{ width: '14%' }}>
+                            Pay / Fee
+                          </th>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {vacancyRows.map((row, idx) => (
+                        <tr key={`${row.department}-${row.postName}-${idx}`}>
+                          <td
+                            data-label={isEducation ? 'Department' : 'Department / Cadre'}
+                          >
+                            {row.department}
+                          </td>
+                          <td data-label={isEducation ? 'Programme' : 'Post Name'}>
+                            {row.postName}
+                          </td>
+                          <td
+                            data-label={isEducation ? 'Seats' : 'Posts'}
+                            className="pb-col-num"
+                          >
+                            <strong>{row.posts}</strong>
+                          </td>
+                          <td data-label="Qualification">{row.qualification}</td>
+                          {hasFeeCol && (
+                            <td data-label="Pay / Fee">{row.fee || '—'}</td>
+                          )}
+                        </tr>
+                      ))}
+                      {vacancyTotalLabel && (
+                        <tr className="pb-row-total">
+                          <td data-label="Summary">Total</td>
+                          <td data-label="Scope">All notified cadres</td>
+                          <td
+                            data-label={isEducation ? 'Total Seats' : 'Total Posts'}
+                            className="pb-col-num"
+                          >
+                            {vacancyTotalLabel}
+                          </td>
+                          <td data-label="Note">As per official notification</td>
+                          {hasFeeCol && <td data-label="Pay Level">—</td>}
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* NUMBERED SECTION: ELIGIBILITY (QUALIFICATION CARDS + AGE TABLE) */}
+          {showEligibilitySection && (
+            <section className="pb-section" aria-labelledby="pb-sec-eligibility">
+              <h2 id="pb-sec-eligibility" className="pb-h2">
+                <span className="pb-sec-num">{nextSectionNumber()}.</span>
+                <span>Eligibility</span>
+              </h2>
+
+              {parsedEligibility && (
+                <>
+                  <h3 className="pb-subh3">Educational qualification</h3>
+                  <div className="pb-qual-list">
+                    {parsedEligibility.cards.map((card, idx) => (
+                      <div key={`${card.title || 'qual'}-${idx}`} className="pb-qual-card">
+                        {card.title && (
+                          <h4 className="pb-qual-title">{card.title}</h4>
+                        )}
+                        <div className="pb-qual-lines">
+                          {card.lines.map((line, lIdx) => (
+                            <span key={`${line}-${lIdx}`}>{line}</span>
+                          ))}
+                        </div>
+                        {card.ref && <div className="pb-qual-ref">{card.ref}</div>}
+                      </div>
+                    ))}
+                    {parsedEligibility.note && (
+                      <div className="pb-qual-note">{parsedEligibility.note}</div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {ageRows.length > 0 && (
+                <>
+                  <h3 className="pb-subh3">Age limit</h3>
+                  <div className="pb-table-wrap">
+                    <table className="pb-table">
+                      <thead>
+                        <tr>
+                          <th scope="col" style={{ width: '50%' }}>
+                            Category
+                          </th>
+                          <th scope="col" style={{ width: '50%' }}>
+                            Upper age limit
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ageRows.map((row, idx) => (
+                          <tr key={`${row.category}-${idx}`}>
+                            <td>{row.category}</td>
+                            <td>{row.limit}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+
+              {item.selectionProcess && item.selectionProcess.length > 0 && (
+                <>
+                  <h3 className="pb-subh3">Selection stages</h3>
+                  <ol className="pb-ol">
+                    {item.selectionProcess.map((stage, idx) => (
+                      <li key={`${stage}-${idx}`}>{stage}</li>
+                    ))}
+                  </ol>
+                </>
+              )}
+            </section>
+          )}
+
+          {/* NUMBERED SECTION: DOCUMENTS REQUIRED (BULLETED LIST) */}
+          {checklistItems.length > 0 && (
+            <section className="pb-section" aria-labelledby="pb-sec-docs">
+              <h2 id="pb-sec-docs" className="pb-h2">
+                <span className="pb-sec-num">{nextSectionNumber()}.</span>
+                <span>Documents required</span>
+              </h2>
+              <ul className="pb-ul">
+                {checklistItems.map((doc, idx) => (
+                  <li key={`${doc}-${idx}`}>{doc}</li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* NUMBERED SECTION: HOW TO APPLY / PROCESS STEPS (NUMBERED LIST) */}
+          {processConfig && processConfig.steps.length > 0 && (
+            <section className="pb-section" aria-labelledby="pb-sec-process">
+              <h2 id="pb-sec-process" className="pb-h2">
+                <span className="pb-sec-num">{nextSectionNumber()}.</span>
+                <span>
+                  {effectiveType === 'application' || effectiveType === 'admission'
+                    ? 'How to apply'
+                    : processConfig.title}
+                </span>
+              </h2>
+              {processConfig.subtitle && (
+                <p className="pb-prose">{processConfig.subtitle}</p>
+              )}
+              <ol className="pb-ol">
+                {processConfig.steps.map((step, idx) => (
+                  <li key={`${step.title}-${idx}`}>
+                    <span className="pb-step-title">{step.title}</span>
+                    <span className="pb-step-desc">{step.description}</span>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
+
+          {/* Overflow-safe AdSense Slot above FAQ */}
+          <div className="pb-ad-wrap">
+            <AdSlot />
+          </div>
+
+          {/* NUMBERED SECTION: FREQUENTLY ASKED QUESTIONS (<details>/<summary>) */}
+          {faqItems.length > 0 && (
+            <section className="pb-section" aria-labelledby="pb-sec-faq">
+              <h2 id="pb-sec-faq" className="pb-h2">
+                <span className="pb-sec-num">{nextSectionNumber()}.</span>
+                <span>Frequently asked questions</span>
+              </h2>
+              <div className="pb-faq-list">
+                {faqItems.map((faq, idx) => (
+                  <details key={`${faq.question}-${idx}`} className="pb-faq-item">
+                    <summary className="pb-faq-summary">
+                      <span className="pb-faq-arrow" aria-hidden="true">
+                        ▶
+                      </span>
+                      <span>{faq.question}</span>
+                    </summary>
+                    <div className="pb-faq-answer">{faq.answer}</div>
+                  </details>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* 10. VERIFICATION PANEL */}
+          <section
+            aria-label="Official portal verification"
+            className="pb-verify-panel pb-print-hide"
+          >
+            <h2 className="pb-verify-title">
+              {nonAppTemplate
+                ? 'Verify on the official portal'
+                : 'Verify and apply on the official portal'}
+            </h2>
+            <p className="pb-verify-sub">
+              Confirm every detail on the issuing authority’s website before submitting.
+            </p>
+            <div className="pb-btn-row">
+              <a
+                href={portalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="pb-btn pb-btn--primary"
+              >
+                Official {shortOrg} portal
+              </a>
+              <a
+                href="https://www.cscdost.com/apply"
+                onClick={handleAssistedApply}
+                className="pb-btn pb-btn--outline"
+              >
+                Assisted desk
+              </a>
+            </div>
+            <div className="pb-verify-extra">
+              {pdfUrl && (
+                <a
+                  href={pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="pb-verify-link"
+                >
+                  Official notification PDF
+                </a>
+              )}
               <a
                 href={whatsappShareUrl}
                 target="_blank"
@@ -607,330 +910,60 @@ export default function SarkariDedicatedPageView({
                     onShare(item);
                   }
                 }}
-                className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[var(--status-open-bg)] text-[var(--status-open-text)] border border-[var(--status-open-border)] font-bold text-sm inline-flex items-center gap-1.5 no-underline transition-colors hover:opacity-90"
+                className="pb-verify-link"
               >
-                <MessageCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>{t.shareOnWhatsApp}</span>
+                Share on WhatsApp
               </a>
-
               <button
                 type="button"
                 onClick={() => window.print()}
-                aria-label="Print notice details"
-                className="min-h-[44px] min-w-[44px] px-3 py-2 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-default)] font-semibold text-sm inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                className="pb-verify-link"
               >
-                <Printer className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span className="hidden sm:inline">Print</span>
+                Print bulletin
               </button>
             </div>
-          </div>
-        </header>
+          </section>
 
-        {/* Fixed-height AdSlot below At a glance card (never adjacent to CTAs or inside forms) */}
-        <AdSlot />
-
-        {/* Main Content Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-5 lg:gap-6 items-start">
-          {/* MAIN CONTENT COLUMN */}
-          <div className="min-w-0 space-y-4">
-            {/* Key Facts Grid tailored per template type */}
-            <PostFactsGrid
-              item={item}
-              type={effectiveType}
-              statusInfo={statusInfo}
-              orgName={orgName}
-              labels={{
-                asPerNotice: t.asPerOfficialNotice,
-                vacanciesLabel: t.vacanciesLabel,
-                qualificationLabel: t.qualificationLabel,
-                venueLabel: t.venueLabel,
-                reportingTimeLabel: t.reportingTimeLabel,
-                examWindowLabel: t.examWindowLabel,
-                dvDateLabel: t.dvDateLabel,
-                resultOutLabel: t.resultOutLabel,
-                keyOutLabel: t.keyOutLabel,
-                windowOpensLabel: t.windowOpensLabel,
-                closingDateLabel: t.closingDateLabel,
-                closedOnLabel: t.closedOnLabel,
-                programmeLabel: t.programmeLabel,
-                eligibleLearnersLabel: t.eligibleLearnersLabel,
-                academicSessionLabel: t.academicSessionLabel,
-                submissionDeadlineLabel: t.submissionDeadlineLabel,
-                examDateLabel: t.examDateLabel,
-              }}
-            />
-
-            {/* Overview Card */}
-            <section
-              id="overview-section"
-              aria-label={t.postOverview}
-              className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-4 sm:p-5 space-y-3 text-start"
-            >
-              <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-[#1F9D6B] shrink-0" aria-hidden="true" />
-                <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)] m-0">
-                  {t.postOverview}
-                </h2>
-              </div>
-              <p className="text-sm sm:text-base text-[var(--text-primary)] leading-relaxed m-0">
-                {item.shortInfo || intro}
-              </p>
-              {remainder && (
-                <p className="text-sm text-[var(--text-secondary)] leading-relaxed m-0">
-                  {remainder}
-                </p>
-              )}
-              {statusInfo.closingTimeNote && (
-                <p className="text-sm font-medium text-[var(--text-secondary)] bg-[var(--bg-subtle)] border border-[var(--border-default)] rounded-xl p-3 m-0">
-                  {statusInfo.closingTimeNote}
-                </p>
-              )}
-            </section>
-
-            {/* STRICT: Fee Section ONLY rendered for application | admission | upcoming */}
-            {!nonAppTemplate && (
-              <PostFeeSection
-                item={item}
-                sectionTitle={t.postFeeDetails}
-                asPerNoticeText={t.asPerOfficialNotice}
-              />
-            )}
-
-            {/* Eligibility & Age Section (ONLY rendered when meaningful data exists on application/admission/upcoming) */}
-            {showEligibilityAgeCard && (
-              <section
-                id="eligibility-section"
-                aria-label="Eligibility & Age Criteria"
-                className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-4 sm:p-5 space-y-3 text-start"
-              >
-                <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)] m-0">
-                  {isEducation
-                    ? 'Eligibility & Academic Requirements'
-                    : 'Eligibility & Age Criteria'}
-                </h2>
-
-                {eligibilityText && (
-                  <p className="text-sm sm:text-base text-[var(--text-primary)] leading-relaxed bg-[var(--bg-subtle)] border border-[var(--border-default)] rounded-xl p-3.5 m-0">
-                    {eligibilityText}
-                  </p>
-                )}
-
-                {hasRealDataValue(item.ageLimit) &&
-                  (!isEducation || !isGenericNoticePlaceholder(item.ageLimit)) && (
-                    <div className="pt-1">
-                      <dl className="divide-y divide-[var(--border-default)] border-t border-[var(--border-default)] m-0">
-                        <div className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4">
-                          <dt className="text-sm font-medium text-[var(--text-secondary)]">
-                            {t.postAgeLimit}
-                          </dt>
-                          <dd className="text-sm sm:text-base font-bold text-[var(--text-primary)] m-0">
-                            {item.ageLimit}
-                          </dd>
-                        </div>
-                        {hasRealDataValue(item.ageRelaxationDetails) && (
-                          <div className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4">
-                            <dt className="text-sm font-medium text-[var(--text-secondary)]">
-                              Age Relaxation
-                            </dt>
-                            <dd className="text-sm text-[var(--text-primary)] m-0">
-                              {item.ageRelaxationDetails}
-                            </dd>
-                          </div>
-                        )}
-                      </dl>
-                    </div>
-                  )}
-              </section>
-            )}
-
-            {/* Special SSC Timetable Table */}
-            {isSscTimetablePost && <PostSscTimetableTable />}
-
-            {/* Vacancy / Programme Table (completely hidden when empty) */}
-            <PostVacancyTable
-              rows={vacancyRows}
-              title={t.postVacancyBreakdown}
-              isEducation={isEducation}
-            />
-
-            {/* Selection Process (hidden on non-application types unless custom verified stages exist) */}
-            {showSelectionProcess && (
-              <section
-                id="selection-process"
-                aria-label="Selection Process"
-                className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-4 sm:p-5 space-y-3 text-start"
-              >
-                <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)] m-0">
-                  {isEducation ? 'Selection & Evaluation' : 'Selection Process'}
-                </h2>
-                <ul className="space-y-2 list-none m-0 p-0">
-                  {selectionSteps.map((step, idx) => (
-                    <li
-                      key={`${step}-${idx}`}
-                      className="flex items-start gap-2.5 text-sm sm:text-base text-[var(--text-primary)] leading-relaxed"
-                    >
-                      <CheckCircle2
-                        className="w-4 h-4 text-[#1F9D6B] shrink-0 mt-1"
-                        aria-hidden="true"
-                      />
-                      <span>{step}</span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            {/* Interactive Checklist With Progress (hidden automatically if empty) */}
-            {checklistItems.length > 0 && (
-              <ChecklistWithProgress
-                title={getChecklistTitleForType(effectiveType)}
-                items={checklistItems}
-                storageKey={item.id}
-              />
-            )}
-
-            {/* Type-Specific Action / Instruction Steps (NEVER "How to apply online" on non-application posts) */}
-            {processConfig && (
-              <PostProcessSteps
-                id={processConfig.id}
-                title={processConfig.title}
-                subtitle={processConfig.subtitle}
-                steps={processConfig.steps}
-              />
-            )}
-
-            {/* Free WhatsApp Alert Subscription */}
-            <AlertsBox />
-
-            {/* Citizen Helpdesk Card (Operator Wasim Ahmad Khanday, VLE ID 212515670018, Qazigund) */}
-            <HelpApplyingCard contextTitle={item.title} />
-
-            {/* FAQs Accordion + FAQPage Schema */}
-            <FaqAccordion items={faqItems} injectSchema />
-
-            {/* Bottom Fixed-Height AdSlot */}
-            <AdSlot />
-          </div>
-
-          {/* SUPPORT & RELATED SIDEBAR */}
-          <aside className="space-y-4 lg:sticky lg:top-[80px]">
-            {/* Primary Portal & Assisted Application Card */}
-            <Card className="p-4 sm:p-5 space-y-3.5 text-start">
-              <div className="space-y-1">
-                <h2 className="text-base font-extrabold text-[var(--text-primary)] m-0">
-                  {statusInfo.canApplyOnline
-                    ? isEducation
-                      ? 'Apply Online or Get Help'
-                      : 'Submit Form or Get Help'
-                    : 'Official Authority Link'}
-                </h2>
-                <p className="text-sm text-[var(--text-secondary)] leading-relaxed m-0">
-                  {statusInfo.canApplyOnline
-                    ? 'Apply directly on the official portal or let CSC DOST prepare and file your application.'
-                    : 'Access the official notification, result, admit card, or notice directly on the issuing portal.'}
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-2.5">
-                {statusInfo.canApplyOnline && (
-                  <button
-                    type="button"
-                    onClick={handleRequestAssistance}
-                    className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[#1F9D6B] hover:bg-[#178257] text-white font-bold text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
-                  >
-                    <span>{applyButtonLabel}</span>
-                  </button>
-                )}
-
-                <a
-                  href={portalUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[#101A36] hover:bg-[#1B2A52] text-white font-bold text-sm inline-flex items-center justify-center gap-2 no-underline transition-colors border border-white/10"
-                >
-                  <span>{officialButtonLabel}</span>
-                  <ExternalLink className="w-4 h-4 text-[#F5A623] shrink-0" aria-hidden="true" />
-                </a>
-
-                {pdfUrl && (
-                  <a
-                    href={pdfUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-default)] font-bold text-sm inline-flex items-center justify-center gap-2 no-underline transition-colors"
-                  >
-                    <span>{t.officialPdfBtn}</span>
-                    <ExternalLink className="w-4 h-4 text-[var(--text-muted)] shrink-0" aria-hidden="true" />
-                  </a>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => onShare(item)}
-                  className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[var(--bg-card)] hover:bg-[var(--bg-subtle)] text-[var(--text-primary)] border border-[var(--border-default)] font-semibold text-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
-                >
-                  <Share2 className="w-4 h-4 text-[#1F9D6B] shrink-0" aria-hidden="true" />
-                  <span>{t.shareOnWhatsApp}</span>
-                </button>
-              </div>
-            </Card>
-
-            {/* Notice Timeline Milestones */}
-            <PostTimelineCard steps={timelineSteps} title={t.postTimeline} />
-
-            {/* Related Notices (Deduplicated) */}
-            {relatedPosts.length > 0 && (
-              <section
-                aria-label={t.postRelated}
-                className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-4 space-y-3 text-start"
-              >
-                <h2 className="text-sm font-extrabold uppercase tracking-wider text-[var(--text-primary)] m-0">
-                  {t.postRelated}
-                </h2>
-                <ul className="space-y-2.5 list-none m-0 p-0">
-                  {relatedPosts.map(({ item: rel, st }) => (
-                    <li key={rel.id}>
-                      <a
-                        href={`/post/${rel.id}`}
-                        onClick={(e) => {
-                          if (!e.metaKey && !e.ctrlKey && e.button === 0) {
-                            e.preventDefault();
-                            navigateInternal(`/post/${rel.id}`);
-                          }
-                        }}
-                        className="block rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] hover:border-[var(--border-strong)] p-3 space-y-1.5 no-underline transition-colors"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <StatusPill
-                            status={st.computedStatus}
-                            label={getPostStatusBadgeLabel(st, language)}
-                          />
-                          <span className="text-[11px] font-semibold text-[var(--text-muted)] tabular-nums truncate">
-                            {st.dateValue}
-                          </span>
-                        </div>
-                        <p className="text-sm font-bold text-[var(--text-primary)] line-clamp-2 leading-snug m-0">
-                          {rel.title}
-                        </p>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            <AlertsBox compact />
-          </aside>
+          {/* 11. PUBLISHER BLOCK */}
+          <footer aria-label="Bulletin publisher details" className="pb-publisher">
+            <div>
+              <strong>Published by CSC DOST.</strong> Operator: Wasim Ahmad Khanday,
+              Authorised CSC VLE (ID 212515670018), Sangran Qazigund, Anantnag, J&amp;K
+              192221. Phone{' '}
+              <a href="tel:+917006833767" dir="ltr">
+                +91 70068 33767
+              </a>
+              .
+            </div>
+            <p className="pb-publisher-disclaimer">
+              CSC DOST is not a government website. This bulletin is for information only.
+            </p>
+          </footer>
         </div>
       </div>
 
-      {/* Sticky Bottom Mobile Quick Bar (Official Notice + Share on WhatsApp) */}
-      <StickyMobileActionBar
-        officialUrl={portalUrl}
-        officialLabel={isDirectPdfPortal ? t.officialPdfBtn : t.officialNotice}
-        shareWhatsAppUrl={whatsappShareUrl}
-        aboveBottomNav={true}
-      />
+      {/* 12. FIXED MOBILE BOTTOM BAR (Hidden >= 860px and in print) */}
+      <div
+        className={`pb-bottom-bar pb-print-hide ${
+          !seal.hasDeadline ? 'pb-bottom-bar--no-date' : ''
+        }`}
+        role="region"
+        aria-label="Quick application action"
+      >
+        {seal.hasDeadline && (
+          <div className="pb-bb-left">
+            <span className="pb-bb-days">{seal.bottomDaysText}</span>
+            <span className="pb-bb-date">{seal.bottomDateText}</span>
+          </div>
+        )}
+        <a
+          href="https://www.cscdost.com/apply"
+          onClick={handleAssistedApply}
+          className="pb-btn pb-btn--primary pb-bb-apply"
+        >
+          Apply Now
+        </a>
+      </div>
     </article>
   );
 }

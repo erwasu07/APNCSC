@@ -1027,13 +1027,15 @@ export default function App() {
       className={
         isAdminView
           ? 'min-h-screen w-full bg-[var(--bg-page)] text-[var(--text-primary)] font-sans'
+          : activeJobPost
+          ? 'min-h-screen w-full bg-[#E4E8E6] dark:bg-[#0B1210] text-[#17201D] dark:text-[#E7EFEB] transition-colors duration-200'
           : 'min-h-screen w-full bg-[#DFE5F2] dark:bg-[#05080F] lg:bg-[#F4F6FB] dark:lg:bg-[#0B1120] text-[#101A36] dark:text-[#F1F5F9] font-sans transition-colors duration-200'
       }
     >
       <div
         className={
-          isAdminView
-            ? 'w-full min-h-screen flex flex-col justify-between'
+          isAdminView || activeJobPost
+            ? 'w-full min-h-screen flex flex-col justify-between relative overflow-x-clip'
             : 'max-w-[480px] sm:max-w-[720px] lg:max-w-none w-full mx-auto min-h-screen bg-[#F4F6FB] dark:bg-[#0B1120] text-[#101A36] dark:text-[#F1F5F9] text-[14px] flex flex-col justify-between shadow-[0_0_32px_rgba(16,26,54,0.12)] lg:shadow-none relative overflow-x-clip'
         }
       >
@@ -1063,6 +1065,8 @@ export default function App() {
           className={
             isAdminView
               ? 'flex-grow w-full min-h-screen bg-[var(--bg-page)] overflow-x-hidden'
+              : activeJobPost
+              ? 'flex-grow w-full overflow-x-clip pb-0'
               : isApplyView || isTrackView
               ? 'flex-grow w-full bg-[var(--bg-surface)] overflow-x-clip pb-20 lg:pb-8'
               : 'flex-grow w-full overflow-x-clip pb-4 lg:pb-8'
@@ -1481,7 +1485,7 @@ export default function App() {
       )}
 
       {/* Fixed Mobile Bottom Navigation Bar (5 items: Home, Jobs, Results, Services, Alerts) */}
-      {!isAdminView && (
+      {!isAdminView && !activeJobPost && (
         <MobileBottomNav
           activeTab={activeBottomTab}
           onNavigate={handleBottomNavNavigate}
