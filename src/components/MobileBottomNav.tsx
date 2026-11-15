@@ -29,7 +29,7 @@ export default function MobileBottomNav({
   return (
     <nav
       aria-label="Bottom Navigation"
-      className="fixed bottom-0 inset-x-0 max-w-[480px] mx-auto z-40 bg-white dark:bg-[#111A2E] border-t border-[#E3E8F2] dark:border-[#283757] px-1 pt-1 pb-[max(0.35rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgba(16,26,54,0.08)] grid grid-cols-5 select-none"
+      className="fixed bottom-0 inset-x-0 max-w-[480px] sm:max-w-[720px] mx-auto z-40 bg-white dark:bg-[#111A2E] border-t border-[#E3E8F2] dark:border-[#283757] px-1 pt-1 pb-[max(0.35rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgba(16,26,54,0.08)] grid lg:hidden grid-cols-5 select-none"
     >
       {navItems.map((item) => {
         const isActive = activeTab === item.id;

@@ -59,15 +59,17 @@ export default function LiveTickerBar({ posts, onOpenPost }: LiveTickerBarProps)
     <div
       role="region"
       aria-label="Live Latest Updates Ticker"
-      className="w-full bg-[#101A36] text-slate-100 text-[12px] leading-tight border-b border-white/10 px-3 py-1.5 flex items-center gap-2 overflow-hidden"
+      className="w-full bg-[#101A36] text-slate-100 text-[12px] leading-tight border-b border-white/10"
     >
-      <span className="bg-[#F59E0B] text-[#101A36] text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-[5px] shrink-0 leading-none">
-        LIVE
-      </span>
-      <div className="flex-1 overflow-hidden whitespace-nowrap relative">
-        <div className="animate-marquee">
-          {renderTrack('main')}
-          {renderTrack('dup', true)}
+      <div className="max-w-[1180px] mx-auto px-3 sm:px-4 lg:px-6 py-1.5 flex items-center gap-2 overflow-hidden">
+        <span className="bg-[#F59E0B] text-[#101A36] text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-[5px] shrink-0 leading-none">
+          LIVE
+        </span>
+        <div className="flex-1 overflow-hidden whitespace-nowrap relative">
+          <div className="animate-marquee">
+            {renderTrack('main')}
+            {renderTrack('dup', true)}
+          </div>
         </div>
       </div>
     </div>

@@ -175,7 +175,7 @@ export default function SchemeDetailView({
       aria-labelledby="scheme-page-h1"
       className="w-full bg-[var(--bg-page)] text-[var(--text-primary)] pb-24"
     >
-      <div className="px-3 pt-4 space-y-4">
+      <div className="max-w-[1180px] mx-auto px-3 sm:px-4 lg:px-6 pt-4 lg:pt-6 space-y-4">
         {/* Top Breadcrumbs & Back Link */}
         <Breadcrumbs
           items={[
@@ -359,7 +359,7 @@ export default function SchemeDetailView({
             </a>
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
             {summaryRows.map((row) => {
               const hasValue = Boolean(row.value && row.value.trim());
               return (
@@ -405,7 +405,7 @@ export default function SchemeDetailView({
         <AdSlot />
 
         {/* Main Content Stack */}
-        <div className="grid grid-cols-1 gap-5 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-5 lg:gap-6 items-start">
           {/* LEFT MAIN CONTENT */}
           <div className="min-w-0 space-y-5">
             {/* Overview & Detailed Guideline Sections */}
@@ -556,7 +556,7 @@ export default function SchemeDetailView({
           </div>
 
           {/* SUPPORT & RELATED SIDEBAR */}
-          <aside className="space-y-4">
+          <aside className="space-y-4 lg:sticky lg:top-[80px]">
             {/* Official Link + Need Help Applying CTA Card */}
             <Card className="p-4 sm:p-5 space-y-3.5 text-start">
               <div className="space-y-1">

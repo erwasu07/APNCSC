@@ -168,7 +168,7 @@ export default function ExploreServicesDesk({
       aria-labelledby="services-board-heading"
       className="w-full bg-[var(--bg-page)] text-[var(--text-primary)] pb-12 scroll-mt-20"
     >
-      <div className="px-3 pt-4 space-y-4">
+      <div className="max-w-[1180px] mx-auto px-3 sm:px-4 lg:px-6 pt-4 lg:pt-6 space-y-4">
         <Breadcrumbs
           items={[
             { label: t.navHome, href: '/' },
@@ -284,7 +284,7 @@ export default function ExploreServicesDesk({
             </button>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 gap-3.5">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 lg:gap-4">
             {displayedServices.map((item) => {
               const hasPrice = Boolean(item.price && item.price.trim().length > 0);
               const feeText = hasPrice ? item.price.trim() : t.servicesAskUs;

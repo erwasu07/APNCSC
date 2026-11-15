@@ -709,7 +709,7 @@ export default function SarkariListPage({
       aria-labelledby="list-page-heading"
       className="w-full bg-[var(--bg-page)] text-[var(--text-primary)] pb-12"
     >
-      <div className="px-3 pt-4 space-y-4">
+      <div className="max-w-[1180px] mx-auto px-3 sm:px-4 lg:px-6 pt-4 lg:pt-6 space-y-4">
         {/* 1. Single Breadcrumb Bar + Cross-link */}
         <Breadcrumbs
           items={breadcrumbItems}
@@ -863,7 +863,7 @@ export default function SarkariListPage({
           className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-3.5 space-y-3 shadow-2xs scroll-mt-20"
         >
           {/* Search + Qualification + J&K Toggle Row */}
-          <div className="flex flex-col gap-2.5 items-stretch">
+          <div className="flex flex-col lg:flex-row gap-2.5 items-stretch lg:items-center">
             <div className="relative flex-1 min-w-0">
               <Search
                 className="w-4 h-4 text-[var(--text-muted)] absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
@@ -969,8 +969,8 @@ export default function SarkariListPage({
           />
         </div>
 
-        {/* 6. Main Stack (List + Support Cards in 480px shell) */}
-        <div className="grid grid-cols-1 gap-5 items-start">
+        {/* 6. Main Layout (Single column below 1024px, 2 columns with sticky sidebar on desktop) */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-5 lg:gap-6 items-start">
           {/* MAIN LIST COLUMN */}
           <div className="min-w-0 space-y-4">
             {/* Results Count + Sort Bar */}
@@ -1050,7 +1050,7 @@ export default function SarkariListPage({
                         </div>
 
                         {/* Thumbnail (600x315 WebP, <=120px tall on mobile) + Title + Summary + DateBlock */}
-                        <div className="flex flex-col gap-3 items-start text-start">
+                        <div className="flex flex-col lg:flex-row gap-3 lg:gap-4 items-start text-start">
                           <a
                             href={`/post/${item.id}`}
                             onClick={(e) => handlePostClick(e, item)}
@@ -1067,7 +1067,7 @@ export default function SarkariListPage({
                             />
                           </a>
 
-                          <div className="flex-1 min-w-0 grid grid-cols-1 gap-3 items-start w-full">
+                          <div className="flex-1 min-w-0 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-3 items-start w-full">
                             <div className="space-y-1.5 min-w-0">
                               <h3 className="text-base sm:text-lg font-bold leading-snug m-0">
                                 <a
@@ -1248,8 +1248,8 @@ export default function SarkariListPage({
             )}
           </div>
 
-          {/* BOTTOM STACK IN 480PX FRAME */}
-          <aside className="space-y-4">
+          {/* SUPPORT SIDEBAR */}
+          <aside className="space-y-4 lg:sticky lg:top-[80px]">
             <AlertsBox compact />
 
             <HelpApplyingCard

@@ -15,6 +15,7 @@ interface NavbarProps {
 
 export default function Navbar({
   cafeName,
+  currentPath = '/',
   onHomeClick,
   onOpenNotificationCenter,
   unreadNotificationCount = 0,
@@ -43,7 +44,8 @@ export default function Navbar({
   const navigateToPath = (urlPath: string) => {
     setQuickSearchOpen(false);
     try {
-      if (window.location.pathname !== urlPath || window.location.hash) {
+      const currentFull = `${window.location.pathname}${window.location.search}`;
+      if (currentFull !== urlPath || window.location.hash) {
         window.history.pushState(null, '', urlPath);
       }
       window.dispatchEvent(new PopStateEvent('popstate'));
@@ -97,9 +99,53 @@ export default function Navbar({
     }
   };
 
+  const currentSearch =
+    typeof window !== 'undefined' ? window.location.search.toLowerCase() : '';
+
+  const desktopNavItems: { label: string; href: string; isActive: boolean }[] = [
+    {
+      label: 'Home',
+      href: '/',
+      isActive: currentPath === '/',
+    },
+    {
+      label: 'Jobs',
+      href: '/jobs',
+      isActive:
+        currentPath === '/jobs' &&
+        !currentSearch.includes('tab=exams') &&
+        !currentSearch.includes('tab=results'),
+    },
+    {
+      label: 'Admit Card',
+      href: '/jobs?tab=exams',
+      isActive: currentPath === '/jobs' && currentSearch.includes('tab=exams'),
+    },
+    {
+      label: 'Results',
+      href: '/jobs?tab=results',
+      isActive: currentPath === '/jobs' && currentSearch.includes('tab=results'),
+    },
+    {
+      label: 'Admissions',
+      href: '/education',
+      isActive: currentPath.startsWith('/education'),
+    },
+    {
+      label: 'Services',
+      href: '/services',
+      isActive: currentPath === '/services' || currentPath.startsWith('/service/'),
+    },
+    {
+      label: 'Tools',
+      href: '/tools',
+      isActive: currentPath.startsWith('/tools') || currentPath === '/calculators',
+    },
+  ];
+
   return (
     <header className="sticky top-0 z-40 w-full bg-white dark:bg-[#111A2E] text-[#101A36] dark:text-white border-b border-[#E3E8F2] dark:border-[#283757] pt-[env(safe-area-inset-top)]">
-      <div className="px-3 h-[54px] flex items-center justify-between gap-2">
+      <div className="max-w-[1180px] mx-auto px-3 sm:px-4 lg:px-6 h-[54px] lg:h-[64px] flex items-center justify-between gap-2 lg:gap-6">
         {/* Left: 30px rounded-9px blue-to-purple CD square + bold 17px CSC DOST */}
         <a
           href="/"
@@ -108,7 +154,7 @@ export default function Navbar({
             handleLogoClick();
           }}
           aria-label={`${cafeName || t.brandName} Home`}
-          className="min-h-[40px] inline-flex items-center gap-2 no-underline rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6]"
+          className="min-h-[40px] inline-flex items-center gap-2 no-underline rounded-lg shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6]"
         >
           <span
             aria-hidden="true"
@@ -121,8 +167,33 @@ export default function Navbar({
           </span>
         </a>
 
-        {/* Right: Two 34px rounded-10px soft-blue icon buttons (tap area >=40px) */}
-        <div className="flex items-center gap-1 shrink-0">
+        {/* Middle (Desktop >=1024px): Horizontal Navigation */}
+        <nav
+          aria-label="Primary Navigation"
+          className="hidden lg:flex items-center justify-center gap-5 xl:gap-6 min-w-0"
+        >
+          {desktopNavItems.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              onClick={(e) => {
+                e.preventDefault();
+                navigateToPath(item.href);
+              }}
+              aria-current={item.isActive ? 'page' : undefined}
+              className={`min-h-[40px] inline-flex items-center text-[13.5px] font-semibold whitespace-nowrap shrink-0 no-underline border-b-2 transition-colors ${
+                item.isActive
+                  ? 'text-[#2455E6] dark:text-[#60A5FA] border-[#2455E6] dark:border-[#60A5FA]'
+                  : 'text-[#101A36] dark:text-slate-200 border-transparent hover:text-[#2455E6] dark:hover:text-[#60A5FA]'
+              }`}
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+
+        {/* Right: Search + Mobile Bell OR Desktop Join Alerts */}
+        <div className="flex items-center gap-1.5 lg:gap-2.5 shrink-0">
           <button
             type="button"
             onClick={handleSearchButtonClick}
@@ -130,7 +201,7 @@ export default function Navbar({
             aria-expanded={quickSearchOpen}
             className="min-w-[40px] min-h-[40px] inline-flex items-center justify-center rounded-[10px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6]"
           >
-            <span className="w-[34px] h-[34px] rounded-[10px] bg-[#EEF2FF] dark:bg-[#1E2C4A] hover:bg-[#DFE7FF] dark:hover:bg-[#293B61] text-[#101A36] dark:text-white inline-flex items-center justify-center text-[15px] leading-none transition-colors">
+            <span className="w-[34px] h-[34px] lg:w-[38px] lg:h-[38px] rounded-[10px] bg-[#EEF2FF] dark:bg-[#1E2C4A] hover:bg-[#DFE7FF] dark:hover:bg-[#293B61] text-[#101A36] dark:text-white inline-flex items-center justify-center text-[15px] leading-none transition-colors">
               {quickSearchOpen ? (
                 <X className="w-4 h-4" aria-hidden="true" />
               ) : (
@@ -139,6 +210,7 @@ export default function Navbar({
             </span>
           </button>
 
+          {/* Mobile/Tablet Notification Bell */}
           <button
             type="button"
             onClick={() => {
@@ -149,7 +221,7 @@ export default function Navbar({
                 ? `Notifications (${unreadNotificationCount} unread)`
                 : 'Notifications'
             }
-            className="min-w-[40px] min-h-[40px] inline-flex items-center justify-center rounded-[10px] cursor-pointer relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6]"
+            className="lg:hidden min-w-[40px] min-h-[40px] inline-flex items-center justify-center rounded-[10px] cursor-pointer relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6]"
           >
             <span className="w-[34px] h-[34px] rounded-[10px] bg-[#EEF2FF] dark:bg-[#1E2C4A] hover:bg-[#DFE7FF] dark:hover:bg-[#293B61] text-[#101A36] dark:text-white inline-flex items-center justify-center text-[15px] leading-none transition-colors relative">
               <span aria-hidden="true">🔔</span>
@@ -160,13 +232,34 @@ export default function Navbar({
               )}
             </span>
           </button>
+
+          {/* Desktop Join Alerts CTA */}
+          <button
+            type="button"
+            onClick={() => {
+              if (onOpenNotificationCenter) onOpenNotificationCenter();
+            }}
+            className="hidden lg:inline-flex items-center justify-center gap-1.5 min-h-[40px] px-4 rounded-[10px] bg-[#2455E6] hover:bg-[#1D4ED8] text-white text-[13px] font-bold whitespace-nowrap shrink-0 cursor-pointer transition-colors relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6]"
+          >
+            <span aria-hidden="true">🔔</span>
+            <span>Join Alerts</span>
+            {unreadNotificationCount > 0 && (
+              <span className="ms-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#F59E0B] text-[#101A36] text-[10px] font-extrabold inline-flex items-center justify-center leading-none tabular-nums">
+                {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
-      {/* Expandable Compact Quick Search Bar (for sub-pages) */}
+      {/* Expandable Compact Quick Search Bar */}
       {quickSearchOpen && (
-        <div className="border-t border-[#E3E8F2] dark:border-[#283757] bg-[#F4F6FB] dark:bg-[#0B1120] px-3 py-2">
-          <form onSubmit={handleSearchSubmit} role="search" className="flex items-center gap-2">
+        <div className="border-t border-[#E3E8F2] dark:border-[#283757] bg-[#F4F6FB] dark:bg-[#0B1120] px-3 sm:px-4 lg:px-6 py-2">
+          <form
+            onSubmit={handleSearchSubmit}
+            role="search"
+            className="max-w-[1180px] mx-auto flex items-center gap-2"
+          >
             <label htmlFor="header-quick-search-input" className="sr-only">
               Search JKSSB, SSC, Aadhaar
             </label>

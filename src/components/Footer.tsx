@@ -25,6 +25,17 @@ export default function Footer({ cafeName = 'CSC DOST', onOpenAdmin }: FooterPro
     } catch {}
   };
 
+  const exploreLinks = [
+    { href: '/jobs', label: t.catJobs || 'Jobs & Recruitment' },
+    { href: '/jobs?tab=exams', label: 'Admit Cards' },
+    { href: '/jobs?tab=results', label: 'Results & Answer Keys' },
+    { href: '/education', label: t.catAdmissions || 'Admissions & IGNOU' },
+    { href: '/schemes', label: t.catSchemes || 'Government Schemes' },
+    { href: '/services', label: t.catServices || 'CSC E-Services' },
+    { href: '/tools', label: t.navTools || 'Document Tools' },
+    { href: '/calculators', label: t.navCalculators || 'Citizen Calculators' },
+  ];
+
   const links = [
     { href: '/about-us', label: t.footerAbout },
     { href: '/contact-us', label: t.footerContact },
@@ -43,82 +54,113 @@ export default function Footer({ cafeName = 'CSC DOST', onOpenAdmin }: FooterPro
   return (
     <footer
       aria-label="Site Footer"
-      className="w-full bg-[#101A36] text-slate-200 border-t border-white/10 mt-5 px-3.5 pt-4 pb-[calc(76px+env(safe-area-inset-bottom))]"
+      className="w-full bg-[#101A36] text-slate-200 border-t border-white/10 mt-5 px-3.5 sm:px-4 lg:px-0 pt-4 lg:pt-10 pb-[calc(76px+env(safe-area-inset-bottom))] lg:pb-8"
     >
-      <div className="space-y-3 text-start">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <div className="text-[13px] font-extrabold text-white tabular-nums">
-              {cafeName} © {currentYear}
+      <div className="max-w-[1180px] mx-auto lg:px-6 space-y-3 lg:space-y-6 text-start">
+        {/* Desktop 3 Columns / Mobile Compact Stack */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-10">
+          {/* Column 1: Operator Details */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between gap-2 lg:flex-col lg:items-start lg:gap-2">
+              <div>
+                <div className="text-[13px] lg:text-[15px] font-extrabold text-white tabular-nums">
+                  {cafeName} © {currentYear}
+                </div>
+                <div className="text-[11px] lg:text-[12.5px] text-slate-300 mt-0.5 leading-snug">
+                  Wasim Ahmad Khanday · VLE ID: 212515670018
+                </div>
+              </div>
+
+              <div
+                role="group"
+                aria-label="Language switcher"
+                className="inline-flex items-center bg-white/10 border border-white/15 rounded-lg p-0.5 shrink-0"
+              >
+                {langOptions.map((opt) => {
+                  const active = language === opt.code;
+                  return (
+                    <button
+                      key={opt.code}
+                      type="button"
+                      onClick={() => setLanguage(opt.code)}
+                      aria-pressed={active}
+                      className={`min-h-[30px] px-2 py-0.5 rounded-md text-[11px] font-bold transition-colors cursor-pointer ${
+                        active
+                          ? 'bg-[#F59E0B] text-[#101A36]'
+                          : 'text-slate-200 hover:text-white'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <div className="text-[11px] text-slate-300 mt-0.5 leading-snug">
-              Wasim Ahmad Khanday · VLE ID: 212515670018
+
+            <div className="text-[11.5px] lg:text-[12.5px] text-slate-300 leading-relaxed">
+              Sangran Qazigund, Anantnag, J&amp;K 192221 ·{' '}
+              <a
+                href="tel:+917006833767"
+                dir="ltr"
+                className="text-white font-semibold underline decoration-white/30 hover:text-[#F59E0B]"
+              >
+                +91 70068 33767
+              </a>
             </div>
           </div>
 
-          <div
-            role="group"
-            aria-label="Language switcher"
-            className="inline-flex items-center bg-white/10 border border-white/15 rounded-lg p-0.5 shrink-0"
-          >
-            {langOptions.map((opt) => {
-              const active = language === opt.code;
-              return (
-                <button
-                  key={opt.code}
-                  type="button"
-                  onClick={() => setLanguage(opt.code)}
-                  aria-pressed={active}
-                  className={`min-h-[30px] px-2 py-0.5 rounded-md text-[11px] font-bold transition-colors cursor-pointer ${
-                    active
-                      ? 'bg-[#F59E0B] text-[#101A36]'
-                      : 'text-slate-200 hover:text-white'
-                  }`}
+          {/* Column 2: Explore Links (Desktop 3-col layout) */}
+          <div className="hidden lg:block space-y-2.5">
+            <div className="text-[12px] font-extrabold uppercase tracking-wider text-slate-300">
+              Explore
+            </div>
+            <nav aria-label="Explore Sections" className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[12.5px] font-semibold">
+              {exploreLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={(e) => handleLink(link.href, e)}
+                  className="text-slate-200 hover:text-[#F59E0B] transition-colors no-underline py-0.5"
                 >
-                  {opt.label}
+                  {link.label}
+                </a>
+              ))}
+            </nav>
+          </div>
+
+          {/* Column 3: Company & Legal Links (Compact wrap on Mobile/Tablet, Clean Column on Desktop) */}
+          <div className="space-y-2 lg:space-y-2.5">
+            <div className="hidden lg:block text-[12px] font-extrabold uppercase tracking-wider text-slate-300">
+              Company
+            </div>
+            <nav
+              aria-label="Footer Links"
+              className="flex flex-wrap items-center gap-x-3 gap-y-1 lg:grid lg:grid-cols-2 lg:gap-x-4 lg:gap-y-1.5 text-[11.5px] lg:text-[12.5px] font-semibold border-t border-white/10 lg:border-t-0 pt-2.5 lg:pt-0"
+            >
+              {links.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={(e) => handleLink(link.href, e)}
+                  className="min-h-[32px] lg:min-h-0 lg:py-0.5 inline-flex items-center text-slate-200 hover:text-[#F59E0B] transition-colors no-underline"
+                >
+                  {link.label}
+                </a>
+              ))}
+              {onOpenAdmin && (
+                <button
+                  type="button"
+                  onClick={onOpenAdmin}
+                  className="min-h-[32px] lg:min-h-0 lg:py-0.5 inline-flex items-center text-slate-400 hover:text-white transition-colors cursor-pointer text-[11px] lg:text-[12px] ms-auto lg:ms-0 text-start"
+                >
+                  {t.staffLogin}
                 </button>
-              );
-            })}
+              )}
+            </nav>
           </div>
         </div>
 
-        <div className="text-[11.5px] text-slate-300 leading-snug">
-          Sangran Qazigund, Anantnag, J&amp;K 192221 ·{' '}
-          <a
-            href="tel:+917006833767"
-            dir="ltr"
-            className="text-white font-semibold underline decoration-white/30 hover:text-[#F59E0B]"
-          >
-            +91 70068 33767
-          </a>
-        </div>
-
-        <nav
-          aria-label="Footer Links"
-          className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] font-semibold border-t border-white/10 pt-2.5"
-        >
-          {links.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              onClick={(e) => handleLink(link.href, e)}
-              className="min-h-[32px] inline-flex items-center text-slate-200 hover:text-[#F59E0B] transition-colors no-underline"
-            >
-              {link.label}
-            </a>
-          ))}
-          {onOpenAdmin && (
-            <button
-              type="button"
-              onClick={onOpenAdmin}
-              className="min-h-[32px] inline-flex items-center text-slate-400 hover:text-white transition-colors cursor-pointer text-[11px] ms-auto"
-            >
-              {t.staffLogin}
-            </button>
-          )}
-        </nav>
-
-        <p className="text-[11px] text-slate-300 leading-relaxed m-0 border-t border-white/10 pt-2.5">
+        <p className="text-[11px] lg:text-[12px] text-slate-300 leading-relaxed m-0 border-t border-white/10 pt-2.5 lg:pt-4">
           CSC DOST is an independent portal, not an official government website. Always confirm details on the official notification.
         </p>
       </div>

@@ -334,7 +334,7 @@ export default function SarkariDedicatedPageView({
       aria-labelledby="post-page-h1"
       className="w-full bg-[var(--bg-page)] text-[var(--text-primary)] pb-24"
     >
-      <div className="px-3 pt-4 space-y-4">
+      <div className="max-w-[1180px] mx-auto px-3 sm:px-4 lg:px-6 pt-4 lg:pt-6 space-y-4">
         {/* Top Breadcrumbs + Back Action */}
         <Breadcrumbs
           items={breadcrumbItems}
@@ -556,7 +556,7 @@ export default function SarkariDedicatedPageView({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-3 lg:gap-6 items-start">
             <div className="space-y-2 min-w-0">
               {intro && (
                 <p className="text-sm sm:text-base text-[var(--text-secondary)] leading-relaxed m-0 max-w-3xl break-words">
@@ -580,7 +580,7 @@ export default function SarkariDedicatedPageView({
               label={statusInfo.dateLabel}
               dateText={statusInfo.dateValue}
               hint={statusInfo.dateHint}
-              className="w-full"
+              className="w-full lg:w-auto lg:min-w-[210px]"
             />
           </div>
 
@@ -629,8 +629,8 @@ export default function SarkariDedicatedPageView({
         {/* Fixed-height AdSlot below At a glance card (never adjacent to CTAs or inside forms) */}
         <AdSlot />
 
-        {/* Main Content Stack (480px mobile-shell) */}
-        <div className="grid grid-cols-1 gap-5 items-start">
+        {/* Main Content Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-5 lg:gap-6 items-start">
           {/* MAIN CONTENT COLUMN */}
           <div className="min-w-0 space-y-4">
             {/* Key Facts Grid tailored per template type */}
@@ -812,8 +812,8 @@ export default function SarkariDedicatedPageView({
             <AdSlot />
           </div>
 
-          {/* SUPPORT & RELATED SIDEBAR (Stacked in 480px frame) */}
-          <aside className="space-y-4">
+          {/* SUPPORT & RELATED SIDEBAR */}
+          <aside className="space-y-4 lg:sticky lg:top-[80px]">
             {/* Primary Portal & Assisted Application Card */}
             <Card className="p-4 sm:p-5 space-y-3.5 text-start">
               <div className="space-y-1">

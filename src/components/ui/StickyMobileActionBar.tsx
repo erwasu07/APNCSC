@@ -35,7 +35,7 @@ export function StickyMobileActionBar({
     <div
       role="region"
       aria-label="Quick actions"
-      className={`fixed inset-x-0 max-w-[480px] mx-auto z-35 bg-[var(--bg-surface)] border-t border-[var(--border-default)] px-3 py-2 shadow-[0_-4px_14px_rgba(10,17,36,0.12)] flex items-center gap-2.5 ${
+      className={`fixed inset-x-0 max-w-[480px] sm:max-w-[720px] mx-auto z-35 bg-[var(--bg-surface)] border-t border-[var(--border-default)] px-3 py-2 shadow-[0_-4px_14px_rgba(10,17,36,0.12)] flex lg:hidden items-center gap-2.5 ${
         aboveBottomNav
           ? 'bottom-[calc(60px+env(safe-area-inset-bottom))]'
           : 'bottom-0 pb-[max(0.5rem,env(safe-area-inset-bottom))]'

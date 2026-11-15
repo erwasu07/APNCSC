@@ -366,7 +366,7 @@ export default function CitizenToolsDesk({
       <div
         className={
           isStandalonePage
-            ? 'px-3 pt-4 space-y-4'
+            ? 'max-w-[1180px] mx-auto px-3 sm:px-4 lg:px-6 pt-4 lg:pt-6 space-y-4'
             : 'space-y-4'
         }
       >
@@ -402,7 +402,7 @@ export default function CitizenToolsDesk({
           className="space-y-4 sm:space-y-5 scroll-mt-20"
         >
           {/* Header & Tab Switcher */}
-          <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-4 flex flex-col justify-between gap-4 text-start shadow-2xs">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 text-start shadow-2xs">
             <div className="space-y-1.5 min-w-0">
               <Chip variant="verified">Citizen Utility Calculators</Chip>
               {isStandalonePage ? (
@@ -486,7 +486,7 @@ export default function CitizenToolsDesk({
           {/* ============================================================== */}
           {activeTab === 'age' && (
             <Card className="p-4 text-start">
-              <div className="grid grid-cols-1 gap-5 items-start">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-6 items-start">
                 {/* 1. Form */}
                 <div className="space-y-4">
                   <div>
@@ -689,7 +689,7 @@ export default function CitizenToolsDesk({
           {/* ============================================================== */}
           {activeTab === 'photo' && (
             <Card className="p-4 text-start">
-              <div className="grid grid-cols-1 gap-5 items-start">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-6 items-start">
                 {/* 1. Portal Spec Selection (Form) */}
                 <div className="space-y-4">
                   <div>
@@ -874,7 +874,7 @@ export default function CitizenToolsDesk({
           {/* ============================================================== */}
           {activeTab === 'fee' && (
             <Card className="p-4 text-start">
-              <div className="grid grid-cols-1 gap-5 items-start">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-6 items-start">
                 {/* 1. Service Select Column (Form) */}
                 <div className="space-y-4">
                   <div>

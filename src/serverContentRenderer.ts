@@ -1004,16 +1004,21 @@ export function renderHomepageSubstantiveHtml(
       : '';
 
   return `
-  <div style="min-height:100vh; background:#DFE5F2;">
-  <div style="max-width:480px; margin:0 auto; background:#F4F6FB; box-shadow:0 0 32px rgba(16,26,54,0.12); font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:14px; color:#101A36; line-height:1.5;">
-  <header style="background:#ffffff; border-bottom:1px solid #E3E8F2; padding:10px 12px; display:flex; align-items:center; justify-content:space-between;">
-    <a href="/" style="display:inline-flex; align-items:center; gap:8px; font-size:17px; font-weight:800; color:#101A36; text-decoration:none;">CSC DOST</a>
-    <nav aria-label="Primary sections" style="display:flex; gap:10px; font-size:12px; font-weight:700;">
-      <a href="/jobs" style="color:#2455E6; text-decoration:none;">Jobs</a>
-      <a href="/services" style="color:#2455E6; text-decoration:none;">Services</a>
-      <a href="/schemes" style="color:#2455E6; text-decoration:none;">Schemes</a>
-    </nav>
+  <div style="min-height:100vh; background:#F4F6FB; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:14px; color:#101A36; line-height:1.5;">
+  <header style="background:#ffffff; border-bottom:1px solid #E3E8F2; padding:12px 24px;">
+    <div style="max-width:1180px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:16px;">
+      <a href="/" style="display:inline-flex; align-items:center; gap:8px; font-size:17px; font-weight:800; color:#101A36; text-decoration:none;">CSC DOST</a>
+      <nav aria-label="Primary sections" style="display:flex; flex-wrap:wrap; gap:14px; font-size:13px; font-weight:700;">
+        <a href="/jobs" style="color:#2455E6; text-decoration:none;">Jobs</a>
+        <a href="/jobs?tab=exams" style="color:#2455E6; text-decoration:none;">Admit Card</a>
+        <a href="/jobs?tab=results" style="color:#2455E6; text-decoration:none;">Results</a>
+        <a href="/education" style="color:#2455E6; text-decoration:none;">Admissions</a>
+        <a href="/services" style="color:#2455E6; text-decoration:none;">Services</a>
+        <a href="/tools" style="color:#2455E6; text-decoration:none;">Tools</a>
+      </nav>
+    </div>
   </header>
+  <div style="max-width:1180px; margin:0 auto;">
 
   <main class="ssr-homepage-wrapper" style="padding:0 0 24px 0;">
     <section style="background:linear-gradient(135deg,#101A36,#1C2C66); color:#ffffff; padding:20px 14px 44px 14px;">
