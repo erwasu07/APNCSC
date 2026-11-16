@@ -1,4 +1,5 @@
 // CSC DOST — Official Client Web Push & Device Detection Utility
+import { VAPID_PUBLIC_KEY } from '../config/pushConfig';
 
 export interface PushPreferences {
   jobs: boolean;
@@ -15,7 +16,7 @@ export const DEFAULT_PUSH_PREFERENCES: PushPreferences = {
 };
 
 /**
- * Converts a base64 string to a Uint8Array for applicationServerKey
+ * Converts a base64url string to a Uint8Array for applicationServerKey
  */
 export function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -101,8 +102,6 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
     const registration = await navigator.serviceWorker.register('/sw.js', {
       scope: '/'
     });
-
-    // Wait until service worker is active
     await navigator.serviceWorker.ready;
     return registration;
   } catch (err) {
@@ -117,52 +116,18 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
 export async function getExistingPushSubscription(): Promise<PushSubscription | null> {
   if (!isPushSupported()) return null;
   try {
-    const registration = await navigator.serviceWorker.ready;
-    return await registration.pushManager.getSubscription();
-  } catch (err) {
-    console.warn('[WebPush] Error checking existing subscription:', err);
+    const existingReg = await navigator.serviceWorker.getRegistration('/');
+    if (!existingReg) return null;
+    return await existingReg.pushManager.getSubscription();
+  } catch {
     return null;
   }
 }
 
-/**
- * Subscribes the visitor to real Web Push notifications
- */
-export async function subscribeToWebPush(
-  preferences: PushPreferences = DEFAULT_PUSH_PREFERENCES,
-  options?: { sendWelcome?: boolean }
-): Promise<{ success: boolean; subscription: PushSubscription; subscriptionId: string }> {
-  // 1. Check support
-  if (!isPushSupported()) {
-    throw new Error('Web Push notifications are not supported in this browser.');
+async function resolvePublicVapidKey(): Promise<string> {
+  if (VAPID_PUBLIC_KEY && VAPID_PUBLIC_KEY.length > 20) {
+    return VAPID_PUBLIC_KEY;
   }
-
-  // 2. Check iOS special requirement
-  if (isIOS() && !isStandalone()) {
-    throw new Error('IOS_HOMESCREEN_REQUIRED');
-  }
-
-  // 3. Request native browser notification permission
-  const permission = await Notification.requestPermission();
-  if (permission !== 'granted') {
-    try {
-      localStorage.setItem('csc_push_notification_status', 'denied');
-    } catch {}
-    throw new Error(
-      permission === 'denied'
-        ? 'Notifications are blocked in your browser settings. Please enable notifications in site permissions.'
-        : 'Notification permission was dismissed.'
-    );
-  }
-
-  // 4. Ensure Service Worker is registered and ready
-  const registration = await registerServiceWorker();
-  if (!registration) {
-    throw new Error('Could not initialize service worker.');
-  }
-
-  // 5. Fetch VAPID public key from backend (with automatic fallback)
-  let keyData: any = null;
   for (const endpoint of ['/api/push/vapid-public-key', '/push/vapid-public-key']) {
     try {
       const res = await fetch(endpoint);
@@ -170,20 +135,59 @@ export async function subscribeToWebPush(
       if (res.ok && contentType.includes('application/json')) {
         const data = await res.json();
         if (data.success && data.publicKey) {
-          keyData = data;
-          break;
+          return String(data.publicKey).trim();
         }
       }
     } catch {}
   }
+  throw new Error('Failed to retrieve VAPID public key.');
+}
 
-  if (!keyData || !keyData.publicKey) {
-    throw new Error('Failed to retrieve VAPID application server key from server.');
+/**
+ * Subscribes the visitor to real Web Push notifications (call ONLY inside user gesture)
+ */
+export async function subscribeToWebPush(
+  preferences: PushPreferences = DEFAULT_PUSH_PREFERENCES,
+  options?: { sendWelcome?: boolean; subscribedFrom?: string }
+): Promise<{ success: boolean; subscription: PushSubscription; subscriptionId: string }> {
+  if (!isPushSupported()) {
+    throw new Error('Web Push notifications are not supported in this browser.');
   }
 
-  const applicationServerKey = urlBase64ToUint8Array(keyData.publicKey);
+  if (isIOS() && !isStandalone()) {
+    throw new Error('IOS_HOMESCREEN_REQUIRED');
+  }
 
-  // 6. Check existing subscription or create a new one
+  let permission = Notification.permission;
+  if (permission === 'denied') {
+    try {
+      localStorage.setItem('csc_push_notification_status', 'denied');
+    } catch {}
+    throw new Error('PERMISSION_DENIED');
+  }
+
+  if (permission === 'default') {
+    permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      if (permission === 'denied') {
+        try {
+          localStorage.setItem('csc_push_notification_status', 'denied');
+        } catch {}
+        throw new Error('PERMISSION_DENIED');
+      }
+      throw new Error('PERMISSION_DISMISSED');
+    }
+  }
+
+  // Permission is 'granted' (either silently already granted or freshly approved)
+  const registration = await registerServiceWorker();
+  if (!registration) {
+    throw new Error('Could not initialize service worker.');
+  }
+
+  const publicKey = await resolvePublicVapidKey();
+  const applicationServerKey = urlBase64ToUint8Array(publicKey);
+
   let subscription = await registration.pushManager.getSubscription();
   if (!subscription) {
     subscription = await registration.pushManager.subscribe({
@@ -194,10 +198,13 @@ export async function subscribeToWebPush(
 
   const subJson = subscription.toJSON();
   if (!subJson.endpoint || !subJson.keys || !subJson.keys.p256dh || !subJson.keys.auth) {
-    throw new Error('Failed to generate full encryption keys for push subscription.');
+    throw new Error('Failed to generate encryption keys for push subscription.');
   }
 
-  // 7. Save subscription securely in Supabase / backend database
+  const subscribedFrom =
+    options?.subscribedFrom ||
+    (typeof window !== 'undefined' ? `${window.location.pathname || '/'}${window.location.search || ''}` : '/');
+
   let saveData: any = null;
   let saveOk = false;
   for (const endpoint of ['/api/push/subscribe', '/push/subscribe']) {
@@ -210,6 +217,7 @@ export async function subscribeToWebPush(
           preferences,
           deviceType: getDeviceType(),
           userAgent: navigator.userAgent,
+          subscribedFrom,
           sendWelcome: options?.sendWelcome !== false
         })
       });
@@ -226,11 +234,11 @@ export async function subscribeToWebPush(
     throw new Error('Server failed to save push subscription in database.');
   }
 
-  // 8. Update local storage with true confirmed state
   try {
     localStorage.setItem('csc_push_notification_status', 'subscribed');
     localStorage.setItem('csc_push_preferences', JSON.stringify(preferences));
     localStorage.setItem('csc_push_endpoint', subJson.endpoint);
+    localStorage.removeItem('csc_push_dismissed_until');
   } catch {}
 
   return {
@@ -241,26 +249,31 @@ export async function subscribeToWebPush(
 }
 
 /**
- * Unsubscribes the visitor from Web Push notifications
+ * Unsubscribes the visitor from Web Push notifications and deletes DB row
  */
 export async function unsubscribeFromWebPush(): Promise<boolean> {
-  if (!isPushSupported()) return false;
-
   try {
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.getSubscription();
+    let endpointToDelete = '';
+    try {
+      endpointToDelete = localStorage.getItem('csc_push_endpoint') || '';
+    } catch {}
 
-    if (subscription) {
-      const endpoint = subscription.endpoint;
-      await subscription.unsubscribe();
+    if (isPushSupported()) {
+      const registration = await navigator.serviceWorker.getRegistration('/');
+      const subscription = registration ? await registration.pushManager.getSubscription() : null;
+      if (subscription) {
+        endpointToDelete = subscription.endpoint || endpointToDelete;
+        await subscription.unsubscribe();
+      }
+    }
 
-      // Notify backend to deactivate record
+    if (endpointToDelete) {
       for (const ep of ['/api/push/unsubscribe', '/push/unsubscribe']) {
         try {
           const res = await fetch(ep, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ endpoint })
+            body: JSON.stringify({ endpoint: endpointToDelete })
           });
           if (res.ok) break;
         } catch {}

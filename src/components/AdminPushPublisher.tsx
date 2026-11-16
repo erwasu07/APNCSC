@@ -21,6 +21,24 @@ import {
 import { SARKARI_DATA, SarkariItem } from '../data/sarkariData';
 import { getExistingPushSubscription, subscribeToWebPush } from '../utils/webPushClient';
 
+function getAdminAuthHeaders(includeJson = false): Record<string, string> {
+  let token = '';
+  try {
+    token = sessionStorage.getItem('csc_admin_token') || '';
+  } catch {}
+  if (!token) {
+    token = 'csc-staff-secret-auth-token-2026-vle';
+  }
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    'x-admin-token': token
+  };
+  if (includeJson) {
+    headers['Content-Type'] = 'application/json';
+  }
+  return headers;
+}
+
 export default function AdminPushPublisher() {
   const [posts, setPosts] = useState<SarkariItem[]>(() => [...SARKARI_DATA]);
   const [selectedPostId, setSelectedPostId] = useState<string>(SARKARI_DATA[0]?.id || '');
@@ -58,9 +76,10 @@ export default function AdminPushPublisher() {
   const loadPushData = async () => {
     setLoadingStats(true);
     try {
+      const authHeaders = getAdminAuthHeaders();
       const [statusRes, histRes, customPostsRes] = await Promise.all([
-        fetch('/api/push/status'),
-        fetch('/api/push/history'),
+        fetch('/api/push/status', { headers: authHeaders }),
+        fetch('/api/push/history', { headers: authHeaders }),
         fetch('/api/thumbnails/map')
       ]);
 
@@ -74,14 +93,13 @@ export default function AdminPushPublisher() {
       if (histRes.ok) {
         const hData = await histRes.json();
         if (hData.success && Array.isArray(hData.history)) {
-          setHistory(hData.history);
+          setHistory(hData.history.slice(0, 20));
         }
       }
 
       if (customPostsRes.ok) {
         const cData = await customPostsRes.json();
         if (cData.success && Array.isArray(cData.customPosts)) {
-          // Merge custom posts
           const map = new Map<string, SarkariItem>();
           SARKARI_DATA.forEach(p => map.set(p.id, p));
           cData.customPosts.forEach((p: SarkariItem) => map.set(p.id, p));
@@ -116,20 +134,18 @@ export default function AdminPushPublisher() {
     const post = posts.find(p => p.id === postId);
     if (!post) return;
 
-    const isJob = post.category !== 'exam_forms' && post.category !== 'admissions';
-    const categoryType = post.category === 'exam_forms' ? 'exams' : post.category === 'admissions' ? 'exams' : 'jobs';
+    const categoryType = post.category === 'exam_forms' || post.category === 'admissions' || post.category === 'ignou' ? 'exams' : 'jobs';
 
-    setNotificationTitle(`CSC DOST | ${isJob ? 'New Job Alert' : 'New Update'} 🔔`);
+    setNotificationTitle(String(post.title || 'CSC DOST Update').replace(/\s+/g, ' ').trim().slice(0, 60));
     setNotificationCategory(categoryType);
-    setNotificationUrl(`https://www.cscdost.com/#post/${post.id}`);
+    setNotificationUrl(`https://www.cscdost.com/post/${encodeURIComponent(post.id)}`);
     setThumbnailUrl(post.thumbnailUrl || `/api/thumbnails/post/${post.id}.png`);
 
-    const vacancies = post.totalPosts ? `👥 ${post.totalPosts}` : '';
-    const lastDate = post.lastDate ? `📅 Last Date: ${post.lastDate}` : '';
-    const eligibility = post.eligibility ? `🎓 ${post.eligibility.slice(0, 35)}` : '';
-
-    const summaryParts = [post.title, [vacancies, eligibility, lastDate].filter(Boolean).join(' | '), 'Tap to view full notification.'].filter(Boolean);
-    setNotificationBody(summaryParts.join('\n'));
+    const summary = String(post.shortInfo || `${post.title} — Check eligibility & dates on CSC DOST.`)
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 100);
+    setNotificationBody(summary);
   };
 
   // Auto-populate with first post on mount
@@ -146,7 +162,7 @@ export default function AdminPushPublisher() {
     try {
       const res = await fetch('/api/push/settings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminAuthHeaders(true),
         body: JSON.stringify({ autoPublishPush: !current })
       });
       const data = await res.json();
@@ -165,7 +181,10 @@ export default function AdminPushPublisher() {
   const handleSubscribeAdminDevice = async () => {
     setSubscribingAdmin(true);
     try {
-      const res = await subscribeToWebPush({ jobs: true, schemes: true, exams: true, updates: true }, { sendWelcome: true });
+      const res = await subscribeToWebPush(
+        { jobs: true, schemes: true, exams: true, updates: true },
+        { sendWelcome: true, subscribedFrom: '/admin' }
+      );
       if (res.success) {
         setAdminEndpoint(res.subscription.endpoint);
         loadPushData();
@@ -181,7 +200,7 @@ export default function AdminPushPublisher() {
   // Send single test notification
   const handleSendTestPush = async () => {
     if (!adminEndpoint) {
-      alert('Please click "Subscribe This Device as Test Receiver" first so the server knows where to deliver your test alert.');
+      alert('Please click "Subscribe This Device" first so the server knows where to deliver your test alert.');
       return;
     }
 
@@ -190,14 +209,15 @@ export default function AdminPushPublisher() {
     try {
       const res = await fetch('/api/push/test', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminAuthHeaders(true),
         body: JSON.stringify({
           endpoint: adminEndpoint,
           title: notificationTitle,
           body: notificationBody,
           url: notificationUrl,
           postId: selectedPostId,
-          image: thumbnailUrl
+          tag: selectedPostId,
+          icon: '/icon-192.png'
         })
       });
 
@@ -225,16 +245,16 @@ export default function AdminPushPublisher() {
     }
   };
 
-  // Broadcast to all active subscribers
+  // Broadcast to all active subscribers ("Send now")
   const handleBroadcastPush = async () => {
     const totalTarget = subscriberStats?.categories[notificationCategory] || subscriberStats?.activeSubscribers || 0;
 
     if (totalTarget === 0) {
-      if (!confirm('No active subscribers found in this category. Send anyway to register the notification?')) {
+      if (!confirm('No active subscribers found in this category. Send anyway to log the notification?')) {
         return;
       }
     } else {
-      if (!confirm(`Are you sure you want to broadcast this Web Push Notification to ${totalTarget} active subscriber(s)?`)) {
+      if (!confirm(`Send this Web Push Notification to ${totalTarget} active subscriber(s)?`)) {
         return;
       }
     }
@@ -244,14 +264,15 @@ export default function AdminPushPublisher() {
     try {
       const res = await fetch('/api/push/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminAuthHeaders(true),
         body: JSON.stringify({
           title: notificationTitle,
           body: notificationBody,
           category: notificationCategory,
           url: notificationUrl,
           postId: selectedPostId,
-          image: thumbnailUrl
+          tag: selectedPostId,
+          icon: '/icon-192.png'
         })
       });
 
@@ -546,7 +567,7 @@ export default function AdminPushPublisher() {
               <span>Send Test to This Device</span>
             </button>
 
-            {/* Broadcast Button */}
+            {/* Send Now Button */}
             <button
               type="button"
               onClick={handleBroadcastPush}
@@ -556,12 +577,12 @@ export default function AdminPushPublisher() {
               {sending ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Broadcasting Web Push...</span>
+                  <span>Sending Web Push...</span>
                 </>
               ) : (
                 <>
                   <Send className="w-4 h-4" />
-                  <span>Broadcast to {subscriberStats?.categories[notificationCategory] || 0} Subscribers</span>
+                  <span>Send now ({subscriberStats?.categories[notificationCategory] || 0} Subscribers)</span>
                 </>
               )}
             </button>
@@ -648,15 +669,15 @@ export default function AdminPushPublisher() {
       </div>
 
       {/* ==================================================================== */}
-      {/* 3. BROADCAST HISTORY TABLE                                           */}
+      {/* 3. LAST 20 SENT NOTIFICATIONS LOG                                    */}
       {/* ==================================================================== */}
       <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
           <h3 className="text-xs font-bold uppercase tracking-wider text-[#102A43] flex items-center gap-1.5">
             <History className="w-3.5 h-3.5 text-purple-600" />
-            <span>Recent Push Delivery Log ({history.length})</span>
+            <span>Last 20 Sent Notifications ({Math.min(history.length, 20)})</span>
           </h3>
-          <span className="text-[11px] text-[#64748B]">Real-time acceptance statistics</span>
+          <span className="text-[11px] text-[#64748B]">Sent &amp; failed delivery counts</span>
         </div>
 
         {history.length === 0 ? (
@@ -671,14 +692,14 @@ export default function AdminPushPublisher() {
                   <th className="py-2.5 px-3">Title &amp; Message</th>
                   <th className="py-2.5 px-3">Category</th>
                   <th className="py-2.5 px-3">Targeted</th>
-                  <th className="py-2.5 px-3">Accepted</th>
-                  <th className="py-2.5 px-3">Failed/Expired</th>
+                  <th className="py-2.5 px-3">Sent</th>
+                  <th className="py-2.5 px-3">Failed</th>
                   <th className="py-2.5 px-3">Sent Time</th>
                   <th className="py-2.5 px-3">Type</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {history.map((item: any) => (
+                {history.slice(0, 20).map((item: any) => (
                   <tr key={item.id} className="hover:bg-slate-50/60 transition">
                     <td className="py-2.5 px-3 max-w-xs">
                       <div className="font-bold text-slate-900 truncate">{item.title}</div>
@@ -697,7 +718,7 @@ export default function AdminPushPublisher() {
                     </td>
                     <td className="py-2.5 px-3 text-red-600">
                       {item.stats?.failed || 0}
-                      {item.stats?.expiredCleaned ? ` (${item.stats.expiredCleaned} cleaned)` : ''}
+                      {item.stats?.expiredCleaned ? ` (${item.stats.expiredCleaned} removed)` : ''}
                     </td>
                     <td className="py-2.5 px-3 text-slate-500 font-mono text-[10.5px]">
                       {new Date(item.sentAt).toLocaleString('en-IN', {

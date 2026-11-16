@@ -45,20 +45,37 @@ export default function NotificationPreferencesModal({
 
   const [isSubscribed, setIsSubscribed] = useState<boolean>(false);
   const [permission, setPermission] = useState<NotificationPermission>('default');
+  const [supported, setSupported] = useState<boolean>(true);
+  const [iosNeedsHomeScreen, setIosNeedsHomeScreen] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
     setStatusMsg(null);
+    const iosA2HS = isIOS() && !isStandalone();
+    setIosNeedsHomeScreen(iosA2HS);
+    setSupported(isPushSupported());
     const perm = getBrowserPermission();
     setPermission(perm);
-    try {
-      const status = localStorage.getItem('csc_push_notification_status');
-      setIsSubscribed(status === 'subscribed' && perm === 'granted');
-    } catch {
-      setIsSubscribed(false);
-    }
+
+    let cancelled = false;
+    (async () => {
+      const existing = await getExistingPushSubscription();
+      if (cancelled) return;
+      const savedStatus = (() => {
+        try {
+          return localStorage.getItem('csc_push_notification_status');
+        } catch {
+          return null;
+        }
+      })();
+      setIsSubscribed(Boolean((existing || savedStatus === 'subscribed') && perm === 'granted'));
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen]);
 
   const handleTogglePreference = (key: keyof PushPreferences) => {
@@ -73,22 +90,39 @@ export default function NotificationPreferencesModal({
 
   const handleEnable = async () => {
     if (isIOS() && !isStandalone()) {
+      setIosNeedsHomeScreen(true);
       onClose();
       if (onOpenIOSGuide) onOpenIOSGuide();
+      return;
+    }
+
+    if (!isPushSupported()) {
+      setStatusMsg({ type: 'error', text: 'Push notifications are not supported in this browser.' });
+      return;
+    }
+
+    if (getBrowserPermission() === 'denied') {
+      setPermission('denied');
       return;
     }
 
     setLoading(true);
     setStatusMsg(null);
     try {
-      const res = await subscribeToWebPush(preferences);
+      const res = await subscribeToWebPush(preferences, {
+        subscribedFrom: `${window.location.pathname || '/'}${window.location.search || ''}`
+      });
       if (res.success) {
         setIsSubscribed(true);
         setPermission('granted');
-        setStatusMsg({ type: 'success', text: 'Web push notifications are now active on your device!' });
+        setStatusMsg({ type: 'success', text: "You're subscribed! Notifications are active on this device." });
       }
     } catch (err: any) {
-      setStatusMsg({ type: 'error', text: err?.message || 'Failed to enable notifications.' });
+      if (err?.message === 'PERMISSION_DENIED') {
+        setPermission('denied');
+      } else {
+        setStatusMsg({ type: 'error', text: err?.message || 'Failed to enable notifications.' });
+      }
     } finally {
       setLoading(false);
     }
@@ -101,10 +135,10 @@ export default function NotificationPreferencesModal({
       const success = await unsubscribeFromWebPush();
       if (success) {
         setIsSubscribed(false);
-        setStatusMsg({ type: 'success', text: 'Notifications disabled. You will no longer receive push alerts.' });
+        setStatusMsg({ type: 'success', text: 'Unsubscribed. Your device subscription has been removed.' });
       }
     } catch (err: any) {
-      setStatusMsg({ type: 'error', text: err?.message || 'Failed to disable notifications.' });
+      setStatusMsg({ type: 'error', text: err?.message || 'Failed to unsubscribe.' });
     } finally {
       setLoading(false);
     }
@@ -112,13 +146,17 @@ export default function NotificationPreferencesModal({
 
   const handleSavePreferences = async () => {
     setStatusMsg(null);
-    localStorage.setItem('csc_push_preferences', JSON.stringify(preferences));
+    try {
+      localStorage.setItem('csc_push_preferences', JSON.stringify(preferences));
+    } catch {}
 
-    // If subscribed, re-sync preferences to backend
     if (isSubscribed) {
       setLoading(true);
       try {
-        await subscribeToWebPush(preferences, { sendWelcome: false });
+        await subscribeToWebPush(preferences, {
+          sendWelcome: false,
+          subscribedFrom: `${window.location.pathname || '/'}${window.location.search || ''}`
+        });
         setStatusMsg({ type: 'success', text: 'Notification preferences saved successfully!' });
       } catch (e: any) {
         setStatusMsg({ type: 'error', text: e?.message || 'Failed to sync preferences.' });
@@ -134,7 +172,6 @@ export default function NotificationPreferencesModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
-      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"
         onClick={onClose}
@@ -166,47 +203,68 @@ export default function NotificationPreferencesModal({
         </div>
 
         {/* Device Push Status Banner */}
-        <div className="mb-4 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span
-              className={`w-2.5 h-2.5 rounded-full ${
-                isSubscribed
-                  ? 'bg-emerald-500 animate-pulse'
-                  : permission === 'denied'
-                  ? 'bg-red-500'
-                  : 'bg-amber-400'
-              }`}
-            />
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-              {isSubscribed
-                ? 'Device Push: Active'
-                : permission === 'denied'
-                ? 'Browser Push: Blocked'
-                : 'Device Push: Not Enabled'}
-            </span>
+        {permission === 'denied' ? (
+          <div className="mb-4 p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 space-y-2">
+            <p className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
+              Notifications are blocked for this site. Click the lock icon next to the address bar, set Notifications to Allow, then reload.
+            </p>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3 py-1 rounded-lg bg-slate-900 text-white text-[11px] font-bold cursor-pointer"
+              >
+                Got it
+              </button>
+            </div>
           </div>
+        ) : iosNeedsHomeScreen ? (
+          <div className="mb-4 p-3 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800">
+            <p className="text-xs text-blue-900 dark:text-blue-200 leading-relaxed">
+              On iPhone (iOS 16.4+), add CSC DOST to your Home Screen via Safari Share → Add to Home Screen, then open it from there to enable push notifications.
+            </p>
+          </div>
+        ) : !supported ? (
+          <div className="mb-4 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+            <p className="text-xs text-slate-600 dark:text-slate-300">
+              Web Push notifications are not supported in this browser.
+            </p>
+          </div>
+        ) : (
+          <div className="mb-4 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span
+                className={`w-2.5 h-2.5 rounded-full ${
+                  isSubscribed ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'
+                }`}
+              />
+              <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                {isSubscribed ? "You're subscribed" : 'Device Push: Not Enabled'}
+              </span>
+            </div>
 
-          {isSubscribed ? (
-            <button
-              type="button"
-              onClick={handleDisable}
-              disabled={loading}
-              className="text-[11px] font-bold text-red-600 hover:underline cursor-pointer flex items-center gap-1 disabled:opacity-50"
-            >
-              <BellOff className="w-3 h-3" />
-              <span>Disable</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleEnable}
-              disabled={loading}
-              className="px-2.5 py-1 rounded-lg bg-[#175CEE] text-white text-[11px] font-bold hover:bg-blue-700 transition cursor-pointer disabled:opacity-50"
-            >
-              Enable Push
-            </button>
-          )}
-        </div>
+            {isSubscribed ? (
+              <button
+                type="button"
+                onClick={handleDisable}
+                disabled={loading}
+                className="text-[11px] font-bold text-red-600 hover:underline cursor-pointer flex items-center gap-1 disabled:opacity-50"
+              >
+                <BellOff className="w-3 h-3" />
+                <span>Unsubscribe</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleEnable}
+                disabled={loading}
+                className="px-2.5 py-1 rounded-lg bg-[#175CEE] text-white text-[11px] font-bold hover:bg-blue-700 transition cursor-pointer disabled:opacity-50"
+              >
+                {loading ? 'Connecting...' : 'Enable Notifications'}
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Feedback message */}
         {statusMsg && (

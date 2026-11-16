@@ -561,9 +561,16 @@ function PrivacyContent() {
           </li>
           <li>
             <strong className="text-[var(--text-primary)]">Web Push Subscribers:</strong> If you
-            grant browser notification permissions, we store your anonymous cryptographic Web Push
-            subscription endpoint and keys to deliver official job notifications and exam alerts. No
-            identity data is associated with push tokens.
+            click &ldquo;Enable Notifications&rdquo; and grant browser notification permission, we store
+            your browser push subscription endpoint URL, cryptographic encryption keys (<code>p256dh</code> and{' '}
+            <code>auth</code>), device/user-agent string, the page you subscribed from, and timestamps
+            strictly to deliver requested recruitment, exam date-sheet, admission, and CSC welfare scheme
+            alerts. We do not link push subscriptions to any personal identity or form data. You may{' '}
+            <strong className="text-[var(--text-primary)]">unsubscribe at any time</strong> by clicking
+            &ldquo;Unsubscribe&rdquo; inside Notification Preferences (accessible via the bell icon) or
+            by revoking Notifications permission in your browser&rsquo;s site settings. Whenever you
+            unsubscribe or a browser endpoint expires (HTTP 404/410), the subscription row is
+            permanently deleted from our database.
           </li>
           <li>
             <strong className="text-[var(--text-primary)]">Payment Information:</strong> Online fee

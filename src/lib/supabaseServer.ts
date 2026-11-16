@@ -693,12 +693,13 @@ export async function persistCustomerApplication(
 }
 
 /**
- * Syncs a Web Push Subscription record to Supabase table 'push_subscriptions'
+ * Syncs a Web Push Subscription record to Supabase table 'push_subscriptions' (unique on endpoint)
  */
 export async function syncPushSubscriptionToSupabase(record: any): Promise<{ success: boolean; error?: string }> {
   const supabase = getServerSupabaseClient();
   if (!supabase) return { success: false, error: 'Supabase client not initialized' };
 
+  const nowIso = new Date().toISOString();
   try {
     const { error } = await supabase
       .from('push_subscriptions')
@@ -709,22 +710,86 @@ export async function syncPushSubscriptionToSupabase(record: any): Promise<{ suc
         auth: record.keys?.auth,
         device_type: record.deviceType || 'unknown',
         user_agent: record.userAgent,
+        subscribed_from: record.subscribedFrom || '/',
         preferences: record.preferences,
         status: record.status || 'active',
-        created_at: record.createdAt,
-        updated_at: record.updatedAt,
-        last_delivery_at: record.lastDeliveryAt
+        created_at: record.createdAt || nowIso,
+        last_seen: record.lastSeen || nowIso,
+        updated_at: record.updatedAt || nowIso,
+        last_delivery_at: record.lastDeliveryAt || null
       }, { onConflict: 'endpoint' });
 
     if (error) {
-      // Table might not exist yet; log clear info without breaking
-      console.warn('[SupabaseServer] push_subscriptions table sync notice:', error.message);
+      console.warn('[SupabaseServer] push_subscriptions upsert notice:', error.message);
       return { success: false, error: error.message };
     }
     return { success: true };
   } catch (err: any) {
     console.warn('[SupabaseServer] push_subscriptions sync exception:', err?.message);
     return { success: false, error: err?.message };
+  }
+}
+
+/**
+ * Deletes a Web Push Subscription row from Supabase table 'push_subscriptions' by endpoint
+ */
+export async function deletePushSubscriptionFromSupabase(endpoint: string): Promise<{ success: boolean; error?: string }> {
+  const supabase = getServerSupabaseClient();
+  if (!supabase || !endpoint) return { success: false, error: 'Supabase client or endpoint missing' };
+
+  try {
+    const { error } = await supabase
+      .from('push_subscriptions')
+      .delete()
+      .eq('endpoint', endpoint);
+
+    if (error) {
+      console.warn('[SupabaseServer] push_subscriptions delete notice:', error.message);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
+  }
+}
+
+/**
+ * Fetches active Web Push subscriptions from Supabase table 'push_subscriptions'
+ */
+export async function getPushSubscriptionsFromSupabase(): Promise<any[]> {
+  const supabase = getServerSupabaseClient();
+  if (!supabase) return [];
+
+  try {
+    const { data, error } = await supabase
+      .from('push_subscriptions')
+      .select('id, endpoint, p256dh, auth, device_type, user_agent, subscribed_from, preferences, status, created_at, last_seen, updated_at, last_delivery_at')
+      .order('last_seen', { ascending: false })
+      .limit(5000);
+
+    if (error || !Array.isArray(data)) {
+      return [];
+    }
+
+    return data
+      .filter(r => r && r.endpoint && r.p256dh && r.auth && (!r.status || r.status === 'active'))
+      .map(r => ({
+        id: r.id,
+        endpoint: r.endpoint,
+        keys: { p256dh: r.p256dh, auth: r.auth },
+        deviceType: r.device_type || 'unknown',
+        userAgent: r.user_agent || '',
+        subscribedFrom: r.subscribed_from || '/',
+        preferences: r.preferences || { jobs: true, schemes: true, exams: true, updates: true },
+        status: 'active' as const,
+        createdAt: r.created_at || new Date().toISOString(),
+        lastSeen: r.last_seen || r.updated_at || new Date().toISOString(),
+        updatedAt: r.updated_at || new Date().toISOString(),
+        lastDeliveryAt: r.last_delivery_at || undefined,
+        failureCount: 0
+      }));
+  } catch {
+    return [];
   }
 }
 
@@ -747,7 +812,8 @@ export async function syncPushNotificationToSupabase(record: any): Promise<{ suc
         post_id: record.postId,
         stats: record.stats,
         sent_at: record.sentAt,
-        sent_by: record.sentBy || 'Admin'
+        sent_by: record.sentBy || 'Admin',
+        is_test: Boolean(record.isTest)
       });
 
     if (error) {
@@ -757,6 +823,38 @@ export async function syncPushNotificationToSupabase(record: any): Promise<{ suc
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err?.message };
+  }
+}
+
+/**
+ * Fetches recent sent push notification logs from Supabase
+ */
+export async function getPushNotificationsFromSupabase(limit = 20): Promise<any[]> {
+  const supabase = getServerSupabaseClient();
+  if (!supabase) return [];
+
+  try {
+    const { data, error } = await supabase
+      .from('push_notifications_log')
+      .select('id, title, body, category, url, post_id, stats, sent_at, sent_by, is_test')
+      .order('sent_at', { ascending: false })
+      .limit(limit);
+
+    if (error || !Array.isArray(data)) return [];
+    return data.map(row => ({
+      id: row.id,
+      title: row.title,
+      body: row.body,
+      category: row.category || 'all',
+      url: row.url || '/',
+      postId: row.post_id || undefined,
+      stats: row.stats || { totalTargeted: 0, accepted: 0, failed: 0, expiredCleaned: 0 },
+      sentAt: row.sent_at,
+      sentBy: row.sent_by || 'Admin',
+      isTest: Boolean(row.is_test)
+    }));
+  } catch {
+    return [];
   }
 }
 

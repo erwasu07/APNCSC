@@ -74,9 +74,28 @@
   "customPosts": [],
   "postThumbnails": {},
   "pushSubscriptions": [],
-  "pushNotifications": [],
+  "pushNotifications": [
+    {
+      "title": "Hello",
+      "body": "World",
+      "category": "all",
+      "url": "https://www.cscdost.com/",
+      "tag": "csc-test-push",
+      "icon": "/icon-192.png",
+      "sentBy": "Admin Console",
+      "stats": {
+        "totalTargeted": 1,
+        "accepted": 0,
+        "failed": 1,
+        "expiredCleaned": 0
+      },
+      "isTest": true,
+      "id": "push_1794827212351_fvyp",
+      "sentAt": "2026-11-16T11:06:52.351Z"
+    }
+  ],
   "pushSettings": {
-    "autoPublishPush": false,
+    "autoPublishPush": true,
     "welcomePushEnabled": true
   },
   "paymentTransactions": [

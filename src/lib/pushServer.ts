@@ -1,88 +1,58 @@
-import fs from 'fs';
-import path from 'path';
 import webpush from 'web-push';
 import {
   getActivePushSubscriptions,
+  deletePushSubscription,
   markPushSubscriptionFailure,
   recordPushDeliverySuccess,
   addPushNotificationRecord,
-  PushSubscriptionRecord,
-  PushNotificationRecord,
-  getPushServerSettings
+  PushSubscriptionRecord
 } from '../dbServer';
-import { syncPushNotificationToSupabase } from './supabaseServer';
+import {
+  deletePushSubscriptionFromSupabase,
+  getPushSubscriptionsFromSupabase,
+  syncPushNotificationToSupabase
+} from './supabaseServer';
 
-// Path for persistent VAPID keys fallback
-const VAPID_FILE = path.join(process.cwd(), 'data', 'vapid.json');
-const TMP_VAPID_FILE = '/tmp/vapid.json';
+const DEFAULT_PUBLIC_KEY =
+  'BJZxu9aQ0e54Br6OUHQMQbw7Oc1p1FStaxyzuBGISVvfBDp8N4lFPn8tVEZPZeM75TJjbLJHmdsTIkLi7noWlnk';
+const DEFAULT_SUBJECT = 'mailto:support@cscdost.com';
 
-// Production-grade permanent VAPID fallback keypair for CSC DOST
-// (Overrides via process.env.VAPID_PUBLIC_KEY and process.env.VAPID_PRIVATE_KEY are prioritized)
-const STABLE_VAPID_PUBLIC_KEY = 'BIWxr5Hs7YgdviLAArRERb4tMUKSu-6PvSJbIB6_JLtIuemW4knw4LTtRdj8G-MdKa7EpepFB_vOjKLBkTB0pGg';
-const STABLE_VAPID_PRIVATE_KEY = 'OGGSMWlqvau-Tghbf6ajVEzBl_ohTQpI6SsV0kNqTjg';
-const STABLE_VAPID_SUBJECT = 'mailto:support@cscdost.com';
+let vapidConfigured = false;
 
-interface VapidConfig {
-  publicKey: string;
-  privateKey: string;
-  subject: string;
+export function getVapidPublicKey(): string {
+  return (
+    process.env.VAPID_PUBLIC_KEY ||
+    process.env.VITE_VAPID_PUBLIC_KEY ||
+    DEFAULT_PUBLIC_KEY
+  ).trim();
 }
 
-let activeVapidConfig: VapidConfig | null = null;
+export function isPushConfigured(): boolean {
+  const publicKey = getVapidPublicKey();
+  const privateKey = (process.env.VAPID_PRIVATE_KEY || '').trim();
+  return Boolean(publicKey && privateKey);
+}
 
-export function initializeVapid(): VapidConfig {
-  if (activeVapidConfig) return activeVapidConfig;
+export function initializeVapid(): boolean {
+  if (vapidConfigured) return true;
 
-  let publicKey = (process.env.VAPID_PUBLIC_KEY || '').trim();
-  let privateKey = (process.env.VAPID_PRIVATE_KEY || '').trim();
-  const subject = (process.env.VAPID_SUBJECT || STABLE_VAPID_SUBJECT).trim();
+  const publicKey = getVapidPublicKey();
+  const privateKey = (process.env.VAPID_PRIVATE_KEY || '').trim();
+  const subject = (process.env.VAPID_SUBJECT || DEFAULT_SUBJECT).trim();
 
-  // 1. If environment variables are missing, try reading data/vapid.json or /tmp/vapid.json
   if (!publicKey || !privateKey) {
-    const candidatePaths = [VAPID_FILE, TMP_VAPID_FILE];
-    for (const filePath of candidatePaths) {
-      try {
-        if (fs.existsSync(filePath)) {
-          const fileContent = fs.readFileSync(filePath, 'utf-8');
-          const parsed = JSON.parse(fileContent);
-          if (parsed.publicKey && parsed.privateKey) {
-            publicKey = parsed.publicKey;
-            privateKey = parsed.privateKey;
-            break;
-          }
-        }
-      } catch (e) {
-        // Read error (e.g. permission or unparseable), continue to next
-      }
-    }
-  }
-
-  // 2. If still missing, use stable compiled fallback keys
-  if (!publicKey || !privateKey) {
-    publicKey = STABLE_VAPID_PUBLIC_KEY;
-    privateKey = STABLE_VAPID_PRIVATE_KEY;
-
-    // Attempt to persist to /tmp or data directory safely without crashing if read-only
-    try {
-      const targetDir = fs.existsSync(path.dirname(VAPID_FILE)) ? VAPID_FILE : TMP_VAPID_FILE;
-      fs.writeFileSync(targetDir, JSON.stringify({ publicKey, privateKey, subject, createdAt: new Date().toISOString() }, null, 2));
-    } catch {}
+    console.warn('[WebPush] VAPID_PRIVATE_KEY environment secret is not set; push delivery is disabled.');
+    return false;
   }
 
   try {
     webpush.setVapidDetails(subject, publicKey, privateKey);
-    console.log(`✅ [WebPush] VAPID configured successfully. Subject: ${subject}`);
-  } catch (setErr) {
-    console.error('[WebPush] Error setting VAPID details:', setErr);
+    vapidConfigured = true;
+    return true;
+  } catch (err: any) {
+    console.error('[WebPush] Error configuring VAPID details:', err?.message || 'Invalid VAPID configuration');
+    return false;
   }
-
-  activeVapidConfig = { publicKey, privateKey, subject };
-  return activeVapidConfig;
-}
-
-export function getVapidPublicKey(): string {
-  const config = initializeVapid();
-  return config.publicKey;
 }
 
 export interface PushPayload {
@@ -97,6 +67,72 @@ export interface PushPayload {
   category?: 'jobs' | 'schemes' | 'exams' | 'updates' | 'all';
 }
 
+export function formatPostPushPayload(post: {
+  id: string;
+  title?: string;
+  shortInfo?: string;
+  shortDescription?: string;
+  summary?: string;
+  category?: 'jobs' | 'schemes' | 'exams' | 'updates' | 'all';
+}): PushPayload {
+  const cleanTitle = String(post.title || 'CSC DOST Update')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 60);
+  const rawSummary = String(post.shortInfo || post.shortDescription || post.summary || '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const cleanBody = (rawSummary || 'Tap to view complete notification details on CSC DOST.').slice(0, 100);
+  const slug = String(post.id || '').trim();
+
+  return {
+    title: cleanTitle,
+    body: cleanBody,
+    icon: '/icon-192.png',
+    badge: '/favicon-32x32.png',
+    url: slug ? `https://www.cscdost.com/post/${encodeURIComponent(slug)}` : 'https://www.cscdost.com/',
+    tag: slug || `csc-${Date.now()}`,
+    postId: slug || undefined,
+    category: post.category || 'all'
+  };
+}
+
+/**
+ * Merges active subscribers from both Supabase and local database, deduplicated by endpoint
+ */
+export async function getMergedActiveSubscribers(category?: string): Promise<PushSubscriptionRecord[]> {
+  const localSubs = getActivePushSubscriptions(category);
+  const supaSubs = await getPushSubscriptionsFromSupabase();
+
+  const merged = new Map<string, PushSubscriptionRecord>();
+  for (const sub of localSubs) {
+    if (sub && sub.endpoint) merged.set(sub.endpoint, sub);
+  }
+  for (const sub of supaSubs) {
+    if (!sub || !sub.endpoint) continue;
+    if (category && category !== 'all') {
+      const prefs = sub.preferences || { jobs: true, schemes: true, exams: true, updates: true };
+      if (category === 'jobs' && prefs.jobs === false) continue;
+      if (category === 'schemes' && prefs.schemes === false) continue;
+      if (category === 'exams' && prefs.exams === false) continue;
+      if (category === 'updates' && prefs.updates === false) continue;
+    }
+    if (!merged.has(sub.endpoint)) {
+      merged.set(sub.endpoint, sub);
+    }
+  }
+
+  return Array.from(merged.values());
+}
+
+/**
+ * Removes an expired or invalid subscription from both local store and Supabase
+ */
+async function removeExpiredSubscription(endpoint: string): Promise<void> {
+  deletePushSubscription(endpoint);
+  await deletePushSubscriptionFromSupabase(endpoint).catch(() => false);
+}
+
 /**
  * Sends a single push notification to a specific subscription
  */
@@ -104,18 +140,27 @@ export async function sendSingleNotification(
   subscription: { endpoint: string; keys: { p256dh: string; auth: string } },
   payload: PushPayload
 ): Promise<{ success: boolean; statusCode?: number; error?: string }> {
-  initializeVapid();
+  if (!initializeVapid()) {
+    return {
+      success: false,
+      statusCode: 503,
+      error: 'Push server secret (VAPID_PRIVATE_KEY) is not configured.'
+    };
+  }
 
   const formattedPayload = JSON.stringify({
-    title: payload.title || 'CSC DOST | Notification 🔔',
-    body: payload.body || 'New update available on CSC DOST portal.',
-    icon: payload.icon || '/csc-dost-header-logo.png',
+    title: payload.title || 'CSC DOST Update',
+    body: payload.body || 'New update available on CSC DOST.',
+    icon: payload.icon || '/icon-192.png',
     badge: payload.badge || '/favicon-32x32.png',
     image: payload.image || undefined,
-    url: payload.url || '/',
-    tag: payload.tag || `csc-${Date.now()}`,
+    url: payload.url || 'https://www.cscdost.com/',
+    tag: payload.tag || payload.postId || `csc-${Date.now()}`,
     postId: payload.postId,
-    category: payload.category || 'all'
+    category: payload.category || 'all',
+    data: {
+      url: payload.url || 'https://www.cscdost.com/'
+    }
   });
 
   const pushSubscription = {
@@ -128,7 +173,7 @@ export async function sendSingleNotification(
 
   try {
     const result = await webpush.sendNotification(pushSubscription, formattedPayload, {
-      TTL: 60 * 60 * 24, // 24 hours
+      TTL: 60 * 60 * 24,
       urgency: 'high'
     });
 
@@ -136,12 +181,11 @@ export async function sendSingleNotification(
     return { success: true, statusCode: result.statusCode };
   } catch (err: any) {
     const statusCode = err?.statusCode;
-    // 404 or 410 means subscription has expired or unsubscribed
     if (statusCode === 404 || statusCode === 410) {
-      console.log(`[WebPush] Subscription expired (${statusCode}) for endpoint: ${subscription.endpoint.slice(0, 45)}...`);
-      markPushSubscriptionFailure(subscription.endpoint, true);
+      console.log(`[WebPush] Removed expired subscription (${statusCode}): ${subscription.endpoint.slice(0, 48)}...`);
+      await removeExpiredSubscription(subscription.endpoint);
     } else {
-      console.warn(`[WebPush] Delivery warning (${statusCode || 'network'}):`, err?.message || err);
+      console.warn(`[WebPush] Delivery failure (${statusCode || 'network'}): ${err?.message || 'Push request failed'}`);
       markPushSubscriptionFailure(subscription.endpoint, false);
     }
 
@@ -154,13 +198,14 @@ export async function sendSingleNotification(
 }
 
 /**
- * Broadcasts a push notification to subscribers, handling batching and deactivation of expired subscriptions
+ * Broadcasts a push notification in batches of 200 and cleans up 404/410 subscriptions
  */
 export async function broadcastPushNotification(params: {
   title: string;
   body: string;
   category?: 'jobs' | 'schemes' | 'exams' | 'updates' | 'all';
   url?: string;
+  tag?: string;
   postId?: string;
   icon?: string;
   image?: string;
@@ -178,35 +223,41 @@ export async function broadcastPushNotification(params: {
   };
   error?: string;
 }> {
-  initializeVapid();
+  if (!initializeVapid()) {
+    return {
+      success: false,
+      notificationId: '',
+      stats: { totalTargeted: 0, accepted: 0, failed: 0, expiredCleaned: 0 },
+      error: 'Push server secret (VAPID_PRIVATE_KEY) is not configured.'
+    };
+  }
 
   const category = params.category || 'all';
+  const targetIcon = params.icon || '/icon-192.png';
+  const targetTag = params.tag || params.postId || `csc-${Date.now()}`;
+  const targetUrl = params.url || (params.postId ? `https://www.cscdost.com/post/${encodeURIComponent(params.postId)}` : 'https://www.cscdost.com/');
 
-  // If this is a test targeted to a single subscriber
+  // Single targeted test send
   if (params.isTest && params.testEndpoint) {
-    const sub = {
-      endpoint: params.testEndpoint,
-      keys: { p256dh: '', auth: '' }
-    };
-    // Look up in active subscriptions to find matching keys
-    const all = getActivePushSubscriptions('all');
+    const all = await getMergedActiveSubscribers('all');
     const match = all.find(s => s.endpoint === params.testEndpoint);
     if (!match) {
       return {
         success: false,
         notificationId: '',
         stats: { totalTargeted: 1, accepted: 0, failed: 1, expiredCleaned: 0 },
-        error: 'Target test subscription not found or inactive.'
+        error: 'Target test subscription not found or no longer active.'
       };
     }
 
     const res = await sendSingleNotification(match, {
       title: params.title,
       body: params.body,
-      url: params.url,
+      url: targetUrl,
+      tag: targetTag,
       postId: params.postId,
       category,
-      icon: params.icon,
+      icon: targetIcon,
       image: params.image
     });
 
@@ -221,9 +272,10 @@ export async function broadcastPushNotification(params: {
       title: params.title,
       body: params.body,
       category,
-      url: params.url || '/',
+      url: targetUrl,
+      tag: targetTag,
       postId: params.postId,
-      icon: params.icon,
+      icon: targetIcon,
       image: params.image,
       sentBy: params.sentBy || 'Admin Test',
       stats,
@@ -240,42 +292,47 @@ export async function broadcastPushNotification(params: {
     };
   }
 
-  // Get active subscribers matching category
-  const targetSubscribers = getActivePushSubscriptions(category);
+  // Broadcast to active subscribers in batches of 200
+  const targetSubscribers = await getMergedActiveSubscribers(category);
 
   let acceptedCount = 0;
   let failedCount = 0;
   let expiredCleanedCount = 0;
 
-  // Controlled batch size (20 concurrent requests) to avoid overwhelming sockets
-  const BATCH_SIZE = 20;
+  const BATCH_SIZE = 200;
   for (let i = 0; i < targetSubscribers.length; i += BATCH_SIZE) {
     const batch = targetSubscribers.slice(i, i + BATCH_SIZE);
-    const results = await Promise.all(
+    const settled = await Promise.allSettled(
       batch.map(sub =>
         sendSingleNotification(sub, {
           title: params.title,
           body: params.body,
-          url: params.url,
+          url: targetUrl,
+          tag: targetTag,
           postId: params.postId,
           category,
-          icon: params.icon,
+          icon: targetIcon,
           image: params.image
         })
       )
     );
 
-    for (const res of results) {
-      if (res.success) {
+    for (const outcome of settled) {
+      if (outcome.status === 'fulfilled' && outcome.value.success) {
         acceptedCount++;
       } else {
         failedCount++;
-        if (res.statusCode === 410 || res.statusCode === 404) {
+        const statusCode = outcome.status === 'fulfilled' ? outcome.value.statusCode : undefined;
+        if (statusCode === 410 || statusCode === 404) {
           expiredCleanedCount++;
         }
       }
     }
   }
+
+  console.log(
+    `[WebPush] Broadcast finished (${category}): targeted=${targetSubscribers.length}, accepted=${acceptedCount}, failed=${failedCount}, deleted=${expiredCleanedCount}`
+  );
 
   const stats = {
     totalTargeted: targetSubscribers.length,
@@ -288,9 +345,10 @@ export async function broadcastPushNotification(params: {
     title: params.title,
     body: params.body,
     category,
-    url: params.url || '/',
+    url: targetUrl,
+    tag: targetTag,
     postId: params.postId,
-    icon: params.icon,
+    icon: targetIcon,
     image: params.image,
     sentBy: params.sentBy || 'Admin Broadcast',
     stats,

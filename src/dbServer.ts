@@ -53,7 +53,7 @@ const DEFAULT_DB: DatabaseSchema = {
   postThumbnails: {},
   pushSubscriptions: [],
   pushNotifications: [],
-  pushSettings: { autoPublishPush: false, welcomePushEnabled: true },
+  pushSettings: { autoPublishPush: true, welcomePushEnabled: true },
   paymentTransactions: []
 };
 
@@ -94,7 +94,7 @@ export function getDb(): DatabaseSchema {
       if (!parsed.postThumbnails) parsed.postThumbnails = {};
       if (!parsed.pushSubscriptions) parsed.pushSubscriptions = [];
       if (!parsed.pushNotifications) parsed.pushNotifications = [];
-      if (!parsed.pushSettings) parsed.pushSettings = { autoPublishPush: false, welcomePushEnabled: true };
+      if (!parsed.pushSettings) parsed.pushSettings = { autoPublishPush: true, welcomePushEnabled: true };
       if (!parsed.paymentTransactions) parsed.paymentTransactions = [];
 
       // Permanently filter any appointments matching deletedAppointmentIds
@@ -838,9 +838,11 @@ export interface PushSubscriptionRecord {
   };
   deviceType: 'android' | 'ios' | 'desktop' | 'unknown';
   userAgent?: string;
+  subscribedFrom?: string;
   preferences: PushSubscriptionPreferences;
   status: 'active' | 'inactive' | 'expired';
   createdAt: string;
+  lastSeen: string;
   updatedAt: string;
   lastDeliveryAt?: string;
   failureCount: number;
@@ -853,6 +855,7 @@ export interface PushNotificationRecord {
   category: 'jobs' | 'schemes' | 'exams' | 'updates' | 'all';
   url: string;
   postId?: string;
+  tag?: string;
   icon?: string;
   image?: string;
   sentAt: string;
@@ -876,6 +879,7 @@ export function upsertPushSubscription(payload: {
   keys: { p256dh: string; auth: string };
   deviceType?: 'android' | 'ios' | 'desktop' | 'unknown';
   userAgent?: string;
+  subscribedFrom?: string;
   preferences?: Partial<PushSubscriptionPreferences>;
 }): PushSubscriptionRecord {
   const db = getDb();
@@ -899,9 +903,11 @@ export function upsertPushSubscription(payload: {
       keys: payload.keys || existing.keys,
       deviceType: payload.deviceType || existing.deviceType || 'unknown',
       userAgent: payload.userAgent || existing.userAgent,
+      subscribedFrom: payload.subscribedFrom || existing.subscribedFrom || '/',
       preferences: { ...existing.preferences, ...defaultPreferences },
       status: 'active',
       failureCount: 0,
+      lastSeen: nowIso,
       updatedAt: nowIso
     };
     db.pushSubscriptions[existingIdx] = updated;
@@ -915,9 +921,11 @@ export function upsertPushSubscription(payload: {
     keys: payload.keys,
     deviceType: payload.deviceType || 'unknown',
     userAgent: payload.userAgent,
+    subscribedFrom: payload.subscribedFrom || '/',
     preferences: defaultPreferences,
     status: 'active',
     createdAt: nowIso,
+    lastSeen: nowIso,
     updatedAt: nowIso,
     failureCount: 0
   };
@@ -927,17 +935,20 @@ export function upsertPushSubscription(payload: {
   return newRecord;
 }
 
-export function deactivatePushSubscription(endpoint: string): boolean {
+export function deletePushSubscription(endpoint: string): boolean {
   const db = getDb();
   if (!Array.isArray(db.pushSubscriptions)) return false;
-  const idx = db.pushSubscriptions.findIndex(s => s && s.endpoint === endpoint);
-  if (idx !== -1) {
-    db.pushSubscriptions[idx].status = 'inactive';
-    db.pushSubscriptions[idx].updatedAt = new Date().toISOString();
+  const before = db.pushSubscriptions.length;
+  db.pushSubscriptions = db.pushSubscriptions.filter(s => s && s.endpoint !== endpoint);
+  const removed = db.pushSubscriptions.length !== before;
+  if (removed) {
     saveDb(db);
-    return true;
   }
-  return false;
+  return removed;
+}
+
+export function deactivatePushSubscription(endpoint: string): boolean {
+  return deletePushSubscription(endpoint);
 }
 
 export function getActivePushSubscriptions(category?: string): PushSubscriptionRecord[] {
@@ -948,7 +959,6 @@ export function getActivePushSubscriptions(category?: string): PushSubscriptionR
     if (!sub || sub.status !== 'active') return false;
     if (!category || category === 'all') return true;
 
-    // Filter by subscriber's preference if specified
     const prefs = sub.preferences || { jobs: true, schemes: true, exams: true, updates: true };
     if (category === 'jobs' && prefs.jobs !== false) return true;
     if (category === 'schemes' && prefs.schemes !== false) return true;
@@ -959,19 +969,19 @@ export function getActivePushSubscriptions(category?: string): PushSubscriptionR
 }
 
 export function markPushSubscriptionFailure(endpoint: string, isPermanentExpired: boolean): void {
+  if (isPermanentExpired) {
+    deletePushSubscription(endpoint);
+    return;
+  }
   const db = getDb();
   if (!Array.isArray(db.pushSubscriptions)) return;
   const idx = db.pushSubscriptions.findIndex(s => s && s.endpoint === endpoint);
   if (idx !== -1) {
-    if (isPermanentExpired) {
-      db.pushSubscriptions[idx].status = 'expired';
-    } else {
-      db.pushSubscriptions[idx].failureCount = (db.pushSubscriptions[idx].failureCount || 0) + 1;
-      if (db.pushSubscriptions[idx].failureCount >= 3) {
-        db.pushSubscriptions[idx].status = 'expired';
-      }
-    }
+    db.pushSubscriptions[idx].failureCount = (db.pushSubscriptions[idx].failureCount || 0) + 1;
     db.pushSubscriptions[idx].updatedAt = new Date().toISOString();
+    if (db.pushSubscriptions[idx].failureCount >= 5) {
+      db.pushSubscriptions.splice(idx, 1);
+    }
     saveDb(db);
   }
 }
@@ -981,7 +991,9 @@ export function recordPushDeliverySuccess(endpoint: string): void {
   if (!Array.isArray(db.pushSubscriptions)) return;
   const idx = db.pushSubscriptions.findIndex(s => s && s.endpoint === endpoint);
   if (idx !== -1) {
-    db.pushSubscriptions[idx].lastDeliveryAt = new Date().toISOString();
+    const nowIso = new Date().toISOString();
+    db.pushSubscriptions[idx].lastDeliveryAt = nowIso;
+    db.pushSubscriptions[idx].lastSeen = nowIso;
     db.pushSubscriptions[idx].failureCount = 0;
     saveDb(db);
   }
@@ -1012,13 +1024,13 @@ export function getPushNotificationHistory(): PushNotificationRecord[] {
 
 export function getPushServerSettings(): PushServerSettings {
   const db = getDb();
-  return db.pushSettings || { autoPublishPush: false, welcomePushEnabled: true };
+  return db.pushSettings || { autoPublishPush: true, welcomePushEnabled: true };
 }
 
 export function updatePushServerSettings(settings: Partial<PushServerSettings>): PushServerSettings {
   const db = getDb();
   db.pushSettings = {
-    ...(db.pushSettings || { autoPublishPush: false, welcomePushEnabled: true }),
+    ...(db.pushSettings || { autoPublishPush: true, welcomePushEnabled: true }),
     ...settings
   };
   saveDb(db);

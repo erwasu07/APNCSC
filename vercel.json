@@ -30,5 +30,15 @@
       "source": "/((?!assets/|csc-dost|favicon|apple-touch-icon|og-banner|manifest\\.json|site\\.webmanifest|sw\\.js|ads\\.txt|google[a-zA-Z0-9_-]+\\.html|.*\\.(?:js|mjs|css|png|jpg|jpeg|gif|webp|avif|svg|ico|woff|woff2|ttf|eot|map|pdf|txt|json|webmanifest)$).*)",
       "destination": "/api"
     }
+  ],
+  "headers": [
+    {
+      "source": "/sw.js",
+      "headers": [
+        { "key": "Content-Type", "value": "application/javascript; charset=utf-8" },
+        { "key": "Service-Worker-Allowed", "value": "/" },
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+      ]
+    }
   ]
 }

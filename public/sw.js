@@ -1,10 +1,7 @@
-// CSC DOST — Official Web Push & Service Worker
-// Version: 1.0.0
+// CSC DOST — Official Web Push Service Worker (/sw.js)
 // Scope: /
 
-const CACHE_NAME = 'csc-dost-cache-v1';
-
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
@@ -12,24 +9,21 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-// ============================================================
-// PUSH EVENT HANDLER
-// ============================================================
 self.addEventListener('push', (event) => {
   let payload = {
-    title: 'CSC DOST | New Alert 🔔',
-    body: 'New citizen e-service or recruitment update available.',
-    icon: '/csc-dost-header-logo.png',
+    title: 'CSC DOST',
+    body: 'New update available on CSC DOST.',
+    icon: '/icon-192.png',
     badge: '/favicon-32x32.png',
-    url: '/',
-    tag: 'csc-dost-general-alert'
+    tag: 'csc-dost-alert',
+    url: '/'
   };
 
   if (event.data) {
     try {
       const parsed = event.data.json();
       payload = { ...payload, ...parsed };
-    } catch (e) {
+    } catch {
       const rawText = event.data.text();
       if (rawText) {
         payload.body = rawText;
@@ -37,91 +31,79 @@ self.addEventListener('push', (event) => {
     }
   }
 
-  const notificationOptions = {
+  const targetUrl =
+    (payload.data && payload.data.url) ||
+    payload.url ||
+    '/';
+
+  const options = {
     body: payload.body,
-    icon: payload.icon || '/csc-dost-header-logo.png',
+    icon: payload.icon || '/icon-192.png',
     badge: payload.badge || '/favicon-32x32.png',
-    image: payload.image || undefined,
-    tag: payload.tag || `csc-dost-${Date.now()}`,
-    renotify: true,
-    requireInteraction: true,
-    vibrate: [150, 80, 150],
+    tag: payload.tag || 'csc-dost-alert',
+    renotify: Boolean(payload.tag),
     data: {
-      url: payload.url || '/',
-      postId: payload.postId,
-      category: payload.category,
-      timestamp: Date.now()
-    },
-    actions: [
-      {
-        action: 'open',
-        title: 'View Details'
-      },
-      {
-        action: 'close',
-        title: 'Dismiss'
-      }
-    ]
+      url: targetUrl
+    }
   };
 
   event.waitUntil(
-    self.registration.showNotification(payload.title, notificationOptions)
+    self.registration.showNotification(payload.title || 'CSC DOST', options)
   );
 });
 
-// ============================================================
-// NOTIFICATION CLICK HANDLER
-// ============================================================
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  if (event.action === 'close') {
-    return;
-  }
+  const rawUrl =
+    (event.notification.data && event.notification.data.url) ||
+    '/';
 
-  const targetUrl = (event.notification.data && event.notification.data.url)
-    ? event.notification.data.url
-    : '/';
+  let resolvedUrl = '/';
+  try {
+    resolvedUrl = new URL(rawUrl, self.location.origin).href;
+  } catch {
+    resolvedUrl = self.location.origin + '/';
+  }
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      // If a tab is already open with CSC DOST, focus and navigate it
       for (const client of windowClients) {
-        if ('focus' in client) {
-          client.focus();
-          if ('navigate' in client && targetUrl) {
-            return client.navigate(targetUrl);
-          }
-          return client;
+        if (client.url && client.url.startsWith(self.location.origin) && 'focus' in client) {
+          return client.focus().then(() => {
+            if ('navigate' in client) {
+              return client.navigate(resolvedUrl);
+            }
+            return client;
+          });
         }
       }
-      // If no tab is open, open a new window
+
       if (self.clients.openWindow) {
-        return self.clients.openWindow(targetUrl);
+        return self.clients.openWindow(resolvedUrl);
       }
     })
   );
 });
 
-// ============================================================
-// PUSH SUBSCRIPTION CHANGE HANDLER (Browser Rotation)
-// ============================================================
 self.addEventListener('pushsubscriptionchange', (event) => {
+  const options = event.oldSubscription && event.oldSubscription.options
+    ? event.oldSubscription.options
+    : { userVisibleOnly: true };
+
   event.waitUntil(
     self.registration.pushManager
-      .subscribe(event.oldSubscription ? event.oldSubscription.options : { userVisibleOnly: true })
-      .then((newSubscription) => {
-        return fetch('/api/push/subscribe', {
+      .subscribe(options)
+      .then((newSubscription) =>
+        fetch('/api/push/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            subscription: newSubscription,
-            source: 'pushsubscriptionchange'
+            subscription: newSubscription.toJSON ? newSubscription.toJSON() : newSubscription,
+            subscribedFrom: '/'
           })
-        });
-      })
-      .catch((err) => {
-        console.warn('[SW] pushsubscriptionchange re-subscribe failed:', err);
-      })
+        })
+      )
+      .catch(() => undefined)
   );
 });

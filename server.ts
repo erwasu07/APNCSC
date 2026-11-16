@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import fs from 'fs';
@@ -101,6 +102,7 @@ import {
   getWhatsAppHistoryByIdempotencyKey,
   clearWhatsAppPublishHistory,
   upsertPushSubscription,
+  deletePushSubscription,
   deactivatePushSubscription,
   getActivePushSubscriptions,
   getPushNotificationHistory,
@@ -123,6 +125,8 @@ import {
   isDeletedApplicationRecord,
   uploadDocumentBufferToSupabase,
   syncPushSubscriptionToSupabase,
+  deletePushSubscriptionFromSupabase,
+  getPushNotificationsFromSupabase,
   updateSupabasePaymentRecord,
   recordSupabasePaymentTransaction
 } from './src/lib/supabaseServer';
@@ -148,12 +152,11 @@ import {
   getVapidPublicKey,
   sendSingleNotification,
   broadcastPushNotification,
-  initializeVapid
+  initializeVapid,
+  isPushConfigured,
+  getMergedActiveSubscribers,
+  formatPostPushPayload
 } from './src/lib/pushServer';
-
-// Setup environment variables
-import dotenv from 'dotenv';
-dotenv.config();
 
 const app = express();
 const PORT = 3000;
@@ -3336,32 +3339,77 @@ app.post('/api/whatsapp/broadcast', authenticateAdmin, async (req: Request, res:
 });
 
 // ============================================================
-// WEB PUSH NOTIFICATION API ENDPOINTS
+// SERVICE WORKER & WEB PUSH NOTIFICATION API ENDPOINTS
 // ============================================================
+
+app.get('/sw.js', (_req: Request, res: Response) => {
+  const swPath = path.join(process.cwd(), 'public', 'sw.js');
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.setHeader('Service-Worker-Allowed', '/');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  return res.sendFile(swPath);
+});
+
+const PUSH_RATE_LIMIT_MAX = 10;
+const PUSH_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+const pushSendTimestamps: number[] = [];
+
+function checkAndRecordPushRateLimit(): { allowed: boolean; remaining: number; retryAfterSeconds: number } {
+  const now = Date.now();
+  while (pushSendTimestamps.length > 0 && now - pushSendTimestamps[0] >= PUSH_RATE_LIMIT_WINDOW_MS) {
+    pushSendTimestamps.shift();
+  }
+  if (pushSendTimestamps.length >= PUSH_RATE_LIMIT_MAX) {
+    const oldest = pushSendTimestamps[0];
+    const retryAfterSeconds = Math.max(1, Math.ceil((PUSH_RATE_LIMIT_WINDOW_MS - (now - oldest)) / 1000));
+    return { allowed: false, remaining: 0, retryAfterSeconds };
+  }
+  pushSendTimestamps.push(now);
+  return {
+    allowed: true,
+    remaining: Math.max(0, PUSH_RATE_LIMIT_MAX - pushSendTimestamps.length),
+    retryAfterSeconds: 0
+  };
+}
+
+function pushSendRateLimiter(_req: Request, res: Response, next: NextFunction) {
+  const rate = checkAndRecordPushRateLimit();
+  if (!rate.allowed) {
+    res.setHeader('Retry-After', String(rate.retryAfterSeconds));
+    return res.status(429).json({
+      success: false,
+      error: `Rate limit exceeded: maximum ${PUSH_RATE_LIMIT_MAX} push dispatches per hour. Try again in ${Math.ceil(rate.retryAfterSeconds / 60)} minute(s).`
+    });
+  }
+  next();
+}
 
 // 1. Get VAPID Public Key for client PushManager subscription
 app.get(['/api/push/vapid-public-key', '/push/vapid-public-key'], (_req: Request, res: Response) => {
   try {
     const publicKey = getVapidPublicKey();
-    res.json({ success: true, publicKey });
+    res.json({ success: true, publicKey, configured: isPushConfigured() });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err?.message || 'Failed to retrieve VAPID key' });
   }
 });
 
 // 2. Get Push Status & Statistics for Admin and Client Center
-app.get(['/api/push/status', '/push/status'], (_req: Request, res: Response) => {
+app.get(['/api/push/status', '/push/status'], async (_req: Request, res: Response) => {
   try {
-    const all = getActivePushSubscriptions('all');
-    const jobs = getActivePushSubscriptions('jobs');
-    const schemes = getActivePushSubscriptions('schemes');
-    const exams = getActivePushSubscriptions('exams');
-    const updates = getActivePushSubscriptions('updates');
+    const [all, jobs, schemes, exams, updates] = await Promise.all([
+      getMergedActiveSubscribers('all'),
+      getMergedActiveSubscribers('jobs'),
+      getMergedActiveSubscribers('schemes'),
+      getMergedActiveSubscribers('exams'),
+      getMergedActiveSubscribers('updates')
+    ]);
     const settings = getPushServerSettings();
     const history = getPushNotificationHistory();
 
     res.json({
       success: true,
+      configured: isPushConfigured(),
       activeSubscribers: all.length,
       categories: {
         all: all.length,
@@ -3378,10 +3426,10 @@ app.get(['/api/push/status', '/push/status'], (_req: Request, res: Response) => 
   }
 });
 
-// 3. Register or Update a Web Push Subscription
+// 3. Register or Update a Web Push Subscription (Upserts by unique endpoint)
 app.post(['/api/push/subscribe', '/push/subscribe'], async (req: Request, res: Response) => {
   try {
-    const { subscription, preferences, deviceType, userAgent } = req.body || {};
+    const { subscription, preferences, deviceType, userAgent, subscribedFrom } = req.body || {};
 
     if (!subscription || !subscription.endpoint || !subscription.keys || !subscription.keys.p256dh || !subscription.keys.auth) {
       return res.status(400).json({
@@ -3390,29 +3438,35 @@ app.post(['/api/push/subscribe', '/push/subscribe'], async (req: Request, res: R
       });
     }
 
+    const cleanSubscribedFrom =
+      typeof subscribedFrom === 'string' && subscribedFrom.trim()
+        ? subscribedFrom.trim().slice(0, 250)
+        : '/';
+
     const savedRecord = upsertPushSubscription({
-      endpoint: subscription.endpoint,
+      endpoint: String(subscription.endpoint).trim(),
       keys: {
-        p256dh: subscription.keys.p256dh,
-        auth: subscription.keys.auth
+        p256dh: String(subscription.keys.p256dh).trim(),
+        auth: String(subscription.keys.auth).trim()
       },
       deviceType: deviceType || 'unknown',
       userAgent: userAgent || (req.headers['user-agent'] as string) || '',
+      subscribedFrom: cleanSubscribedFrom,
       preferences: preferences || { jobs: true, schemes: true, exams: true, updates: true }
     });
 
-    // Background sync to Supabase table
-    syncPushSubscriptionToSupabase(savedRecord).catch(err => {
+    await syncPushSubscriptionToSupabase(savedRecord).catch(err => {
       console.warn('[Push] Background Supabase sync notice:', err);
     });
 
-    // Optional welcome notification to confirm end-to-end receipt
     const settings = getPushServerSettings();
     if (settings.welcomePushEnabled && req.body.sendWelcome) {
       sendSingleNotification(savedRecord, {
-        title: 'CSC DOST | Alerts Active! 🔔',
-        body: 'You are now connected to receive instant job openings, scheme alerts & KU updates.',
-        url: '/',
+        title: 'CSC DOST Alerts Enabled',
+        body: 'You are subscribed to J&K jobs, exams, and CSC scheme alerts.',
+        icon: '/icon-192.png',
+        url: 'https://www.cscdost.com/',
+        tag: 'csc-welcome',
         category: 'updates'
       }).catch(() => {});
     }
@@ -3420,7 +3474,7 @@ app.post(['/api/push/subscribe', '/push/subscribe'], async (req: Request, res: R
     return res.status(200).json({
       success: true,
       subscriptionId: savedRecord.id,
-      message: 'Push subscription successfully registered and verified.'
+      message: 'Push subscription successfully saved.'
     });
   } catch (err: any) {
     console.error('[Push] Subscribe error:', err);
@@ -3431,35 +3485,44 @@ app.post(['/api/push/subscribe', '/push/subscribe'], async (req: Request, res: R
   }
 });
 
-// 4. Unsubscribe / Deactivate Web Push Subscription
-app.post(['/api/push/unsubscribe', '/push/unsubscribe'], (req: Request, res: Response) => {
+// 4. Unsubscribe & Delete Web Push Subscription Row
+app.post(['/api/push/unsubscribe', '/push/unsubscribe'], async (req: Request, res: Response) => {
   try {
     const { endpoint } = req.body || {};
     if (!endpoint) {
       return res.status(400).json({ success: false, error: 'Endpoint is required to unsubscribe.' });
     }
-    const removed = deactivatePushSubscription(endpoint);
-    res.json({ success: true, removed, message: 'Subscription successfully deactivated.' });
+    const cleanEndpoint = String(endpoint).trim();
+    const removedLocal = deletePushSubscription(cleanEndpoint);
+    const supaRes = await deletePushSubscriptionFromSupabase(cleanEndpoint);
+    res.json({
+      success: true,
+      removed: removedLocal || supaRes.success,
+      message: 'Subscription deleted.'
+    });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err?.message });
   }
 });
 
-// 5. Send Test Notification to a Specific Subscriber or Self
-app.post(['/api/push/test', '/push/test'], authenticateAdmin, async (req: Request, res: Response) => {
+// 5. Send Test Notification to a Specific Subscriber (Admin Only, Rate Limited 10/hr)
+app.post(['/api/push/test', '/push/test'], authenticateAdmin, pushSendRateLimiter, async (req: Request, res: Response) => {
   try {
-    const { endpoint, title, body, url, postId } = req.body || {};
+    const { endpoint, title, body, url, postId, tag, icon, image } = req.body || {};
     if (!endpoint) {
       return res.status(400).json({ success: false, error: 'Target subscriber endpoint is required for test send.' });
     }
 
     const result = await broadcastPushNotification({
-      title: title || 'CSC DOST | Test Notification 🔔',
-      body: body || 'This is a test notification from CSC DOST Admin Console.',
-      url: url || '/',
+      title: String(title || 'CSC DOST | Test Notification').trim().slice(0, 60),
+      body: String(body || 'This is a test push alert from CSC DOST Admin Console.').trim().slice(0, 100),
+      url: url || (postId ? `https://www.cscdost.com/post/${encodeURIComponent(postId)}` : 'https://www.cscdost.com/'),
+      tag: tag || postId || 'csc-test-push',
       postId,
+      icon: icon || '/icon-192.png',
+      image,
       isTest: true,
-      testEndpoint: endpoint,
+      testEndpoint: String(endpoint).trim(),
       sentBy: req.body.adminUser || 'Admin Console'
     });
 
@@ -3482,25 +3545,40 @@ app.post(['/api/push/test', '/push/test'], authenticateAdmin, async (req: Reques
   }
 });
 
-// 6. Broadcast or Category-Targeted Push Notification
-app.post(['/api/push/send', '/push/send'], authenticateAdmin, async (req: Request, res: Response) => {
+// 6. Broadcast or Category-Targeted Push Notification (Admin Only, Rate Limited 10/hr)
+app.post(['/api/push/send', '/push/send'], authenticateAdmin, pushSendRateLimiter, async (req: Request, res: Response) => {
   try {
-    const { title, body, category, url, postId, image, icon, adminUser } = req.body || {};
+    const { title, body, category, url, postId, tag, image, icon, adminUser } = req.body || {};
 
     if (!title || !body) {
       return res.status(400).json({ success: false, error: 'Title and body are required to broadcast a push notification.' });
     }
 
+    const resolvedUrl =
+      url ||
+      (postId
+        ? `https://www.cscdost.com/post/${encodeURIComponent(String(postId).trim())}`
+        : 'https://www.cscdost.com/');
+
     const result = await broadcastPushNotification({
       title: String(title).trim(),
       body: String(body).trim(),
       category: category || 'all',
-      url: url || (postId ? `/#post/${postId}` : '/'),
+      url: resolvedUrl,
+      tag: tag || (postId ? String(postId).trim() : undefined),
       postId,
       image,
-      icon,
+      icon: icon || '/icon-192.png',
       sentBy: adminUser || 'Admin Broadcast'
     });
+
+    if (!result.success) {
+      return res.status(500).json({
+        success: false,
+        error: result.error || 'Failed to send broadcast push notification.',
+        stats: result.stats
+      });
+    }
 
     return res.json({
       success: true,
@@ -3514,10 +3592,20 @@ app.post(['/api/push/send', '/push/send'], authenticateAdmin, async (req: Reques
   }
 });
 
-// 7. Get Push Notification History
-app.get(['/api/push/history', '/push/history'], (_req: Request, res: Response) => {
+// 7. Get Last 20 Sent Push Notifications (Local + Supabase merged)
+app.get(['/api/push/history', '/push/history'], async (_req: Request, res: Response) => {
   try {
-    const history = getPushNotificationHistory();
+    const localHistory = getPushNotificationHistory();
+    const supaHistory = await getPushNotificationsFromSupabase(20);
+    const mergedMap = new Map<string, any>();
+    for (const item of [...supaHistory, ...localHistory]) {
+      if (item && item.id && !mergedMap.has(item.id)) {
+        mergedMap.set(item.id, item);
+      }
+    }
+    const history = Array.from(mergedMap.values())
+      .sort((a, b) => new Date(b.sentAt || 0).getTime() - new Date(a.sentAt || 0).getTime())
+      .slice(0, 20);
     res.json({ success: true, history });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err?.message });
@@ -4333,6 +4421,18 @@ app.post('/api/posts', async (req: Request, res: Response) => {
     const category = body.category || (String(body.institution || '').toUpperCase() === 'IGNOU' ? 'ignou' : 'jkssb');
     const resolvedNoticeType = body.noticeType || undefined;
 
+    // Inspect existing post state BEFORE upserting to only trigger Web Push on FIRST transition to 'published'
+    const existingCustom = getCustomSarkariPosts().find((p: any) => p && p.id === slug);
+    const existingStatic = SARKARI_DATA.find((p: any) => p && p.id === slug);
+    const existingPost = existingCustom || existingStatic;
+    const wasAlreadyPublished = Boolean(
+      existingPost &&
+        (existingPost.publicationStatus === 'published' ||
+          Boolean(existingPost.pushNotifiedAt) ||
+          (!existingPost.publicationStatus && isPublishedSarkariItem(existingPost)))
+    );
+    const isFirstPublish = publicationStatus === 'published' && !wasAlreadyPublished;
+
     const newPost: any = {
       id: slug,
       title: String(body.title).trim(),
@@ -4354,6 +4454,9 @@ app.post('/api/posts', async (req: Request, res: Response) => {
       documentDate: body.documentDate ? String(body.documentDate).trim() : undefined,
       isTentative: Boolean(body.isTentative),
       publicationStatus,
+      pushNotifiedAt:
+        existingPost?.pushNotifiedAt ||
+        (isFirstPublish ? new Date().toISOString() : undefined),
       status: body.applicationStatus || body.status || 'Open',
       postDate: body.postDate || body.documentDate || todayStr,
       startDate: body.startDate || body.postDate || body.documentDate || todayStr,
@@ -4396,26 +4499,38 @@ app.post('/api/posts', async (req: Request, res: Response) => {
 
     syncCustomPostsAndThumbnailsInMemory();
 
-    // Check if auto-publish push is active (never push drafts or archived notices)
+    // Auto-trigger Web Push ONLY when a post transitions to 'published' for the first time (never on edits)
+    let autoPushResult: any = null;
     const pushSettings = getPushServerSettings();
-    if (publicationStatus === 'published' && pushSettings.autoPublishPush && !body.suppressPush) {
+    if (isFirstPublish && pushSettings.autoPublishPush !== false && !body.suppressPush) {
       const pushCategory = isEducationSarkariItem(newPost) ? 'exams' : 'jobs';
-      broadcastPushNotification({
-        title: `CSC DOST | ${newPost.postType === 'Job' ? 'New Job Alert' : 'New Update'} 🔔`,
-        body: `${newPost.title} — ${newPost.totalPosts || ''} (${newPost.lastDate ? `Last Date: ${newPost.lastDate}` : ''}). Tap to view full details.`,
-        category: pushCategory,
-        url: `/#post/${slug}`,
-        postId: slug,
-        image: newPost.thumbnailUrl,
-        sentBy: 'Auto-Publish on Post Save'
-      }).catch(err => {
-        console.warn('[Push] Auto-publish background notification notice:', err?.message);
+      const formattedPayload = formatPostPushPayload({
+        id: slug,
+        title: newPost.title,
+        shortInfo: newPost.shortInfo,
+        category: pushCategory
       });
+      try {
+        autoPushResult = await broadcastPushNotification({
+          title: formattedPayload.title,
+          body: formattedPayload.body,
+          category: pushCategory,
+          url: formattedPayload.url,
+          tag: formattedPayload.tag,
+          postId: slug,
+          icon: formattedPayload.icon,
+          sentBy: 'Auto-Publish (First Publish)'
+        });
+      } catch (pushErr: any) {
+        console.warn('[Push] Auto-publish notification warning:', pushErr?.message);
+      }
     }
 
     res.json({
       success: true,
-      post: newPost
+      post: newPost,
+      pushTriggered: Boolean(autoPushResult?.success),
+      pushStats: autoPushResult?.stats || null
     });
   } catch (err: any) {
     console.error('[Posts] Create/Update post error:', err);
