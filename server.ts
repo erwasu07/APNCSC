@@ -113,7 +113,16 @@ import {
   getPaymentTransactionByTxnId,
   getPaymentTransactions,
   getDeletedAppointmentIds,
-  isAppointmentIdDeleted
+  isAppointmentIdDeleted,
+  getMonitorSources,
+  getReviewQueue,
+  updateReviewQueueItemStatus,
+  getMonitorRuns,
+  getWhatsAppAlertSettings,
+  updateWhatsAppAlertSettings,
+  getWhatsAppAlertState,
+  saveWhatsAppAlertState,
+  getWhatsAppAlertLogs
 } from './src/dbServer';
 import { buildWhatsAppNotification, buildServiceWhatsAppNotification } from './src/utils/whatsappFormatter';
 import {
@@ -157,6 +166,17 @@ import {
   getMergedActiveSubscribers,
   formatPostPushPayload
 } from './src/lib/pushServer';
+import {
+  getProviderSecretsStatus,
+  getIstTimeParts,
+  isWithinQuietHours,
+  sendTestWhatsAppAlert,
+  DAILY_ALERT_LIMIT
+} from './src/server/whatsappAlerts';
+import {
+  runOfficialNoticeMonitor,
+  startNoticeMonitorScheduler
+} from './src/server/noticeMonitor';
 
 const app = express();
 const PORT = 3000;
@@ -3622,6 +3642,167 @@ app.post(['/api/push/settings', '/push/settings'], authenticateAdmin, (req: Requ
   }
 });
 
+// ============================================================
+// OWNER-ONLY WHATSAPP ALERTS & OFFICIAL NOTICE MONITOR
+// (Strictly protected by authenticateAdmin; never exposes secrets or sends to visitors)
+// ============================================================
+
+app.get('/api/staff/alerts/status', authenticateAdmin, (_req: Request, res: Response) => {
+  try {
+    const settings = getWhatsAppAlertSettings();
+    const state = getWhatsAppAlertState();
+    const { dateKey } = getIstTimeParts(new Date());
+    const providerStatus = getProviderSecretsStatus();
+    const dailySentCount = state.dailySentCounts[dateKey] || 0;
+    const quietHoursActive = isWithinQuietHours(settings, new Date());
+
+    res.json({
+      success: true,
+      providerStatus,
+      settings,
+      dailySentCount,
+      dailyLimit: DAILY_ALERT_LIMIT,
+      quietHoursActive,
+      queuedDuringQuietHours: state.queuedDuringQuietHours || null,
+      lastFailureWarning: state.lastFailureWarning || null,
+      logs: getWhatsAppAlertLogs(20)
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err?.message || 'Failed to read alert status' });
+  }
+});
+
+app.post('/api/staff/alerts/settings', authenticateAdmin, (req: Request, res: Response) => {
+  try {
+    const body = req.body || {};
+    const hhmmRegex = /^\d{2}:\d{2}$/;
+    const patch: Record<string, any> = {};
+
+    if (typeof body.enabled === 'boolean') patch.enabled = body.enabled;
+    if (typeof body.dailySummary === 'boolean') patch.dailySummary = body.dailySummary;
+    if (typeof body.urgentAlerts === 'boolean') patch.urgentAlerts = body.urgentAlerts;
+    if (typeof body.failureAlerts === 'boolean') patch.failureAlerts = body.failureAlerts;
+    if (typeof body.quietHoursEnabled === 'boolean') patch.quietHoursEnabled = body.quietHoursEnabled;
+
+    if (typeof body.quietStartIst === 'string') {
+      if (!hhmmRegex.test(body.quietStartIst.trim())) {
+        return res.status(400).json({ success: false, error: 'Invalid quietStartIst format (expected HH:MM)' });
+      }
+      patch.quietStartIst = body.quietStartIst.trim();
+    }
+    if (typeof body.quietEndIst === 'string') {
+      if (!hhmmRegex.test(body.quietEndIst.trim())) {
+        return res.status(400).json({ success: false, error: 'Invalid quietEndIst format (expected HH:MM)' });
+      }
+      patch.quietEndIst = body.quietEndIst.trim();
+    }
+
+    const updated = updateWhatsAppAlertSettings(patch);
+    res.json({ success: true, settings: updated });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err?.message || 'Failed to save alert settings' });
+  }
+});
+
+app.post('/api/staff/alerts/test', authenticateAdmin, async (_req: Request, res: Response) => {
+  try {
+    const result = await sendTestWhatsAppAlert();
+    if (result.sent) {
+      return res.json({
+        success: true,
+        provider: result.provider,
+        attempts: result.attempts,
+        responseSummary: result.responseSummary || 'delivered'
+      });
+    }
+    return res.status(400).json({
+      success: false,
+      provider: result.provider,
+      attempts: result.attempts,
+      error: result.error || 'WhatsApp test alert could not be delivered.'
+    });
+  } catch (err: any) {
+    return res.status(500).json({
+      success: false,
+      error: err?.message || 'Failed to execute WhatsApp test alert.'
+    });
+  }
+});
+
+app.post('/api/staff/alerts/dismiss-warning', authenticateAdmin, (_req: Request, res: Response) => {
+  try {
+    const state = getWhatsAppAlertState();
+    state.lastFailureWarning = null;
+    saveWhatsAppAlertState(state);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err?.message || 'Failed to dismiss warning' });
+  }
+});
+
+app.get('/api/staff/monitor/status', authenticateAdmin, (_req: Request, res: Response) => {
+  try {
+    res.json({
+      success: true,
+      sources: getMonitorSources(),
+      queue: getReviewQueue(),
+      runs: getMonitorRuns()
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err?.message || 'Failed to read monitor status' });
+  }
+});
+
+app.post('/api/staff/monitor/run', authenticateAdmin, async (_req: Request, res: Response) => {
+  try {
+    const summary = await runOfficialNoticeMonitor({ trigger: 'manual' });
+    res.json({ success: true, summary });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err?.message || 'Monitor execution failed' });
+  }
+});
+
+app.post('/api/staff/monitor/review/:id', authenticateAdmin, (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { action } = req.body || {};
+    if (action !== 'approve_draft' && action !== 'dismiss') {
+      return res.status(400).json({ success: false, error: 'Invalid review action.' });
+    }
+
+    const adminUser = (req as any).adminUser;
+    const reviewer = adminUser?.email || adminUser?.username || 'Staff Admin';
+    const nextStatus = action === 'approve_draft' ? 'approved' : 'dismissed';
+    const updated = updateReviewQueueItemStatus(id, nextStatus, reviewer);
+    if (!updated) {
+      return res.status(404).json({ success: false, error: 'Review queue item not found.' });
+    }
+
+    // Store approved new drafts strictly as unpublished drafts (never modifies live posts)
+    if (action === 'approve_draft' && updated.kind === 'new_draft') {
+      const slug = String(updated.id || `monitor-${Date.now()}`)
+        .toLowerCase()
+        .replace(/[^a-z0-9-]+/g, '-')
+        .replace(/^-|-$/g, '');
+      upsertCustomSarkariPost({
+        id: slug,
+        title: updated.title,
+        category: updated.category || 'jkssb',
+        postDate: new Date().toLocaleDateString('en-GB'),
+        lastDate: updated.lastDate || 'Verify Official Notice',
+        shortInfo: updated.shortInfo,
+        officialLink: updated.officialNotificationUrl || updated.sourceUrl,
+        publicationStatus: 'draft',
+        suppressPush: true
+      });
+    }
+
+    return res.json({ success: true, item: updated });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err?.message || 'Review update failed' });
+  }
+});
+
 // 9. In-Website Notification Center Public Feed
 app.get(['/api/notifications/center', '/notifications/center'], (_req: Request, res: Response) => {
   try {
@@ -5311,6 +5492,7 @@ async function startServer() {
   }
 
   if (!process.env.VERCEL) {
+    startNoticeMonitorScheduler();
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 CSC DOST Server successfully started on http://0.0.0.0:${PORT}`);
     });

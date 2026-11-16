@@ -19,6 +19,12 @@ interface DatabaseSchema {
   pushNotifications?: any[];
   pushSettings?: { autoPublishPush: boolean; welcomePushEnabled: boolean };
   paymentTransactions?: any[];
+  monitorSources?: MonitorSourceRecord[];
+  reviewQueue?: ReviewQueueItem[];
+  monitorRuns?: MonitorRunRecord[];
+  whatsappAlertSettings?: WhatsAppAlertSettings;
+  whatsappAlertState?: WhatsAppAlertState;
+  whatsappAlertLogs?: WhatsAppAlertLogRecord[];
 }
 
 const DEFAULT_DB: DatabaseSchema = {
@@ -54,7 +60,28 @@ const DEFAULT_DB: DatabaseSchema = {
   pushSubscriptions: [],
   pushNotifications: [],
   pushSettings: { autoPublishPush: true, welcomePushEnabled: true },
-  paymentTransactions: []
+  paymentTransactions: [],
+  monitorSources: [],
+  reviewQueue: [],
+  monitorRuns: [],
+  whatsappAlertSettings: {
+    enabled: true,
+    dailySummary: true,
+    urgentAlerts: true,
+    failureAlerts: true,
+    quietHoursEnabled: true,
+    quietStartIst: '22:00',
+    quietEndIst: '06:30'
+  },
+  whatsappAlertState: {
+    queuedDuringQuietHours: null,
+    lastUrgentAlertByKey: {},
+    dailySentCounts: {},
+    limitReachedSentDate: '',
+    lastFailureWarning: null,
+    lastScheduledSlotKey: ''
+  },
+  whatsappAlertLogs: []
 };
 
 let memoryDb: DatabaseSchema | null = null;
@@ -96,6 +123,12 @@ export function getDb(): DatabaseSchema {
       if (!parsed.pushNotifications) parsed.pushNotifications = [];
       if (!parsed.pushSettings) parsed.pushSettings = { autoPublishPush: true, welcomePushEnabled: true };
       if (!parsed.paymentTransactions) parsed.paymentTransactions = [];
+      if (!Array.isArray(parsed.monitorSources)) parsed.monitorSources = [];
+      if (!Array.isArray(parsed.reviewQueue)) parsed.reviewQueue = [];
+      if (!Array.isArray(parsed.monitorRuns)) parsed.monitorRuns = [];
+      if (!parsed.whatsappAlertSettings) parsed.whatsappAlertSettings = { ...DEFAULT_WHATSAPP_ALERT_SETTINGS };
+      if (!parsed.whatsappAlertState) parsed.whatsappAlertState = { ...DEFAULT_WHATSAPP_ALERT_STATE };
+      if (!Array.isArray(parsed.whatsappAlertLogs)) parsed.whatsappAlertLogs = [];
 
       // Permanently filter any appointments matching deletedAppointmentIds
       if (Array.isArray(parsed.deletedAppointmentIds) && parsed.deletedAppointmentIds.length > 0) {
@@ -1035,6 +1068,310 @@ export function updatePushServerSettings(settings: Partial<PushServerSettings>):
   };
   saveDb(db);
   return db.pushSettings;
+}
+
+// ============================================================
+// OFFICIAL NOTICE MONITOR, REVIEW QUEUE & OWNER WHATSAPP ALERTS
+// ============================================================
+
+export interface MonitorSourceRecord {
+  id: string;
+  name: string;
+  url: string;
+  category: string;
+  consecutiveFailures: number;
+  lastCheckedAt?: string;
+  lastStatus: 'ok' | 'failing' | 'pending';
+  lastContentHash?: string;
+  lastError?: string;
+}
+
+export interface ReviewQueueItem {
+  id: string;
+  kind: 'new_draft' | 'update_proposal';
+  postId?: string;
+  title: string;
+  category: string;
+  sourceId: string;
+  sourceUrl: string;
+  officialNotificationUrl: string;
+  confidence: number;
+  validationFlags: string[];
+  proposedChanges?: Record<string, { before: string; after: string }>;
+  shortInfo: string;
+  lastDate?: string;
+  status: 'pending' | 'approved' | 'dismissed';
+  detectedAt: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+}
+
+export interface MonitorRunRecord {
+  id: string;
+  startedAt: string;
+  completedAt: string;
+  trigger: 'scheduled_ist' | 'manual' | 'simulated';
+  status: 'ok' | 'crashed';
+  newDrafts: number;
+  updateProposals: number;
+  carefulReview: number;
+  sourcesFailing: number;
+  error?: string;
+}
+
+export interface WhatsAppAlertSettings {
+  enabled: boolean;
+  dailySummary: boolean;
+  urgentAlerts: boolean;
+  failureAlerts: boolean;
+  quietHoursEnabled: boolean;
+  quietStartIst: string; // HH:MM (default 22:00)
+  quietEndIst: string;   // HH:MM (default 06:30)
+}
+
+export interface WhatsAppAlertState {
+  queuedDuringQuietHours: {
+    newDrafts: number;
+    updateProposals: number;
+    carefulReview: number;
+    sourcesFailing: number;
+    queuedAt: string;
+  } | null;
+  lastUrgentAlertByKey: Record<string, string>;
+  dailySentCounts: Record<string, number>;
+  limitReachedSentDate: string;
+  lastFailureWarning: {
+    message: string;
+    at: string;
+    provider: string;
+  } | null;
+  lastScheduledSlotKey: string;
+}
+
+export type WhatsAppAlertType = 'summary' | 'urgent' | 'failure' | 'test' | 'rate_limit';
+export type WhatsAppProviderType = 'cloud_api' | 'twilio' | 'callmebot';
+
+export interface WhatsAppAlertLogRecord {
+  id: string;
+  timestamp: string;
+  type: WhatsAppAlertType;
+  provider: WhatsAppProviderType;
+  recipientsMasked: string[];
+  status: 'sent' | 'failed' | 'queued_quiet_hours' | 'suppressed_rate_limit';
+  attempts: number;
+  messagePreview: string;
+  error?: string;
+  responseSummary?: string;
+}
+
+export const DEFAULT_MONITOR_SOURCES: MonitorSourceRecord[] = [
+  {
+    id: 'jkssb',
+    name: 'JKSSB Official Portal',
+    url: 'https://jkssb.nic.in/',
+    category: 'jkssb',
+    consecutiveFailures: 0,
+    lastStatus: 'pending'
+  },
+  {
+    id: 'ku-exams',
+    name: 'Kashmir University Examinations',
+    url: 'https://www.kashmiruniversity.net/',
+    category: 'exam_forms',
+    consecutiveFailures: 0,
+    lastStatus: 'pending'
+  },
+  {
+    id: 'ku-admissions',
+    name: 'Kashmir University Admissions',
+    url: 'https://egov.uok.edu.in/',
+    category: 'admissions',
+    consecutiveFailures: 0,
+    lastStatus: 'pending'
+  },
+  {
+    id: 'cusrinagar',
+    name: 'Cluster University Srinagar',
+    url: 'https://www.cusrinagar.edu.in/',
+    category: 'cluster_univ',
+    consecutiveFailures: 0,
+    lastStatus: 'pending'
+  },
+  {
+    id: 'ssc',
+    name: 'Staff Selection Commission (SSC)',
+    url: 'https://ssc.gov.in/',
+    category: 'ssc_jobs',
+    consecutiveFailures: 0,
+    lastStatus: 'pending'
+  },
+  {
+    id: 'rrb',
+    name: 'Railway Recruitment Board (RRB)',
+    url: 'https://www.rrbapply.gov.in/',
+    category: 'rrb_jobs',
+    consecutiveFailures: 0,
+    lastStatus: 'pending'
+  },
+  {
+    id: 'army',
+    name: 'Join Indian Army',
+    url: 'https://joinindianarmy.nic.in/',
+    category: 'army_jobs',
+    consecutiveFailures: 0,
+    lastStatus: 'pending'
+  }
+];
+
+export const DEFAULT_WHATSAPP_ALERT_SETTINGS: WhatsAppAlertSettings = {
+  enabled: true,
+  dailySummary: true,
+  urgentAlerts: true,
+  failureAlerts: true,
+  quietHoursEnabled: true,
+  quietStartIst: '22:00',
+  quietEndIst: '06:30'
+};
+
+export const DEFAULT_WHATSAPP_ALERT_STATE: WhatsAppAlertState = {
+  queuedDuringQuietHours: null,
+  lastUrgentAlertByKey: {},
+  dailySentCounts: {},
+  limitReachedSentDate: '',
+  lastFailureWarning: null,
+  lastScheduledSlotKey: ''
+};
+
+export function getMonitorSources(): MonitorSourceRecord[] {
+  const db = getDb();
+  if (!Array.isArray(db.monitorSources) || db.monitorSources.length === 0) {
+    db.monitorSources = DEFAULT_MONITOR_SOURCES.map(s => ({ ...s }));
+    saveDb(db);
+  }
+  return db.monitorSources;
+}
+
+export function saveMonitorSources(sources: MonitorSourceRecord[]): void {
+  const db = getDb();
+  db.monitorSources = sources;
+  saveDb(db);
+}
+
+export function getReviewQueue(): ReviewQueueItem[] {
+  const db = getDb();
+  return Array.isArray(db.reviewQueue) ? db.reviewQueue : [];
+}
+
+export function upsertReviewQueueItem(item: ReviewQueueItem): ReviewQueueItem {
+  const db = getDb();
+  if (!Array.isArray(db.reviewQueue)) db.reviewQueue = [];
+  const idx = db.reviewQueue.findIndex(r => r && r.id === item.id);
+  if (idx !== -1) {
+    db.reviewQueue[idx] = { ...db.reviewQueue[idx], ...item };
+  } else {
+    db.reviewQueue.unshift(item);
+  }
+  if (db.reviewQueue.length > 200) {
+    db.reviewQueue = db.reviewQueue.slice(0, 200);
+  }
+  saveDb(db);
+  return item;
+}
+
+export function updateReviewQueueItemStatus(
+  id: string,
+  status: 'approved' | 'dismissed',
+  reviewedBy = 'Staff Admin'
+): ReviewQueueItem | null {
+  const db = getDb();
+  if (!Array.isArray(db.reviewQueue)) return null;
+  const idx = db.reviewQueue.findIndex(r => r && r.id === id);
+  if (idx === -1) return null;
+  db.reviewQueue[idx] = {
+    ...db.reviewQueue[idx],
+    status,
+    reviewedAt: new Date().toISOString(),
+    reviewedBy
+  };
+  saveDb(db);
+  return db.reviewQueue[idx];
+}
+
+export function addMonitorRunRecord(run: MonitorRunRecord): void {
+  const db = getDb();
+  if (!Array.isArray(db.monitorRuns)) db.monitorRuns = [];
+  db.monitorRuns.unshift(run);
+  if (db.monitorRuns.length > 50) {
+    db.monitorRuns = db.monitorRuns.slice(0, 50);
+  }
+  saveDb(db);
+}
+
+export function getMonitorRuns(): MonitorRunRecord[] {
+  const db = getDb();
+  return Array.isArray(db.monitorRuns) ? db.monitorRuns : [];
+}
+
+export function getWhatsAppAlertSettings(): WhatsAppAlertSettings {
+  const db = getDb();
+  return {
+    ...DEFAULT_WHATSAPP_ALERT_SETTINGS,
+    ...(db.whatsappAlertSettings || {})
+  };
+}
+
+export function updateWhatsAppAlertSettings(partial: Partial<WhatsAppAlertSettings>): WhatsAppAlertSettings {
+  const db = getDb();
+  db.whatsappAlertSettings = {
+    ...DEFAULT_WHATSAPP_ALERT_SETTINGS,
+    ...(db.whatsappAlertSettings || {}),
+    ...partial
+  };
+  saveDb(db);
+  return db.whatsappAlertSettings;
+}
+
+export function getWhatsAppAlertState(): WhatsAppAlertState {
+  const db = getDb();
+  return {
+    ...DEFAULT_WHATSAPP_ALERT_STATE,
+    ...(db.whatsappAlertState || {}),
+    lastUrgentAlertByKey: {
+      ...(db.whatsappAlertState?.lastUrgentAlertByKey || {})
+    },
+    dailySentCounts: {
+      ...(db.whatsappAlertState?.dailySentCounts || {})
+    }
+  };
+}
+
+export function saveWhatsAppAlertState(state: WhatsAppAlertState): void {
+  const db = getDb();
+  db.whatsappAlertState = state;
+  saveDb(db);
+}
+
+export function addWhatsAppAlertLog(
+  entry: Omit<WhatsAppAlertLogRecord, 'id'>
+): WhatsAppAlertLogRecord {
+  const db = getDb();
+  if (!Array.isArray(db.whatsappAlertLogs)) db.whatsappAlertLogs = [];
+  const full: WhatsAppAlertLogRecord = {
+    ...entry,
+    id: `waalert_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+  };
+  db.whatsappAlertLogs.unshift(full);
+  if (db.whatsappAlertLogs.length > 100) {
+    db.whatsappAlertLogs = db.whatsappAlertLogs.slice(0, 100);
+  }
+  saveDb(db);
+  return full;
+}
+
+export function getWhatsAppAlertLogs(limit = 20): WhatsAppAlertLogRecord[] {
+  const db = getDb();
+  const logs = Array.isArray(db.whatsappAlertLogs) ? db.whatsappAlertLogs : [];
+  return logs.slice(0, limit);
 }
 
 

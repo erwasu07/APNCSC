@@ -74,11 +74,14 @@ import {
   SlidersHorizontal,
   Sparkles,
   FileImage,
-  File
+  File,
+  Activity
 } from 'lucide-react';
 import WhatsAppBroadcaster from './WhatsAppBroadcaster';
 import AdminThumbnailGeneratorStudio from './AdminThumbnailGeneratorStudio';
 import AdminPushPublisher from './AdminPushPublisher';
+import AdminReviewQueue from './AdminReviewQueue';
+import AdminWhatsAppAlerts from './AdminWhatsAppAlerts';
 
 interface AdminDashboardProps {
   cafeName: string;
@@ -98,6 +101,8 @@ type NavSectionId =
   | 'vle_logs'
   | 'whatsapp_sync'
   | 'push_publisher'
+  | 'review_queue'
+  | 'alerts'
   | 'reports';
 
 function getSafeSession(key: string, fallback: string = ''): string {
@@ -2360,6 +2365,16 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       subtitle: 'Compose, test, and broadcast instant push notifications to registered devices.',
       breadcrumb: 'Operations / Push Publisher'
     },
+    review_queue: {
+      title: 'Official Notice Monitor & Review Queue',
+      subtitle: 'Twice-daily (7:00 AM & 6:00 PM IST) official portal checks, flagged drafts, and update proposals.',
+      breadcrumb: 'Operations / Review Queue'
+    },
+    alerts: {
+      title: 'Owner WhatsApp Alerts',
+      subtitle: 'Manage owner-only WhatsApp monitor summaries, urgent alerts, quiet hours, and delivery logs.',
+      breadcrumb: 'Operations / Alerts'
+    },
     reports: {
       title: 'Reports & Export',
       subtitle: 'Generate filtered CSV reports and inspect live Supabase database & storage health.',
@@ -2480,6 +2495,8 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     { id: 'vle_logs', label: 'VLE Visitor Access Logs', icon: ShieldAlert, count: vleInquiries.length },
     { id: 'whatsapp_sync', label: 'WhatsApp Publisher', icon: Radio },
     { id: 'push_publisher', label: 'Web Push Publisher', icon: Bell },
+    { id: 'review_queue', label: 'Review Queue', icon: Activity },
+    { id: 'alerts', label: 'Alerts', icon: MessageSquare },
     { id: 'reports', label: 'Reports & Export', icon: FileSpreadsheet }
   ];
 
@@ -4432,6 +4449,24 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           {activeNav === 'push_publisher' && (
             <section aria-label="Web Push Publisher" className="space-y-4">
               <AdminPushPublisher />
+            </section>
+          )}
+
+          {/* ================================================================ */}
+          {/* 8C. OFFICIAL NOTICE MONITOR & REVIEW QUEUE                       */}
+          {/* ================================================================ */}
+          {activeNav === 'review_queue' && (
+            <section aria-label="Official Notice Monitor and Review Queue" className="space-y-4">
+              <AdminReviewQueue />
+            </section>
+          )}
+
+          {/* ================================================================ */}
+          {/* 8D. OWNER WHATSAPP ALERTS                                        */}
+          {/* ================================================================ */}
+          {activeNav === 'alerts' && (
+            <section aria-label="Owner WhatsApp Alerts" className="space-y-4">
+              <AdminWhatsAppAlerts />
             </section>
           )}
 

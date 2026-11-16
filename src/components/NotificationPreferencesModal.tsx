@@ -17,6 +17,7 @@ import {
   isIOS,
   isStandalone,
   getBrowserPermission,
+  getExistingPushSubscription,
   subscribeToWebPush,
   unsubscribeFromWebPush,
   DEFAULT_PUSH_PREFERENCES,
