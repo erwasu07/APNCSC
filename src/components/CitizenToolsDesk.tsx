@@ -27,9 +27,13 @@ interface CitizenToolsDeskProps {
   onApplyService?: (serviceName: string) => void;
   isStandalonePage?: boolean;
   onNavigateRoute?: (path: string) => void;
+  initialTab?: 'age' | 'photo' | 'fee';
+  initialPortal?: string;
+  initialFeeService?: string;
+  onBackToCatalog?: () => void;
 }
 
-const PORTAL_PRESETS = [
+export const PORTAL_PRESETS = [
   {
     id: 'jkssb',
     name: 'JKSSB Portal',
@@ -82,7 +86,7 @@ const PORTAL_PRESETS = [
   },
 ];
 
-const SERVICE_FEE_CATALOGUE = [
+export const SERVICE_FEE_CATALOGUE = [
   {
     id: 'jkssb_apply',
     name: 'JKSSB Online Application Form Submission',
@@ -163,9 +167,13 @@ export default function CitizenToolsDesk({
   onApplyService,
   isStandalonePage = false,
   onNavigateRoute,
+  initialTab,
+  initialPortal,
+  initialFeeService,
+  onBackToCatalog,
 }: CitizenToolsDeskProps) {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'age' | 'photo' | 'fee'>('age');
+  const [activeTab, setActiveTab] = useState<'age' | 'photo' | 'fee'>(initialTab || 'age');
 
   const navigateRoute = (href: string) => {
     if (onNavigateRoute) {
@@ -244,7 +252,11 @@ export default function CitizenToolsDesk({
   // -------------------------------------------------------------
   // Tool 2: Photo & Signature Dimension / KB Compliance Inspector
   // -------------------------------------------------------------
-  const [selectedPortal, setSelectedPortal] = useState(PORTAL_PRESETS[0].id);
+  const [selectedPortal, setSelectedPortal] = useState(() =>
+    initialPortal && PORTAL_PRESETS.some((p) => p.id === initialPortal)
+      ? initialPortal
+      : PORTAL_PRESETS[0].id
+  );
   const currentPreset =
     PORTAL_PRESETS.find((p) => p.id === selectedPortal) || PORTAL_PRESETS[0];
 
@@ -284,8 +296,10 @@ export default function CitizenToolsDesk({
   // -------------------------------------------------------------
   // Tool 3: CSC Regulated Fee Estimator
   // -------------------------------------------------------------
-  const [selectedFeeService, setSelectedFeeService] = useState(
-    SERVICE_FEE_CATALOGUE[0].id
+  const [selectedFeeService, setSelectedFeeService] = useState(() =>
+    initialFeeService && SERVICE_FEE_CATALOGUE.some((s) => s.id === initialFeeService)
+      ? initialFeeService
+      : SERVICE_FEE_CATALOGUE[0].id
   );
   const activeFeeData =
     SERVICE_FEE_CATALOGUE.find((s) => s.id === selectedFeeService) ||
@@ -372,26 +386,58 @@ export default function CitizenToolsDesk({
       >
         {isStandalonePage && (
           <Breadcrumbs
-            items={[
-              { label: t.navHome, href: '/' },
-              { label: t.calculatorsPageTitle },
-            ]}
-            onNavigate={navigateRoute}
+            items={
+              onBackToCatalog
+                ? [
+                    { label: t.navHome, href: '/' },
+                    { label: t.calculatorsPageTitle, href: '/calculators' },
+                    {
+                      label:
+                        activeTab === 'photo'
+                          ? t.calculatorsTabPhoto
+                          : activeTab === 'fee'
+                          ? t.calculatorsTabFee
+                          : t.calculatorsTabAge,
+                    },
+                  ]
+                : [
+                    { label: t.navHome, href: '/' },
+                    { label: t.calculatorsPageTitle },
+                  ]
+            }
+            onNavigate={(href) => {
+              if (href === '/calculators' && onBackToCatalog) {
+                onBackToCatalog();
+                return;
+              }
+              navigateRoute(href);
+            }}
             rightSlot={
-              <a
-                href="/tools"
-                onClick={(e) => {
-                  if (!e.metaKey && !e.ctrlKey && e.button === 0) {
-                    e.preventDefault();
-                    navigateRoute('/tools');
-                  }
-                }}
-                className="min-h-[40px] inline-flex items-center gap-1.5 text-sm font-bold text-[#1F9D6B] hover:underline no-underline"
-              >
-                <Wrench className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>{t.navTools}</span>
-                <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180 shrink-0" aria-hidden="true" />
-              </a>
+              <div className="flex items-center gap-3">
+                {onBackToCatalog && (
+                  <button
+                    type="button"
+                    onClick={onBackToCatalog}
+                    className="min-h-[40px] inline-flex items-center gap-1.5 text-sm font-bold text-[var(--text-primary)] hover:text-[#1F9D6B] cursor-pointer"
+                  >
+                    <span>All Calculators</span>
+                  </button>
+                )}
+                <a
+                  href="/tools"
+                  onClick={(e) => {
+                    if (!e.metaKey && !e.ctrlKey && e.button === 0) {
+                      e.preventDefault();
+                      navigateRoute('/tools');
+                    }
+                  }}
+                  className="min-h-[40px] inline-flex items-center gap-1.5 text-sm font-bold text-[#1F9D6B] hover:underline no-underline"
+                >
+                  <Wrench className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <span>{t.navTools}</span>
+                  <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180 shrink-0" aria-hidden="true" />
+                </a>
+              </div>
             }
           />
         )}

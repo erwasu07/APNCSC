@@ -33,6 +33,7 @@ const CitizenToolsDesk = lazy(() => import('./components/CitizenToolsDesk'));
 const NotificationCenterModal = lazy(() => import('./components/NotificationCenterModal'));
 const NotificationPreferencesModal = lazy(() => import('./components/NotificationPreferencesModal'));
 const SarkariResultDesk = lazy(() => import('./components/SarkariResultDesk'));
+const CategoryPage = lazy(() => import('./components/category/CategoryPage'));
 const DevThumbnailsPreview = lazy(() => import('./components/DevThumbnailsPreview'));
 import { TOOLS_LIST } from './components/tools/toolsData';
 import { GUIDE_ARTICLES } from './data/guidesData';
@@ -1021,6 +1022,33 @@ export default function App() {
     !categoryView &&
     activeSchemeId === null;
 
+  const calcSearchParams = new URLSearchParams(
+    routeSearch || (typeof window !== 'undefined' ? window.location.search : '')
+  );
+  const activeCalcParam = categoryView === 'calculators' ? calcSearchParams.get('calc') : null;
+  const activeCalcTab: 'age' | 'photo' | 'fee' | undefined =
+    activeCalcParam === 'age' || activeCalcParam === 'photo' || activeCalcParam === 'fee'
+      ? activeCalcParam
+      : undefined;
+  const activeCalcPreset = calcSearchParams.get('preset') || undefined;
+  const activeCalcService = calcSearchParams.get('service') || undefined;
+
+  const isCategoryListingView =
+    !isAdminView &&
+    !isDevThumbnailsView &&
+    !activeLegalPage &&
+    !isApplyView &&
+    !isTrackView &&
+    !activeJobPost &&
+    !activeServicePost &&
+    !isNotFoundView &&
+    (categoryView === 'jobs' ||
+      categoryView === 'education' ||
+      (categoryView === 'schemes' && activeSchemeId === null) ||
+      categoryView === 'services' ||
+      (categoryView === 'calculators' && !activeCalcTab) ||
+      (isToolsView && !activeToolId));
+
   return (
     <LanguageProvider>
     <div
@@ -1029,12 +1057,14 @@ export default function App() {
           ? 'min-h-screen w-full bg-[var(--bg-page)] text-[var(--text-primary)] font-sans'
           : activeJobPost
           ? 'min-h-screen w-full bg-[#E4E8E6] dark:bg-[#0B1210] text-[#17201D] dark:text-[#E7EFEB] transition-colors duration-200'
+          : isCategoryListingView
+          ? 'min-h-screen w-full bg-[#F3F6FC] dark:bg-[#070A12] text-[#0B1226] dark:text-[#EAF0FF] transition-colors duration-200'
           : 'min-h-screen w-full bg-[#DFE5F2] dark:bg-[#05080F] lg:bg-[#F4F6FB] dark:lg:bg-[#0B1120] text-[#101A36] dark:text-[#F1F5F9] font-sans transition-colors duration-200'
       }
     >
       <div
         className={
-          isAdminView || activeJobPost
+          isAdminView || activeJobPost || isCategoryListingView
             ? 'w-full min-h-screen flex flex-col justify-between relative overflow-x-clip'
             : 'max-w-[480px] sm:max-w-[720px] lg:max-w-none w-full mx-auto min-h-screen bg-[#F4F6FB] dark:bg-[#0B1120] text-[#101A36] dark:text-[#F1F5F9] text-[14px] flex flex-col justify-between shadow-[0_0_32px_rgba(16,26,54,0.12)] lg:shadow-none relative overflow-x-clip'
         }
@@ -1065,7 +1095,7 @@ export default function App() {
           className={
             isAdminView
               ? 'flex-grow w-full min-h-screen bg-[var(--bg-page)] overflow-x-hidden'
-              : activeJobPost
+              : activeJobPost || isCategoryListingView
               ? 'flex-grow w-full overflow-x-clip pb-0'
               : isApplyView || isTrackView
               ? 'flex-grow w-full bg-[var(--bg-surface)] overflow-x-clip pb-20 lg:pb-8'
@@ -1162,18 +1192,33 @@ export default function App() {
             </Suspense>
           </div>
         ) : isToolsView ? (
-          /* DEDICATED FULL-PAGE VIEW FOR FREE ONLINE TOOLS HUB */
-          <div className="animate-fade-in w-full">
-            <Suspense fallback={<PageRouteSkeleton message="Loading Free Online Tools Hub..." />}>
-              <ToolsHub
-                initialToolId={activeToolId || undefined}
-                onSelectTool={(id) => {
-                  setActiveToolId(id);
-                }}
-                onNavigateRoute={navigateToPath}
-              />
-            </Suspense>
-          </div>
+          activeToolId ? (
+            /* INDIVIDUAL INTERACTIVE TOOL RUNNER (/tools/[slug]) */
+            <div className="animate-fade-in w-full">
+              <Suspense fallback={<PageRouteSkeleton message="Loading Free Online Tool..." />}>
+                <ToolsHub
+                  initialToolId={activeToolId}
+                  onSelectTool={(id) => {
+                    setActiveToolId(id);
+                  }}
+                  onNavigateRoute={navigateToPath}
+                />
+              </Suspense>
+            </div>
+          ) : (
+            /* CATEGORY LISTING TEMPLATE FOR /tools */
+            <div className="animate-fade-in w-full">
+              <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Document Tools..." />}>
+                <CategoryPage
+                  category="tools"
+                  routeSearch={routeSearch}
+                  onNavigateRoute={navigateToPath}
+                  onOpenTool={(toolId) => navigateToPath(`/tools/${toolId}`)}
+                  onApplyService={handleServiceSelect}
+                />
+              </Suspense>
+            </div>
+          )
         ) : isNotFoundView ? (
           /* GENUINE 404 PAGE VIEW FOR UNRECOGNIZED CLIENT ROUTES */
           <div className="animate-fade-in w-full px-4 py-12 flex items-center justify-center">
@@ -1215,15 +1260,15 @@ export default function App() {
             </div>
           </div>
         ) : categoryView === 'jobs' ? (
-          /* DEDICATED FULL-PAGE VIEW FOR JOBS & RECRUITMENT */
+          /* SHARED CATEGORY TEMPLATE FOR /jobs */
           <div className="animate-fade-in w-full">
             <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Recruitment Notifications..." />}>
-              <SarkariResultDesk
-                mode="jobs"
+              <CategoryPage
+                category="jobs"
                 routeSearch={routeSearch}
                 onNavigateRoute={navigateToPath}
+                onOpenPost={handleOpenJobPage}
                 onApplyService={handleServiceSelect}
-                onOpenDedicatedPage={handleOpenJobPage}
               />
             </Suspense>
           </div>
@@ -1241,24 +1286,23 @@ export default function App() {
             </Suspense>
           </div>
         ) : categoryView === 'education' ? (
-          /* DEDICATED FULL-PAGE VIEW FOR EDUCATION & ADMISSIONS (INCLUDING /education/ignou) */
+          /* SHARED CATEGORY TEMPLATE FOR /education & /education/ignou */
           <div className="animate-fade-in w-full">
             <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Education & Admissions..." />}>
-              <SarkariResultDesk
-                mode="education"
-                initialTab={educationSubRoute === 'ignou' ? 'ignou' : 'all'}
+              <CategoryPage
+                category="education"
                 educationSubRoute={educationSubRoute === 'ignou'}
                 routeSearch={routeSearch}
                 onNavigateRoute={navigateToPath}
+                onOpenPost={handleOpenJobPage}
                 onApplyService={handleServiceSelect}
-                onOpenDedicatedPage={handleOpenJobPage}
               />
             </Suspense>
           </div>
-        ) : categoryView === 'schemes' || activeSchemeId !== null ? (
-          /* DEDICATED FULL-PAGE VIEW FOR GOVERNMENT SCHEMES & GUIDES */
+        ) : activeSchemeId !== null ? (
+          /* INDIVIDUAL SCHEME DETAIL VIEW (/scheme/[slug]) */
           <div className="animate-fade-in w-full">
-            <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Government Schemes & Guides..." />}>
+            <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Government Scheme Guide..." />}>
               <GuidesKnowledgeHub
                 initialArticleId={activeSchemeId}
                 onClearInitialArticle={() => navigateToPath('/schemes')}
@@ -1268,29 +1312,61 @@ export default function App() {
               />
             </Suspense>
           </div>
+        ) : categoryView === 'schemes' ? (
+          /* SHARED CATEGORY TEMPLATE FOR /schemes */
+          <div className="animate-fade-in w-full">
+            <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Government Schemes & Guides..." />}>
+              <CategoryPage
+                category="schemes"
+                routeSearch={routeSearch}
+                onNavigateRoute={navigateToPath}
+                onOpenScheme={handleOpenSchemePage}
+                onApplyService={handleServiceSelect}
+              />
+            </Suspense>
+          </div>
         ) : categoryView === 'services' ? (
-          /* DEDICATED FULL-PAGE VIEW FOR CSC E-SERVICES */
+          /* SHARED CATEGORY TEMPLATE FOR /services */
           <div className="animate-fade-in w-full">
             <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Citizen Services Catalogue..." />}>
-              <ExploreServicesDesk
-                onApplyService={handleServiceSelect}
-                selectedService={selectedService}
-                onOpenDedicatedServicePage={handleOpenServicePage}
+              <CategoryPage
+                category="services"
+                routeSearch={routeSearch}
                 onNavigateRoute={navigateToPath}
+                onOpenService={handleOpenServicePage}
+                onApplyService={handleServiceSelect}
               />
             </Suspense>
           </div>
         ) : categoryView === 'calculators' ? (
-          /* DEDICATED FULL-PAGE VIEW FOR CITIZEN CALCULATORS */
-          <div className="animate-fade-in w-full">
-            <Suspense fallback={<SectionSkeleton height="min-h-[420px]" title="Loading Citizen Calculators..." />}>
-              <CitizenToolsDesk
-                isStandalonePage
-                onApplyService={handleServiceSelect}
-                onNavigateRoute={navigateToPath}
-              />
-            </Suspense>
-          </div>
+          activeCalcTab ? (
+            /* INTERACTIVE CALCULATOR RUNNER (/calculators?calc=age|photo|fee) */
+            <div className="animate-fade-in w-full">
+              <Suspense fallback={<SectionSkeleton height="min-h-[420px]" title="Loading Citizen Calculators..." />}>
+                <CitizenToolsDesk
+                  isStandalonePage
+                  initialTab={activeCalcTab}
+                  initialPortal={activeCalcPreset}
+                  initialFeeService={activeCalcService}
+                  onBackToCatalog={() => navigateToPath('/calculators')}
+                  onApplyService={handleServiceSelect}
+                  onNavigateRoute={navigateToPath}
+                />
+              </Suspense>
+            </div>
+          ) : (
+            /* SHARED CATEGORY TEMPLATE FOR /calculators */
+            <div className="animate-fade-in w-full">
+              <Suspense fallback={<SectionSkeleton height="min-h-[500px]" title="Loading Citizen Calculators..." />}>
+                <CategoryPage
+                  category="calculators"
+                  routeSearch={routeSearch}
+                  onNavigateRoute={navigateToPath}
+                  onApplyService={handleServiceSelect}
+                />
+              </Suspense>
+            </div>
+          )
         ) : (
           /* MOBILE-FIRST CSC DOST HOMEPAGE */
           <div className="animate-fade-in space-y-0 w-full">
@@ -1484,8 +1560,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Fixed Mobile Bottom Navigation Bar (5 items: Home, Jobs, Results, Services, Alerts) */}
-      {!isAdminView && !activeJobPost && (
+      {/* Fixed Mobile Bottom Navigation Bar (hidden on category listing pages with their own fixed bar) */}
+      {!isAdminView && !activeJobPost && !isCategoryListingView && (
         <MobileBottomNav
           activeTab={activeBottomTab}
           onNavigate={handleBottomNavNavigate}
