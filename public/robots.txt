@@ -3,6 +3,11 @@ User-agent: *
 Allow: /
 Allow: /api/og-image/
 Allow: /api/thumbnails/
+Disallow: /admin
+Disallow: /staff
+Disallow: /apply
+Disallow: /track
+Disallow: /dev/
 Disallow: /api/
 
 # Sitemap

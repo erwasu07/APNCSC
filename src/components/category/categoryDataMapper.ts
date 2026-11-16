@@ -12,6 +12,7 @@ import {
   getNowInAsiaKolkata,
   parseDateToKolkataMs,
 } from '../../utils/sarkariStatus';
+import { isOlderThan12Months } from '../../utils/postLifecycle';
 import { GUIDE_ARTICLES, type GuideArticle } from '../../data/guidesData';
 import { SERVICES_LIST, CATEGORY_LABELS, type ServiceItem } from '../../servicesData';
 import { TOOLS_LIST, TOOLS_CATEGORIES, type ToolItem } from '../tools/toolsData';
@@ -169,6 +170,7 @@ function mapDeadlinePosts(
   const { nowMs } = getNowInAsiaKolkata();
   const deduped = getDeduplicatedSarkariPosts(posts).filter((item) => {
     if (item.isCancelled) return false;
+    if (isOlderThan12Months(item)) return false;
     if (category === 'jobs') return isRecruitmentSarkariItem(item);
     return isEducationSarkariItem(item);
   });

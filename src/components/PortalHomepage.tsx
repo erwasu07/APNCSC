@@ -9,6 +9,7 @@ import {
 import { getDeduplicatedSarkariPosts, resolvePostOrg } from '../data/sarkariMigration';
 import { computeSarkariStatus, getActiveClosingDeadlines } from '../utils/sarkariStatus';
 import { useSyncedSarkariPosts, sortByNewestPostDate } from '../utils/postDataSync';
+import { isOlderThan12Months } from '../utils/postLifecycle';
 import { SERVICES_LIST, ServiceItem } from '../servicesData';
 import { GUIDE_ARTICLES } from '../data/guidesData';
 import { TOOLS_LIST } from './tools/toolsData';
@@ -149,10 +150,11 @@ export default function PortalHomepage({
     }
   };
 
-  // Verified, deduplicated posts
+  // Verified, deduplicated posts (< 12 months old for active homepage feeds)
   const verifiedPosts = useMemo(() => {
     return getDeduplicatedSarkariPosts(allPosts).filter((item) => {
       if (!isPublishedSarkariItem(item) || item.isCancelled) return false;
+      if (isOlderThan12Months(item)) return false;
       const st = computeSarkariStatus(item);
       return st.verificationStatus !== 'needs_verification';
     });

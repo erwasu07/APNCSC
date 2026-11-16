@@ -540,10 +540,154 @@
   border: 1px solid var(--pb-gold);
 }
 
+.post-bulletin .pb-notice--closed {
+  background-color: var(--pb-warn-bg);
+  border: 1.5px solid var(--pb-gold);
+  border-left: 5px solid var(--pb-gold);
+}
+
 .post-bulletin .pb-notice a {
   color: var(--pb-green2);
   font-weight: 700;
   text-decoration: underline;
+}
+
+/* Editorial Guidance Cards & Prose Lists */
+.post-bulletin .pb-two-col-lists {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.post-bulletin .pb-guidance-card {
+  border: 1px solid var(--pb-line);
+  border-radius: 3px;
+  background-color: var(--pb-sheet);
+  padding: 15px 16px;
+}
+
+.post-bulletin .pb-guidance-card--apply {
+  border-top: 3px solid var(--pb-green2);
+}
+
+.post-bulletin .pb-guidance-card--skip {
+  border-top: 3px solid var(--pb-gold);
+}
+
+.post-bulletin .pb-guidance-card .pb-subh3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.post-bulletin .pb-prose-list {
+  margin: 0;
+  padding-left: 20px;
+  list-style-type: disc;
+  max-width: 66ch;
+  font-size: 15.5px;
+  line-height: 1.65;
+  color: var(--pb-ink);
+}
+
+.post-bulletin .pb-prose-list li {
+  margin-bottom: 8px;
+  padding-left: 2px;
+  overflow-wrap: break-word;
+}
+
+.post-bulletin .pb-prose-list li:last-child {
+  margin-bottom: 0;
+}
+
+.post-bulletin .pb-prose-list li::marker {
+  color: var(--pb-green2);
+}
+
+.post-bulletin .pb-source-box {
+  background-color: var(--pb-tint);
+  border: 1px solid var(--pb-line);
+  border-left: 4px solid var(--pb-green2);
+  border-radius: 3px;
+  padding: 14px 16px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--pb-ink);
+  overflow-wrap: anywhere;
+}
+
+.post-bulletin .pb-source-box a {
+  color: var(--pb-green2);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.post-bulletin .pb-author-box {
+  border: 1px solid var(--pb-line);
+  background-color: var(--pb-tint);
+  border-radius: 3px;
+  padding: 14px 16px;
+  margin: 0 0 22px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--pb-ink);
+}
+
+.post-bulletin .pb-author-box a {
+  color: var(--pb-green2);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* Related notices links */
+.post-bulletin .pb-related-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.post-bulletin .pb-related-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 13px 16px;
+  border: 1px solid var(--pb-line);
+  border-left: 3.5px solid var(--pb-green2);
+  border-radius: 3px;
+  background-color: var(--pb-tint);
+  text-decoration: none;
+  color: var(--pb-ink);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.post-bulletin .pb-related-card:hover {
+  border-color: var(--pb-green2);
+  background-color: var(--pb-sheet);
+}
+
+.post-bulletin .pb-related-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  font-size: 12px;
+  color: var(--pb-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+.post-bulletin .pb-related-tag {
+  font-weight: 700;
+  color: var(--pb-green2);
+}
+
+.post-bulletin .pb-related-title {
+  font-family: var(--pb-serif);
+  font-size: 15.5px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--pb-ink);
+  overflow-wrap: break-word;
 }
 
 /* Qualification Cards (Section 3) */
@@ -951,9 +1095,28 @@
   .post-bulletin .pb-section > .pb-ul,
   .post-bulletin .pb-section > .pb-ol,
   .post-bulletin .pb-section > .pb-faq-list,
+  .post-bulletin .pb-section > .pb-prose-list,
+  .post-bulletin .pb-two-col-lists,
+  .post-bulletin .pb-section > .pb-source-box,
+  .post-bulletin .pb-section > .pb-related-list,
+  .post-bulletin .pb-author-box,
   .post-bulletin .pb-publisher,
   .post-bulletin .pb-ad-wrap {
     padding-inline: 16px;
+  }
+
+  .post-bulletin .pb-section > .pb-prose-list {
+    padding-left: 36px;
+    padding-right: 16px;
+  }
+
+  .post-bulletin .pb-two-col-lists {
+    grid-template-columns: 1fr;
+  }
+
+  .post-bulletin .pb-section > .pb-source-box,
+  .post-bulletin .pb-author-box {
+    margin-inline: 16px;
   }
 
   .post-bulletin .pb-section > .pb-notice {

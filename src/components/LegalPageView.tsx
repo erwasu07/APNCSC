@@ -464,6 +464,37 @@ function ContactContent() {
           <strong className="text-[var(--text-primary)]">+91 70068 33767</strong> with your
           tracking ID.
         </p>
+
+        <h2 className="text-xl font-bold text-[var(--text-primary)] mt-6">
+          Service Turnaround &amp; Citizen Verification Desk
+        </h2>
+        <p>
+          Walk-in citizens visiting our Sangran Qazigund facilitation desk and remote applicants
+          submitting online form requests receive clear step-by-step confirmation before any
+          government fee is paid. Standard form drafting and document optimization requests are
+          reviewed within 4 to 12 business hours during working days, while urgent same-day closing
+          forms should be submitted at least 6 hours prior to official portal deadlines.
+        </p>
+        <ul className="list-disc ps-5 space-y-2">
+          <li>
+            <strong className="text-[var(--text-primary)]">Pre-Submission Preview:</strong> Every
+            assisted applicant receives a summary of entered academic scores, category status, and
+            uploaded photograph dimensions before final lock on the official portal.
+          </li>
+          <li>
+            <strong className="text-[var(--text-primary)]">Official Acknowledgement Proof:</strong>{' '}
+            Upon submission, the issuing authority&apos;s generated PDF receipt or challan number is
+            shared directly via email or WhatsApp along with your CSC DOST tracking token.
+          </li>
+          <li>
+            <strong className="text-[var(--text-primary)]">Grievance Resolution Matrix:</strong>{' '}
+            Billing discrepancies, duplicate fee debits, and document correction requests logged
+            via{' '}
+            <strong className="text-[var(--text-primary)]">support@cscdost.com</strong> are
+            acknowledged within 24 hours and resolved by Grievance Officer Wasim Ahmad Khanday
+            within 3 to 5 business days.
+          </li>
+        </ul>
       </section>
     </article>
   );
@@ -604,7 +635,7 @@ function PrivacyContent() {
           </a>{' '}
           or through the{' '}
           <a
-            href="https://aboutads.info"
+            href="https://optout.networkadvertising.org"
             target="_blank"
             rel="noopener noreferrer"
             className="text-[#1F9D6B] underline font-semibold"
@@ -615,7 +646,35 @@ function PrivacyContent() {
         </p>
 
         <h2 className="text-xl font-bold text-[var(--text-primary)] mt-8 mb-4">
-          6. Data Retention and Erasure
+          6. Cookies and Browser Storage Controls
+        </h2>
+        <p>
+          Cookies are small text files stored on your device browser when you visit websites. CSC
+          DOST uses lightweight browser storage and cookies strictly in the following categories:
+        </p>
+        <ul className="list-disc ps-5 space-y-2">
+          <li>
+            <strong className="text-[var(--text-primary)]">Essential Functional Storage:</strong>{' '}
+            Remembers your chosen interface theme (light or dark), regional language selection
+            (English, Hindi, or Urdu), and your dismissal of the cookie consent notice using local
+            browser storage.
+          </li>
+          <li>
+            <strong className="text-[var(--text-primary)]">Advertising Cookies (Google AdSense):</strong>{' '}
+            Third-party vendors, including Google, use cookies to serve relevant ads based on a
+            user&apos;s prior visits to cscdost.com or other websites on the Internet.
+          </li>
+          <li>
+            <strong className="text-[var(--text-primary)]">Managing or Disabling Cookies:</strong>{' '}
+            You can clear, block, or restrict cookies at any time through your web browser&apos;s
+            privacy preferences (Chrome, Safari, Firefox, Edge). Disabling non-essential advertising
+            cookies will not prevent you from reading job notices, scheme guides, or using our
+            offline document resizers.
+          </li>
+        </ul>
+
+        <h2 className="text-xl font-bold text-[var(--text-primary)] mt-8 mb-4">
+          7. Data Retention and Erasure
         </h2>
         <p>
           Application records and uploaded documents are retained securely for a period of up to 180
@@ -627,7 +686,7 @@ function PrivacyContent() {
         </p>
 
         <h2 className="text-xl font-bold text-[var(--text-primary)] mt-8 mb-4">
-          7. Contact &amp; Grievance Redressal Officer
+          8. Contact &amp; Grievance Redressal Officer
         </h2>
         <p>
           For inquiries or grievance redressal concerning this policy, contact our Data Grievance
@@ -915,6 +974,33 @@ function DisclaimerContent() {
           <strong className="text-[var(--text-primary)]">nominative fair use</strong> for
           identification and citizen navigation purposes.
         </p>
+
+        <h2 className="text-xl font-bold text-[var(--text-primary)] mt-8 mb-4">
+          4. Independent Pre-Application Verification Checklist
+        </h2>
+        <p>
+          Before paying an examination fee, submitting an online admission form, or traveling to a
+          recruitment rally or verification venue, every applicant is strongly advised to complete
+          the following four official verification steps on the issuing authority&apos;s website:
+        </p>
+        <ul className="list-disc ps-5 space-y-2">
+          <li>
+            Confirm whether any addendum, corrigendum, or deadline extension notice was issued after
+            the initial advertisement publication date.
+          </li>
+          <li>
+            Check the exact cutoff date used for calculating minimum and maximum age limits as well as
+            educational result declaration dates.
+          </li>
+          <li>
+            Ensure category certificates (Domicile, RBA, SC, ST, EWS, OBC/NCL) match the format and
+            validity year specified in the official notification PDF.
+          </li>
+          <li>
+            Verify all fee exemption clauses, objection window fees, and bank reconciliation rules
+            directly on the government payment portal prior to transaction confirmation.
+          </li>
+        </ul>
       </section>
     </article>
   );
@@ -989,6 +1075,32 @@ function RefundContent() {
           </code>
           ) and payment transaction reference ID.
         </p>
+
+        <h2 className="text-xl font-bold text-[var(--text-primary)] mt-8 mb-4">
+          4. Failed UPI / Card Transactions &amp; Reconciliation
+        </h2>
+        <p>
+          If an amount is debited from your bank account via UPI, debit card, or net banking during
+          checkout but your application status does not update to Paid immediately, please avoid
+          making a duplicate payment right away. Payment gateway settlement logs are reconciled
+          daily, and failed or dropped transactions are automatically refunded by your issuing bank
+          within 5 to 7 working days.
+        </p>
+        <ul className="list-disc ps-5 space-y-2">
+          <li>
+            Keep your Razorpay Payment ID, UPI RRN (12-digit Retrieval Reference Number), and debit
+            SMS timestamp ready when contacting our helpdesk at +91 70068 33767.
+          </li>
+          <li>
+            Where duplicate payments occur for the same CSC tracking token before application filing,
+            the surplus amount is refunded 100% back to the original funding source upon gateway
+            verification.
+          </li>
+          <li>
+            Free document tools and informational job guides on cscdost.com never require payment or
+            registration fees.
+          </li>
+        </ul>
       </section>
     </article>
   );

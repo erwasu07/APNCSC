@@ -14,8 +14,9 @@ import {
   parseSarkariDateSortValue,
 } from './src/data/sarkariData';
 import { computeSarkariStatus } from './src/utils/sarkariStatus';
+import { isOlderThan12Months, isStaleOver90Days } from './src/utils/postLifecycle';
 import { resolveEffectiveTemplateType, toIsoDate as toIsoPostDate } from './src/components/post/postHelpers';
-import { resolvePostOrg } from './src/data/sarkariMigration';
+import { KNOWN_DUPLICATE_MAP, resolvePostOrg } from './src/data/sarkariMigration';
 import { SERVICES_LIST } from './src/servicesData';
 import { GUIDE_ARTICLES } from './src/data/guidesData';
 import { 
@@ -43,6 +44,7 @@ import {
   renderServiceSubstantiveHtml,
   renderLegalPageSubstantiveHtml,
   renderHomepageSubstantiveHtml,
+  renderArchiveSubstantiveHtml,
   renderSchemeSubstantiveHtml,
   renderToolDetailSubstantiveHtml,
   renderCategorySubstantiveHtml,
@@ -54,9 +56,14 @@ import {
   LEGAL_SEO_MAP,
   PRIVATE_NOINDEX_META,
   DEADLINES_SEO,
+  ARCHIVE_SEO,
   IGNOU_EDUCATION_SEO,
   getCategorySeoMeta,
   getSchemeSeoMeta,
+  formatSeoTitle,
+  formatPostSeoTitle,
+  formatPostSeoDescription,
+  formatSeoDescription,
   CategorySlug,
 } from './src/utils/seoConfig';
 import { TOOLS_LIST } from './src/components/tools/toolsData';
@@ -215,6 +222,20 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     }
     if (cleanReqPath === '/scheme/army-agniveer-rally-guide-2026') {
       return res.redirect(301, `/post/army-agniveer-rally-guide-2026${queryString}`);
+    }
+
+    const approvedDuplicateRedirects: Record<string, string> = {
+      '/post/army-tes-57-course-2026': '/post/indian-army-tes-57-course-closing-today',
+      '/post/ssc-cgl-2026-tier-1-answer-key': '/post/ssc-cgl-tier-1-tentative-answer-key-objection-notice-2026',
+      '/post/ssc-stenographer-grade-cd-exam-2026': '/post/ssc-stenographer-grade-c-d-exam-2026',
+      '/post/ssc-steno-2026': '/post/ssc-stenographer-grade-c-d-exam-2026',
+      '/post/ssc-jht-examination-2026': '/post/ssc-junior-hindi-translator-jht-exam-2026',
+      '/post/army-tes-54-course-2026': '/post/army-tes-54-course-jan-2027',
+      '/post/cus-bed-supplementary-4th-sem-exam-dyd-2026': '/post/cus-bed-4th-sem-supplementary-exam-2026',
+    };
+    const approvedRedirectTarget = approvedDuplicateRedirects[cleanReqPath];
+    if (approvedRedirectTarget) {
+      return res.redirect(301, `${approvedRedirectTarget}${queryString}`);
     }
 
     if (
@@ -3532,6 +3553,7 @@ app.get(['/api/notifications/center', '/notifications/center'], (_req: Request, 
     const topSarkari = getAllMergedSarkariPosts()
       .filter((item) => {
         if (!isPublishedSarkariItem(item)) return false;
+        if (item.duplicateOfId || KNOWN_DUPLICATE_MAP[item.id]) return false;
         const st = computeSarkariStatus(item);
         return st.verificationStatus !== 'needs_verification' && !item.isCancelled;
       })
@@ -4550,7 +4572,7 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
   let description = HOMEPAGE_SEO.description;
   let ogImage = `${baseOrigin}/og-banner.png?v=2026_v3`;
   let canonicalUrl = HOMEPAGE_SEO.canonicalUrl;
-  let robotsContent: 'index, follow' | 'noindex, nofollow' = HOMEPAGE_SEO.robots;
+  let robotsContent: 'index, follow' | 'noindex, follow' | 'noindex, nofollow' = HOMEPAGE_SEO.robots;
   let ogType: 'website' | 'article' = 'website';
   let articlePublishedDate = '';
   let breadcrumbItems: { name: string; url: string }[] = [];
@@ -4581,22 +4603,24 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
     breadcrumbItems = meta.breadcrumbs || [];
     substantiveBodyHtml = renderLegalPageSubstantiveHtml(rawKey);
   } else if (adminMatch) {
-    title = PRIVATE_NOINDEX_META.admin.title;
-    description = PRIVATE_NOINDEX_META.admin.description;
-    canonicalUrl = PRIVATE_NOINDEX_META.admin.canonicalUrl;
-    robotsContent = PRIVATE_NOINDEX_META.admin.robots;
+    const adminKey = adminMatch[1].toLowerCase() === 'staff' ? 'staff' : 'admin';
+    title = PRIVATE_NOINDEX_META[adminKey].title;
+    description = PRIVATE_NOINDEX_META[adminKey].description;
+    canonicalUrl = PRIVATE_NOINDEX_META[adminKey].canonicalUrl;
+    robotsContent = PRIVATE_NOINDEX_META[adminKey].robots;
     substantiveBodyHtml = renderCategorySubstantiveHtml('admin', [], []);
   } else if (targetPostId) {
     const allSarkari = getAllMergedSarkariPosts().filter(isPublishedSarkariItem);
     const item = allSarkari.find(i => i.id === targetPostId || i.id === decodeURIComponent(targetPostId));
     if (item) {
       matchedJobPost = item;
-      title = `${item.title} | CSC DOST`;
-      description = item.shortInfo || `Apply online for ${item.title}. Last Date: ${item.lastDate || 'Check Notification'}. Vacancies: ${item.totalPosts || 'Open'}. Official updates & application assistance at cscdost.com.`;
+      title = formatPostSeoTitle(item);
+      description = formatPostSeoDescription(item);
       const thumbHash = computeThumbnailVersionHash(item);
       ogImage = `${baseOrigin}/api/og-image/${encodeURIComponent(item.id)}.png?v=${thumbHash}`;
       canonicalUrl = `${SITE_ORIGIN}/post/${item.id}`;
-      robotsContent = 'index, follow';
+      const isDuplicatePost = Boolean(item.duplicateOfId) || Boolean(KNOWN_DUPLICATE_MAP[item.id]);
+      robotsContent = isStaleOver90Days(item) || isDuplicatePost ? 'noindex, follow' : 'index, follow';
       ogType = 'article';
       articlePublishedDate = toIsoDate(item.postDate);
       const isIgnouPost = isIgnouItem(item);
@@ -4616,7 +4640,7 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
             },
             { name: item.title, url: canonicalUrl }
           ];
-      substantiveBodyHtml = renderPostSubstantiveHtml(item);
+      substantiveBodyHtml = renderPostSubstantiveHtml(item, allSarkari);
     } else if (matchPost) {
       isNotFound = true;
       title = PRIVATE_NOINDEX_META.notfound.title;
@@ -4628,10 +4652,10 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
   } else if (targetServiceId) {
     const service = SERVICES_LIST.find(s => s.id === targetServiceId || s.id === decodeURIComponent(targetServiceId));
     if (service) {
-      title = `${service.name} | CSC DOST`;
+      title = formatSeoTitle(service.name);
       const feeText = service.price?.trim() ? ` Fee: ${service.price.trim()}.` : ' Fee: Ask us.';
       const timeText = service.estimatedTime?.trim() ? ` Typical time: ${service.estimatedTime.trim()}.` : '';
-      description = `${service.description}${timeText}${feeText}`;
+      description = formatSeoDescription(`${service.description}${timeText}${feeText}`);
       ogImage = `${baseOrigin}/api/og-image/${encodeURIComponent(service.id)}.png?v=srv_v3`;
       canonicalUrl = `${SITE_ORIGIN}/service/${service.id}`;
       robotsContent = 'index, follow';
@@ -4681,8 +4705,8 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       if (toolSlug) {
         const matchedTool = TOOLS_LIST.find((t) => t.id === toolSlug);
         if (matchedTool) {
-          title = `${matchedTool.name} – Document Tools | CSC DOST`;
-          description = matchedTool.shortDescription;
+          title = formatSeoTitle(`${matchedTool.name} - Tools`);
+          description = formatSeoDescription(matchedTool.shortDescription);
           canonicalUrl = `${SITE_ORIGIN}/tools/${matchedTool.id}`;
           robotsContent = 'index, follow';
           breadcrumbItems = [
@@ -4720,6 +4744,14 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       canonicalUrl = PRIVATE_NOINDEX_META.track.canonicalUrl;
       robotsContent = PRIVATE_NOINDEX_META.track.robots;
       substantiveBodyHtml = renderCategorySubstantiveHtml('track', [], []);
+    } else if (urlPath.toLowerCase() === '/archive') {
+      const allSarkari = getAllMergedSarkariPosts();
+      title = ARCHIVE_SEO.title;
+      description = ARCHIVE_SEO.description;
+      canonicalUrl = ARCHIVE_SEO.canonicalUrl;
+      robotsContent = ARCHIVE_SEO.robots;
+      breadcrumbItems = ARCHIVE_SEO.breadcrumbs || [];
+      substantiveBodyHtml = renderArchiveSubstantiveHtml(allSarkari);
     } else if (urlPath.toLowerCase() === '/deadlines') {
       const allSarkari = getAllMergedSarkariPosts();
       title = DEADLINES_SEO.title;
@@ -4775,6 +4807,10 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
     }
   }
 
+  // Final meta-length safeguard (< 60 char title, < 155 char description)
+  title = formatSeoTitle(title, '', 59);
+  description = formatSeoDescription(description, 154);
+
   // Escape HTML / XML special characters
   const escAttr = (s: string) => String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const escText = (s: string) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -4786,6 +4822,17 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
   const safeCanonical = escAttr(canonicalUrl);
 
   let html = rawHtml;
+
+  // Strip any legacy identical <meta name="keywords"> tag
+  html = html.replace(/\s*<meta\s+name=["']keywords["'][^>]*\/?>/gi, '');
+
+  // Keep the "Welcome to CSC DOST... Please enable JavaScript..." intro noscript block strictly on homepage ("/")
+  if (urlPath !== '/') {
+    html = html.replace(
+      /<noscript>\s*<div\b[\s\S]*?Welcome to CSC DOST[\s\S]*?<\/div>\s*<\/noscript>/i,
+      () => '<noscript><p style="padding:12px;font-family:sans-serif;">JavaScript is disabled. Core notice details are shown below; enable JavaScript for interactive forms and tools.</p></noscript>'
+    );
+  }
 
   // Replace <title>
   html = html.replace(/<title>[\s\S]*?<\/title>/i, () => `<title>${safeTitle}</title>`);
@@ -4836,20 +4883,31 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
   html = html.replace(/<meta\s+name=["']twitter:image["']\s+content=["'][\s\S]*?["']\s*\/?>/i, () => `<meta name="twitter:image" content="${safeOgImage}" />`);
   html = html.replace(/<meta\s+name=["']twitter:image:alt["']\s+content=["'][\s\S]*?["']\s*\/?>/i, () => `<meta name="twitter:image:alt" content="${safeAttrTitle}" />`);
 
-  // If article, inject article JSON-LD before </head>
+  // If article, inject Article JSON-LD before </head>
   if (ogType === 'article') {
     const articleModifiedDate = matchedJobPost
       ? (toIsoPostDate(matchedJobPost.updatedAt || matchedJobPost.postDate) || articlePublishedDate)
       : articlePublishedDate;
     const articleLd = {
       "@context": "https://schema.org",
-      "@type": "NewsArticle",
+      "@type": "Article",
       "headline": title,
       "description": description,
       "image": [ogImage],
       "datePublished": articlePublishedDate,
       "dateModified": articleModifiedDate,
       "mainEntityOfPage": canonicalUrl,
+      "author": [
+        {
+          "@type": "Organization",
+          "name": "CSC DOST",
+          "url": SITE_ORIGIN
+        },
+        {
+          "@type": "Person",
+          "name": "Wasim Ahmad Khanday"
+        }
+      ],
       "publisher": {
         "@type": "Organization",
         "name": "CSC DOST",
@@ -4963,6 +5021,7 @@ app.get('/sitemap.xml', (req: Request, res: Response) => {
     const staticPages = [
       { loc: '/', changefreq: 'daily', priority: '1.0' },
       { loc: '/deadlines', changefreq: 'daily', priority: '0.9' },
+      { loc: '/archive', changefreq: 'monthly', priority: '0.6' },
       { loc: '/jobs', changefreq: 'daily', priority: '0.9' },
       { loc: '/education', changefreq: 'daily', priority: '0.9' },
       { loc: '/education/ignou', changefreq: 'daily', priority: '0.9' },
@@ -4999,14 +5058,14 @@ app.get('/sitemap.xml', (req: Request, res: Response) => {
     for (const post of allSarkari) {
       if (!post.id || seenPostIds.has(post.id)) continue;
       seenPostIds.add(post.id);
-      let safeDate = VERIFIED_STATIC_DATE;
-      if (post.postDate && /^\d{2}\/\d{2}\/\d{4}$/.test(post.postDate)) {
-        const [d, m, y] = post.postDate.split('/');
-        safeDate = `${y}-${m}-${d}`;
-      } else if (post.lastDate && /^\d{2}\/\d{2}\/\d{4}$/.test(post.lastDate)) {
-        const [d, m, y] = post.lastDate.split('/');
-        safeDate = `${y}-${m}-${d}`;
+      const isDuplicatePost = Boolean(post.duplicateOfId) || Boolean(KNOWN_DUPLICATE_MAP[post.id]);
+      if (isStaleOver90Days(post) || isOlderThan12Months(post) || isDuplicatePost) {
+        continue;
       }
+      const safeDate =
+        toIsoPostDate(post.updatedAt || post.postDate) ||
+        toIsoPostDate(post.lastDate) ||
+        VERIFIED_STATIC_DATE;
       xml += '  <url>\n';
       xml += `    <loc>${BASE_URL}/post/${encodeURIComponent(post.id)}</loc>\n`;
       xml += `    <lastmod>${safeDate}</lastmod>\n`;

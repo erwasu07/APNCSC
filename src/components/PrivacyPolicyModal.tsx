@@ -115,9 +115,12 @@ Technical, physical, and administrative safeguards to protect your personal data
 - We use Google AdSense to display relevant advertisements on https://www.cscdost.com/.
 - Google, as a third-party vendor, uses cookies (including the DoubleClick cookie) to serve ads based on users' visits to our site and other websites across the internet.
 - Google's use of advertising cookies enables it and its partners to serve ads to our users based on their visit to our site and/or other sites on the Internet.
-- Users may opt out of personalized advertising by visiting Google Ads Settings (https://adssettings.google.com/) or by visiting www.aboutads.info.
+- Users may opt out of personalized advertising by visiting Google Ads Settings (https://adssettings.google.com/) or the Network Advertising Initiative Opt-Out Page (https://optout.networkadvertising.org).
 
-6. THIRD-PARTY LINKS
+6. COOKIES & BROWSER STORAGE
+- We use essential local storage for theme/language preferences and cookie consent acknowledgment, as well as third-party Google AdSense advertising cookies. You can manage or block cookies in your browser settings at any time.
+
+7. THIRD-PARTY LINKS
 External links to government/payment portals are subject to their own privacy policies.
 
 7. CHILDREN'S PRIVACY
@@ -388,10 +391,11 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
     { id: 'sec-2', label: '2. How We Use' },
     { id: 'sec-3', label: '3. Data Sharing' },
     { id: 'sec-4', label: '4. Security' },
-    { id: 'sec-5', label: '5. Third-Party Links' },
-    { id: 'sec-6', label: '6. Children' },
-    { id: 'sec-7', label: '7. Updates' },
-    { id: 'sec-8', label: '8. Contact' }
+    { id: 'sec-cookies', label: '5. Cookies & Ads' },
+    { id: 'sec-5', label: '6. Third-Party Links' },
+    { id: 'sec-6', label: '7. Children' },
+    { id: 'sec-7', label: '8. Updates' },
+    { id: 'sec-8', label: '9. Contact' }
   ];
 
   const termsSections = [
@@ -881,13 +885,56 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                 </div>
               </section>
 
-              {/* 5. THIRD-PARTY LINKS & 6. CHILDREN'S PRIVACY */}
+              {/* 5. COOKIES & GOOGLE ADSENSE */}
+              <section id="sec-cookies" className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-800/80">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-emerald-600 text-white rounded-xl shadow-xs">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                      5. Cookies &amp; Google AdSense Advertising
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Essential browser storage, advertising cookies, and user opt-out options.
+                    </p>
+                  </div>
+                </div>
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 text-xs space-y-2.5 text-slate-600 dark:text-slate-300 leading-relaxed">
+                  <p>
+                    We use essential local storage to remember your theme, language preference, and cookie banner acknowledgment, alongside Google AdSense (ca-pub-3600904217061779) cookies to display relevant advertisements.
+                  </p>
+                  <p>
+                    Users may opt out of personalized advertising by visiting{' '}
+                    <a
+                      href="https://adssettings.google.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-emerald-600 dark:text-emerald-400 underline font-semibold"
+                    >
+                      Google Ads Settings
+                    </a>{' '}
+                    or the{' '}
+                    <a
+                      href="https://optout.networkadvertising.org"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-emerald-600 dark:text-emerald-400 underline font-semibold"
+                    >
+                      Network Advertising Initiative Opt-Out Page
+                    </a>
+                    , or by blocking cookies directly in browser privacy settings.
+                  </p>
+                </div>
+              </section>
+
+              {/* 6. THIRD-PARTY LINKS & 7. CHILDREN'S PRIVACY */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-200 dark:border-slate-800/80">
                 <section id="sec-5" className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 space-y-2">
                   <div className="flex items-center gap-2">
                     <ExternalLink className="w-4 h-4 text-cyan-500" />
                     <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
-                      5. Third-Party Links
+                      6. Third-Party Links
                     </h3>
                   </div>
                   <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -899,7 +946,7 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                   <div className="flex items-center gap-2">
                     <UserCheck className="w-4 h-4 text-rose-500" />
                     <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
-                      6. Children's Privacy
+                      7. Children&apos;s Privacy
                     </h3>
                   </div>
                   <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">

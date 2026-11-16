@@ -7,10 +7,233 @@ export interface RouteSeoMeta {
   title: string;
   description: string;
   canonicalUrl: string;
-  robots: 'index, follow' | 'noindex, nofollow';
+  robots: 'index, follow' | 'noindex, follow' | 'noindex, nofollow';
   ogType?: 'website' | 'article';
   ogImage?: string;
   breadcrumbs?: { name: string; url: string }[];
+}
+
+function normalizeSeoWhitespace(text: string): string {
+  return String(text || '')
+    .replace(/\s+/g, ' ')
+    .replace(/\u2013|\u2014/g, '-')
+    .trim();
+}
+
+function trimAtWordBoundary(text: string, maxLen: number): string {
+  const clean = normalizeSeoWhitespace(text);
+  if (clean.length <= maxLen) return clean;
+  const sliced = clean.slice(0, maxLen + 1);
+  const lastSpace = sliced.lastIndexOf(' ');
+  const cut = lastSpace >= Math.floor(maxLen * 0.55) ? sliced.slice(0, lastSpace) : clean.slice(0, maxLen);
+  return cut.replace(/[\s,;:\-–—(\[/]+$/g, '').trim();
+}
+
+function compactTitlePhrases(raw: string): string {
+  return normalizeSeoWhitespace(raw)
+    .replace(/\bJammu\s*(?:&|and)\s*Kashmir\b/gi, 'J&K')
+    .replace(/\bUniversity of Kashmir\b/gi, 'Kashmir Univ')
+    .replace(/\bCluster University Srinagar\b/gi, 'CUS Srinagar')
+    .replace(/\bCluster University\b/gi, 'Cluster Univ')
+    .replace(/\bRegional Centre\b/gi, 'RC')
+    .replace(/\bExamination Form\b/gi, 'Exam Form')
+    .replace(/\bExamination\b/gi, 'Exam')
+    .replace(/\bNotification\b/gi, 'Notice')
+    .replace(/\bTentative Date Sheet for\b/gi, 'Tentative Datesheet')
+    .replace(/\bTentative Date Sheet\b/gi, 'Tentative Datesheet')
+    .replace(/\bRevised Tentative Date Sheet\b/gi, 'Rev Datesheet')
+    .replace(/\bDate Sheet\b/gi, 'Datesheet')
+    .replace(/\bSupplementary\b/gi, 'Suppl')
+    .replace(/\bAssignment Submission\b/gi, 'Assignment')
+    .replace(/\bRe-Registration\b/gi, 'Re-Reg')
+    .replace(/\bRegistration\b/gi, 'Reg')
+    .replace(/\bRecruitment\b/gi, 'Jobs')
+    .replace(/\bAdmissions\b/gi, 'Adm')
+    .replace(/\bAdmission\b/gi, 'Adm')
+    .replace(/\bSemester\b/gi, 'Sem')
+    .replace(/\bStenographer\b/gi, 'Steno')
+    .replace(/\bJunior Hindi Translator\b/gi, 'JHT')
+    .replace(/\bDistance & Online Education\b/gi, 'DDOE')
+    .replace(/\bOpen & Distance Learning\b/gi, 'ODL')
+    .replace(/\bCommon Eligibility Test\b/gi, 'CET')
+    .replace(/\s*\(\s*Closing Today\s*\)/gi, '')
+    .replace(/\s*[-–—]\s*Last Date\s+[0-9]{1,2}\s+[A-Za-z]{3,9}\s+[0-9]{4}/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Formats an HTML <title> strictly under 60 chars (max 59) while preserving distinct tags/year discriminators.
+ */
+export function formatSeoTitle(
+  rawTitle: string,
+  suffix = ' | CSC DOST',
+  maxLen = 59
+): string {
+  const clean = normalizeSeoWhitespace(rawTitle);
+  if (!clean) return 'CSC DOST Portal';
+  if (clean.length + suffix.length <= maxLen) {
+    return `${clean}${suffix}`;
+  }
+
+  const compacted = compactTitlePhrases(clean);
+  if (compacted.length + suffix.length <= maxLen) {
+    return `${compacted}${suffix}`;
+  }
+
+  // Prefer keeping suffix when possible (budget = 48 chars); if compacted itself <= 59, drop suffix only if needed to preserve meaning
+  const budgetWithSuffix = maxLen - suffix.length;
+  if (budgetWithSuffix >= 36) {
+    // Preserve short trailing parenthetical discriminator e.g. "(GOAL)" or "(ODL)" or "(2026)"
+    const parenMatch = compacted.match(/\(([^()]{2,18})\)$/);
+    if (parenMatch) {
+      const tag = ` (${parenMatch[1].trim()})`;
+      const headBudget = budgetWithSuffix - tag.length;
+      if (headBudget >= 22) {
+        const head = trimAtWordBoundary(compacted.slice(0, compacted.length - parenMatch[0].length), headBudget);
+        return `${head}${tag}${suffix}`.slice(0, maxLen);
+      }
+    }
+    const trimmed = trimAtWordBoundary(compacted, budgetWithSuffix);
+    if (trimmed.length >= 24) {
+      return `${trimmed}${suffix}`;
+    }
+  }
+
+  if (compacted.length <= maxLen) return compacted;
+  return trimAtWordBoundary(compacted, maxLen);
+}
+
+const POST_EXACT_SEO_MAP: Record<string, { title: string; description: string }> = {
+  'indian-army-tes-57-course-closing-today': {
+    title: 'Army 10+2 TES-57 (July 2027) Closed | CSC DOST',
+    description:
+      'Indian Army TES-57 (July 2027 Course) application window closed 12/11/2026. Check 10+2 PCM & JEE Main eligibility and SSB details on CSC DOST.',
+  },
+  'army-tes-55-course-july-2027': {
+    title: 'Army 10+2 TES-55 (July 2027) Application | CSC DOST',
+    description:
+      'Indian Army TES-55 (July 2027 Course) online application (last date 30/09/2026). Check 10+2 PCM & JEE Main criteria and SSB notice on CSC DOST.',
+  },
+  'army-tes-54-course-jan-2027': {
+    title: 'Army 10+2 TES-54 (Jan 2027) Application | CSC DOST',
+    description:
+      'Indian Army TES-54 (January 2027 Course) online application (last date 22/09/2026). View 10+2 PCM criteria, age limit & SSB details on CSC DOST.',
+  },
+  'army-tgc-145-course-2026': {
+    title: 'Army TGC-145 (July 2027) Recruitment | CSC DOST',
+    description:
+      'Indian Army 145th Technical Graduate Course (TGC-145, July 2027) recruitment notice (last date 30/10/2026). Check B.E./B.Tech streams on CSC DOST.',
+  },
+  'army-tgc-143-course-jul-2027': {
+    title: 'Army TGC-143 (Jul 2027) Recruitment | CSC DOST',
+    description:
+      'Indian Army 143rd Technical Graduate Course (TGC-143, July 2027) recruitment notice (last date 19/09/2026). Check branch eligibility on CSC DOST.',
+  },
+  'rrb-isolated-ministerial-cen-09-2026': {
+    title: 'RRB Ministerial CEN 09/2026 (191 Posts) | CSC DOST',
+    description:
+      'RRB Isolated & Ministerial Categories CEN 09/2026 recruitment for 191 vacancies. Online form open 05/11/2026 to 04/12/2026 at rrbapply.gov.in.',
+  },
+  'rrb-ministerial-isolated-cen08-2026': {
+    title: 'RRB Ministerial CEN 08/2026 (1,280 Posts) | CSC DOST',
+    description:
+      'RRB Ministerial & Isolated Categories CEN 08/2026 recruitment (1,280 posts, last date 20/09/2026). Check Welfare Inspector & Translator details.',
+  },
+  'rrb-ministerial-isolated-2026': {
+    title: 'RRB Ministerial CEN 06/2026 (1,038 Posts) | CSC DOST',
+    description:
+      'RRB Ministerial & Isolated Categories CEN 06/2026 recruitment (1,038 posts, last date 17/09/2026). Check Jr Steno, Law Asst & Translator details.',
+  },
+  'jkssb-advt-06-2026': {
+    title: 'JKSSB Advt 06/2026 Application (357 Posts) | CSC DOST',
+    description:
+      'JKSSB Advt 06/2026 Online Application for 357 Draftsman (Civil) & Works Supervisor posts in PW(R&B) Dept (last date 30/08/2026). View eligibility.',
+  },
+  'jkssb-dv-notice-advt06-2026-works-supervisor': {
+    title: 'JKSSB Advt 06/2026 DV Notice (Draftsman) | CSC DOST',
+    description:
+      'JKSSB Advt 06/2026 Document Verification (DV Notice) for 357 Draftsman (Civil) & Works Supervisor posts (DV until 24/09/2026). Check schedule & docs.',
+  },
+};
+
+/**
+ * Formats a post <title> strictly < 60 chars and deduplicates colliding prefixes using learnerGroup/session/advt/stage/id.
+ */
+export function formatPostSeoTitle(item: {
+  id: string;
+  title: string;
+  learnerGroup?: string;
+  session?: string;
+  advertisementNo?: string;
+  postDate?: string;
+}): string {
+  const exact = POST_EXACT_SEO_MAP[item.id];
+  if (exact) return exact.title;
+
+  const clean = normalizeSeoWhitespace(item.title);
+  if (clean.length + ' | CSC DOST'.length <= 59) {
+    return `${clean} | CSC DOST`;
+  }
+
+  // Extract a meaningful unique tag if title is very long
+  const rawTag =
+    (item.learnerGroup && item.learnerGroup.length <= 16 ? item.learnerGroup : '') ||
+    (item.title.match(/\b(Tier[- ]?\d+|Paper[- ]?\d+|Sem(?:ester)?[- ]?[\d&\-I]+|Batch[- ]?20\d{2}|CEN\s*(?:No\.?)?\s*\d+\/?20\d{2}|Advt\.?\s*(?:No\.?)?\s*\d+\/?20\d{2}|TES[- ]?\d+|TGC[- ]?\d+|DV Notice|Answer Key|Admit Card|Result|ODL|GOAL|E-Vidya Bharti|CDOE|DDOE|2nd|1st|4th|7th|8th)\b/i)?.[0] || '') ||
+    (item.advertisementNo?.match(/\b(CEN\s*(?:No\.?)?\s*\d+\/?20\d{2}|Advt\.?\s*(?:No\.?)?\s*\d+\/?20\d{2})\b/i)?.[0] || '');
+
+  const compacted = compactTitlePhrases(clean);
+  if (compacted.length + ' | CSC DOST'.length <= 59) {
+    return `${compacted} | CSC DOST`;
+  }
+
+  const suffix = ' | CSC DOST';
+  const maxCore = 59 - suffix.length; // 48
+  const tagClean = rawTag ? compactTitlePhrases(rawTag).replace(/\s*No\.?\s*/gi, ' ').replace(/\s+/g, ' ').trim().slice(0, 14) : '';
+
+  if (tagClean && !compacted.slice(0, maxCore - tagClean.length - 1).toLowerCase().includes(tagClean.toLowerCase())) {
+    const coreBudget = maxCore - tagClean.length - 3;
+    if (coreBudget >= 20) {
+      const head = trimAtWordBoundary(compacted, coreBudget);
+      return `${head} (${tagClean})${suffix}`.slice(0, 59);
+    }
+  }
+
+  return formatSeoTitle(compacted, suffix, 59);
+}
+
+export function formatSeoDescription(
+  rawDesc: string,
+  maxLen = 154
+): string {
+  const clean = normalizeSeoWhitespace(rawDesc);
+  if (!clean) return 'Official citizen guides and updates on CSC DOST.';
+  if (clean.length <= maxLen) return clean;
+
+  // Keep complete first sentence if informative (>= 75 chars)
+  const firstPeriod = clean.indexOf('. ');
+  if (firstPeriod >= 75 && firstPeriod + 1 <= maxLen) {
+    return clean.slice(0, firstPeriod + 1);
+  }
+
+  const cut = trimAtWordBoundary(clean, maxLen - 3);
+  return `${cut}...`;
+}
+
+export function formatPostSeoDescription(item: {
+  id: string;
+  title: string;
+  shortInfo?: string;
+  summary?: string;
+  advertisementNo?: string;
+  lastDate?: string;
+  totalPosts?: string | number;
+}): string {
+  const exact = POST_EXACT_SEO_MAP[item.id];
+  if (exact) return exact.description;
+
+  const fallback = `Official notification dates, eligibility and verification links for ${item.title} on CSC DOST.`;
+  return formatSeoDescription(item.summary || item.shortInfo || fallback, 154);
 }
 
 export interface CategoryMetaEntry {
@@ -100,6 +323,19 @@ export const DEADLINES_SEO: RouteSeoMeta = {
   ],
 };
 
+export const ARCHIVE_SEO: RouteSeoMeta = {
+  title: 'Archived Recruitment & Exam Notices | CSC DOST',
+  description:
+    'Browse archived J&K and central recruitment, admission, and examination notifications older than 12 months on CSC DOST.',
+  canonicalUrl: `${SITE_ORIGIN}/archive`,
+  robots: 'index, follow',
+  ogType: 'website',
+  breadcrumbs: [
+    { name: 'Home', url: `${SITE_ORIGIN}/` },
+    { name: 'Archive', url: `${SITE_ORIGIN}/archive` },
+  ],
+};
+
 export const IGNOU_EDUCATION_SEO: RouteSeoMeta = {
   title: 'IGNOU Latest Notifications, Admissions & Exams | CSC DOST',
   description:
@@ -127,7 +363,7 @@ export const LEGAL_SEO_MAP: Record<string, RouteSeoMeta> = {
   privacy: {
     title: 'Privacy Policy | CSC DOST',
     description:
-      'Read how CSC DOST handles citizen application details, local browser document processing and data privacy under applicable Indian laws.',
+      'Read how CSC DOST handles citizen application details, cookies, local browser processing and privacy under Indian law.',
     canonicalUrl: `${SITE_ORIGIN}/privacy-policy`,
     robots: 'index, follow',
     ogType: 'website',
@@ -151,7 +387,7 @@ export const LEGAL_SEO_MAP: Record<string, RouteSeoMeta> = {
   disclaimer: {
     title: 'Disclaimer & Non-Affiliation | CSC DOST',
     description:
-      'Important notice: CSC DOST is an independent private citizen facilitation center in Qazigund, Anantnag and is not an official government website.',
+      'Important notice: CSC DOST is an independent private citizen facilitation center in Qazigund, Anantnag and not a government site.',
     canonicalUrl: `${SITE_ORIGIN}/disclaimer`,
     robots: 'index, follow',
     ogType: 'website',
@@ -198,7 +434,7 @@ export const LEGAL_SEO_MAP: Record<string, RouteSeoMeta> = {
   },
 };
 
-export const PRIVATE_NOINDEX_META: Record<'apply' | 'track' | 'admin' | 'notfound', RouteSeoMeta> = {
+export const PRIVATE_NOINDEX_META: Record<'apply' | 'track' | 'admin' | 'staff' | 'notfound', RouteSeoMeta> = {
   apply: {
     title: 'Assisted Online Application Desk | CSC DOST',
     description:
@@ -222,10 +458,17 @@ export const PRIVATE_NOINDEX_META: Record<'apply' | 'track' | 'admin' | 'notfoun
     robots: 'noindex, nofollow',
     ogType: 'website',
   },
+  staff: {
+    title: 'Staff Login Portal | CSC DOST',
+    description: 'Operator workspace login and queue management for CSC DOST staff.',
+    canonicalUrl: `${SITE_ORIGIN}/staff`,
+    robots: 'noindex, nofollow',
+    ogType: 'website',
+  },
   notfound: {
     title: 'Page Not Found (404) | CSC DOST',
     description:
-      'The requested page could not be found on CSC DOST. Explore active jobs, admissions, schemes, e-services, tools and calculators.',
+      'The requested page could not be found on CSC DOST. Explore active jobs, admissions, schemes, e-services and calculators.',
     canonicalUrl: `${SITE_ORIGIN}/`,
     robots: 'noindex, nofollow',
     ogType: 'website',
@@ -254,8 +497,8 @@ export function getSchemeSeoMeta(guide: {
 }): RouteSeoMeta {
   const canonicalUrl = `${SITE_ORIGIN}/scheme/${guide.id}`;
   return {
-    title: `${guide.title} – Eligibility, Documents & Steps | CSC DOST`,
-    description: guide.summary,
+    title: formatSeoTitle(`${guide.title} Guide`),
+    description: formatSeoDescription(guide.summary),
     canonicalUrl,
     robots: 'index, follow',
     ogType: 'article',
@@ -274,7 +517,13 @@ export function applyClientSeo(meta: RouteSeoMeta): void {
   if (typeof document === 'undefined') return;
 
   try {
-    document.title = meta.title;
+    const safeTitle = formatSeoTitle(meta.title, '', 59);
+    const safeDesc = formatSeoDescription(meta.description, 154);
+
+    document.title = safeTitle;
+
+    // Remove legacy generic <meta name="keywords"> tag if present
+    document.querySelectorAll('meta[name="keywords"]').forEach((el) => el.remove());
 
     const setMetaTag = (attrName: 'name' | 'property', attrValue: string, content: string) => {
       let el = document.querySelector(`meta[${attrName}="${attrValue}"]`) as HTMLMetaElement | null;
@@ -286,25 +535,25 @@ export function applyClientSeo(meta: RouteSeoMeta): void {
       el.setAttribute('content', content);
     };
 
-    setMetaTag('name', 'title', meta.title);
-    setMetaTag('name', 'description', meta.description);
+    setMetaTag('name', 'title', safeTitle);
+    setMetaTag('name', 'description', safeDesc);
     setMetaTag('name', 'robots', meta.robots);
 
     setMetaTag('property', 'og:type', meta.ogType || 'website');
     setMetaTag('property', 'og:url', meta.canonicalUrl);
-    setMetaTag('property', 'og:title', meta.title);
-    setMetaTag('property', 'og:description', meta.description);
+    setMetaTag('property', 'og:title', safeTitle);
+    setMetaTag('property', 'og:description', safeDesc);
 
     if (meta.ogImage) {
       setMetaTag('property', 'og:image', meta.ogImage);
       setMetaTag('property', 'og:image:secure_url', meta.ogImage);
-      setMetaTag('property', 'og:image:alt', meta.title);
+      setMetaTag('property', 'og:image:alt', safeTitle);
       setMetaTag('name', 'twitter:image', meta.ogImage);
-      setMetaTag('name', 'twitter:image:alt', meta.title);
+      setMetaTag('name', 'twitter:image:alt', safeTitle);
     }
 
-    setMetaTag('name', 'twitter:title', meta.title);
-    setMetaTag('name', 'twitter:description', meta.description);
+    setMetaTag('name', 'twitter:title', safeTitle);
+    setMetaTag('name', 'twitter:description', safeDesc);
 
     let canonicalEl = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
     if (!canonicalEl) {

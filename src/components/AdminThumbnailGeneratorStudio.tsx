@@ -58,7 +58,7 @@ const APPROVED_PRESETS = [
   {
     key: 'army-tes-57',
     badge: 'Indian Army Approved Style',
-    id: 'army-tes-57-course-2026',
+    id: 'indian-army-tes-57-course-closing-today',
     title: 'Indian Army 10+2 Technical Entry Scheme (TES-57 Course)',
     category: 'army_jobs',
     department: 'Join Indian Army (joinindianarmy.nic.in)',
@@ -110,7 +110,7 @@ const APPROVED_PRESETS = [
   {
     key: 'cus-cluster-univ',
     badge: 'Cluster University Approved Style',
-    id: 'cus-bed-supplementary-4th-sem-exam-dyd-2026',
+    id: 'cus-bed-4th-sem-supplementary-exam-2026',
     title: 'Cluster University Srinagar B.Ed Supplementary 4th Sem Exam DYD 2026',
     category: 'cluster_univ',
     department: 'Cluster University Srinagar (cusrinagar.edu.in)',

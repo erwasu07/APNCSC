@@ -5,10 +5,9 @@ import { useLanguage, type Language } from '../contexts/LanguageContext';
 export interface FooterProps {
   cafeName?: string;
   onOpenPrivacyPolicy?: (tab?: PolicyTab) => void;
-  onOpenAdmin?: () => void;
 }
 
-export default function Footer({ cafeName = 'CSC DOST', onOpenAdmin }: FooterProps) {
+export default function Footer({ cafeName = 'CSC DOST' }: FooterProps) {
   const { language, setLanguage, t } = useLanguage();
   const currentYear = new Date().getFullYear();
 
@@ -34,6 +33,7 @@ export default function Footer({ cafeName = 'CSC DOST', onOpenAdmin }: FooterPro
     { href: '/services', label: t.catServices || 'CSC E-Services' },
     { href: '/tools', label: t.navTools || 'Document Tools' },
     { href: '/calculators', label: t.navCalculators || 'Citizen Calculators' },
+    { href: '/archive', label: 'Notice Archive' },
   ];
 
   const links = [
@@ -147,15 +147,6 @@ export default function Footer({ cafeName = 'CSC DOST', onOpenAdmin }: FooterPro
                   {link.label}
                 </a>
               ))}
-              {onOpenAdmin && (
-                <button
-                  type="button"
-                  onClick={onOpenAdmin}
-                  className="min-h-[32px] lg:min-h-0 lg:py-0.5 inline-flex items-center text-slate-400 hover:text-white transition-colors cursor-pointer text-[11px] lg:text-[12px] ms-auto lg:ms-0 text-start"
-                >
-                  {t.staffLogin}
-                </button>
-              )}
             </nav>
           </div>
         </div>

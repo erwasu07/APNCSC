@@ -1598,15 +1598,17 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       scSt: '₹0/-'
     },
     selectionProcess: [
-      'Shortlisting of applications based on JEE (Mains) 2026 CRL ranks.',
-      'Services Selection Board (SSB) Interview (5-Stage Selection Process).',
-      'Special Medical Examination Board (SMB) Medical Examination.'
+      'Shortlisting of applications based on JEE (Mains) 2026 Common Rank List (CRL) ranks.',
+      'Two-stage Services Selection Board (SSB) Interview (5 days) at Selection Centres (Prayagraj, Bhopal, Bengaluru, or Jalandhar) comprising Psychological Tests, GTO Tasks, and Personal Interview.',
+      'Special Medical Examination Board (SMB) Medical Examination at designated Military Hospitals.',
+      'Final Merit List and 4-year training (1 year basic military training + 3 years engineering degree course) leading to Permanent Commission in the rank of Lieutenant (no CEE or physical rally is conducted).'
     ],
     documentsRequired: [
       'Class 10th Certificate / Marksheet showing Date of Birth.',
-      'Class 12th Marksheet with PCM marks verification.',
-      'JEE (Mains) 2026 Scorecard / Rank card.',
-      'Valid Photo Identity Proof (Aadhaar / Voter ID / Passport).'
+      'Class 12th Marksheet with PCM marks verification (minimum 60% aggregate).',
+      'JEE (Mains) 2026 Scorecard / CRL Rank card.',
+      'Valid Photo Identity Proof (Aadhaar / Voter ID / Passport).',
+      'Clear passport-size photograph (5–20 KB) and signature (5–10 KB) as per JIA portal specifications.'
     ],
     verificationStatus: 'verified',
     verification: {
@@ -2062,7 +2064,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     department: 'Staff Selection Commission (SSC)',
     postType: 'Result',
     status: 'Closed',
-    shortInfo: 'Staff Selection Commission (SSC) uploaded the Tentative Answer Keys along with candidates’ Response Sheets for the Combined Graduate Level Examination (Tier-I), 2026. The online representation and objection challenge window (₹50 per question) officially closed on 07th November 2026 at 21:00 hrs IST.',
+    shortInfo: 'Staff Selection Commission (SSC) uploaded the Tentative Answer Keys along with candidates’ Response Sheets for the Combined Graduate Level Examination (Tier-I), 2026 on 04/11/2026 (21:00 IST). The online representation and objection challenge window (₹50 per question) officially closed on 07th November 2026 at 21:00 hrs IST.',
     ageLimit: 'Not Applicable (Answer Key & Challenge Window Closed)',
     eligibility: 'All candidates who appeared in the SSC Combined Graduate Level (Tier-I) Computer Based Examination 2026.',
     totalPosts: '17,727 Posts Tier-I Exam Key & Response Sheets',
@@ -2434,14 +2436,14 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     recruitmentYear: '2026',
     shortInfo: 'Cluster University of Srinagar Controller of Examinations notified the online examination form submission schedule for B.Ed 4th Semester Supplementary / Backlog candidates (Batch 2024). Submission closed on 12th November 2026.',
     ageLimit: 'N/A (Enrolled B.Ed Students)',
-    eligibility: 'Students of constituent colleges enrolled in 2-Year B.Ed Programme (Batch 2024) with backlogs or supplementary status in 4th Semester.',
+    eligibility: 'Students enrolled in 2-Year B.Ed Programme (Batch 2024 & eligible backlog batches) at IAES / Constituent Colleges with backlogs or supplementary status in 4th Semester, alongside Design Your Degree (DYD) NEP-2020 Undergraduate streams of Cluster University Srinagar.',
     totalPosts: 'B.Ed 4th Semester Supplementary Candidates',
     officialLink: 'https://www.cusrinagar.edu.in',
     officialNotificationUrl: 'https://www.cusrinagar.edu.in',
     officialApplicationUrl: 'https://www.cusrinagar.edu.in',
     fees: {
       genObc: '₹1,200/- per semester examination fee',
-      scSt: '₹1,200/- per semester examination fee'
+      scSt: '₹1,200/- per semester examination fee (Specially-Abled PwD & Orphan Category exemption as per University norms, verify on the official notice)'
     },
     stage: 'exam_form',
     status: 'Closed',
@@ -3481,8 +3483,8 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     lastDate: '22/09/2026',
     advertisementNo: 'F.No. SSC/HQ/Steno-2026/08',
     shortInfo: 'Staff Selection Commission invites online applications from eligible candidates for Computer Based Examination for recruitment of Stenographers Grade ‘C’ (Group B Non-Gazetted) and Grade ‘D’ (Group C) for various Central Government Ministries and Departments.',
-    ageLimit: '18 to 30 Years for Grade C, 18 to 27 Years for Grade D (Age relaxation applicable)',
-    eligibility: '12th Standard or equivalent qualification + Shorthand/Typing Speed in Hindi or English',
+    ageLimit: '18 to 30 Years for Grade C, 18 to 27 Years for Grade D as of 01/08/2026 (Age relaxation applicable)',
+    eligibility: '12th Standard (10+2) or equivalent qualification from a recognized Board + Shorthand Stenography Skill Test (100 wpm for Grade C, 80 wpm for Grade D in Hindi or English)',
     totalPosts: '2,140 Vacancies (Tentative)',
     officialLink: 'https://ssc.gov.in',
     fees: {
@@ -3711,7 +3713,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     lastDate: '18/09/2026',
     advertisementNo: 'SSC/HQ/JHT-Exam-2026',
     shortInfo: 'Staff Selection Commission (SSC) notifies competitive computer-based examination for recruitment of Junior Hindi Translator, Junior Translation Officer, Senior Hindi Translator, and Senior Translation Officer in various Central Government Ministries and Departments.',
-    ageLimit: '18 to 30 Years (Age relaxation applicable as per Govt of India rules)',
+    ageLimit: '18 to 30 Years (OBC +3 Years, SC/ST +5 Years, PwD +10 Years as per Govt of India rules)',
     eligibility: "Master's Degree in Hindi with English as a compulsory/elective subject OR Master's Degree in English with Hindi + Recognized Diploma/Certificate in Translation from Hindi to English & vice-versa",
     totalPosts: '412 Posts across Central Ministries',
     officialLink: 'https://ssc.gov.in',

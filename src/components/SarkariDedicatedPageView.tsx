@@ -2,6 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import {
   isIgnouItem,
   isRecruitmentSarkariItem,
+  SARKARI_DATA,
   type SarkariItem,
 } from '../data/sarkariData';
 import { resolvePostOrg } from '../data/sarkariMigration';
@@ -34,10 +35,21 @@ import {
   parseAgeLimitRows,
   parseEligibilityBlocks,
 } from './post/postBulletinHelpers';
+import {
+  buildPostEnrichmentData,
+  EDITORIAL_AUTHOR_TEXT,
+  getRelatedNoticesForPost,
+} from './post/postEnrichmentHelpers';
+import {
+  getDaysSinceClosing,
+  isStaleOver90Days,
+} from '../utils/postLifecycle';
+import { formatPostSeoTitle, SITE_ORIGIN } from '../utils/seoConfig';
 import './post/post-bulletin.css';
 
 interface SarkariDedicatedPageViewProps {
   item: SarkariItem;
+  allPosts?: SarkariItem[];
   onBack: () => void;
   onApplyService: (serviceName: string) => void;
   onShare: (item: SarkariItem) => void;
@@ -68,6 +80,7 @@ const SSC_TIMETABLE_ROWS = [
 
 export default function SarkariDedicatedPageView({
   item,
+  allPosts,
   onApplyService,
   onShare,
   onNavigateRoute,
@@ -189,6 +202,17 @@ export default function SarkariDedicatedPageView({
     [item.updatedAt, item.verification?.lastVerified, item.postDate, item.documentDate]
   );
 
+  const staleOver90Days = useMemo(() => isStaleOver90Days(item), [item]);
+  const daysSinceClosing = useMemo(() => getDaysSinceClosing(item), [item]);
+  const enrichment = useMemo(
+    () => buildPostEnrichmentData(item, effectiveType, statusInfo, orgName, portalUrl),
+    [item, effectiveType, statusInfo, orgName, portalUrl]
+  );
+  const relatedNotices = useMemo(
+    () => getRelatedNoticesForPost(item, allPosts && allPosts.length > 0 ? allPosts : SARKARI_DATA, 4),
+    [item, allPosts]
+  );
+
   // Load Google Fonts (Libre Baskerville + Libre Franklin) ONLY while post route is active
   useEffect(() => {
     let fontLink = document.getElementById(PB_FONT_LINK_ID) as HTMLLinkElement | null;
@@ -206,19 +230,73 @@ export default function SarkariDedicatedPageView({
     };
   }, []);
 
-  // Document title & Schema.org JSON-LD (JobPosting ONLY on active recruitment; Article otherwise + FAQPage)
+  // Document title & Schema.org JSON-LD (Always Article + BreadcrumbList; JobPosting conditionally + FAQPage)
   useEffect(() => {
     const prevTitle = document.title;
-    document.title = `${item.title} | CSC DOST`;
+    document.title = formatPostSeoTitle(item);
 
-    const scriptId = 'csc-post-structured-schema';
-    let scriptEl = document.getElementById(scriptId) as HTMLScriptElement | null;
-    if (!scriptEl) {
-      scriptEl = document.createElement('script');
-      scriptEl.id = scriptId;
-      scriptEl.type = 'application/ld+json';
-      document.head.appendChild(scriptEl);
-    }
+    const articleScriptId = 'csc-post-article-schema';
+    const breadcrumbScriptId = 'csc-post-breadcrumb-schema';
+    const jobScriptId = 'csc-post-structured-schema';
+    const faqScriptId = 'csc-post-faq-schema';
+
+    const upsertSchema = (id: string, payload: unknown) => {
+      let el = document.getElementById(id) as HTMLScriptElement | null;
+      if (!el) {
+        el = document.createElement('script');
+        el.id = id;
+        el.type = 'application/ld+json';
+        document.head.appendChild(el);
+      }
+      el.textContent = JSON.stringify(payload);
+    };
+
+    const articlePayload = {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: item.title,
+      description: item.summary || item.shortInfo || item.title,
+      articleSection: orgName,
+      datePublished: toIsoDate(item.postDate) || undefined,
+      dateModified:
+        toIsoDate(item.updatedAt || item.verification?.lastVerified || item.postDate) || undefined,
+      author: [
+        {
+          '@type': 'Organization',
+          name: 'CSC DOST',
+          url: SITE_ORIGIN,
+        },
+        {
+          '@type': 'Person',
+          name: 'Wasim Ahmad Khanday',
+        },
+      ],
+      publisher: {
+        '@type': 'Organization',
+        name: 'CSC DOST',
+        url: SITE_ORIGIN,
+      },
+      mainEntityOfPage: {
+        '@type': 'WebPage',
+        '@id': `${SITE_ORIGIN}/post/${item.id}`,
+      },
+    };
+    upsertSchema(articleScriptId, articlePayload);
+
+    const breadcrumbListItems = [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
+      ...breadcrumbSegments.map((seg, idx) => ({
+        '@type': 'ListItem',
+        position: idx + 2,
+        name: seg.label,
+        item: seg.href ? `${SITE_ORIGIN}${seg.href}` : `${SITE_ORIGIN}/post/${item.id}`,
+      })),
+    ];
+    upsertSchema(breadcrumbScriptId, {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: breadcrumbListItems,
+    });
 
     const emitJobSchema =
       (effectiveType === 'application' || effectiveType === 'upcoming') &&
@@ -229,65 +307,41 @@ export default function SarkariDedicatedPageView({
       !statusInfo.isClosed &&
       !statusInfo.isCancelled;
 
-    const schemaPayload = emitJobSchema
-      ? {
-          '@context': 'https://schema.org',
-          '@type': 'JobPosting',
-          title: item.title,
-          description: item.summary || item.shortInfo || item.title,
-          datePosted: toIsoDate(item.postDate) || '2026-11-01',
-          ...(toIsoDate(item.applyEnd || item.lastDate)
-            ? { validThrough: toIsoDate(item.applyEnd || item.lastDate) }
-            : {}),
-          employmentType: 'FULL_TIME',
-          hiringOrganization: {
-            '@type': 'Organization',
-            name: orgName,
-            sameAs: portalUrl,
+    const existingJobEl = document.getElementById(jobScriptId);
+    if (emitJobSchema) {
+      upsertSchema(jobScriptId, {
+        '@context': 'https://schema.org',
+        '@type': 'JobPosting',
+        title: item.title,
+        description: item.summary || item.shortInfo || item.title,
+        datePosted: toIsoDate(item.postDate) || '2026-11-01',
+        ...(toIsoDate(item.applyEnd || item.lastDate)
+          ? { validThrough: toIsoDate(item.applyEnd || item.lastDate) }
+          : {}),
+        employmentType: 'FULL_TIME',
+        hiringOrganization: {
+          '@type': 'Organization',
+          name: orgName,
+          sameAs: portalUrl,
+        },
+        jobLocation: {
+          '@type': 'Place',
+          address: {
+            '@type': 'PostalAddress',
+            addressRegion: 'Jammu and Kashmir',
+            addressCountry: 'IN',
           },
-          jobLocation: {
-            '@type': 'Place',
-            address: {
-              '@type': 'PostalAddress',
-              addressRegion: 'Jammu and Kashmir',
-              addressCountry: 'IN',
-            },
-          },
-          directApply: false,
-          url: `https://www.cscdost.com/post/${item.id}`,
-        }
-      : {
-          '@context': 'https://schema.org',
-          '@type': 'Article',
-          headline: item.title,
-          description: item.summary || item.shortInfo || item.title,
-          articleSection: orgName,
-          datePublished: toIsoDate(item.postDate) || undefined,
-          dateModified: toIsoDate(item.updatedAt || item.postDate) || undefined,
-          author: {
-            '@type': 'Organization',
-            name: 'CSC DOST',
-            url: 'https://www.cscdost.com',
-          },
-          mainEntityOfPage: {
-            '@type': 'WebPage',
-            '@id': `https://www.cscdost.com/post/${item.id}`,
-          },
-        };
+        },
+        directApply: false,
+        url: `${SITE_ORIGIN}/post/${item.id}`,
+      });
+    } else if (existingJobEl) {
+      existingJobEl.remove();
+    }
 
-    scriptEl.textContent = JSON.stringify(schemaPayload);
-
-    // Emit FAQPage JSON-LD strictly for FAQ section visibility
-    const faqScriptId = 'csc-post-faq-schema';
-    let faqScriptEl = document.getElementById(faqScriptId) as HTMLScriptElement | null;
+    const existingFaqEl = document.getElementById(faqScriptId);
     if (faqItems.length > 0) {
-      if (!faqScriptEl) {
-        faqScriptEl = document.createElement('script');
-        faqScriptEl.id = faqScriptId;
-        faqScriptEl.type = 'application/ld+json';
-        document.head.appendChild(faqScriptEl);
-      }
-      faqScriptEl.textContent = JSON.stringify({
+      upsertSchema(faqScriptId, {
         '@context': 'https://schema.org',
         '@type': 'FAQPage',
         mainEntity: faqItems.map((fq) => ({
@@ -299,14 +353,16 @@ export default function SarkariDedicatedPageView({
           },
         })),
       });
-    } else if (faqScriptEl) {
-      faqScriptEl.remove();
+    } else if (existingFaqEl) {
+      existingFaqEl.remove();
     }
 
     return () => {
       document.title = prevTitle;
       try {
-        document.getElementById(scriptId)?.remove();
+        document.getElementById(articleScriptId)?.remove();
+        document.getElementById(breadcrumbScriptId)?.remove();
+        document.getElementById(jobScriptId)?.remove();
         document.getElementById(faqScriptId)?.remove();
       } catch {}
     };
@@ -320,6 +376,7 @@ export default function SarkariDedicatedPageView({
     statusInfo.isOpen,
     statusInfo.isUpcoming,
     faqItems,
+    breadcrumbSegments,
   ]);
 
   const navigateInternal = (path: string) => {
@@ -391,13 +448,23 @@ export default function SarkariDedicatedPageView({
         </div>
 
         <div className="pb-body">
-          {/* Contextual Callouts (Duplicate continuity / Cancellation / Verification / Agniveer guide notice) */}
-          {(item.duplicateOfId ||
+          {/* Contextual Callouts (Stale Closed / Duplicate continuity / Cancellation / Verification / Agniveer guide notice) */}
+          {(staleOver90Days ||
+            item.duplicateOfId ||
             statusInfo.isCancelled ||
             statusInfo.verificationStatus === 'needs_verification' ||
             item.id === 'army-agniveer-rally-guide-2026' ||
             item.isTentative) && (
             <div className="pb-status-stack">
+              {staleOver90Days && (
+                <div className="pb-notice pb-notice--closed" role="status">
+                  <strong>Closed</strong> — The submission deadline passed{' '}
+                  {daysSinceClosing ? `${daysSinceClosing} days ago` : 'over 90 days ago'} (
+                  {formatLongDate(item.applyEnd || item.lastDate) || item.applyEnd || item.lastDate}).
+                  This bulletin stays live for historical reference only.
+                </div>
+              )}
+
               {item.duplicateOfId && (
                 <div className="pb-notice pb-notice--info" role="note">
                   <strong>Updated notice available.</strong>{' '}
@@ -535,6 +602,21 @@ export default function SarkariDedicatedPageView({
               </div>
             ))}
           </section>
+
+          {/* QUICK SUMMARY SECTION */}
+          {enrichment.quickSummary.length > 0 && (
+            <section className="pb-section" aria-labelledby="pb-sec-quick-summary">
+              <h2 id="pb-sec-quick-summary" className="pb-h2">
+                <span className="pb-sec-num">{nextSectionNumber()}.</span>
+                <span>Quick summary</span>
+              </h2>
+              <ul className="pb-prose-list">
+                {enrichment.quickSummary.map((line, idx) => (
+                  <li key={`qs-${idx}`}>{line}</li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           {/* 5+. NUMBERED SECTION 1: IMPORTANT DATES & FEE NOTICE */}
           {showDatesSection && (
@@ -831,6 +913,58 @@ export default function SarkariDedicatedPageView({
             </section>
           )}
 
+          {/* NUMBERED SECTION: WHO SHOULD APPLY / WHO SHOULD NOT APPLY */}
+          <section className="pb-section" aria-labelledby="pb-sec-applicability">
+            <h2 id="pb-sec-applicability" className="pb-h2">
+              <span className="pb-sec-num">{nextSectionNumber()}.</span>
+              <span>Applicant suitability</span>
+            </h2>
+            <div className="pb-two-col-lists">
+              <div className="pb-guidance-card pb-guidance-card--apply">
+                <h3 className="pb-subh3">Who should apply</h3>
+                <ul className="pb-prose-list">
+                  {enrichment.whoShouldApply.map((line, idx) => (
+                    <li key={`wsa-${idx}`}>{line}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="pb-guidance-card pb-guidance-card--skip">
+                <h3 className="pb-subh3">Who should not apply</h3>
+                <ul className="pb-prose-list">
+                  {enrichment.whoShouldNotApply.map((line, idx) => (
+                    <li key={`wsna-${idx}`}>{line}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          {/* NUMBERED SECTION: COMMON MISTAKES TO AVOID */}
+          <section className="pb-section" aria-labelledby="pb-sec-mistakes">
+            <h2 id="pb-sec-mistakes" className="pb-h2">
+              <span className="pb-sec-num">{nextSectionNumber()}.</span>
+              <span>Common mistakes to avoid</span>
+            </h2>
+            <ul className="pb-prose-list">
+              {enrichment.commonMistakes.map((line, idx) => (
+                <li key={`cm-${idx}`}>{line}</li>
+              ))}
+            </ul>
+          </section>
+
+          {/* NUMBERED SECTION: WHAT TO DO NEXT */}
+          <section className="pb-section" aria-labelledby="pb-sec-next">
+            <h2 id="pb-sec-next" className="pb-h2">
+              <span className="pb-sec-num">{nextSectionNumber()}.</span>
+              <span>What to do next</span>
+            </h2>
+            <ol className="pb-ol">
+              {enrichment.whatToDoNext.map((step, idx) => (
+                <li key={`wtdn-${idx}`}>{step}</li>
+              ))}
+            </ol>
+          </section>
+
           {/* Overflow-safe AdSense Slot above FAQ */}
           <div className="pb-ad-wrap">
             <AdSlot />
@@ -854,6 +988,60 @@ export default function SarkariDedicatedPageView({
                     </summary>
                     <div className="pb-faq-answer">{faq.answer}</div>
                   </details>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* NUMBERED SECTION: SOURCE AND LAST VERIFIED */}
+          <section className="pb-section" aria-labelledby="pb-sec-source">
+            <h2 id="pb-sec-source" className="pb-h2">
+              <span className="pb-sec-num">{nextSectionNumber()}.</span>
+              <span>Source and last verified</span>
+            </h2>
+            <div className="pb-source-box">
+              <div>
+                <strong>Official authority:</strong> {orgName} (
+                <a href={enrichment.portalUrl} target="_blank" rel="noopener noreferrer">
+                  {enrichment.sourceDomain}
+                </a>
+                )
+              </div>
+              <div>
+                <strong>Last verified:</strong> {enrichment.verifiedDateText}
+              </div>
+              <div>
+                Always cross-check live dates, category relaxations, and PDF corrigenda directly on the official source before payment or submission.
+              </div>
+            </div>
+          </section>
+
+          {/* NUMBERED SECTION: RELATED NOTICES */}
+          {relatedNotices.length > 0 && (
+            <section className="pb-section" aria-labelledby="pb-sec-related">
+              <h2 id="pb-sec-related" className="pb-h2">
+                <span className="pb-sec-num">{nextSectionNumber()}.</span>
+                <span>Related notices</span>
+              </h2>
+              <div className="pb-related-list">
+                {relatedNotices.map((rel) => (
+                  <a
+                    key={rel.id}
+                    href={`/post/${rel.id}`}
+                    onClick={(e) => {
+                      if (!e.metaKey && !e.ctrlKey && e.button === 0) {
+                        e.preventDefault();
+                        navigateInternal(`/post/${rel.id}`);
+                      }
+                    }}
+                    className="pb-related-card"
+                  >
+                    <div className="pb-related-top">
+                      <span className="pb-related-tag">{rel.relationLabel}</span>
+                      {rel.dateText && <span>Date / Closing: {rel.dateText}</span>}
+                    </div>
+                    <div className="pb-related-title">{rel.title} →</div>
+                  </a>
                 ))}
               </div>
             </section>
@@ -923,6 +1111,22 @@ export default function SarkariDedicatedPageView({
               </button>
             </div>
           </section>
+
+          {/* EDITORIAL AUTHOR BOX */}
+          <div className="pb-author-box">
+            <strong>Editorial review:</strong> {EDITORIAL_AUTHOR_TEXT}.{' '}
+            <a
+              href="/about-us"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && e.button === 0) {
+                  e.preventDefault();
+                  navigateInternal('/about-us');
+                }
+              }}
+            >
+              Read about our editorial process &amp; VLE verification →
+            </a>
+          </div>
 
           {/* 11. PUBLISHER BLOCK */}
           <footer aria-label="Bulletin publisher details" className="pb-publisher">

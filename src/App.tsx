@@ -34,13 +34,22 @@ const NotificationCenterModal = lazy(() => import('./components/NotificationCent
 const NotificationPreferencesModal = lazy(() => import('./components/NotificationPreferencesModal'));
 const SarkariResultDesk = lazy(() => import('./components/SarkariResultDesk'));
 const CategoryPage = lazy(() => import('./components/category/CategoryPage'));
+const ArchivePageView = lazy(() => import('./components/ArchivePageView'));
 const DevThumbnailsPreview = lazy(() => import('./components/DevThumbnailsPreview'));
+import CookieNotice from './components/CookieNotice';
 import { TOOLS_LIST } from './components/tools/toolsData';
 import { GUIDE_ARTICLES } from './data/guidesData';
+import { KNOWN_DUPLICATE_MAP } from './data/sarkariMigration';
+import { isStaleOver90Days } from './utils/postLifecycle';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { getPostOgImageUrl } from './utils/postThumbnailMeta';
 import {
   applyClientSeo,
+  ARCHIVE_SEO,
+  formatPostSeoDescription,
+  formatPostSeoTitle,
+  formatSeoDescription,
+  formatSeoTitle,
   getCategorySeoMeta,
   getSchemeSeoMeta,
   DEADLINES_SEO,
@@ -138,6 +147,8 @@ export default function App() {
   const [educationSubRoute, setEducationSubRoute] = useState<'all' | 'ignou'>('all');
   const [activeSchemeId, setActiveSchemeId] = useState<string | null>(null);
   const [isNotFoundView, setIsNotFoundView] = useState<boolean>(false);
+  const [isArchiveView, setIsArchiveView] = useState<boolean>(false);
+  const [isStaffRoute, setIsStaffRoute] = useState<boolean>(false);
   const [isDevThumbnailsView, setIsDevThumbnailsView] = useState<boolean>(false);
 
   const [activeLegalPage, setActiveLegalPage] = useState<LegalPageType | null>(null);
@@ -241,8 +252,10 @@ export default function App() {
       // Clean query parameters and trailing slashes for clean route matching
       const cleanPath = (effectivePath.split('#')[0].split('?')[0] || '/').replace(/\/+$/, '') || '/';
 
-      // Reset client not found & scheme flags before evaluating current path
+      // Reset client not found, archive & scheme flags before evaluating current path
       setIsNotFoundView(false);
+      setIsArchiveView(false);
+      setIsStaffRoute(false);
       setActiveSchemeId(null);
 
       // 0. Transparent Migration for Legacy Shared Fragment URLs if supported
@@ -332,6 +345,7 @@ export default function App() {
         rawHash === '#/staff'
       ) {
         setIsAdminView(true);
+        setIsStaffRoute(cleanPath === '/staff' || rawHash === '#staff' || rawHash === '#/staff');
         setIsDevThumbnailsView(false);
         setCategoryView(null);
         setIsApplyView(false);
@@ -342,6 +356,7 @@ export default function App() {
         return;
       } else {
         setIsAdminView(false);
+        setIsStaffRoute(false);
       }
 
       // 2b. Check Dev Thumbnail Preview route (/dev/thumbnails) - internal QA only (noindex)
@@ -359,6 +374,25 @@ export default function App() {
         return;
       } else {
         setIsDevThumbnailsView(false);
+      }
+
+      // 2c. Dedicated Archive Route (/archive)
+      if (cleanPath === '/archive') {
+        setIsArchiveView(true);
+        setCategoryView(null);
+        setIsAdminView(false);
+        setIsApplyView(false);
+        setIsTrackView(false);
+        setIsToolsView(false);
+        setActiveJobPost(null);
+        setActiveServicePost(null);
+        setActiveLegalPage(null);
+        try {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch {}
+        return;
+      } else {
+        setIsArchiveView(false);
       }
 
       // 3. Dedicated category routes: /jobs, /education, /education/ignou, /schemes, /services, /calculators, /deadlines
@@ -804,7 +838,11 @@ export default function App() {
       return;
     }
     if (isAdminView) {
-      applyClientSeo(PRIVATE_NOINDEX_META.admin);
+      applyClientSeo(isStaffRoute ? PRIVATE_NOINDEX_META.staff : PRIVATE_NOINDEX_META.admin);
+      return;
+    }
+    if (isArchiveView) {
+      applyClientSeo(ARCHIVE_SEO);
       return;
     }
     if (isApplyView) {
@@ -820,13 +858,15 @@ export default function App() {
       return;
     }
     if (activeJobPost) {
+      const isNoindexPost =
+        isStaleOver90Days(activeJobPost) ||
+        Boolean(activeJobPost.duplicateOfId) ||
+        Boolean(KNOWN_DUPLICATE_MAP[activeJobPost.id]);
       applyClientSeo({
-        title: `${activeJobPost.title} | CSC DOST`,
-        description:
-          activeJobPost.shortInfo ||
-          `View official notification dates, eligibility and application details for ${activeJobPost.title} on CSC DOST.`,
+        title: formatPostSeoTitle(activeJobPost),
+        description: formatPostSeoDescription(activeJobPost),
         canonicalUrl: `${SITE_ORIGIN}/post/${activeJobPost.id}`,
-        robots: 'index, follow',
+        robots: isNoindexPost ? 'noindex, follow' : 'index, follow',
         ogType: 'article',
         ogImage: getPostOgImageUrl(activeJobPost, SITE_ORIGIN),
       });
@@ -834,8 +874,10 @@ export default function App() {
     }
     if (activeServicePost) {
       applyClientSeo({
-        title: `${activeServicePost.name} | CSC DOST`,
-        description: `${activeServicePost.description} Estimated time: ${activeServicePost.estimatedTime}.`,
+        title: formatSeoTitle(activeServicePost.name),
+        description: formatSeoDescription(
+          `${activeServicePost.description} Estimated time: ${activeServicePost.estimatedTime}.`
+        ),
         canonicalUrl: `${SITE_ORIGIN}/service/${activeServicePost.id}`,
         robots: 'index, follow',
         ogType: 'website',
@@ -847,8 +889,8 @@ export default function App() {
         const matchedTool = TOOLS_LIST.find((t) => t.id === activeToolId);
         if (matchedTool) {
           applyClientSeo({
-            title: `${matchedTool.name} – Document Tools | CSC DOST`,
-            description: matchedTool.shortDescription,
+            title: formatSeoTitle(`${matchedTool.name} - Tools`),
+            description: formatSeoDescription(matchedTool.shortDescription),
             canonicalUrl: `${SITE_ORIGIN}/tools/${matchedTool.id}`,
             robots: 'index, follow',
             ogType: 'website',
@@ -881,6 +923,8 @@ export default function App() {
     isDevThumbnailsView,
     activeLegalPage,
     isAdminView,
+    isStaffRoute,
+    isArchiveView,
     isApplyView,
     isTrackView,
     activeJobPost,
@@ -932,6 +976,8 @@ export default function App() {
 
   const handleGoHome = () => {
     setIsAdminView(false);
+    setIsStaffRoute(false);
+    setIsArchiveView(false);
     setIsDevThumbnailsView(false);
     setIsToolsView(false);
     setCategoryView(null);
@@ -993,6 +1039,8 @@ export default function App() {
 
   const currentNavPath = activeLegalPage
     ? LEGAL_PAGE_CONFIG[activeLegalPage].path
+    : isArchiveView
+    ? '/archive'
     : activeJobPost
     ? `/post/${activeJobPost.id}`
     : activeServicePost
@@ -1011,6 +1059,7 @@ export default function App() {
 
   const isHomepageView =
     !isAdminView &&
+    !isArchiveView &&
     !isDevThumbnailsView &&
     !activeLegalPage &&
     !isApplyView &&
@@ -1080,7 +1129,6 @@ export default function App() {
             cafeName={settings.cafeName}
             currentPath={currentNavPath}
             onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
-            onOpenAdmin={handleOpenStaffPortal}
             onHomeClick={handleGoHome}
             onOpenNotificationCenter={() => {
               setIsNotificationCenterOpen(true);
@@ -1107,6 +1155,14 @@ export default function App() {
             <DevThumbnailsPreview
               posts={syncedPosts}
               onOpenPost={handleOpenJobPage}
+              onBackHome={handleGoHome}
+            />
+          </Suspense>
+        ) : isArchiveView ? (
+          <Suspense fallback={<SectionSkeleton height="min-h-[420px]" title="Loading Archived Notices..." />}>
+            <ArchivePageView
+              onOpenPost={handleOpenJobPage}
+              onNavigateRoute={navigateToPath}
               onBackHome={handleGoHome}
             />
           </Suspense>
@@ -1165,6 +1221,7 @@ export default function App() {
             <Suspense fallback={<PageRouteSkeleton message="Loading Official Sarkari Notification..." />}>
               <SarkariDedicatedPageView
                 item={activeJobPost}
+                allPosts={syncedPosts}
                 onBack={handleCloseJobPage}
                 onNavigateRoute={navigateToPath}
                 onApplyService={(service) => {
@@ -1391,7 +1448,6 @@ export default function App() {
           <Footer 
             cafeName={settings.cafeName} 
             onOpenPrivacyPolicy={(tab) => openLegalModal(tab)}
-            onOpenAdmin={handleOpenStaffPortal}
           />
         </Suspense>
       )}
@@ -1567,6 +1623,10 @@ export default function App() {
           onNavigate={handleBottomNavNavigate}
           unreadAlertsCount={unreadNotificationCount}
         />
+      )}
+
+      {!isAdminView && (
+        <CookieNotice onOpenPrivacy={() => navigateToPath('/privacy-policy')} />
       )}
 
       </div>
