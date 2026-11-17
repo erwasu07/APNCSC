@@ -211,6 +211,7 @@ export function isPublishedSarkariItem(item: SarkariItem): boolean {
 }
 
 export function isIgnouItem(item: SarkariItem): boolean {
+  if (item.section === 'jobs') return false;
   return item.category === 'ignou' || item.institution === 'IGNOU';
 }
 
@@ -233,6 +234,616 @@ export function parseSarkariDateSortValue(dateStr?: string): number {
 }
 
 const RAW_SARKARI_DATA: SarkariItem[] = [
+  // 📰 DAILY OFFICIAL UPDATE VERIFIED 16/11/2026 IST (Approved & Published)
+  {
+    id: 'jkssb-accounts-assistant-finance-answer-key-2026',
+    title: 'JKSSB Accounts Assistant Answer Key Notice 2026',
+    category: 'jkssb',
+    org: 'JKSSB',
+    department: 'Finance Department, Government of Jammu & Kashmir',
+    postType: 'Result',
+    noticeType: 'answer_key',
+    stage: 'objection_window',
+    publicationStatus: 'published',
+    isNew: true,
+    postDate: '15/11/2026',
+    documentDate: '15/11/2026',
+    startDate: '16/11/2026',
+    lastDate: '18/11/2026',
+    closingTime: '17:00 IST',
+    advertisementNo: 'JKSSB-COE0EXAM(UT)/27/2026-03 (7987676) | Advt No. 10 of 2025 (Item No. 271)',
+    recruitmentYear: '2025',
+    shortInfo: 'JKSSB released the Provisional Answer Key (Series A-D) for Accounts Assistant (Finance) OMR exam held 15/11/2026; offline objections open from 16/11/2026.',
+    ageLimit: 'Not stated in the notice',
+    eligibility: 'Candidates who appeared in the OMR Based Written Examination for Accounts Assistant (Finance Dept), Advt No. 10 of 2025 (Item No. 271) on 15/11/2026.',
+    totalPosts: 'Not stated in the notice',
+    officialLink: 'https://jkssb.nic.in/Pdf/PROV_ANSKEY_FAA_15112026.pdf',
+    officialNotificationUrl: 'https://jkssb.nic.in/Pdf/PROV_ANSKEY_FAA_15112026.pdf',
+    officialApplicationUrl: 'https://jkssb.nic.in/WhatsNew.html',
+    fees: {
+      genObc: '₹200/- per question (Demand Draft in favour of Accounts Officer, JKSSB; refundable if genuine/correct)',
+      scSt: '₹200/- per question (No category exemption stated in the notice)'
+    },
+    paymentInstructions: '₹200/- per question via Demand Draft in favour of Accounts Officer, J&K Services Selection Board, submitted offline with Annexure B proforma and hard-copy proof.',
+    documentsRequired: [
+      'Filled Objection Proforma (Annexure B — separate page for each question)',
+      'Hard copies of documentary proof / evidence substantiating the objection',
+      'Demand Draft of ₹200/- per question in favour of Accounts Officer, JKSSB',
+      'Candidate bank account details (16-digit account number & IFSC) for refund processing'
+    ],
+    selectionProcess: [
+      'OMR Based Written Examination conducted on 15/11/2026 (120 questions across Series A, B, C, D).',
+      'Offline objection submission at JKSSB Jammu (Muthi, Akhnoor Road) or Srinagar (Zamzam Building, Rambagh) for 3 working days from 16/11/2026 (11:00 AM to 05:00 PM).',
+      'Final revision of Answer Key for all candidates upon Board verification of valid objections.'
+    ],
+    faq: [
+      {
+        question: 'How can candidates challenge the JKSSB Accounts Assistant (Finance) Provisional Answer Key 2026?',
+        answer: 'Objections can be submitted in offline mode only at the JKSSB offices in Muthi, Akhnoor Road, Jammu or Zamzam Building, Rambagh, Srinagar during three working days starting from 16/11/2026 between 11:00 AM and 05:00 PM.'
+      },
+      {
+        question: 'What is the objection fee per question?',
+        answer: 'Candidates must attach a Demand Draft of ₹200/- per question in favour of the Accounts Officer, J&K Services Selection Board, which is refundable if the objection is found genuine/correct.'
+      }
+    ],
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '16/11/2026',
+      lastVerified: '16/11/2026',
+      officialNotificationUrl: 'https://jkssb.nic.in/Pdf/PROV_ANSKEY_FAA_15112026.pdf',
+      officialApplicationUrl: 'https://jkssb.nic.in/WhatsNew.html',
+      advertisementNo: 'JKSSB-COE0EXAM(UT)/27/2026-03 (7987676) | Advt No. 10 of 2025',
+      recruitmentYear: '2025',
+      verifiedOpeningDate: '16/11/2026',
+      verifiedClosingDate: '18/11/2026',
+      closingTime: '17:00 IST',
+      sourceHistory: [
+        'Official JKSSB notice PROV_ANSKEY_FAA_15112026.pdf (dated 15/11/2026) verified on 16/11/2026.'
+      ]
+    }
+  },
+  {
+    id: 'jkssb-head-assistant-home-final-selection-2026',
+    title: 'JKSSB Head Assistant Final Selection List 2026',
+    category: 'jkssb',
+    org: 'JKSSB',
+    department: 'Home Department, Government of Jammu & Kashmir',
+    postType: 'Result',
+    noticeType: 'result',
+    stage: 'result',
+    publicationStatus: 'published',
+    isNew: true,
+    postDate: '16/11/2026',
+    documentDate: '12/11/2026',
+    startDate: '16/11/2026',
+    lastDate: 'Informational',
+    advertisementNo: 'Notification No. 36-Selection of 2026 | JKSSB-Scry/23/2025-03 (E-7731861) | Advt 06/2020 Item 214',
+    recruitmentYear: '2020',
+    shortInfo: 'JKSSB uploaded the Final Selection List (Notification 36-Selection of 2026) for 01 Head Assistant post (Home Dept, District Reasi) under Advt 06/2020.',
+    ageLimit: 'Not stated in the notice',
+    eligibility: 'Deemed Graduate from Defence Services / recognized University; retired JCO or equivalent rank from Navy/Air Force; preferably knowledge of Accounts; exemplary character per discharge book; qualified entrance test.',
+    totalPosts: '01 Post (District Reasi: OM 01)',
+    officialLink: 'https://jkssb.nic.in/Pdf/Final_Selection_list_HA_16112026.pdf',
+    officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Final_Selection_list_HA_16112026.pdf',
+    officialApplicationUrl: 'https://jkssb.nic.in/WhatsNew.html',
+    fees: {
+      genObc: 'Not stated in the notice',
+      scSt: 'Not stated in the notice'
+    },
+    documentsRequired: [
+      'Original certificates and self-declaration already submitted during DV (formal recommendation forwarded separately to Home Department)'
+    ],
+    selectionProcess: [
+      'OMR based written examination held on 02/02/2025; result/score-sheet notified on 15/04/2025.',
+      'Document Verification conducted on 07/05/2025 and supplementary DV on 17/06/2025.',
+      'Provisional Selection List notified on 05/06/2026; Final Selection List approved in 364th Board meeting on 16/09/2026 and notified on 12/11/2026 (uploaded 16/11/2026).'
+    ],
+    faq: [
+      {
+        question: 'How many candidates were selected for JKSSB Head Assistant (Advt 06/2020 Item 214)?',
+        answer: 'One candidate (Roll No. 2130001, Score 64.50) was selected under the Open Merit (OM) category for District Cadre Reasi. The OM Waiting List remained unfilled due to non-availability of a suitable candidate.'
+      }
+    ],
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '16/11/2026',
+      lastVerified: '16/11/2026',
+      officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Final_Selection_list_HA_16112026.pdf',
+      officialApplicationUrl: 'https://jkssb.nic.in/WhatsNew.html',
+      advertisementNo: 'Notification No. 36-Selection of 2026 | Advt 06/2020 Item 214',
+      recruitmentYear: '2020',
+      sourceHistory: [
+        'Official JKSSB scanned PDF Final_Selection_list_HA_16112026.pdf (notified 12/11/2026, uploaded 16/11/2026) verified visually on 16/11/2026.'
+      ]
+    }
+  },
+  {
+    id: 'jkssb-telephone-operator-final-selection-2026',
+    title: 'JKSSB Telephone Operator Selection List 2026',
+    category: 'jkssb',
+    org: 'JKSSB',
+    department: 'Estates Department, Government of Jammu & Kashmir',
+    postType: 'Result',
+    noticeType: 'result',
+    stage: 'result',
+    publicationStatus: 'published',
+    isNew: true,
+    postDate: '16/11/2026',
+    documentDate: '12/11/2026',
+    startDate: '16/11/2026',
+    lastDate: 'Informational',
+    advertisementNo: 'Notification No. 38-Selection of 2026 | JKSSB-Scry/22/2025-06 (E-7731805) | Advt 04/2022 Item 130',
+    recruitmentYear: '2022',
+    shortInfo: 'JKSSB uploaded the Final Selection List (Notification 38-Selection of 2026) for 03 Telephone Operator posts in Estates Department under Advt 04 of 2022.',
+    ageLimit: 'Not stated in the notice',
+    eligibility: 'Matric with ITI/diploma in electronics and communication trade.',
+    totalPosts: '03 Posts (UT Cadre: OM 02, SC 01)',
+    officialLink: 'https://jkssb.nic.in/Pdf/Final_Selection_list_TelephoneOperator_16112026.pdf',
+    officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Final_Selection_list_TelephoneOperator_16112026.pdf',
+    officialApplicationUrl: 'https://jkssb.nic.in/WhatsNew.html',
+    fees: {
+      genObc: 'Not stated in the notice',
+      scSt: 'Not stated in the notice'
+    },
+    documentsRequired: [
+      'Verification of original certificates by Indenting Department (Estates Department) upon formal recommendation'
+    ],
+    selectionProcess: [
+      'OMR based written examination held on 02/03/2025; result declared on 14/05/2025.',
+      'Document Verification held on 04/06/2025 and supplementary DV from 24/06/2025 to 25/06/2025.',
+      'Provisional Selection List notified on 26/05/2026; Final Selection List approved in 364th Board meeting on 16/09/2026 and notified on 12/11/2026 (uploaded 16/11/2026).'
+    ],
+    faq: [
+      {
+        question: 'How many vacancies are covered in the JKSSB Telephone Operator Final Selection List 2026?',
+        answer: 'Three UT Cadre posts (02 Open Merit and 01 SC) in the Estates Department under Advt No. 04 of 2022 (Item No. 130) are covered, with all 3 candidates selected in Annexure-A.'
+      }
+    ],
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '16/11/2026',
+      lastVerified: '16/11/2026',
+      officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Final_Selection_list_TelephoneOperator_16112026.pdf',
+      officialApplicationUrl: 'https://jkssb.nic.in/WhatsNew.html',
+      advertisementNo: 'Notification No. 38-Selection of 2026 | Advt 04/2022 Item 130',
+      recruitmentYear: '2022',
+      sourceHistory: [
+        'Official JKSSB scanned PDF Final_Selection_list_TelephoneOperator_16112026.pdf (notified 12/11/2026, uploaded 16/11/2026) verified visually on 16/11/2026.'
+      ]
+    }
+  },
+  {
+    id: 'jkssb-screen-technician-final-selection-2026',
+    title: 'JKSSB Screen Technician Selection List 2026',
+    category: 'jkssb',
+    org: 'JKSSB',
+    department: 'Health & Medical Education Department, Government of Jammu & Kashmir',
+    postType: 'Result',
+    noticeType: 'result',
+    stage: 'result',
+    publicationStatus: 'published',
+    isNew: true,
+    postDate: '16/11/2026',
+    documentDate: '12/11/2026',
+    startDate: '16/11/2026',
+    lastDate: 'Informational',
+    advertisementNo: 'Notification No. 37-Selection of 2026 | JKSSB-Scry/21/2025-03 (E-7731566) | Advt 02/2021 Item 309',
+    recruitmentYear: '2021',
+    shortInfo: 'JKSSB issued the Final Selection List (Notification 37-Selection of 2026) for 01 Screen Technician post (H&ME Dept, Div. Jammu) under Advt 02 of 2021.',
+    ageLimit: 'Not stated in the notice',
+    eligibility: 'Matric (as per SRO-20).',
+    totalPosts: '01 Post (Div. Jammu: OM 01)',
+    officialLink: 'https://jkssb.nic.in/Pdf/Final_Selection_list_ScreenTechnician_16112026.pdf',
+    officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Final_Selection_list_ScreenTechnician_16112026.pdf',
+    officialApplicationUrl: 'https://jkssb.nic.in/WhatsNew.html',
+    fees: {
+      genObc: 'Not stated in the notice',
+      scSt: 'Not stated in the notice'
+    },
+    documentsRequired: [
+      'Original Matric/qualification certificates subject to verification by Health & Medical Education Department'
+    ],
+    selectionProcess: [
+      'OMR based written examination held on 09/02/2025; result declared on 18/04/2025.',
+      'Document Verification held on 08/05/2025 and supplementary DV w.e.f. 19/06/2025.',
+      'Provisional Selection List notified on 04/12/2025; Final Selection List approved on 16/09/2026 and notified on 12/11/2026 (uploaded 16/11/2026).'
+    ],
+    faq: [
+      {
+        question: 'Does Notification No. 37-Selection of 2026 include a waiting list for Screen Technician?',
+        answer: 'Yes, Annexure-A lists 01 selected candidate under OM (Roll No. 1320289, Score 74.00) and 01 candidate in the OM Waiting List (Roll No. 1400051, Score 73.75).'
+      }
+    ],
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '16/11/2026',
+      lastVerified: '16/11/2026',
+      officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Final_Selection_list_ScreenTechnician_16112026.pdf',
+      officialApplicationUrl: 'https://jkssb.nic.in/WhatsNew.html',
+      advertisementNo: 'Notification No. 37-Selection of 2026 | Advt 02/2021 Item 309',
+      recruitmentYear: '2021',
+      sourceHistory: [
+        'Official JKSSB scanned PDF Final_Selection_list_ScreenTechnician_16112026.pdf (notified 12/11/2026, uploaded 16/11/2026) verified visually on 16/11/2026.'
+      ]
+    }
+  },
+  {
+    id: 'ssc-cpo-si-2026-paper1-city-admit-card',
+    title: 'SSC SI CPO 2026 Paper-I City & Admit Card',
+    category: 'ssc_jobs',
+    org: 'SSC',
+    department: 'Staff Selection Commission (SSC)',
+    postType: 'Job',
+    noticeType: 'admit_card',
+    stage: 'admit_card',
+    publicationStatus: 'published',
+    isNew: true,
+    postDate: '13/11/2026',
+    documentDate: '13/11/2026',
+    startDate: '23/11/2026',
+    lastDate: '28/11/2026',
+    advertisementNo: 'Not stated in the notice (SI in Delhi Police and CAPFs Exam, 2026 Paper-I)',
+    recruitmentYear: '2026',
+    shortInfo: 'SSC Paper-I city status is live for SI Delhi Police & CAPFs Exam 2026 (23–28 Nov); affected candidates must upload Class 10 marksheet before 20 Nov.',
+    ageLimit: 'Not stated in the notice',
+    eligibility: 'Candidates scheduled for Paper-I of Sub-Inspector in Delhi Police and CAPFs Examination, 2026. ~21,000 candidates with matriculation discrepancies must upload Class 10 marksheet before 20/11/2026.',
+    totalPosts: 'Not stated in the notice',
+    officialLink: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/City%20live%20CPO%20Exam%20notice_13112026.pdf',
+    officialNotificationUrl: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/City%20live%20CPO%20Exam%20notice_13112026.pdf',
+    officialApplicationUrl: 'https://ssc.gov.in/',
+    fees: {
+      genObc: 'Not stated in the notice',
+      scSt: 'Not stated in the notice'
+    },
+    documentsRequired: [
+      'SSC Candidate Portal Login credentials (ssc.gov.in)',
+      'Class 10 marksheet copy (mandatory upload before 20/11/2026 for ~21,000 candidates with matriculation discrepancies)',
+      'Printed Admission Certificate (available 2-3 days prior to exam date)'
+    ],
+    selectionProcess: [
+      'Log in at https://ssc.gov.in/ to view Paper-I Examination City details.',
+      'Affected candidates (~21,000) with matriculation discrepancies must upload their Class 10 marksheet via City Live / Admit Card Status page before 20/11/2026.',
+      'Download Admission Certificate 2–3 days before respective exam date (Paper-I scheduled 23/11/2026 to 28/11/2026).'
+    ],
+    faq: [
+      {
+        question: 'When will SSC SI CPO 2026 Paper-I Admit Card be available?',
+        answer: 'According to the SSC notice dated 13/11/2026, Paper-I is scheduled from 23 to 28 November 2026 and the Admission Certificate will tentatively be available 2–3 days prior to each candidate’s exam date.'
+      },
+      {
+        question: 'Who needs to upload the Class 10 marksheet before 20 November 2026?',
+        answer: 'Approximately 21,000 candidates whose matriculation qualification details showed discrepancies have been provisionally permitted to appear and must upload their Class 10 marksheet on ssc.gov.in before 20/11/2026.'
+      }
+    ],
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '16/11/2026',
+      lastVerified: '16/11/2026',
+      officialNotificationUrl: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/City%20live%20CPO%20Exam%20notice_13112026.pdf',
+      officialApplicationUrl: 'https://ssc.gov.in/',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '23/11/2026',
+      verifiedClosingDate: '28/11/2026',
+      sourceHistory: [
+        'Official SSC notice City live CPO Exam notice_13112026.pdf (dated 13/11/2026) verified on 16/11/2026.'
+      ]
+    }
+  },
+  {
+    id: 'cus-result-472-ug-4th-sem-backlog-2026',
+    title: 'CUS Result 472: UG 4th Sem Backlog (2022-23)',
+    category: 'cluster_univ',
+    org: 'Cluster University Srinagar',
+    department: 'Office of the Controller of Examinations, Cluster University Srinagar',
+    postType: 'Result',
+    noticeType: 'result',
+    stage: 'result',
+    publicationStatus: 'published',
+    isNew: true,
+    postDate: '16/11/2026',
+    documentDate: '16/11/2026',
+    startDate: '16/11/2026',
+    lastDate: 'Informational',
+    advertisementNo: 'Result Notification No. 472 | CUS/Result/1/IV/472/26',
+    recruitmentYear: '2026',
+    session: 'Batches 2022–2023 (FYUP NEP-2020)',
+    shortInfo: 'Cluster University Srinagar declared Result Notification No. 472 (dated 16/11/2026) for UG 4th Semester Backlog Batches 2022–2023 under FYUP NEP-2020.',
+    ageLimit: 'Not stated in the notice',
+    eligibility: 'Candidates of backlog batches 2022–2023 of U.G. 4th Semester under FYUP of NEP–2020.',
+    totalPosts: 'Not stated in the notice',
+    officialLink: 'https://www.cusrinagar.edu.in/foldermanager/notification/f7c522d047b94ca1b28cb591f0e46d4a.pdf',
+    officialNotificationUrl: 'https://www.cusrinagar.edu.in/foldermanager/notification/f7c522d047b94ca1b28cb591f0e46d4a.pdf',
+    officialApplicationUrl: 'https://www.cusrinagar.edu.in/',
+    fees: {
+      genObc: 'Not stated in the notice',
+      scSt: 'Not stated in the notice'
+    },
+    documentsRequired: [
+      'University Registration / Roll Number to check result at www.cusrinagar.edu.in',
+      'For LO or NA status rectification: Report to the university within 15 days of publication'
+    ],
+    selectionProcess: [
+      'Check Result Notification No. 472 (CUS/Result/1/IV/472/26) on www.cusrinagar.edu.in.',
+      'Students with LO or NA status not updated within 15 days must report to the university for rectification.',
+      'No representation is entertained after 1 year from the date of the result notification.'
+    ],
+    faq: [
+      {
+        question: 'What should students with LO or NA status in CUS Result 472 do?',
+        answer: 'Students whose results show LO or NA and are not updated within 15 days of publication (16/11/2026) must report to Cluster University Srinagar for rectification.'
+      }
+    ],
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '16/11/2026',
+      lastVerified: '16/11/2026',
+      officialNotificationUrl: 'https://www.cusrinagar.edu.in/foldermanager/notification/f7c522d047b94ca1b28cb591f0e46d4a.pdf',
+      officialApplicationUrl: 'https://www.cusrinagar.edu.in/',
+      advertisementNo: 'Result Notification No. 472 | CUS/Result/1/IV/472/26',
+      recruitmentYear: '2026',
+      sourceHistory: [
+        'Official Cluster University Srinagar PDF f7c522d047b94ca1b28cb591f0e46d4a.pdf (dated 16/11/2026) verified on 16/11/2026.'
+      ]
+    }
+  },
+  {
+    id: 'ignou-piu-consultants-recruitment-2026',
+    title: 'IGNOU PIU Contractual Consultants Hiring 2026',
+    category: 'jobs',
+    section: 'jobs',
+    org: 'IGNOU',
+    department: 'Administration Division, Public Information Unit (PIU), IGNOU, New Delhi',
+    postType: 'Job',
+    noticeType: 'recruitment',
+    stage: 'recruitment',
+    publicationStatus: 'published',
+    isNew: true,
+    postDate: '16/11/2026',
+    startDate: '16/11/2026',
+    lastDate: '11/12/2026',
+    advertisementNo: 'Not stated in the notice',
+    recruitmentYear: '2026',
+    shortInfo: 'IGNOU invited offline applications (last date 11/12/2026) for 03 full-time contractual Consultants in Public Information Unit (PIU), New Delhi.',
+    ageLimit: 'Maximum engagement 2 years or up to attaining age of 70 years, whichever is earlier (age as on 11/12/2026)',
+    eligibility: 'PG Diploma in Photography / Advertising & PR / Journalism OR relevant Master’s Degree (Mass Communication, Journalism, Convergent Journalism, Corporate Communication, MBA Marketing, etc.) from a recognised University/Institution plus required experience.',
+    totalPosts: '03 Posts (Photography & Digital Content: 01 | Social Media & Communication: 01 | Journalism: 01)',
+    officialLink: 'https://www.ignou.ac.in/viewFile/AD/notification/Job-AD.pdf',
+    officialNotificationUrl: 'https://www.ignou.ac.in/viewFile/AD/notification/Job-AD.pdf',
+    officialApplicationUrl: 'https://www.ignou.ac.in/announcements/0?nav=1',
+    fees: {
+      genObc: 'Not stated in the notice',
+      scSt: 'Not stated in the notice'
+    },
+    departmentBreakdown: [
+      {
+        department: 'Public Information Unit (PIU), IGNOU New Delhi',
+        postName: 'Consultant - Photography & Digital Content Creation',
+        posts: 1,
+        qualification: 'PG Diploma in Photography or Master’s Degree in Mass Communication/Journalism or related field + DSLR/mirrorless/drone/editing & Reels/Shorts experience',
+        fee: '₹40,000–60,000/month'
+      },
+      {
+        department: 'Public Information Unit (PIU), IGNOU New Delhi',
+        postName: 'Consultant - Social Media & Communication',
+        posts: 1,
+        qualification: 'PG Diploma in Advertising & PR or Master’s Degree in Mass Comm/Convergent Journalism/New Media/Marketing or related field + SEO/Meta Ads/LinkedIn skills',
+        fee: '₹40,000–60,000/month'
+      },
+      {
+        department: 'Public Information Unit (PIU), IGNOU New Delhi',
+        postName: 'Consultant - Journalism',
+        posts: 1,
+        qualification: 'PG Diploma in Journalism or Master’s Degree in Mass Communication/Journalism or related field + English/Hindi communication, copyediting, Canva & AI tools',
+        fee: '₹40,000–60,000/month'
+      }
+    ],
+    documentsRequired: [
+      'Filled Application Form (Pages 4–5 of Job-AD.pdf) with recent passport-size photograph',
+      'Self-attested copies of educational qualifications, Last Pay Certificate & Experience Certificates',
+      'Signed Declaration of Vigilance/Criminal Proceedings (Page 6 of Job-AD.pdf)'
+    ],
+    selectionProcess: [
+      'Offline application submission by 11/12/2026 to Deputy Registrar, Recruitment Cell, Admin Division, Block-7, Room No. 13, IGNOU, Maidan Garhi, New Delhi – 110068.',
+      'Interview / Selection Committee review (No TA/DA paid for interview; remuneration ₹40,000–60,000/- decided by Selection Committee).'
+    ],
+    faq: [
+      {
+        question: 'What is the last date and address to apply for IGNOU PIU Consultants 2026?',
+        answer: 'Duly completed offline applications with self-attested testimonials must reach the Deputy Registrar, Recruitment Cell, Administration Division, Block-7, Room No. 13, IGNOU, Maidan Garhi, New Delhi – 110068 on or before 11 December 2026.'
+      }
+    ],
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '16/11/2026',
+      lastVerified: '16/11/2026',
+      officialNotificationUrl: 'https://www.ignou.ac.in/viewFile/AD/notification/Job-AD.pdf',
+      officialApplicationUrl: 'https://www.ignou.ac.in/announcements/0?nav=1',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '16/11/2026',
+      verifiedClosingDate: '11/12/2026',
+      sourceHistory: [
+        'Official IGNOU Administration Division PDF Job-AD.pdf verified on 16/11/2026 (last date 11/12/2026).'
+      ]
+    }
+  },
+  {
+    id: 'ibps-crp-po-mt-xv-reserve-list-2026',
+    title: 'IBPS PO/MT-XV Reserve List Allotment 2026',
+    category: 'banking_jobs',
+    org: 'IBPS',
+    department: 'Institute of Banking Personnel Selection (IBPS)',
+    postType: 'Result',
+    noticeType: 'result',
+    stage: 'result',
+    publicationStatus: 'published',
+    isNew: true,
+    postDate: '16/11/2026',
+    documentDate: '16/11/2026',
+    startDate: '16/11/2026',
+    lastDate: '15/12/2026',
+    advertisementNo: 'CRP PO/MT-XV (Vacancies of 2026-27)',
+    recruitmentYear: '2026',
+    shortInfo: 'IBPS issued the CRP PO/MT-XV Reserve List provisional allotment notice (16/11/2026) with category cut-offs; allotment list due by 15/12/2026.',
+    ageLimit: 'Not stated in the notice',
+    eligibility: 'Reserve List candidates under CRP PO/MT-XV (based on merit-cum-preference and actual vacancies provided by Participating Public Sector Banks).',
+    totalPosts: 'Not stated in the notice (Cut-offs out of 100: OBC(NCL) 43.44, EWS 42.84, UR 45.31; SC/ST/PwBD marked NA)',
+    officialLink: 'https://www.ibps.in/wp-content/uploads/PO_MT_XV_WEB_NOTICE_PHASE_3_non_printable.pdf',
+    officialNotificationUrl: 'https://www.ibps.in/wp-content/uploads/PO_MT_XV_WEB_NOTICE_PHASE_3_non_printable.pdf',
+    officialApplicationUrl: 'https://www.ibps.in/index.php/management-trainees-xv/',
+    fees: {
+      genObc: 'Not stated in the notice',
+      scSt: 'Not stated in the notice'
+    },
+    selectionProcess: [
+      'Provisional allotment from Reserve List done on 16/11/2026 based on merit-cum-preference (tie-breaker: senior in age by DOB).',
+      'Individual intimation sent to registered email and mobile number; full list to be displayed on www.ibps.in on or before 15/12/2026.',
+      'Offer of appointment and document/biometric verification to be issued in due course by the respective allotted Participating Bank.'
+    ],
+    faq: [
+      {
+        question: 'What are the minimum combined scores for the IBPS CRP PO/MT-XV Reserve List allotment dated 16/11/2026?',
+        answer: 'Per the official notice, minimum combined scores (out of 100) are OBC(NCL): 43.44, EWS: 42.84, and UR: 45.31. SC, ST, HI, OC, VI, and ID show NA (No Vacancy / No Candidate Available).'
+      }
+    ],
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '16/11/2026',
+      lastVerified: '16/11/2026',
+      officialNotificationUrl: 'https://www.ibps.in/wp-content/uploads/PO_MT_XV_WEB_NOTICE_PHASE_3_non_printable.pdf',
+      officialApplicationUrl: 'https://www.ibps.in/index.php/management-trainees-xv/',
+      advertisementNo: 'CRP PO/MT-XV (Vacancies of 2026-27)',
+      recruitmentYear: '2026',
+      sourceHistory: [
+        'Official IBPS PDF PO_MT_XV_WEB_NOTICE_PHASE_3_non_printable.pdf (dated 16/11/2026) verified on 16/11/2026.'
+      ]
+    }
+  },
+  {
+    id: 'ibps-crp-spl-xv-reserve-list-2026',
+    title: 'IBPS SPL-XV Reserve List Allotment 2026',
+    category: 'banking_jobs',
+    org: 'IBPS',
+    department: 'Institute of Banking Personnel Selection (IBPS)',
+    postType: 'Result',
+    noticeType: 'result',
+    stage: 'result',
+    publicationStatus: 'published',
+    isNew: true,
+    postDate: '16/11/2026',
+    documentDate: '16/11/2026',
+    startDate: '16/11/2026',
+    lastDate: '15/12/2026',
+    advertisementNo: 'CRP SPL-XV (Vacancies of 2026-27)',
+    recruitmentYear: '2026',
+    shortInfo: 'IBPS released the CRP SPL-XV Specialist Officer Reserve List allotment notice (16/11/2026) with post-wise cut-off scores; list due by 15/12/2026.',
+    ageLimit: 'Not stated in the notice',
+    eligibility: 'Reserve List candidates under CRP-SPL-XV for Specialist Officers in Participating Public Sector Banks.',
+    totalPosts: 'Not stated in the notice (Cut-offs: I.T. Officer OBC 49.00, Rajbhasha ST 47.73, Marketing OBC 72.07; AFO/Law/HR: NA)',
+    officialLink: 'https://www.ibps.in/wp-content/uploads/SPL_XV_PHASE-III_WEB_NOTICE_NON_PRINTABLE.pdf',
+    officialNotificationUrl: 'https://www.ibps.in/wp-content/uploads/SPL_XV_PHASE-III_WEB_NOTICE_NON_PRINTABLE.pdf',
+    officialApplicationUrl: 'https://www.ibps.in/index.php/specialist-officers-xv/',
+    fees: {
+      genObc: 'Not stated in the notice',
+      scSt: 'Not stated in the notice'
+    },
+    selectionProcess: [
+      'Provisional allotment under Reserve List notified on 16/11/2026 with individual email/SMS intimation.',
+      'Post-wise provisionally allotted candidates list to be displayed on www.ibps.in on or before 15/12/2026.',
+      'Allotted Participating Bank handles verification, offer of appointment, and joining formalities.'
+    ],
+    faq: [
+      {
+        question: 'Which Specialist Officer posts had Reserve List allotment in IBPS CRP SPL-XV on 16/11/2026?',
+        answer: 'Annexure I reports minimum scores for I.T. Officer Scale-I (OBC 49.00), Rajbhasha Adhikari Scale-I (ST 47.73), and Marketing Officer Scale-I (OBC 72.07), while Agricultural Field Officer, Law Officer, and HR/Personnel Officer are marked NA.'
+      }
+    ],
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '16/11/2026',
+      lastVerified: '16/11/2026',
+      officialNotificationUrl: 'https://www.ibps.in/wp-content/uploads/SPL_XV_PHASE-III_WEB_NOTICE_NON_PRINTABLE.pdf',
+      officialApplicationUrl: 'https://www.ibps.in/index.php/specialist-officers-xv/',
+      advertisementNo: 'CRP SPL-XV (Vacancies of 2026-27)',
+      recruitmentYear: '2026',
+      sourceHistory: [
+        'Official IBPS PDF SPL_XV_PHASE-III_WEB_NOTICE_NON_PRINTABLE.pdf (dated 16/11/2026) verified on 16/11/2026.'
+      ]
+    }
+  },
+  {
+    id: 'ju-ug-3rd-sem-nep-centre-shift-2026',
+    title: 'Jammu Univ UG 3rd Sem NEP Centre Shift Notice',
+    category: 'exam_forms',
+    section: 'education',
+    org: 'University of Jammu',
+    department: 'Controller of Examinations, University of Jammu',
+    postType: 'Admission',
+    noticeType: 'date_sheet',
+    stage: 'admit_card',
+    publicationStatus: 'published',
+    isNew: true,
+    postDate: '16/11/2026',
+    documentDate: '13/11/2026',
+    startDate: '25/11/2026',
+    lastDate: '25/11/2026',
+    advertisementNo: 'No. Exams./Sem-III/2026/1531-1535 (Dated 13/11/2026)',
+    recruitmentYear: '2026',
+    session: 'UG 3rd Semester NEP 2026-2027',
+    shortInfo: 'University of Jammu shifted UG 3rd Sem NEP exam centres (exams from 25/11/2026) from GDC Boys Udhampur Hall-I & J to GDC Neeli Nallah Hall B & C.',
+    ageLimit: 'Not stated in the notice',
+    eligibility: 'Concerned candidates of Undergraduate Four Year Degree (General) Course 3rd Semester (NEP) Examination 2026-2027 whose roll numbers are listed in the centre shift notice.',
+    totalPosts: 'Not stated in the notice (Centre shift from GDC Boys Udhampur Hall-I & Hall-J to GDC Neeli Nallah Hall B & Hall C)',
+    officialLink: 'https://www.coeju.com/det.aspx?type=2&id=4934',
+    officialNotificationUrl: 'https://www.coeju.com/det.aspx?type=2&id=4934',
+    officialApplicationUrl: 'https://www.coeju.com/',
+    fees: {
+      genObc: 'Not stated in the notice',
+      scSt: 'Not stated in the notice'
+    },
+    selectionProcess: [
+      'Examinations commence from 25/11/2026.',
+      'Affected candidates previously allotted Centre No. 26 (GDC Boys Udhampur Hall-I) and GDC Boys Udhampur Hall-J must report to GDC Neeli Nallah Hall B and Hall C respectively.',
+      'Download the official notice PDF from coeju.com (det.aspx?type=2&id=4934) to confirm exact roll number ranges.'
+    ],
+    faq: [
+      {
+        question: 'When do the University of Jammu UG 3rd Semester NEP examinations begin?',
+        answer: 'Per the University of Jammu notification dated 13/11/2026 (uploaded on coeju.com on 16/11/2026), examinations commence from 25/11/2026.'
+      }
+    ],
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '16/11/2026',
+      lastVerified: '16/11/2026',
+      officialNotificationUrl: 'https://www.coeju.com/det.aspx?type=2&id=4934',
+      officialApplicationUrl: 'https://www.coeju.com/',
+      advertisementNo: 'No. Exams./Sem-III/2026/1531-1535 (Dated 13/11/2026)',
+      recruitmentYear: '2026',
+      sourceHistory: [
+        'Official University of Jammu notice 11202616039172.pdf via coeju.com/det.aspx?type=2&id=4934 (dated 13/11/2026, uploaded 16/11/2026) verified on 16/11/2026.'
+      ]
+    }
+  },
   // 🎓 VERIFIED IGNOU STUDENT NOTIFICATIONS (Verified 14/11/2026 IST from ignou.ac.in/announcements/0)
   {
     id: 'ignou-rc-srinagar-campus-placement-drive-nov-2026',
@@ -1654,7 +2265,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '1,033 Posts',
     officialLink: 'https://jkb.bank.in/',
     officialNotificationUrl: '/assets/aistudio/JK_BANK_b62482f5.pdf',
-    officialApplicationUrl: 'https://jkb.bank.in/',
+    officialApplicationUrl: 'https://ibpsreg.ibps.in/jkbvpocto26/',
     fees: {
       genObc: '₹800/- (excluding GST) for General, EWS and other candidates',
       scSt: '₹600/- (excluding GST) for SC / ST / SEBC / PwBD / ESM candidates'
@@ -1694,9 +2305,9 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       status: 'verified',
       verificationStatus: 'verified',
       verifiedAt: '07/11/2026',
-      lastVerified: '07/11/2026',
+      lastVerified: '16/11/2026',
       officialNotificationUrl: '/assets/aistudio/JK_BANK_b62482f5.pdf',
-      officialApplicationUrl: 'https://jkb.bank.in/',
+      officialApplicationUrl: 'https://ibpsreg.ibps.in/jkbvpocto26/',
       advertisementNo: 'JKB/HR/Rectt/2026-493',
       recruitmentYear: '2026',
       verifiedOpeningDate: '07/11/2026',
@@ -1705,7 +2316,8 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       feePaymentDeadline: '26/11/2026 (23:59 IST)',
       sourceHistory: [
         'Official Advertisement Notification No: JKB/HR/Rectt/2026-493 dated 07-11-2026 issued by General Manager - HR, Corporate Headquarters, M.A. Road, Srinagar, J&K Bank Ltd.',
-        'Recruitment of Banking Associates - UT of J&K (1,033 vacancies). Online exam conducted by IBPS.'
+        'Recruitment of Banking Associates - UT of J&K (1,033 vacancies). Online exam conducted by IBPS.',
+        'Verified direct IBPS online application registration link (https://ibpsreg.ibps.in/jkbvpocto26/) on 16/11/2026.'
       ]
     },
     isNew: true
@@ -2343,20 +2955,21 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   // 🇮🇳 STAFF SELECTION COMMISSION (SSC) CPO SI PET/PST RESULT & PAPER-II NOTICE (30 OCTOBER 2026)
   {
     id: 'ssc-cpo-pet-pst-result-paper-2-exam-date-2026',
-    title: 'SSC Sub-Inspector in Delhi Police & CAPFs Exam 2026: PET/PST Result Declared & Paper-II Exam Date Announced',
+    title: 'SSC Sub-Inspector in Delhi Police & CAPFs Exam 2025: PET/PST Result, Corrigendum (16 Nov) & Paper-II Date (28 Nov 2026)',
     category: 'ssc_jobs',
     postDate: '30/10/2026',
+    documentDate: '16/11/2026',
     startDate: '30/10/2026',
     lastDate: '28/11/2026',
     closingTime: '17:00 IST',
-    advertisementNo: 'F.No- E/13/2025-C-2 (SI in Delhi Police & CAPFs)',
-    recruitmentYear: '2026',
-    shortInfo: 'Staff Selection Commission (SSC) has officially declared the Physical Endurance Test (PET) and Physical Standard Test (PST) results for Sub-Inspector in Delhi Police and Central Armed Police Forces (CAPFs) Examination. A total of 10,676 candidates have qualified for Paper-II, which is scheduled to be conducted on 28th November 2026 in Computer-Based Examination mode.',
+    advertisementNo: 'F.No- E/13/2025-C-2 (SI in Delhi Police & CAPFs Exam 2025)',
+    recruitmentYear: '2025',
+    shortInfo: 'SSC declared PET/PST results for SI in Delhi Police & CAPFs Exam 2025 (10,676 qualified for Paper-II on 28/11/2026) and issued a Corrigendum on 16/11/2026 amending Para 5 petitioner roll numbers (inserting 225130051041, 225130047683, 625130000489; deleting 225130005272; correcting 225130058585 to 225130058588).',
     ageLimit: '20 to 25 Years (As per original recruitment rules)',
-    eligibility: 'Candidates who qualified both Paper-I and PET/PST stages of Sub-Inspector in Delhi Police & CAPFs Examination.',
+    eligibility: 'Candidates who qualified both Paper-I and PET/PST stages of Sub-Inspector in Delhi Police & CAPFs Examination, 2025 (including Corrigendum dated 16/11/2026 petitioner list updates).',
     totalPosts: '10,676 Qualified Candidates for Paper-II (4,187 Total Vacancies)',
     officialLink: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/writeup_29102026.pdf',
-    officialNotificationUrl: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/writeup_29102026.pdf',
+    officialNotificationUrl: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/corrigendum_16112026.pdf',
     officialApplicationUrl: 'https://ssc.gov.in',
     fees: {
       genObc: '₹0/- (Exempted - Result & Exam Schedule Notice)',
@@ -2367,17 +2980,22 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     verificationStatus: 'verified',
     verification: {
       status: 'verified',
+      verificationStatus: 'verified',
       verifiedAt: '14/11/2026',
-      lastVerified: '14/11/2026',
+      lastVerified: '16/11/2026',
       officialNotificationUrl: 'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/writeup_29102026.pdf',
+      amendmentUrls: [
+        'https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/corrigendum_16112026.pdf'
+      ],
       officialApplicationUrl: 'https://ssc.gov.in',
-      advertisementNo: 'F.No- E/13/2025-C-2',
-      recruitmentYear: '2026',
+      advertisementNo: 'F.No- E/13/2025-C-2 (Exam 2025)',
+      recruitmentYear: '2025',
       verifiedOpeningDate: '30/10/2026',
       verifiedClosingDate: '28/11/2026',
       closingTime: '17:00 IST',
       correctionHistory: [
-        'Verified direct official SSC PDF writeup_29102026.pdf on 14/11/2026 (10,676 qualified for Paper-II on 28/11/2026).'
+        'Verified direct official SSC PDF writeup_29102026.pdf on 14/11/2026 (10,676 qualified for Paper-II on 28/11/2026).',
+        'Verified Corrigendum dated 16/11/2026 (corrigendum_16112026.pdf) amending Para 5 petitioner roll numbers (added 225130051041, 225130047683, 625130000489; deleted 225130005272; corrected 225130058585 to 225130058588); Paper-II date remains 28/11/2026.'
       ]
     },
     isNew: true
@@ -3103,21 +3721,22 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   },
   {
     id: 'jkssb-advt-10-of-2026-je-mechanical-pwd',
-    title: 'JKSSB Advt 10 of 2026: Recruitment for 127 Junior Engineer (Mechanical) Posts in Public Works (R&B) Department',
+    title: 'JKSSB Advt 10 of 2026: Recruitment for 127 Junior Engineer (Mechanical) Posts in PW(R&B) Dept (Online Form Postponed)',
     category: 'jkssb',
     noticeType: 'recruitment',
     stage: 'recruitment',
     postDate: '21/10/2026',
-    startDate: '16/11/2026',
-    lastDate: '15/12/2026',
+    documentDate: '15/11/2026',
+    startDate: 'Postponed (Fresh dates to be notified separately)',
+    lastDate: 'Postponed (Fresh dates to be notified separately)',
     postType: 'Job',
-    status: 'Open',
-    advertisementNo: 'Advertisement Notification No. 10 of 2026 (Dated: 21.10.2026)',
-    shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) invites online applications from 16/11/2026 to 15/12/2026 for 127 UT Cadre posts of Junior Engineer (Mechanical) in Pay Level-6 (₹35,400 - ₹1,12,400) under Public Works (R&B) Department.',
+    status: 'Upcoming',
+    advertisementNo: 'Advertisement Notification No. 10 of 2026 (Dated: 21.10.2026) | Postponement Notice No. 15.11.2026',
+    shortInfo: 'JKSSB issued an official notice dated 15/11/2026 postponing the online application form window (earlier 16/11/2026 to 15/12/2026) for 127 Junior Engineer (Mechanical) posts in Public Works (R&B) Department under Advt No. 10 of 2026. Fresh dates for online registration will be notified separately on jkssb.nic.in.',
     ageLimit: 'Open Merit (OM): 40 Years (as on 01.01.2026) | SC / ST-1 / ST-2 / RBA / ALC-IB / EWS / OBC: 43 Years | PwBD: 42 Years | In-Service / Contractual: 40 Years',
     eligibility: 'Three Years Diploma in Mechanical Engineering from a Government recognized Institute / Indian University, OR Degree in Mechanical Engineering / AMIE Section (A&B) in Mechanical Engineering. Candidate must be a Domicile of UT of J&K.',
     totalPosts: '127 Posts (OM: 51 | SC: 11 | ST-1: 12 | ST-2: 13 | OBC: 10 | ALC/IB: 05 | RBA: 13 | EWS: 12)',
-    officialLink: 'https://jkssb.nic.in/Pdf/Advt_notification_10OF2026_21102026.pdf',
+    officialLink: 'https://jkssb.nic.in/Pdf/Notice_10OF2026_15112026.pdf',
     officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Advt_notification_10OF2026_21102026.pdf',
     officialApplicationUrl: 'https://jkssb.nic.in',
     fees: {
@@ -3129,15 +3748,19 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       status: 'verified',
       verificationStatus: 'verified',
       verifiedAt: '14/11/2026',
-      lastVerified: '14/11/2026',
+      lastVerified: '16/11/2026',
       officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Advt_notification_10OF2026_21102026.pdf',
+      amendmentUrls: [
+        'https://jkssb.nic.in/Pdf/Notice_10OF2026_15112026.pdf'
+      ],
       officialApplicationUrl: 'https://jkssb.nic.in',
       advertisementNo: 'Advt No. 10 of 2026',
       recruitmentYear: '2026',
-      verifiedOpeningDate: '16/11/2026',
-      verifiedClosingDate: '15/12/2026',
+      verifiedOpeningDate: 'Postponed (Fresh dates to be notified separately)',
+      verifiedClosingDate: 'Postponed (Fresh dates to be notified separately)',
       sourceHistory: [
-        'Verified direct official PDF Advt_notification_10OF2026_21102026.pdf dated 21/10/2026 on 14/11/2026 (applications open 16/11/2026 to 15/12/2026).'
+        'Verified direct official PDF Advt_notification_10OF2026_21102026.pdf dated 21/10/2026 on 14/11/2026 (applications originally scheduled 16/11/2026 to 15/12/2026).',
+        'Verified official postponement notice Notice_10OF2026_15112026.pdf (dated 15/11/2026) on 16/11/2026: online submission of application forms postponed; fresh dates will be notified separately.'
       ]
     },
     isNew: true

@@ -155,6 +155,16 @@ const POST_EXACT_SEO_MAP: Record<string, { title: string; description: string }>
     description:
       'JKSSB Advt 06/2026 Document Verification (DV Notice) for 357 Draftsman (Civil) & Works Supervisor posts (DV until 24/09/2026). Check schedule & docs.',
   },
+  'jkssb-advt-10-of-2026-je-mechanical-pwd': {
+    title: 'JKSSB Advt 10/2026 JE Mechanical Postponed | CSC DOST',
+    description:
+      'JKSSB Advt 10 of 2026 (127 Junior Engineer Mechanical posts in PW(R&B) Dept) online form postponed per 15/11/2026 notice. Fresh dates to be notified.',
+  },
+  'ssc-cpo-pet-pst-result-paper-2-exam-date-2026': {
+    title: 'SSC CPO SI 2025 PET/PST Result & Corrigendum | CSC DOST',
+    description:
+      'SSC SI Delhi Police & CAPFs Exam 2025 PET/PST result (10,676 qualified), Corrigendum dated 16/11/2026, and Paper-II exam date 28/11/2026 on CSC DOST.',
+  },
 };
 
 /**

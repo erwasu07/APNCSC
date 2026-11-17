@@ -115,6 +115,28 @@ const CURATED_RELATED_CLUSTERS: Array<{
       'ssc-cgl-2026': 'SSC CGL 2026 Main Recruitment',
     },
   },
+  {
+    // JKSSB Accounts Assistant (Finance) Advt 10/2025 Item 271 stages
+    ids: [
+      'jkssb-accounts-assistant-finance-answer-key-2026',
+      'jkssb-accounts-assistant-finance-exam-date-admit-card-2026',
+    ],
+    labels: {
+      'jkssb-accounts-assistant-finance-answer-key-2026': 'Provisional Answer Key & Objections (16–18 Nov)',
+      'jkssb-accounts-assistant-finance-exam-date-admit-card-2026': 'OMR Exam & E-Admit Card (15 Nov 2026)',
+    },
+  },
+  {
+    // SSC SI Delhi Police & CAPFs Exam 2026 stages
+    ids: [
+      'ssc-cpo-si-2026-paper1-city-admit-card',
+      'ssc-cpo-si-delhi-police-capf-2026',
+    ],
+    labels: {
+      'ssc-cpo-si-2026-paper1-city-admit-card': 'Paper-I City Intimation & Admit Card (23–28 Nov)',
+      'ssc-cpo-si-delhi-police-capf-2026': 'Main Recruitment Notice · 4,187 Vacancies',
+    },
+  },
 ];
 
 export function getRelatedNoticesForPost(

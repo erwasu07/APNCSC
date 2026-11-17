@@ -349,6 +349,13 @@ export function renderPostSubstantiveHtml(
       <section style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px; margin-bottom:20px; font-size:14px; color:#334155;">
         <h2 style="font-size:16px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Source and last verified</h2>
         <p style="margin:0 0 6px 0;"><strong>Official source:</strong> <a href="${safeOfficialLink}" target="_blank" rel="noopener noreferrer" style="color:#1F9D6B; font-weight:700;">${escapeHtml(enrichment.sourceDomain)}</a></p>
+        ${
+          Array.isArray(item.verification?.amendmentUrls) && item.verification.amendmentUrls.length > 0
+            ? `<p style="margin:0 0 6px 0;"><strong>Latest circular / amendment:</strong> ${item.verification.amendmentUrls
+                .map((u, idx) => `<a href="${escapeHtml(u)}" target="_blank" rel="noopener noreferrer" style="color:#1F9D6B; font-weight:600;">Official Amendment PDF${item.verification!.amendmentUrls!.length > 1 ? ` #${idx + 1}` : ''} ↗</a>`)
+                .join(' · ')}</p>`
+            : ''
+        }
         <p style="margin:0 0 8px 0;"><strong>Last verified:</strong> ${escapeHtml(enrichment.verifiedDateText)}</p>
         <p style="margin:0; padding-top:8px; border-top:1px solid #e2e8f0;">
           <strong>Editorial review:</strong> ${escapeHtml(EDITORIAL_AUTHOR_TEXT)}. <a href="/about-us" style="color:#1F9D6B; font-weight:600;">About CSC DOST Editorial Desk →</a>
