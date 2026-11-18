@@ -17,6 +17,7 @@ import { Share2, X, MessageCircle, Copy, Check } from 'lucide-react';
 const PortalHomepage = lazy(() => import('./components/PortalHomepage'));
 const SarkariDedicatedPageView = lazy(() => import('./components/SarkariDedicatedPageView'));
 const ServiceDedicatedPageView = lazy(() => import('./components/ServiceDedicatedPageView'));
+const ServiceClusterHubView = lazy(() => import('./components/ServiceClusterHubView'));
 const ApplyDedicatedPageView = lazy(() => import('./components/ApplyDedicatedPageView'));
 const TrackDedicatedPageView = lazy(() => import('./components/TrackDedicatedPageView'));
 const ExploreServicesDesk = lazy(() => import('./components/ExploreServicesDesk'));
@@ -60,6 +61,7 @@ import {
   SITE_ORIGIN,
   CORE_CATEGORIES,
 } from './utils/seoConfig';
+import { getServiceClusterById } from './utils/serviceMetadata';
 
 // Lightweight Skeleton Fallback for Section Containers (Prevents Layout Shift)
 function SectionSkeleton({ height = 'min-h-[360px]', title = 'Loading Desk...' }: { height?: string; title?: string }) {
@@ -151,6 +153,9 @@ export default function App() {
   const [isStaffRoute, setIsStaffRoute] = useState<boolean>(false);
   const [isDevThumbnailsView, setIsDevThumbnailsView] = useState<boolean>(false);
   const [publishedGuides, setPublishedGuides] = useState<GuideArticle[]>(STATIC_PUBLISHED_GUIDES);
+  const [mergedServices, setMergedServices] = useState<ServiceItem[]>(SERVICES_LIST);
+  const [serviceRedirectMap, setServiceRedirectMap] = useState<Record<string, string>>({});
+  const [activeClusterId, setActiveClusterId] = useState<string | null>(null);
 
   const [activeLegalPage, setActiveLegalPage] = useState<LegalPageType | null>(null);
 
@@ -233,6 +238,17 @@ export default function App() {
         }
       })
       .catch(() => {});
+    fetch('/api/services')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.success && Array.isArray(data.services)) {
+          setMergedServices(data.services);
+        }
+        if (data?.redirectMap && typeof data.redirectMap === 'object') {
+          setServiceRedirectMap(data.redirectMap);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Track route changes and keep post resolution synced with published posts
@@ -261,11 +277,12 @@ export default function App() {
       // Clean query parameters and trailing slashes for clean route matching
       const cleanPath = (effectivePath.split('#')[0].split('?')[0] || '/').replace(/\/+$/, '') || '/';
 
-      // Reset client not found, archive & scheme flags before evaluating current path
+      // Reset client not found, archive, cluster & scheme flags before evaluating current path
       setIsNotFoundView(false);
       setIsArchiveView(false);
       setIsStaffRoute(false);
       setActiveSchemeId(null);
+      setActiveClusterId(null);
 
       // 0. Transparent Migration for Legacy Shared Fragment URLs if supported
       try {
@@ -518,11 +535,71 @@ export default function App() {
         setIsToolsView(false);
       }
 
+      // 6b. Check Consolidated Service Cluster Hub route (/services/cluster/:clusterId)
+      const pathClusterMatch = cleanPath.match(/^\/services\/cluster\/([^/?#]+)$/i);
+      if (pathClusterMatch) {
+        const cid = decodeURIComponent(pathClusterMatch[1]);
+        const cluster = getServiceClusterById(cid);
+        if (cluster) {
+          setActiveClusterId(cluster.clusterId);
+          setActiveServicePost(null);
+          setActiveJobPost(null);
+          setIsAdminView(false);
+          setIsApplyView(false);
+          setIsTrackView(false);
+          setIsToolsView(false);
+          setCategoryView(null);
+          setActiveLegalPage(null);
+          try {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } catch {}
+          return;
+        } else {
+          setActiveClusterId(null);
+          setActiveServicePost(null);
+          setIsNotFoundView(true);
+          return;
+        }
+      }
+
       // 7. Check Service route (/service/:id, #service/:id, #/service/:id, ?service=:id)
       const pathServiceMatch = cleanPath.match(/^\/service\/([^/?#]+)$/i);
       if (pathServiceMatch) {
         const serviceId = decodeURIComponent(pathServiceMatch[1]);
-        const matchService = SERVICES_LIST.find(s => s.id === serviceId);
+        const redirectTarget = serviceRedirectMap[serviceId];
+        if (redirectTarget) {
+          try {
+            window.history.replaceState(null, '', redirectTarget);
+          } catch {}
+          const clusterTargetMatch = redirectTarget.match(/^\/services\/cluster\/([^/?#]+)$/i);
+          if (clusterTargetMatch) {
+            const cluster = getServiceClusterById(decodeURIComponent(clusterTargetMatch[1]));
+            if (cluster) {
+              setActiveClusterId(cluster.clusterId);
+              setActiveServicePost(null);
+              setActiveJobPost(null);
+              setIsAdminView(false);
+              setIsApplyView(false);
+              setIsTrackView(false);
+              setIsToolsView(false);
+              return;
+            }
+          }
+          const svcTargetMatch = redirectTarget.match(/^\/service\/([^/?#]+)$/i);
+          if (svcTargetMatch) {
+            const redirectedSvc = mergedServices.find((s) => s.id === decodeURIComponent(svcTargetMatch[1]));
+            if (redirectedSvc) {
+              setActiveServicePost(redirectedSvc);
+              setActiveJobPost(null);
+              setIsAdminView(false);
+              setIsApplyView(false);
+              setIsTrackView(false);
+              setIsToolsView(false);
+              return;
+            }
+          }
+        }
+        const matchService = mergedServices.find(s => s.id === serviceId);
         if (matchService) {
           setActiveServicePost(matchService);
           setActiveJobPost(null);
@@ -543,7 +620,7 @@ export default function App() {
       }
 
       if (serviceParam && !cleanPath.startsWith('/post')) {
-        const matchService = SERVICES_LIST.find(s => s.id === serviceParam);
+        const matchService = mergedServices.find(s => s.id === serviceParam);
         if (matchService) {
           setActiveServicePost(matchService);
           setActiveJobPost(null);
@@ -670,7 +747,7 @@ export default function App() {
       window.removeEventListener('hashchange', parseRoute);
       window.removeEventListener('popstate', parseRoute);
     };
-  }, [syncedPosts, publishedGuides]);
+  }, [syncedPosts, publishedGuides, mergedServices, serviceRedirectMap]);
 
   const navigateToPath = (path: string) => {
     try {
@@ -706,6 +783,7 @@ export default function App() {
   };
 
   const handleOpenServicePage = (item: ServiceItem) => {
+    setActiveClusterId(null);
     setActiveServicePost(item);
     setActiveJobPost(null);
     setIsApplyView(false);
@@ -883,14 +961,32 @@ export default function App() {
       });
       return;
     }
+    if (activeClusterId) {
+      const cluster = getServiceClusterById(activeClusterId);
+      if (cluster) {
+        applyClientSeo({
+          title: formatSeoTitle(cluster.title),
+          description: formatSeoDescription(cluster.summary),
+          canonicalUrl: `${SITE_ORIGIN}${cluster.hubPath}`,
+          robots: 'index, follow',
+          ogType: 'website',
+        });
+        return;
+      }
+    }
     if (activeServicePost) {
+      const svcTime =
+        activeServicePost.estimatedTime && activeServicePost.estimatedTime.trim()
+          ? ` Estimated time: ${activeServicePost.estimatedTime.trim()}.`
+          : '';
       applyClientSeo({
         title: formatSeoTitle(activeServicePost.name),
-        description: formatSeoDescription(
-          `${activeServicePost.description} Estimated time: ${activeServicePost.estimatedTime}.`
-        ),
+        description: formatSeoDescription(`${activeServicePost.description}${svcTime}`),
         canonicalUrl: `${SITE_ORIGIN}/service/${activeServicePost.id}`,
-        robots: 'index, follow',
+        robots:
+          activeServicePost.robotsNoindex || activeServicePost.duplicateOfId
+            ? 'noindex, follow'
+            : 'index, follow',
         ogType: 'website',
       });
       return;
@@ -958,6 +1054,7 @@ export default function App() {
     isTrackView,
     activeJobPost,
     activeServicePost,
+    activeClusterId,
     isToolsView,
     activeToolId,
     activeSchemeId,
@@ -1013,6 +1110,7 @@ export default function App() {
     setIsToolsView(false);
     setCategoryView(null);
     setActiveSchemeId(null);
+    setActiveClusterId(null);
     setIsNotFoundView(false);
     setActiveToolId(null);
     setActiveJobPost(null);
@@ -1074,6 +1172,8 @@ export default function App() {
     ? '/archive'
     : activeJobPost
     ? `/post/${activeJobPost.id}`
+    : activeClusterId
+    ? `/services/cluster/${activeClusterId}`
     : activeServicePost
     ? `/service/${activeServicePost.id}`
     : isToolsView
@@ -1097,6 +1197,7 @@ export default function App() {
     !isTrackView &&
     !activeJobPost &&
     !activeServicePost &&
+    !activeClusterId &&
     !isToolsView &&
     !isNotFoundView &&
     !categoryView &&
@@ -1121,6 +1222,7 @@ export default function App() {
     !isTrackView &&
     !activeJobPost &&
     !activeServicePost &&
+    !activeClusterId &&
     !isNotFoundView &&
     (categoryView === 'jobs' ||
       categoryView === 'education' ||
@@ -1263,12 +1365,28 @@ export default function App() {
               />
             </Suspense>
           </div>
+        ) : activeClusterId ? (
+          /* CONSOLIDATED SERVICE CLUSTER HUB VIEW (/services/cluster/:clusterId) */
+          <div className="animate-fade-in w-full">
+            <Suspense fallback={<PageRouteSkeleton message="Loading Service Cluster Hub..." />}>
+              <ServiceClusterHubView
+                clusterId={activeClusterId}
+                allServices={mergedServices}
+                onBack={() => navigateToPath('/services')}
+                onNavigateRoute={navigateToPath}
+                onApplyService={(service) => {
+                  handleOpenApplyPage(service);
+                }}
+              />
+            </Suspense>
+          </div>
         ) : activeServicePost ? (
           /* DEDICATED FULL-PAGE VIEW FOR COMPREHENSIVE E-SERVICES CATALOGUE */
           <div className="animate-fade-in w-full">
             <Suspense fallback={<PageRouteSkeleton message="Loading CSC E-Service Catalogue..." />}>
               <ServiceDedicatedPageView
                 service={activeServicePost}
+                allServices={mergedServices}
                 onBack={() => navigateToPath('/services')}
                 onNavigateRoute={navigateToPath}
                 onApplyService={(service) => {

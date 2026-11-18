@@ -9,6 +9,16 @@ export interface ServiceItem {
   feeLines?: string[];
   officialUrl?: string;
   popular?: boolean;
+  issuingAuthority?: string;
+  eligibility?: string;
+  rejectionReasons?: string[];
+  stepFlow?: string[];
+  staffChecks?: string[];
+  publicationStatus?: 'published' | 'draft' | 'archived';
+  robotsNoindex?: boolean;
+  duplicateOfId?: string;
+  updatedAt?: string;
+  verifiedBy?: string;
 }
 
 export const CATEGORY_LABELS = {

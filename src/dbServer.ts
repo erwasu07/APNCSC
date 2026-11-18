@@ -28,6 +28,8 @@ interface DatabaseSchema {
   guideStates?: Record<string, GuideVerificationState>;
   guideVerificationLogs?: GuideVerificationLog[];
   postHealthOverrides?: Record<string, PostHealthOverride>;
+  serviceHealthOverrides?: Record<string, ServiceHealthOverride>;
+  approvedServiceMerges?: Record<string, ApprovedServiceMerge>;
   contentHealthLogs?: ContentHealthLog[];
 }
 
@@ -89,6 +91,8 @@ const DEFAULT_DB: DatabaseSchema = {
   guideStates: {},
   guideVerificationLogs: [],
   postHealthOverrides: {},
+  serviceHealthOverrides: {},
+  approvedServiceMerges: {},
   contentHealthLogs: []
 };
 
@@ -140,6 +144,8 @@ export function getDb(): DatabaseSchema {
       if (!parsed.guideStates || typeof parsed.guideStates !== 'object') parsed.guideStates = {};
       if (!Array.isArray(parsed.guideVerificationLogs)) parsed.guideVerificationLogs = [];
       if (!parsed.postHealthOverrides || typeof parsed.postHealthOverrides !== 'object') parsed.postHealthOverrides = {};
+      if (!parsed.serviceHealthOverrides || typeof parsed.serviceHealthOverrides !== 'object') parsed.serviceHealthOverrides = {};
+      if (!parsed.approvedServiceMerges || typeof parsed.approvedServiceMerges !== 'object') parsed.approvedServiceMerges = {};
       if (!Array.isArray(parsed.contentHealthLogs)) parsed.contentHealthLogs = [];
 
       // Normalize legacy placeholder settings email on disk to urnxtfd@gmail.com
@@ -1512,10 +1518,54 @@ export interface PostHealthOverride {
   updatedBy?: string;
 }
 
+export interface ServiceHealthOverride {
+  id: string;
+  publicationStatus?: 'published' | 'draft' | 'archived';
+  robotsNoindex?: boolean;
+  duplicateOfId?: string;
+  name?: string;
+  description?: string;
+  issuingAuthority?: string;
+  eligibility?: string;
+  requirements?: string[];
+  estimatedTime?: string;
+  price?: string;
+  feeLines?: string[];
+  officialUrl?: string;
+  stepFlow?: string[];
+  staffChecks?: string[];
+  rejectionReasons?: string[];
+  verifiedBy?: string;
+  updatedAt: string;
+  updatedBy?: string;
+}
+
+export interface ApprovedServiceMerge {
+  clusterId: string;
+  hubPath: string;
+  approved: boolean;
+  memberIds: string[];
+  approvedAt: string;
+  approvedBy: string;
+}
+
 export interface ContentHealthLog {
   id: string;
   postId: string;
-  action: 'enrich_save' | 'set_draft' | 'set_published' | 'mark_noindex' | 'clear_noindex' | 'merge_301' | 'bulk_noindex_class_c';
+  action:
+    | 'enrich_save'
+    | 'set_draft'
+    | 'set_published'
+    | 'mark_noindex'
+    | 'clear_noindex'
+    | 'merge_301'
+    | 'bulk_noindex_class_c'
+    | 'bulk_noindex_class_d'
+    | 'service_save'
+    | 'service_publish'
+    | 'service_draft'
+    | 'approve_service_merge'
+    | 'revert_service_merge';
   actor: string;
   timestamp: string;
   details: string;
@@ -1595,6 +1645,191 @@ export function addContentHealthLog(entry: Omit<ContentHealthLog, 'id'>): Conten
 export function getContentHealthLogs(limit = 100): ContentHealthLog[] {
   const db = getDb();
   return (Array.isArray(db.contentHealthLogs) ? db.contentHealthLogs : []).slice(0, limit);
+}
+
+export function getServiceHealthOverrides(): Record<string, ServiceHealthOverride> {
+  const db = getDb();
+  return db.serviceHealthOverrides && typeof db.serviceHealthOverrides === 'object'
+    ? db.serviceHealthOverrides
+    : {};
+}
+
+export function upsertServiceHealthOverride(override: ServiceHealthOverride): ServiceHealthOverride {
+  const db = getDb();
+  if (!db.serviceHealthOverrides || typeof db.serviceHealthOverrides !== 'object') {
+    db.serviceHealthOverrides = {};
+  }
+  const prev = db.serviceHealthOverrides[override.id] || { id: override.id, updatedAt: override.updatedAt };
+  const merged: ServiceHealthOverride = {
+    ...prev,
+    ...override,
+    updatedAt: override.updatedAt || new Date().toISOString().slice(0, 10),
+  };
+  db.serviceHealthOverrides[override.id] = merged;
+  saveDb(db);
+  return merged;
+}
+
+export function getApprovedServiceMerges(): Record<string, ApprovedServiceMerge> {
+  const db = getDb();
+  return db.approvedServiceMerges && typeof db.approvedServiceMerges === 'object'
+    ? db.approvedServiceMerges
+    : {};
+}
+
+export function approveServiceMergeGroup(
+  clusterId: string,
+  hubPath: string,
+  memberIds: string[],
+  actor = 'Staff Admin'
+): ApprovedServiceMerge {
+  const db = getDb();
+  if (!db.approvedServiceMerges || typeof db.approvedServiceMerges !== 'object') {
+    db.approvedServiceMerges = {};
+  }
+  if (!db.serviceHealthOverrides || typeof db.serviceHealthOverrides !== 'object') {
+    db.serviceHealthOverrides = {};
+  }
+  const now = new Date().toISOString();
+  const record: ApprovedServiceMerge = {
+    clusterId,
+    hubPath,
+    approved: true,
+    memberIds: [...memberIds],
+    approvedAt: now,
+    approvedBy: actor,
+  };
+  db.approvedServiceMerges[clusterId] = record;
+
+  for (const sId of memberIds) {
+    const prev = db.serviceHealthOverrides[sId] || { id: sId, updatedAt: now.slice(0, 10) };
+    db.serviceHealthOverrides[sId] = {
+      ...prev,
+      id: sId,
+      duplicateOfId: hubPath,
+      robotsNoindex: true,
+      updatedAt: now.slice(0, 10),
+      updatedBy: actor,
+    };
+  }
+
+  if (!Array.isArray(db.contentHealthLogs)) db.contentHealthLogs = [];
+  db.contentHealthLogs.unshift({
+    id: `chlog_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    postId: clusterId,
+    action: 'approve_service_merge',
+    actor,
+    timestamp: now,
+    details: `Approved service merge group (${memberIds.length} pages -> 301 ${hubPath})`,
+  });
+  if (db.contentHealthLogs.length > 200) {
+    db.contentHealthLogs = db.contentHealthLogs.slice(0, 200);
+  }
+  saveDb(db);
+  return record;
+}
+
+export function revertServiceMergeGroup(
+  clusterId: string,
+  memberIds: string[],
+  actor = 'Staff Admin'
+): void {
+  const db = getDb();
+  if (!db.approvedServiceMerges || typeof db.approvedServiceMerges !== 'object') {
+    db.approvedServiceMerges = {};
+  }
+  if (!db.serviceHealthOverrides || typeof db.serviceHealthOverrides !== 'object') {
+    db.serviceHealthOverrides = {};
+  }
+  const now = new Date().toISOString();
+  delete db.approvedServiceMerges[clusterId];
+
+  for (const sId of memberIds) {
+    const prev = db.serviceHealthOverrides[sId];
+    if (prev) {
+      const next = { ...prev, updatedAt: now.slice(0, 10), updatedBy: actor };
+      delete next.duplicateOfId;
+      next.robotsNoindex = false;
+      db.serviceHealthOverrides[sId] = next;
+    }
+  }
+
+  if (!Array.isArray(db.contentHealthLogs)) db.contentHealthLogs = [];
+  db.contentHealthLogs.unshift({
+    id: `chlog_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    postId: clusterId,
+    action: 'revert_service_merge',
+    actor,
+    timestamp: now,
+    details: `Reverted service merge group (${memberIds.length} member pages restored)`,
+  });
+  if (db.contentHealthLogs.length > 200) {
+    db.contentHealthLogs = db.contentHealthLogs.slice(0, 200);
+  }
+  saveDb(db);
+}
+
+export function bulkNoindexClassDItems(
+  postIds: string[],
+  serviceIds: string[],
+  actor = 'Staff Admin'
+): { updatedCount: number; updatedPostIds: string[]; updatedServiceIds: string[] } {
+  const db = getDb();
+  if (!db.postHealthOverrides || typeof db.postHealthOverrides !== 'object') db.postHealthOverrides = {};
+  if (!db.serviceHealthOverrides || typeof db.serviceHealthOverrides !== 'object') db.serviceHealthOverrides = {};
+  const now = new Date().toISOString();
+  const nowDate = now.slice(0, 10);
+  const updatedPostIds: string[] = [];
+  const updatedServiceIds: string[] = [];
+
+  for (const rawId of postIds) {
+    const id = String(rawId || '').trim();
+    if (!id) continue;
+    const prev = db.postHealthOverrides[id] || { id, updatedAt: nowDate };
+    db.postHealthOverrides[id] = {
+      ...prev,
+      id,
+      robotsNoindex: true,
+      auditClass: 'D',
+      updatedAt: nowDate,
+      updatedBy: actor,
+    };
+    updatedPostIds.push(id);
+  }
+
+  for (const rawId of serviceIds) {
+    const id = String(rawId || '').trim();
+    if (!id) continue;
+    const prev = db.serviceHealthOverrides[id] || { id, updatedAt: nowDate };
+    db.serviceHealthOverrides[id] = {
+      ...prev,
+      id,
+      robotsNoindex: true,
+      updatedAt: nowDate,
+      updatedBy: actor,
+    };
+    updatedServiceIds.push(id);
+  }
+
+  const totalCount = updatedPostIds.length + updatedServiceIds.length;
+  if (totalCount > 0) {
+    const previewList = [...updatedPostIds, ...updatedServiceIds].slice(0, 12).join(', ');
+    if (!Array.isArray(db.contentHealthLogs)) db.contentHealthLogs = [];
+    db.contentHealthLogs.unshift({
+      id: `chlog_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      postId: `BULK_D(${totalCount})`,
+      action: 'bulk_noindex_class_d',
+      actor,
+      timestamp: now,
+      details: `Marked ${totalCount} Class D item(s) noindex, follow (${updatedPostIds.length} posts, ${updatedServiceIds.length} services): ${previewList}${totalCount > 12 ? '...' : ''}`,
+    });
+    if (db.contentHealthLogs.length > 200) {
+      db.contentHealthLogs = db.contentHealthLogs.slice(0, 200);
+    }
+  }
+
+  saveDb(db);
+  return { updatedCount: totalCount, updatedPostIds, updatedServiceIds };
 }
 
 

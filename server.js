@@ -7492,6 +7492,12 @@ function resolvePostPortalUrl(item) {
   }
   return "https://www.india.gov.in";
 }
+function resolvePostPdfUrl(item, portalUrl) {
+  const candidate = item.notificationPdfUrl || item.verification?.officialNotificationUrl || item.officialNotificationUrl || (/\.pdf($|\?)/i.test(item.officialLink || "") ? item.officialLink : void 0);
+  if (!candidate || !candidate.trim()) return void 0;
+  const trimmed = candidate.trim();
+  return trimmed !== portalUrl ? trimmed : void 0;
+}
 function toIsoDate(raw) {
   const parsed = extractDatePattern(raw);
   if (!parsed) return void 0;
@@ -7525,52 +7531,52 @@ function getDocumentsForPost(item, type) {
   }
   if (type === "dv") {
     return [
-      "Printed copy of online application form & DV call letter / shortlist notice",
-      "All original educational marksheets, degree / diploma, and provisional certificates",
-      "Class 10th (Matriculation) certificate for Date of Birth verification",
-      "J&K Domicile Certificate and Category Certificate (if applicable) in original",
-      "Valid original Government Photo Identity Proof (Aadhaar / Voter ID / PAN / DL)",
-      "Two sets of self-attested photocopies and recent passport-size photographs"
+      "Application printout & DV call letter",
+      "Original marksheets & degree/diploma certificates",
+      "Class 10th DOB proof certificate",
+      "Domicile & Category certificate (if applicable)",
+      "Valid Government Photo ID (Aadhaar / Voter ID)",
+      "Self-attested photocopy sets & passport photos"
     ];
   }
   if (type === "admit_card") {
     return [
-      "Clear printout of downloaded Admit Card / Hall Ticket",
-      "Original valid Government Photo ID (Aadhaar Card, Voter ID, Passport, or Driving Licence)",
-      "Two recent passport-size colour photographs matching your application form",
-      "Follow permitted stationery & prohibited items instructions printed on the hall ticket"
+      `Downloaded Admit Card for ${item.title}`,
+      "Valid original Government Photo ID",
+      "Recent passport-size colour photographs",
+      "Permitted stationery per hall ticket rules"
     ];
   }
   if (type === "exam") {
     if (item.stage === "rc_update") {
       return [
-        "Printed Resume / CV (multiple copies for placement interviews)",
-        "Original & photocopy set of IGNOU ID Card and academic marksheets",
-        "Valid Government Photo Identity Proof (Aadhaar / Voter ID)"
+        "Printed CV / Resume copies",
+        "IGNOU ID card & marksheet copies",
+        "Valid Government Photo ID"
       ];
     }
     return [
-      "Official Examination Hall Ticket / Admit Card (when released on the portal)",
-      "Original Government Photo Identity Card & University / Student ID Card",
-      "Verify exact shift timing and examination centre address printed on the Hall Ticket"
+      "Official Hall Ticket / Admit Card printout",
+      "Government Photo ID & Student ID Card",
+      "Verified centre address & shift timing slip"
     ];
   }
   if (type === "admission") {
     return [
-      "Class 10th & Class 12th / Qualifying Examination Marksheets",
-      "Provisional / Migration / Character Certificate (if required by the university)",
-      "Aadhaar Card or valid Government Photo Identity Proof",
-      "Domicile Certificate & Reserved Category Certificate (if applicable)",
-      "Recent passport-size colour photograph & scanned signature"
+      "10th, 12th & qualifying marksheets",
+      "Migration / Provisional / Character certificate",
+      "Aadhaar or valid Photo ID",
+      "Domicile & Category certificate (if applicable)",
+      "Passport photo & scanned signature"
     ];
   }
   if (type === "application" && !isEducationNotice(item)) {
     return [
-      "Aadhaar Card or valid Government Photo Identity Proof",
-      "Class 10th Certificate & Marksheet (for Date of Birth verification)",
-      "Qualifying Educational Marksheets & Certificates",
-      "Domicile / Category / Experience Certificate (if applicable per notice)",
-      "Recent passport-size photograph & scanned signature in official portal size"
+      "Aadhaar or valid Photo ID",
+      "Class 10th certificate for DOB",
+      "Qualifying academic marksheets",
+      "Domicile / Category / Experience certificate (if applicable)",
+      "Scanned photo & signature matching portal limits"
     ];
   }
   return [];
@@ -7611,20 +7617,20 @@ function getProcessSectionConfig(item, type, statusInfo, portalUrl) {
       const hasRealVenue = hasRealDataValue(item.venue) && !isGenericNoticePlaceholder(item.venue);
       return {
         id: "dv-instructions",
-        title: "Document Verification Instructions",
-        subtitle: `Official verification guidance for ${orgName} shortlisted candidates.`,
+        title: `Document Verification \u2014 ${orgName}`,
+        subtitle: `DV guidance for ${item.title}.`,
         steps: [
           {
-            title: "Verify Your Roll No. & Reporting Schedule",
-            description: `Check the official ${orgName} notice for your assigned verification date (${statusInfo.dateValue}), board/committee, and reporting window.`
+            title: `Check ${orgName} DV Schedule`,
+            description: `Confirm your roll number and verification date (${statusInfo.dateValue}) in ${item.title}.`
           },
           {
-            title: "Arrange Original Credentials & Photocopy Sets",
-            description: "Arrange all original educational, DOB, domicile, and category certificates chronologically with at least two self-attested photocopy sets."
+            title: "Carry Originals & Copies",
+            description: "Organize academic, DOB, domicile, and category originals with photocopy sets."
           },
           {
-            title: "Report at the Prescribed Venue",
-            description: hasRealVenue ? `Attend at ${item.venue} as per your reporting schedule. Missing verification may forfeit candidature.` : "Attend at the verification venue notified in the official circular on your assigned date. Missing verification may forfeit candidature."
+            title: "Attend Prescribed Venue",
+            description: hasRealVenue ? `Report at ${item.venue} on your scheduled DV date.` : `Report at the ${orgName} venue notified in the circular.`
           }
         ]
       };
@@ -7632,20 +7638,20 @@ function getProcessSectionConfig(item, type, statusInfo, portalUrl) {
     case "admit_card":
       return {
         id: "how-to-download-admit-card",
-        title: "How to Download Admit Card / Hall Ticket",
-        subtitle: "Official steps for already-registered candidates.",
+        title: `Download ${orgName} Admit Card`,
+        subtitle: `Steps for ${item.title}.`,
         steps: [
           {
-            title: "Open the Official Authority Portal",
-            description: `Visit ${portalUrl} and open the Admit Card / Hall Ticket / City Intimation link for this examination.`
+            title: `Open ${orgName} Portal`,
+            description: `Visit ${portalUrl} and open the ${item.title} download link.`
           },
           {
-            title: "Sign In Using Registration Credentials",
-            description: "Enter your Application / Registration Number, Roll Number, Enrollment Number, or Date of Birth / Password."
+            title: "Enter Candidate Login",
+            description: "Sign in with your Application/Roll Number and Date of Birth."
           },
           {
-            title: "Check Details & Print Clear Copy",
-            description: "Verify your name, photograph, exam date, shift reporting time, and centre address on the downloaded PDF before printing."
+            title: "Verify & Print Hall Ticket",
+            description: `Confirm your exam shift (${statusInfo.dateValue}), centre address, and instructions on the PDF.`
           }
         ]
       };
@@ -7654,73 +7660,73 @@ function getProcessSectionConfig(item, type, statusInfo, portalUrl) {
       const hasTime = hasRealDataValue(item.reportingTime) && !isGenericNoticePlaceholder(item.reportingTime);
       const steps = [
         {
-          title: "Verify Your Paper / Event Schedule",
-          description: `Confirm your exact examination or event date (${statusInfo.dateValue}) from the official ${orgName} notice.`
+          title: `Verify ${orgName} Exam Schedule`,
+          description: `Check dates (${statusInfo.dateValue}) published under ${item.title}.`
         }
       ];
       if (hasVenue || hasTime) {
         const parts = [];
         if (hasVenue) parts.push(`Venue: ${item.venue}`);
-        if (hasTime) parts.push(`Session / Reporting Time: ${item.reportingTime}`);
+        if (hasTime) parts.push(`Timing: ${item.reportingTime}`);
         steps.push({
-          title: "Check Notified Timings & Venue Details",
+          title: "Confirm Venue & Timing",
           description: `${parts.join(". ")}.`
         });
       }
       steps.push({
-        title: item.stage === "rc_update" ? "Carry ID Card & Required Copies" : "Confirm Final Centre on Hall Ticket",
-        description: item.stage === "rc_update" ? "Carry your IGNOU Student ID card, original photo ID, and supporting CV/academic copies to the venue." : "Carry your downloaded hall ticket / admit card and valid original photo ID to the allotted centre."
+        title: item.stage === "rc_update" ? "Carry ID & Resume Copies" : "Carry Hall Ticket & ID",
+        description: item.stage === "rc_update" ? `Carry your IGNOU ID card and CV copies to the ${orgName} venue.` : `Bring your printed ${orgName} admit card and valid photo ID to the centre.`
       });
       return {
         id: "exam-day-instructions",
-        title: item.stage === "rc_update" ? "Participation & Reporting Steps" : isDatesheetNotice(item) ? "Date Sheet Verification Steps" : "Exam Schedule Instructions",
-        subtitle: "Key guidance for students and candidates covered under this notice.",
+        title: item.stage === "rc_update" ? `Reporting Steps \u2014 ${item.title}` : isDatesheetNotice(item) ? `Date Sheet Check \u2014 ${item.title}` : `Schedule Guidance \u2014 ${item.title}`,
+        subtitle: `Key instructions for ${orgName} candidates.`,
         steps
       };
     }
     case "result":
       return {
         id: "whats-next-result",
-        title: "What Happens Next After Result",
-        subtitle: "Steps to verify your result and prepare for subsequent stages.",
+        title: `Check ${orgName} Result & Next Steps`,
+        subtitle: `Summary for ${item.title}.`,
         steps: [
           {
-            title: "Check Roll Number / Scorecard on Official Portal",
-            description: `Open ${portalUrl} and verify your Roll Number, Registration No., or Scorecard in the official result notice.`
+            title: `Open ${orgName} Result Portal`,
+            description: `Visit ${portalUrl} and verify your roll number or marks in ${item.title}.`
           },
           {
-            title: "Save Official Result PDF for Record",
-            description: "Download and save a copy of the selection list, grade card, or marksheet published by the authority."
+            title: "Download Result PDF / Scorecard",
+            description: `Save the official ${orgName} selection list or marksheet (${statusInfo.dateValue}) for verification.`
           },
           {
-            title: isCounsellingNotice(item) ? "Follow Counselling & Reporting Schedule" : "Monitor Next-Stage Notices",
-            description: `Watch official ${orgName} circulars for subsequent counselling, document verification, or admission formalities.`
+            title: isCounsellingNotice(item) ? "Complete Counselling Schedule" : "Track Further Notices",
+            description: `Follow subsequent ${orgName} DV, counselling, or joining circulars.`
           }
         ]
       };
     case "answer_key":
       return {
         id: "check-answer-key",
-        title: "How to Check Answer Key & Submit Objection",
-        subtitle: statusInfo.computedStatus === "closing_soon" ? `Objection window active until ${statusInfo.dateValue}.` : "Official key verification process.",
+        title: `Check ${orgName} Answer Key & Objections`,
+        subtitle: statusInfo.computedStatus === "closing_soon" ? `Objection window for ${item.title} runs until ${statusInfo.dateValue}.` : `Key verification steps for ${item.title}.`,
         steps: [
           {
-            title: "Open Official Answer Key / Response Sheet Link",
-            description: `Visit ${portalUrl} and sign in with your candidate credentials or open the published answer key PDF.`
+            title: `Open ${orgName} Key Link`,
+            description: `Log in at ${portalUrl} to view ${item.title} provisional responses.`
           },
           {
-            title: "Match Your Recorded Responses Carefully",
-            description: "Compare each question ID and option ID against the official provisional or final key published by the authority."
+            title: "Compare Question Responses",
+            description: `Match your Question/Option IDs carefully against the ${orgName} key.`
           },
           ...statusInfo.computedStatus === "closing_soon" ? [
             {
-              title: `Submit Online Challenge Before ${statusInfo.dateValue}`,
-              description: "Upload clear academic/standard reference proof on the official objection portal within the stipulated objection window."
+              title: `Raise Objection by ${statusInfo.dateValue}`,
+              description: `Submit challenges with reference proof on ${portalUrl} before closing.`
             }
           ] : [
             {
-              title: "Track Final Result Publication",
-              description: "After reviewing candidate objections, the authority publishes final keys and results on the official website."
+              title: "Monitor Final Key & Result",
+              description: `${orgName} issues final results after reviewing candidate challenges.`
             }
           ]
         ]
@@ -7728,20 +7734,20 @@ function getProcessSectionConfig(item, type, statusInfo, portalUrl) {
     case "upcoming":
       return {
         id: "prepare-before-opening",
-        title: "How to Prepare Before Registration Opens",
-        subtitle: `Window is scheduled to open on ${item.applyStart || item.startDate || statusInfo.dateValue}.`,
+        title: `Preparation Steps \u2014 ${item.title}`,
+        subtitle: `Expected opening: ${item.applyStart || item.startDate || statusInfo.dateValue}.`,
         steps: [
           {
-            title: "Review Eligibility Criteria in Official Notification",
-            description: "Check qualification cut-off dates, category certificate requirements, and eligibility rules on the official circular."
+            title: `Review ${orgName} Eligibility`,
+            description: `Check qualification cut-off dates and category norms in ${item.title}.`
           },
           {
-            title: isEdu ? "Keep Student Registration & Academic Records Ready" : "Prepare Scanned Documents & OTR Profile",
-            description: isEdu ? "Keep your enrollment number, qualifying marksheets, and valid ID ready before the portal opens." : "Keep clear scans of your photograph, signature, Class 10th marksheet, qualification certificates, and domicile certificate ready."
+            title: isEdu ? "Keep Enrolment Records Ready" : "Prepare OTR & Scans",
+            description: isEdu ? "Keep enrollment number, marksheets, and valid ID ready." : "Keep scanned photo, signature, 10th certificate, and domicile ready."
           },
           {
-            title: "Apply Once Official Portal Link Activates",
-            description: `Visit ${portalUrl} or contact CSC DOST once the window opens to complete submission before the closing deadline.`
+            title: `Apply on ${orgName} Activation`,
+            description: `Submit via ${portalUrl} once registration activates.`
           }
         ]
       };
@@ -7754,48 +7760,48 @@ function getProcessSectionConfig(item, type, statusInfo, portalUrl) {
       if (isEdu) {
         return {
           id: "submission-procedure",
-          title: "Submission procedure",
-          subtitle: "Follow these steps on the official university/board portal or request CSC DOST assistance.",
+          title: `Submission Procedure \u2014 ${item.title}`,
+          subtitle: `Online submission guide for ${orgName}.`,
           steps: [
             {
-              title: `Open Official ${orgName} Portal`,
-              description: `Visit ${portalUrl} and open the active link for "${item.title}".`
+              title: `Open ${orgName} Portal`,
+              description: `Visit ${portalUrl} and open "${item.title}".`
             },
             {
-              title: "Sign In With Student / Candidate Credentials",
-              description: "Log in using your University Registration / Enrollment Number or complete student registration using an active mobile number and email."
+              title: "Student Sign-In",
+              description: `Log in with your ${orgName} registration or enrolment number.`
             },
             {
-              title: "Select Programme / Courses & Verify Details",
-              description: "Choose your programme, semester, or courses carefully and confirm all academic details against official student records."
+              title: "Verify Courses & Details",
+              description: "Confirm selected semester/courses against academic records."
             },
             {
-              title: item.fee?.genObc && /₹0|free|exempt|no application fee/i.test(item.fee.genObc) ? "Submit Form & Download Confirmation" : "Pay Prescribed Fee & Save Final Receipt",
-              description: "Review your form preview carefully before final submission and save a copy of the acknowledgment receipt."
+              title: item.fee?.genObc && /₹0|free|exempt|no application fee/i.test(item.fee.genObc) ? "Submit & Save Slip" : "Pay Fee & Save Receipt",
+              description: `Review preview before locking and save your ${orgName} receipt.`
             }
           ]
         };
       }
       return {
         id: "how-to-apply",
-        title: "How to Apply Online",
-        subtitle: "Follow these steps on the official portal or request CSC DOST assistance.",
+        title: `How to Apply \u2014 ${item.title}`,
+        subtitle: `Application overview for ${orgName}.`,
         steps: [
           {
-            title: `Open Official ${orgName} Portal`,
-            description: `Visit ${portalUrl} and locate the active link for "${item.title}".`
+            title: `Open ${orgName} Portal`,
+            description: `Go to ${portalUrl} and select "${item.title}".`
           },
           {
-            title: "Complete Candidate Registration / Sign In",
-            description: "Log in with your OTR / Candidate ID or complete new registration using your active mobile number and email."
+            title: "Candidate Registration / OTR",
+            description: `Sign in with your ${orgName} OTR/Candidate ID or register.`
           },
           {
-            title: "Fill Details & Upload Scanned Documents",
-            description: "Enter personal and academic details matching your Class 10th / qualifying marksheets and upload properly sized scans."
+            title: "Enter Data & Upload Scans",
+            description: "Match entries to Class 10th records and upload compliant scans."
           },
           {
-            title: item.fee?.genObc && /₹0|free|exempt|no application fee/i.test(item.fee.genObc) ? "Submit Form & Download Confirmation" : "Pay Prescribed Fee & Save Final Receipt",
-            description: "Review your preview carefully before final submission and keep a printed/PDF copy of the acknowledgment receipt."
+            title: item.fee?.genObc && /₹0|free|exempt|no application fee/i.test(item.fee.genObc) ? "Submit & Print Form" : "Remit Fee & Save Receipt",
+            description: `Verify preview prior to submission and retain the ${orgName} confirmation PDF.`
           }
         ]
       };
@@ -7805,45 +7811,41 @@ function buildPostFaqs(item, type, orgName, portalUrl, statusInfo) {
   const customFaqs = item.faq ? [...item.faq] : [];
   const faqs = [...customFaqs];
   faqs.push({
-    question: `Where can I verify the official notification for ${item.title}?`,
-    answer: `You can confirm every official date, eligibility rule, and circular directly from ${orgName} at ${portalUrl}. Always rely on the official notice for final updates.`
+    question: `Where is the official source for ${item.title}?`,
+    answer: `Official dates and rules for ${item.title} are published by ${orgName} at ${portalUrl}.`
   });
   if (!isAssignmentNotice(item) && (type === "application" || type === "admission" || type === "upcoming") && !(item.fee?.genObc && /₹0|free|exempt|no application fee/i.test(item.fee.genObc))) {
     faqs.push({
-      question: "What if online fee payment is deducted but the form shows pending?",
-      answer: "Wait 24\u201348 hours for bank/gateway reconciliation before attempting another payment, and check the Verify Payment option in your candidate dashboard."
+      question: `What if ${orgName} fee payment shows pending for ${item.title}?`,
+      answer: `Wait 24\u201348 hours for bank reconciliation before retrying on ${portalUrl}.`
     });
   }
   if (isAssignmentNotice(item)) {
     faqs.push({
-      question: "Do learners who submitted assignments offline at their Study Centre need to upload again?",
-      answer: "No. Learners who have already submitted assignments at their Study Centre or Regional Centre do not need to re-upload online."
+      question: `Must offline Study Centre learners re-upload ${item.title}?`,
+      answer: `No. Learners who already submitted offline at their ${orgName} centre need not re-upload.`
     });
   } else if (type === "dv") {
     faqs.push({
-      question: "Do I need to submit an online application or pay a fee for Document Verification?",
-      answer: "No. Document Verification is only for already shortlisted candidates listed in the official DV notice. Bring original certificates and photocopies per your schedule."
+      question: `Is a fresh form needed for ${item.title}?`,
+      answer: `No. Only candidates shortlisted by ${orgName} attend with original certificates.`
     });
   } else if (type === "answer_key") {
     faqs.push({
-      question: "Can fresh candidates apply through this answer key notice?",
-      answer: statusInfo.computedStatus === "closing_soon" ? `No. This notice is strictly for candidates who appeared in the examination to review responses or submit key objections up to ${statusInfo.dateValue}.` : "No. This notice is published for candidates who appeared in the examination to check their responses."
+      question: `Who can access ${item.title}?`,
+      answer: statusInfo.computedStatus === "closing_soon" ? `Only candidates who appeared in this ${orgName} exam can check keys or object until ${statusInfo.dateValue}.` : `Candidates who appeared in this ${orgName} exam can verify their responses.`
     });
   } else if (type === "result") {
     faqs.push({
-      question: "Does this result notice require a new application form?",
-      answer: "No. This page covers an official result or selection list update. Follow the next-stage DV or counselling instructions issued by the authority."
+      question: `Does ${item.title} open new registration?`,
+      answer: `No. ${item.title} covers result/merit updates from ${orgName}. Follow next-stage DV or counselling instructions.`
     });
   } else if (type === "admit_card" || type === "exam") {
     faqs.push({
-      question: "Who is eligible to download or appear under this notice?",
-      answer: "Only candidates who previously registered for this examination cycle can download their hall ticket or appear per the notified schedule."
+      question: `Who can download or appear under ${item.title}?`,
+      answer: `Registered candidates of this ${orgName} examination cycle (${statusInfo.dateValue}).`
     });
   }
-  faqs.push({
-    question: "Is CSC DOST an official government website?",
-    answer: "No. CSC DOST is an independent citizen information and facilitation portal run by Authorised CSC VLE Wasim Ahmad Khanday (VLE ID 212515670018) at Sangran Qazigund, Anantnag, J&K."
-  });
   return faqs;
 }
 
@@ -8583,6 +8585,294 @@ var SERVICES_LIST = [
     price: "\u20B970 (Portal Fee)"
   }
 ];
+
+// src/utils/serviceMetadata.ts
+var SERVICE_MERGE_CLUSTERS = [
+  {
+    clusterId: "jk-category-certificates",
+    title: "J&K Caste, Category & Reservation Certificates",
+    hubPath: "/services/cluster/jk-category-certificates",
+    summary: "Consolidated hub comparing SC, ST, OBC/OSC, RBA, ALC/IB, Pahari, EWS, and state reservation certificate services issued via J&K ServiceOnline / Tehsildar.",
+    issuingAuthority: "Competent Tehsildar / Revenue Authority via J&K e-UNNAT (ServiceOnline)",
+    memberIds: [
+      "jk-rba-cert",
+      "jk-obc-cert",
+      "jk-st-cert",
+      "jk-sc-cert",
+      "jk-alc-ib-cert",
+      "jk-pahari-cert",
+      "jk-ews-cert",
+      "csc-certificates"
+    ]
+  },
+  {
+    clusterId: "jk-civil-certificates",
+    title: "J&K Domicile, Civil & Identity Certificates",
+    hubPath: "/services/cluster/jk-civil-certificates",
+    summary: "Consolidated hub for Domicile, Birth, Death, Marriage, Character, Dependent, Unemployment, and Senior Citizen certificates in Jammu & Kashmir.",
+    issuingAuthority: "Competent Tehsildar / Registrar via J&K e-UNNAT Portal",
+    memberIds: [
+      "jk-domicile-cert",
+      "jk-birth-cert",
+      "jk-death-cert",
+      "jk-marriage-cert",
+      "jk-character-cert",
+      "jk-dependent-cert",
+      "jk-unemployment-cert",
+      "jk-senior-citizen"
+    ]
+  },
+  {
+    clusterId: "jk-revenue-land-records",
+    title: "J&K Revenue & Land Records (rev-*)",
+    hubPath: "/services/cluster/jk-revenue-land-records",
+    summary: "Unified comparison of J&K Revenue Department land extracts, mutations (Inteqal), Jamabandi, Girdawari, Fard, Legal Heir, and Income certificates.",
+    issuingAuthority: "Revenue Department, Govt. of Jammu & Kashmir (Tehsildar / Patwari Circle)",
+    memberIds: [
+      "rev-attestation-mutation",
+      "rev-clu",
+      "rev-copy-mutation",
+      "rev-encumbrance-cert",
+      "rev-aks-masavi",
+      "rev-chulah-chowkidara",
+      "rev-girdawari",
+      "rev-jamabandi",
+      "rev-fard",
+      "rev-field-book",
+      "rev-court-files",
+      "rev-income-cert",
+      "rev-income-dependency",
+      "rev-land-passbook",
+      "rev-legal-heir",
+      "rev-demarcation",
+      "rev-prc-files",
+      "rev-property-cert",
+      "rev-shajra-nasab"
+    ]
+  },
+  {
+    clusterId: "instant-pvc-smart-cards",
+    title: "Instant PVC & Smart Card Printing (ca-*-pvc)",
+    hubPath: "/services/cluster/instant-pvc-smart-cards",
+    summary: "Combined desk overview for Ayushman, Driving Licence, Vehicle RC, Aadhaar, Voter EPIC, and Ration PVC smart card print requests.",
+    issuingAuthority: "Respective Central/State Portals + Local CSC DOST Print Desk",
+    memberIds: [
+      "ca-ayushman-pvc",
+      "ca-dl-pvc",
+      "ca-vehicle-rc-pvc",
+      "ca-aadhaar-pvc",
+      "ca-voter-pvc",
+      "ca-ration-rice-pvc"
+    ]
+  }
+];
+function getServiceClusterById(clusterId) {
+  return SERVICE_MERGE_CLUSTERS.find((c) => c.clusterId === clusterId);
+}
+function getClusterForServiceId(serviceId) {
+  return SERVICE_MERGE_CLUSTERS.find((c) => c.memberIds.includes(serviceId));
+}
+function resolveServiceOfficialPortal(service) {
+  if (service.officialUrl && service.officialUrl.trim().length > 0) {
+    return { label: "Official Portal", url: service.officialUrl.trim() };
+  }
+  if (service.category === "cards_adda") {
+    const sId2 = service.id.toLowerCase();
+    if (sId2.includes("ayushman")) return { label: "NHA PM-JAY Portal", url: "https://beneficiary.nha.gov.in" };
+    if (sId2.includes("dl") || sId2.includes("rc")) return { label: "Parivahan Sewa", url: "https://parivahan.gov.in" };
+    if (sId2.includes("aadhaar")) return { label: "UIDAI myAadhaar", url: "https://myaadhaar.uidai.gov.in" };
+    if (sId2.includes("voter")) return { label: "ECI Voters Portal", url: "https://voters.eci.gov.in" };
+    if (sId2.includes("pan")) return { label: "NSDL Protean", url: "https://www.onlineservices.nsdl.com/paam/endUserRegisterContact.html" };
+    if (sId2.includes("gst")) return { label: "GST Portal (GSTN)", url: "https://www.gst.gov.in" };
+    return { label: "", url: "" };
+  }
+  const sId = service.id.toLowerCase();
+  const sName = service.name.toLowerCase();
+  if (sId.includes("pan") || sName.includes("pan")) {
+    return { label: "NSDL Protean / Income Tax Portal", url: "https://www.onlineservices.nsdl.com/paam/endUserRegisterContact.html" };
+  }
+  if (sId.includes("aadhaar") || sName.includes("aadhaar")) {
+    return { label: "UIDAI myAadhaar Portal", url: "https://myaadhaar.uidai.gov.in" };
+  }
+  if (sId.includes("ayushman") || sName.includes("ayushman") || sName.includes("golden")) {
+    return { label: "NHA PM-JAY Beneficiary Portal", url: "https://beneficiary.nha.gov.in" };
+  }
+  if (sId.includes("voter") || sName.includes("voter")) {
+    return { label: "ECI Voters Portal", url: "https://voters.eci.gov.in" };
+  }
+  if (sId.includes("pmkisan") || sName.includes("kisan")) {
+    return { label: "PM-KISAN Official Portal", url: "https://pmkisan.gov.in" };
+  }
+  if (sId.includes("passport") || sName.includes("passport")) {
+    return { label: "Passport Seva (MEA)", url: "https://www.passportindia.gov.in" };
+  }
+  if (sId.includes("dl") || sName.includes("driving")) {
+    return { label: "Parivahan Sewa (MoRTH)", url: "https://parivahan.gov.in" };
+  }
+  if (sId.includes("eshram") || sName.includes("shram")) {
+    return { label: "e-Shram Official Portal", url: "https://eshram.gov.in" };
+  }
+  if (sId.includes("udyam")) {
+    return { label: "Udyam Registration (MSME)", url: "https://udyamregistration.gov.in" };
+  }
+  if (sId.includes("gst")) {
+    return { label: "GST Portal (GSTN)", url: "https://www.gst.gov.in" };
+  }
+  if (service.category === "jk_state" || service.category === "revenue") {
+    return { label: "J&K e-UNNAT / ServiceOnline Portal", url: "https://eunnat.jk.gov.in" };
+  }
+  return { label: "", url: "" };
+}
+function resolveStoredAuthority(service) {
+  if (service.issuingAuthority && service.issuingAuthority.trim() && !/\[VERIFY\]/i.test(service.issuingAuthority)) {
+    return { value: service.issuingAuthority.trim(), stored: true };
+  }
+  const sId = service.id.toLowerCase();
+  if (service.category === "revenue") {
+    return {
+      value: "J&K Revenue Dept. (Tehsildar / Patwari)",
+      stored: true
+    };
+  }
+  if (service.category === "jk_state") {
+    if (sId === "jk-marriage-cert") return { value: "Registrar of Marriages (J&K)", stored: true };
+    if (sId === "jk-building-licenses") return { value: "SMC / JMC Municipal Authority", stored: true };
+    if (sId === "jk-drone-permission") return { value: "District Magistrate (J&K)", stored: true };
+    if (sId === "jk-mgnrega-jobcard") return { value: "Rural Development Dept., J&K", stored: true };
+    if (sId === "jk-horticulture-passbook") return { value: "Dept. of Horticulture, J&K", stored: true };
+    return {
+      value: "Tehsildar / J&K e-UNNAT",
+      stored: true
+    };
+  }
+  if (sId === "csc-pan" || sId === "ca-epan-download" || sId === "ca-lost-pan-find" || sId === "ca-nsdl-instant-pan") {
+    return { value: "Income Tax Dept. (NSDL / UTIITSL)", stored: true };
+  }
+  if (sId === "csc-aadhaar" || sId === "ca-aadhaar-pvc") {
+    return { value: "UIDAI (Aadhaar Authority)", stored: true };
+  }
+  if (sId === "csc-voter" || sId === "ca-voter-pvc" || sId === "ca-voter-mobile-link") {
+    return { value: "Election Commission (ECI)", stored: true };
+  }
+  if (sId === "csc-ayushman" || sId === "ca-ayushman-pvc") {
+    return { value: "National Health Authority (PM-JAY)", stored: true };
+  }
+  if (sId === "csc-pmkisan") {
+    return { value: "Ministry of Agriculture (PM-KISAN)", stored: true };
+  }
+  if (sId === "csc-eshram") {
+    return { value: "Ministry of Labour (e-Shram)", stored: true };
+  }
+  if (sId === "csc-passport") {
+    return { value: "Passport Seva (MEA)", stored: true };
+  }
+  if (sId === "csc-dl" || sId === "ca-dl-pvc" || sId === "ca-vehicle-rc-pvc") {
+    return { value: "MoRTH / RTO (Parivahan)", stored: true };
+  }
+  if (sId === "biz-gst" || sId === "ca-gst-registration") {
+    return { value: "GST Network (GSTN)", stored: true };
+  }
+  if (sId === "biz-udyam") {
+    return { value: "Ministry of MSME", stored: true };
+  }
+  if (service.category === "digital") {
+    return { value: "CSC DOST Desk, Qazigund", stored: true };
+  }
+  return { value: "[VERIFY]", stored: false };
+}
+function hasExplicitContent(val) {
+  const s = String(val || "").trim();
+  return Boolean(s && !/\[VERIFY\]/i.test(s) && !/^ask us$/i.test(s));
+}
+function hasExplicitList(arr) {
+  return Array.isArray(arr) && arr.filter((item) => Boolean(item && item.trim() && !/\[VERIFY\]/i.test(item))).length > 0;
+}
+function deriveStoredServiceFacts(service) {
+  const auth = resolveStoredAuthority(service);
+  const portal = resolveServiceOfficialPortal(service);
+  const eligibilityStored = hasExplicitContent(service.eligibility);
+  const eligibility = eligibilityStored ? service.eligibility.trim() : "[VERIFY]";
+  const reqList = Array.isArray(service.requirements) ? service.requirements.map((r) => r.trim()).filter(Boolean) : [];
+  const requirementsStored = reqList.length > 0 && !reqList.some((r) => /\[VERIFY\]/i.test(r));
+  const feeLines = Array.isArray(service.feeLines) ? service.feeLines.filter(Boolean) : [];
+  const rawPrice = String(service.price || "").trim();
+  const feesStored = (feeLines.length > 0 || Boolean(rawPrice) && !/^ask us$/i.test(rawPrice)) && !/\[VERIFY\]/i.test(rawPrice);
+  const feesText = rawPrice ? feesStored ? rawPrice : `${rawPrice} [VERIFY]` : "[VERIFY]";
+  const rawTime = String(service.estimatedTime || "").trim();
+  const timeStored = hasExplicitContent(rawTime);
+  const estimatedTime = timeStored ? rawTime : "[VERIFY]";
+  const stepFlowStored = hasExplicitList(service.stepFlow);
+  const stepFlow = stepFlowStored ? service.stepFlow.filter(Boolean) : [];
+  const staffChecksStored = hasExplicitList(service.staffChecks);
+  const staffChecks = staffChecksStored ? service.staffChecks.filter(Boolean) : [];
+  const rejectionReasonsStored = hasExplicitList(service.rejectionReasons);
+  const rejectionReasons = rejectionReasonsStored ? service.rejectionReasons.filter(Boolean) : [];
+  const missingVerifyFields = [];
+  if (!auth.stored) missingVerifyFields.push("issuingAuthority");
+  if (!eligibilityStored) missingVerifyFields.push("eligibility");
+  if (!requirementsStored) missingVerifyFields.push("requirements");
+  if (!feesStored) missingVerifyFields.push("fees");
+  if (!timeStored) missingVerifyFields.push("estimatedTime");
+  if (!stepFlowStored) missingVerifyFields.push("stepFlow");
+  if (!staffChecksStored) missingVerifyFields.push("staffChecks");
+  if (!rejectionReasonsStored) missingVerifyFields.push("rejectionReasons");
+  return {
+    issuingAuthority: auth.value,
+    authorityFromStoredData: auth.stored,
+    eligibility,
+    eligibilityFromStoredData: eligibilityStored,
+    requirements: reqList,
+    requirementsFromStoredData: requirementsStored,
+    feesText,
+    feeLines,
+    feesFromStoredData: feesStored,
+    estimatedTime,
+    timeFromStoredData: timeStored,
+    stepFlow,
+    stepFlowFromStoredData: stepFlowStored,
+    staffChecks,
+    staffChecksFromStoredData: staffChecksStored,
+    rejectionReasons,
+    rejectionReasonsFromStoredData: rejectionReasonsStored,
+    officialPortalUrl: portal.url,
+    officialPortalLabel: portal.label,
+    missingVerifyFields,
+    hasVerifyPlaceholders: missingVerifyFields.length > 0
+  };
+}
+function validateServiceReadyToPublish(service) {
+  const facts = deriveStoredServiceFacts(service);
+  const errors = [];
+  if (!facts.authorityFromStoredData) {
+    errors.push("Issuing Authority still contains [VERIFY] or is missing.");
+  }
+  if (!facts.eligibilityFromStoredData) {
+    errors.push("Who Is Eligible still contains [VERIFY] or is empty.");
+  }
+  if (!facts.requirementsFromStoredData) {
+    errors.push("Exact Documents Checklist is incomplete or contains [VERIFY].");
+  }
+  if (!facts.feesFromStoredData) {
+    errors.push("Fees field is missing or marked Ask us / [VERIFY].");
+  }
+  if (!facts.timeFromStoredData) {
+    errors.push("Processing Time is missing or contains [VERIFY].");
+  }
+  if (!facts.stepFlowFromStoredData) {
+    errors.push("Step-by-Step Flow still contains [VERIFY] or has no steps.");
+  }
+  if (!facts.staffChecksFromStoredData) {
+    errors.push("CSC DOST Staff Pre-Submission Checks still contain [VERIFY] or are empty.");
+  }
+  if (!facts.rejectionReasonsFromStoredData) {
+    errors.push("Common Rejection Reasons still contain [VERIFY] or are empty.");
+  }
+  return {
+    canPublish: errors.length === 0,
+    missingFields: facts.missingVerifyFields,
+    errors
+  };
+}
 
 // src/data/guidesData.ts
 var GUIDE_ARTICLES = [
@@ -9386,6 +9676,610 @@ var GUIDE_ARTICLES = [
         answer: "ABC/APAAR generation relies on Aadhaar demographic data. If spelling differs significantly from academic records, update Aadhaar demographic details at an authorized centre before university verification."
       }
     ]
+  },
+  {
+    id: "jk-pm-surya-ghar-muft-bijli-guide-draft",
+    title: "PM Surya Ghar Muft Bijli Yojana in J&K: Subsidy Slabs, Net Metering & Portal Guide",
+    hindiTitle: "\u092A\u0940\u090F\u092E \u0938\u0942\u0930\u094D\u092F \u0918\u0930 \u092E\u0941\u092B\u094D\u0924 \u092C\u093F\u091C\u0932\u0940 \u092F\u094B\u091C\u0928\u093E \u091C\u092E\u094D\u092E\u0942-\u0915\u0936\u094D\u092E\u0940\u0930: \u0938\u092C\u094D\u0938\u093F\u0921\u0940 \u0914\u0930 \u0906\u0935\u0947\u0926\u0928 \u0917\u093E\u0907\u0921",
+    urduTitle: "\u067E\u06CC \u0627\u06CC\u0645 \u0633\u0648\u0631\u06CC\u06C1 \u06AF\u06BE\u0631 \u0645\u0641\u062A \u0628\u062C\u0644\u06CC \u06CC\u0648\u062C\u0646\u0627 \u062C\u0645\u0648\u06BA \u0648 \u06A9\u0634\u0645\u06CC\u0631: \u0633\u0628\u0633\u0688\u06CC \u0627\u0648\u0631 \u062F\u0631\u062E\u0648\u0627\u0633\u062A \u06AF\u0627\u0626\u06CC\u0688",
+    category: "Central Scheme",
+    readTime: "6 min read",
+    lastUpdated: "November 18, 2026",
+    status: "draft",
+    verifyNotes: [
+      "Verify latest JPDCL / KPDCL empanelled vendor rules and net metering fee schedule for Jammu & Kashmir consumers.",
+      "Confirm central CFA subsidy slabs (1 kW, 2 kW, 3 kW+) and any additional UT/state top-up on pmsuryaghar.gov.in."
+    ],
+    author: "CSC DOST Editorial & Citizen Advisory Desk",
+    officialPortal: "pmsuryaghar.gov.in",
+    officialUrl: "https://pmsuryaghar.gov.in",
+    responsibleDepartment: "Ministry of New & Renewable Energy (MNRE) / KPDCL & JPDCL",
+    intendedBeneficiaries: "Residential electricity consumers with domestic meter connection and suitable roof space",
+    benefitSummary: "Central Financial Assistance up to [VERIFY \u20B978,000 for 3 kW+] rooftop solar & up to 300 units/month free power benefit",
+    applicableRegion: "All India (including Jammu & Kashmir KPDCL / JPDCL divisions)",
+    summary: "Step-by-step guide for Jammu and Kashmir residential electricity consumers applying for rooftop solar installation under PM Surya Ghar: Muft Bijli Yojana, covering registration, KPDCL/JPDCL technical feasibility, vendor selection, net-metering inspection, and DBT subsidy disbursement.",
+    tableOfContents: [
+      "Overview & Electricity Discom Integration in J&K",
+      "CFA Subsidy Structure & Capacity Sizing",
+      "Mandatory Consumer Eligibility & Roof Readiness",
+      "Documents Required for Online Application",
+      "Step-by-Step Application on pmsuryaghar.gov.in",
+      "Post-Installation Net Metering & DBT Release"
+    ],
+    sections: [
+      {
+        heading: "1. Overview & Electricity Discom Integration in J&K",
+        content: "PM Surya Ghar: Muft Bijli Yojana assists residential households with domestic grid connections in installing grid-connected rooftop solar plants. In Jammu and Kashmir, consumer consumer-number verification and technical feasibility approvals route through Kashmir Power Distribution Corporation Limited (KPDCL) and Jammu Power Distribution Corporation Limited (JPDCL). Applicants should never pay cash advances to unregistered middlemen before receiving online technical feasibility approval on the national portal.",
+        bulletPoints: [
+          "Only residential domestic metered connections are eligible; purely commercial or industrial meters follow separate policies.",
+          "All installations claiming central subsidy must be executed by a vendor registered and listed on the official national portal under the relevant Discom.",
+          "Net metering replaces or reconfigures the existing service meter with a bidirectional smart or net meter approved by the Discom."
+        ]
+      },
+      {
+        heading: "2. CFA Subsidy Structure & Capacity Sizing",
+        content: "Under central guidelines, Central Financial Assistance depends on sanctioned plant capacity and average monthly household consumption [VERIFY current MNRE 2026 CFA slab rates and any J&K UT special-category additional subsidy percentage on pmsuryaghar.gov.in]. Households should match system kW sizing carefully against their sanctioned load rather than over-sizing beyond sanctioned Discom limits, because sanctioned load upgrades must be cleared by the local Electric Sub-Division before commissioning.",
+        tips: "Check your last 6 months of KPDCL/JPDCL electricity bills before selecting 1 kW, 2 kW, or 3 kW capacity. Snow-load mounting tilt angles matter in Kashmir valley districts."
+      },
+      {
+        heading: "3. Net Metering Inspection & DBT Subsidy Release",
+        content: "Once panels and inverter are installed using DCR-compliant solar modules, the vendor submits work completion details with serial numbers and geo-tagged photographs. Discom engineers inspect earthing, AC/DC protection boxes, and install the net meter. After commissioning certificate issuance, the applicant enters bank account details and cancelled cheque on the portal for Direct Benefit Transfer [VERIFY typical 30-day DBT disbursement timeline in KPDCL/JPDCL divisions]."
+      }
+    ],
+    eligibility: [
+      "Applicant must be an Indian citizen residing in a house with a valid domestic electricity connection [VERIFY tenant NOC / joint family meter transfer rules]",
+      "Roof ownership or valid property title suitable for shadow-free solar mounting",
+      "No prior central rooftop solar subsidy availed for the same consumer account number [VERIFY current DBT deduplication norm]"
+    ],
+    documentsRequired: [
+      "Latest KPDCL / JPDCL domestic electricity bill showing Consumer ID and Sanctioned Load",
+      "Aadhaar Card linked with active mobile number for OTP login",
+      "Cancelled cheque or Bank Passbook front page (matching applicant name for DBT)",
+      "Property ownership proof / Jamabandi / Municipal Tax receipt [VERIFY accepted J&K ownership proof list]"
+    ],
+    stepByStep: [
+      "Visit pmsuryaghar.gov.in and select Apply for Rooftop Solar -> Register using State (Jammu & Kashmir), Electricity Distribution Company (KPDCL or JPDCL), and Consumer Account Number.",
+      "Log in with registered mobile number and fill out the rooftop capacity request form.",
+      "Wait for online Technical Feasibility Approval from your respective Discom sub-division.",
+      "Select a registered solar vendor shown inside your portal dashboard and sign the standard agreement.",
+      "Complete installation using domestic content requirement (DCR) panels and submit commissioning inspection request.",
+      "After net meter installation and commissioning certificate upload, submit bank details on the portal to claim DBT subsidy."
+    ],
+    faqs: [
+      {
+        question: "Can households in snow-bound districts of Anantnag, Kulgam, or Baramulla apply?",
+        answer: "Yes, domestic consumers across KPDCL and JPDCL divisions are eligible, provided the vendor uses sturdy elevated mounting structures designed for local wind and snow loads [VERIFY local empanelled vendor availability in rural feeders]."
+      },
+      {
+        question: "How much subsidy is credited to the bank account?",
+        answer: "Central Financial Assistance is credited directly to the beneficiary bank account based on installed capacity slabs [VERIFY exact current slab figures on pmsuryaghar.gov.in before submission]."
+      }
+    ]
+  },
+  {
+    id: "jk-ladli-beti-smas-guide-draft",
+    title: "J&K Ladli Beti & State Marriage Assistance Scheme (SMAS): Eligibility & Jansugam Guide",
+    hindiTitle: "\u091C\u092E\u094D\u092E\u0942-\u0915\u0936\u094D\u092E\u0940\u0930 \u0932\u093E\u0921\u0932\u0940 \u092C\u0947\u091F\u0940 \u0914\u0930 \u0935\u093F\u0935\u093E\u0939 \u0938\u0939\u093E\u092F\u0924\u093E \u092F\u094B\u091C\u0928\u093E (SMAS): \u092A\u093E\u0924\u094D\u0930\u0924\u093E \u0914\u0930 \u091C\u0928\u0938\u0941\u0917\u092E \u0917\u093E\u0907\u0921",
+    urduTitle: "\u062C\u0645\u0648\u06BA \u0648 \u06A9\u0634\u0645\u06CC\u0631 \u0644\u0627\u0688\u0644\u06CC \u0628\u06CC\u0679\u06CC \u0627\u0648\u0631 \u0627\u0633\u0679\u06CC\u0679 \u0645\u06CC\u0631\u062C \u0627\u0633\u0633\u0679\u0646\u0633 \u0627\u0633\u06A9\u06CC\u0645: \u0627\u06C1\u0644\u06CC\u062A \u0627\u0648\u0631 \u062F\u0631\u062E\u0648\u0627\u0633\u062A \u06AF\u0627\u0626\u06CC\u0688",
+    category: "State Services",
+    readTime: "6 min read",
+    lastUpdated: "November 18, 2026",
+    status: "draft",
+    verifyNotes: [
+      "Verify latest annual family income limit for Ladli Beti and AAY/PHH ration card requirement for SMAS.",
+      "Confirm current J&K Bank recurring deposit monthly contribution (Rs 1,000/month) and SMAS financial assistance amount on jksocialwelfare.nic.in."
+    ],
+    author: "CSC DOST Editorial & Welfare Desk",
+    officialPortal: "jansugam.jk.gov.in / jksocialwelfare.nic.in",
+    officialUrl: "https://jansugam.jk.gov.in",
+    responsibleDepartment: "Department of Social Welfare, Government of Jammu & Kashmir",
+    intendedBeneficiaries: "Eligible families of newborn girl children (Ladli Beti) & economically weaker brides (SMAS) in J&K",
+    benefitSummary: "Ladli Beti recurring deposit & SMAS marriage assistance [VERIFY exact 2026 \u20B91,000/month & \u20B950,000/gold norm on official portal]",
+    applicableRegion: "Jammu & Kashmir UT (verified districts & BPL/AAY/PHH beneficiaries)",
+    summary: "Citizens guide to two flagship Jammu & Kashmir Social Welfare schemes available via Jansugam: Ladli Beti Scheme for newborn girl children and the State Marriage Assistance Scheme (SMAS) for economically weaker prospective brides.",
+    tableOfContents: [
+      "Difference Between Ladli Beti and SMAS",
+      "Verified Eligibility Rules & Income Thresholds",
+      "Mandatory Certificates Required via Tehsil & Health Dept",
+      "Online Application Workflow on Jansugam Portal",
+      "Verification by CDPO / District Social Welfare Officer"
+    ],
+    sections: [
+      {
+        heading: "1. Difference Between Ladli Beti and State Marriage Assistance Scheme",
+        content: "Although both programmes are administered by the J&K Social Welfare Department through the Jansugam e-services portal, they serve different life stages. Ladli Beti opens a zero-fee recurring deposit account at birth in the girl child name with monthly UT contributions maturing at age 21, while SMAS provides one-time marriage assistance to eligible unmarried daughters aged 18 or above from priority households prior to marriage.",
+        bulletPoints: [
+          "Ladli Beti applications must generally be submitted within a fixed window from the child birth date [VERIFY 6-month / 1-year window from birth certificate issue].",
+          "SMAS applications must be submitted at least one month prior to the scheduled date of marriage [VERIFY exact advance filing days in latest SO notification]."
+        ]
+      },
+      {
+        heading: "2. Verified Eligibility Rules & Income Thresholds",
+        content: "Applicants must belong to Jammu and Kashmir UT with valid Domicile status and verified family income or priority ration category. For Ladli Beti, total annual family income from all sources must remain below [VERIFY Rs 75,000 / Rs 1,00,000 annual income cap as per latest Social Welfare order]. For SMAS, families holding AAY or PHH ration cards verified through Food, Civil Supplies & Consumer Affairs records receive primary priority alongside age and unmarried status confirmation.",
+        tips: "Ensure the mother or girl child Aadhaar-seeded J&K Bank account and Tehsildar Income Certificate have matching spellings before uploading scans on Jansugam."
+      },
+      {
+        heading: "3. Field Verification by CDPO & Sanction",
+        content: "Once submitted online with application reference number, records pass digitally to the jurisdictional Child Development Project Officer (CDPO) or Tehsil Social Welfare Officer for field verification through Anganwadi Workers. Keep photocopies of hospital birth record, ration card, and Aadhaar ready for physical verification if requested."
+      }
+    ],
+    eligibility: [
+      "Girl child born in J&K UT within eligible birth-date filing window (Ladli Beti) [VERIFY applicable district list & filing window]",
+      "Unmarried girl aged 18 years or above belonging to AAY/PHH family (SMAS) [VERIFY current age & minimum educational qualification norm]",
+      "Annual household income below UT prescribed threshold verified by Tehsildar [VERIFY exact \u20B9 threshold]"
+    ],
+    documentsRequired: [
+      "J&K Domicile Certificate of parents / applicant",
+      "Hospital Birth Certificate (Ladli Beti) or School/Date-of-Birth Proof & Nikahnama/Marriage Card (SMAS)",
+      "Valid Tehsildar Income Certificate or AAY/PHH Ration Card copy",
+      "Aadhaar Card of parents and girl child / prospective bride",
+      "Active J&K Bank Passbook copy"
+    ],
+    stepByStep: [
+      "Register or log in on jansugam.jk.gov.in via MeriPehchaan (JanParichay) credentials.",
+      "Select Department of Social Welfare -> choose Ladli Beti Scheme or State Marriage Assistance Scheme (SMAS).",
+      "Enter family ration card, Aadhaar, domicile, and bank details carefully.",
+      "Upload clear PDF/JPG scans of required certificates and submit for e-verification.",
+      "Note the Jansugam Application Reference Number and track verification status with local CDPO / TSWO office."
+    ],
+    faqs: [
+      {
+        question: "Can a family apply for SMAS after the marriage ceremony has already taken place?",
+        answer: "Under standard Social Welfare rules, SMAS applications must be submitted in advance before the marriage date so field verification can be completed [VERIFY exact advance window on jksocialwelfare.nic.in]."
+      },
+      {
+        question: "Can an amount from Ladli Beti be withdrawn before age 21?",
+        answer: "Normally the recurring deposit matures when the beneficiary attains 21 years of age and remains unmarried, subject to official J&K Bank & Social Welfare terms [VERIFY premature closure exceptions]."
+      }
+    ]
+  },
+  {
+    id: "pan-aadhaar-linking-correction-guide-draft",
+    title: "PAN-Aadhaar Linking, e-PAN Download & Demographic Correction: Complete Citizen Guide",
+    hindiTitle: "\u092A\u0948\u0928-\u0906\u0927\u093E\u0930 \u0932\u093F\u0902\u0915\u093F\u0902\u0917, \u0908-\u092A\u0948\u0928 \u0921\u093E\u0909\u0928\u0932\u094B\u0921 \u0914\u0930 \u0938\u0941\u0927\u093E\u0930: \u0938\u0902\u092A\u0942\u0930\u094D\u0923 \u0928\u093E\u0917\u0930\u093F\u0915 \u0917\u093E\u0907\u0921",
+    urduTitle: "\u067E\u06CC\u0646-\u0622\u062F\u06BE\u0627\u0631 \u0644\u0646\u06A9\u0646\u06AF\u060C \u0627\u06CC-\u067E\u06CC\u0646 \u0688\u0627\u0624\u0646 \u0644\u0648\u0688 \u0627\u0648\u0631 \u062A\u0635\u062D\u06CC\u062D: \u0645\u06A9\u0645\u0644 \u0634\u06C1\u0631\u06CC \u06AF\u0627\u0626\u06CC\u0688",
+    category: "Identity & Tax",
+    readTime: "6 min read",
+    lastUpdated: "November 18, 2026",
+    status: "draft",
+    verifyNotes: [
+      "Confirm current Income Tax e-Filing Section 234H late linking fee (Rs 1,000) and any exempted categories for 2026.",
+      "Verify current Protean (NSDL) and UTIITSL physical/e-PAN correction fees."
+    ],
+    author: "CSC DOST Identity & Compliance Desk",
+    officialPortal: "incometax.gov.in / onlineservices.nsdl.com",
+    officialUrl: "https://www.incometax.gov.in/iec/foportal/",
+    responsibleDepartment: "Income Tax Department (CBDT) / Protean (NSDL) & UTIITSL",
+    intendedBeneficiaries: "PAN holders checking Link Aadhaar status, fixing name/DOB mismatches, or downloading e-PAN",
+    benefitSummary: "Prevents inoperative PAN status, avoids higher TDS deduction, and keeps banking & scholarship KYC active",
+    applicableRegion: "All India",
+    summary: "How to verify whether your PAN is already linked with Aadhaar on the Income Tax e-Filing portal, fix name or date-of-birth mismatches that block linking, pay applicable late fees safely, and request PAN demographic correction.",
+    tableOfContents: [
+      "Why Operative PAN-Aadhaar Linking Matters",
+      "How to Check Link Aadhaar Status Before Paying",
+      "Fixing Name, Gender & Date of Birth Mismatches",
+      "Fee Structure & Authorized Portals",
+      "Step-by-Step Linking & Correction Workflow"
+    ],
+    sections: [
+      {
+        heading: "1. Why Operative PAN-Aadhaar Linking Matters",
+        content: "Under Income Tax rules, an individual whose PAN becomes inoperative due to non-linking with Aadhaar faces disruptions in Income Tax Return refunds, higher TDS/TCS deductions, bank KYC updates, Demat operations, and scholarship bank mandates. Before starting any correction or payment, always check your live linking status directly on the official Income Tax portal without sharing OTPs with third-party agents.",
+        bulletPoints: [
+          "If PAN status shows Already Linked, no duplicate fee payment is required.",
+          "Exempted categories (such as certain NRI statuses or notified age groups) should verify official CBDT exemption circulars before initiating payment [VERIFY current 2026 CBDT exemption list]."
+        ]
+      },
+      {
+        heading: "2. Fixing Name, Gender & Date of Birth Mismatches",
+        content: "UIDAI demographic verification will reject PAN-Aadhaar linking automatically if full name spelling, date of birth, or gender differs between your PAN database record and your Aadhaar record. Decide carefully which document matches your Class 10 Matriculation certificate: update PAN via Protean/UTIITSL if Aadhaar matches school records, or update Aadhaar at an authorized Seva Kendra if PAN holds the accurate spelling.",
+        tips: "Never pay the Rs 1,000 challan twice if UIDAI demographic match fails\u2014fix the mismatch on PAN or Aadhaar first, then re-submit Link Aadhaar once the challan reflects under the same PAN."
+      },
+      {
+        heading: "3. Authorized Correction Portals & e-PAN Retrieval",
+        content: "Citizens requiring PAN reprint or demographic correction can use Protean eGov (tin-nsdl) or UTIITSL portals depending on which agency originally issued the PAN, or submit an assisted request through an authorized CSC centre [VERIFY latest Protean & UTIITSL official fee schedule including physical dispatch vs e-PAN only]."
+      }
+    ],
+    eligibility: [
+      "All non-exempt Indian PAN holders allotted PAN prior to notified cutoff dates [VERIFY latest CBDT cutoff date]",
+      "Aadhaar number active and linked with mobile number for OTP confirmation",
+      "Exact match in Name, Date of Birth, and Gender between PAN and Aadhaar"
+    ],
+    documentsRequired: [
+      "PAN Card Number / Existing PAN copy",
+      "Aadhaar Card with active mobile number for OTP",
+      "Matriculation / Birth Certificate (if correcting Date of Birth on PAN)",
+      "Gazette Notification or Supporting ID proof (for major name changes)"
+    ],
+    stepByStep: [
+      "Open incometax.gov.in -> Quick Links -> Link Aadhaar Status and enter your 10-digit PAN and 12-digit Aadhaar.",
+      "If status confirms not linked, verify exact Name and DOB matching on both documents first.",
+      "Click Link Aadhaar -> validate PAN/Aadhaar -> complete e-Pay Tax challan under Minor Head 500 (Other Receipts) [VERIFY Rs 1,000 fee applicability].",
+      "Wait for challan verification (up to 4-5 working days in some banks), then revisit Link Aadhaar to submit the final OTP request.",
+      "Re-check Link Aadhaar Status after 48 hours to confirm active operative linking."
+    ],
+    faqs: [
+      {
+        question: "My challan payment succeeded, but PAN-Aadhaar still says Not Linked. What should I do?",
+        answer: "Paying the fee challan is only Step 1. You must return to the Link Aadhaar screen on incometax.gov.in once payment reflects and complete the Aadhaar OTP submission step [VERIFY bank settlement delay window]."
+      },
+      {
+        question: "Which agency should I choose for PAN correction\u2014Protean (NSDL) or UTIITSL?",
+        answer: "Check the back of your physical PAN card or original acknowledgment slip to see whether NSDL or UTIITSL issued it; either authorized portal can process Changes/Correction in existing PAN data."
+      }
+    ]
+  },
+  {
+    id: "jk-passport-seva-police-verification-guide-draft",
+    title: "Passport Seva in J&K (PSK Srinagar & Jammu): Fresh, Renewal & Police Verification Guide",
+    hindiTitle: "\u091C\u092E\u094D\u092E\u0942-\u0915\u0936\u094D\u092E\u0940\u0930 \u092A\u093E\u0938\u092A\u094B\u0930\u094D\u091F \u0938\u0947\u0935\u093E: \u0928\u092F\u093E \u092A\u093E\u0938\u092A\u094B\u0930\u094D\u091F, \u0928\u0935\u0940\u0928\u0940\u0915\u0930\u0923 \u0914\u0930 \u092A\u0941\u0932\u093F\u0938 \u0938\u0924\u094D\u092F\u093E\u092A\u0928 \u0917\u093E\u0907\u0921",
+    urduTitle: "\u062C\u0645\u0648\u06BA \u0648 \u06A9\u0634\u0645\u06CC\u0631 \u067E\u0627\u0633\u067E\u0648\u0631\u0679 \u0633\u06CC\u0648\u0627: \u0646\u06CC\u0627 \u067E\u0627\u0633\u067E\u0648\u0631\u0679\u060C \u062A\u062C\u062F\u06CC\u062F \u0627\u0648\u0631 \u067E\u0648\u0644\u06CC\u0633 \u062A\u0635\u062F\u06CC\u0642 \u06AF\u0627\u0626\u06CC\u0688",
+    category: "State Services",
+    readTime: "6 min read",
+    lastUpdated: "November 18, 2026",
+    status: "draft",
+    verifyNotes: [
+      "Confirm current normal vs Tatkaal passport fees (Rs 1,500 normal / Rs 3,500 Tatkaal for 36-page adult passport) on passportindia.gov.in.",
+      "Verify latest J&K Police CID / mPassport Police App verification norms and RPO Srinagar / RPO Jammu POPSK list."
+    ],
+    author: "CSC DOST Travel & Identity Advisory Desk",
+    officialPortal: "passportindia.gov.in",
+    officialUrl: "https://www.passportindia.gov.in",
+    responsibleDepartment: "Ministry of External Affairs (RPO Srinagar & RPO Jammu)",
+    intendedBeneficiaries: "Citizens applying for Fresh, Re-issue/Renewal, Minor, or Lost/Damaged Indian Passports in J&K",
+    benefitSummary: "Transparent walkthrough covering Document Advisor, PSK slot booking, biometrics, and J&K Police CID clearance",
+    applicableRegion: "Jammu & Kashmir (RPO Srinagar & RPO Jammu jurisdictions)",
+    summary: "Complete guide to applying for a fresh or renewed Indian passport through Passport Seva Kendra (PSK) Srinagar, PSK Jammu, or district Post Office Passport Seva Kendras (POPSK), plus preparing documents for J&K Police and CID verification.",
+    tableOfContents: [
+      "RPO Srinagar vs RPO Jammu Jurisdiction & POPSK Centres",
+      "Fresh vs Re-issue & ECNR vs ECR Categories",
+      "Checklist of Identity, Address & DOB Proofs",
+      "PSK Biometric Appointment & Counter Stages (A, B, C)",
+      "J&K Police & CID Verification Tips to Avoid Delays"
+    ],
+    sections: [
+      {
+        heading: "1. RPO Srinagar vs RPO Jammu Jurisdiction & POPSK Centres",
+        content: "Applicants residing in Kashmir division districts (Anantnag, Kulgam, Pulwama, Shopian, Srinagar, Budgam, Baramulla, Bandipora, Kupwara, Ganderbal) fall under Regional Passport Office (RPO) Srinagar, while Jammu division districts report to RPO Jammu. Alongside main PSKs, several district Post Office Passport Seva Kendras (POPSKs) handle normal category bookings [VERIFY active POPSK list in Anantnag, Baramulla, Leh, Udhampur on passportindia.gov.in].",
+        bulletPoints: [
+          "Always verify on the official Document Advisor tool before booking an appointment whether you need Fresh or Re-issue (validity expiry, damaged pages, exhaustion of pages, or personal detail change).",
+          "Do not pay unauthorised third-party websites claiming instant Tatkaal approval; all fees are paid strictly on passportindia.gov.in."
+        ]
+      },
+      {
+        heading: "2. ECNR Status & Document Consistency",
+        content: "Applicants who have passed Class 10 (Matriculation) or above automatically qualify for Emigration Check Not Required (ECNR) status upon carrying original Class 10 marksheet and certificate to the PSK counter. Ensure your Aadhaar, Voter ID/bank passbook, and school marksheet display identical name spelling, father name, and date of birth; minor spelling mismatches are the top cause of counter hold.",
+        tips: "If you have lived at multiple addresses within the last 12 months, mention all addresses accurately in the form so post-PSK police verification does not trigger an adverse report."
+      },
+      {
+        heading: "3. J&K Police & CID Verification Preparation",
+        content: "After successful document scan and biometrics at PSK Counters A, B, and C, your file is forwarded digitally to the local Police Station and Special Branch / CID verification unit [VERIFY current mPassport Police App timeline & required witness proofs in J&K districts]. Keep original documents, two passport photos, and copy of parent/witness ID handy when contacted by the beat officer."
+      }
+    ],
+    eligibility: [
+      "Indian citizen residing in Jammu & Kashmir with verifiable current and permanent residential address",
+      "Class 10 pass certificate for Non-ECR endorsement (or other eligible ECNR proof per MEA rules)",
+      "Parent/guardian consent Annexures D/C for minor applicants under 18 years [VERIFY latest MEA minor annexure rules]"
+    ],
+    documentsRequired: [
+      "Original Aadhaar Card + Address Proof (Bank Passbook with photo / Electricity or Water bill / Election Card)",
+      "Class 10 Matriculation Certificate / Birth Certificate for Date of Birth & ECNR verification",
+      "Old Passport in original (for Re-issue / Renewal applications)",
+      "Printed Application Receipt (ARN) & SMS appointment confirmation (originals required at PSK)"
+    ],
+    stepByStep: [
+      "Register on passportindia.gov.in selecting the correct RPO (Srinagar or Jammu).",
+      "Fill out the Fresh or Re-issue Passport application carefully matching exact spellings on school and Aadhaar records.",
+      "Pay the prescribed passport fee online [VERIFY current \u20B91,500 normal / \u20B93,500 Tatkaal fee] and book a PSK or POPSK slot.",
+      "Visit the selected PSK/POPSK 15 minutes early with all ORIGINAL documents (photocopies alone are rejected).",
+      "Complete Counter A (document scanning & biometrics), Counter B (verification), and Counter C (granting officer).",
+      "Cooperate promptly with local Police Station and CID verification once SMS notification arrives."
+    ],
+    faqs: [
+      {
+        question: "Is Tatkaal passport available for every applicant?",
+        answer: "Tatkaal slots carry higher fees and stricter verification norms, and certain categories such as major name change or lost passport may face restrictions [VERIFY Tatkaal eligibility matrix on passportindia.gov.in]."
+      },
+      {
+        question: "Do I need to carry self-attested photocopies along with original documents to PSK?",
+        answer: "Original documents are mandatory for digital scanning at PSK Counter A. Carrying one clean self-attested set as backup is helpful, though PSK staff scan directly from originals."
+      }
+    ]
+  },
+  {
+    id: "udyam-msme-jk-self-employment-guide-draft",
+    title: "Udyam MSME Registration & J&K Self-Employment Loan Linkage (PMEGP / Mumkin / Tejaswini)",
+    hindiTitle: "\u0909\u0926\u094D\u092F\u092E \u090F\u092E\u090F\u0938\u090F\u092E\u0908 \u092A\u0902\u091C\u0940\u0915\u0930\u0923 \u0914\u0930 \u091C\u092E\u094D\u092E\u0942-\u0915\u0936\u094D\u092E\u0940\u0930 \u0938\u094D\u0935\u0930\u094B\u091C\u0917\u093E\u0930 \u092F\u094B\u091C\u0928\u093E \u0917\u093E\u0907\u0921",
+    urduTitle: "\u0627\u064F\u062F\u06CC\u0645 \u0627\u06CC\u0645 \u0627\u06CC\u0633 \u0627\u06CC\u0645 \u0627\u06CC \u0631\u062C\u0633\u0679\u0631\u06CC\u0634\u0646 \u0627\u0648\u0631 \u062C\u0645\u0648\u06BA \u0648 \u06A9\u0634\u0645\u06CC\u0631 \u062E\u0648\u062F \u0631\u0648\u0632\u06AF\u0627\u0631 \u0627\u0633\u06A9\u06CC\u0645\u0627\u06BA \u06AF\u0627\u0626\u06CC\u0688",
+    category: "Central Scheme",
+    readTime: "6 min read",
+    lastUpdated: "November 18, 2026",
+    status: "draft",
+    verifyNotes: [
+      "Verify latest Micro/Small/Medium investment & turnover limits on udyamregistration.gov.in.",
+      "Confirm active status & age/education limits of J&K Mission Youth (Mumkin / Tejaswini / Spurring Entrepreneurship) and KVIC PMEGP for 2026."
+    ],
+    author: "CSC DOST Enterprise & Youth Support Desk",
+    officialPortal: "udyamregistration.gov.in / missionyouth.jk.gov.in",
+    officialUrl: "https://udyamregistration.gov.in",
+    responsibleDepartment: "Ministry of MSME / KVIC & J&K Mission Youth / JKEDI",
+    intendedBeneficiaries: "Small traders, artisans, CSC VLEs, tailoring/manufacturing units, and unemployed youth entrepreneurs",
+    benefitSummary: "Free lifetime Udyam Certificate + eligibility gateway for PMEGP [VERIFY 15-35% margin money subsidy] & J&K Mission Youth credit schemes",
+    applicableRegion: "All India & Jammu & Kashmir UT",
+    summary: "Complete walkthrough for obtaining a free government Udyam MSME Registration Certificate using Aadhaar and PAN, and using it as an enterprise foundation for bank Mudra loans, KVIC PMEGP, and J&K Mission Youth self-employment programmes.",
+    tableOfContents: [
+      "Why Udyam Registration Is Free & Essential",
+      "NIC Business Activity Codes & Investment Classification",
+      "Linking Udyam with PMEGP & J&K Youth Schemes",
+      "Documents & Bank Details Needed",
+      "Step-by-Step Registration on udyamregistration.gov.in"
+    ],
+    sections: [
+      {
+        heading: "1. Why Udyam Registration Is Free & Essential",
+        content: "Udyam Registration is the official Government of India enterprise certificate issued by the Ministry of MSME, completely free of government charge on udyamregistration.gov.in. Beware of lookalike private portals charging hefty fees for free Udyam certificates. A valid Udyam number helps shops, handloom artisans, dairy units, food processors, and service enterprises open current bank accounts, apply for collateral-free credit guarantee schemes, and qualify for priority sector lending.",
+        bulletPoints: [
+          "Micro, Small, and Medium classification automatically syncs with Income Tax PAN and GSTIN turnover data [VERIFY current \u20B9 turnover/investment limits].",
+          "Existing Udyog Aadhaar holders had to migrate onto Udyam to remain valid for government tenders and subsidies."
+        ]
+      },
+      {
+        heading: "2. Linking Udyam with PMEGP & J&K Youth Self-Employment Schemes",
+        content: "Young entrepreneurs across Anantnag, Srinagar, Baramulla, and Jammu looking for subsidized loans via KVIC/DIC PMEGP, PM Vishwakarma, or J&K Mission Youth initiatives (such as Mumkin commercial vehicle support or Tejaswini women entrepreneurship) frequently need clean KYC, Aadhaar-linked bank accounts, project reports (DPR), and Udyam registration [VERIFY exact active J&K Mission Youth & JKREGP guidelines for 2026 before applying].",
+        tips: "Pick accurate 5-digit NIC 2008 activity codes (manufacturing vs wholesale/retail/service) during Udyam form entry\u2014banks cross-check your NIC code against your loan project report."
+      }
+    ],
+    eligibility: [
+      "Proprietor, Partnership, SHG, Cooperative, or Enterprise owner with valid Aadhaar & PAN",
+      "Aadhaar linked to active mobile number for OTP verification",
+      "For J&K Mission Youth / PMEGP linkage: domicile, age (18+ years), and non-defaulter CIBIL status [VERIFY scheme-specific age/qualification criteria]"
+    ],
+    documentsRequired: [
+      "Proprietor Aadhaar Card & Mobile Number",
+      "PAN Card of Enterprise / Proprietor",
+      "Active Savings or Current Bank Account Number & IFSC",
+      "Business Address, Date of Commencement, and NIC Activity Details",
+      "GSTIN (if registered and mandatory under GST turnover rules)"
+    ],
+    stepByStep: [
+      "Visit udyamregistration.gov.in and choose For New Entrepreneurs who are not Registered yet as MSME.",
+      "Validate Aadhaar number via OTP, then validate PAN and ITR/GST status.",
+      "Enter enterprise name, unit location (District, Block, Pincode), and select exact 5-digit NIC Codes.",
+      "Enter employee headcount, investment in plant/machinery, and bank account number + IFSC.",
+      "Submit final OTP verification and download the printable Udyam Certificate with QR code instantly."
+    ],
+    faqs: [
+      {
+        question: "Is there any government registration fee for Udyam MSME Certificate?",
+        answer: "No. Official registration on udyamregistration.gov.in is 100% free of government fee. Only optional CSC facilitation charges apply if you seek assisted data entry and printing."
+      },
+      {
+        question: "Can a small shop or CSC service point register under Udyam?",
+        answer: "Yes, retail trades and service enterprises with valid Aadhaar, PAN, and active bank accounts can register under the appropriate service/trade NIC activity codes [VERIFY latest retail MSME priority sector lending rules]."
+      }
+    ]
+  },
+  {
+    id: "eshram-card-unorganised-workers-guide-draft",
+    title: "e-Shram Card Registration & Profile Update: Benefits for Unorganised Workers",
+    hindiTitle: "\u0908-\u0936\u094D\u0930\u092E \u0915\u093E\u0930\u094D\u0921 \u092A\u0902\u091C\u0940\u0915\u0930\u0923 \u0914\u0930 \u092A\u094D\u0930\u094B\u092B\u093E\u0907\u0932 \u0905\u092A\u0921\u0947\u091F: \u0905\u0938\u0902\u0917\u0920\u093F\u0924 \u0936\u094D\u0930\u092E\u093F\u0915\u094B\u0902 \u0915\u0947 \u0932\u093F\u090F \u0932\u093E\u092D",
+    urduTitle: "\u0627\u06CC-\u0634\u0631\u0645 \u06A9\u0627\u0631\u0688 \u0631\u062C\u0633\u0679\u0631\u06CC\u0634\u0646 \u0627\u0648\u0631 \u067E\u0631\u0648\u0641\u0627\u0626\u0644 \u0627\u067E\u0688\u06CC\u0679: \u063A\u06CC\u0631 \u0645\u0646\u0638\u0645 \u0645\u0632\u062F\u0648\u0631\u0648\u06BA \u06A9\u06D2 \u0644\u06CC\u06D2 \u0641\u0648\u0627\u0626\u062F",
+    category: "Central Scheme",
+    readTime: "5 min read",
+    lastUpdated: "November 18, 2026",
+    status: "draft",
+    verifyNotes: [
+      "Confirm active PMSBY \u20B92 lakh accidental insurance coverage terms and whether e-Shram pension/rations convergence rules updated in 2026.",
+      "Verify exact NCO occupation codes and ESIC/EPFO exclusion logic."
+    ],
+    author: "CSC DOST Citizen Welfare Desk",
+    officialPortal: "eshram.gov.in",
+    officialUrl: "https://eshram.gov.in",
+    responsibleDepartment: "Ministry of Labour & Employment, Government of India",
+    intendedBeneficiaries: "Construction workers, agricultural labourers, drivers, street vendors, domestic workers, weavers & artisans",
+    benefitSummary: "12-digit Universal Account Number (UAN) linking central/state social security & [VERIFY accidental insurance / ration convergence rules]",
+    applicableRegion: "All India",
+    summary: "Step-by-step guide for unorganised sector workers on registering for an e-Shram Universal Account Number (UAN), selecting the right NCO occupation code, and updating Aadhaar-linked bank or address details.",
+    tableOfContents: [
+      "Who Counts as an Unorganised Worker under e-Shram",
+      "Key Benefits & PMSBY Convergence Notes",
+      "Mandatory Eligibility & Exclusions (EPFO / ESIC)",
+      "Documents Required & Occupation Coding",
+      "Self-Registration & Profile Update Steps"
+    ],
+    sections: [
+      {
+        heading: "1. Who Counts as an Unorganised Worker under e-Shram",
+        content: "The National Database of Unorganised Workers (e-Shram) covers home-based workers, self-employed workers, and wage workers across construction, agriculture, carpet weaving, apple orchard labour, transport driving, tailoring, carpentry, and domestic help. Registered citizens receive a lifetime 12-digit Universal Account Number (UAN) card recognized across India for state and central welfare delivery.",
+        bulletPoints: [
+          "Migrant workers moving outside Jammu & Kashmir for seasonal work benefit from a unified national worker database.",
+          "Always verify bank account seeding with Aadhaar so future welfare transfers do not bounce."
+        ]
+      },
+      {
+        heading: "2. Important Exclusions & Accidental Cover Notes",
+        content: "Workers actively covered under Employees Provident Fund Organisation (EPFO), Employees State Insurance Corporation (ESIC), or paying Income Tax are NOT eligible for e-Shram registration [VERIFY current 2026 e-Shram age limit 16\u201359 years and active PMSBY \u20B92 lakh accidental insurance subsidy terms on eshram.gov.in]. Students who are not engaged in any wage or self-employed activity should also verify eligibility carefully rather than registering needlessly.",
+        tips: "Update your e-Shram profile immediately if you change your bank account, mobile number, or skill trade\u2014or if you become an income taxpayer or join organized EPFO payroll."
+      }
+    ],
+    eligibility: [
+      "Citizen engaged in unorganised work (wage worker, migrant labourer, small farmer, artisan, driver)",
+      "Age strictly between [VERIFY 16 and 59 years] on date of registration",
+      "Must NOT be a member of EPFO / ESIC or an Income Tax assessee"
+    ],
+    documentsRequired: [
+      "Aadhaar Card (with Aadhaar-linked mobile number or biometric verification via CSC)",
+      "Active Bank Account Number & IFSC Code seeded with Aadhaar",
+      "Nominee full name, relationship, and date of birth",
+      "Occupation details matching NCO Code list"
+    ],
+    stepByStep: [
+      "Visit eshram.gov.in and select Register on e-Shram (or Update Profile if already registered).",
+      "Verify your Aadhaar-linked mobile number via OTP and enter captcha.",
+      "Review pre-filled Aadhaar demographic details and fill in residential address, education, income bracket, and nominee.",
+      "Select your primary and secondary NCO occupation code from the official occupation PDF list.",
+      "Confirm Aadhaar-seeded bank account details and download your e-Shram UAN Card."
+    ],
+    faqs: [
+      {
+        question: "Can college students apply for an e-Shram card to receive monthly allowances?",
+        answer: "e-Shram is strictly designed for unorganised sector workers aged 16\u201359, not non-working students. Incorrect registration can interfere with scholarship eligibility or create compliance mismatches."
+      },
+      {
+        question: "How do I update my bank account or occupation on e-Shram?",
+        answer: "Log in on eshram.gov.in -> Already Registered? Update using UAN/Aadhaar OTP -> edit Bank Account or Occupation Skills and re-download the updated UAN card."
+      }
+    ]
+  },
+  {
+    id: "kashmir-univ-cus-exam-migration-bonafide-guide-draft",
+    title: "University of Kashmir & Cluster University Srinagar: Migration, Degree & Re-Evaluation Guide",
+    hindiTitle: "\u0915\u0936\u094D\u092E\u0940\u0930 \u0935\u093F\u0936\u094D\u0935\u0935\u093F\u0926\u094D\u092F\u093E\u0932\u092F \u0914\u0930 \u0915\u094D\u0932\u0938\u094D\u091F\u0930 \u092F\u0942\u0928\u093F\u0935\u0930\u094D\u0938\u093F\u091F\u0940 \u0936\u094D\u0930\u0940\u0928\u0917\u0930: \u092E\u093E\u0907\u0917\u094D\u0930\u0947\u0936\u0928, \u0921\u093F\u0917\u094D\u0930\u0940 \u0914\u0930 \u0930\u0940-\u0907\u0935\u0948\u0932\u094D\u092F\u0942\u090F\u0936\u0928 \u0917\u093E\u0907\u0921",
+    urduTitle: "\u06A9\u0634\u0645\u06CC\u0631 \u06CC\u0648\u0646\u06CC\u0648\u0631\u0633\u0679\u06CC \u0627\u0648\u0631 \u06A9\u0644\u0633\u0679\u0631 \u06CC\u0648\u0646\u06CC\u0648\u0631\u0633\u0679\u06CC \u0633\u0631\u06CC \u0646\u06AF\u0631: \u0645\u0627\u0626\u06CC\u06AF\u0631\u06CC\u0634\u0646\u060C \u0688\u06AF\u0631\u06CC \u0627\u0648\u0631 \u0631\u06CC \u0627\u06CC\u0648\u06CC\u0644\u0648\u0627\u06CC\u0634\u0646 \u06AF\u0627\u0626\u06CC\u0688",
+    category: "Education",
+    readTime: "6 min read",
+    lastUpdated: "November 18, 2026",
+    status: "draft",
+    verifyNotes: [
+      "Verify latest University of Kashmir & CUS Srinagar online fee structures for Migration Certificate, Provisional/Original Degree, and Re-evaluation per paper.",
+      "Confirm ABC/APAAR ID mandatory requirement on egov.uok.edu.in and cusrinagar.edu.in student portals."
+    ],
+    author: "CSC DOST Higher Education Support Desk",
+    officialPortal: "egov.uok.edu.in / cusrinagar.edu.in",
+    officialUrl: "https://www.kashmiruniversity.net",
+    responsibleDepartment: "University of Kashmir & Cluster University Srinagar (Examination & Registration Wings)",
+    intendedBeneficiaries: "UG, PG, B.Ed, Integrated & DDOE students needing academic certificates or answer-script re-evaluation",
+    benefitSummary: "Clear step-by-step workflow for Migration, Provisional/Degree Certificate, Transcript & Re-evaluation applications",
+    applicableRegion: "Jammu & Kashmir (affiliated colleges & campus students)",
+    summary: "Practical student guide to applying online for Migration Certificates, Provisional or Original Degree Certificates, Academic Transcripts, and Re-evaluation/Xerox copies of answer scripts at University of Kashmir and Cluster University Srinagar.",
+    tableOfContents: [
+      "Preparing Registration No., Roll No. & ABC/APAAR ID",
+      "Applying for Migration & Provisional/Original Degree",
+      "Re-Evaluation & Answer Script Xerox Windows",
+      "Documents & College Counter Endorsements",
+      "Step-by-Step Portal Submission & Receipt Tracking"
+    ],
+    sections: [
+      {
+        heading: "1. Preparing Registration No., Roll No. & ABC/APAAR ID",
+        content: "Before starting any student service request on University of Kashmir (egov.uok.edu.in / kashmiruniversity.net) or Cluster University Srinagar (cusrinagar.edu.in), gather your University Registration Number, College Class Roll Number, Final Semester Marks Card, and 12-digit APAAR/ABC ID. Incorrect registration numbers or unpaid fee challans are the most common reason certificates remain stuck in processing.",
+        bulletPoints: [
+          "Keep active email ID and student mobile number updated for SMS certificate dispatch alerts.",
+          "Download and print the online payment confirmation receipt with Transaction ID immediately after paying fees."
+        ]
+      },
+      {
+        heading: "2. Migration, Provisional & Original Degree Certificates",
+        content: "Students moving to IGNOU, central universities, or outside-state institutions require an official Migration Certificate after clearing or cancelling their earlier enrolment. Both University of Kashmir and Cluster University run online student service forms where candidates upload marks cards, college NOC/clearance where specified, and pay the prescribed statutory fee [VERIFY current \u20B9 Migration and Degree certificate fee slabs on official student service portals].",
+        tips: "Read the specific college clearance instructions printed on your online receipt\u2014some certificates require physical submission of the printed form at your parent college or Hazratbal/Gogji Bagh counter."
+      },
+      {
+        heading: "3. Re-Evaluation & Answer Script Xerox Windows",
+        content: "Whenever UG/PG or B.Ed results are declared, the Controller of Examinations publishes a strict notification window (typically 10 to 15 days) for applying online for Re-evaluation or obtaining photocopies of answer scripts [VERIFY exact window days & per-paper re-evaluation fee in latest KU/CUS circular]. Submit before the closing timestamp as late offline applications are not entertained."
+      }
+    ],
+    eligibility: [
+      "Bonafide enrolled or pass-out students of University of Kashmir or Cluster University Srinagar",
+      "Valid University Registration Number and declared semester results (for Degree/Migration/Re-evaluation)",
+      "Clearance of college dues / library NOC if requested by department guidelines"
+    ],
+    documentsRequired: [
+      "University Registration Number & Enrolment Details",
+      "Consolidated / All-Semester Marks Cards PDF",
+      "12-digit DigiLocker ABC / APAAR ID (where required)",
+      "College No-Objection / Clearance Slip (if applying for mid-course Migration)",
+      "Debit Card / UPI / NetBanking for statutory university fee payment"
+    ],
+    stepByStep: [
+      "Visit official portal (kashmiruniversity.net -> Student Services / eGov, or cusrinagar.edu.in -> Student Login).",
+      "Select the exact service: Migration Certificate, Provisional/Degree Certificate, Bona Fide, or Re-Evaluation.",
+      "Enter University Registration Number and verify auto-fetched student profile details carefully.",
+      "Upload scanned marks cards/documents in prescribed KB file size and preview all details.",
+      "Pay the official fee online, download the stamped Form + Fee Receipt PDF, and complete physical counter submission if printed on the slip."
+    ],
+    faqs: [
+      {
+        question: "Can I apply for University of Kashmir Migration Certificate online without visiting Srinagar campus?",
+        answer: "University of Kashmir has digitized several certificate workflows on its eGov portal, though original document verification or postal dispatch rules vary by certificate type [VERIFY current online-only vs counter pickup notice on egov.uok.edu.in]."
+      },
+      {
+        question: "What is the fee for applying for a Xerox copy or Re-evaluation of an exam paper?",
+        answer: "Fee per paper is notified separately in each examination re-evaluation circular [VERIFY exact per-paper \u20B9 rate in the active notification before paying]."
+      }
+    ]
+  },
+  {
+    id: "jk-driving-licence-sarathi-parivahan-guide-draft",
+    title: "J&K Driving Licence & Sarathi Parivahan Guide: Learner Licence, Track Test & Renewal",
+    hindiTitle: "\u091C\u092E\u094D\u092E\u0942-\u0915\u0936\u094D\u092E\u0940\u0930 \u0921\u094D\u0930\u093E\u0907\u0935\u093F\u0902\u0917 \u0932\u093E\u0907\u0938\u0947\u0902\u0938 (\u0938\u093E\u0930\u0925\u0940 \u092A\u0930\u093F\u0935\u0939\u0928): \u0932\u0930\u094D\u0928\u0930, \u091F\u0947\u0938\u094D\u091F \u0914\u0930 \u0928\u0935\u0940\u0928\u0940\u0915\u0930\u0923 \u0917\u093E\u0907\u0921",
+    urduTitle: "\u062C\u0645\u0648\u06BA \u0648 \u06A9\u0634\u0645\u06CC\u0631 \u0688\u0631\u0627\u0626\u06CC\u0648\u0646\u06AF \u0644\u0627\u0626\u0633\u0646\u0633 (\u0633\u0627\u0631\u062A\u06BE\u06CC \u067E\u0631\u06CC \u0648\u0627\u06C1\u0646): \u0644\u0631\u0646\u0631\u060C \u0679\u06CC\u0633\u0679 \u0627\u0648\u0631 \u062A\u062C\u062F\u06CC\u062F \u06AF\u0627\u0626\u06CC\u0688",
+    category: "State Services",
+    readTime: "6 min read",
+    lastUpdated: "November 18, 2026",
+    status: "draft",
+    verifyNotes: [
+      "Verify latest J&K RTO / ARTO contactless Aadhaar-eKYC Learner Licence fee, DL Smart Card fee, and Form 1A age threshold (40+ years).",
+      "Confirm active driving track test slot booking instructions for Anantnag, Srinagar, Pulwama, and Jammu RTOs."
+    ],
+    author: "CSC DOST Transport & Citizen Facilitation Desk",
+    officialPortal: "sarathi.parivahan.gov.in",
+    officialUrl: "https://sarathi.parivahan.gov.in",
+    responsibleDepartment: "Ministry of Road Transport & Highways (MoRTH) / J&K Transport Department (RTO & ARTOs)",
+    intendedBeneficiaries: "New drivers, two-wheeler/LMV learners, and existing licence holders seeking renewal or duplicate DL in J&K",
+    benefitSummary: "Contactless Aadhaar Learner Test, Permanent DL track booking, and smart-card renewal steps",
+    applicableRegion: "Jammu & Kashmir UT (all RTO & ARTO jurisdictions)",
+    summary: "Complete guide to applying for a Learner Licence (LL) via contactless Aadhaar e-KYC on Sarathi Parivahan, upgrading to a Permanent Driving Licence after 30 days, passing the ARTO driving track test, and renewing expired licences.",
+    tableOfContents: [
+      "Contactless Learner Licence via Aadhaar e-KYC",
+      "Mandatory Age, Medical Form 1/1A & Vehicle Classes (MCWG / LMV)",
+      "Permanent DL Application & ARTO Track Slot Booking",
+      "Renewal, Address Change & Duplicate DL Services",
+      "Step-by-Step Parivahan Portal Walkthrough"
+    ],
+    sections: [
+      {
+        heading: "1. Contactless Learner Licence via Aadhaar e-KYC",
+        content: "Under MoRTH contactless services integrated with Jammu & Kashmir RTOs/ARTOs (such as ARTO Anantnag, RTO Kashmir Srinagar, ARTO Kulgam, RTO Jammu), applicants using Aadhaar OTP authentication can apply for a Learner Licence (LL) and take the road-signs online stall test directly from home or an authorized facilitation desk after watching the mandatory road-safety tutorial.",
+        bulletPoints: [
+          "Minimum age is 18 years for standard MCWG (geared two-wheeler) and LMV (car/jeep) [VERIFY 16-year gearless 50cc parental consent rule if needed].",
+          "A Learner Licence remains valid for 6 months; you can apply for Permanent Driving Licence only after completing at least 30 days from LL issue date."
+        ]
+      },
+      {
+        heading: "2. Medical Form 1, Form 1A & ARTO Track Test Preparation",
+        content: "Applicants under 40 years applying for non-transport categories submit self-declaration Form 1 online, whereas applicants aged 40 years or above (or applying for transport/commercial badges) must upload Medical Certificate Form 1A signed by an authorized MBBS doctor on the Parivahan Medical dashboard [VERIFY current J&K RTO Form 1A age threshold and prescribed LL/DL fee table]. On your Permanent DL appointment day, bring your own road-worthy vehicle with valid RC, Insurance, and PUC to the ARTO testing track.",
+        tips: "Practice reverse-S / 8-figure track manoeuvres cleanly and carry printed Application Form, Fee Receipt, LL copy, and original Aadhaar on test day."
+      }
+    ],
+    eligibility: [
+      "Age 18 years or above for MCWG and LMV non-transport licences",
+      "Valid residential proof under concerned J&K RTO / ARTO jurisdiction (Aadhaar preferred for contactless mode)",
+      "Mandatory 30-day holding period with active Learner Licence before Permanent DL track test"
+    ],
+    documentsRequired: [
+      "Aadhaar Card with active mobile number for OTP e-KYC",
+      "Age Proof (Class 10 Certificate / Birth Certificate / Passport / PAN)",
+      "Passport-size Photograph & Scanned Signature (white background)",
+      "Form 1 Self-Declaration / Form 1A Medical Certificate (if aged 40+ or transport category)",
+      "Original Valid Vehicle RC, Insurance & PUC on Permanent DL track test date"
+    ],
+    stepByStep: [
+      "Visit parivahan.gov.in -> Sarathi (Driving Licence Related Services) -> select State: Jammu and Kashmir.",
+      "Click Apply for Learner Licence -> choose Submit via Aadhaar Authentication (or non-Aadhaar RTO visit).",
+      "Verify Aadhaar OTP, select vehicle classes (MCWG / LMV), fill personal details, and upload photograph/signature/Form 1A if applicable.",
+      "Pay prescribed Learner Licence + LL Test fee online, watch the mandatory road safety video, and pass the online road-signs quiz.",
+      "After 30 days (and within 180 days), log back in -> Apply for Driving Licence -> book your ARTO Driving Test slot and appear with originals."
+    ],
+    faqs: [
+      {
+        question: "Can I take the Learner Licence online test from home or a CSC centre?",
+        answer: "Yes, if you apply via Aadhaar e-KYC mode on sarathi.parivahan.gov.in, the online road-signs tutorial and proctored test can be taken without visiting the ARTO office [VERIFY camera/device requirements before starting]."
+      },
+      {
+        question: "What happens if my Learner Licence expires before I pass the track test?",
+        answer: "An expired Learner Licence cannot be extended into a Permanent DL; you must apply for a fresh/expired LL re-issue on Sarathi and clear the LL step again [VERIFY exact fee for expired LL]."
+      }
+    ]
   }
 ];
 var PUBLISHED_GUIDE_ARTICLES = GUIDE_ARTICLES.filter(
@@ -9532,6 +10426,271 @@ function validatePostPublishQuality(input, options = {}) {
     copiedCheck
   };
 }
+
+// src/utils/guidesMerge.ts
+function extractGuideVerifyMarkers(guide) {
+  const found = [];
+  const regex = /\[VERIFY[^\]]*\]/gi;
+  const scanString = (field, value) => {
+    if (!value) return;
+    const matches = value.match(regex);
+    if (matches) {
+      matches.forEach((m) => {
+        found.push({
+          field,
+          markerText: m,
+          context: value.length > 220 ? `${value.slice(0, 220)}...` : value
+        });
+      });
+    }
+  };
+  scanString("title", guide.title);
+  scanString("summary", guide.summary);
+  scanString("officialPortal", guide.officialPortal);
+  scanString("officialUrl", guide.officialUrl);
+  scanString("benefitSummary", guide.benefitSummary);
+  scanString("responsibleDepartment", guide.responsibleDepartment);
+  scanString("intendedBeneficiaries", guide.intendedBeneficiaries);
+  scanString("applicableRegion", guide.applicableRegion);
+  (guide.verifyNotes || []).forEach((n, idx) => scanString(`verifyNotes[${idx}]`, n));
+  (guide.sections || []).forEach((sec, idx) => {
+    scanString(`sections[${idx}].heading`, sec.heading);
+    scanString(`sections[${idx}].content`, sec.content);
+    scanString(`sections[${idx}].tips`, sec.tips);
+    (sec.bulletPoints || []).forEach(
+      (bp, bIdx) => scanString(`sections[${idx}].bulletPoints[${bIdx}]`, bp)
+    );
+  });
+  (guide.eligibility || []).forEach((item, idx) => scanString(`eligibility[${idx}]`, item));
+  (guide.documentsRequired || []).forEach(
+    (item, idx) => scanString(`documentsRequired[${idx}]`, item)
+  );
+  (guide.stepByStep || []).forEach((item, idx) => scanString(`stepByStep[${idx}]`, item));
+  (guide.faqs || []).forEach((faq, idx) => {
+    scanString(`faqs[${idx}].question`, faq.question);
+    scanString(`faqs[${idx}].answer`, faq.answer);
+  });
+  return found;
+}
+function collectGuideFullText(guide) {
+  const parts = [
+    guide.title,
+    guide.summary,
+    guide.responsibleDepartment || "",
+    guide.intendedBeneficiaries || "",
+    guide.benefitSummary || "",
+    guide.applicableRegion || ""
+  ];
+  (guide.sections || []).forEach((sec) => {
+    parts.push(sec.heading, sec.content);
+    if (sec.tips) parts.push(sec.tips);
+    if (sec.bulletPoints) parts.push(...sec.bulletPoints);
+  });
+  if (guide.eligibility) parts.push(...guide.eligibility);
+  if (guide.documentsRequired) parts.push(...guide.documentsRequired);
+  if (guide.stepByStep) parts.push(...guide.stepByStep);
+  if (guide.faqs) {
+    guide.faqs.forEach((f) => parts.push(f.question, f.answer));
+  }
+  return parts.filter(Boolean).join(" ");
+}
+function countGuideWords(guide) {
+  return countWords(collectGuideFullText(guide));
+}
+function mergeSingleGuideWithState(base, state) {
+  if (!state) return base;
+  const ov = state.overrides || {};
+  return {
+    ...base,
+    title: ov.title || base.title,
+    summary: ov.summary || base.summary,
+    officialPortal: ov.officialPortal || state.officialPortal || base.officialPortal,
+    officialUrl: ov.officialUrl || state.officialUrl || base.officialUrl,
+    benefitSummary: ov.benefitSummary !== void 0 ? ov.benefitSummary : base.benefitSummary,
+    responsibleDepartment: ov.responsibleDepartment !== void 0 ? ov.responsibleDepartment : base.responsibleDepartment,
+    intendedBeneficiaries: ov.intendedBeneficiaries !== void 0 ? ov.intendedBeneficiaries : base.intendedBeneficiaries,
+    applicableRegion: ov.applicableRegion !== void 0 ? ov.applicableRegion : base.applicableRegion,
+    sections: Array.isArray(ov.sections) && ov.sections.length > 0 ? ov.sections : base.sections,
+    eligibility: Array.isArray(ov.eligibility) && ov.eligibility.length > 0 ? ov.eligibility : base.eligibility,
+    documentsRequired: Array.isArray(ov.documentsRequired) && ov.documentsRequired.length > 0 ? ov.documentsRequired : base.documentsRequired,
+    stepByStep: Array.isArray(ov.stepByStep) && ov.stepByStep.length > 0 ? ov.stepByStep : base.stepByStep,
+    faqs: Array.isArray(ov.faqs) && ov.faqs.length > 0 ? ov.faqs : base.faqs,
+    status: state.status || base.status || "published",
+    lastUpdated: state.lastUpdated || base.lastUpdated,
+    reviewedBy: state.reviewedBy || state.verifierName || base.reviewedBy,
+    reviewedAt: state.reviewedAt || state.verifiedDate || base.reviewedAt,
+    verifierName: state.verifierName || base.verifierName,
+    verifiedDate: state.verifiedDate || base.verifiedDate
+  };
+}
+function mergeAllGuidesWithStates(guideStates = {}, baseGuides = GUIDE_ARTICLES) {
+  return baseGuides.map((guide) => mergeSingleGuideWithState(guide, guideStates[guide.id]));
+}
+function getPublishedMergedGuides(guideStates = {}, baseGuides = GUIDE_ARTICLES) {
+  return mergeAllGuidesWithStates(guideStates, baseGuides).filter(
+    (g) => g.status !== "draft"
+  );
+}
+function validateGuideReadyForPublish(guide, options = {}) {
+  const errors = [];
+  const remainingMarkers = extractGuideVerifyMarkers(guide).filter(
+    (m) => !m.field.startsWith("verifyNotes[")
+  );
+  const wordCount = countGuideWords(guide);
+  if (remainingMarkers.length > 0) {
+    errors.push(
+      `${remainingMarkers.length} unverified [VERIFY] placeholder(s) remain in guide content (${remainingMarkers.slice(0, 3).map((m) => m.field).join(", ")}). Replace or clear them before publishing.`
+    );
+  }
+  if (!isValidHttpUrl(guide.officialUrl)) {
+    errors.push("A valid https:// or http:// Official URL is required.");
+  }
+  if (wordCount < 400) {
+    errors.push(`Guide content is ${wordCount} words (minimum 400 words required to publish).`);
+  }
+  if (options.confirmChecked === false) {
+    errors.push("Staff verification confirmation checkbox must be ticked.");
+  }
+  if (options.verifierName !== void 0 && !options.verifierName.trim()) {
+    errors.push("Verifier Name is required before publishing.");
+  }
+  return {
+    ok: errors.length === 0,
+    errors,
+    remainingMarkers,
+    wordCount
+  };
+}
+
+// src/utils/contentAuditRules.ts
+var DEFAULT_AUDIT_THRESHOLDS = {
+  minClassAWords: 400,
+  thinWordThreshold: 300,
+  maxConsecutiveCopiedAllowed: 2,
+  nearDuplicateJaccardThreshold: 0.65
+};
+function normalizeTextForAudit(text) {
+  return String(text || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+function buildWordShingles(text, shingleSize = 5) {
+  const words = normalizeTextForAudit(text).toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter((w) => w.length >= 2);
+  const shingles = /* @__PURE__ */ new Set();
+  if (words.length < shingleSize) {
+    if (words.length > 0) shingles.add(words.join(" "));
+    return shingles;
+  }
+  for (let i = 0; i <= words.length - shingleSize; i++) {
+    shingles.add(words.slice(i, i + shingleSize).join(" "));
+  }
+  return shingles;
+}
+function jaccardSimilarity(a, b) {
+  if (a.size === 0 || b.size === 0) return 0;
+  let intersection = 0;
+  const [smaller, larger] = a.size <= b.size ? [a, b] : [b, a];
+  smaller.forEach((item) => {
+    if (larger.has(item)) intersection++;
+  });
+  const union = a.size + b.size - intersection;
+  return union === 0 ? 0 : intersection / union;
+}
+function detectOutboundOfficialLinks(htmlOrText) {
+  const matches = /* @__PURE__ */ new Set();
+  const urlRegex = /href=["'](https?:\/\/[^"']+)["']/gi;
+  let m;
+  while ((m = urlRegex.exec(htmlOrText)) !== null) {
+    const href = m[1];
+    try {
+      const parsed = new URL(href);
+      const host = parsed.hostname.toLowerCase();
+      if (host.includes("cscdost.com")) continue;
+      if (host.endsWith(".gov.in") || host.endsWith(".nic.in") || host.endsWith(".ac.in") || host.endsWith(".edu.in") || host.includes("kashmiruniversity") || host.includes("cusrinagar") || host.includes("coeju.com") || host.includes("ntaonline.in") || host.includes("jkb.bank.in") || host.includes("parikshasaarthi.in") || host.includes("cdac.in") || host.includes("ignou") || host.includes("ibps") || host.includes("jkbank") || host.includes("samarth") || host.includes("digilocker")) {
+        matches.add(href);
+      }
+    } catch {
+    }
+  }
+  return Array.from(matches);
+}
+function classifyAuditPage(input) {
+  const reasons = [];
+  const cleanPath = (() => {
+    try {
+      return new URL(input.url).pathname;
+    } catch {
+      return input.url;
+    }
+  })();
+  if (input.httpStatus !== 200) {
+    reasons.push(`HTTP ${input.httpStatus} (expected 200)`);
+  }
+  if (input.canonicalMismatch) {
+    reasons.push("Canonical URL does not match requested path");
+  }
+  if (!input.title || input.title.trim().length < 10) {
+    reasons.push("Missing or very short <title>");
+  }
+  if (!input.metaDescription || input.metaDescription.trim().length < 30) {
+    reasons.push('Missing or weak <meta name="description">');
+  }
+  if (input.h1Count !== 1) {
+    reasons.push(`Expected 1 <h1>, found ${input.h1Count}`);
+  }
+  const isPostRoute = /^\/(post|job|notice)\//i.test(cleanPath);
+  const isToolOrUtilityRoute = /^\/tools(\/|$)/i.test(cleanPath) || cleanPath === "/calculators" || cleanPath === "/archive";
+  if (input.httpStatus >= 400 || input.httpStatus === 0) {
+    return { auditClass: "D", reasons };
+  }
+  if (input.copiedRunLength > DEFAULT_AUDIT_THRESHOLDS.maxConsecutiveCopiedAllowed) {
+    reasons.push(
+      `${input.copiedRunLength} consecutive sentences match raw official excerpt (>2)`
+    );
+    return { auditClass: "D", reasons };
+  }
+  if (input.highestJaccardScore >= DEFAULT_AUDIT_THRESHOLDS.nearDuplicateJaccardThreshold && input.nearDuplicateOf) {
+    reasons.push(
+      `Near-duplicate similarity ${(input.highestJaccardScore * 100).toFixed(0)}% with ${input.nearDuplicateOf}`
+    );
+    return { auditClass: "D", reasons };
+  }
+  if (input.wordCount < DEFAULT_AUDIT_THRESHOLDS.thinWordThreshold) {
+    reasons.push(`Thin main content (${input.wordCount} words < 300)`);
+  } else if (input.wordCount < DEFAULT_AUDIT_THRESHOLDS.minClassAWords) {
+    reasons.push(`Below 400-word target (${input.wordCount} words)`);
+  }
+  if (isPostRoute && !input.hasOfficialLink) {
+    reasons.push("Missing outbound official .gov.in/.nic.in/university link");
+  }
+  if (isPostRoute && !input.hasLastUpdated) {
+    reasons.push("Missing visible Last updated / Last Verified timestamp");
+  }
+  if (input.wordCount < DEFAULT_AUDIT_THRESHOLDS.thinWordThreshold) {
+    return { auditClass: "C", reasons };
+  }
+  if (input.canonicalMismatch && isPostRoute) {
+    return { auditClass: "C", reasons };
+  }
+  if (input.wordCount >= DEFAULT_AUDIT_THRESHOLDS.minClassAWords && input.h1Count === 1 && Boolean(input.title) && Boolean(input.metaDescription) && (!isPostRoute || input.hasOfficialLink && input.hasLastUpdated)) {
+    return { auditClass: "A", reasons: reasons.length > 0 ? reasons : ["Meets all Class A quality thresholds"] };
+  }
+  if (isToolOrUtilityRoute && input.wordCount >= 320 && input.h1Count === 1) {
+    return { auditClass: "B", reasons };
+  }
+  return { auditClass: "B", reasons };
+}
+function evaluatePostCopyAndWords(candidateText, sourceText) {
+  return {
+    wordCount: countWords(candidateText),
+    copiedCheck: checkConsecutiveCopiedSentences(
+      candidateText,
+      sourceText,
+      DEFAULT_AUDIT_THRESHOLDS.maxConsecutiveCopiedAllowed
+    )
+  };
+}
+
+// src/config/siteContact.ts
+var PUBLIC_CONTACT_EMAIL = "urnxtfd@gmail.com";
 
 // src/ogImageGenerator.ts
 import sharp from "sharp";
@@ -11689,74 +12848,66 @@ function buildPostEnrichmentData(item, effectiveType, statusInfo, orgName, porta
   const whoShouldApply = [];
   if (effectiveType === "result" || effectiveType === "admit_card" || effectiveType === "dv" || effectiveType === "exam" || effectiveType === "answer_key") {
     whoShouldApply.push(
-      `Registered candidates / enrolled students of ${orgName} covered under ${hasRealDataValue(item.learnerGroup) ? item.learnerGroup : qualStr}.`
+      `Candidates registered under ${orgName} for ${item.title} (${hasRealDataValue(item.learnerGroup) ? item.learnerGroup : qualStr}).`
     );
     whoShouldApply.push(
-      effectiveType === "answer_key" ? `Candidates who appeared in the examination and need to verify responses${statusInfo.isClosingSoon && endLong ? ` or submit objections before ${endLong}` : ""}.` : effectiveType === "dv" ? "Shortlisted applicants listed in the notice who hold original academic, identity, and category/domicile certificates." : `Applicants holding a valid registration, enrolment, or roll number issued by ${orgName}.`
+      effectiveType === "answer_key" ? `Appeared examinees reviewing ${orgName} responses${statusInfo.isClosingSoon && endLong ? ` before ${endLong}` : ""}.` : effectiveType === "dv" ? `Shortlisted applicants carrying originals required by ${orgName}.` : `Holders of valid ${orgName} roll/registration numbers for ${item.title}.`
     );
     if (item.jkDomicile) {
-      whoShouldApply.push(
-        "Domicile residents of Jammu & Kashmir eligible under the notified cadre or regional schedule."
-      );
+      whoShouldApply.push(`Eligible J&K domicile residents covered in ${item.title}.`);
     }
   } else {
     whoShouldApply.push(
-      `Eligible candidates meeting the stated educational criteria (${qualStr}) as detailed in the ${orgName} notice.`
+      `Applicants fulfilling ${qualStr} as notified by ${orgName} in ${item.title}.`
     );
     if (hasRealDataValue(item.ageLimit) && !isGenericNoticePlaceholder(item.ageLimit)) {
       whoShouldApply.push(
-        `Applicants falling within the notified age limit (${item.ageLimit}) on the cutoff date specified in the official advertisement.`
+        `Candidates within ${orgName} age bounds (${item.ageLimit}) for ${item.title}.`
       );
     }
     if (item.jkDomicile) {
-      whoShouldApply.push(
-        "Permanent residents holding a valid Jammu & Kashmir Domicile Certificate issued by a competent authority."
-      );
+      whoShouldApply.push(`Holders of valid Jammu & Kashmir Domicile Certificates for ${item.title}.`);
     }
     whoShouldApply.push(
-      statusInfo.isClosed ? "Note: New registrations are closed \u2014 this bulletin remains available only for record reference." : `Applicants with active mobile number, email ID, and scanned documents ready before ${endLong || "the closing date"}.`
+      statusInfo.isClosed ? `Window closed (${endLong || statusInfo.dateValue}); kept for reference.` : `Candidates with active contact details ready before ${endLong || "the deadline"} on ${sourceDomain}.`
     );
   }
   const whoShouldNotApply = [];
   if (statusInfo.isClosed || statusInfo.isCancelled) {
     whoShouldNotApply.push(
-      statusInfo.isCancelled ? `All applicants \u2014 this ${orgName} notice has been cancelled or withdrawn.` : `New applicants \u2014 the closing deadline${endLong ? ` (${endLong})` : ""} has already passed and fresh submissions are not accepted.`
+      statusInfo.isCancelled ? `All applicants \u2014 ${orgName} cancelled ${item.title}.` : `New applicants \u2014 ${item.title} closed on ${endLong || statusInfo.dateValue}.`
     );
   }
   if (effectiveType === "result" || effectiveType === "admit_card" || effectiveType === "dv" || effectiveType === "answer_key" || effectiveType === "exam") {
     whoShouldNotApply.push(
-      `Candidates who did not register or appear for the relevant ${orgName} cycle cannot submit new applications through this notice.`
+      `Unregistered applicants \u2014 ${item.title} covers existing ${orgName} candidates only.`
     );
   } else {
     whoShouldNotApply.push(
-      `Candidates whose final qualification, mark sheet result, or required certificate is awaited beyond the cutoff date specified by ${orgName} (unless explicitly permitted in the notification).`
+      `Awaited-result candidates beyond ${orgName} cutoff rules unless ${item.title} allows it.`
     );
     if (item.jkDomicile) {
-      whoShouldNotApply.push(
-        "Applicants without a valid J&K Domicile Certificate where Jammu & Kashmir domicile is mandatory under the advertisement rules."
-      );
+      whoShouldNotApply.push(`Non-domicile applicants where ${orgName} mandates J&K domicile.`);
     }
     if (hasRealDataValue(item.ageLimit) && !isGenericNoticePlaceholder(item.ageLimit)) {
-      whoShouldNotApply.push(
-        `Candidates outside the notified age range (${item.ageLimit}) who do not qualify for an official category relaxation.`
-      );
+      whoShouldNotApply.push(`Candidates outside ${item.ageLimit} without ${orgName} relaxation.`);
     }
   }
   const commonMistakes = [
-    `Relying on third-party summaries without opening the official ${sourceDomain} notification PDF or portal circular.`,
-    effectiveType === "application" || effectiveType === "admission" || effectiveType === "upcoming" ? "Uploading blurred passport photographs, dark-background signatures, or files exceeding the portal pixel/KB limits \u2014 resize documents accurately before login." : "Missing roll number, registration ID, or date-of-birth formatting while checking status or downloading PDFs.",
-    "Entering mismatched spelling of candidate name, parent name, or date of birth that differs from the 10th/Matriculation certificate.",
-    hasFee ? "Immediately paying the application fee twice if a bank receipt shows pending \u2014 check portal transaction status or wait before retrying." : "Submitting forms in the final few hours before closing when portal traffic and server timeouts increase."
+    `Skipping the original ${item.title} notice on ${sourceDomain}.`,
+    effectiveType === "application" || effectiveType === "admission" || effectiveType === "upcoming" ? `Uploading oversized/unclear scans to ${sourceDomain} instead of verifying KB/pixel specs.` : `Mismatched roll number or DOB entry when checking ${item.title} on ${sourceDomain}.`,
+    `Spelling differences versus Class 10th records for ${orgName} verification.`,
+    hasFee ? `Double-paying ${item.title} fees before bank settlement checks.` : `Waiting until closing hours on ${sourceDomain} when traffic peaks.`
   ];
   if (item.jkDomicile || !isEdu) {
     commonMistakes.push(
-      "Selecting an incorrect reservation category (RBA, EWS, SC, ST, OBC) without holding a valid certificate dated on or before the closing deadline."
+      `Claiming reserved categories without valid certificates dated by ${endLong || "cutoff"}.`
     );
   }
   const whatToDoNext = [
-    `Step 1 \u2014 Verify source notice (${postLong}): Open ${sourceDomain} and confirm all official eligibility lines and annexures.`,
-    statusInfo.isClosed ? `Step 2 \u2014 Check post-closing updates: Since ${endLong || "the deadline"} has passed, watch ${sourceDomain} only for shortlist, edit-window, or exam date circulars.` : statusInfo.isUpcoming ? `Step 2 \u2014 Keep documents ready for ${startLong || "opening date"}: Verify certificate validity and scan photograph and signature in required dimensions.` : effectiveType === "result" || effectiveType === "admit_card" || effectiveType === "answer_key" ? `Step 2 \u2014 Keep login details ready: Use your registration number and date of birth on ${sourceDomain}${endLong ? ` before ${endLong}` : ""}.` : `Step 2 \u2014 Complete online submission before ${endLong || "closing"}: Fill details carefully${startLong ? ` (window opened ${startLong})` : ""} and preview every field prior to final lock.`,
-    `Step 3 \u2014 Save official proof: Download and print the confirmation PDF, payment receipt, or hall ticket for future verification stages.`
+    `1. Confirm ${item.title} (${postLong}) directly on ${sourceDomain}.`,
+    statusInfo.isClosed ? `2. Follow post-closing ${orgName} updates (${endLong || "closed"}) on ${sourceDomain}.` : statusInfo.isUpcoming ? `2. Prepare certificates for ${item.title} ahead of ${startLong || "opening"}.` : effectiveType === "result" || effectiveType === "admit_card" || effectiveType === "answer_key" ? `2. Sign in on ${sourceDomain} with registration ID${endLong ? ` before ${endLong}` : ""} for ${item.title}.` : `2. Submit ${item.title} on ${sourceDomain} before ${endLong || "closing"}${startLong ? ` (opened ${startLong})` : ""}.`,
+    `3. Save the official ${orgName} PDF or confirmation receipt for ${item.title}.`
   ];
   return {
     quickSummary,
@@ -11781,6 +12932,7 @@ function renderPostSubstantiveHtml(item, allPosts = SARKARI_DATA) {
   const nonAppTemplate = isNonApplicationTemplateType(effectiveType);
   const orgName = item.org || resolvePostOrg(item);
   const portalUrl = resolvePostPortalUrl(item);
+  const pdfUrl = resolvePostPdfUrl(item, portalUrl);
   const safeTitle = escapeHtml(item.title);
   const safeOrg = escapeHtml(orgName);
   const safeCategory = escapeHtml(item.category?.replace(/_/g, " ").toUpperCase() || "RECRUITMENT NOTICE");
@@ -11835,17 +12987,17 @@ function renderPostSubstantiveHtml(item, allPosts = SARKARI_DATA) {
     </nav>
 
     <!-- Government Transparency Notice -->
-    <aside style="background:#fffbeb; border-left:4px solid #f59e0b; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:13px; color:#92400e;">
-      <strong>Independent Portal Notice:</strong> CSC DOST (cscdost.com) is an independent portal, not a government website, operated by Authorized CSC VLE Wasim Ahmad Khanday (VLE ID: 212515670018). Always confirm details on the official notification linked below.
+    <aside style="background:#fffbeb; border-left:4px solid #f59e0b; padding:10px 14px; border-radius:0 8px 8px 0; margin-bottom:18px; font-size:13px; color:#92400e;">
+      <strong>Independent Summary (${safeOrg}):</strong> Verify "${safeTitle}" directly on <a href="${safeOfficialLink}" target="_blank" rel="noopener noreferrer" style="color:#92400e; font-weight:700;">${escapeHtml(enrichment.sourceDomain)}</a>.
     </aside>
     ${isStale90 ? `
     <aside role="status" style="background:#fef2f2; border:1px solid #fecaca; border-left:4px solid #dc2626; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:14px; color:#7f1d1d;">
-      <strong>Closed:</strong> The submission deadline passed (${escapeHtml(safeLastDate)}${daysClosed !== null && daysClosed > 0 ? `, ${daysClosed} days ago` : ""}). This page is kept live for historical reference only; confirm any fresh cycles on the official authority website.
+      <strong>Closed (${escapeHtml(safeLastDate)}):</strong> "${safeTitle}" passed closing${daysClosed !== null && daysClosed > 0 ? ` ${daysClosed} days ago` : ""}; verify any new ${safeOrg} cycle on ${escapeHtml(enrichment.sourceDomain)}.
     </aside>
     ` : ""}
     ${!computed.canApplyOnline ? `
     <aside style="background:${computed.verificationStatus === "needs_verification" ? "#fffbeb" : computed.isCancelled ? "#fff1f2" : "#f8fafc"}; border:1px solid ${computed.verificationStatus === "needs_verification" ? "#fde68a" : computed.isCancelled ? "#fecdd3" : "#cbd5e1"}; border-left:4px solid ${computed.verificationStatus === "needs_verification" ? "#d97706" : computed.isCancelled ? "#e11d48" : "#475569"}; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:13px; color:#0f172a;">
-      <strong>Status (${escapeHtml(computed.badgeLabel)}):</strong> ${computed.verificationStatus === "needs_verification" ? "This notice could not be freshly corroborated from the official portal and is paused for assisted application requests. Verify directly on the authority website." : computed.isCancelled ? "This notification has been cancelled or withdrawn by the issuing authority." : computed.isClosed ? escapeHtml(computed.closingTimeNote || `The application window concluded on ${safeLastDate}. Assisted applications are closed.`) : computed.isUpcoming ? `Window is scheduled to open on ${safeStartDate}.` : "Check the official authority portal link below for downloads, schedules, or post-application instructions."}
+      <strong>${escapeHtml(computed.badgeLabel)} (${safeOrg}):</strong> ${computed.verificationStatus === "needs_verification" ? `Confirm "${safeTitle}" status directly on ${escapeHtml(enrichment.sourceDomain)}.` : computed.isCancelled ? `${safeOrg} cancelled or withdrew "${safeTitle}".` : computed.isClosed ? escapeHtml(computed.closingTimeNote || `"${safeTitle}" closed on ${safeLastDate}.`) : computed.isUpcoming ? `${safeOrg} scheduled opening for "${safeTitle}": ${safeStartDate}.` : `Check ${escapeHtml(enrichment.sourceDomain)} for "${safeTitle}" updates.`}
     </aside>
     ` : ""}
 
@@ -12037,20 +13189,23 @@ function renderPostSubstantiveHtml(item, allPosts = SARKARI_DATA) {
       <!-- Official Links Action Section -->
       <section style="background:#f1f5f9; border-radius:10px; padding:18px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
         <div>
-          <div style="font-weight:700; font-size:15px; color:#101A36;">Official Board Portal &amp; Verification Links</div>
-          <div style="font-size:13px; color:#475569;">Verify official notification details directly on the issuing authority portal.</div>
+          <div style="font-weight:700; font-size:15px; color:#101A36;">Official ${safeOrg} Source Links</div>
+          <div style="font-size:13px; color:#475569;">Confirm "${safeTitle}" on ${escapeHtml(enrichment.sourceDomain)}.</div>
         </div>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
           <a href="${safeOfficialLink}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
-            ${isSscTimetablePost ? "Official Portal (ssc.gov.in) \u2197" : isIgnouPost ? "Official IGNOU Circular / Portal \u2197" : "Official Portal / Notice \u2197"}
+            ${isSscTimetablePost ? "Official Portal (ssc.gov.in) \u2197" : isIgnouPost ? "Official IGNOU Circular / Portal \u2197" : `${safeOrg} Official Portal \u2197`}
           </a>
+          ${pdfUrl ? `<a href="${escapeHtml(pdfUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#ffffff; color:#101A36; border:1px solid #cbd5e1; font-weight:700; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
+            Notification PDF \u2197
+          </a>` : ""}
           ${!computed.canApplyOnline ? `
           <a href="/" style="display:inline-block; background:#ffffff; color:#101A36; border:1px solid #cbd5e1; font-weight:600; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
-            Return to Portal Homepage
+            CSC DOST Home
           </a>
           ` : `
-          <a href="/apply" style="display:inline-block; background:#101A36; color:#ffffff; font-weight:600; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
-            Assisted Application Desk
+          <a href="/apply?service=${encodeURIComponent(item.title)}" style="display:inline-block; background:#101A36; color:#ffffff; font-weight:600; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
+            Request Assistance
           </a>
           `}
         </div>
@@ -12067,7 +13222,7 @@ function renderPostSubstantiveHtml(item, allPosts = SARKARI_DATA) {
 function renderSsrPolicyFooterHtml() {
   return `
     <footer style="margin-top:30px; font-size:12px; color:#475569; text-align:center; line-height:1.7; border-top:1px solid #E2E8F0; padding-top:16px;">
-      <p style="margin:0 0 6px 0;">Published by CSC DOST | Operator: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) | Sangran Qazigund, Anantnag, J&amp;K 192221 \xB7 +91 70068 33767</p>
+      <p style="margin:0 0 6px 0;">Published by CSC DOST | Operator: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) | Sangran Qazigund, Anantnag, J&amp;K 192221 \xB7 +91 70068 33767 \xB7 <a href="mailto:urnxtfd@gmail.com" style="color:#101A36; font-weight:600; text-decoration:underline;">urnxtfd@gmail.com</a></p>
       <p style="margin:0;">
         <a href="/about-us" style="color:#101A36; font-weight:600; text-decoration:none;">About</a> \u2022
         <a href="/contact-us" style="color:#101A36; font-weight:600; text-decoration:none;">Contact</a> \u2022
@@ -12080,144 +13235,177 @@ function renderSsrPolicyFooterHtml() {
     </footer>`;
 }
 function renderServiceSubstantiveHtml(service) {
+  const facts = deriveStoredServiceFacts(service);
+  const cluster = getClusterForServiceId(service.id);
   const safeName = escapeHtml(service.name);
   const safeDescription = escapeHtml(service.description);
-  const hasFeeLines = Array.isArray(service.feeLines) && service.feeLines.length > 0;
-  const hasPrice = Boolean(service.price && service.price.trim().length > 0);
-  const safePrice = escapeHtml(hasPrice ? service.price.trim() : "Ask us");
-  const safeFeeHtml = hasFeeLines ? service.feeLines.map((l) => `<div>${escapeHtml(l)}</div>`).join("") : safePrice;
-  const hasTime = Boolean(service.estimatedTime && service.estimatedTime.trim().length > 0);
-  const safeTime = escapeHtml(service.estimatedTime?.trim() || "");
   const safeCategory = escapeHtml(service.category);
-  const safeOfficialUrl = service.officialUrl && service.officialUrl.trim().length > 0 ? escapeHtml(service.officialUrl.trim()) : service.category === "cards_adda" ? "" : "";
-  const safeDocs = Array.isArray(service.requirements) ? service.requirements.filter(Boolean) : [];
+  const safeAuthority = escapeHtml(facts.issuingAuthority);
+  const safeEligibility = escapeHtml(facts.eligibility);
+  const safeTime = escapeHtml(facts.estimatedTime);
+  const safeFeeHtml = facts.feeLines.length > 0 ? facts.feeLines.map((l) => `<div>${escapeHtml(l)}</div>`).join("") : escapeHtml(facts.feesText);
   const waEnquiryUrl = `https://wa.me/917006833767?text=${encodeURIComponent(
-    `Hello Wasim Ahmad Khanday (CSC DOST), I would like to enquire about ${service.name}: https://www.cscdost.com/service/${service.id}`
+    `Hello CSC DOST, enquiry for ${service.name} (${service.id})`
   )}`;
-  const faqItems = [
-    {
-      question: `What documents are needed for ${service.name}?`,
-      answer: safeDocs.length > 0 ? `Listed documents: ${safeDocs.join(", ")}. Additional verification may be requested by the issuing authority.` : "Document requirements depend on your specific application case. Contact +91 70068 33767 before applying."
-    },
-    {
-      question: `What are the charges for ${service.name}?`,
-      answer: `${hasPrice ? `Listed reference charge: ${service.price.trim()}. ` : 'Fee is confirmed on enquiry ("Ask us"). '}Final charges depend on the service and any government fee. Please confirm before applying.`
-    },
-    {
-      question: `How long does ${service.name} typically take?`,
-      answer: hasTime ? `Indicative timeline noted in the service entry: ${service.estimatedTime.trim()}. Actual completion depends on issuing authority verification.` : "Processing time depends on departmental verification. Contact +91 70068 33767 for current turnaround expectations."
-    }
-  ];
-  const faqSchemaJson = JSON.stringify({
+  const serviceSchemaJson = JSON.stringify({
     "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faqItems.map((f) => ({
-      "@type": "Question",
-      name: f.question,
-      acceptedAnswer: { "@type": "Answer", text: f.answer }
-    }))
+    "@type": "Service",
+    name: service.name,
+    description: service.description,
+    serviceType: service.category,
+    provider: {
+      "@type": "LocalBusiness",
+      name: "CSC DOST",
+      telephone: "+91-70068-33767"
+    },
+    url: `https://www.cscdost.com/service/${encodeURIComponent(service.id)}`
   }).replace(/</g, "\\u003c");
   return `
   ${renderPrimaryCategoryNavHtml("services")}
-  <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:12px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:16px; color:#101A36; line-height:1.6;">
-    <nav aria-label="Breadcrumb" style="font-size:14px; color:#475569; margin-bottom:16px;">
+  <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:12px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:15px; color:#101A36; line-height:1.55;">
+    <nav aria-label="Breadcrumb" style="font-size:14px; color:#475569; margin-bottom:14px;">
       <a href="/" style="color:#101A36; font-weight:600; text-decoration:none;">Home</a>
       <span style="margin:0 6px;">/</span>
-      <a href="/services" style="color:#101A36; font-weight:600; text-decoration:none;">CSC E-Services</a>
+      <a href="/services" style="color:#101A36; font-weight:600; text-decoration:none;">Services</a>
       <span style="margin:0 6px;">/</span>
       <span style="color:#101A36; font-weight:700;">${safeName}</span>
     </nav>
 
-    <aside style="background:#FFFBEB; border-left:4px solid #F5A623; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:14px; color:#101A36;">
-      <strong>Fee &amp; Transparency Notice:</strong> Final charges depend on the service and any government fee. Please confirm before applying. Operated by Wasim Ahmad Khanday (CSC VLE ID: 212515670018, Sangran Qazigund, Anantnag, J&amp;K 192221).
-    </aside>
+    ${cluster ? `<div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:10px; padding:10px 14px; margin-bottom:14px; font-size:13px;">
+      <strong>${escapeHtml(cluster.title)}:</strong> <a href="${escapeHtml(cluster.hubPath)}" style="color:#1D4ED8; font-weight:700; text-decoration:underline;">View Hub Comparison \u2192</a>
+    </div>` : ""}
 
-    <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:24px;">
-      <header style="border-bottom:1px solid #E2E8F0; padding-bottom:18px; margin-bottom:20px;">
-        <span style="display:inline-block; background:#ECFDF5; color:#1F9D6B; border:1px solid #A7F3D0; font-size:12px; font-weight:700; text-transform:uppercase; padding:4px 10px; border-radius:6px; margin-bottom:10px;">
-          ${safeCategory}
+    <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:22px;">
+      <header style="border-bottom:1px solid #E2E8F0; padding-bottom:14px; margin-bottom:18px;">
+        <span style="display:inline-block; background:#ECFDF5; color:#1F9D6B; border:1px solid #A7F3D0; font-size:11px; font-weight:700; text-transform:uppercase; padding:3px 9px; border-radius:6px; margin-bottom:8px;">
+          ${safeCategory}${facts.hasVerifyPlaceholders ? " \xB7 [VERIFY]" : " \xB7 Verified"}
         </span>
-        <h1 style="font-size:28px; line-height:1.3; font-weight:800; color:#101A36; margin:0 0 12px 0;">
-          ${safeName}
-        </h1>
-        <p style="font-size:16px; color:#475569; margin:0;">
-          ${safeDescription}
-        </p>
+        <h1 style="font-size:26px; line-height:1.28; font-weight:800; color:#101A36; margin:0 0 8px 0;">${safeName}</h1>
+        <p style="font-size:15px; color:#475569; margin:0;">${safeDescription}</p>
       </header>
 
-      <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:24px;">
-        <div style="background:#F6F8FC; border:1px solid #E2E8F0; border-radius:10px; padding:16px;">
-          <div style="font-size:12px; font-weight:600; color:#64748B; text-transform:uppercase;">Fee</div>
-          <div style="font-size:16px; font-weight:800; color:#1F9D6B; margin-top:4px; line-height:1.45;">${safeFeeHtml}</div>
+      <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-bottom:18px;">
+        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:14px;">
+          <h2 style="font-size:12px; font-weight:700; color:#475569; margin:0 0 4px 0;">${safeName} \u2014 Issuing Authority</h2>
+          <div style="font-size:14px; font-weight:700; color:${facts.authorityFromStoredData ? "#101A36" : "#B45309"};">${safeAuthority}</div>
         </div>
-        ${hasTime ? `<div style="background:#F6F8FC; border:1px solid #E2E8F0; border-radius:10px; padding:16px;">
-          <div style="font-size:12px; font-weight:600; color:#64748B; text-transform:uppercase;">Typical Time</div>
-          <div style="font-size:18px; font-weight:800; color:#101A36; margin-top:4px;">${safeTime}</div>
-        </div>` : ""}
-      </section>
-
-      <section style="margin-bottom:24px;">
-        <h2 style="font-size:20px; font-weight:700; color:#101A36; margin:0 0 12px 0;">Documents Checklist</h2>
-        ${safeDocs.length > 0 ? `<ul style="padding-left:20px; font-size:15px; color:#334155; line-height:1.8; margin:0;">
-          ${safeDocs.map((doc) => `<li>${escapeHtml(doc)}</li>`).join("")}
-        </ul>` : `<p style="font-size:15px; color:#475569; margin:0;">Ask us \u2014 document requirements depend on your specific application case.</p>`}
-      </section>
-
-      <section style="margin-bottom:24px;">
-        <h2 style="font-size:20px; font-weight:700; color:#101A36; margin:0 0 12px 0;">Process Steps</h2>
-        <ol style="padding-left:20px; font-size:15px; color:#334155; line-height:1.8; margin:0;">
-          <li>Confirm required documents and total fee (${safePrice}) on WhatsApp or +91 70068 33767 before applying.</li>
-          <li>Submit clear supporting document scans online or at CSC DOST (Sangran Qazigund, Anantnag).</li>
-          <li>Application is filed on the relevant official portal with OTP or biometric verification where needed.</li>
-          <li>Save your submission receipt / reference number to monitor progress.</li>
-        </ol>
-      </section>
-
-      <section style="margin-bottom:24px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px;">
-        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 10px 0;">Service Scope &amp; Pre-Submission Verification</h2>
-        <p style="font-size:14px; color:#334155; margin:0 0 10px 0;">
-          CSC DOST provides independent citizen facilitation for <strong>${safeName}</strong> under the ${safeCategory} category through our Authorized Common Services Center kiosk (VLE ID: 212515670018, Sangran Qazigund, Anantnag). ${hasTime ? `Indicative timeline noted for this filing: ${safeTime}. ` : ""}Final acceptance and certificate issuance depend strictly on verification by the competent government department.
-        </p>
-        <ul style="padding-left:20px; font-size:14px; color:#334155; line-height:1.75; margin:0;">
-          <li>Ensure applicant name, parent name, and date of birth match across Aadhaar, Matriculation certificate, and revenue records before filing.</li>
-          <li>Confirm exact government fee plus CSC operator facilitation charges (${safePrice}) in advance before initiating any payment.</li>
-          <li>Keep an active mobile number ready for Aadhaar OTP or portal login verification alerts during form entry.</li>
-          <li>Retain your official acknowledgement slip and CSC tracking token to review application updates on <a href="/track" style="color:#1F9D6B; font-weight:600;">cscdost.com/track</a>.</li>
-        </ul>
-      </section>
-
-      <section style="margin-bottom:24px;">
-        <h2 style="font-size:20px; font-weight:700; color:#101A36; margin:0 0 10px 0;">Frequently Asked Questions</h2>
-        <div style="display:flex; flex-direction:column; gap:10px;">
-          ${faqItems.map(
-    (f) => `
-          <details style="border:1px solid #E2E8F0; border-radius:10px; padding:12px;">
-            <summary style="font-weight:700; color:#101A36; cursor:pointer;">${escapeHtml(f.question)}</summary>
-            <p style="margin:8px 0 0 0; font-size:14px; color:#334155;">${escapeHtml(f.answer)}</p>
-          </details>`
-  ).join("")}
+        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:14px;">
+          <h2 style="font-size:12px; font-weight:700; color:#475569; margin:0 0 4px 0;">${safeName} \u2014 Fees</h2>
+          <div style="font-size:14px; font-weight:700; color:${facts.feesFromStoredData ? "#1F9D6B" : "#B45309"};">${safeFeeHtml}</div>
+        </div>
+        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:14px;">
+          <h2 style="font-size:12px; font-weight:700; color:#475569; margin:0 0 4px 0;">${safeName} \u2014 Processing Time</h2>
+          <div style="font-size:14px; font-weight:700; color:${facts.timeFromStoredData ? "#101A36" : "#B45309"};">${safeTime}</div>
         </div>
       </section>
 
-      <section style="background:#F6F8FC; border:1px solid #E2E8F0; border-radius:12px; padding:18px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
-        <div>
-          <div style="font-weight:700; font-size:16px; color:#101A36;">Enquire or Request Filing Help</div>
-          <div style="font-size:14px; color:#475569;">Final charges depend on the service and any government fee. Please confirm before applying.</div>
-        </div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <a href="${escapeHtml(waEnquiryUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">
-            Enquire on WhatsApp
-          </a>
-          <a href="tel:+917006833767" style="display:inline-block; background:#101A36; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">
-            Call +91 70068 33767
-          </a>
-          ${safeOfficialUrl ? `<a href="${safeOfficialUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#ffffff; color:#101A36; border:1px solid #CBD5E1; font-weight:600; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">
-            Official Portal \u2197
-          </a>` : ""}
-        </div>
+      <section style="margin-bottom:16px;">
+        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">${safeName} \u2014 Who Is Eligible</h2>
+        <p style="font-size:14px; color:${facts.eligibilityFromStoredData ? "#334155" : "#B45309"}; margin:0;">${safeEligibility}</p>
       </section>
+
+      <section style="margin-bottom:16px;">
+        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">${safeName} \u2014 Exact Documents List</h2>
+        ${facts.requirements.length > 0 ? `<ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
+          ${facts.requirements.map((doc) => `<li>${escapeHtml(doc)}</li>`).join("")}
+        </ul>` : `<p style="font-size:14px; color:#B45309; margin:0;">${safeName} documents: [VERIFY]</p>`}
+      </section>
+
+      <section style="margin-bottom:16px;">
+        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">${safeName} \u2014 Step-by-Step Flow</h2>
+        ${facts.stepFlow.length > 0 ? `<ol style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
+          ${facts.stepFlow.map((s) => `<li>${escapeHtml(s)}</li>`).join("")}
+        </ol>` : `<p style="font-size:14px; color:#B45309; margin:0;">${safeName} steps: [VERIFY]</p>`}
+      </section>
+
+      <section style="margin-bottom:16px;">
+        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">${safeName} \u2014 Common Rejection Reasons</h2>
+        ${facts.rejectionReasons.length > 0 ? `<ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
+          ${facts.rejectionReasons.map((r) => `<li>${escapeHtml(r)}</li>`).join("")}
+        </ul>` : `<p style="font-size:14px; color:#B45309; margin:0;">${safeName} rejections: [VERIFY]</p>`}
+      </section>
+
+      <section style="margin-bottom:16px;">
+        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">${safeName} \u2014 Staff Pre-Submission Checks</h2>
+        ${facts.staffChecks.length > 0 ? `<ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
+          ${facts.staffChecks.map((c) => `<li>${escapeHtml(c)}</li>`).join("")}
+        </ul>` : `<p style="font-size:14px; color:#B45309; margin:0;">${safeName} checks: [VERIFY]</p>`}
+      </section>
+
+      <details style="border:1px solid #E2E8F0; border-radius:8px; padding:10px 12px; margin-bottom:16px; background:#F8FAFC; font-size:13px;">
+        <summary style="font-weight:700; color:#101A36; cursor:pointer;">Disclaimer &amp; FAQ</summary>
+        <p style="margin:6px 0 0 0; color:#475569;">Independent CSC desk (VLE 212515670018, Qazigund). Confirm charges (+91 70068 33767) before applying.</p>
+      </details>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; padding-top:8px; border-top:1px solid #E2E8F0;">
+        <a href="${escapeHtml(waEnquiryUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:9px 16px; border-radius:10px; text-decoration:none;">WhatsApp</a>
+        <a href="tel:+917006833767" style="display:inline-block; background:#101A36; color:#ffffff; font-weight:700; font-size:14px; padding:9px 16px; border-radius:10px; text-decoration:none;">+91 70068 33767</a>
+        <a href="/apply?service=${encodeURIComponent(service.name)}" style="display:inline-block; background:#F8FAFC; color:#101A36; border:1px solid #CBD5E1; font-weight:700; font-size:14px; padding:9px 16px; border-radius:10px; text-decoration:none;">Request Filing</a>
+        ${facts.officialPortalUrl ? `<a href="${escapeHtml(facts.officialPortalUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#ffffff; color:#101A36; border:1px solid #CBD5E1; font-weight:600; font-size:14px; padding:9px 16px; border-radius:10px; text-decoration:none;">${escapeHtml(facts.officialPortalLabel || "Portal")} \u2197</a>` : ""}
+      </div>
     </article>
-    <script type="application/ld+json">${faqSchemaJson}</script>
+    <script type="application/ld+json">${serviceSchemaJson}</script>
+    ${renderSsrPolicyFooterHtml()}
+  </main>
+  `;
+}
+function renderServiceClusterHubHtml(cluster, members) {
+  const safeTitle = escapeHtml(cluster.title);
+  return `
+  ${renderPrimaryCategoryNavHtml("services")}
+  <main class="ssr-article-wrapper" style="max-width:1040px; margin:0 auto; padding:12px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:15px; color:#101A36; line-height:1.6;">
+    <nav aria-label="Breadcrumb" style="font-size:14px; color:#475569; margin-bottom:14px;">
+      <a href="/" style="color:#101A36; font-weight:600; text-decoration:none;">Home</a>
+      <span style="margin:0 6px;">/</span>
+      <a href="/services" style="color:#101A36; font-weight:600; text-decoration:none;">Services</a>
+      <span style="margin:0 6px;">/</span>
+      <span style="color:#101A36; font-weight:700;">${safeTitle}</span>
+    </nav>
+
+    <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:24px;">
+      <header style="border-bottom:1px solid #E2E8F0; padding-bottom:16px; margin-bottom:20px;">
+        <span style="display:inline-block; background:#EFF6FF; color:#1D4ED8; font-size:11px; font-weight:700; text-transform:uppercase; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
+          Consolidated Service Hub \xB7 ${members.length} Services
+        </span>
+        <h1 style="font-size:26px; font-weight:800; color:#101A36; margin:0 0 8px 0;">${safeTitle}</h1>
+        <p style="font-size:15px; color:#475569; margin:0 0 8px 0;">${escapeHtml(cluster.summary)}</p>
+        <p style="font-size:13px; color:#334155; margin:0;"><strong>Issuing Authority:</strong> ${escapeHtml(cluster.issuingAuthority)}</p>
+      </header>
+
+      <div style="overflow-x:auto; margin-bottom:20px;">
+        <table style="width:100%; border-collapse:collapse; font-size:13px; border:1px solid #E2E8F0;">
+          <thead>
+            <tr style="background:#F8FAFC; text-align:left;">
+              <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Service</th>
+              <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Documents</th>
+              <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Fee</th>
+              <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Time</th>
+              <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${members.map((m) => {
+    const f = deriveStoredServiceFacts(m);
+    const docsText = f.requirements.length > 0 ? f.requirements.join(", ") : "[VERIFY]";
+    return `
+                <tr style="border-bottom:1px solid #E2E8F0;">
+                  <td style="padding:10px; vertical-align:top;">
+                    <div style="font-weight:700; color:#101A36;">${escapeHtml(m.name)}</div>
+                    <div style="color:#475569; margin-top:2px;">${escapeHtml(m.description)}</div>
+                  </td>
+                  <td style="padding:10px; vertical-align:top; color:#334155;">${escapeHtml(docsText)}</td>
+                  <td style="padding:10px; vertical-align:top; font-weight:700; color:#1F9D6B;">${escapeHtml(f.feesText)}</td>
+                  <td style="padding:10px; vertical-align:top; color:#334155;">${escapeHtml(f.estimatedTime)}</td>
+                  <td style="padding:10px; vertical-align:top;">
+                    <a href="/apply?service=${encodeURIComponent(m.name)}" style="display:inline-block; background:#101A36; color:#ffffff; padding:5px 10px; border-radius:6px; font-weight:700; text-decoration:none;">Apply</a>
+                  </td>
+                </tr>`;
+  }).join("")}
+          </tbody>
+        </table>
+      </div>
+    </article>
+    ${renderSsrPolicyFooterHtml()}
   </main>
   `;
 }
@@ -12288,7 +13476,12 @@ function renderLegalPageSubstantiveHtml(pageType) {
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">4. Report an Error or Request a Correction</h2>
           <p>
-            Readers who spot a typographical error, broken official PDF link, or updated date circular can report it directly to our editorial desk via email at <a href="mailto:support@cscdost.com" style="color:#2563eb;">support@cscdost.com</a>, phone at <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a>, or through our <a href="/contact-us" style="color:#2563eb; font-weight:600;">Contact Helpdesk</a>. Verified corrections are applied within 24 hours.
+            Readers who spot a typographical error, broken official PDF link, or updated date circular can report it directly to our editorial desk via email at <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a>, phone at <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a>, or through our <a href="/contact-us" style="color:#2563eb; font-weight:600;">Contact Helpdesk</a>. Verified corrections are applied within 24 hours.
+          </p>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">5. Service-Page Verification &amp; Advertising Independence</h2>
+          <p>
+            No scheme guide or CSC service fee sheet may be marked verified while any <code>[VERIFY]</code> gap remains open. Editorial selections, scheme summaries, and job rankings remain completely independent of third-party advertising networks and reflect only primary official notifications.
           </p>
         </section>
       </article>
@@ -12361,14 +13554,15 @@ function renderLegalPageSubstantiveHtml(pageType) {
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">7. Data Retention and Erasure</h2>
           <p>
-            Application records and uploaded documents are retained securely for a period of up to 180 days after application processing to permit verification and candidate support, after which they are systematically purged from our encrypted storage. Citizens may request immediate deletion of their personal records by emailing <strong>support@cscdost.com</strong> with their tracking token.
+            Application records and uploaded documents are retained securely for a period of up to 180 days after application processing to permit verification and candidate support, after which they are systematically purged from our encrypted storage. Citizens may request immediate deletion of their personal records by emailing <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a> with their tracking token.
           </p>
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">8. Grievance Redressal Officer</h2>
           <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
             <p style="margin:0 0 6px 0;"><strong>Data Grievance Officer:</strong> Wasim Ahmad Khanday</p>
             <p style="margin:0 0 6px 0;"><strong>Designation:</strong> Lead VLE &amp; Operator, CSC DOST (VLE ID: 212515670018)</p>
-            <p style="margin:0 0 6px 0;"><strong>Email:</strong> <a href="mailto:support@cscdost.com" style="color:#2563eb;">support@cscdost.com</a> / <a href="mailto:wasimkhanday@gmail.com" style="color:#2563eb;">wasimkhanday@gmail.com</a></p>
+            <p style="margin:0 0 6px 0;"><strong>Email:</strong> <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a></p>
+            <p style="margin:0 0 6px 0;"><strong>Helpline:</strong> <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a></p>
             <p style="margin:0;"><strong>Physical Office:</strong> Sangran Qazigund, District Anantnag, Jammu &amp; Kashmir 192221</p>
           </div>
         </section>
@@ -12429,9 +13623,14 @@ function renderLegalPageSubstantiveHtml(pageType) {
             <li>Cross-check fee exemptions, bank portal charges, and official last-date closing times in IST prior to making payment.</li>
           </ul>
 
-          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">5. Contact &amp; Questions</h2>
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">5. Assisted Filing Scope &amp; Non-Guarantee Policy</h2>
           <p>
-            If you have questions regarding this disclaimer, please contact us at <a href="mailto:support@cscdost.com" style="color:#2563eb;">support@cscdost.com</a> or phone: <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a>. Physical Office: Sangran Qazigund, District Anantnag, Jammu &amp; Kashmir 192221.
+            Using CSC DOST's informational guides, browser document tools, or assisted form-entry desk does not confer preference, shortcut approval, or guaranteed sanction from any recruitment board, university, or government department. Final scrutiny of eligibility certificates, merit lists, and payments always remains exclusively with the competent statutory authority.
+          </p>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">6. Contact &amp; Questions</h2>
+          <p>
+            If you have questions regarding this disclaimer or need to report an official circular update, please contact us at <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a> or phone: <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a>. Physical Office: Sangran Qazigund, District Anantnag, Jammu &amp; Kashmir 192221.
           </p>
         </section>
       </article>
@@ -12511,9 +13710,9 @@ function renderLegalPageSubstantiveHtml(pageType) {
             </li>
           </ul>
 
-          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">5. Governing Law and Jurisdiction</h2>
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">5. Governing Law, Support &amp; Jurisdiction</h2>
           <p>
-            These terms and any disputes arising out of the use of CSC DOST shall be governed by and construed in accordance with the laws of India, subject to the exclusive jurisdiction of the competent courts in District Anantnag, Jammu &amp; Kashmir.
+            These terms and any disputes arising out of the use of CSC DOST shall be governed by and construed in accordance with the laws of India, subject to the exclusive jurisdiction of the competent courts in District Anantnag, Jammu &amp; Kashmir. Questions regarding these Terms of Service may be sent to <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a> or <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a>.
           </p>
         </section>
       </article>
@@ -12556,7 +13755,7 @@ function renderLegalPageSubstantiveHtml(pageType) {
               <li><strong>MSME Udyam Registration:</strong> UDYAM-JK-01-0041957</li>
               <li><strong>Physical Facilitation Center:</strong> Sangran Qazigund, District Anantnag, Jammu &amp; Kashmir (PIN: 192221)</li>
               <li><strong>Helpline Contact:</strong> +91 70068 33767 / +91 96821 32895</li>
-              <li><strong>Support Email:</strong> support@cscdost.com</li>
+              <li><strong>Support Email:</strong> <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a></li>
             </ul>
           </div>
 
@@ -12570,6 +13769,10 @@ function renderLegalPageSubstantiveHtml(pageType) {
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">Editorial Independence &amp; Official Source Standards</h2>
           <p>
             Every notification published on CSC DOST is verified directly against primary government portals (<code>.gov.in</code>, <code>.nic.in</code>) and official university circulars before publication. Read our <a href="/editorial-policy" style="color:#2563eb; font-weight:600;">Editorial Policy</a> or <a href="/disclaimer" style="color:#2563eb; font-weight:600;">Government Non-Affiliation Disclaimer</a> to learn how we review updates and report corrections.
+          </p>
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">Transparency &amp; Citizen Trust Commitments</h2>
+          <p>
+            Operating from Sangran Qazigund since registration under MSME Udyam (<code>UDYAM-JK-01-0041957</code>), we separate informational content\u2014always free for every visitor\u2014from optional counter facilitation. Whether an applicant visits in person across Anantnag and Kulgam or submits documents remotely with a tracking token, published timestamps, primary source URLs, and clear helpline escalation via <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a> remain standard across every page.
           </p>
         </section>
       </article>
@@ -12612,8 +13815,8 @@ function renderLegalPageSubstantiveHtml(pageType) {
             <p style="font-size:14px; color:#334155; line-height:1.8; margin:0;">
               <strong>Helpline / Phone:</strong> <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a><br/>
               <strong>Alternate Contact:</strong> +91 96821 32895<br/>
-              <strong>Support Email:</strong> <a href="mailto:support@cscdost.com" style="color:#2563eb;">support@cscdost.com</a><br/>
-              <strong>Grievance Officer:</strong> Wasim Ahmad Khanday (<a href="mailto:wasimkhanday@gmail.com" style="color:#2563eb;">wasimkhanday@gmail.com</a>)<br/>
+              <strong>Support Email:</strong> <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a><br/>
+              <strong>Grievance Officer:</strong> Wasim Ahmad Khanday (<a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a>)<br/>
               <strong>Tracking Desk:</strong> <a href="/track" style="color:#2563eb;">cscdost.com/track</a>
             </p>
           </div>
@@ -12636,6 +13839,10 @@ function renderLegalPageSubstantiveHtml(pageType) {
           <p style="margin:12px 0 0 0;">
             You can also submit an online contact inquiry directly once the interactive helpdesk loads, or visit <a href="/editorial-policy" style="color:#2563eb; font-weight:600;">Editorial Policy</a> to report a correction on any published circular summary.
           </p>
+          <h3 style="font-size:15px; font-weight:700; color:#0f172a; margin:14px 0 6px 0;">Escalation, Privacy &amp; Refund Requests</h3>
+          <p style="margin:0;">
+            For personal document deletion requests under DPDP Act 2023 guidelines, delayed UPI reconciliation checks, or duplicate fee refund follow-ups, email <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a> with your CSC tracking token and Razorpay reference ID. Grievance enquiries are logged directly by operator Wasim Ahmad Khanday (CSC VLE ID: 212515670018) and receive a written status reply within one to two working days, alongside our full <a href="/refund-policy" style="color:#2563eb; font-weight:600;">Refund &amp; Pricing Policy</a>.
+          </p>
         </section>
       </article>
 
@@ -12648,49 +13855,88 @@ function renderLegalPageSubstantiveHtml(pageType) {
     <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
       <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
       <span style="margin:0 6px;">/</span>
-      <span style="color:#0f172a; font-weight:600;">Refund Policy</span>
+      <span style="color:#0f172a; font-weight:600;">Refund &amp; Service Pricing Policy</span>
     </nav>
 
     <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:28px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
       <header style="border-bottom:1px solid #e2e8f0; padding-bottom:18px; margin-bottom:20px;">
         <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
-          Payment Policies
+          Payment &amp; Pricing Transparency
         </span>
-        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Refund &amp; Cancellation Policy</h1>
-        <p style="font-size:13px; color:#64748b; margin:0;">Effective Date: February 2026 \u2022 Last Reviewed: October 2026</p>
+        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Refund, Cancellation &amp; Service Pricing Policy</h1>
+        <p style="font-size:13px; color:#64748b; margin:0;">Effective Date: February 2026 \u2022 Last Reviewed: November 2026</p>
       </header>
 
       <section style="font-size:15px; color:#334155; line-height:1.7;">
         <p>
-          At <strong>CSC DOST</strong>, we maintain a transparent and fair refund policy for all assisted application processing and digital appointment services.
+          At <strong>CSC DOST</strong> (operated by Authorized CSC VLE <strong>Wasim Ahmad Khanday</strong>, VLE ID: <code>212515670018</code>, Sangran Qazigund, Anantnag, J&amp;K), citizens may read all job bulletins, scheme guides, and browser-local document tools free of cost. Charges apply only when you voluntarily request assisted form filing or physical printing at our desk.
         </p>
 
-        <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">1. Assisted Application Cancellation &amp; Refunds</h2>
+        <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">1. Indicative Service Pricing Tiers &amp; Delivery Timeframes</h2>
+        <p style="font-size:14px; color:#475569; margin:0 0 12px 0;">
+          All listed totals distinguish statutory government/university fees from CSC facilitation charges. Exact statutory amounts depend on official department tariffs at submission time.
+        </p>
+        <div style="overflow-x:auto; margin-bottom:18px;">
+          <table style="width:100%; border-collapse:collapse; font-size:14px; border:1px solid #e2e8f0;">
+            <thead>
+              <tr style="background:#f1f5f9; text-align:left;">
+                <th style="padding:10px 12px; border-bottom:1px solid #e2e8f0;">Service Category</th>
+                <th style="padding:10px 12px; border-bottom:1px solid #e2e8f0;">Published Rate / CSC Charge</th>
+                <th style="padding:10px 12px; border-bottom:1px solid #e2e8f0;">Estimated Turnaround</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid #e2e8f0;">
+                <td style="padding:10px 12px;"><strong>CSC Welfare &amp; Identity Assistance</strong> (PM-KISAN e-KYC, Ayushman, Voter ID, e-Shram, Aadhaar Update Guidance)</td>
+                <td style="padding:10px 12px;">Govt fee as applicable (\u20B90\u2013\u20B915) + <strong>\u20B970 CSC facilitation charge</strong></td>
+                <td style="padding:10px 12px;">Same day \u2013 7 days (subject to UIDAI/dept verification)</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e2e8f0;">
+                <td style="padding:10px 12px;"><strong>PAN Card &amp; Instant e-PAN</strong> (New / Correction)</td>
+                <td style="padding:10px 12px;">\u20B9107 statutory NSDL/UTIITSL fee + <strong>\u20B970 CSC charge</strong></td>
+                <td style="padding:10px 12px;">e-PAN in ~2 hrs; physical card 3\u20137 days</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e2e8f0;">
+                <td style="padding:10px 12px;"><strong>J&amp;K State Certificates</strong> (Domicile, RBA, OBC, SC, ST, EWS, Birth/Death, Marriage)</td>
+                <td style="padding:10px 12px;">\u20B920\u2013\u20B950 govt fee + <strong>\u20B970 CSC charge</strong></td>
+                <td style="padding:10px 12px;">5 \u2013 30 days depending on Tehsildar/Registrar schedule</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e2e8f0;">
+                <td style="padding:10px 12px;"><strong>J&amp;K Revenue Extracts</strong> (Fard, Jamabandi, Girdawari, Mutation, Legal Heir, Income)</td>
+                <td style="padding:10px 12px;">\u20B9100 govt fee + <strong>\u20B970 CSC charge</strong></td>
+                <td style="padding:10px 12px;">2 \u2013 30 days depending on Patwari/Tehsildar workflow</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e2e8f0;">
+                <td style="padding:10px 12px;"><strong>Admissions, Scholarships &amp; Exam Forms</strong> (JKSSB, SSC, RRB, KU, CUS, IGNOU, NSP)</td>
+                <td style="padding:10px 12px;"><strong>\u20B950 \u2013 \u20B9100 CSC filing</strong> + official exam/university fee</td>
+                <td style="padding:10px 12px;">Same day (typically 20 mins \u2013 2 hrs)</td>
+              </tr>
+              <tr>
+                <td style="padding:10px 12px;"><strong>Business &amp; Compliance</strong> (MSME UDYAM, GST Reg/Return, Class-3 DSC)</td>
+                <td style="padding:10px 12px;">UDYAM \u20B970; GST \u20B9300\u2013\u20B9500; DSC \u20B9500\u2013\u20B91,500</td>
+                <td style="padding:10px 12px;">Same day \u2013 7 days</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">2. What Assisted Service Includes</h2>
         <ul style="padding-left:20px; margin:0 0 16px 0; line-height:1.8;">
-          <li>
-            <strong>Prior to Submission:</strong> If an applicant requests cancellation <em>before</em> our VLE team has processed or submitted the form to the government portal, a full 100% refund of both the government fee and convenience charges will be initiated.
-          </li>
-          <li>
-            <strong>After Final Submission:</strong> Once an application has been successfully submitted to the official government portal and an official registration number or challan has been generated, statutory government fees cannot be refunded, as government treasuries do not permit clawbacks.
-          </li>
-          <li>
-            <strong>Rejected or Incomplete Forms due to Portal Outages:</strong> If a submission fails due to an official government server closure or outage prior to the deadline, any unspent fees will be returned within 5-7 working days.
-          </li>
+          <li>Pre-filing checklist review against the primary official notification or department portal.</li>
+          <li>Document scanning, photo/signature resizing to portal pixel and KB limits, and form data entry.</li>
+          <li>OTP/biometric coordination where permitted and delivery of the official acknowledgement receipt plus a CSC tracking token via <a href="/track" style="color:#2563eb; font-weight:600;">cscdost.com/track</a>.</li>
         </ul>
 
-        <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">2. Mode and Timeline of Refund</h2>
-        <p>
-          Approved refunds are processed through our Razorpay payment gateway back to the original source account (UPI, debit card, or net banking) within <strong>5 to 7 business days</strong>.
-        </p>
+        <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">3. Cancellation &amp; Refund Rules</h2>
+        <ul style="padding-left:20px; margin:0 0 16px 0; line-height:1.8;">
+          <li><strong>Prior to Submission:</strong> Full 100% refund of both the statutory fee and CSC facilitation charge if cancelled before portal filing begins.</li>
+          <li><strong>After Final Submission:</strong> Statutory government or examination fees already remitted to the government treasury or university portal cannot be clawed back or refunded.</li>
+          <li><strong>Portal Failure Before Cutoff:</strong> If submission cannot be completed due to an official government portal outage before the deadline, unspent fees are refunded in full.</li>
+        </ul>
 
-        <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">3. Dispute and Refund Requests</h2>
+        <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">4. Refund Timeline, Failed UPI Debits &amp; Contact</h2>
         <p>
-          To request a refund or raise a billing grievance, please email <strong>support@cscdost.com</strong> with your Application Tracking Token (e.g. <code>CSC-XXXXXXXX</code>) and payment transaction reference ID.
-        </p>
-
-        <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">4. Failed UPI / Card Transactions &amp; Reconciliation</h2>
-        <p>
-          If an amount is debited from your bank account during Razorpay checkout due to network interruption while your CSC DOST application screen shows pending, do not initiate a second payment immediately. Wait up to 24 hours for automated gateway reconciliation or share your Razorpay Payment ID, UTR number, and registered mobile number with our desk at <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a> or <a href="mailto:support@cscdost.com" style="color:#2563eb;">support@cscdost.com</a>. Duplicate or uncaptured gateway debits are settled automatically by banking rails within 5 to 7 working days.
+          Approved refunds are credited via Razorpay to your original UPI, debit card, or bank account within <strong>5 to 7 business days</strong>. If money is debited during a network drop while your CSC DOST token still shows pending, do not pay twice\u2014wait up to 24 hours for automated settlement or write to <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a> or call <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a> with your Application Tracking Token and payment UTR/Razorpay ID.
         </p>
       </section>
     </article>
@@ -12723,7 +13969,7 @@ function renderPrimaryCategoryNavHtml(activeCategory) {
     </div>
   </header>`;
 }
-function renderHomepageSubstantiveHtml(posts, services, alertsConfig) {
+function renderHomepageSubstantiveHtml(posts, services, alertsConfig, publishedGuides = PUBLISHED_GUIDE_ARTICLES) {
   const dedupedPosts = getDeduplicatedSarkariPosts(posts);
   const verifiedVisiblePosts = dedupedPosts.filter((p) => {
     if (!isPublishedSarkariItem(p)) return false;
@@ -12740,7 +13986,7 @@ function renderHomepageSubstantiveHtml(posts, services, alertsConfig) {
     ...verifiedVisiblePosts.filter((p) => !recruitmentPool.some((r) => r.id === p.id))
   ].slice(0, 12);
   const educationPosts = verifiedVisiblePosts.filter((p) => isEducationSarkariItem(p)).slice(0, 6);
-  const popularSchemes = PUBLISHED_GUIDE_ARTICLES.filter(
+  const popularSchemes = publishedGuides.filter(
     (g) => g.category === "Central Scheme" || g.category === "State Services" || g.category === "Identity & Tax"
   ).slice(0, 4);
   const featuredServices = services.slice(0, 6);
@@ -12928,7 +14174,7 @@ function renderHomepageSubstantiveHtml(posts, services, alertsConfig) {
           CSC DOST is operated by <strong>Wasim Ahmad Khanday</strong>, Authorized Common Services Center Village Level Entrepreneur (<strong>CSC VLE ID: 212515670018</strong> \xB7 MSME: UDYAM-JK-01-0041957).
         </p>
         <p style="font-size:13px; color:#475569; margin:0;">
-          Center Address: Sangran Qazigund, District Anantnag, Jammu &amp; Kashmir 192221 \xB7 Helpline Phone: <a href="tel:+917006833767" style="color:#2455E6; font-weight:600; text-decoration:none;">+91 70068 33767</a> \xB7 Email: <a href="mailto:support@cscdost.com" style="color:#2455E6; font-weight:600; text-decoration:none;">support@cscdost.com</a>.
+          Center Address: Sangran Qazigund, District Anantnag, Jammu &amp; Kashmir 192221 \xB7 Helpline Phone: <a href="tel:+917006833767" style="color:#2455E6; font-weight:600; text-decoration:none;">+91 70068 33767</a> \xB7 Email: <a href="mailto:urnxtfd@gmail.com" style="color:#2455E6; font-weight:600; text-decoration:none;">urnxtfd@gmail.com</a>.
         </p>
       </section>
 
@@ -12947,7 +14193,7 @@ function renderHomepageSubstantiveHtml(posts, services, alertsConfig) {
 
       <footer style="background:#101A36; color:#E2E8F0; border-radius:14px; padding:14px; font-size:12px; line-height:1.6;">
         <p style="margin:0 0 6px 0; font-weight:700;">
-          CSC DOST \xA9 ${(/* @__PURE__ */ new Date()).getFullYear()} \xB7 Wasim Ahmad Khanday \xB7 VLE ID: 212515670018 \xB7 Sangran Qazigund, Anantnag, J&amp;K 192221 \xB7 +91 70068 33767
+          CSC DOST \xA9 ${(/* @__PURE__ */ new Date()).getFullYear()} \xB7 Wasim Ahmad Khanday \xB7 VLE ID: 212515670018 \xB7 Sangran Qazigund, Anantnag, J&amp;K 192221 \xB7 +91 70068 33767 \xB7 <a href="mailto:urnxtfd@gmail.com" style="color:#93C5FD; text-decoration:underline;">urnxtfd@gmail.com</a>
         </p>
         <p style="margin:0 0 6px 0; display:flex; flex-wrap:wrap; gap:10px;">
           <a href="/about-us" style="color:#ffffff; text-decoration:none;">About Us</a>
@@ -13020,10 +14266,14 @@ function renderArchiveSubstantiveHtml(posts) {
       <p style="margin:0 0 8px 0;">
         Applicants checking historical advertisement numbers, past eligibility criteria, or old selection processes can still inspect every individual bulletin directly via its archived link above. However, online registration windows on those expired recruitments are closed and assisted filing requests are disabled.
       </p>
+      <p style="margin:0 0 8px 0;">
+        If an authority re-opens a suspended advertisement, publishes a supplementary merit list, or issues an extension circular, the updated bulletin is restored to active <a href="/jobs" style="color:#1F9D6B; font-weight:600;">Recruitment</a> or <a href="/education" style="color:#1F9D6B; font-weight:600;">Education</a> listings with refreshed dates and source links. Citizens researching upcoming cycles can also review active <a href="/deadlines" style="color:#1F9D6B; font-weight:600;">Closing Deadlines</a> or verify portal requirements with our desk on <a href="/contact-us" style="color:#1F9D6B; font-weight:600;">Contact Us</a>.
+      </p>
       <p style="margin:0;">
         Operated by Wasim Ahmad Khanday (Authorized CSC VLE ID: 212515670018, Sangran Qazigund, Anantnag, J&amp;K 192221). Always verify fresh cycles directly on the official issuing authority website before preparing any documents or fees.
       </p>
     </section>
+    ${renderSsrPolicyFooterHtml()}
   </main>
   `;
 }
@@ -13075,7 +14325,7 @@ function renderSchemeSubstantiveHtml(guide) {
         </h1>
         <p style="font-size:16px; color:#475569; margin:0 0 10px 0;">${safeSummary}</p>
         <div style="font-size:13px; color:#64748B;">
-          <strong>Official Portal:</strong> ${safePortal} \xB7 <strong>Last Updated:</strong> ${escapeHtml(guide.lastUpdated)}
+          <strong>Official Portal:</strong> ${safePortal} \xB7 <strong>Last updated:</strong> ${escapeHtml(guide.lastUpdated)}${guide.reviewedBy ? ` \xB7 <strong>Reviewed by:</strong> ${escapeHtml(guide.reviewedBy)}` : ""}
         </div>
       </header>
 
@@ -13174,12 +14424,452 @@ function renderSchemeSubstantiveHtml(guide) {
   </main>
   `;
 }
+var TOOL_RICH_SPECS = {
+  "image-compressor": {
+    overview: "Government recruitment portals such as JKSSB, SSC OTR, RRB Apply, and Kashmir University admit-card modules routinely reject raw smartphone portraits because modern camera sensors save 3 MB to 8 MB JPEG files while portals cap portrait uploads at 20 KB\u201350 KB or 10 KB\u201320 KB. Image Compressor solves that mismatch inside your device browser by iteratively running canvas re-encoding passes at descending JPEG/WebP quality ratios until the exported byte count sits cleanly below your selected kilobyte ceiling without distorting facial proportions or slicing off forehead margins.",
+    capabilities: [
+      "Instant one-tap byte ceilings for 20 KB, 50 KB, 100 KB, and 200 KB recruitment forms plus fine custom KB slider control.",
+      "Accepts JPG, JPEG, PNG, and WebP photographs up to 30 MB inside local device memory without remote cloud upload.",
+      "Live preview comparing original versus compressed clarity, pixel dimensions, and exact KB savings before saving.",
+      "Smart fallback step-down automatically trims excessive megapixel width if aggressive quantization alone cannot hit ultra-low 20 KB targets.",
+      "Strips bulky camera EXIF thumbnail blobs so precious kilobytes go toward keeping eyes, ears, and date stamps crisp."
+    ],
+    workflow: [
+      "Choose a well-lit candidate portrait, scanned marksheet, or domicile image from phone storage or desktop.",
+      "Select the exact target ceiling published in your notification\u2014typically 20\u201350 KB for passport photos or 100\u2013200 KB for document scans.",
+      "Toggle JPEG output (universally required by Indian government portals) or WebP and let binary-search encoding converge just under the limit.",
+      "Inspect eyes, eyeglasses reflections, and small certificate serial digits in preview, then download the submission-ready file."
+    ],
+    specsNote: "JPEG quantization preserves edge luminance while trimming invisible high-frequency chrominance variance, keeping biometric features and stamped dates sharp during automated OTR validation. Always keep a slight 2\u20133 KB safety margin below portal maximums.",
+    faqs: [
+      {
+        q: "Why does hitting exact 20 KB sometimes soften portrait backgrounds?",
+        a: "Smaller byte budgets force stronger JPEG block compression; cropping empty wall space around the shoulders before compressing allocates more bits to the candidate face."
+      },
+      {
+        q: "Which image extension do JKSSB, SSC, and RRB portals expect?",
+        a: "Almost every Indian recruitment portal mandates plain .jpg or .jpeg uploads for candidate photographs and signatures rather than .png or .webp."
+      },
+      {
+        q: "Can I compress a dense A4 certificate scan down to 50 KB without making text unreadable?",
+        a: "Text documents carry lots of sharp black strokes, so pushing an A4 scan below 100 KB can blur small numbers; crop borders tightly and check legibility at 100% zoom."
+      },
+      {
+        q: "Does Image Compressor upload my ID documents or portraits to CSC DOST servers?",
+        a: "No. Canvas decoding and JPEG quantization run strictly inside browser RAM and vanish once the tab closes."
+      }
+    ]
+  },
+  "image-resizer": {
+    overview: "Many admission and civil service forms enforce strict horizontal and vertical pixel frames\u2014such as 160\xD7200 px, 200\xD7230 px, 140\xD760 px, or 300\xD7400 px\u2014where even a 2-pixel deviation triggers an immediate validation rejection. Image Resizer rescales candidate portraits, thumb impressions, and scanned slips to exact numeric pixel widths and heights inside HTML5 Canvas while giving you explicit control over aspect-ratio locking so faces never look unnaturally squished or vertically stretched.",
+    capabilities: [
+      "Exact numeric width \xD7 height pixel fields supporting both locked aspect scaling and manual custom target dimensions.",
+      "Built-in common recruitment preset sizes alongside freehand pixel entry down to small signature boxes.",
+      "Exports clean JPEG or PNG output with crisp white canvas fill when converting alpha-transparent graphics.",
+      "Zero-distortion proportional fit check warns before extreme aspect changes elongate or flatten facial features.",
+      "Displays before-and-after pixel geometry and rendered file size immediately upon adjustment."
+    ],
+    workflow: [
+      "Load your already-cropped portrait, left-thumb impression, or document photograph into the resizer.",
+      "Enter required portal width and height in pixels, leaving Aspect Lock turned ON when proportional scaling fits within limits.",
+      "If an agency enforces a strict unmatched ratio (e.g., 200\xD7230 px), crop surplus margin proportionally first before locking exact pixel dimensions.",
+      "Choose JPEG or PNG format, preview edge sharpness at full zoom, and download directly to your Downloads folder."
+    ],
+    specsNote: "Multi-step canvas downscaling interpolates oversized 4000\xD73000 px mobile photos smoothly, eliminating harsh jagged pixels along collar lines, hair edges, and inked signatures.",
+    faqs: [
+      {
+        q: "Should I keep Aspect Ratio Lock enabled when changing pixel width?",
+        a: "Yes whenever possible\u2014locking proportions calculates the matching height automatically so heads and eyes are never stretched."
+      },
+      {
+        q: "How do I handle portals demanding 200\xD7230 px when my photo is 35\xD745 mm?",
+        a: "Use Passport Photo Maker or crop excess top/side backdrop lightly before applying exact 200\xD7230 pixel dimensions so facial geometry stays accurate."
+      },
+      {
+        q: "Does reducing pixels from 3000 px down to 200 px automatically lower KB size?",
+        a: "Yes, fewer pixels dramatically cut raw image bytes; pair Image Resizer with Image Compressor if you also need a strict 20\u201350 KB ceiling."
+      }
+    ]
+  },
+  "image-to-pdf": {
+    overview: "Scholarship portals, university verification counters, and J&K e-UNNAT service applications frequently request a single consolidated PDF file containing multiple certificate photographs\u2014for instance Class 10th marksheet, Domicile Certificate, Aadhaar Card, and Category proof combined together. Image to PDF packs multiple JPG, PNG, and WebP photos onto cleanly aligned A4 or US Letter sheets directly inside your browser without altering certificate seals or uploading sensitive family records online.",
+    capabilities: [
+      "Combines multiple camera snaps or scanned JPG, PNG, and WebP certificates into one ordered portable PDF.",
+      "Interactive thumbnail drag-and-drop sequence ordering plus per-page 90-degree clockwise rotation for sideways phone shots.",
+      "Configurable A4 (210\xD7297 mm) or US Letter page templates with clean white margins so corner serial numbers stay printable.",
+      "Auto-fit image scaling centres portrait and landscape certificates neatly without stretching aspect ratios.",
+      "Generates standard cross-platform PDF streams compatible with Adobe Reader, Chrome, and portal preview viewers."
+    ],
+    workflow: [
+      "Select two or more academic marksheets, revenue extracts, or identity photographs from your device.",
+      "Verify each sheet faces upright using per-page rotate buttons and drag thumbnails into official checklist sequence.",
+      "Choose A4 sheet layout and safe margin padding so laser printers will not clip embossed seals or signatures.",
+      "Generate the combined PDF and verify every page opens sharply in your browser before submitting."
+    ],
+    specsNote: "Uniform A4 page embedding prevents awkward page-size jumps when clerks inspect or print merged multi-certificate dossiers at scrutiny desks.",
+    faqs: [
+      {
+        q: "Can I put my 10th diploma first, 12th marksheet second, and Domicile third?",
+        a: "Yes, drag the uploaded thumbnail cards into the exact checklist order prior to clicking export."
+      },
+      {
+        q: "My phone saved one certificate sideways\u2014can I rotate just that page?",
+        a: "Yes, use the individual 90-degree rotation control on that card without affecting the remaining pages."
+      },
+      {
+        q: "What if the combined PDF exceeds a portal 1 MB limit?",
+        a: "Run the exported bundle through PDF Compressor or shrink very large camera photos first with Image Compressor before building the PDF."
+      }
+    ]
+  },
+  "pdf-to-image": {
+    overview: "Several admission counters, messaging helplines, and legacy portals refuse PDF attachments and accept only JPG or PNG uploads\u2014even when your hall ticket, university provisional certificate, or e-Aadhaar slip arrives strictly as a multi-page PDF. PDF to Image decodes PDF vector glyphs, stamps, and barcodes page-by-page inside local browser memory using pdf.js canvas rendering and exports crisp raster images or a single bundled ZIP package.",
+    capabilities: [
+      "Client-side pdf.js rendering decodes multi-page notices, roll-number slips, and fee receipts cleanly without uploading files.",
+      "Selectable 150 DPI screen-friendly resolution or 300 DPI high-clarity print/barcode rendering.",
+      "Supports crisp lossless PNG exports for crisp text and lightweight JPG images for strict portal upload fields.",
+      "Per-page thumbnail preview lets you export a single required sheet instead of every appendix page.",
+      "One-click ZIP archive builder bundles all rendered pages together cleanly for multi-sheet circulars."
+    ],
+    workflow: [
+      "Drop your admit card, marksheet PDF, or multi-page circular into the browser canvas reader.",
+      "Pick 300 DPI for small dense tables, QR codes, or tiny signatures, or 150 DPI for fast mobile sharing.",
+      "Choose PNG for crisp monochrome stamps or JPG for lightweight photo/document upload fields.",
+      "Download individual rendered pages directly or package the entire multi-page set inside a ZIP archive."
+    ],
+    specsNote: "Rendering dense official circulars at 300 DPI keeps micro-printed verification barcodes, candidate photographs, and embossed QR matrices readable on mobile screens and printouts alike.",
+    faqs: [
+      {
+        q: "When should I choose 300 DPI over 150 DPI?",
+        a: "Pick 300 DPI whenever small QR codes, marksheet subjects, or serial numbers need maximum clarity; pick 150 DPI when small file size matters most."
+      },
+      {
+        q: "Can I extract only page 2 of a 10-page admit card PDF as a JPG?",
+        a: "Yes\u2014wait for thumbnails to render, then click the download button beneath page 2 alone."
+      },
+      {
+        q: "Does PDF to Image handle password-locked e-Aadhaar PDFs?",
+        a: "Remove or unlock standard reader passwords cleanly in your viewer first, or inspect unencrypted PDFs directly inside the browser."
+      }
+    ]
+  },
+  "pdf-merge": {
+    overview: 'Recruitment document verification modules and scholarship portals often provide just one attachment slot labeled "Combined Qualification & Category Certificates PDF." Keeping five separate PDFs slows down filing and forces awkward re-scanning. PDF Merge stitches multiple existing PDF documents\u2014such as Aadhaar, Domicile Certificate, Provisional Degree, and Fee Receipt\u2014into one clean sequential document inside JavaScript RAM without degrading underlying vector fonts.',
+    capabilities: [
+      "Joins multiple standalone PDF documents into a single contiguous file without uploading records to remote servers.",
+      "Displays exact page count per queued PDF alongside drag reordering controls before assembly.",
+      "Copies underlying PDF page trees losslessly via pdf-lib so vector typography and line art stay razor-sharp.",
+      "Preserves mixed portrait and landscape page dimensions cleanly within the merged dossier.",
+      "Fast local assembly handles typical multi-certificate application packets in a couple of seconds."
+    ],
+    workflow: [
+      "Select all separate PDF certificates, receipts, or annexures you want bundled together.",
+      "Drag the file rows into exact checklist sequence matching the board upload instructions.",
+      "Check individual page counts so blank trailing sheets or wrong attachments are caught early.",
+      "Click Merge PDFs and save your unified document; follow with PDF Compressor if total KB exceeds portal caps."
+    ],
+    specsNote: "Because pdf-lib transfers vector streams directly rather than rasterizing pages into bitmaps, crisp digital text from e-UNNAT and DigiLocker certificates retains infinite zoom clarity.",
+    faqs: [
+      {
+        q: "Will merging two DigiLocker PDFs make the QR code or text blurry?",
+        a: "No. PDF Merge copies original vector streams intact without rasterizing text into low-DPI images."
+      },
+      {
+        q: "Why does my merged PDF become larger than the portal 500 KB limit?",
+        a: "Merging sums the byte weights of its source files; run the combined output through PDF Compressor afterward to stay within strict portal limits."
+      },
+      {
+        q: "Can I merge PDFs with image files directly?",
+        a: "Convert JPG/PNG certificates to PDF first using Image to PDF, then combine everything cleanly in PDF Merge."
+      }
+    ]
+  },
+  "pdf-split": {
+    overview: "Official JKSSB selection gazettes, university examination date sheets, and consolidated family dossiers frequently run 40 to 200 pages long when you only need to save or upload two specific pages bearing your roll number or certificate. PDF Split extracts exact single pages or comma-separated intervals locally in your browser without damaging the original source PDF.",
+    capabilities: [
+      'Flexible range syntax accepting intervals and single indices such as "1-3, 7, 12-15".',
+      "Saves selected pages either as one trimmed single PDF or as separate individual per-page files packed in a ZIP.",
+      "Reports total page count immediately upon opening heavy circulars or multi-certificate packets.",
+      "Preserves original vector fonts, official watermarks, and table borders cleanly without re-rasterizing.",
+      "Leaves the original file untouched on device storage while creating a clean trimmed download."
+    ],
+    workflow: [
+      "Load your multi-page gazette, syllabus PDF, or combined certificate scan.",
+      "Note the total page count and enter the exact page numbers or hyphenated intervals you want extracted.",
+      "Pick single trimmed PDF output for concise portal uploads, or ZIP per-page mode when splitting separate certificates.",
+      "Verify extracted pages open cleanly in your PDF viewer before sharing or uploading."
+    ],
+    specsNote: "Trimming an 80-page official PDF down to the two relevant pages trims megabytes cleanly while retaining exact original page geometry and digital legibility.",
+    faqs: [
+      {
+        q: "Can I extract non-adjacent pages such as page 1, page 4, and pages 9-11 together?",
+        a: 'Yes\u2014type "1, 4, 9-11" into the page range field to build a clean 5-page PDF in that exact order.'
+      },
+      {
+        q: "How do I split a 4-page combined scan into four separate certificate PDFs?",
+        a: "Select the per-page ZIP export option so every page downloads neatly as its own standalone file."
+      },
+      {
+        q: "Does splitting alter fonts inside university roll-number gazettes?",
+        a: "No. Page objects are extracted verbatim without image conversion so search and print quality stay identical."
+      }
+    ]
+  },
+  "pdf-compressor": {
+    overview: "High-resolution mobile scanner apps routinely create 4 MB to 12 MB PDF scans for simple 2-page caste or revenue certificates, causing uploads to time out on 300 KB or 1 MB government portal forms. PDF Compressor compacts redundant PDF stream bloat and gives you Low, Medium, and High compression presets inside browser memory so you can trade byte weight against visual sharpness safely.",
+    capabilities: [
+      "Three selectable presets\u2014Low, Medium, and High\u2014tailored to sharp seals, standard portal uploads, and tight KB ceilings.",
+      "Shows live pre-compression and post-compression file size with exact percentage reduction saved.",
+      "Strips redundant embedded metadata streams and re-encodes bloated image scans efficiently inside the browser.",
+      "Works completely client-side so confidential bank passbooks, affidavits, and revenue extracts never touch remote servers.",
+      "Clean preview download ensures you can verify serial numbers before attaching to final forms."
+    ],
+    workflow: [
+      "Select your oversized certificate PDF or merged multi-page verification dossier.",
+      "Begin with Medium compression for typical 500 KB\u20131 MB portal thresholds, or choose Low for delicate handwritten Patwari remarks.",
+      "Compare original versus output size readout; switch to High if a strict 200 KB\u2013300 KB cap still needs extra trimming.",
+      "Open the saved PDF and confirm all official stamps, barcodes, and signature lines remain easy to read."
+    ],
+    specsNote: "Medium compression typically reduces camera-scanned multi-megabyte certificates by 60\u201380% while preserving dark ink legibility on Domicile, RBA, and marksheet scans.",
+    faqs: [
+      {
+        q: "Which preset is safest for Domicile, Category, and Revenue Fard PDFs?",
+        a: "Start with Medium; verify the Tehsildar seal and QR reference number remain crisp before submitting."
+      },
+      {
+        q: "Why does a tiny 80 KB vector DigiLocker PDF barely shrink under Low?",
+        a: "Clean vector PDFs already contain compressed instructions rather than raw camera bitmaps, so only image-heavy PDFs see huge byte drops."
+      },
+      {
+        q: "What if I also need to remove unnecessary appendix pages before compressing?",
+        a: "Run PDF Split first to drop unused sheets, then compress only the remaining essential pages."
+      }
+    ]
+  },
+  "background-remover": {
+    overview: "Recruitment agencies reject candidate portraits photographed against patterned curtains, wood doors, or dim room shadows. Background Remover isolates the candidate portrait foreground inside your browser without transmitting private photos to external cloud AI endpoints, allowing you to export either a crisp alpha-transparent PNG cutout or a clean studio-white backdrop ready for form sizing.",
+    capabilities: [
+      "100% browser-local foreground segmentation model keeps candidate portraits strictly on your device.",
+      "One-click switching between alpha-transparent PNG cutouts and solid pure-white (#FFFFFF) studio backdrops.",
+      "Smooth edge feathering handles collared shirts, headscarves, glasses frames, and shoulder contours cleanly.",
+      "Fast preview lets you inspect hairlines and ear margins before downloading.",
+      "Pairs smoothly with Passport Photo Maker and Image Compressor for complete form readiness."
+    ],
+    workflow: [
+      "Pick a bright, front-facing portrait taken at arm\u2019s length or tripod height with clear contrast behind the shoulders.",
+      "Run local foreground segmentation and wait a few seconds for mask extraction to finish inside browser memory.",
+      "Select solid pure-white backdrop for official exam applications (or transparent PNG for custom print layouts).",
+      "Inspect shoulder and ear edges closely, download the studio-clean image, then export to 35\xD745 mm JPEG if needed."
+    ],
+    specsNote: "Even front daylight facing a plain doorway with zero harsh flash shadows behind the head produces the cleanest automated hair and shoulder separation.",
+    faqs: [
+      {
+        q: "Should I upload a transparent PNG cutout directly to SSC or JKSSB?",
+        a: "No. Recruitment portals require solid white or light plain backgrounds saved as .jpg/.jpeg\u2014choose white backdrop and convert with PNG to JPG if required."
+      },
+      {
+        q: "Is my portrait photo sent to a third-party GPU API for background removal?",
+        a: "No. All foreground segmentation executes locally inside browser memory with zero remote photo upload."
+      },
+      {
+        q: "Why do messy dark hair edges sometimes look faintly haloed?",
+        a: "Strong contrast between hair and wall behind you prevents dark color bleed; reshoot near an open window facing outside light for cleaner cutouts."
+      }
+    ]
+  },
+  "passport-photo-maker": {
+    overview: "Passport Photo Maker aligns front portraits accurately into official 35\xD745 mm (Indian passport, visa, JKSSB, SSC) or 2\xD72 inch (US visa / pan-card style) photo proportions without squishing facial width, and lets you generate printable A4 multi-copy studio sheets ready for matte or glossy photo paper printing.",
+    capabilities: [
+      "Precision physical frame presets including 35\xD745 mm (413\xD7531 px at 300 DPI) and 2\xD72 inch studio cutouts.",
+      "Proportional interactive crop guides center eyes and shoulders without stretching vertical facial ratio.",
+      "Automated A4 (210\xD7297 mm) print sheet builder arranging 6, 8, 12, or 16 crisp photo copies with clean cut spacing.",
+      "Supports exporting either a single digital file for online portal upload or the full A4 studio sheet.",
+      "Runs entirely offline inside HTML5 Canvas with zero distortion or third-party watermark."
+    ],
+    workflow: [
+      "Upload a bright plain-background portrait (use Background Remover first if household clutter appears behind you).",
+      "Choose 35\xD745 mm or 2\xD72 inch target preset and center chin-to-crown alignment inside frame guides.",
+      "Download the single cropped portrait for online OTR forms\u2014compress with Image Compressor if a strict 20\u201350 KB ceiling applies.",
+      "Or switch to A4 multi-copy layout (8 or 16 copies) and print at 100% Actual Size on glossy photo paper."
+    ],
+    specsNote: "Maintaining exact physical aspect ratios protects against automated biometric distortion rejection that happens when rectangular smartphone photos are squeezed directly into passport boxes.",
+    faqs: [
+      {
+        q: "What printer scale setting should I choose for the 8-copy or 16-copy A4 sheet?",
+        a: 'Select A4 paper size and set print scale to 100% ("Actual Size")\u2014never "Fit to Page"\u2014so physical cutouts stay true 35\xD745 mm.'
+      },
+      {
+        q: "Does Passport Photo Maker stretch my face to hit 35\xD745 mm?",
+        a: "No. Excess margin outside the frame is trimmed proportionally so head width and eye spacing remain exact."
+      },
+      {
+        q: "Can I put date-of-photo or name labels cleanly?",
+        a: "If a notice explicitly specifies white plain unlabelled portrait, leave clean margins without extra graphics."
+      }
+    ]
+  },
+  "signature-resizer": {
+    overview: "Smartphone photos of signatures written on notebook paper look muddy grey under indoor LEDs and routinely fail strict 10 KB\u201320 KB portal limits or automated ink contrast checks. Signature Resizer crops excess blank paper tightly around your pen strokes, boosts white paper thresholds cleanly, darkens blue/black ink clarity, and outputs compact 10\u201320 KB compliant JPEG signatures.",
+    capabilities: [
+      "Interactive tight crop frame removes empty margins so pen strokes fill the required 140\xD760 px or 300\xD7120 px box cleanly.",
+      "Paper-whitening brightness and contrast threshold converts dull grey indoor lighting into uniform pure white.",
+      "Enhances blue or black ballpoint strokes for unmistakable stroke continuity against light backdrop.",
+      "Targets compact 10 KB\u201320 KB JPEG ceilings commonly enforced across JKSSB, SSC, IBPS, and RRB forms.",
+      "Processes handwritten signatures strictly inside your browser without storing biometric ink specimens remotely."
+    ],
+    workflow: [
+      "Sign steadily on blank unruled white A4 paper using dark black or blue ballpoint ink in uniform daylight.",
+      "Snap a sharp straight overhead photo (avoid tilting the phone or casting hand shadows across the paper).",
+      "Crop closely around the full signature width, turn on paper-white cleanup, and match portal pixel/KB ceilings.",
+      "Confirm every letter loop looks clean and unbroken before downloading the final JPEG."
+    ],
+    specsNote: "Signing on ruled lined paper or using faint pale gel pens hurts cleanup thresholds; plain white printer paper plus dark ballpoint ink delivers crisp scanner-grade contrast.",
+    faqs: [
+      {
+        q: "Why do examination boards reject signatures signed in ALL CAPS or on lined pages?",
+        a: "Official instructions mandate running-hand signature (not block capitals) on clean unruled white paper so verification desks can match handwriting."
+      },
+      {
+        q: "My phone shadow turned half the paper dark yellow\u2014will threshold cleanup fix it?",
+        a: "Moderate lighting dullness cleans cleanly to bright white, though heavy diagonal arm shadows may darken pen edges; retake near window daylight for best results."
+      },
+      {
+        q: "What is the typical KB ceiling for exam signatures?",
+        a: "Most boards (SSC, JKSSB, IBPS, NTA) ask for 10 KB to 20 KB JPEG files inside roughly 140\xD760 px to 200\xD780 px proportions."
+      }
+    ]
+  },
+  "jpg-to-png": {
+    overview: "JPG to PNG Converter decodes lossy JPEG scans or photographs inside an HTML5 Canvas pixel buffer and saves clean lossless PNG files. Switching from JPEG to PNG stops additional generational compression artifacts when you plan to edit graphics, insert transparent overlays, or preserve crisp sharp screenshots for design templates and documentation packets.",
+    capabilities: [
+      "Lossless PNG re-encoding preserves decoded pixel width, height, and color channels verbatim.",
+      "Eliminates further JPEG mosquito-noise artifacts during repeated cropping or graphical layout edits.",
+      "Batch-friendly browser execution converts files immediately without remote image hosting.",
+      "Displays exact source and exported dimensions before download.",
+      "Clean standard .png MIME headers compatible across desktop editors and print shops."
+    ],
+    workflow: [
+      "Upload one or more .jpg / .jpeg graphics, logos, or scanned slips into the converter.",
+      "Review decoded dimensions and sharpness inside the preview panel.",
+      "Click convert to generate lossless PNG streams directly inside browser memory.",
+      "Save the .png files locally for transparent editing or sharp graphic placement."
+    ],
+    specsNote: "Remember that converting an already-compressed JPG into PNG freezes existing pixels losslessly\u2014it stops future degradation, though PNG files naturally take more kilobytes than JPEGs.",
+    faqs: [
+      {
+        q: "Why does a 45 KB JPG become 240 KB after converting to PNG?",
+        a: "JPEG throws away subtle pixel variations using lossy math, whereas PNG stores every decoded RGB pixel losslessly."
+      },
+      {
+        q: "Should I convert JPG photos into PNG before uploading to JKSSB or SSC?",
+        a: "No! Most government exam forms reject PNG uploads and explicitly require .jpg/.jpeg for portraits and signatures."
+      },
+      {
+        q: "Does converting JPG to PNG automatically erase the background?",
+        a: "No\u2014JPG files have no alpha channel; use Background Remover if you want a transparent PNG cutout."
+      }
+    ]
+  },
+  "png-to-jpg": {
+    overview: 'Submitting transparent PNG signatures, logos, or mobile screenshots to government recruitment portals often triggers an "Invalid File Type" error\u2014or worse, server-side scripts turn transparent pixels completely solid black, hiding dark ink completely. PNG to JPG Converter flattens alpha transparency cleanly onto a pure #FFFFFF white backdrop and exports standard web-ready JPEG images with adjustable byte quality.',
+    capabilities: [
+      "Automatically pre-fills solid #FFFFFF pure-white canvas behind transparent PNG alpha regions.",
+      "Prevents black-box signature corruption on legacy exam and university upload modules.",
+      "Adjustable JPEG quality slider lets you shrink oversized PNG screenshots cleanly below strict KB caps.",
+      "Converts lossless PNG files instantaneously inside browser RAM without network transfer.",
+      "Preserves original pixel aspect ratios while producing universally accepted .jpg output."
+    ],
+    workflow: [
+      "Drop your transparent cutout, Canva graphic, or mobile screenshot PNG into the converter.",
+      "Confirm the live preview shows a crisp bright white backdrop behind all dark ink or edges.",
+      "Dial JPEG quality down slightly if you need the final .jpg file under a specific portal kilobyte cap.",
+      "Download the flattened JPEG image ready for upload."
+    ],
+    specsNote: "Pre-filling pure white before RGB encoding guarantees predictable brightness across older portal scripts that strip alpha transparency channels blindly.",
+    faqs: [
+      {
+        q: "Why do transparent PNG signatures turn into a black rectangle on some exam forms?",
+        a: "Legacy server-side thumbnail libraries discard alpha transparency (0,0,0,0) and leave RGB bytes as 0,0,0 (black). Flattening onto #FFFFFF white fixes this permanently."
+      },
+      {
+        q: "Will converting my screenshot from PNG to JPG shrink file size?",
+        a: "Yes\u2014lossy JPEG encoding typically shrinks large flat or photographic PNG files by 50% to 85% immediately."
+      },
+      {
+        q: "Can I keep transparency inside a JPG file?",
+        a: "The JPEG specification does not support alpha transparency; choose PNG when transparent backgrounds are needed for graphic design."
+      }
+    ]
+  },
+  "pdf-watermark-rotate": {
+    overview: 'Scanned property papers, ration cards, and identity PDFs frequently end up upside-down after quick phone scans\u2014or need a clean diagonal "For Bank KYC Only" / "Self-Attested Copy" watermark stamped across every page before sharing over messaging apps. PDF Watermark & Page Rotator lets you rotate individual or all pages permanently by 90\xB0, 180\xB0, or 270\xB0 and stamp custom diagonal purpose watermarks locally in your browser.',
+    capabilities: [
+      "Permanent 90\xB0, 180\xB0, and 270\xB0 page rotation saved cleanly into PDF page orientation dictionaries.",
+      "Optional diagonal text watermark stamped transparently across every page without obscuring underlying ID numbers.",
+      "Adjustable watermark text label, opacity, and subtle angle suitable for purpose-scoped photocopy protection.",
+      "Runs completely offline inside pdf-lib so sensitive Aadhaar, PAN, and land records stay private.",
+      "Preserves underlying crisp text and scanned clarity without rasterizing vector pages."
+    ],
+    workflow: [
+      "Select the sideways PDF scan or sensitive identity document you want prepared.",
+      "Click rotate buttons to orient skewed pages cleanly upright.",
+      'Optionally enter a concise diagonal purpose label (for example: "Submitted for Bank KYC \xB7 Nov 2026") and tune opacity.',
+      "Generate and inspect every rotated/watermarked page before sharing or printing."
+    ],
+    specsNote: "Stamping low-opacity diagonal purpose notes across identity PDFs clarifies submission context and deters unauthorized reuse while keeping QR codes and serial numbers scannable.",
+    faqs: [
+      {
+        q: "Does page rotation stick permanently when clerks open the PDF on office Windows PCs?",
+        a: "Yes. Standard /Rotate page dictionary flags are updated directly inside the downloaded PDF binary."
+      },
+      {
+        q: "Can I use this tool only to rotate upside-down pages without adding any watermark?",
+        a: "Yes\u2014leave the watermark text box empty and apply rotation alone."
+      },
+      {
+        q: "Will a semi-transparent diagonal watermark block barcode scanners?",
+        a: "Using soft opacity (around 15\u201325%) keeps printed barcodes, seals, and numbers completely legible."
+      }
+    ]
+  },
+  "pdf-metadata-cleaner": {
+    overview: "Nearly every PDF generated by mobile scanning apps, office suites, or desktop print drivers secretly embeds hidden document properties\u2014including Author account name, computer username, software build tags, CreationDate, and ModDate timestamps. PDF Metadata Cleaner inspects those trailer info fields inside browser memory and scrubs identifying metadata cleanly before you submit resumes or sensitive PDFs publicly.",
+    capabilities: [
+      "Reads and displays hidden Author, Creator, Producer, Title, Subject, Keywords, and timestamp fields.",
+      "One-click sanitization wipes personal author names, phone scanner app tags, and internal file titles.",
+      "Leaves visible page graphics, stamps, and vector fonts completely untouched.",
+      "Executes 100% locally in JavaScript RAM with zero upload of private resumes or legal filings.",
+      "Shows clean verification confirming empty metadata properties on the exported sanitized file."
+    ],
+    workflow: [
+      "Open any exported resume, tender annexure, or scanned PDF inside PDF Metadata Cleaner.",
+      "Review the revealed hidden Info Dictionary tags embedded by your word processor or scanner app.",
+      "Click Clean Metadata to strip Author, Creator, Producer, Subject, and timestamp markers.",
+      "Download the scrubbed PDF copy safe for external portal or public submission."
+    ],
+    specsNote: "Stripping trailer dictionary tags modifies zero visible layout coordinates while removing personal workstation names and automated scanner software signatures.",
+    faqs: [
+      {
+        q: "Will wiping PDF metadata erase any visible signature, stamp, or resume line?",
+        a: "No. Visible content streams remain bit-for-bit intact; only non-visible header/trailer metadata strings are cleared."
+      },
+      {
+        q: "Why do phone scanner apps store Author and Producer strings inside PDFs?",
+        a: "Scanning apps auto-fill your device account handle and app version into standard PDF info tags unless scrubbed manually."
+      },
+      {
+        q: "Can PDF Metadata Cleaner strip XMP XML metadata packets too?",
+        a: "The sanitizer clears standard trailer metadata dictionary keys cleanly before re-saving your PDF stream."
+      }
+    ]
+  }
+};
 function renderToolDetailSubstantiveHtml(tool) {
   const safeName = escapeHtml(tool.name);
   const safeDesc = escapeHtml(tool.shortDescription);
   const safeCat = escapeHtml(tool.categoryLabel);
   const safeSpecs = escapeHtml(tool.specs || "Local browser HTML5 Canvas / JavaScript processing");
-  const usesPdfWorker = tool.id === "pdf-compressor" || tool.id === "pdf-to-image";
+  const rich = TOOL_RICH_SPECS[tool.id];
   return `
   ${renderPrimaryCategoryNavHtml("tools")}
   <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:12px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:16px; color:#101A36; line-height:1.65;">
@@ -13194,80 +14884,56 @@ function renderToolDetailSubstantiveHtml(tool) {
     <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:24px;">
       <header style="border-bottom:1px solid #E2E8F0; padding-bottom:18px; margin-bottom:20px;">
         <span style="display:inline-block; background:#ECFDF5; color:#1F9D6B; border:1px solid #A7F3D0; font-size:12px; font-weight:700; text-transform:uppercase; padding:4px 10px; border-radius:6px; margin-bottom:10px;">
-          ${safeCat} \xB7 Processed Locally in Browser
+          ${safeCat} \xB7 ${safeSpecs}
         </span>
         <h1 style="font-size:28px; font-weight:800; color:#101A36; margin:0 0 10px 0;">${safeName}</h1>
         <p style="font-size:16px; color:#475569; margin:0;">${safeDesc}</p>
       </header>
 
       <section style="background:#F6F8FC; border:1px solid #E2E8F0; border-radius:10px; padding:16px; margin-bottom:16px;">
-        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">How This Tool Works</h2>
-        <p style="font-size:15px; color:#334155; margin:0 0 8px 0;">${safeDesc}</p>
-        <p style="font-size:15px; color:#334155; margin:0;"><strong>Supported capabilities:</strong> ${safeSpecs}</p>
+        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Why &amp; How ${safeName} Works</h2>
+        <p style="font-size:15px; color:#334155; margin:0 0 10px 0;">${escapeHtml(rich?.overview || tool.shortDescription)}</p>
+        ${rich ? `<ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
+          ${rich.capabilities.map((cap) => `<li>${escapeHtml(cap)}</li>`).join("")}
+        </ul>` : `<p style="font-size:14px; color:#334155; margin:0;"><strong>Specification:</strong> ${safeSpecs}</p>`}
       </section>
 
       <section style="background:#ffffff; border:1px solid #E2E8F0; border-radius:10px; padding:16px; margin-bottom:16px;">
-        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Step-by-Step Usage</h2>
+        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">${safeName} Workflow</h2>
         <ol style="padding-left:20px; font-size:15px; color:#334155; line-height:1.75; margin:0 0 10px 0;">
-          <li>Select or drag your photograph, signature, or document file from your phone or computer.</li>
-          <li>Choose the target dimensions, DPI, or file-size limit matching your JKSSB, SSC, RRB, or university portal circular.</li>
-          <li>Preview the processed output right inside your browser to confirm clarity and legibility before saving.</li>
-          <li>Download the optimized file directly to your device and verify its KB size on the official portal upload screen.</li>
+          ${(rich?.workflow || [tool.shortDescription]).map((step) => `<li>${escapeHtml(step)}</li>`).join("")}
         </ol>
-        <p style="font-size:14px; color:#475569; margin:0;">
-          Use <strong>${safeName}</strong> when government or university forms reject high-resolution camera photos, oversized scanned PDFs, or signatures outside strict width-to-height bounds. Because no registration or login is required, citizens and CSC operators can format files in seconds.
-        </p>
+        ${rich ? `<p style="font-size:14px; color:#475569; margin:0;">${escapeHtml(rich.specsNote)}</p>` : ""}
       </section>
 
-      <section style="background:#ECFDF5; border:1px solid #A7F3D0; border-radius:10px; padding:16px; margin-bottom:20px;">
-        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Privacy &amp; Portal Compatibility Note</h2>
-        <p style="font-size:15px; color:#334155; margin:0;">Files are processed in your browser using HTML5 Canvas and client-side JavaScript and are never uploaded to any external server. Operated by CSC DOST (Authorized CSC VLE ID: 212515670018, Sangran Qazigund, Anantnag, J&amp;K 192221) as a free citizen utility alongside our official recruitment, admission, and e-governance bulletins.</p>
-        ${usesPdfWorker ? `<p style="font-size:13px; color:#334155; margin:8px 0 0 0;">Technical note: The open-source pdf.js worker script is loaded from cdnjs.cloudflare.com for local rendering while your PDF document itself never leaves your device.</p>` : ""}
-      </section>
-
-      <section style="background:#ffffff; border:1px solid #E2E8F0; border-radius:10px; padding:16px; margin-bottom:20px;">
-        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Official Portal Upload Standards &amp; Practical Guidance</h2>
-        <p style="font-size:14px; color:#334155; margin:0 0 8px 0;">
-          Most Indian recruitment and university portals (such as JKSSB OTR, SSC OTR, RRB apply, University of Kashmir examination portals, and IGNOU Samarth) enforce strict automated validation checks on file extension, pixel width/height ratio, and file size in kilobytes (KB). Files that look crisp on a phone screen are frequently rejected when camera defaults save multi-megabyte JPEG or HEIC photos.
-        </p>
-        <ul style="padding-left:20px; font-size:14px; color:#334155; line-height:1.75; margin:0 0 8px 0;">
-          <li><strong>Photographs:</strong> Use a plain light/white background with clear front-facing lighting and no heavy filters. Standard form uploads usually accept JPG/JPEG files between 20 KB and 50 KB.</li>
-          <li><strong>Signatures:</strong> Sign cleanly in black or blue ink on unruled white paper, crop tight around the stroke edges before resizing, and avoid blurry shadows or flash glare.</li>
-          <li><strong>Supporting PDFs:</strong> When compressing or combining Domicile certificates, Matriculation diplomas, or category certificates, inspect the preview to confirm serial numbers and authority seals remain clearly legible.</li>
-        </ul>
-        <p style="font-size:14px; color:#475569; margin:0;">
-          Use our <a href="/calculators" style="color:#1F9D6B; font-weight:700; text-decoration:none;">Photo &amp; Signature Spec Inspector</a> to verify your final file measurements before logging in to submit your application form.
-        </p>
-      </section>
-
-      <section style="margin-bottom:20px;">
-        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 10px 0;">Frequently Asked Questions</h2>
+      ${rich && rich.faqs.length > 0 ? `<section style="margin-bottom:18px;">
+        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 10px 0;">${safeName} Questions</h2>
         <div style="display:flex; flex-direction:column; gap:10px;">
+          ${rich.faqs.map(
+    (f) => `
           <details style="border:1px solid #E2E8F0; border-radius:10px; padding:12px;">
-            <summary style="font-weight:700; color:#101A36; cursor:pointer;">Are my photos or documents uploaded to CSC DOST servers?</summary>
-            <p style="margin:8px 0 0 0; font-size:14px; color:#334155;">No. ${safeName} runs completely inside your local browser session, so personal IDs, photos, and signatures remain strictly on your own device.</p>
-          </details>
-          <details style="border:1px solid #E2E8F0; border-radius:10px; padding:12px;">
-            <summary style="font-weight:700; color:#101A36; cursor:pointer;">Does ${safeName} work on Android phones and slower connections?</summary>
-            <p style="margin:8px 0 0 0; font-size:14px; color:#334155;">Yes. Once the page loads, processing takes place offline in device memory without sending large images over mobile data.</p>
-          </details>
-          <details style="border:1px solid #E2E8F0; border-radius:10px; padding:12px;">
-            <summary style="font-weight:700; color:#101A36; cursor:pointer;">Should I still verify portal upload rules before submitting my form?</summary>
-            <p style="margin:8px 0 0 0; font-size:14px; color:#334155;">Yes. Recruitment boards and universities sometimes update pixel dimensions or KB caps in individual circulars. Always verify exact upload requirements on the official portal.</p>
-          </details>
+            <summary style="font-weight:700; color:#101A36; cursor:pointer;">${escapeHtml(f.q)}</summary>
+            <p style="margin:8px 0 0 0; font-size:14px; color:#334155;">${escapeHtml(f.a)}</p>
+          </details>`
+  ).join("")}
         </div>
-      </section>
+      </section>` : ""}
+
+      <details style="border:1px solid #E2E8F0; border-radius:8px; padding:10px 12px; margin-bottom:18px; background:#ECFDF5; font-size:13px;">
+        <summary style="font-weight:700; color:#101A36; cursor:pointer;">Local Privacy &amp; Portal Spec Check</summary>
+        <p style="margin:6px 0 0 0; color:#334155;">${safeName} processes files offline inside your device browser (zero server upload). Verify final pixel/KB figures with <a href="/calculators" style="color:#1F9D6B; font-weight:700;">Citizen Calculators</a>.</p>
+      </details>
 
       <div style="display:flex; flex-wrap:wrap; gap:10px;">
-        <a href="/tools" style="background:#101A36; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">Back to All Document Tools</a>
-        <a href="/calculators" style="background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">Citizen Calculators</a>
+        <a href="/tools" style="background:#101A36; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">All Document Tools</a>
+        <a href="/calculators" style="background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">Photo Spec Inspector</a>
       </div>
     </article>
     ${renderSsrPolicyFooterHtml()}
   </main>
   `;
 }
-function renderCategorySubstantiveHtml(categoryType, posts, services) {
+function renderCategorySubstantiveHtml(categoryType, posts, services, publishedGuides = PUBLISHED_GUIDE_ARTICLES) {
   const dedupedPosts = getDeduplicatedSarkariPosts(posts);
   const verifiedPosts = dedupedPosts.filter((p) => {
     if (!isPublishedSarkariItem(p)) return false;
@@ -13316,6 +14982,17 @@ function renderCategorySubstantiveHtml(categoryType, posts, services) {
           </article>`;
     }).join("")}
       </section>
+
+      <section style="margin-top:24px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:18px; font-size:14px; color:#334155; line-height:1.65;">
+        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 8px 0;">How Closing Deadlines Are Tracked &amp; Verified</h2>
+        <p style="margin:0 0 8px 0;">
+          All countdown dates on this page follow Indian Standard Time (<code>Asia/Kolkata</code>) and display exact closing times where explicitly notified by JKSSB, SSC, RRB, Kashmir University, Cluster University Srinagar, or IGNOU. Notifications whose closing date has already passed are automatically removed from this active tracker and tagged <strong>Closed</strong> on their individual summary pages.
+        </p>
+        <p style="margin:0;">
+          Avoid waiting for the final few hours before a deadline, as official recruitment and examination portals frequently slow down under heavy traffic. Always confirm fee payment cutoffs and edit-window notices on the issuing authority's primary website, or reach CSC DOST desk at <a href="tel:+917006833767" style="color:#1F9D6B; font-weight:700;">+91 70068 33767</a> (<a href="/contact-us" style="color:#1F9D6B; font-weight:600;">Sangran Qazigund, Anantnag</a>) for assisted online submission during working hours (Mon\u2013Sat, 9 AM\u20137 PM IST). Browse full directories: <a href="/jobs" style="color:#1F9D6B; font-weight:600;">Jobs</a> \xB7 <a href="/education" style="color:#1F9D6B; font-weight:600;">Education</a> \xB7 <a href="/archive" style="color:#1F9D6B; font-weight:600;">Notice Archive</a>.
+        </p>
+      </section>
+      ${renderSsrPolicyFooterHtml()}
     </main>
     `;
   }
@@ -13531,7 +15208,7 @@ function renderCategorySubstantiveHtml(categoryType, posts, services) {
       </header>
 
       <section style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px; margin-bottom:28px;">
-        ${PUBLISHED_GUIDE_ARTICLES.map((g) => `
+        ${publishedGuides.map((g) => `
           <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:18px;">
             <div style="font-size:11px; font-weight:700; color:#1F9D6B; text-transform:uppercase; margin-bottom:6px;">${escapeHtml(g.category)} \xB7 ${escapeHtml(g.readTime)}</div>
             <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 8px 0;">
@@ -14067,7 +15744,7 @@ var LEGAL_SEO_MAP = {
   },
   contact: {
     title: "Contact Us & Citizen Helpdesk | CSC DOST",
-    description: "Contact CSC DOST helpdesk in Sangran Qazigund, Anantnag, J&K by phone (+91-7006833767) or email (support@cscdost.com).",
+    description: "Contact CSC DOST helpdesk in Sangran Qazigund, Anantnag, J&K by phone (+91-7006833767) or email (urnxtfd@gmail.com).",
     canonicalUrl: `${SITE_ORIGIN}/contact-us`,
     robots: "index, follow",
     ogType: "website",
@@ -14175,7 +15852,7 @@ var DEFAULT_DB = {
     cafeName: "CSC DOST",
     phone: "+91 70068 33767, +91 96821 32895",
     whatsapp: "+91 70068 33767",
-    email: "www.khanday09@gmail.com",
+    email: "urnxtfd@gmail.com",
     address: "Sangran Qazigund, Sangran Qazigund, Anantnag, Jammu and Kashmir 192221",
     officeHours: "Mon - Sat: 08:30 AM - 08:00 PM, Sun: 10:00 AM - 04:00 PM",
     googleMapsEmbed: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3501.996452296068!2d77.21833441508272!3d28.630041982417724!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cfd3637e19e75%3A0x6b7a544f84c4f9a7!2sConnaught%20Place%2C%20New%20Delhi%2C%20Delhi%20110001!5e0!3m2!1sen!2sin!4v1680000000000!5m2!1sen!2sin",
@@ -14224,7 +15901,13 @@ var DEFAULT_DB = {
     lastFailureWarning: null,
     lastScheduledSlotKey: ""
   },
-  whatsappAlertLogs: []
+  whatsappAlertLogs: [],
+  guideStates: {},
+  guideVerificationLogs: [],
+  postHealthOverrides: {},
+  serviceHealthOverrides: {},
+  approvedServiceMerges: {},
+  contentHealthLogs: []
 };
 var memoryDb = null;
 function initDb() {
@@ -14268,6 +15951,16 @@ function getDb() {
       if (!parsed.whatsappAlertSettings) parsed.whatsappAlertSettings = { ...DEFAULT_WHATSAPP_ALERT_SETTINGS };
       if (!parsed.whatsappAlertState) parsed.whatsappAlertState = { ...DEFAULT_WHATSAPP_ALERT_STATE };
       if (!Array.isArray(parsed.whatsappAlertLogs)) parsed.whatsappAlertLogs = [];
+      if (!parsed.guideStates || typeof parsed.guideStates !== "object") parsed.guideStates = {};
+      if (!Array.isArray(parsed.guideVerificationLogs)) parsed.guideVerificationLogs = [];
+      if (!parsed.postHealthOverrides || typeof parsed.postHealthOverrides !== "object") parsed.postHealthOverrides = {};
+      if (!parsed.serviceHealthOverrides || typeof parsed.serviceHealthOverrides !== "object") parsed.serviceHealthOverrides = {};
+      if (!parsed.approvedServiceMerges || typeof parsed.approvedServiceMerges !== "object") parsed.approvedServiceMerges = {};
+      if (!Array.isArray(parsed.contentHealthLogs)) parsed.contentHealthLogs = [];
+      const curEmail = String(parsed.settings?.email || "").trim().toLowerCase();
+      if (!curEmail || curEmail === "www.khanday09@gmail.com" || curEmail === "support@cscdost.com" || curEmail === "wasimkhanday@gmail.com" || curEmail === "cscdost.support@gmail.com") {
+        parsed.settings = { ...parsed.settings || DEFAULT_DB.settings, email: "urnxtfd@gmail.com" };
+      }
       if (Array.isArray(parsed.deletedAppointmentIds) && parsed.deletedAppointmentIds.length > 0) {
         const delSet = new Set(parsed.deletedAppointmentIds.map((s) => String(s).trim().toLowerCase()));
         parsed.appointments = parsed.appointments.filter((a) => {
@@ -15110,6 +16803,260 @@ function getWhatsAppAlertLogs(limit = 20) {
   const db = getDb();
   const logs = Array.isArray(db.whatsappAlertLogs) ? db.whatsappAlertLogs : [];
   return logs.slice(0, limit);
+}
+function getGuideStates() {
+  const db = getDb();
+  return db.guideStates && typeof db.guideStates === "object" ? db.guideStates : {};
+}
+function upsertGuideState(state) {
+  const db = getDb();
+  if (!db.guideStates || typeof db.guideStates !== "object") db.guideStates = {};
+  db.guideStates[state.id] = state;
+  saveDb(db);
+  return state;
+}
+function addGuideVerificationLog(entry) {
+  const db = getDb();
+  if (!Array.isArray(db.guideVerificationLogs)) db.guideVerificationLogs = [];
+  const full = {
+    ...entry,
+    id: `glog_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+  };
+  db.guideVerificationLogs.unshift(full);
+  if (db.guideVerificationLogs.length > 150) {
+    db.guideVerificationLogs = db.guideVerificationLogs.slice(0, 150);
+  }
+  saveDb(db);
+  return full;
+}
+function getGuideVerificationLogs(limit = 50) {
+  const db = getDb();
+  return (Array.isArray(db.guideVerificationLogs) ? db.guideVerificationLogs : []).slice(0, limit);
+}
+function getPostHealthOverrides() {
+  const db = getDb();
+  return db.postHealthOverrides && typeof db.postHealthOverrides === "object" ? db.postHealthOverrides : {};
+}
+function upsertPostHealthOverride(override) {
+  const db = getDb();
+  if (!db.postHealthOverrides || typeof db.postHealthOverrides !== "object") db.postHealthOverrides = {};
+  const prev = db.postHealthOverrides[override.id] || { id: override.id, updatedAt: override.updatedAt };
+  const merged = {
+    ...prev,
+    ...override,
+    updatedAt: override.updatedAt || (/* @__PURE__ */ new Date()).toISOString()
+  };
+  db.postHealthOverrides[override.id] = merged;
+  saveDb(db);
+  return merged;
+}
+function bulkNoindexPostIds(postIds, actor = "Staff Admin") {
+  const db = getDb();
+  if (!db.postHealthOverrides || typeof db.postHealthOverrides !== "object") db.postHealthOverrides = {};
+  const now = (/* @__PURE__ */ new Date()).toISOString();
+  const updatedIds = [];
+  for (const rawId of postIds) {
+    const id = String(rawId || "").trim();
+    if (!id) continue;
+    const prev = db.postHealthOverrides[id] || { id, updatedAt: now };
+    db.postHealthOverrides[id] = {
+      ...prev,
+      id,
+      robotsNoindex: true,
+      auditClass: prev.auditClass || "C",
+      updatedAt: now,
+      updatedBy: actor
+    };
+    updatedIds.push(id);
+  }
+  if (updatedIds.length > 0) {
+    if (!Array.isArray(db.contentHealthLogs)) db.contentHealthLogs = [];
+    db.contentHealthLogs.unshift({
+      id: `chlog_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      postId: updatedIds.length === 1 ? updatedIds[0] : `BULK(${updatedIds.length})`,
+      action: "bulk_noindex_class_c",
+      actor,
+      timestamp: now,
+      details: `Marked ${updatedIds.length} Class C post(s) noindex, follow: ${updatedIds.slice(0, 12).join(", ")}${updatedIds.length > 12 ? "..." : ""}`
+    });
+    if (db.contentHealthLogs.length > 200) {
+      db.contentHealthLogs = db.contentHealthLogs.slice(0, 200);
+    }
+  }
+  saveDb(db);
+  return { updatedCount: updatedIds.length, updatedIds };
+}
+function addContentHealthLog(entry) {
+  const db = getDb();
+  if (!Array.isArray(db.contentHealthLogs)) db.contentHealthLogs = [];
+  const full = {
+    ...entry,
+    id: `chlog_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+  };
+  db.contentHealthLogs.unshift(full);
+  if (db.contentHealthLogs.length > 200) {
+    db.contentHealthLogs = db.contentHealthLogs.slice(0, 200);
+  }
+  saveDb(db);
+  return full;
+}
+function getContentHealthLogs(limit = 100) {
+  const db = getDb();
+  return (Array.isArray(db.contentHealthLogs) ? db.contentHealthLogs : []).slice(0, limit);
+}
+function getServiceHealthOverrides() {
+  const db = getDb();
+  return db.serviceHealthOverrides && typeof db.serviceHealthOverrides === "object" ? db.serviceHealthOverrides : {};
+}
+function upsertServiceHealthOverride(override) {
+  const db = getDb();
+  if (!db.serviceHealthOverrides || typeof db.serviceHealthOverrides !== "object") {
+    db.serviceHealthOverrides = {};
+  }
+  const prev = db.serviceHealthOverrides[override.id] || { id: override.id, updatedAt: override.updatedAt };
+  const merged = {
+    ...prev,
+    ...override,
+    updatedAt: override.updatedAt || (/* @__PURE__ */ new Date()).toISOString().slice(0, 10)
+  };
+  db.serviceHealthOverrides[override.id] = merged;
+  saveDb(db);
+  return merged;
+}
+function getApprovedServiceMerges() {
+  const db = getDb();
+  return db.approvedServiceMerges && typeof db.approvedServiceMerges === "object" ? db.approvedServiceMerges : {};
+}
+function approveServiceMergeGroup(clusterId, hubPath, memberIds, actor = "Staff Admin") {
+  const db = getDb();
+  if (!db.approvedServiceMerges || typeof db.approvedServiceMerges !== "object") {
+    db.approvedServiceMerges = {};
+  }
+  if (!db.serviceHealthOverrides || typeof db.serviceHealthOverrides !== "object") {
+    db.serviceHealthOverrides = {};
+  }
+  const now = (/* @__PURE__ */ new Date()).toISOString();
+  const record = {
+    clusterId,
+    hubPath,
+    approved: true,
+    memberIds: [...memberIds],
+    approvedAt: now,
+    approvedBy: actor
+  };
+  db.approvedServiceMerges[clusterId] = record;
+  for (const sId of memberIds) {
+    const prev = db.serviceHealthOverrides[sId] || { id: sId, updatedAt: now.slice(0, 10) };
+    db.serviceHealthOverrides[sId] = {
+      ...prev,
+      id: sId,
+      duplicateOfId: hubPath,
+      robotsNoindex: true,
+      updatedAt: now.slice(0, 10),
+      updatedBy: actor
+    };
+  }
+  if (!Array.isArray(db.contentHealthLogs)) db.contentHealthLogs = [];
+  db.contentHealthLogs.unshift({
+    id: `chlog_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    postId: clusterId,
+    action: "approve_service_merge",
+    actor,
+    timestamp: now,
+    details: `Approved service merge group (${memberIds.length} pages -> 301 ${hubPath})`
+  });
+  if (db.contentHealthLogs.length > 200) {
+    db.contentHealthLogs = db.contentHealthLogs.slice(0, 200);
+  }
+  saveDb(db);
+  return record;
+}
+function revertServiceMergeGroup(clusterId, memberIds, actor = "Staff Admin") {
+  const db = getDb();
+  if (!db.approvedServiceMerges || typeof db.approvedServiceMerges !== "object") {
+    db.approvedServiceMerges = {};
+  }
+  if (!db.serviceHealthOverrides || typeof db.serviceHealthOverrides !== "object") {
+    db.serviceHealthOverrides = {};
+  }
+  const now = (/* @__PURE__ */ new Date()).toISOString();
+  delete db.approvedServiceMerges[clusterId];
+  for (const sId of memberIds) {
+    const prev = db.serviceHealthOverrides[sId];
+    if (prev) {
+      const next = { ...prev, updatedAt: now.slice(0, 10), updatedBy: actor };
+      delete next.duplicateOfId;
+      next.robotsNoindex = false;
+      db.serviceHealthOverrides[sId] = next;
+    }
+  }
+  if (!Array.isArray(db.contentHealthLogs)) db.contentHealthLogs = [];
+  db.contentHealthLogs.unshift({
+    id: `chlog_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    postId: clusterId,
+    action: "revert_service_merge",
+    actor,
+    timestamp: now,
+    details: `Reverted service merge group (${memberIds.length} member pages restored)`
+  });
+  if (db.contentHealthLogs.length > 200) {
+    db.contentHealthLogs = db.contentHealthLogs.slice(0, 200);
+  }
+  saveDb(db);
+}
+function bulkNoindexClassDItems(postIds, serviceIds, actor = "Staff Admin") {
+  const db = getDb();
+  if (!db.postHealthOverrides || typeof db.postHealthOverrides !== "object") db.postHealthOverrides = {};
+  if (!db.serviceHealthOverrides || typeof db.serviceHealthOverrides !== "object") db.serviceHealthOverrides = {};
+  const now = (/* @__PURE__ */ new Date()).toISOString();
+  const nowDate = now.slice(0, 10);
+  const updatedPostIds = [];
+  const updatedServiceIds = [];
+  for (const rawId of postIds) {
+    const id = String(rawId || "").trim();
+    if (!id) continue;
+    const prev = db.postHealthOverrides[id] || { id, updatedAt: nowDate };
+    db.postHealthOverrides[id] = {
+      ...prev,
+      id,
+      robotsNoindex: true,
+      auditClass: "D",
+      updatedAt: nowDate,
+      updatedBy: actor
+    };
+    updatedPostIds.push(id);
+  }
+  for (const rawId of serviceIds) {
+    const id = String(rawId || "").trim();
+    if (!id) continue;
+    const prev = db.serviceHealthOverrides[id] || { id, updatedAt: nowDate };
+    db.serviceHealthOverrides[id] = {
+      ...prev,
+      id,
+      robotsNoindex: true,
+      updatedAt: nowDate,
+      updatedBy: actor
+    };
+    updatedServiceIds.push(id);
+  }
+  const totalCount = updatedPostIds.length + updatedServiceIds.length;
+  if (totalCount > 0) {
+    const previewList = [...updatedPostIds, ...updatedServiceIds].slice(0, 12).join(", ");
+    if (!Array.isArray(db.contentHealthLogs)) db.contentHealthLogs = [];
+    db.contentHealthLogs.unshift({
+      id: `chlog_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      postId: `BULK_D(${totalCount})`,
+      action: "bulk_noindex_class_d",
+      actor,
+      timestamp: now,
+      details: `Marked ${totalCount} Class D item(s) noindex, follow (${updatedPostIds.length} posts, ${updatedServiceIds.length} services): ${previewList}${totalCount > 12 ? "..." : ""}`
+    });
+    if (db.contentHealthLogs.length > 200) {
+      db.contentHealthLogs = db.contentHealthLogs.slice(0, 200);
+    }
+  }
+  saveDb(db);
+  return { updatedCount: totalCount, updatedPostIds, updatedServiceIds };
 }
 
 // src/utils/whatsappFormatter.ts
@@ -16603,7 +18550,7 @@ async function verifyPaymentWithPayU(txnid) {
 // src/lib/pushServer.ts
 import webpush from "web-push";
 var DEFAULT_PUBLIC_KEY = "BJZxu9aQ0e54Br6OUHQMQbw7Oc1p1FStaxyzuBGISVvfBDp8N4lFPn8tVEZPZeM75TJjbLJHmdsTIkLi7noWlnk";
-var DEFAULT_SUBJECT = "mailto:support@cscdost.com";
+var DEFAULT_SUBJECT = "mailto:urnxtfd@gmail.com";
 var vapidConfigured = false;
 function getVapidPublicKey() {
   return (process.env.VAPID_PUBLIC_KEY || process.env.VITE_VAPID_PUBLIC_KEY || DEFAULT_PUBLIC_KEY).trim();
@@ -17824,6 +19771,31 @@ app.use((req, res, next) => {
     if (approvedRedirectTarget) {
       return res.redirect(301, `${approvedRedirectTarget}${queryString}`);
     }
+    const postMergeMatch = cleanReqPath.match(/^\/(?:post|job|jobs|sarkari|notice)\/([^/?#]+)$/i);
+    if (postMergeMatch) {
+      const candidateSlug = decodeURIComponent(postMergeMatch[1]);
+      const healthOverrides = getPostHealthOverrides();
+      const mergeTarget = healthOverrides[candidateSlug]?.duplicateOfId;
+      if (mergeTarget && mergeTarget !== candidateSlug) {
+        return res.redirect(301, `/post/${encodeURIComponent(mergeTarget)}${queryString}`);
+      }
+    }
+    const serviceMergeMatch = cleanReqPath.match(/^\/service\/([^/?#]+)$/i);
+    if (serviceMergeMatch) {
+      const candidateSvcSlug = decodeURIComponent(serviceMergeMatch[1]);
+      const svcOverrides = getServiceHealthOverrides();
+      const approvedMerges = getApprovedServiceMerges();
+      const explicitTarget = svcOverrides[candidateSvcSlug]?.duplicateOfId;
+      if (explicitTarget && explicitTarget !== candidateSvcSlug) {
+        const dest = explicitTarget.startsWith("/") ? explicitTarget : `/service/${encodeURIComponent(explicitTarget)}`;
+        return res.redirect(301, `${dest}${queryString}`);
+      }
+      for (const mergeRec of Object.values(approvedMerges)) {
+        if (mergeRec?.approved && Array.isArray(mergeRec.memberIds) && mergeRec.memberIds.includes(candidateSvcSlug)) {
+          return res.redirect(301, `${mergeRec.hubPath}${queryString}`);
+        }
+      }
+    }
     if (!req.path.startsWith("/api/") && req.path.length > 1 && req.path.endsWith("/")) {
       const normalizedPath = req.path.replace(/\/+$/, "") || "/";
       return res.redirect(301, `${normalizedPath}${queryString}`);
@@ -18674,30 +20646,35 @@ app.post("/api/contact", (req, res) => {
     simulateEmail(
       email,
       `Confirmation: Contact Request Received - ${db.settings.cafeName}`,
-      `\u{1F4A1} Hello ${name},<br/><br/>
+      `Hello ${name},<br/><br/>
       Thank you for contacting ${db.settings.cafeName}. We have received your query regarding <b>${service}</b>.<br/>
-      Our team will review your message and reach out to you within 2 to 4 working hours.<br/><br/>
+      Our team will review your message and reach out to you within working hours (Mon\u2013Sat). You can also write directly to ${PUBLIC_CONTACT_EMAIL}.<br/><br/>
       <b>Your Query Details:</b><br/>
       - Name: ${name}<br/>
       - Phone: ${phone}<br/>
       - Message: ${message}<br/><br/>
-      Regards,<br/>Support Team - ${db.settings.cafeName}`
+      Regards,<br/>Support Team - ${db.settings.cafeName} (${PUBLIC_CONTACT_EMAIL})`
     );
   }
+  const ownerInbox = db.settings.email || PUBLIC_CONTACT_EMAIL;
   simulateEmail(
-    db.settings.email,
-    `\u{1F6A8} NEW Contact Request: ${service} from ${name}`,
-    `\u{1F514} Hello Administrator,<br/><br/>
-    You have received a new service query on the cyber cafe portal:<br/><br/>
+    ownerInbox,
+    `NEW Contact Request: ${service} from ${name}`,
+    `Hello Administrator,<br/><br/>
+    You have received a new citizen inquiry on ${db.settings.cafeName}:<br/><br/>
     <b>Submission Information:</b><br/>
     - Name: ${name}<br/>
     - Phone: ${phone}<br/>
     - Email: ${email || "Not Provided"}<br/>
     - Requested Service: ${service}<br/>
     - Message: ${message}<br/><br/>
-    Please log in to your admin panel to manage this request.`
+    Target Helpdesk Email: ${PUBLIC_CONTACT_EMAIL}`
   );
-  res.json({ success: true, data: request, message: "Message submitted successfully. Emails simulated in logs." });
+  res.json({
+    success: true,
+    data: request,
+    message: `Message received by CSC DOST Helpdesk (${PUBLIC_CONTACT_EMAIL}). We will respond during working hours.`
+  });
 });
 var sseClients = /* @__PURE__ */ new Set();
 function broadcastRealtimeEvent(type, payload) {
@@ -20163,7 +22140,7 @@ app.post("/api/whatsapp/send", authenticateAdmin, async (req, res) => {
     let isService = false;
     let matchedService = null;
     if (!matchedPost) {
-      matchedService = SERVICES_LIST.find((s) => s.id === cleanPostId || s.id === decodeURIComponent(cleanPostId));
+      matchedService = getAllMergedServices().find((s) => s.id === cleanPostId || s.id === decodeURIComponent(cleanPostId));
       if (matchedService) {
         isService = true;
       }
@@ -21140,6 +23117,7 @@ function syncCustomPostsAndThumbnailsInMemory() {
 syncCustomPostsAndThumbnailsInMemory();
 function getAllMergedSarkariPosts() {
   const thumbnailsMap = getPostThumbnailsMap();
+  const healthOverrides = getPostHealthOverrides();
   const mergedMap = /* @__PURE__ */ new Map();
   for (const item of SARKARI_DATA) {
     if (item && item.id) {
@@ -21154,14 +23132,37 @@ function getAllMergedSarkariPosts() {
   }
   return Array.from(mergedMap.values()).map((item) => {
     const savedThumb = thumbnailsMap[item.id];
+    const ov = healthOverrides[item.id];
+    let next = item;
     if (savedThumb && savedThumb.thumbnailUrl) {
-      return {
-        ...item,
+      next = {
+        ...next,
         thumbnailUrl: savedThumb.thumbnailUrl,
-        thumbnailSpec: savedThumb.spec || item.thumbnailSpec
+        thumbnailSpec: savedThumb.spec || next.thumbnailSpec
       };
     }
-    return item;
+    if (ov) {
+      next = {
+        ...next,
+        publicationStatus: ov.publicationStatus ?? next.publicationStatus,
+        robotsNoindex: ov.robotsNoindex !== void 0 ? ov.robotsNoindex : next.robotsNoindex,
+        duplicateOfId: ov.duplicateOfId !== void 0 ? ov.duplicateOfId : next.duplicateOfId,
+        title: ov.title || next.title,
+        shortInfo: ov.shortInfo !== void 0 ? ov.shortInfo : next.shortInfo,
+        summary: ov.summary !== void 0 ? ov.summary : next.summary,
+        eligibility: ov.eligibility !== void 0 ? ov.eligibility : next.eligibility,
+        qualification: ov.qualification !== void 0 ? ov.qualification : next.qualification,
+        lastDate: ov.lastDate !== void 0 ? ov.lastDate : next.lastDate,
+        officialNotificationUrl: ov.officialNotificationUrl || next.officialNotificationUrl,
+        officialLink: ov.officialLink || ov.officialNotificationUrl || next.officialLink,
+        howToApply: Array.isArray(ov.howToApply) ? ov.howToApply : next.howToApply,
+        selectionProcess: Array.isArray(ov.selectionProcess) ? ov.selectionProcess : next.selectionProcess,
+        documentsRequired: Array.isArray(ov.documentsRequired) ? ov.documentsRequired : next.documentsRequired,
+        faq: Array.isArray(ov.faq) ? ov.faq.map((f) => ({ question: f.q, answer: f.a })) : next.faq,
+        updatedAt: ov.updatedAt || next.updatedAt
+      };
+    }
+    return next;
   }).sort(
     (a, b) => parseSarkariDateSortValue(b.postDate || b.documentDate) - parseSarkariDateSortValue(a.postDate || a.documentDate)
   );
@@ -21175,12 +23176,737 @@ app.get("/api/sarkari-posts", (req, res) => {
       posts: merged
     });
   }
-  const posts = merged.filter(isPublishedSarkariItem);
-  const hiddenIds = merged.filter((p) => !isPublishedSarkariItem(p)).map((p) => p.id);
+  const posts = merged.filter((p) => isPublishedSarkariItem(p) && !p.duplicateOfId);
+  const hiddenIds = merged.filter((p) => !isPublishedSarkariItem(p) || Boolean(p.duplicateOfId)).map((p) => p.id);
   res.json({
     success: true,
     posts,
     hiddenIds
+  });
+});
+function getAllMergedServices() {
+  const svcOverrides = getServiceHealthOverrides();
+  const approvedMerges = getApprovedServiceMerges();
+  const clusterRedirectMap = /* @__PURE__ */ new Map();
+  for (const mergeRec of Object.values(approvedMerges)) {
+    if (mergeRec?.approved && Array.isArray(mergeRec.memberIds)) {
+      for (const mId of mergeRec.memberIds) {
+        clusterRedirectMap.set(mId, mergeRec.hubPath);
+      }
+    }
+  }
+  return SERVICES_LIST.map((baseSvc) => {
+    const ov = svcOverrides[baseSvc.id];
+    const clusterTarget = clusterRedirectMap.get(baseSvc.id);
+    let next = { ...baseSvc };
+    if (ov) {
+      next = {
+        ...next,
+        publicationStatus: ov.publicationStatus ?? next.publicationStatus,
+        robotsNoindex: ov.robotsNoindex !== void 0 ? ov.robotsNoindex : next.robotsNoindex,
+        duplicateOfId: ov.duplicateOfId !== void 0 ? ov.duplicateOfId : next.duplicateOfId,
+        name: ov.name || next.name,
+        description: ov.description !== void 0 ? ov.description : next.description,
+        issuingAuthority: ov.issuingAuthority !== void 0 ? ov.issuingAuthority : next.issuingAuthority,
+        eligibility: ov.eligibility !== void 0 ? ov.eligibility : next.eligibility,
+        requirements: Array.isArray(ov.requirements) ? ov.requirements : next.requirements,
+        estimatedTime: ov.estimatedTime !== void 0 ? ov.estimatedTime : next.estimatedTime,
+        price: ov.price !== void 0 ? ov.price : next.price,
+        feeLines: Array.isArray(ov.feeLines) ? ov.feeLines : next.feeLines,
+        officialUrl: ov.officialUrl !== void 0 ? ov.officialUrl : next.officialUrl,
+        stepFlow: Array.isArray(ov.stepFlow) ? ov.stepFlow : next.stepFlow,
+        staffChecks: Array.isArray(ov.staffChecks) ? ov.staffChecks : next.staffChecks,
+        rejectionReasons: Array.isArray(ov.rejectionReasons) ? ov.rejectionReasons : next.rejectionReasons,
+        verifiedBy: ov.verifiedBy || next.verifiedBy,
+        updatedAt: ov.updatedAt || next.updatedAt
+      };
+    }
+    if (clusterTarget && !next.duplicateOfId) {
+      next.duplicateOfId = clusterTarget;
+      next.robotsNoindex = true;
+    }
+    return next;
+  });
+}
+app.get("/api/services", (_req, res) => {
+  const merged = getAllMergedServices();
+  const approvedMerges = getApprovedServiceMerges();
+  const redirectMap = {};
+  for (const s of merged) {
+    if (s.duplicateOfId) {
+      redirectMap[s.id] = s.duplicateOfId.startsWith("/") ? s.duplicateOfId : `/service/${s.duplicateOfId}`;
+    }
+  }
+  const visible = merged.filter(
+    (s) => s.publicationStatus !== "draft" && s.publicationStatus !== "archived" && !s.duplicateOfId
+  );
+  res.json({
+    success: true,
+    services: visible,
+    redirectMap,
+    clusters: SERVICE_MERGE_CLUSTERS.map((c) => ({
+      ...c,
+      approved: Boolean(approvedMerges[c.clusterId]?.approved)
+    }))
+  });
+});
+app.get("/api/guides", (_req, res) => {
+  const published = getPublishedMergedGuides(getGuideStates(), GUIDE_ARTICLES);
+  res.json({
+    success: true,
+    guides: published
+  });
+});
+app.get("/api/staff/guides", authenticateAdmin, (_req, res) => {
+  const states = getGuideStates();
+  const merged = mergeAllGuidesWithStates(states, GUIDE_ARTICLES).map((g) => ({
+    ...g,
+    verifyCount: extractGuideVerifyMarkers(g).filter((m) => !m.field.startsWith("verifyNotes[")).length,
+    wordCount: countGuideWords(g)
+  }));
+  res.json({
+    success: true,
+    guides: merged,
+    logs: getGuideVerificationLogs(50)
+  });
+});
+app.post("/api/staff/guides/:id/save-draft", authenticateAdmin, (req, res) => {
+  const guideId = decodeURIComponent(String(req.params.id || ""));
+  const baseGuide = GUIDE_ARTICLES.find((g) => g.id === guideId);
+  if (!baseGuide) {
+    return res.status(404).json({ success: false, error: "Guide not found." });
+  }
+  const body = req.body || {};
+  const prev = getGuideStates()[guideId];
+  const actor = req.adminUser?.email || req.adminUser?.username || "Staff Admin";
+  const nextStatus = body.forceStatus === "draft" ? "draft" : prev?.status || baseGuide.status || "draft";
+  const saved = upsertGuideState({
+    id: guideId,
+    status: nextStatus,
+    officialUrl: body.officialUrl !== void 0 ? String(body.officialUrl).trim() : prev?.officialUrl || baseGuide.officialUrl,
+    officialPortal: body.officialPortal !== void 0 ? String(body.officialPortal).trim() : prev?.officialPortal || baseGuide.officialPortal,
+    verifiedMarkers: Array.isArray(body.verifiedMarkers) ? body.verifiedMarkers : prev?.verifiedMarkers,
+    verifierName: body.verifierName ? String(body.verifierName).trim() : prev?.verifierName,
+    verifiedDate: body.verifiedDate ? String(body.verifiedDate).trim() : prev?.verifiedDate,
+    reviewedBy: prev?.reviewedBy,
+    reviewedAt: prev?.reviewedAt,
+    lastUpdated: prev?.lastUpdated || baseGuide.lastUpdated,
+    notes: body.notes ? String(body.notes).trim() : prev?.notes,
+    updatedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    overrides: body.overrides !== void 0 ? body.overrides : prev?.overrides
+  });
+  addGuideVerificationLog({
+    guideId,
+    action: body.forceStatus === "draft" ? "revert_draft" : "save_draft",
+    actor,
+    timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+    officialUrl: saved.officialUrl,
+    notes: body.notes ? String(body.notes).trim() : void 0
+  });
+  res.json({ success: true, state: saved });
+});
+app.post("/api/staff/guides/:id/verify", authenticateAdmin, (req, res) => {
+  const guideId = decodeURIComponent(String(req.params.id || ""));
+  const baseGuide = GUIDE_ARTICLES.find((g) => g.id === guideId);
+  if (!baseGuide) {
+    return res.status(404).json({ success: false, error: "Guide not found." });
+  }
+  const body = req.body || {};
+  const prev = getGuideStates()[guideId];
+  const actor = req.adminUser?.email || req.adminUser?.username || "Staff Admin";
+  const verifierName = String(body.verifierName || prev?.verifierName || "").trim();
+  const verifiedDate = String(body.verifiedDate || (/* @__PURE__ */ new Date()).toISOString().slice(0, 10)).trim();
+  const confirmVerified = Boolean(body.confirmVerified);
+  const candidateState = {
+    id: guideId,
+    status: "published",
+    officialUrl: body.officialUrl !== void 0 ? String(body.officialUrl).trim() : prev?.officialUrl || baseGuide.officialUrl,
+    officialPortal: body.officialPortal !== void 0 ? String(body.officialPortal).trim() : prev?.officialPortal || baseGuide.officialPortal,
+    verifiedMarkers: Array.isArray(body.verifiedMarkers) ? body.verifiedMarkers : prev?.verifiedMarkers,
+    verifierName,
+    verifiedDate,
+    reviewedBy: verifierName,
+    reviewedAt: verifiedDate,
+    lastUpdated: (/* @__PURE__ */ new Date()).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
+    notes: body.notes ? String(body.notes).trim() : prev?.notes,
+    updatedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    overrides: body.overrides !== void 0 ? body.overrides : prev?.overrides
+  };
+  const mergedCandidate = mergeAllGuidesWithStates({ [guideId]: candidateState }, [baseGuide])[0];
+  const check = validateGuideReadyForPublish(mergedCandidate, {
+    confirmChecked: confirmVerified,
+    verifierName
+  });
+  if (!check.ok) {
+    return res.status(400).json({
+      success: false,
+      error: check.errors[0] || "Verification gate prevented publishing.",
+      errors: check.errors
+    });
+  }
+  const saved = upsertGuideState(candidateState);
+  addGuideVerificationLog({
+    guideId,
+    action: "verify_publish",
+    actor: verifierName || actor,
+    timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+    officialUrl: saved.officialUrl,
+    notes: body.notes ? String(body.notes).trim() : `Verified (${check.wordCount} words)`
+  });
+  res.json({ success: true, state: saved, guide: mergedCandidate });
+});
+function extractMainTextWordCount(renderedHtml) {
+  const withoutChrome = String(renderedHtml || "").replace(/<header\b[^>]*class=["'][^"']*ssr-site-header[^"']*["'][^>]*>[\s\S]*?<\/header>/gi, " ").replace(/<nav\b[\s\S]*?<\/nav>/gi, " ").replace(/<footer\b[\s\S]*?<\/footer>/gi, " ").replace(/<script\b[\s\S]*?<\/script>/gi, " ").replace(/<style\b[\s\S]*?<\/style>/gi, " ");
+  const textOnly = withoutChrome.replace(/<[^>]+>/g, " ").replace(/&[a-z0-9#]+;/gi, " ").replace(/\s+/g, " ").trim();
+  const wordCount = textOnly ? textOnly.split(/\s+/).filter(Boolean).length : 0;
+  const hasOfficialLink = detectOutboundOfficialLinks(withoutChrome).length > 0;
+  const hasLastUpdated = /last\s+(updated|verified)/i.test(textOnly);
+  return { wordCount, hasOfficialLink, hasLastUpdated };
+}
+app.get("/api/staff/content-health", authenticateAdmin, (_req, res) => {
+  const allPosts = getAllMergedSarkariPosts();
+  const allServices = getAllMergedServices();
+  const overrides = getPostHealthOverrides();
+  const svcOverrides = getServiceHealthOverrides();
+  const approvedMerges = getApprovedServiceMerges();
+  const publishedGuides = getPublishedMergedGuides(getGuideStates(), GUIDE_ARTICLES);
+  let auditMap = /* @__PURE__ */ new Map();
+  try {
+    const auditJsonPath = path4.join(process.cwd(), "reports", "content_audit.json");
+    if (fs4.existsSync(auditJsonPath)) {
+      const parsed = JSON.parse(fs4.readFileSync(auditJsonPath, "utf-8"));
+      if (Array.isArray(parsed?.pages)) {
+        for (const p of parsed.pages) {
+          if (p?.path) auditMap.set(p.path, p);
+        }
+      }
+    }
+  } catch {
+  }
+  const shingleCandidates = [];
+  const postMetricsMap = /* @__PURE__ */ new Map();
+  for (const post of allPosts) {
+    if (!isPublishedSarkariItem(post) || post.duplicateOfId || KNOWN_DUPLICATE_MAP[post.id]) continue;
+    const urlPath = `/post/${post.id}`;
+    const html = renderPostSubstantiveHtml(post, allPosts);
+    const metrics = extractMainTextWordCount(html);
+    postMetricsMap.set(urlPath, metrics);
+    if (!post.robotsNoindex && !isStaleOver90Days(post)) {
+      shingleCandidates.push({ path: urlPath, shingles: buildWordShingles(html.replace(/<[^>]+>/g, " "), 5) });
+    }
+  }
+  const serviceMetricsMap = /* @__PURE__ */ new Map();
+  for (const svc of allServices) {
+    const urlPath = `/service/${svc.id}`;
+    const html = renderServiceSubstantiveHtml(svc);
+    const metrics = extractMainTextWordCount(html);
+    serviceMetricsMap.set(urlPath, metrics);
+    if (svc.publicationStatus !== "draft" && svc.publicationStatus !== "archived" && !svc.duplicateOfId && !svc.robotsNoindex) {
+      shingleCandidates.push({ path: urlPath, shingles: buildWordShingles(html.replace(/<[^>]+>/g, " "), 5) });
+    }
+  }
+  const toolMetricsMap = /* @__PURE__ */ new Map();
+  for (const tool of TOOLS_LIST) {
+    const urlPath = `/tools/${tool.id}`;
+    const html = renderToolDetailSubstantiveHtml(tool);
+    const metrics = extractMainTextWordCount(html);
+    toolMetricsMap.set(urlPath, metrics);
+    shingleCandidates.push({ path: urlPath, shingles: buildWordShingles(html.replace(/<[^>]+>/g, " "), 5) });
+  }
+  const liveJaccardMap = /* @__PURE__ */ new Map();
+  for (let i = 0; i < shingleCandidates.length; i++) {
+    for (let j = i + 1; j < shingleCandidates.length; j++) {
+      const a = shingleCandidates[i];
+      const b = shingleCandidates[j];
+      const score = jaccardSimilarity(a.shingles, b.shingles);
+      const prevA = liveJaccardMap.get(a.path);
+      if (!prevA || score > prevA.score) liveJaccardMap.set(a.path, { score, peer: b.path });
+      const prevB = liveJaccardMap.get(b.path);
+      if (!prevB || score > prevB.score) liveJaccardMap.set(b.path, { score, peer: a.path });
+    }
+  }
+  const items = [];
+  for (const post of allPosts) {
+    const urlPath = `/post/${post.id}`;
+    const ov = overrides[post.id];
+    const metrics = postMetricsMap.get(urlPath) || extractMainTextWordCount(renderPostSubstantiveHtml(post, allPosts));
+    const { wordCount, hasOfficialLink, hasLastUpdated } = metrics;
+    const copyEval = evaluatePostCopyAndWords(
+      [post.shortInfo, post.summary, post.eligibility, ...post.howToApply || []].filter(Boolean).join(" "),
+      post.sourceExcerpt
+    );
+    const liveDup = liveJaccardMap.get(urlPath);
+    const highestJaccard = liveDup?.score || 0;
+    const cls = classifyAuditPage({
+      url: `${SITE_ORIGIN}${urlPath}`,
+      httpStatus: 200,
+      title: formatPostSeoTitle(post),
+      metaDescription: formatPostSeoDescription(post),
+      h1Count: 1,
+      wordCount,
+      hasOfficialLink,
+      hasLastUpdated,
+      hasFaqOrHowTo: Boolean(post.faq && post.faq.length > 0 || post.howToApply && post.howToApply.length > 0),
+      copiedRunLength: copyEval.copiedCheck.runLength,
+      highestJaccardScore: highestJaccard,
+      nearDuplicateOf: liveDup?.peer || post.duplicateOfId,
+      canonicalMismatch: Boolean(post.duplicateOfId)
+    });
+    items.push({
+      id: post.id,
+      url: urlPath,
+      kind: "post",
+      title: post.title,
+      auditClass: ov?.auditClass && ov.duplicateOfId ? "D" : cls.auditClass,
+      wordCount,
+      hasOfficialLink,
+      hasLastUpdated,
+      publicationStatus: post.publicationStatus || "published",
+      robotsNoindex: Boolean(post.robotsNoindex || isStaleOver90Days(post) || post.duplicateOfId || KNOWN_DUPLICATE_MAP[post.id]),
+      duplicateOfId: post.duplicateOfId || KNOWN_DUPLICATE_MAP[post.id],
+      reasons: cls.reasons,
+      rawPost: {
+        id: post.id,
+        title: post.title,
+        shortInfo: post.shortInfo,
+        summary: post.summary,
+        eligibility: post.eligibility,
+        lastDate: post.lastDate,
+        postDate: post.postDate,
+        officialNotificationUrl: post.officialNotificationUrl,
+        officialLink: post.officialLink,
+        howToApply: post.howToApply,
+        selectionProcess: post.selectionProcess,
+        documentsRequired: post.documentsRequired,
+        faq: Array.isArray(post.faq) ? post.faq.map((f) => ({ q: f.question, a: f.answer })) : [],
+        notes: ov?.notes || "",
+        sourceExcerpt: post.sourceExcerpt
+      }
+    });
+  }
+  for (const svc of allServices) {
+    const urlPath = `/service/${svc.id}`;
+    const facts = deriveStoredServiceFacts(svc);
+    const metrics = serviceMetricsMap.get(urlPath) || { wordCount: 0, hasOfficialLink: false, hasLastUpdated: false };
+    const liveDup = liveJaccardMap.get(urlPath);
+    const highestJaccard = liveDup?.score || 0;
+    const feeText = svc.price?.trim() ? ` Fee: ${svc.price.trim()}.` : " Fee: [VERIFY].";
+    const cls = classifyAuditPage({
+      url: `${SITE_ORIGIN}${urlPath}`,
+      httpStatus: 200,
+      title: formatSeoTitle(svc.name),
+      metaDescription: formatSeoDescription(`${svc.description}${feeText}`),
+      h1Count: 1,
+      wordCount: metrics.wordCount,
+      hasOfficialLink: Boolean(facts.officialPortalUrl),
+      hasLastUpdated: Boolean(svc.updatedAt),
+      hasFaqOrHowTo: facts.stepFlow.length > 0,
+      copiedRunLength: 0,
+      highestJaccardScore: highestJaccard,
+      nearDuplicateOf: liveDup?.peer || svc.duplicateOfId,
+      canonicalMismatch: Boolean(svc.duplicateOfId)
+    });
+    items.push({
+      id: svc.id,
+      url: urlPath,
+      kind: "service",
+      title: svc.name,
+      auditClass: svc.duplicateOfId ? "D" : cls.auditClass,
+      wordCount: metrics.wordCount,
+      hasOfficialLink: Boolean(facts.officialPortalUrl),
+      hasLastUpdated: Boolean(svc.updatedAt),
+      publicationStatus: svc.publicationStatus || "published",
+      robotsNoindex: Boolean(svc.robotsNoindex || svc.duplicateOfId),
+      duplicateOfId: svc.duplicateOfId,
+      hasVerifyPlaceholders: facts.hasVerifyPlaceholders,
+      missingVerifyFields: facts.missingVerifyFields,
+      clusterId: getClusterForServiceId(svc.id)?.clusterId,
+      reasons: cls.reasons,
+      rawService: {
+        id: svc.id,
+        name: svc.name,
+        category: svc.category,
+        description: svc.description,
+        issuingAuthority: svc.issuingAuthority || (facts.authorityFromStoredData ? facts.issuingAuthority : ""),
+        eligibility: svc.eligibility || "",
+        requirements: svc.requirements || [],
+        estimatedTime: svc.estimatedTime || "",
+        price: svc.price || "",
+        feeLines: svc.feeLines || [],
+        officialUrl: svc.officialUrl || facts.officialPortalUrl || "",
+        stepFlow: svc.stepFlow || [],
+        staffChecks: svc.staffChecks || [],
+        rejectionReasons: svc.rejectionReasons || [],
+        notes: svcOverrides[svc.id]?.verifiedBy || svc.verifiedBy || ""
+      }
+    });
+  }
+  for (const tool of TOOLS_LIST) {
+    const urlPath = `/tools/${tool.id}`;
+    const metrics = toolMetricsMap.get(urlPath) || { wordCount: 0, hasOfficialLink: false, hasLastUpdated: false };
+    const liveDup = liveJaccardMap.get(urlPath);
+    const cls = classifyAuditPage({
+      url: `${SITE_ORIGIN}${urlPath}`,
+      httpStatus: 200,
+      title: formatSeoTitle(`${tool.name} - Tools`),
+      metaDescription: formatSeoDescription(tool.shortDescription),
+      h1Count: 1,
+      wordCount: metrics.wordCount,
+      hasOfficialLink: false,
+      hasLastUpdated: true,
+      hasFaqOrHowTo: true,
+      copiedRunLength: 0,
+      highestJaccardScore: liveDup?.score || 0,
+      nearDuplicateOf: liveDup?.peer,
+      canonicalMismatch: false
+    });
+    items.push({
+      id: tool.id,
+      url: urlPath,
+      kind: "tool",
+      title: tool.name,
+      auditClass: cls.auditClass,
+      wordCount: metrics.wordCount,
+      hasOfficialLink: false,
+      hasLastUpdated: true,
+      publicationStatus: "published",
+      robotsNoindex: false,
+      reasons: cls.reasons
+    });
+  }
+  for (const guide of publishedGuides) {
+    const urlPath = `/scheme/${guide.id}`;
+    const wc = countGuideWords(guide);
+    const cls = classifyAuditPage({
+      url: `${SITE_ORIGIN}${urlPath}`,
+      httpStatus: 200,
+      title: guide.title,
+      metaDescription: guide.summary,
+      h1Count: 1,
+      wordCount: wc,
+      hasOfficialLink: Boolean(guide.officialUrl),
+      hasLastUpdated: Boolean(guide.lastUpdated),
+      hasFaqOrHowTo: (guide.faqs?.length || 0) > 0,
+      copiedRunLength: 0,
+      highestJaccardScore: 0,
+      canonicalMismatch: false
+    });
+    items.push({
+      id: guide.id,
+      url: urlPath,
+      kind: "guide",
+      title: guide.title,
+      auditClass: cls.auditClass,
+      wordCount: wc,
+      hasOfficialLink: Boolean(guide.officialUrl),
+      hasLastUpdated: Boolean(guide.lastUpdated),
+      publicationStatus: guide.status || "published",
+      robotsNoindex: false,
+      reasons: cls.reasons
+    });
+  }
+  for (const [p, entry] of auditMap.entries()) {
+    if (p.startsWith("/post/") || p.startsWith("/scheme/") || p.startsWith("/service/") || p.startsWith("/tools/")) continue;
+    items.push({
+      id: p,
+      url: p,
+      kind: "static",
+      title: entry.title || p,
+      auditClass: entry.auditClass || "A",
+      wordCount: entry.wordCount || 0,
+      hasOfficialLink: Boolean(entry.hasOfficialLink),
+      hasLastUpdated: Boolean(entry.hasLastUpdated),
+      reasons: entry.reasons || []
+    });
+  }
+  const mergeClusters = SERVICE_MERGE_CLUSTERS.map((c) => ({
+    ...c,
+    approved: Boolean(approvedMerges[c.clusterId]?.approved),
+    approvedAt: approvedMerges[c.clusterId]?.approvedAt || null,
+    approvedBy: approvedMerges[c.clusterId]?.approvedBy || null,
+    memberCount: c.memberIds.length
+  }));
+  res.json({
+    success: true,
+    items,
+    mergeClusters,
+    logs: getContentHealthLogs(80)
+  });
+});
+app.post("/api/staff/content-health/save", authenticateAdmin, (req, res) => {
+  const body = req.body || {};
+  const postId = String(body.id || "").trim();
+  if (!postId) {
+    return res.status(400).json({ success: false, error: "Missing post ID." });
+  }
+  const allPosts = getAllMergedSarkariPosts();
+  const target = allPosts.find((p) => p.id === postId);
+  if (!target) {
+    return res.status(404).json({ success: false, error: "Post not found." });
+  }
+  const publicationStatus = body.publicationStatus === "draft" ? "draft" : "published";
+  const actor = req.adminUser?.email || req.adminUser?.username || "Staff Admin";
+  if (publicationStatus === "published") {
+    const validation = validatePostPublishQuality(
+      {
+        id: postId,
+        title: body.title ?? target.title,
+        shortInfo: body.shortInfo ?? target.shortInfo,
+        summary: body.summary ?? target.summary,
+        eligibility: body.eligibility ?? target.eligibility,
+        lastDate: body.lastDate ?? target.lastDate,
+        postDate: target.postDate,
+        updatedAt: (/* @__PURE__ */ new Date()).toISOString().slice(0, 10),
+        officialNotificationUrl: body.officialNotificationUrl || target.officialNotificationUrl || target.officialLink,
+        howToApply: Array.isArray(body.howToApply) ? body.howToApply : target.howToApply,
+        selectionProcess: Array.isArray(body.selectionProcess) ? body.selectionProcess : target.selectionProcess,
+        documentsRequired: Array.isArray(body.documentsRequired) ? body.documentsRequired : target.documentsRequired,
+        notes: body.notes,
+        sourceExcerpt: target.sourceExcerpt
+      },
+      { minWordCount: 400, maxConsecutiveCopiedSentences: 2, enforceWordCount: true }
+    );
+    if (!validation.valid) {
+      return res.status(400).json({
+        success: false,
+        error: validation.errors[0] || "Quality gate blocked publishing.",
+        errors: validation.errors
+      });
+    }
+  }
+  const saved = upsertPostHealthOverride({
+    id: postId,
+    publicationStatus,
+    title: body.title !== void 0 ? String(body.title).trim() : void 0,
+    shortInfo: body.shortInfo !== void 0 ? String(body.shortInfo).trim() : void 0,
+    summary: body.summary !== void 0 ? String(body.summary).trim() : void 0,
+    eligibility: body.eligibility !== void 0 ? String(body.eligibility).trim() : void 0,
+    lastDate: body.lastDate !== void 0 ? String(body.lastDate).trim() : void 0,
+    officialNotificationUrl: body.officialNotificationUrl !== void 0 ? String(body.officialNotificationUrl).trim() : void 0,
+    howToApply: Array.isArray(body.howToApply) ? body.howToApply : void 0,
+    selectionProcess: Array.isArray(body.selectionProcess) ? body.selectionProcess : void 0,
+    documentsRequired: Array.isArray(body.documentsRequired) ? body.documentsRequired : void 0,
+    faq: Array.isArray(body.faq) ? body.faq : void 0,
+    notes: body.notes !== void 0 ? String(body.notes).trim() : void 0,
+    updatedAt: (/* @__PURE__ */ new Date()).toISOString().slice(0, 10),
+    updatedBy: actor
+  });
+  addContentHealthLog({
+    postId,
+    action: "enrich_save",
+    actor,
+    timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+    details: `Saved structured enrichments as ${publicationStatus}`
+  });
+  res.json({ success: true, override: saved });
+});
+app.post("/api/staff/content-health/service/save", authenticateAdmin, (req, res) => {
+  const body = req.body || {};
+  const serviceId = String(body.id || "").trim();
+  if (!serviceId) {
+    return res.status(400).json({ success: false, error: "Missing service ID." });
+  }
+  const allServices = getAllMergedServices();
+  const target = allServices.find((s) => s.id === serviceId);
+  if (!target) {
+    return res.status(404).json({ success: false, error: "Service not found." });
+  }
+  const publicationStatus = body.publicationStatus === "draft" ? "draft" : "published";
+  const actor = req.adminUser?.email || req.adminUser?.username || "Staff Admin";
+  const nowDate = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+  const candidateService = {
+    ...target,
+    name: body.name !== void 0 ? String(body.name).trim() || target.name : target.name,
+    description: body.description !== void 0 ? String(body.description).trim() : target.description,
+    issuingAuthority: body.issuingAuthority !== void 0 ? String(body.issuingAuthority).trim() : target.issuingAuthority,
+    eligibility: body.eligibility !== void 0 ? String(body.eligibility).trim() : target.eligibility,
+    requirements: Array.isArray(body.requirements) ? body.requirements.map((s) => String(s).trim()).filter(Boolean) : target.requirements,
+    estimatedTime: body.estimatedTime !== void 0 ? String(body.estimatedTime).trim() : target.estimatedTime,
+    price: body.price !== void 0 ? String(body.price).trim() : target.price,
+    feeLines: Array.isArray(body.feeLines) ? body.feeLines.map((s) => String(s).trim()).filter(Boolean) : target.feeLines,
+    officialUrl: body.officialUrl !== void 0 ? String(body.officialUrl).trim() : target.officialUrl,
+    stepFlow: Array.isArray(body.stepFlow) ? body.stepFlow.map((s) => String(s).trim()).filter(Boolean) : target.stepFlow,
+    staffChecks: Array.isArray(body.staffChecks) ? body.staffChecks.map((s) => String(s).trim()).filter(Boolean) : target.staffChecks,
+    rejectionReasons: Array.isArray(body.rejectionReasons) ? body.rejectionReasons.map((s) => String(s).trim()).filter(Boolean) : target.rejectionReasons,
+    verifiedBy: actor,
+    updatedAt: nowDate
+  };
+  if (publicationStatus === "published") {
+    const check = validateServiceReadyToPublish(candidateService);
+    if (!check.canPublish) {
+      return res.status(400).json({
+        success: false,
+        error: check.errors[0] || "Cannot publish service with [VERIFY] placeholders remaining.",
+        errors: check.errors,
+        missingFields: check.missingFields
+      });
+    }
+  }
+  const saved = upsertServiceHealthOverride({
+    id: serviceId,
+    publicationStatus,
+    name: candidateService.name,
+    description: candidateService.description,
+    issuingAuthority: candidateService.issuingAuthority,
+    eligibility: candidateService.eligibility,
+    requirements: candidateService.requirements,
+    estimatedTime: candidateService.estimatedTime,
+    price: candidateService.price,
+    feeLines: candidateService.feeLines,
+    officialUrl: candidateService.officialUrl,
+    stepFlow: candidateService.stepFlow,
+    staffChecks: candidateService.staffChecks,
+    rejectionReasons: candidateService.rejectionReasons,
+    verifiedBy: actor,
+    updatedAt: nowDate,
+    updatedBy: actor
+  });
+  addContentHealthLog({
+    postId: serviceId,
+    action: publicationStatus === "published" ? "service_publish" : "service_save",
+    actor,
+    timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+    details: publicationStatus === "published" ? "Verified all service fields and published /service/" + serviceId : "Saved service verification draft edits"
+  });
+  res.json({ success: true, override: saved });
+});
+app.post("/api/staff/content-health/merge-group", authenticateAdmin, (req, res) => {
+  const clusterId = String(req.body?.clusterId || "").trim();
+  const action = String(req.body?.action || "").trim();
+  const cluster = getServiceClusterById(clusterId);
+  if (!cluster) {
+    return res.status(404).json({ success: false, error: "Merge cluster not found." });
+  }
+  const actor = req.adminUser?.email || req.adminUser?.username || "Staff Admin";
+  if (action === "approve") {
+    const mergeRecord = approveServiceMergeGroup(cluster.clusterId, cluster.hubPath, cluster.memberIds, actor);
+    return res.json({
+      success: true,
+      message: `Approved merge for ${cluster.title}: ${cluster.memberIds.length} pages now 301 redirect to ${cluster.hubPath}.`,
+      mergeRecord
+    });
+  }
+  if (action === "revert") {
+    revertServiceMergeGroup(cluster.clusterId, cluster.memberIds, actor);
+    return res.json({
+      success: true,
+      message: `Reverted merge for ${cluster.title}: ${cluster.memberIds.length} service pages restored.`
+    });
+  }
+  return res.status(400).json({ success: false, error: 'Action must be "approve" or "revert".' });
+});
+app.post("/api/staff/content-health/action", authenticateAdmin, (req, res) => {
+  const { id, action, targetId, kind } = req.body || {};
+  const itemId = String(id || "").trim();
+  const itemKind = kind === "service" ? "service" : "post";
+  if (!itemId || !action) {
+    return res.status(400).json({ success: false, error: "Missing id or action." });
+  }
+  const actor = req.adminUser?.email || req.adminUser?.username || "Staff Admin";
+  const nowDate = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+  if (itemKind === "service") {
+    const targetSvc = getAllMergedServices().find((s) => s.id === itemId);
+    if (!targetSvc) {
+      return res.status(404).json({ success: false, error: "Service not found." });
+    }
+    if (action === "set_draft") {
+      upsertServiceHealthOverride({ id: itemId, publicationStatus: "draft", updatedAt: nowDate, updatedBy: actor });
+      addContentHealthLog({ postId: itemId, action: "service_draft", actor, timestamp: (/* @__PURE__ */ new Date()).toISOString(), details: "Moved service to draft (hidden from public & sitemap)" });
+      return res.json({ success: true, message: `Marked service ${itemId} as draft.` });
+    }
+    if (action === "set_published") {
+      const check = validateServiceReadyToPublish(targetSvc);
+      if (!check.canPublish) {
+        return res.status(400).json({
+          success: false,
+          error: check.errors[0] || "Fill all [VERIFY] fields before publishing service.",
+          errors: check.errors,
+          missingFields: check.missingFields
+        });
+      }
+      upsertServiceHealthOverride({ id: itemId, publicationStatus: "published", updatedAt: nowDate, updatedBy: actor });
+      addContentHealthLog({ postId: itemId, action: "service_publish", actor, timestamp: (/* @__PURE__ */ new Date()).toISOString(), details: "Published verified service page" });
+      return res.json({ success: true, message: `Published service ${itemId}.` });
+    }
+    if (action === "mark_noindex") {
+      upsertServiceHealthOverride({ id: itemId, robotsNoindex: true, updatedAt: nowDate, updatedBy: actor });
+      addContentHealthLog({ postId: itemId, action: "mark_noindex", actor, timestamp: (/* @__PURE__ */ new Date()).toISOString(), details: "Set robots noindex, follow on service and removed from sitemap.xml" });
+      return res.json({ success: true, message: `Marked service ${itemId} as noindex, follow.` });
+    }
+    if (action === "clear_noindex") {
+      upsertServiceHealthOverride({ id: itemId, robotsNoindex: false, updatedAt: nowDate, updatedBy: actor });
+      addContentHealthLog({ postId: itemId, action: "clear_noindex", actor, timestamp: (/* @__PURE__ */ new Date()).toISOString(), details: "Cleared manual noindex flag on service" });
+      return res.json({ success: true, message: `Cleared noindex on service ${itemId}.` });
+    }
+    if (action === "merge_301") {
+      const cleanTarget = String(targetId || "").trim();
+      if (!cleanTarget || cleanTarget === itemId) {
+        return res.status(400).json({ success: false, error: "Choose a valid distinct canonical target service or hub path." });
+      }
+      const dest = cleanTarget.startsWith("/") ? cleanTarget : `/service/${cleanTarget}`;
+      upsertServiceHealthOverride({ id: itemId, duplicateOfId: cleanTarget, robotsNoindex: true, updatedAt: nowDate, updatedBy: actor });
+      addContentHealthLog({ postId: itemId, action: "merge_301", actor, timestamp: (/* @__PURE__ */ new Date()).toISOString(), details: `Applied 301 redirect to ${dest} and excluded from sitemap.xml` });
+      return res.json({ success: true, message: `Merged service ${itemId} -> 301 ${dest}.` });
+    }
+    return res.status(400).json({ success: false, error: "Unsupported service action." });
+  }
+  if (action === "set_draft") {
+    upsertPostHealthOverride({ id: itemId, publicationStatus: "draft", updatedAt: nowDate, updatedBy: actor });
+    addContentHealthLog({ postId: itemId, action: "set_draft", actor, timestamp: (/* @__PURE__ */ new Date()).toISOString(), details: "Moved post to draft (hidden from public & sitemap)" });
+    return res.json({ success: true, message: `Marked ${itemId} as draft.` });
+  }
+  if (action === "set_published") {
+    upsertPostHealthOverride({ id: itemId, publicationStatus: "published", updatedAt: nowDate, updatedBy: actor });
+    addContentHealthLog({ postId: itemId, action: "set_published", actor, timestamp: (/* @__PURE__ */ new Date()).toISOString(), details: "Published post live" });
+    return res.json({ success: true, message: `Published ${itemId}.` });
+  }
+  if (action === "mark_noindex") {
+    upsertPostHealthOverride({ id: itemId, robotsNoindex: true, updatedAt: nowDate, updatedBy: actor });
+    addContentHealthLog({ postId: itemId, action: "mark_noindex", actor, timestamp: (/* @__PURE__ */ new Date()).toISOString(), details: "Set robots noindex, follow and removed from sitemap.xml" });
+    return res.json({ success: true, message: `Marked ${itemId} as noindex, follow.` });
+  }
+  if (action === "clear_noindex") {
+    upsertPostHealthOverride({ id: itemId, robotsNoindex: false, updatedAt: nowDate, updatedBy: actor });
+    addContentHealthLog({ postId: itemId, action: "clear_noindex", actor, timestamp: (/* @__PURE__ */ new Date()).toISOString(), details: "Cleared manual noindex flag" });
+    return res.json({ success: true, message: `Cleared noindex on ${itemId}.` });
+  }
+  if (action === "merge_301") {
+    const cleanTarget = String(targetId || "").trim();
+    if (!cleanTarget || cleanTarget === itemId) {
+      return res.status(400).json({ success: false, error: "Choose a valid distinct canonical target post slug." });
+    }
+    upsertPostHealthOverride({ id: itemId, duplicateOfId: cleanTarget, robotsNoindex: true, updatedAt: nowDate, updatedBy: actor });
+    addContentHealthLog({ postId: itemId, action: "merge_301", actor, timestamp: (/* @__PURE__ */ new Date()).toISOString(), details: `Applied 301 redirect to /post/${cleanTarget} and excluded from sitemap.xml` });
+    return res.json({ success: true, message: `Merged ${itemId} -> 301 /post/${cleanTarget}.` });
+  }
+  return res.status(400).json({ success: false, error: "Unsupported action." });
+});
+app.post("/api/staff/content-health/bulk-noindex-class-c", authenticateAdmin, (req, res) => {
+  const rawIds = Array.isArray(req.body?.postIds) ? req.body.postIds : [];
+  if (rawIds.length === 0) {
+    return res.status(400).json({ success: false, error: "No Class C post IDs supplied." });
+  }
+  const actor = req.adminUser?.email || req.adminUser?.username || "Staff Admin";
+  const result = bulkNoindexPostIds(rawIds, actor);
+  res.json({
+    success: true,
+    updatedCount: result.updatedCount,
+    updatedIds: result.updatedIds
+  });
+});
+app.post("/api/staff/content-health/bulk-noindex-class-d", authenticateAdmin, (req, res) => {
+  const postIds = Array.isArray(req.body?.postIds) ? req.body.postIds : [];
+  const serviceIds = Array.isArray(req.body?.serviceIds) ? req.body.serviceIds : [];
+  if (postIds.length === 0 && serviceIds.length === 0) {
+    return res.status(400).json({ success: false, error: "No Class D IDs supplied." });
+  }
+  const actor = req.adminUser?.email || req.adminUser?.username || "Staff Admin";
+  const result = bulkNoindexClassDItems(postIds, serviceIds, actor);
+  res.json({
+    success: true,
+    updatedCount: result.updatedCount,
+    updatedPostIds: result.updatedPostIds,
+    updatedServiceIds: result.updatedServiceIds
   });
 });
 app.post("/api/admin/fetch-official-source", async (req, res) => {
@@ -21337,7 +24063,7 @@ app.get(
             status: sarkariItem.status
           });
         } else {
-          const serviceItem = SERVICES_LIST.find((s) => s.id === rawId);
+          const serviceItem = getAllMergedServices().find((s) => s.id === rawId);
           if (serviceItem) {
             resolvedSpec = buildDeterministicThumbnailSpec({
               id: serviceItem.id,
@@ -21720,7 +24446,7 @@ app.get(["/api/og-image/:id.png", "/api/og-image/:id.webp", "/api/og-image/:id.s
       res.setHeader("Cache-Control", cacheHeader);
       return res.send(buffer2);
     }
-    const serviceItem = SERVICES_LIST.find((s) => s.id === rawId || s.id === decodedId);
+    const serviceItem = getAllMergedServices().find((s) => s.id === rawId || s.id === decodedId);
     if (serviceItem) {
       if (isSvg) {
         const svg = generateServiceOgSvg(serviceItem);
@@ -21815,6 +24541,11 @@ function renderDynamicMetaHtml(rawHtml, req) {
   let breadcrumbItems = [];
   let substantiveBodyHtml = "";
   let matchedJobPost = null;
+  let matchedGuide = null;
+  const publishedGuides = getPublishedMergedGuides(getGuideStates(), GUIDE_ARTICLES);
+  const hasFilterQueryParam = ["tab", "org", "filter", "q", "page", "sort", "calc", "preset", "service"].some(
+    (k) => Boolean(req.query[k])
+  );
   const legalMatch = urlPath.match(/^\/(privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|contact-us|editorial-policy|editorial|refund-policy|refund)$/i);
   const adminMatch = urlPath.match(/^\/(admin|staff)$/i);
   const targetPostId = (matchPost ? matchPost[1] : postParam)?.replace(/\.html?$/i, "");
@@ -21843,7 +24574,7 @@ function renderDynamicMetaHtml(rawHtml, req) {
     description = PRIVATE_NOINDEX_META[adminKey].description;
     canonicalUrl = PRIVATE_NOINDEX_META[adminKey].canonicalUrl;
     robotsContent = PRIVATE_NOINDEX_META[adminKey].robots;
-    substantiveBodyHtml = renderCategorySubstantiveHtml("admin", [], []);
+    substantiveBodyHtml = renderCategorySubstantiveHtml("admin", [], [], publishedGuides);
   } else if (targetPostId) {
     const allSarkari = getAllMergedSarkariPosts().filter(isPublishedSarkariItem);
     const item = allSarkari.find((i) => i.id === targetPostId || i.id === decodeURIComponent(targetPostId));
@@ -21855,7 +24586,7 @@ function renderDynamicMetaHtml(rawHtml, req) {
       ogImage = `${baseOrigin}/api/og-image/${encodeURIComponent(item.id)}.png?v=${thumbHash}`;
       canonicalUrl = `${SITE_ORIGIN}/post/${item.id}`;
       const isDuplicatePost = Boolean(item.duplicateOfId) || Boolean(KNOWN_DUPLICATE_MAP[item.id]);
-      robotsContent = isStaleOver90Days(item) || isDuplicatePost ? "noindex, follow" : "index, follow";
+      robotsContent = isStaleOver90Days(item) || isDuplicatePost || Boolean(item.robotsNoindex) ? "noindex, follow" : "index, follow";
       ogType = "article";
       articlePublishedDate = toIsoDate2(item.postDate);
       const isIgnouPost = isIgnouItem(item);
@@ -21882,16 +24613,45 @@ function renderDynamicMetaHtml(rawHtml, req) {
       robotsContent = PRIVATE_NOINDEX_META.notfound.robots;
       substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
     }
+  } else if (urlPath.toLowerCase().startsWith("/services/cluster/")) {
+    const clusterSlug = decodeURIComponent(urlPath.replace(/^\/services\/cluster\//i, "").split("/")[0] || "");
+    const cluster = getServiceClusterById(clusterSlug);
+    if (cluster) {
+      const mergedServices = getAllMergedServices();
+      const byId = new Map(mergedServices.map((s) => [s.id, s]));
+      const members = cluster.memberIds.map((id) => byId.get(id)).filter((s) => Boolean(s));
+      title = formatSeoTitle(cluster.title);
+      description = formatSeoDescription(cluster.summary);
+      canonicalUrl = `${SITE_ORIGIN}${cluster.hubPath}`;
+      robotsContent = "index, follow";
+      ogType = "website";
+      breadcrumbItems = [
+        { name: "Home", url: `${SITE_ORIGIN}/` },
+        { name: "CSC E-Services", url: `${SITE_ORIGIN}/services` },
+        { name: cluster.title, url: canonicalUrl }
+      ];
+      substantiveBodyHtml = renderServiceClusterHubHtml(cluster, members);
+    } else {
+      isNotFound = true;
+      title = PRIVATE_NOINDEX_META.notfound.title;
+      description = PRIVATE_NOINDEX_META.notfound.description;
+      canonicalUrl = PRIVATE_NOINDEX_META.notfound.canonicalUrl;
+      robotsContent = PRIVATE_NOINDEX_META.notfound.robots;
+      substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
+    }
   } else if (targetServiceId) {
-    const service = SERVICES_LIST.find((s) => s.id === targetServiceId || s.id === decodeURIComponent(targetServiceId));
+    const mergedServices = getAllMergedServices();
+    const service = mergedServices.find(
+      (s) => (s.id === targetServiceId || s.id === decodeURIComponent(targetServiceId)) && s.publicationStatus !== "draft" && s.publicationStatus !== "archived"
+    );
     if (service) {
       title = formatSeoTitle(service.name);
-      const feeText = service.price?.trim() ? ` Fee: ${service.price.trim()}.` : " Fee: Ask us.";
+      const feeText = service.price?.trim() ? ` Fee: ${service.price.trim()}.` : " Fee: [VERIFY].";
       const timeText = service.estimatedTime?.trim() ? ` Typical time: ${service.estimatedTime.trim()}.` : "";
       description = formatSeoDescription(`${service.description}${timeText}${feeText}`);
       ogImage = `${baseOrigin}/api/og-image/${encodeURIComponent(service.id)}.png?v=srv_v3`;
       canonicalUrl = `${SITE_ORIGIN}/service/${service.id}`;
-      robotsContent = "index, follow";
+      robotsContent = service.robotsNoindex || service.duplicateOfId ? "noindex, follow" : "index, follow";
       ogType = "website";
       breadcrumbItems = [
         { name: "Home", url: `${SITE_ORIGIN}/` },
@@ -21908,15 +24668,16 @@ function renderDynamicMetaHtml(rawHtml, req) {
       substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
     }
   } else if (targetSchemeId) {
-    const guide = PUBLISHED_GUIDE_ARTICLES.find((g) => g.id === targetSchemeId || g.id === decodeURIComponent(targetSchemeId));
+    const guide = publishedGuides.find((g) => g.id === targetSchemeId || g.id === decodeURIComponent(targetSchemeId));
     if (guide) {
+      matchedGuide = guide;
       const meta = getSchemeSeoMeta(guide);
       title = meta.title;
       description = meta.description;
       canonicalUrl = meta.canonicalUrl;
       robotsContent = meta.robots;
       ogType = "article";
-      articlePublishedDate = "2026-11-14";
+      articlePublishedDate = toIsoDate2(guide.reviewedAt || guide.lastUpdated) || "2026-11-14";
       breadcrumbItems = meta.breadcrumbs || [];
       substantiveBodyHtml = renderSchemeSubstantiveHtml(guide);
     } else if (matchScheme) {
@@ -21940,7 +24701,7 @@ function renderDynamicMetaHtml(rawHtml, req) {
           title = formatSeoTitle(`${matchedTool.name} - Tools`);
           description = formatSeoDescription(matchedTool.shortDescription);
           canonicalUrl = `${SITE_ORIGIN}/tools/${matchedTool.id}`;
-          robotsContent = "index, follow";
+          robotsContent = hasFilterQueryParam ? "noindex, follow" : "index, follow";
           breadcrumbItems = [
             { name: "Home", url: `${SITE_ORIGIN}/` },
             { name: "Document Tools", url: `${SITE_ORIGIN}/tools` },
@@ -21960,56 +24721,68 @@ function renderDynamicMetaHtml(rawHtml, req) {
         title = meta.title;
         description = meta.description;
         canonicalUrl = meta.canonicalUrl;
-        robotsContent = meta.robots;
+        robotsContent = hasFilterQueryParam ? "noindex, follow" : meta.robots;
         breadcrumbItems = meta.breadcrumbs || [];
-        substantiveBodyHtml = renderCategorySubstantiveHtml("tools", allSarkari, SERVICES_LIST);
+        const visibleServices = getAllMergedServices().filter(
+          (s) => s.publicationStatus !== "draft" && s.publicationStatus !== "archived" && !s.duplicateOfId
+        );
+        substantiveBodyHtml = renderCategorySubstantiveHtml("tools", allSarkari, visibleServices, publishedGuides);
       }
     } else if (urlPath === "/apply") {
       title = PRIVATE_NOINDEX_META.apply.title;
       description = PRIVATE_NOINDEX_META.apply.description;
       canonicalUrl = PRIVATE_NOINDEX_META.apply.canonicalUrl;
       robotsContent = PRIVATE_NOINDEX_META.apply.robots;
-      substantiveBodyHtml = renderCategorySubstantiveHtml("apply", [], []);
+      substantiveBodyHtml = renderCategorySubstantiveHtml("apply", [], [], publishedGuides);
     } else if (trackMatch) {
       title = PRIVATE_NOINDEX_META.track.title;
       description = PRIVATE_NOINDEX_META.track.description;
       canonicalUrl = PRIVATE_NOINDEX_META.track.canonicalUrl;
       robotsContent = PRIVATE_NOINDEX_META.track.robots;
-      substantiveBodyHtml = renderCategorySubstantiveHtml("track", [], []);
+      substantiveBodyHtml = renderCategorySubstantiveHtml("track", [], [], publishedGuides);
     } else if (urlPath.toLowerCase() === "/archive") {
       const allSarkari = getAllMergedSarkariPosts();
       title = ARCHIVE_SEO.title;
       description = ARCHIVE_SEO.description;
       canonicalUrl = ARCHIVE_SEO.canonicalUrl;
-      robotsContent = ARCHIVE_SEO.robots;
+      robotsContent = hasFilterQueryParam ? "noindex, follow" : ARCHIVE_SEO.robots;
       breadcrumbItems = ARCHIVE_SEO.breadcrumbs || [];
       substantiveBodyHtml = renderArchiveSubstantiveHtml(allSarkari);
     } else if (urlPath.toLowerCase() === "/deadlines") {
       const allSarkari = getAllMergedSarkariPosts();
+      const visibleServices = getAllMergedServices().filter(
+        (s) => s.publicationStatus !== "draft" && s.publicationStatus !== "archived" && !s.duplicateOfId
+      );
       title = DEADLINES_SEO.title;
       description = DEADLINES_SEO.description;
       canonicalUrl = DEADLINES_SEO.canonicalUrl;
-      robotsContent = DEADLINES_SEO.robots;
+      robotsContent = hasFilterQueryParam ? "noindex, follow" : DEADLINES_SEO.robots;
       breadcrumbItems = DEADLINES_SEO.breadcrumbs || [];
-      substantiveBodyHtml = renderCategorySubstantiveHtml("deadlines", allSarkari, SERVICES_LIST);
+      substantiveBodyHtml = renderCategorySubstantiveHtml("deadlines", allSarkari, visibleServices, publishedGuides);
     } else if (urlPath.toLowerCase() === "/education/ignou") {
       const allSarkari = getAllMergedSarkariPosts();
+      const visibleServices = getAllMergedServices().filter(
+        (s) => s.publicationStatus !== "draft" && s.publicationStatus !== "archived" && !s.duplicateOfId
+      );
       title = IGNOU_EDUCATION_SEO.title;
       description = IGNOU_EDUCATION_SEO.description;
       canonicalUrl = IGNOU_EDUCATION_SEO.canonicalUrl;
-      robotsContent = IGNOU_EDUCATION_SEO.robots;
+      robotsContent = hasFilterQueryParam ? "noindex, follow" : IGNOU_EDUCATION_SEO.robots;
       breadcrumbItems = IGNOU_EDUCATION_SEO.breadcrumbs || [];
-      substantiveBodyHtml = renderCategorySubstantiveHtml("ignou", allSarkari, SERVICES_LIST);
+      substantiveBodyHtml = renderCategorySubstantiveHtml("ignou", allSarkari, visibleServices, publishedGuides);
     } else if (categoryMatch) {
       const catKey = categoryMatch[1].toLowerCase();
       const meta = getCategorySeoMeta(catKey);
       const allSarkari = getAllMergedSarkariPosts();
+      const visibleServices = getAllMergedServices().filter(
+        (s) => s.publicationStatus !== "draft" && s.publicationStatus !== "archived" && !s.duplicateOfId
+      );
       title = meta.title;
       description = meta.description;
       canonicalUrl = meta.canonicalUrl;
-      robotsContent = meta.robots;
+      robotsContent = hasFilterQueryParam ? "noindex, follow" : meta.robots;
       breadcrumbItems = meta.breadcrumbs || [];
-      substantiveBodyHtml = renderCategorySubstantiveHtml(catKey, allSarkari, SERVICES_LIST);
+      substantiveBodyHtml = renderCategorySubstantiveHtml(catKey, allSarkari, visibleServices, publishedGuides);
     } else if (urlPath === "/dev/thumbnails") {
       title = "Thumbnail Preview Matrix | CSC DOST";
       description = "Internal development preview for generated OG images and list thumbnails.";
@@ -22018,14 +24791,22 @@ function renderDynamicMetaHtml(rawHtml, req) {
       substantiveBodyHtml = "<h1>Thumbnail Preview Matrix</h1><p>Internal thumbnail review view (noindex).</p>";
     } else if (urlPath === "/") {
       const allSarkari = getAllMergedSarkariPosts();
+      const visibleServices = getAllMergedServices().filter(
+        (s) => s.publicationStatus !== "draft" && s.publicationStatus !== "archived" && !s.duplicateOfId
+      );
       const waCfg = getWhatsAppPublisherConfig();
       const rawChannel = typeof waCfg.channelUrl === "string" ? waCfg.channelUrl.trim() : "";
       const hasChannel = /^https?:\/\/(www\.)?whatsapp\.com\/channel\//i.test(rawChannel);
       const rawGroup = typeof waCfg.groupInviteUrl === "string" && waCfg.groupInviteUrl.trim() ? waCfg.groupInviteUrl.trim() : "https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI";
-      substantiveBodyHtml = renderHomepageSubstantiveHtml(allSarkari, SERVICES_LIST, {
-        whatsappUrl: hasChannel ? rawChannel : rawGroup,
-        whatsappType: hasChannel ? "channel" : "group"
-      });
+      substantiveBodyHtml = renderHomepageSubstantiveHtml(
+        allSarkari,
+        visibleServices,
+        {
+          whatsappUrl: hasChannel ? rawChannel : rawGroup,
+          whatsappType: hasChannel ? "channel" : "group"
+        },
+        publishedGuides
+      );
     } else {
       isNotFound = true;
       title = PRIVATE_NOINDEX_META.notfound.title;
@@ -22075,7 +24856,8 @@ function renderDynamicMetaHtml(rawHtml, req) {
   html = html.replace(/<meta\s+name=["']twitter:image["']\s+content=["'][\s\S]*?["']\s*\/?>/i, () => `<meta name="twitter:image" content="${safeOgImage}" />`);
   html = html.replace(/<meta\s+name=["']twitter:image:alt["']\s+content=["'][\s\S]*?["']\s*\/?>/i, () => `<meta name="twitter:image:alt" content="${safeAttrTitle}" />`);
   if (ogType === "article") {
-    const articleModifiedDate = matchedJobPost ? toIsoDate(matchedJobPost.updatedAt || matchedJobPost.postDate) || articlePublishedDate : articlePublishedDate;
+    const articleModifiedDate = matchedJobPost ? toIsoDate(matchedJobPost.updatedAt || matchedJobPost.postDate) || articlePublishedDate : matchedGuide ? toIsoDate2(matchedGuide.reviewedAt || matchedGuide.lastUpdated) || articlePublishedDate : articlePublishedDate;
+    const guideReviewer = matchedGuide?.reviewedBy || "Wasim Ahmad Khanday";
     const articleLd = {
       "@context": "https://schema.org",
       "@type": "Article",
@@ -22093,7 +24875,7 @@ function renderDynamicMetaHtml(rawHtml, req) {
         },
         {
           "@type": "Person",
-          "name": "Wasim Ahmad Khanday"
+          "name": guideReviewer
         }
       ],
       "publisher": {
@@ -22143,7 +24925,7 @@ ${JSON.stringify(breadcrumbLd, null, 2)}
 app.get("/sitemap.xml", (req, res) => {
   try {
     const BASE_URL = SITE_ORIGIN;
-    const VERIFIED_STATIC_DATE = "2026-11-14";
+    const VERIFIED_STATIC_DATE = "2026-11-18";
     const staticPages = [
       { loc: "/", changefreq: "daily", priority: "1.0" },
       { loc: "/deadlines", changefreq: "daily", priority: "0.9" },
@@ -22164,6 +24946,7 @@ app.get("/sitemap.xml", (req, res) => {
       { loc: "/refund-policy", changefreq: "monthly", priority: "0.5" }
     ];
     const allSarkari = getAllMergedSarkariPosts().filter(isPublishedSarkariItem);
+    const publishedGuides = getPublishedMergedGuides(getGuideStates(), GUIDE_ARTICLES);
     const seenPostIds = /* @__PURE__ */ new Set();
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
     xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n';
@@ -22186,7 +24969,7 @@ app.get("/sitemap.xml", (req, res) => {
       if (!post.id || seenPostIds.has(post.id)) continue;
       seenPostIds.add(post.id);
       const isDuplicatePost = Boolean(post.duplicateOfId) || Boolean(KNOWN_DUPLICATE_MAP[post.id]);
-      if (isStaleOver90Days(post) || isOlderThan12Months(post) || isDuplicatePost) {
+      if (isStaleOver90Days(post) || isOlderThan12Months(post) || isDuplicatePost || Boolean(post.robotsNoindex)) {
         continue;
       }
       const safeDate = toIsoDate(post.updatedAt || post.postDate) || toIsoDate(post.lastDate) || VERIFIED_STATIC_DATE;
@@ -22199,17 +24982,34 @@ app.get("/sitemap.xml", (req, res) => {
       xml += "    <priority>0.8</priority>\n";
       xml += "  </url>\n";
     }
-    for (const s of SERVICES_LIST) {
+    const mergedServices = getAllMergedServices();
+    const approvedMerges = getApprovedServiceMerges();
+    for (const s of mergedServices) {
+      if (s.publicationStatus === "draft" || s.publicationStatus === "archived" || s.duplicateOfId || s.robotsNoindex) {
+        continue;
+      }
       xml += "  <url>\n";
       xml += `    <loc>${BASE_URL}/service/${encodeURIComponent(s.id)}</loc>
 `;
-      xml += `    <lastmod>${VERIFIED_STATIC_DATE}</lastmod>
+      xml += `    <lastmod>${s.updatedAt || VERIFIED_STATIC_DATE}</lastmod>
 `;
       xml += "    <changefreq>monthly</changefreq>\n";
       xml += "    <priority>0.8</priority>\n";
       xml += "  </url>\n";
     }
-    for (const g of PUBLISHED_GUIDE_ARTICLES) {
+    for (const c of SERVICE_MERGE_CLUSTERS) {
+      if (approvedMerges[c.clusterId]?.approved) {
+        xml += "  <url>\n";
+        xml += `    <loc>${BASE_URL}${c.hubPath}</loc>
+`;
+        xml += `    <lastmod>${VERIFIED_STATIC_DATE}</lastmod>
+`;
+        xml += "    <changefreq>monthly</changefreq>\n";
+        xml += "    <priority>0.8</priority>\n";
+        xml += "  </url>\n";
+      }
+    }
+    for (const g of publishedGuides) {
       xml += "  <url>\n";
       xml += `    <loc>${BASE_URL}/scheme/${encodeURIComponent(g.id)}</loc>
 `;
@@ -22248,8 +25048,12 @@ app.get("/robots.txt", (req, res) => {
 app.use(express.static(path4.join(process.cwd(), "public"), { index: false }));
 if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
   const distPath = path4.join(process.cwd(), "dist");
+  const distAssetsPath = path4.join(distPath, "assets");
   const indexHtmlPath = path4.join(distPath, "index.html");
   const rootHtmlPath = path4.join(process.cwd(), "index.html");
+  if (fs4.existsSync(distAssetsPath)) {
+    app.use("/assets", express.static(distAssetsPath, { index: false, maxAge: "365d", immutable: true }));
+  }
   if (fs4.existsSync(distPath)) {
     app.use(express.static(distPath, { index: false }));
   }
@@ -22263,6 +25067,7 @@ if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
         const indexHtml = fs4.readFileSync(targetHtmlPath, "utf-8");
         const { html: dynamicHtml, isNotFound } = renderDynamicMetaHtml(indexHtml, req);
         res.setHeader("Content-Type", "text/html; charset=utf-8");
+        res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
         if (isNotFound) {
           return res.status(404).send(dynamicHtml);
         }
@@ -22295,6 +25100,7 @@ async function startServer() {
         const transformedHtml = await vite.transformIndexHtml(url, indexHtml);
         const { html: finalHtml, isNotFound } = renderDynamicMetaHtml(transformedHtml, req);
         res.setHeader("Content-Type", "text/html; charset=utf-8");
+        res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
         if (isNotFound) {
           return res.status(404).send(finalHtml);
         }

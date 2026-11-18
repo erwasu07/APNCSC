@@ -1,20 +1,25 @@
 import React, { useEffect, useMemo } from 'react';
 import {
+  AlertTriangle,
   ArrowLeft,
   ArrowRight,
   Banknote,
+  Building2,
+  CheckSquare,
   Clock,
   ExternalLink,
   FileCheck,
+  GitMerge,
   MessageCircle,
   PhoneCall,
   Printer,
   Share2,
-  ShieldAlert,
+  UserCheck,
 } from 'lucide-react';
 import { ServiceItem, CATEGORY_LABELS, SERVICES_LIST } from '../servicesData';
 import { buildServiceWhatsAppNotification } from '../utils/whatsappFormatter';
 import { useLanguage } from '../contexts/LanguageContext';
+import { deriveStoredServiceFacts, getClusterForServiceId } from '../utils/serviceMetadata';
 import {
   AdSlot,
   AlertsBox,
@@ -22,22 +27,30 @@ import {
   Card,
   ChecklistWithProgress,
   Chip,
-  FaqAccordion,
   HelpApplyingCard,
   StickyMobileActionBar,
-  type FaqItem,
 } from './ui';
 
 interface ServiceDedicatedPageViewProps {
   service: ServiceItem;
+  allServices?: ServiceItem[];
   onBack: () => void;
   onApplyService: (serviceName: string) => void;
   onShare: (service: ServiceItem) => void;
   onNavigateRoute?: (path: string) => void;
 }
 
+function VerifyBadge({ label = '[VERIFY]' }: { label?: string }) {
+  return (
+    <span className="inline-flex items-center px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 font-mono text-xs font-bold">
+      {label}
+    </span>
+  );
+}
+
 export default function ServiceDedicatedPageView({
   service,
+  allServices = SERVICES_LIST,
   onBack,
   onApplyService,
   onShare,
@@ -46,105 +59,8 @@ export default function ServiceDedicatedPageView({
   const { t } = useLanguage();
 
   const categoryTitle = CATEGORY_LABELS[service.category] || 'CSC E-Services';
-  const feeDisplay =
-    service.price && service.price.trim().length > 0 ? service.price.trim() : t.servicesAskUs;
-  const timeDisplay =
-    service.estimatedTime && service.estimatedTime.trim().length > 0
-      ? service.estimatedTime.trim()
-      : '';
-  const docsList = useMemo(
-    () =>
-      Array.isArray(service.requirements)
-        ? service.requirements.filter((r) => Boolean(r && r.trim()))
-        : [],
-    [service.requirements]
-  );
-
-  const officialPortal = useMemo(() => {
-    if (service.officialUrl && service.officialUrl.trim().length > 0) {
-      return {
-        name: 'Official Portal',
-        url: service.officialUrl.trim(),
-      };
-    }
-
-    // For all cards_adda services without an explicit officialUrl in data, do not guess portal URLs
-    if (service.category === 'cards_adda') {
-      return null;
-    }
-
-    const sId = service.id.toLowerCase();
-    const sName = service.name.toLowerCase();
-
-    if (sId.includes('pan') || sName.includes('pan')) {
-      return {
-        name: 'NSDL Protean / Income Tax Portal',
-        url: 'https://www.onlineservices.nsdl.com/paam/endUserRegisterContact.html',
-      };
-    }
-    if (sId.includes('aadhaar') || sName.includes('aadhaar')) {
-      return {
-        name: 'Unique Identification Authority of India (UIDAI)',
-        url: 'https://myaadhaar.uidai.gov.in',
-      };
-    }
-    if (sId.includes('ayushman') || sName.includes('ayushman') || sName.includes('golden')) {
-      return {
-        name: 'National Health Authority (NHA Beneficiary Portal)',
-        url: 'https://beneficiary.nha.gov.in',
-      };
-    }
-    if (sId.includes('voter') || sName.includes('voter')) {
-      return {
-        name: 'Election Commission of India (ECI Voters Portal)',
-        url: 'https://voters.eci.gov.in',
-      };
-    }
-    if (sId.includes('pmkisan') || sName.includes('kisan')) {
-      return {
-        name: 'PM-KISAN Official Portal (Ministry of Agriculture)',
-        url: 'https://pmkisan.gov.in',
-      };
-    }
-    if (sId.includes('passport') || sName.includes('passport')) {
-      return {
-        name: 'Passport Seva Online (Ministry of External Affairs)',
-        url: 'https://www.passportindia.gov.in',
-      };
-    }
-    if (
-      sId.includes('parivahan') ||
-      sId.includes('dl') ||
-      sId.includes('driving') ||
-      sName.includes('license') ||
-      sName.includes('rc')
-    ) {
-      return {
-        name: 'Parivahan Sewa (Ministry of Road Transport & Highways)',
-        url: 'https://parivahan.gov.in',
-      };
-    }
-    if (sId.includes('shram') || sName.includes('shram')) {
-      return {
-        name: 'Ministry of Labour & Employment (e-Shram Portal)',
-        url: 'https://eshram.gov.in',
-      };
-    }
-    if (
-      sId.includes('domicile') ||
-      sId.includes('unnat') ||
-      sName.includes('domicile') ||
-      sName.includes('revenue') ||
-      service.category === 'jk_state' ||
-      service.category === 'revenue'
-    ) {
-      return {
-        name: 'e-UNNAT & Jan Sugam J&K Citizen Services Portal',
-        url: 'https://eunnat.jk.gov.in',
-      };
-    }
-    return null;
-  }, [service]);
+  const facts = useMemo(() => deriveStoredServiceFacts(service), [service]);
+  const cluster = useMemo(() => getClusterForServiceId(service.id), [service.id]);
 
   const whatsappShareUrl = useMemo(
     () => buildServiceWhatsAppNotification(service).whatsappShareUrl,
@@ -156,7 +72,6 @@ export default function ServiceDedicatedPageView({
     return `https://wa.me/917006833767?text=${encodeURIComponent(msg)}`;
   }, [service]);
 
-  // Inject Service JSON-LD schema cleanly
   useEffect(() => {
     const scriptId = 'csc-service-schema';
     let scriptEl = document.getElementById(scriptId) as HTMLScriptElement | null;
@@ -196,74 +111,11 @@ export default function ServiceDedicatedPageView({
     };
   }, [service, categoryTitle]);
 
-  const processSteps = useMemo(
-    () => [
-      {
-        title: 'Confirm service requirements and fee before applying',
-        description: `Review the required documents below and confirm applicable charges (${feeDisplay}) with CSC DOST on +91 70068 33767 or WhatsApp before proceeding. Final charges depend on the service and any government fee.`,
-      },
-      {
-        title: 'Submit details & supporting documents',
-        description: `Click "${t.servicesApplyOnline}" or visit our Sangran Qazigund facilitation desk with clear copies/originals of the documents listed for ${service.name}.`,
-      },
-      {
-        title: 'Portal verification & filing',
-        description: officialPortal
-          ? `Your application or request is prepared and submitted on ${officialPortal.name} with required OTP or biometric verification where applicable.`
-          : 'Your request is prepared and processed with required OTP, verification, or document checks where applicable.',
-      },
-      {
-        title: 'Save acknowledgment & track progress',
-        description:
-          'Receive your submission acknowledgment or tracking reference token. Issuing authority timelines apply for final verification and issuance.',
-      },
-    ],
-    [feeDisplay, officialPortal, service.name, t.servicesApplyOnline]
-  );
-
-  const serviceFaqs: FaqItem[] = useMemo(() => {
-    const docsAnswer =
-      docsList.length > 0
-        ? `Listed documents for ${service.name}: ${docsList.join(', ')}. Additional verification may be requested by the issuing authority depending on your case.`
-        : `Required documents depend on your specific application case. Contact Wasim Ahmad Khanday on +91 70068 33767 or WhatsApp before visiting.`;
-
-    const feeAnswer =
-      service.price && service.price.trim().length > 0
-        ? `The listed reference charge is ${service.price.trim()}. Final charges depend on the service and any government fee. Please confirm before applying.`
-        : `Fee details are confirmed upon checking your request ("Ask us"). Final charges depend on the service and any government fee. Please confirm before applying.`;
-
-    const timeAnswer = timeDisplay
-      ? `Indicative timeline noted in the service entry is ${timeDisplay}. Actual completion depends on departmental verification and portal processing.`
-      : `Processing time varies by department verification and application type. Contact us on +91 70068 33767 for current turnaround expectations.`;
-
-    return [
-      {
-        question: `What documents are needed for ${service.name}?`,
-        answer: docsAnswer,
-      },
-      {
-        question: `What are the charges for ${service.name}?`,
-        answer: feeAnswer,
-      },
-      {
-        question: `How long does ${service.name} typically take?`,
-        answer: timeAnswer,
-      },
-      {
-        question: 'Can I get help with this service at CSC DOST?',
-        answer: officialPortal
-          ? `Yes. You can apply directly via ${officialPortal.name} (${officialPortal.url}), or contact CSC DOST (+91 70068 33767) operated by Authorized CSC VLE Wasim Ahmad Khanday (VLE ID 212515670018) for assisted document preparation and online filing.`
-          : `Yes. Contact CSC DOST (+91 70068 33767) operated by Authorized CSC VLE Wasim Ahmad Khanday (VLE ID 212515670018) at Sangran Qazigund, Anantnag for document verification and assisted processing.`,
-      },
-    ];
-  }, [docsList, officialPortal, service.name, service.price, timeDisplay]);
-
   const relatedServices = useMemo(() => {
-    return SERVICES_LIST.filter((s) => s.id !== service.id && s.category === service.category).slice(
-      0,
-      4
-    );
-  }, [service]);
+    return allServices
+      .filter((s) => s.id !== service.id && s.category === service.category && !s.duplicateOfId)
+      .slice(0, 4);
+  }, [allServices, service]);
 
   const navigateRoute = (href: string) => {
     if (href === '/services') {
@@ -301,25 +153,38 @@ export default function ServiceDedicatedPageView({
           }
         />
 
-        {/* Transparency & Fee Confirmation Notice */}
-        <div
-          role="note"
-          className="rounded-2xl border border-[var(--status-closing-border)] bg-[var(--status-closing-bg)] p-3.5 sm:p-4 flex items-start gap-3 text-start"
-        >
-          <ShieldAlert
-            className="w-5 h-5 text-[var(--status-closing-text)] shrink-0 mt-0.5"
-            aria-hidden="true"
-          />
-          <p className="text-xs sm:text-sm font-semibold text-[var(--text-primary)] leading-relaxed m-0">
-            {t.servicesFeeNote}
-          </p>
-        </div>
+        {cluster && (
+          <div className="rounded-2xl border border-sky-500/30 bg-sky-500/10 p-3.5 flex flex-wrap items-center justify-between gap-2 text-start">
+            <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-[var(--text-primary)]">
+              <GitMerge className="w-4 h-4 text-sky-600 shrink-0" aria-hidden="true" />
+              <span>
+                Part of <strong>{cluster.title}</strong>
+              </span>
+            </div>
+            <a
+              href={cluster.hubPath}
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && e.button === 0) {
+                  e.preventDefault();
+                  navigateRoute(cluster.hubPath);
+                }
+              }}
+              className="text-xs font-bold text-sky-700 dark:text-sky-300 underline"
+            >
+              Compare All in Hub →
+            </a>
+          </div>
+        )}
 
         {/* Service Header Card */}
         <header className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-4 sm:p-6 space-y-4 text-start shadow-2xs">
           <div className="flex flex-wrap items-center gap-2">
             <Chip variant="verified">{categoryTitle}</Chip>
-            <Chip>{t.independentChip}</Chip>
+            {facts.hasVerifyPlaceholders ? (
+              <VerifyBadge label={`Needs Staff Verification (${facts.missingVerifyFields.length} [VERIFY])`} />
+            ) : (
+              <Chip variant="verified">Verified Service Sheet</Chip>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -334,50 +199,48 @@ export default function ServiceDedicatedPageView({
             </p>
           </div>
 
-          {/* Summary Strip: Fee (or "Ask us"), Typical Time (only if present), Documents Count, Official Portal */}
+          {/* Service-Specific Snapshot: Authority, Fees, Processing Time */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-2.5 pt-1">
+            <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-3.5">
+              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
+                <Building2 className="w-4 h-4 text-[#101A36] dark:text-[#93C5FD] shrink-0" aria-hidden="true" />
+                <span>Issuing Authority</span>
+              </div>
+              <div className="text-sm sm:text-base font-bold text-[var(--text-primary)] mt-1 leading-snug">
+                {facts.authorityFromStoredData ? facts.issuingAuthority : <VerifyBadge />}
+              </div>
+            </div>
+
             <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-3.5">
               <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
                 <Banknote className="w-4 h-4 text-[#1F9D6B] shrink-0" aria-hidden="true" />
                 <span>{t.servicesFeeLabel}</span>
               </div>
-              {Array.isArray(service.feeLines) && service.feeLines.length > 0 ? (
+              {facts.feeLines.length > 0 ? (
                 <div className="text-sm sm:text-base font-bold text-[var(--text-primary)] mt-1 leading-snug space-y-1">
-                  {service.feeLines.map((line, idx) => (
+                  {facts.feeLines.map((line, idx) => (
                     <div key={`${service.id}-summary-fee-${idx}`}>{line}</div>
                   ))}
                 </div>
               ) : (
                 <div className="text-sm sm:text-base font-bold text-[var(--text-primary)] mt-1 leading-snug">
-                  {feeDisplay}
+                  {facts.feesFromStoredData ? facts.feesText : <VerifyBadge label={facts.feesText} />}
                 </div>
               )}
             </div>
 
-            {timeDisplay && (
-              <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-3.5">
-                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
-                  <Clock className="w-4 h-4 text-[#2563EB] shrink-0" aria-hidden="true" />
-                  <span>{t.servicesTypicalTime}</span>
-                </div>
-                <div className="text-sm sm:text-base font-bold text-[var(--text-primary)] mt-1 leading-snug">
-                  {timeDisplay}
-                </div>
-              </div>
-            )}
-
             <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-3.5">
               <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
-                <FileCheck className="w-4 h-4 text-[#D97706] shrink-0" aria-hidden="true" />
-                <span>{t.servicesDocsNeeded}</span>
+                <Clock className="w-4 h-4 text-[#2563EB] shrink-0" aria-hidden="true" />
+                <span>Processing Time</span>
               </div>
-              <div className="text-sm sm:text-base font-bold text-[var(--text-primary)] mt-1 leading-snug tabular-nums">
-                {docsList.length > 0 ? `${docsList.length} listed items` : t.servicesAskUs}
+              <div className="text-sm sm:text-base font-bold text-[var(--text-primary)] mt-1 leading-snug">
+                {facts.timeFromStoredData ? facts.estimatedTime : <VerifyBadge />}
               </div>
             </div>
           </div>
 
-          {/* Primary Actions: Enquire on WhatsApp, Call +91 70068 33767, Apply Online, Official Portal */}
+          {/* Primary Actions */}
           <div className="pt-3 border-t border-[var(--border-default)] flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2.5">
               <a
@@ -396,7 +259,7 @@ export default function ServiceDedicatedPageView({
               >
                 <PhoneCall className="w-4 h-4 text-[#F5A623] shrink-0" aria-hidden="true" />
                 <span dir="ltr" className="tabular-nums">
-                  {t.servicesCallBtn} +91 70068 33767
+                  +91 70068 33767
                 </span>
               </a>
 
@@ -411,14 +274,14 @@ export default function ServiceDedicatedPageView({
             </div>
 
             <div className="flex items-center gap-2">
-              {officialPortal && (
+              {facts.officialPortalUrl && (
                 <a
-                  href={officialPortal.url}
+                  href={facts.officialPortalUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-default)] font-semibold text-sm inline-flex items-center gap-1.5 no-underline"
                 >
-                  <span>{t.officialPortalBtn}</span>
+                  <span>{facts.officialPortalLabel || t.officialPortalBtn}</span>
                   <ExternalLink className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                 </a>
               )}
@@ -448,94 +311,128 @@ export default function ServiceDedicatedPageView({
 
         <AdSlot />
 
-        {/* Main Content Stack */}
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-5 lg:gap-6 items-start">
-          {/* LEFT MAIN COLUMN */}
+          {/* LEFT MAIN COLUMN: 8 SERVICE-SPECIFIC SECTIONS */}
           <div className="min-w-0 space-y-5">
-            {/* Documents Checklist (Strictly from data; shows Ask us if none listed) */}
-            {docsList.length > 0 ? (
+            {/* 4. Who Is Eligible */}
+            <Card className="p-4 sm:p-5 space-y-2 text-start">
+              <div className="flex items-center gap-2">
+                <UserCheck className="w-4 h-4 text-[#1F9D6B] shrink-0" aria-hidden="true" />
+                <h2 className="text-lg font-bold text-[var(--text-primary)] m-0">
+                  Who Is Eligible — {service.name}
+                </h2>
+              </div>
+              {facts.eligibilityFromStoredData ? (
+                <p className="text-sm text-[var(--text-secondary)] leading-relaxed m-0">
+                  {facts.eligibility}
+                </p>
+              ) : (
+                <p className="text-sm text-amber-700 dark:text-amber-300 m-0">
+                  Eligibility criteria for {service.name}: <VerifyBadge />
+                </p>
+              )}
+            </Card>
+
+            {/* 5. Exact Documents Checklist */}
+            {facts.requirements.length > 0 ? (
               <div id="service-documents" className="scroll-mt-20">
                 <ChecklistWithProgress
-                  title={t.servicesDocsChecklistTitle}
-                  items={docsList}
+                  title={`Exact Documents List — ${service.name}`}
+                  items={facts.requirements}
                   storageKey={`service_docs_${service.id}`}
-                  note={`Bring clear originals or legible scans. ${t.servicesFeeNote}`}
                 />
               </div>
             ) : (
-              <Card className="p-5 space-y-2 text-start">
-                <h2 className="text-lg font-bold text-[var(--text-primary)] m-0">
-                  {t.servicesDocsChecklistTitle}
-                </h2>
-                <p className="text-sm text-[var(--text-secondary)] m-0">
-                  {t.servicesAskUs} — document requirements depend on your specific application case.
+              <Card className="p-4 sm:p-5 space-y-2 text-start">
+                <div className="flex items-center gap-2">
+                  <FileCheck className="w-4 h-4 text-[#D97706] shrink-0" aria-hidden="true" />
+                  <h2 className="text-lg font-bold text-[var(--text-primary)] m-0">
+                    Exact Documents List — {service.name}
+                  </h2>
+                </div>
+                <p className="text-sm text-amber-700 dark:text-amber-300 m-0">
+                  Required documents for {service.name}: <VerifyBadge />
                 </p>
               </Card>
             )}
 
-            {/* Process Steps */}
-            <section
-              id="service-process-steps"
-              aria-label={t.servicesProcessStepsTitle}
-              className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-4 sm:p-5 space-y-3.5 text-start scroll-mt-20"
-            >
-              <div className="space-y-1">
-                <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)] m-0">
-                  {t.servicesProcessStepsTitle}
-                </h2>
-                <p className="text-sm text-[var(--text-secondary)] m-0">
-                  {officialPortal ? (
-                    <>
-                      How CSC DOST helps prepare and submit your request, or apply independently via{' '}
-                      <a
-                        href={officialPortal.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-semibold text-[#1F9D6B] hover:underline"
-                      >
-                        {officialPortal.name}
-                      </a>
-                      .
-                    </>
-                  ) : (
-                    'How CSC DOST helps verify documents, prepare your request, and confirm applicable charges.'
-                  )}
+            {/* 6. Step-by-Step Flow */}
+            <Card className="p-4 sm:p-5 space-y-3 text-start">
+              <h2 className="text-lg font-bold text-[var(--text-primary)] m-0">
+                Step-by-Step Flow — {service.name}
+              </h2>
+              {facts.stepFlowFromStoredData ? (
+                <ol className="space-y-2 list-decimal pl-5 m-0 text-sm text-[var(--text-secondary)]">
+                  {facts.stepFlow.map((step, idx) => (
+                    <li key={`${service.id}-step-${idx}`} className="leading-relaxed">
+                      {step}
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="text-sm text-amber-700 dark:text-amber-300 m-0">
+                  Application workflow for {service.name}: <VerifyBadge />
                 </p>
+              )}
+            </Card>
+
+            {/* 7. Common Rejection Reasons */}
+            <Card className="p-4 sm:p-5 space-y-3 text-start">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" aria-hidden="true" />
+                <h2 className="text-lg font-bold text-[var(--text-primary)] m-0">
+                  Common Rejection Reasons — {service.name}
+                </h2>
               </div>
+              {facts.rejectionReasonsFromStoredData ? (
+                <ul className="space-y-2 list-disc pl-5 m-0 text-sm text-[var(--text-secondary)]">
+                  {facts.rejectionReasons.map((reason, idx) => (
+                    <li key={`${service.id}-reject-${idx}`} className="leading-relaxed">
+                      {reason}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-amber-700 dark:text-amber-300 m-0">
+                  Rejection causes for {service.name}: <VerifyBadge />
+                </p>
+              )}
+            </Card>
 
-              <ol className="space-y-2.5 list-none m-0 p-0">
-                {processSteps.map((step, idx) => (
-                  <li
-                    key={step.title}
-                    className="flex items-start gap-3 p-3.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-default)]"
-                  >
-                    <span className="w-7 h-7 rounded-lg bg-[#101A36] dark:bg-[#F5A623] text-white dark:text-[#101A36] text-xs font-extrabold tabular-nums flex items-center justify-center shrink-0 mt-0.5">
-                      {idx + 1}
-                    </span>
-                    <div className="space-y-1 min-w-0">
-                      <h3 className="text-sm sm:text-base font-bold text-[var(--text-primary)] m-0">
-                        {step.title}
-                      </h3>
-                      <p className="text-sm text-[var(--text-secondary)] leading-relaxed m-0">
-                        {step.description}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
+            {/* 8. What CSC DOST Staff Check Before Submitting */}
+            <Card className="p-4 sm:p-5 space-y-3 text-start">
+              <div className="flex items-center gap-2">
+                <CheckSquare className="w-4 h-4 text-[#1F9D6B] shrink-0" aria-hidden="true" />
+                <h2 className="text-lg font-bold text-[var(--text-primary)] m-0">
+                  What CSC DOST Staff Check Before Submitting
+                </h2>
+              </div>
+              {facts.staffChecksFromStoredData ? (
+                <ul className="space-y-2 list-disc pl-5 m-0 text-sm text-[var(--text-secondary)]">
+                  {facts.staffChecks.map((chk, idx) => (
+                    <li key={`${service.id}-check-${idx}`} className="leading-relaxed">
+                      {chk}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-amber-700 dark:text-amber-300 m-0">
+                  Pre-submission checks for {service.name}: <VerifyBadge />
+                </p>
+              )}
+            </Card>
 
-              <p className="text-xs font-semibold text-[var(--text-muted)] m-0 pt-1">
-                {t.servicesFeeNote}
-              </p>
-            </section>
-
-            {/* Help Applying Card (Wasim Ahmad Khanday · VLE ID 212515670018 · Call & WhatsApp) */}
             <HelpApplyingCard contextTitle={service.name} />
 
-            {/* FAQ Accordion with FAQPage JSON-LD */}
-            <div id="service-faqs" className="scroll-mt-20">
-              <FaqAccordion items={serviceFaqs} title={t.servicesFaqTitle} injectSchema />
-            </div>
+            {/* Compact Collapsed Boilerplate (Disclaimer & Generic FAQ) */}
+            <details className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-4 text-start">
+              <summary className="text-sm font-bold text-[var(--text-primary)] cursor-pointer select-none">
+                Independent Disclaimer &amp; General Desk FAQ
+              </summary>
+              <p className="mt-2 mb-0 text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed">
+                CSC DOST is an independent private CSC facilitation desk (VLE 212515670018, Sangran Qazigund, Anantnag), not a government portal. Final statutory fees and processing timelines depend on the competent issuing authority. Confirm details on +91 70068 33767 before payment.
+              </p>
+            </details>
 
             <AdSlot />
           </div>
@@ -545,10 +442,10 @@ export default function ServiceDedicatedPageView({
             <Card className="p-4 sm:p-5 space-y-3.5 text-start">
               <div className="space-y-1">
                 <h2 className="text-base font-extrabold text-[var(--text-primary)] m-0">
-                  Direct Enquiry &amp; Support
+                  Direct Desk Support
                 </h2>
-                <p className="text-sm text-[var(--text-secondary)] leading-relaxed m-0">
-                  Confirm required documents, government fee, and service charges before submitting.
+                <p className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed m-0">
+                  Verify document eligibility and exact charges for {service.name} prior to filing.
                 </p>
               </div>
 
@@ -569,7 +466,7 @@ export default function ServiceDedicatedPageView({
                 >
                   <PhoneCall className="w-4 h-4 text-[#F5A623] shrink-0" aria-hidden="true" />
                   <span dir="ltr" className="tabular-nums">
-                    {t.servicesCallBtn} · +91 70068 33767
+                    +91 70068 33767
                   </span>
                 </a>
 
@@ -581,13 +478,8 @@ export default function ServiceDedicatedPageView({
                   <span>{t.servicesApplyOnline}</span>
                 </button>
               </div>
-
-              <p className="text-xs text-[var(--text-muted)] leading-relaxed m-0 pt-2 border-t border-[var(--border-default)]">
-                {t.servicesFeeNote}
-              </p>
             </Card>
 
-            {/* Related Services */}
             {relatedServices.length > 0 && (
               <section
                 aria-label={t.servicesRelatedTitle}
@@ -613,7 +505,7 @@ export default function ServiceDedicatedPageView({
                           {rel.name}
                         </p>
                         <div className="text-xs font-semibold text-[#1F9D6B]">
-                          {rel.price?.trim() || t.servicesAskUs}
+                          {rel.price?.trim() || '[VERIFY]'}
                         </div>
                       </a>
                     </li>
@@ -627,7 +519,6 @@ export default function ServiceDedicatedPageView({
         </div>
       </div>
 
-      {/* Mobile Sticky Bottom Quick Bar */}
       <StickyMobileActionBar
         officialUrl={whatsappEnquiryUrl}
         officialLabel={t.servicesEnquireWhatsapp}

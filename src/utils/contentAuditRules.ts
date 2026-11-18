@@ -69,6 +69,11 @@ export function detectOutboundOfficialLinks(htmlOrText: string): string[] {
         host.endsWith('.edu.in') ||
         host.includes('kashmiruniversity') ||
         host.includes('cusrinagar') ||
+        host.includes('coeju.com') ||
+        host.includes('ntaonline.in') ||
+        host.includes('jkb.bank.in') ||
+        host.includes('parikshasaarthi.in') ||
+        host.includes('cdac.in') ||
         host.includes('ignou') ||
         host.includes('ibps') ||
         host.includes('jkbank') ||

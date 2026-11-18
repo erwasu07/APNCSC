@@ -18,7 +18,14 @@ import { computeSarkariStatus } from './src/utils/sarkariStatus';
 import { isOlderThan12Months, isStaleOver90Days } from './src/utils/postLifecycle';
 import { resolveEffectiveTemplateType, toIsoDate as toIsoPostDate } from './src/components/post/postHelpers';
 import { KNOWN_DUPLICATE_MAP, resolvePostOrg } from './src/data/sarkariMigration';
-import { SERVICES_LIST } from './src/servicesData';
+import { SERVICES_LIST, ServiceItem } from './src/servicesData';
+import {
+  SERVICE_MERGE_CLUSTERS,
+  getServiceClusterById,
+  getClusterForServiceId,
+  deriveStoredServiceFacts,
+  validateServiceReadyToPublish,
+} from './src/utils/serviceMetadata';
 import {
   GUIDE_ARTICLES as ALL_GUIDE_ARTICLES,
   PUBLISHED_GUIDE_ARTICLES as STATIC_PUBLISHED_GUIDES,
@@ -32,9 +39,11 @@ import {
   validateGuideReadyForPublish,
 } from './src/utils/guidesMerge';
 import {
+  buildWordShingles,
   classifyAuditPage,
   detectOutboundOfficialLinks,
   evaluatePostCopyAndWords,
+  jaccardSimilarity,
 } from './src/utils/contentAuditRules';
 import { validatePostPublishQuality } from './src/utils/contentQualityValidator';
 import { PUBLIC_CONTACT_EMAIL } from './src/config/siteContact';
@@ -61,6 +70,7 @@ import {
 import {
   renderPostSubstantiveHtml,
   renderServiceSubstantiveHtml,
+  renderServiceClusterHubHtml,
   renderLegalPageSubstantiveHtml,
   renderHomepageSubstantiveHtml,
   renderArchiveSubstantiveHtml,
@@ -148,6 +158,12 @@ import {
   getPostHealthOverrides,
   upsertPostHealthOverride,
   bulkNoindexPostIds,
+  getServiceHealthOverrides,
+  upsertServiceHealthOverride,
+  getApprovedServiceMerges,
+  approveServiceMergeGroup,
+  revertServiceMergeGroup,
+  bulkNoindexClassDItems,
   addContentHealthLog,
   getContentHealthLogs
 } from './src/dbServer';
@@ -298,6 +314,29 @@ app.use((req: Request, res: Response, next: NextFunction) => {
       const mergeTarget = healthOverrides[candidateSlug]?.duplicateOfId;
       if (mergeTarget && mergeTarget !== candidateSlug) {
         return res.redirect(301, `/post/${encodeURIComponent(mergeTarget)}${queryString}`);
+      }
+    }
+
+    const serviceMergeMatch = cleanReqPath.match(/^\/service\/([^/?#]+)$/i);
+    if (serviceMergeMatch) {
+      const candidateSvcSlug = decodeURIComponent(serviceMergeMatch[1]);
+      const svcOverrides = getServiceHealthOverrides();
+      const approvedMerges = getApprovedServiceMerges();
+      const explicitTarget = svcOverrides[candidateSvcSlug]?.duplicateOfId;
+      if (explicitTarget && explicitTarget !== candidateSvcSlug) {
+        const dest = explicitTarget.startsWith('/')
+          ? explicitTarget
+          : `/service/${encodeURIComponent(explicitTarget)}`;
+        return res.redirect(301, `${dest}${queryString}`);
+      }
+      for (const mergeRec of Object.values(approvedMerges)) {
+        if (
+          mergeRec?.approved &&
+          Array.isArray(mergeRec.memberIds) &&
+          mergeRec.memberIds.includes(candidateSvcSlug)
+        ) {
+          return res.redirect(301, `${mergeRec.hubPath}${queryString}`);
+        }
       }
     }
 
@@ -3109,7 +3148,7 @@ app.post('/api/whatsapp/send', authenticateAdmin, async (req: Request, res: Resp
     let matchedService: any = null;
 
     if (!matchedPost) {
-      matchedService = SERVICES_LIST.find(s => s.id === cleanPostId || s.id === decodeURIComponent(cleanPostId));
+      matchedService = getAllMergedServices().find(s => s.id === cleanPostId || s.id === decodeURIComponent(cleanPostId));
       if (matchedService) {
         isService = true;
       }
@@ -4350,6 +4389,75 @@ app.get('/api/sarkari-posts', (req: Request, res: Response) => {
   });
 });
 
+function getAllMergedServices(): ServiceItem[] {
+  const svcOverrides = getServiceHealthOverrides();
+  const approvedMerges = getApprovedServiceMerges();
+  const clusterRedirectMap = new Map<string, string>();
+  for (const mergeRec of Object.values(approvedMerges)) {
+    if (mergeRec?.approved && Array.isArray(mergeRec.memberIds)) {
+      for (const mId of mergeRec.memberIds) {
+        clusterRedirectMap.set(mId, mergeRec.hubPath);
+      }
+    }
+  }
+
+  return SERVICES_LIST.map((baseSvc) => {
+    const ov = svcOverrides[baseSvc.id];
+    const clusterTarget = clusterRedirectMap.get(baseSvc.id);
+    let next: ServiceItem = { ...baseSvc };
+    if (ov) {
+      next = {
+        ...next,
+        publicationStatus: ov.publicationStatus ?? next.publicationStatus,
+        robotsNoindex: ov.robotsNoindex !== undefined ? ov.robotsNoindex : next.robotsNoindex,
+        duplicateOfId: ov.duplicateOfId !== undefined ? ov.duplicateOfId : next.duplicateOfId,
+        name: ov.name || next.name,
+        description: ov.description !== undefined ? ov.description : next.description,
+        issuingAuthority: ov.issuingAuthority !== undefined ? ov.issuingAuthority : next.issuingAuthority,
+        eligibility: ov.eligibility !== undefined ? ov.eligibility : next.eligibility,
+        requirements: Array.isArray(ov.requirements) ? ov.requirements : next.requirements,
+        estimatedTime: ov.estimatedTime !== undefined ? ov.estimatedTime : next.estimatedTime,
+        price: ov.price !== undefined ? ov.price : next.price,
+        feeLines: Array.isArray(ov.feeLines) ? ov.feeLines : next.feeLines,
+        officialUrl: ov.officialUrl !== undefined ? ov.officialUrl : next.officialUrl,
+        stepFlow: Array.isArray(ov.stepFlow) ? ov.stepFlow : next.stepFlow,
+        staffChecks: Array.isArray(ov.staffChecks) ? ov.staffChecks : next.staffChecks,
+        rejectionReasons: Array.isArray(ov.rejectionReasons) ? ov.rejectionReasons : next.rejectionReasons,
+        verifiedBy: ov.verifiedBy || next.verifiedBy,
+        updatedAt: ov.updatedAt || next.updatedAt,
+      };
+    }
+    if (clusterTarget && !next.duplicateOfId) {
+      next.duplicateOfId = clusterTarget;
+      next.robotsNoindex = true;
+    }
+    return next;
+  });
+}
+
+app.get('/api/services', (_req: Request, res: Response) => {
+  const merged = getAllMergedServices();
+  const approvedMerges = getApprovedServiceMerges();
+  const redirectMap: Record<string, string> = {};
+  for (const s of merged) {
+    if (s.duplicateOfId) {
+      redirectMap[s.id] = s.duplicateOfId.startsWith('/') ? s.duplicateOfId : `/service/${s.duplicateOfId}`;
+    }
+  }
+  const visible = merged.filter(
+    (s) => s.publicationStatus !== 'draft' && s.publicationStatus !== 'archived' && !s.duplicateOfId
+  );
+  res.json({
+    success: true,
+    services: visible,
+    redirectMap,
+    clusters: SERVICE_MERGE_CLUSTERS.map((c) => ({
+      ...c,
+      approved: Boolean(approvedMerges[c.clusterId]?.approved),
+    })),
+  });
+});
+
 // ============================================================
 // PUBLIC & STAFF GUIDE VERIFICATION ENDPOINTS (Task 3)
 // ============================================================
@@ -4490,10 +4598,13 @@ function extractMainTextWordCount(renderedHtml: string): { wordCount: number; ha
 
 app.get('/api/staff/content-health', authenticateAdmin, (_req: Request, res: Response) => {
   const allPosts = getAllMergedSarkariPosts();
+  const allServices = getAllMergedServices();
   const overrides = getPostHealthOverrides();
+  const svcOverrides = getServiceHealthOverrides();
+  const approvedMerges = getApprovedServiceMerges();
   const publishedGuides = getPublishedMergedGuides(getGuideStates(), ALL_GUIDE_ARTICLES);
-  let auditMap = new Map<string, any>();
 
+  let auditMap = new Map<string, any>();
   try {
     const auditJsonPath = path.join(process.cwd(), 'reports', 'content_audit.json');
     if (fs.existsSync(auditJsonPath)) {
@@ -4506,18 +4617,70 @@ app.get('/api/staff/content-health', authenticateAdmin, (_req: Request, res: Res
     }
   } catch {}
 
+  // Live pairwise shingle Jaccard across active non-duplicate posts, services & tools
+  const shingleCandidates: Array<{
+    path: string;
+    shingles: Set<string>;
+  }> = [];
+
+  const postMetricsMap = new Map<string, { wordCount: number; hasOfficialLink: boolean; hasLastUpdated: boolean }>();
+  for (const post of allPosts) {
+    if (!isPublishedSarkariItem(post) || post.duplicateOfId || KNOWN_DUPLICATE_MAP[post.id]) continue;
+    const urlPath = `/post/${post.id}`;
+    const html = renderPostSubstantiveHtml(post, allPosts);
+    const metrics = extractMainTextWordCount(html);
+    postMetricsMap.set(urlPath, metrics);
+    if (!post.robotsNoindex && !isStaleOver90Days(post)) {
+      shingleCandidates.push({ path: urlPath, shingles: buildWordShingles(html.replace(/<[^>]+>/g, ' '), 5) });
+    }
+  }
+
+  const serviceMetricsMap = new Map<string, { wordCount: number; hasOfficialLink: boolean; hasLastUpdated: boolean }>();
+  for (const svc of allServices) {
+    const urlPath = `/service/${svc.id}`;
+    const html = renderServiceSubstantiveHtml(svc);
+    const metrics = extractMainTextWordCount(html);
+    serviceMetricsMap.set(urlPath, metrics);
+    if (svc.publicationStatus !== 'draft' && svc.publicationStatus !== 'archived' && !svc.duplicateOfId && !svc.robotsNoindex) {
+      shingleCandidates.push({ path: urlPath, shingles: buildWordShingles(html.replace(/<[^>]+>/g, ' '), 5) });
+    }
+  }
+
+  const toolMetricsMap = new Map<string, { wordCount: number; hasOfficialLink: boolean; hasLastUpdated: boolean }>();
+  for (const tool of TOOLS_LIST) {
+    const urlPath = `/tools/${tool.id}`;
+    const html = renderToolDetailSubstantiveHtml(tool);
+    const metrics = extractMainTextWordCount(html);
+    toolMetricsMap.set(urlPath, metrics);
+    shingleCandidates.push({ path: urlPath, shingles: buildWordShingles(html.replace(/<[^>]+>/g, ' '), 5) });
+  }
+
+  const liveJaccardMap = new Map<string, { score: number; peer: string }>();
+  for (let i = 0; i < shingleCandidates.length; i++) {
+    for (let j = i + 1; j < shingleCandidates.length; j++) {
+      const a = shingleCandidates[i];
+      const b = shingleCandidates[j];
+      const score = jaccardSimilarity(a.shingles, b.shingles);
+      const prevA = liveJaccardMap.get(a.path);
+      if (!prevA || score > prevA.score) liveJaccardMap.set(a.path, { score, peer: b.path });
+      const prevB = liveJaccardMap.get(b.path);
+      if (!prevB || score > prevB.score) liveJaccardMap.set(b.path, { score, peer: a.path });
+    }
+  }
+
   const items: any[] = [];
 
   for (const post of allPosts) {
     const urlPath = `/post/${post.id}`;
     const ov = overrides[post.id];
-    const html = renderPostSubstantiveHtml(post, allPosts);
-    const { wordCount, hasOfficialLink, hasLastUpdated } = extractMainTextWordCount(html);
+    const metrics = postMetricsMap.get(urlPath) || extractMainTextWordCount(renderPostSubstantiveHtml(post, allPosts));
+    const { wordCount, hasOfficialLink, hasLastUpdated } = metrics;
     const copyEval = evaluatePostCopyAndWords(
       [post.shortInfo, post.summary, post.eligibility, ...(post.howToApply || [])].filter(Boolean).join(' '),
       post.sourceExcerpt
     );
-    const cached = auditMap.get(urlPath);
+    const liveDup = liveJaccardMap.get(urlPath);
+    const highestJaccard = liveDup?.score || 0;
     const cls = classifyAuditPage({
       url: `${SITE_ORIGIN}${urlPath}`,
       httpStatus: 200,
@@ -4529,8 +4692,8 @@ app.get('/api/staff/content-health', authenticateAdmin, (_req: Request, res: Res
       hasLastUpdated,
       hasFaqOrHowTo: Boolean((post.faq && post.faq.length > 0) || (post.howToApply && post.howToApply.length > 0)),
       copiedRunLength: copyEval.copiedCheck.runLength,
-      highestJaccardScore: cached?.highestJaccardScore || 0,
-      nearDuplicateOf: cached?.nearDuplicateOf || post.duplicateOfId,
+      highestJaccardScore: highestJaccard,
+      nearDuplicateOf: liveDup?.peer || post.duplicateOfId,
       canonicalMismatch: Boolean(post.duplicateOfId),
     });
 
@@ -4567,6 +4730,99 @@ app.get('/api/staff/content-health', authenticateAdmin, (_req: Request, res: Res
     });
   }
 
+  for (const svc of allServices) {
+    const urlPath = `/service/${svc.id}`;
+    const facts = deriveStoredServiceFacts(svc);
+    const metrics = serviceMetricsMap.get(urlPath) || { wordCount: 0, hasOfficialLink: false, hasLastUpdated: false };
+    const liveDup = liveJaccardMap.get(urlPath);
+    const highestJaccard = liveDup?.score || 0;
+    const feeText = svc.price?.trim() ? ` Fee: ${svc.price.trim()}.` : ' Fee: [VERIFY].';
+    const cls = classifyAuditPage({
+      url: `${SITE_ORIGIN}${urlPath}`,
+      httpStatus: 200,
+      title: formatSeoTitle(svc.name),
+      metaDescription: formatSeoDescription(`${svc.description}${feeText}`),
+      h1Count: 1,
+      wordCount: metrics.wordCount,
+      hasOfficialLink: Boolean(facts.officialPortalUrl),
+      hasLastUpdated: Boolean(svc.updatedAt),
+      hasFaqOrHowTo: facts.stepFlow.length > 0,
+      copiedRunLength: 0,
+      highestJaccardScore: highestJaccard,
+      nearDuplicateOf: liveDup?.peer || svc.duplicateOfId,
+      canonicalMismatch: Boolean(svc.duplicateOfId),
+    });
+
+    items.push({
+      id: svc.id,
+      url: urlPath,
+      kind: 'service',
+      title: svc.name,
+      auditClass: svc.duplicateOfId ? 'D' : cls.auditClass,
+      wordCount: metrics.wordCount,
+      hasOfficialLink: Boolean(facts.officialPortalUrl),
+      hasLastUpdated: Boolean(svc.updatedAt),
+      publicationStatus: svc.publicationStatus || 'published',
+      robotsNoindex: Boolean(svc.robotsNoindex || svc.duplicateOfId),
+      duplicateOfId: svc.duplicateOfId,
+      hasVerifyPlaceholders: facts.hasVerifyPlaceholders,
+      missingVerifyFields: facts.missingVerifyFields,
+      clusterId: getClusterForServiceId(svc.id)?.clusterId,
+      reasons: cls.reasons,
+      rawService: {
+        id: svc.id,
+        name: svc.name,
+        category: svc.category,
+        description: svc.description,
+        issuingAuthority: svc.issuingAuthority || (facts.authorityFromStoredData ? facts.issuingAuthority : ''),
+        eligibility: svc.eligibility || '',
+        requirements: svc.requirements || [],
+        estimatedTime: svc.estimatedTime || '',
+        price: svc.price || '',
+        feeLines: svc.feeLines || [],
+        officialUrl: svc.officialUrl || facts.officialPortalUrl || '',
+        stepFlow: svc.stepFlow || [],
+        staffChecks: svc.staffChecks || [],
+        rejectionReasons: svc.rejectionReasons || [],
+        notes: svcOverrides[svc.id]?.verifiedBy || svc.verifiedBy || '',
+      },
+    });
+  }
+
+  for (const tool of TOOLS_LIST) {
+    const urlPath = `/tools/${tool.id}`;
+    const metrics = toolMetricsMap.get(urlPath) || { wordCount: 0, hasOfficialLink: false, hasLastUpdated: false };
+    const liveDup = liveJaccardMap.get(urlPath);
+    const cls = classifyAuditPage({
+      url: `${SITE_ORIGIN}${urlPath}`,
+      httpStatus: 200,
+      title: formatSeoTitle(`${tool.name} - Tools`),
+      metaDescription: formatSeoDescription(tool.shortDescription),
+      h1Count: 1,
+      wordCount: metrics.wordCount,
+      hasOfficialLink: false,
+      hasLastUpdated: true,
+      hasFaqOrHowTo: true,
+      copiedRunLength: 0,
+      highestJaccardScore: liveDup?.score || 0,
+      nearDuplicateOf: liveDup?.peer,
+      canonicalMismatch: false,
+    });
+    items.push({
+      id: tool.id,
+      url: urlPath,
+      kind: 'tool',
+      title: tool.name,
+      auditClass: cls.auditClass,
+      wordCount: metrics.wordCount,
+      hasOfficialLink: false,
+      hasLastUpdated: true,
+      publicationStatus: 'published',
+      robotsNoindex: false,
+      reasons: cls.reasons,
+    });
+  }
+
   for (const guide of publishedGuides) {
     const urlPath = `/scheme/${guide.id}`;
     const wc = countGuideWords(guide);
@@ -4599,13 +4855,13 @@ app.get('/api/staff/content-health', authenticateAdmin, (_req: Request, res: Res
     });
   }
 
-  // Include non-post audit rows from reports/content_audit.json if generated
+  // Include remaining static pages from cached audit if present
   for (const [p, entry] of auditMap.entries()) {
-    if (p.startsWith('/post/') || p.startsWith('/scheme/')) continue;
+    if (p.startsWith('/post/') || p.startsWith('/scheme/') || p.startsWith('/service/') || p.startsWith('/tools/')) continue;
     items.push({
       id: p,
       url: p,
-      kind: p.startsWith('/service/') ? 'service' : p.startsWith('/tools/') ? 'tool' : 'static',
+      kind: 'static',
       title: entry.title || p,
       auditClass: entry.auditClass || 'A',
       wordCount: entry.wordCount || 0,
@@ -4615,9 +4871,18 @@ app.get('/api/staff/content-health', authenticateAdmin, (_req: Request, res: Res
     });
   }
 
+  const mergeClusters = SERVICE_MERGE_CLUSTERS.map((c) => ({
+    ...c,
+    approved: Boolean(approvedMerges[c.clusterId]?.approved),
+    approvedAt: approvedMerges[c.clusterId]?.approvedAt || null,
+    approvedBy: approvedMerges[c.clusterId]?.approvedBy || null,
+    memberCount: c.memberIds.length,
+  }));
+
   res.json({
     success: true,
     items,
+    mergeClusters,
     logs: getContentHealthLogs(80),
   });
 });
@@ -4696,43 +4961,199 @@ app.post('/api/staff/content-health/save', authenticateAdmin, (req: Request, res
   res.json({ success: true, override: saved });
 });
 
+app.post('/api/staff/content-health/service/save', authenticateAdmin, (req: Request, res: Response) => {
+  const body = req.body || {};
+  const serviceId = String(body.id || '').trim();
+  if (!serviceId) {
+    return res.status(400).json({ success: false, error: 'Missing service ID.' });
+  }
+  const allServices = getAllMergedServices();
+  const target = allServices.find((s) => s.id === serviceId);
+  if (!target) {
+    return res.status(404).json({ success: false, error: 'Service not found.' });
+  }
+
+  const publicationStatus: 'draft' | 'published' =
+    body.publicationStatus === 'draft' ? 'draft' : 'published';
+  const actor = (req as any).adminUser?.email || (req as any).adminUser?.username || 'Staff Admin';
+  const nowDate = new Date().toISOString().slice(0, 10);
+
+  const candidateService: ServiceItem = {
+    ...target,
+    name: body.name !== undefined ? String(body.name).trim() || target.name : target.name,
+    description: body.description !== undefined ? String(body.description).trim() : target.description,
+    issuingAuthority: body.issuingAuthority !== undefined ? String(body.issuingAuthority).trim() : target.issuingAuthority,
+    eligibility: body.eligibility !== undefined ? String(body.eligibility).trim() : target.eligibility,
+    requirements: Array.isArray(body.requirements) ? body.requirements.map((s: any) => String(s).trim()).filter(Boolean) : target.requirements,
+    estimatedTime: body.estimatedTime !== undefined ? String(body.estimatedTime).trim() : target.estimatedTime,
+    price: body.price !== undefined ? String(body.price).trim() : target.price,
+    feeLines: Array.isArray(body.feeLines) ? body.feeLines.map((s: any) => String(s).trim()).filter(Boolean) : target.feeLines,
+    officialUrl: body.officialUrl !== undefined ? String(body.officialUrl).trim() : target.officialUrl,
+    stepFlow: Array.isArray(body.stepFlow) ? body.stepFlow.map((s: any) => String(s).trim()).filter(Boolean) : target.stepFlow,
+    staffChecks: Array.isArray(body.staffChecks) ? body.staffChecks.map((s: any) => String(s).trim()).filter(Boolean) : target.staffChecks,
+    rejectionReasons: Array.isArray(body.rejectionReasons) ? body.rejectionReasons.map((s: any) => String(s).trim()).filter(Boolean) : target.rejectionReasons,
+    verifiedBy: actor,
+    updatedAt: nowDate,
+  };
+
+  if (publicationStatus === 'published') {
+    const check = validateServiceReadyToPublish(candidateService);
+    if (!check.canPublish) {
+      return res.status(400).json({
+        success: false,
+        error: check.errors[0] || 'Cannot publish service with [VERIFY] placeholders remaining.',
+        errors: check.errors,
+        missingFields: check.missingFields,
+      });
+    }
+  }
+
+  const saved = upsertServiceHealthOverride({
+    id: serviceId,
+    publicationStatus,
+    name: candidateService.name,
+    description: candidateService.description,
+    issuingAuthority: candidateService.issuingAuthority,
+    eligibility: candidateService.eligibility,
+    requirements: candidateService.requirements,
+    estimatedTime: candidateService.estimatedTime,
+    price: candidateService.price,
+    feeLines: candidateService.feeLines,
+    officialUrl: candidateService.officialUrl,
+    stepFlow: candidateService.stepFlow,
+    staffChecks: candidateService.staffChecks,
+    rejectionReasons: candidateService.rejectionReasons,
+    verifiedBy: actor,
+    updatedAt: nowDate,
+    updatedBy: actor,
+  });
+
+  addContentHealthLog({
+    postId: serviceId,
+    action: publicationStatus === 'published' ? 'service_publish' : 'service_save',
+    actor,
+    timestamp: new Date().toISOString(),
+    details:
+      publicationStatus === 'published'
+        ? 'Verified all service fields and published /service/' + serviceId
+        : 'Saved service verification draft edits',
+  });
+
+  res.json({ success: true, override: saved });
+});
+
+app.post('/api/staff/content-health/merge-group', authenticateAdmin, (req: Request, res: Response) => {
+  const clusterId = String(req.body?.clusterId || '').trim();
+  const action = String(req.body?.action || '').trim();
+  const cluster = getServiceClusterById(clusterId);
+  if (!cluster) {
+    return res.status(404).json({ success: false, error: 'Merge cluster not found.' });
+  }
+  const actor = (req as any).adminUser?.email || (req as any).adminUser?.username || 'Staff Admin';
+
+  if (action === 'approve') {
+    const mergeRecord = approveServiceMergeGroup(cluster.clusterId, cluster.hubPath, cluster.memberIds, actor);
+    return res.json({
+      success: true,
+      message: `Approved merge for ${cluster.title}: ${cluster.memberIds.length} pages now 301 redirect to ${cluster.hubPath}.`,
+      mergeRecord,
+    });
+  }
+  if (action === 'revert') {
+    revertServiceMergeGroup(cluster.clusterId, cluster.memberIds, actor);
+    return res.json({
+      success: true,
+      message: `Reverted merge for ${cluster.title}: ${cluster.memberIds.length} service pages restored.`,
+    });
+  }
+  return res.status(400).json({ success: false, error: 'Action must be "approve" or "revert".' });
+});
+
 app.post('/api/staff/content-health/action', authenticateAdmin, (req: Request, res: Response) => {
-  const { id, action, targetId } = req.body || {};
-  const postId = String(id || '').trim();
-  if (!postId || !action) {
+  const { id, action, targetId, kind } = req.body || {};
+  const itemId = String(id || '').trim();
+  const itemKind = kind === 'service' ? 'service' : 'post';
+  if (!itemId || !action) {
     return res.status(400).json({ success: false, error: 'Missing id or action.' });
   }
   const actor = (req as any).adminUser?.email || (req as any).adminUser?.username || 'Staff Admin';
   const nowDate = new Date().toISOString().slice(0, 10);
 
+  if (itemKind === 'service') {
+    const targetSvc = getAllMergedServices().find((s) => s.id === itemId);
+    if (!targetSvc) {
+      return res.status(404).json({ success: false, error: 'Service not found.' });
+    }
+    if (action === 'set_draft') {
+      upsertServiceHealthOverride({ id: itemId, publicationStatus: 'draft', updatedAt: nowDate, updatedBy: actor });
+      addContentHealthLog({ postId: itemId, action: 'service_draft', actor, timestamp: new Date().toISOString(), details: 'Moved service to draft (hidden from public & sitemap)' });
+      return res.json({ success: true, message: `Marked service ${itemId} as draft.` });
+    }
+    if (action === 'set_published') {
+      const check = validateServiceReadyToPublish(targetSvc);
+      if (!check.canPublish) {
+        return res.status(400).json({
+          success: false,
+          error: check.errors[0] || 'Fill all [VERIFY] fields before publishing service.',
+          errors: check.errors,
+          missingFields: check.missingFields,
+        });
+      }
+      upsertServiceHealthOverride({ id: itemId, publicationStatus: 'published', updatedAt: nowDate, updatedBy: actor });
+      addContentHealthLog({ postId: itemId, action: 'service_publish', actor, timestamp: new Date().toISOString(), details: 'Published verified service page' });
+      return res.json({ success: true, message: `Published service ${itemId}.` });
+    }
+    if (action === 'mark_noindex') {
+      upsertServiceHealthOverride({ id: itemId, robotsNoindex: true, updatedAt: nowDate, updatedBy: actor });
+      addContentHealthLog({ postId: itemId, action: 'mark_noindex', actor, timestamp: new Date().toISOString(), details: 'Set robots noindex, follow on service and removed from sitemap.xml' });
+      return res.json({ success: true, message: `Marked service ${itemId} as noindex, follow.` });
+    }
+    if (action === 'clear_noindex') {
+      upsertServiceHealthOverride({ id: itemId, robotsNoindex: false, updatedAt: nowDate, updatedBy: actor });
+      addContentHealthLog({ postId: itemId, action: 'clear_noindex', actor, timestamp: new Date().toISOString(), details: 'Cleared manual noindex flag on service' });
+      return res.json({ success: true, message: `Cleared noindex on service ${itemId}.` });
+    }
+    if (action === 'merge_301') {
+      const cleanTarget = String(targetId || '').trim();
+      if (!cleanTarget || cleanTarget === itemId) {
+        return res.status(400).json({ success: false, error: 'Choose a valid distinct canonical target service or hub path.' });
+      }
+      const dest = cleanTarget.startsWith('/') ? cleanTarget : `/service/${cleanTarget}`;
+      upsertServiceHealthOverride({ id: itemId, duplicateOfId: cleanTarget, robotsNoindex: true, updatedAt: nowDate, updatedBy: actor });
+      addContentHealthLog({ postId: itemId, action: 'merge_301', actor, timestamp: new Date().toISOString(), details: `Applied 301 redirect to ${dest} and excluded from sitemap.xml` });
+      return res.json({ success: true, message: `Merged service ${itemId} -> 301 ${dest}.` });
+    }
+    return res.status(400).json({ success: false, error: 'Unsupported service action.' });
+  }
+
   if (action === 'set_draft') {
-    upsertPostHealthOverride({ id: postId, publicationStatus: 'draft', updatedAt: nowDate, updatedBy: actor });
-    addContentHealthLog({ postId, action: 'set_draft', actor, timestamp: new Date().toISOString(), details: 'Moved post to draft (hidden from public & sitemap)' });
-    return res.json({ success: true, message: `Marked ${postId} as draft.` });
+    upsertPostHealthOverride({ id: itemId, publicationStatus: 'draft', updatedAt: nowDate, updatedBy: actor });
+    addContentHealthLog({ postId: itemId, action: 'set_draft', actor, timestamp: new Date().toISOString(), details: 'Moved post to draft (hidden from public & sitemap)' });
+    return res.json({ success: true, message: `Marked ${itemId} as draft.` });
   }
   if (action === 'set_published') {
-    upsertPostHealthOverride({ id: postId, publicationStatus: 'published', updatedAt: nowDate, updatedBy: actor });
-    addContentHealthLog({ postId, action: 'set_published', actor, timestamp: new Date().toISOString(), details: 'Published post live' });
-    return res.json({ success: true, message: `Published ${postId}.` });
+    upsertPostHealthOverride({ id: itemId, publicationStatus: 'published', updatedAt: nowDate, updatedBy: actor });
+    addContentHealthLog({ postId: itemId, action: 'set_published', actor, timestamp: new Date().toISOString(), details: 'Published post live' });
+    return res.json({ success: true, message: `Published ${itemId}.` });
   }
   if (action === 'mark_noindex') {
-    upsertPostHealthOverride({ id: postId, robotsNoindex: true, updatedAt: nowDate, updatedBy: actor });
-    addContentHealthLog({ postId, action: 'mark_noindex', actor, timestamp: new Date().toISOString(), details: 'Set robots noindex, follow and removed from sitemap.xml' });
-    return res.json({ success: true, message: `Marked ${postId} as noindex, follow.` });
+    upsertPostHealthOverride({ id: itemId, robotsNoindex: true, updatedAt: nowDate, updatedBy: actor });
+    addContentHealthLog({ postId: itemId, action: 'mark_noindex', actor, timestamp: new Date().toISOString(), details: 'Set robots noindex, follow and removed from sitemap.xml' });
+    return res.json({ success: true, message: `Marked ${itemId} as noindex, follow.` });
   }
   if (action === 'clear_noindex') {
-    upsertPostHealthOverride({ id: postId, robotsNoindex: false, updatedAt: nowDate, updatedBy: actor });
-    addContentHealthLog({ postId, action: 'clear_noindex', actor, timestamp: new Date().toISOString(), details: 'Cleared manual noindex flag' });
-    return res.json({ success: true, message: `Cleared noindex on ${postId}.` });
+    upsertPostHealthOverride({ id: itemId, robotsNoindex: false, updatedAt: nowDate, updatedBy: actor });
+    addContentHealthLog({ postId: itemId, action: 'clear_noindex', actor, timestamp: new Date().toISOString(), details: 'Cleared manual noindex flag' });
+    return res.json({ success: true, message: `Cleared noindex on ${itemId}.` });
   }
   if (action === 'merge_301') {
     const cleanTarget = String(targetId || '').trim();
-    if (!cleanTarget || cleanTarget === postId) {
+    if (!cleanTarget || cleanTarget === itemId) {
       return res.status(400).json({ success: false, error: 'Choose a valid distinct canonical target post slug.' });
     }
-    upsertPostHealthOverride({ id: postId, duplicateOfId: cleanTarget, robotsNoindex: true, updatedAt: nowDate, updatedBy: actor });
-    addContentHealthLog({ postId, action: 'merge_301', actor, timestamp: new Date().toISOString(), details: `Applied 301 redirect to /post/${cleanTarget} and excluded from sitemap.xml` });
-    return res.json({ success: true, message: `Merged ${postId} -> 301 /post/${cleanTarget}.` });
+    upsertPostHealthOverride({ id: itemId, duplicateOfId: cleanTarget, robotsNoindex: true, updatedAt: nowDate, updatedBy: actor });
+    addContentHealthLog({ postId: itemId, action: 'merge_301', actor, timestamp: new Date().toISOString(), details: `Applied 301 redirect to /post/${cleanTarget} and excluded from sitemap.xml` });
+    return res.json({ success: true, message: `Merged ${itemId} -> 301 /post/${cleanTarget}.` });
   }
 
   return res.status(400).json({ success: false, error: 'Unsupported action.' });
@@ -4749,6 +5170,22 @@ app.post('/api/staff/content-health/bulk-noindex-class-c', authenticateAdmin, (r
     success: true,
     updatedCount: result.updatedCount,
     updatedIds: result.updatedIds,
+  });
+});
+
+app.post('/api/staff/content-health/bulk-noindex-class-d', authenticateAdmin, (req: Request, res: Response) => {
+  const postIds = Array.isArray(req.body?.postIds) ? req.body.postIds : [];
+  const serviceIds = Array.isArray(req.body?.serviceIds) ? req.body.serviceIds : [];
+  if (postIds.length === 0 && serviceIds.length === 0) {
+    return res.status(400).json({ success: false, error: 'No Class D IDs supplied.' });
+  }
+  const actor = (req as any).adminUser?.email || (req as any).adminUser?.username || 'Staff Admin';
+  const result = bulkNoindexClassDItems(postIds, serviceIds, actor);
+  res.json({
+    success: true,
+    updatedCount: result.updatedCount,
+    updatedPostIds: result.updatedPostIds,
+    updatedServiceIds: result.updatedServiceIds,
   });
 });
 
@@ -4944,8 +5381,8 @@ app.get(
             status: sarkariItem.status
           });
         } else {
-          // Look up in SERVICES_LIST
-          const serviceItem = SERVICES_LIST.find(s => s.id === rawId);
+          // Look up in merged services
+          const serviceItem = getAllMergedServices().find(s => s.id === rawId);
           if (serviceItem) {
             resolvedSpec = buildDeterministicThumbnailSpec({
               id: serviceItem.id,
@@ -5415,8 +5852,8 @@ app.get(['/api/og-image/:id.png', '/api/og-image/:id.webp', '/api/og-image/:id.s
       return res.send(buffer);
     }
 
-    // 2. Search in Services list
-    const serviceItem = SERVICES_LIST.find(s => s.id === rawId || s.id === decodedId);
+    // 2. Search in merged services
+    const serviceItem = getAllMergedServices().find(s => s.id === rawId || s.id === decodedId);
     if (serviceItem) {
       if (isSvg) {
         const svg = generateServiceOgSvg(serviceItem);
@@ -5602,16 +6039,48 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       robotsContent = PRIVATE_NOINDEX_META.notfound.robots;
       substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
     }
+  } else if (urlPath.toLowerCase().startsWith('/services/cluster/')) {
+    const clusterSlug = decodeURIComponent(urlPath.replace(/^\/services\/cluster\//i, '').split('/')[0] || '');
+    const cluster = getServiceClusterById(clusterSlug);
+    if (cluster) {
+      const mergedServices = getAllMergedServices();
+      const byId = new Map(mergedServices.map((s) => [s.id, s]));
+      const members = cluster.memberIds.map((id) => byId.get(id)).filter((s): s is ServiceItem => Boolean(s));
+      title = formatSeoTitle(cluster.title);
+      description = formatSeoDescription(cluster.summary);
+      canonicalUrl = `${SITE_ORIGIN}${cluster.hubPath}`;
+      robotsContent = 'index, follow';
+      ogType = 'website';
+      breadcrumbItems = [
+        { name: 'Home', url: `${SITE_ORIGIN}/` },
+        { name: 'CSC E-Services', url: `${SITE_ORIGIN}/services` },
+        { name: cluster.title, url: canonicalUrl }
+      ];
+      substantiveBodyHtml = renderServiceClusterHubHtml(cluster, members);
+    } else {
+      isNotFound = true;
+      title = PRIVATE_NOINDEX_META.notfound.title;
+      description = PRIVATE_NOINDEX_META.notfound.description;
+      canonicalUrl = PRIVATE_NOINDEX_META.notfound.canonicalUrl;
+      robotsContent = PRIVATE_NOINDEX_META.notfound.robots;
+      substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
+    }
   } else if (targetServiceId) {
-    const service = SERVICES_LIST.find(s => s.id === targetServiceId || s.id === decodeURIComponent(targetServiceId));
+    const mergedServices = getAllMergedServices();
+    const service = mergedServices.find(
+      (s) =>
+        (s.id === targetServiceId || s.id === decodeURIComponent(targetServiceId)) &&
+        s.publicationStatus !== 'draft' &&
+        s.publicationStatus !== 'archived'
+    );
     if (service) {
       title = formatSeoTitle(service.name);
-      const feeText = service.price?.trim() ? ` Fee: ${service.price.trim()}.` : ' Fee: Ask us.';
+      const feeText = service.price?.trim() ? ` Fee: ${service.price.trim()}.` : ' Fee: [VERIFY].';
       const timeText = service.estimatedTime?.trim() ? ` Typical time: ${service.estimatedTime.trim()}.` : '';
       description = formatSeoDescription(`${service.description}${timeText}${feeText}`);
       ogImage = `${baseOrigin}/api/og-image/${encodeURIComponent(service.id)}.png?v=srv_v3`;
       canonicalUrl = `${SITE_ORIGIN}/service/${service.id}`;
-      robotsContent = 'index, follow';
+      robotsContent = service.robotsNoindex || service.duplicateOfId ? 'noindex, follow' : 'index, follow';
       ogType = 'website';
       breadcrumbItems = [
         { name: 'Home', url: `${SITE_ORIGIN}/` },
@@ -5684,7 +6153,10 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
         canonicalUrl = meta.canonicalUrl;
         robotsContent = hasFilterQueryParam ? 'noindex, follow' : meta.robots;
         breadcrumbItems = meta.breadcrumbs || [];
-        substantiveBodyHtml = renderCategorySubstantiveHtml('tools', allSarkari, SERVICES_LIST, publishedGuides);
+        const visibleServices = getAllMergedServices().filter(
+          (s) => s.publicationStatus !== 'draft' && s.publicationStatus !== 'archived' && !s.duplicateOfId
+        );
+        substantiveBodyHtml = renderCategorySubstantiveHtml('tools', allSarkari, visibleServices, publishedGuides);
       }
     } else if (urlPath === '/apply') {
       title = PRIVATE_NOINDEX_META.apply.title;
@@ -5708,30 +6180,39 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       substantiveBodyHtml = renderArchiveSubstantiveHtml(allSarkari);
     } else if (urlPath.toLowerCase() === '/deadlines') {
       const allSarkari = getAllMergedSarkariPosts();
+      const visibleServices = getAllMergedServices().filter(
+        (s) => s.publicationStatus !== 'draft' && s.publicationStatus !== 'archived' && !s.duplicateOfId
+      );
       title = DEADLINES_SEO.title;
       description = DEADLINES_SEO.description;
       canonicalUrl = DEADLINES_SEO.canonicalUrl;
       robotsContent = hasFilterQueryParam ? 'noindex, follow' : DEADLINES_SEO.robots;
       breadcrumbItems = DEADLINES_SEO.breadcrumbs || [];
-      substantiveBodyHtml = renderCategorySubstantiveHtml('deadlines', allSarkari, SERVICES_LIST, publishedGuides);
+      substantiveBodyHtml = renderCategorySubstantiveHtml('deadlines', allSarkari, visibleServices, publishedGuides);
     } else if (urlPath.toLowerCase() === '/education/ignou') {
       const allSarkari = getAllMergedSarkariPosts();
+      const visibleServices = getAllMergedServices().filter(
+        (s) => s.publicationStatus !== 'draft' && s.publicationStatus !== 'archived' && !s.duplicateOfId
+      );
       title = IGNOU_EDUCATION_SEO.title;
       description = IGNOU_EDUCATION_SEO.description;
       canonicalUrl = IGNOU_EDUCATION_SEO.canonicalUrl;
       robotsContent = hasFilterQueryParam ? 'noindex, follow' : IGNOU_EDUCATION_SEO.robots;
       breadcrumbItems = IGNOU_EDUCATION_SEO.breadcrumbs || [];
-      substantiveBodyHtml = renderCategorySubstantiveHtml('ignou', allSarkari, SERVICES_LIST, publishedGuides);
+      substantiveBodyHtml = renderCategorySubstantiveHtml('ignou', allSarkari, visibleServices, publishedGuides);
     } else if (categoryMatch) {
       const catKey = categoryMatch[1].toLowerCase() as CategorySlug;
       const meta = getCategorySeoMeta(catKey);
       const allSarkari = getAllMergedSarkariPosts();
+      const visibleServices = getAllMergedServices().filter(
+        (s) => s.publicationStatus !== 'draft' && s.publicationStatus !== 'archived' && !s.duplicateOfId
+      );
       title = meta.title;
       description = meta.description;
       canonicalUrl = meta.canonicalUrl;
       robotsContent = hasFilterQueryParam ? 'noindex, follow' : meta.robots;
       breadcrumbItems = meta.breadcrumbs || [];
-      substantiveBodyHtml = renderCategorySubstantiveHtml(catKey, allSarkari, SERVICES_LIST, publishedGuides);
+      substantiveBodyHtml = renderCategorySubstantiveHtml(catKey, allSarkari, visibleServices, publishedGuides);
     } else if (urlPath === '/dev/thumbnails') {
       title = 'Thumbnail Preview Matrix | CSC DOST';
       description = 'Internal development preview for generated OG images and list thumbnails.';
@@ -5740,6 +6221,9 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       substantiveBodyHtml = '<h1>Thumbnail Preview Matrix</h1><p>Internal thumbnail review view (noindex).</p>';
     } else if (urlPath === '/') {
       const allSarkari = getAllMergedSarkariPosts();
+      const visibleServices = getAllMergedServices().filter(
+        (s) => s.publicationStatus !== 'draft' && s.publicationStatus !== 'archived' && !s.duplicateOfId
+      );
       const waCfg = getWhatsAppPublisherConfig();
       const rawChannel = typeof waCfg.channelUrl === 'string' ? waCfg.channelUrl.trim() : '';
       const hasChannel = /^https?:\/\/(www\.)?whatsapp\.com\/channel\//i.test(rawChannel);
@@ -5749,7 +6233,7 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
           : 'https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI';
       substantiveBodyHtml = renderHomepageSubstantiveHtml(
         allSarkari,
-        SERVICES_LIST,
+        visibleServices,
         {
           whatsappUrl: hasChannel ? rawChannel : rawGroup,
           whatsappType: hasChannel ? 'channel' : 'group',
@@ -5986,13 +6470,28 @@ app.get('/sitemap.xml', (req: Request, res: Response) => {
       xml += '  </url>\n';
     }
 
-    for (const s of SERVICES_LIST) {
+    const mergedServices = getAllMergedServices();
+    const approvedMerges = getApprovedServiceMerges();
+    for (const s of mergedServices) {
+      if (s.publicationStatus === 'draft' || s.publicationStatus === 'archived' || s.duplicateOfId || s.robotsNoindex) {
+        continue;
+      }
       xml += '  <url>\n';
       xml += `    <loc>${BASE_URL}/service/${encodeURIComponent(s.id)}</loc>\n`;
-      xml += `    <lastmod>${VERIFIED_STATIC_DATE}</lastmod>\n`;
+      xml += `    <lastmod>${s.updatedAt || VERIFIED_STATIC_DATE}</lastmod>\n`;
       xml += '    <changefreq>monthly</changefreq>\n';
       xml += '    <priority>0.8</priority>\n';
       xml += '  </url>\n';
+    }
+    for (const c of SERVICE_MERGE_CLUSTERS) {
+      if (approvedMerges[c.clusterId]?.approved) {
+        xml += '  <url>\n';
+        xml += `    <loc>${BASE_URL}${c.hubPath}</loc>\n`;
+        xml += `    <lastmod>${VERIFIED_STATIC_DATE}</lastmod>\n`;
+        xml += '    <changefreq>monthly</changefreq>\n';
+        xml += '    <priority>0.8</priority>\n';
+        xml += '  </url>\n';
+      }
     }
 
     for (const g of publishedGuides) {

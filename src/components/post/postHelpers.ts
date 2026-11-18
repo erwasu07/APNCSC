@@ -199,56 +199,56 @@ export function getDocumentsForPost(
 
   if (type === 'dv') {
     return [
-      'Printed copy of online application form & DV call letter / shortlist notice',
-      'All original educational marksheets, degree / diploma, and provisional certificates',
-      'Class 10th (Matriculation) certificate for Date of Birth verification',
-      'J&K Domicile Certificate and Category Certificate (if applicable) in original',
-      'Valid original Government Photo Identity Proof (Aadhaar / Voter ID / PAN / DL)',
-      'Two sets of self-attested photocopies and recent passport-size photographs',
+      'Application printout & DV call letter',
+      'Original marksheets & degree/diploma certificates',
+      'Class 10th DOB proof certificate',
+      'Domicile & Category certificate (if applicable)',
+      'Valid Government Photo ID (Aadhaar / Voter ID)',
+      'Self-attested photocopy sets & passport photos',
     ];
   }
 
   if (type === 'admit_card') {
     return [
-      'Clear printout of downloaded Admit Card / Hall Ticket',
-      'Original valid Government Photo ID (Aadhaar Card, Voter ID, Passport, or Driving Licence)',
-      'Two recent passport-size colour photographs matching your application form',
-      'Follow permitted stationery & prohibited items instructions printed on the hall ticket',
+      `Downloaded Admit Card for ${item.title}`,
+      'Valid original Government Photo ID',
+      'Recent passport-size colour photographs',
+      'Permitted stationery per hall ticket rules',
     ];
   }
 
   if (type === 'exam') {
     if (item.stage === 'rc_update') {
       return [
-        'Printed Resume / CV (multiple copies for placement interviews)',
-        'Original & photocopy set of IGNOU ID Card and academic marksheets',
-        'Valid Government Photo Identity Proof (Aadhaar / Voter ID)',
+        'Printed CV / Resume copies',
+        'IGNOU ID card & marksheet copies',
+        'Valid Government Photo ID',
       ];
     }
     return [
-      'Official Examination Hall Ticket / Admit Card (when released on the portal)',
-      'Original Government Photo Identity Card & University / Student ID Card',
-      'Verify exact shift timing and examination centre address printed on the Hall Ticket',
+      'Official Hall Ticket / Admit Card printout',
+      'Government Photo ID & Student ID Card',
+      'Verified centre address & shift timing slip',
     ];
   }
 
   if (type === 'admission') {
     return [
-      'Class 10th & Class 12th / Qualifying Examination Marksheets',
-      'Provisional / Migration / Character Certificate (if required by the university)',
-      'Aadhaar Card or valid Government Photo Identity Proof',
-      'Domicile Certificate & Reserved Category Certificate (if applicable)',
-      'Recent passport-size colour photograph & scanned signature',
+      '10th, 12th & qualifying marksheets',
+      'Migration / Provisional / Character certificate',
+      'Aadhaar or valid Photo ID',
+      'Domicile & Category certificate (if applicable)',
+      'Passport photo & scanned signature',
     ];
   }
 
   if (type === 'application' && !isEducationNotice(item)) {
     return [
-      'Aadhaar Card or valid Government Photo Identity Proof',
-      'Class 10th Certificate & Marksheet (for Date of Birth verification)',
-      'Qualifying Educational Marksheets & Certificates',
-      'Domicile / Category / Experience Certificate (if applicable per notice)',
-      'Recent passport-size photograph & scanned signature in official portal size',
+      'Aadhaar or valid Photo ID',
+      'Class 10th certificate for DOB',
+      'Qualifying academic marksheets',
+      'Domicile / Category / Experience certificate (if applicable)',
+      'Scanned photo & signature matching portal limits',
     ];
   }
 
@@ -311,23 +311,23 @@ export function getProcessSectionConfig(
         hasRealDataValue(item.venue) && !isGenericNoticePlaceholder(item.venue);
       return {
         id: 'dv-instructions',
-        title: 'Document Verification Instructions',
-        subtitle: `Official verification guidance for ${orgName} shortlisted candidates.`,
+        title: `Document Verification — ${orgName}`,
+        subtitle: `DV guidance for ${item.title}.`,
         steps: [
           {
-            title: 'Verify Your Roll No. & Reporting Schedule',
-            description: `Check the official ${orgName} notice for your assigned verification date (${statusInfo.dateValue}), board/committee, and reporting window.`,
+            title: `Check ${orgName} DV Schedule`,
+            description: `Confirm your roll number and verification date (${statusInfo.dateValue}) in ${item.title}.`,
           },
           {
-            title: 'Arrange Original Credentials & Photocopy Sets',
+            title: 'Carry Originals & Copies',
             description:
-              'Arrange all original educational, DOB, domicile, and category certificates chronologically with at least two self-attested photocopy sets.',
+              'Organize academic, DOB, domicile, and category originals with photocopy sets.',
           },
           {
-            title: 'Report at the Prescribed Venue',
+            title: 'Attend Prescribed Venue',
             description: hasRealVenue
-              ? `Attend at ${item.venue} as per your reporting schedule. Missing verification may forfeit candidature.`
-              : 'Attend at the verification venue notified in the official circular on your assigned date. Missing verification may forfeit candidature.',
+              ? `Report at ${item.venue} on your scheduled DV date.`
+              : `Report at the ${orgName} venue notified in the circular.`,
           },
         ],
       };
@@ -336,22 +336,22 @@ export function getProcessSectionConfig(
     case 'admit_card':
       return {
         id: 'how-to-download-admit-card',
-        title: 'How to Download Admit Card / Hall Ticket',
-        subtitle: 'Official steps for already-registered candidates.',
+        title: `Download ${orgName} Admit Card`,
+        subtitle: `Steps for ${item.title}.`,
         steps: [
           {
-            title: 'Open the Official Authority Portal',
-            description: `Visit ${portalUrl} and open the Admit Card / Hall Ticket / City Intimation link for this examination.`,
+            title: `Open ${orgName} Portal`,
+            description: `Visit ${portalUrl} and open the ${item.title} download link.`,
           },
           {
-            title: 'Sign In Using Registration Credentials',
+            title: 'Enter Candidate Login',
             description:
-              'Enter your Application / Registration Number, Roll Number, Enrollment Number, or Date of Birth / Password.',
+              'Sign in with your Application/Roll Number and Date of Birth.',
           },
           {
-            title: 'Check Details & Print Clear Copy',
+            title: 'Verify & Print Hall Ticket',
             description:
-              'Verify your name, photograph, exam date, shift reporting time, and centre address on the downloaded PDF before printing.',
+              `Confirm your exam shift (${statusInfo.dateValue}), centre address, and instructions on the PDF.`,
           },
         ],
       };
@@ -364,39 +364,39 @@ export function getProcessSectionConfig(
         !isGenericNoticePlaceholder(item.reportingTime);
       const steps: ProcessStep[] = [
         {
-          title: 'Verify Your Paper / Event Schedule',
-          description: `Confirm your exact examination or event date (${statusInfo.dateValue}) from the official ${orgName} notice.`,
+          title: `Verify ${orgName} Exam Schedule`,
+          description: `Check dates (${statusInfo.dateValue}) published under ${item.title}.`,
         },
       ];
       if (hasVenue || hasTime) {
         const parts: string[] = [];
         if (hasVenue) parts.push(`Venue: ${item.venue}`);
-        if (hasTime) parts.push(`Session / Reporting Time: ${item.reportingTime}`);
+        if (hasTime) parts.push(`Timing: ${item.reportingTime}`);
         steps.push({
-          title: 'Check Notified Timings & Venue Details',
+          title: 'Confirm Venue & Timing',
           description: `${parts.join('. ')}.`,
         });
       }
       steps.push({
         title:
           item.stage === 'rc_update'
-            ? 'Carry ID Card & Required Copies'
-            : 'Confirm Final Centre on Hall Ticket',
+            ? 'Carry ID & Resume Copies'
+            : 'Carry Hall Ticket & ID',
         description:
           item.stage === 'rc_update'
-            ? 'Carry your IGNOU Student ID card, original photo ID, and supporting CV/academic copies to the venue.'
-            : 'Carry your downloaded hall ticket / admit card and valid original photo ID to the allotted centre.',
+            ? `Carry your IGNOU ID card and CV copies to the ${orgName} venue.`
+            : `Bring your printed ${orgName} admit card and valid photo ID to the centre.`,
       });
 
       return {
         id: 'exam-day-instructions',
         title:
           item.stage === 'rc_update'
-            ? 'Participation & Reporting Steps'
+            ? `Reporting Steps — ${item.title}`
             : isDatesheetNotice(item)
-            ? 'Date Sheet Verification Steps'
-            : 'Exam Schedule Instructions',
-        subtitle: 'Key guidance for students and candidates covered under this notice.',
+            ? `Date Sheet Check — ${item.title}`
+            : `Schedule Guidance — ${item.title}`,
+        subtitle: `Key instructions for ${orgName} candidates.`,
         steps,
       };
     }
@@ -404,23 +404,23 @@ export function getProcessSectionConfig(
     case 'result':
       return {
         id: 'whats-next-result',
-        title: 'What Happens Next After Result',
-        subtitle: 'Steps to verify your result and prepare for subsequent stages.',
+        title: `Check ${orgName} Result & Next Steps`,
+        subtitle: `Summary for ${item.title}.`,
         steps: [
           {
-            title: 'Check Roll Number / Scorecard on Official Portal',
-            description: `Open ${portalUrl} and verify your Roll Number, Registration No., or Scorecard in the official result notice.`,
+            title: `Open ${orgName} Result Portal`,
+            description: `Visit ${portalUrl} and verify your roll number or marks in ${item.title}.`,
           },
           {
-            title: 'Save Official Result PDF for Record',
+            title: 'Download Result PDF / Scorecard',
             description:
-              'Download and save a copy of the selection list, grade card, or marksheet published by the authority.',
+              `Save the official ${orgName} selection list or marksheet (${statusInfo.dateValue}) for verification.`,
           },
           {
             title: isCounsellingNotice(item)
-              ? 'Follow Counselling & Reporting Schedule'
-              : 'Monitor Next-Stage Notices',
-            description: `Watch official ${orgName} circulars for subsequent counselling, document verification, or admission formalities.`,
+              ? 'Complete Counselling Schedule'
+              : 'Track Further Notices',
+            description: `Follow subsequent ${orgName} DV, counselling, or joining circulars.`,
           },
         ],
       };
@@ -428,34 +428,34 @@ export function getProcessSectionConfig(
     case 'answer_key':
       return {
         id: 'check-answer-key',
-        title: 'How to Check Answer Key & Submit Objection',
+        title: `Check ${orgName} Answer Key & Objections`,
         subtitle:
           statusInfo.computedStatus === 'closing_soon'
-            ? `Objection window active until ${statusInfo.dateValue}.`
-            : 'Official key verification process.',
+            ? `Objection window for ${item.title} runs until ${statusInfo.dateValue}.`
+            : `Key verification steps for ${item.title}.`,
         steps: [
           {
-            title: 'Open Official Answer Key / Response Sheet Link',
-            description: `Visit ${portalUrl} and sign in with your candidate credentials or open the published answer key PDF.`,
+            title: `Open ${orgName} Key Link`,
+            description: `Log in at ${portalUrl} to view ${item.title} provisional responses.`,
           },
           {
-            title: 'Match Your Recorded Responses Carefully',
+            title: 'Compare Question Responses',
             description:
-              'Compare each question ID and option ID against the official provisional or final key published by the authority.',
+              `Match your Question/Option IDs carefully against the ${orgName} key.`,
           },
           ...(statusInfo.computedStatus === 'closing_soon'
             ? [
                 {
-                  title: `Submit Online Challenge Before ${statusInfo.dateValue}`,
+                  title: `Raise Objection by ${statusInfo.dateValue}`,
                   description:
-                    'Upload clear academic/standard reference proof on the official objection portal within the stipulated objection window.',
+                    `Submit challenges with reference proof on ${portalUrl} before closing.`,
                 },
               ]
             : [
                 {
-                  title: 'Track Final Result Publication',
+                  title: 'Monitor Final Key & Result',
                   description:
-                    'After reviewing candidate objections, the authority publishes final keys and results on the official website.',
+                    `${orgName} issues final results after reviewing candidate challenges.`,
                 },
               ]),
         ],
@@ -464,25 +464,25 @@ export function getProcessSectionConfig(
     case 'upcoming':
       return {
         id: 'prepare-before-opening',
-        title: 'How to Prepare Before Registration Opens',
-        subtitle: `Window is scheduled to open on ${item.applyStart || item.startDate || statusInfo.dateValue}.`,
+        title: `Preparation Steps — ${item.title}`,
+        subtitle: `Expected opening: ${item.applyStart || item.startDate || statusInfo.dateValue}.`,
         steps: [
           {
-            title: 'Review Eligibility Criteria in Official Notification',
+            title: `Review ${orgName} Eligibility`,
             description:
-              'Check qualification cut-off dates, category certificate requirements, and eligibility rules on the official circular.',
+              `Check qualification cut-off dates and category norms in ${item.title}.`,
           },
           {
             title: isEdu
-              ? 'Keep Student Registration & Academic Records Ready'
-              : 'Prepare Scanned Documents & OTR Profile',
+              ? 'Keep Enrolment Records Ready'
+              : 'Prepare OTR & Scans',
             description: isEdu
-              ? 'Keep your enrollment number, qualifying marksheets, and valid ID ready before the portal opens.'
-              : 'Keep clear scans of your photograph, signature, Class 10th marksheet, qualification certificates, and domicile certificate ready.',
+              ? 'Keep enrollment number, marksheets, and valid ID ready.'
+              : 'Keep scanned photo, signature, 10th certificate, and domicile ready.',
           },
           {
-            title: 'Apply Once Official Portal Link Activates',
-            description: `Visit ${portalUrl} or contact CSC DOST once the window opens to complete submission before the closing deadline.`,
+            title: `Apply on ${orgName} Activation`,
+            description: `Submit via ${portalUrl} once registration activates.`,
           },
         ],
       };
@@ -496,60 +496,60 @@ export function getProcessSectionConfig(
       if (isEdu) {
         return {
           id: 'submission-procedure',
-          title: 'Submission procedure',
-          subtitle: 'Follow these steps on the official university/board portal or request CSC DOST assistance.',
+          title: `Submission Procedure — ${item.title}`,
+          subtitle: `Online submission guide for ${orgName}.`,
           steps: [
             {
-              title: `Open Official ${orgName} Portal`,
-              description: `Visit ${portalUrl} and open the active link for "${item.title}".`,
+              title: `Open ${orgName} Portal`,
+              description: `Visit ${portalUrl} and open "${item.title}".`,
             },
             {
-              title: 'Sign In With Student / Candidate Credentials',
+              title: 'Student Sign-In',
               description:
-                'Log in using your University Registration / Enrollment Number or complete student registration using an active mobile number and email.',
+                `Log in with your ${orgName} registration or enrolment number.`,
             },
             {
-              title: 'Select Programme / Courses & Verify Details',
+              title: 'Verify Courses & Details',
               description:
-                'Choose your programme, semester, or courses carefully and confirm all academic details against official student records.',
+                'Confirm selected semester/courses against academic records.',
             },
             {
               title:
                 item.fee?.genObc && /₹0|free|exempt|no application fee/i.test(item.fee.genObc)
-                  ? 'Submit Form & Download Confirmation'
-                  : 'Pay Prescribed Fee & Save Final Receipt',
+                  ? 'Submit & Save Slip'
+                  : 'Pay Fee & Save Receipt',
               description:
-                'Review your form preview carefully before final submission and save a copy of the acknowledgment receipt.',
+                `Review preview before locking and save your ${orgName} receipt.`,
             },
           ],
         };
       }
       return {
         id: 'how-to-apply',
-        title: 'How to Apply Online',
-        subtitle: 'Follow these steps on the official portal or request CSC DOST assistance.',
+        title: `How to Apply — ${item.title}`,
+        subtitle: `Application overview for ${orgName}.`,
         steps: [
           {
-            title: `Open Official ${orgName} Portal`,
-            description: `Visit ${portalUrl} and locate the active link for "${item.title}".`,
+            title: `Open ${orgName} Portal`,
+            description: `Go to ${portalUrl} and select "${item.title}".`,
           },
           {
-            title: 'Complete Candidate Registration / Sign In',
+            title: 'Candidate Registration / OTR',
             description:
-              'Log in with your OTR / Candidate ID or complete new registration using your active mobile number and email.',
+              `Sign in with your ${orgName} OTR/Candidate ID or register.`,
           },
           {
-            title: 'Fill Details & Upload Scanned Documents',
+            title: 'Enter Data & Upload Scans',
             description:
-              'Enter personal and academic details matching your Class 10th / qualifying marksheets and upload properly sized scans.',
+              'Match entries to Class 10th records and upload compliant scans.',
           },
           {
             title:
               item.fee?.genObc && /₹0|free|exempt|no application fee/i.test(item.fee.genObc)
-                ? 'Submit Form & Download Confirmation'
-                : 'Pay Prescribed Fee & Save Final Receipt',
+                ? 'Submit & Print Form'
+                : 'Remit Fee & Save Receipt',
             description:
-              'Review your preview carefully before final submission and keep a printed/PDF copy of the acknowledgment receipt.',
+              `Verify preview prior to submission and retain the ${orgName} confirmation PDF.`,
           },
         ],
       };
@@ -567,8 +567,8 @@ export function buildPostFaqs(
   const faqs: PostFaqItem[] = [...customFaqs];
 
   faqs.push({
-    question: `Where can I verify the official notification for ${item.title}?`,
-    answer: `You can confirm every official date, eligibility rule, and circular directly from ${orgName} at ${portalUrl}. Always rely on the official notice for final updates.`,
+    question: `Where is the official source for ${item.title}?`,
+    answer: `Official dates and rules for ${item.title} are published by ${orgName} at ${portalUrl}.`,
   });
 
   if (
@@ -577,51 +577,45 @@ export function buildPostFaqs(
     !(item.fee?.genObc && /₹0|free|exempt|no application fee/i.test(item.fee.genObc))
   ) {
     faqs.push({
-      question: 'What if online fee payment is deducted but the form shows pending?',
+      question: `What if ${orgName} fee payment shows pending for ${item.title}?`,
       answer:
-        'Wait 24–48 hours for bank/gateway reconciliation before attempting another payment, and check the Verify Payment option in your candidate dashboard.',
+        `Wait 24–48 hours for bank reconciliation before retrying on ${portalUrl}.`,
     });
   }
 
   if (isAssignmentNotice(item)) {
     faqs.push({
-      question: 'Do learners who submitted assignments offline at their Study Centre need to upload again?',
+      question: `Must offline Study Centre learners re-upload ${item.title}?`,
       answer:
-        'No. Learners who have already submitted assignments at their Study Centre or Regional Centre do not need to re-upload online.',
+        `No. Learners who already submitted offline at their ${orgName} centre need not re-upload.`,
     });
   } else if (type === 'dv') {
     faqs.push({
-      question: 'Do I need to submit an online application or pay a fee for Document Verification?',
+      question: `Is a fresh form needed for ${item.title}?`,
       answer:
-        'No. Document Verification is only for already shortlisted candidates listed in the official DV notice. Bring original certificates and photocopies per your schedule.',
+        `No. Only candidates shortlisted by ${orgName} attend with original certificates.`,
     });
   } else if (type === 'answer_key') {
     faqs.push({
-      question: 'Can fresh candidates apply through this answer key notice?',
+      question: `Who can access ${item.title}?`,
       answer:
         statusInfo.computedStatus === 'closing_soon'
-          ? `No. This notice is strictly for candidates who appeared in the examination to review responses or submit key objections up to ${statusInfo.dateValue}.`
-          : 'No. This notice is published for candidates who appeared in the examination to check their responses.',
+          ? `Only candidates who appeared in this ${orgName} exam can check keys or object until ${statusInfo.dateValue}.`
+          : `Candidates who appeared in this ${orgName} exam can verify their responses.`,
     });
   } else if (type === 'result') {
     faqs.push({
-      question: 'Does this result notice require a new application form?',
+      question: `Does ${item.title} open new registration?`,
       answer:
-        'No. This page covers an official result or selection list update. Follow the next-stage DV or counselling instructions issued by the authority.',
+        `No. ${item.title} covers result/merit updates from ${orgName}. Follow next-stage DV or counselling instructions.`,
     });
   } else if (type === 'admit_card' || type === 'exam') {
     faqs.push({
-      question: 'Who is eligible to download or appear under this notice?',
+      question: `Who can download or appear under ${item.title}?`,
       answer:
-        'Only candidates who previously registered for this examination cycle can download their hall ticket or appear per the notified schedule.',
+        `Registered candidates of this ${orgName} examination cycle (${statusInfo.dateValue}).`,
     });
   }
-
-  faqs.push({
-    question: 'Is CSC DOST an official government website?',
-    answer:
-      'No. CSC DOST is an independent citizen information and facilitation portal run by Authorised CSC VLE Wasim Ahmad Khanday (VLE ID 212515670018) at Sangran Qazigund, Anantnag, J&K.',
-  });
 
   return faqs;
 }

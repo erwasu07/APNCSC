@@ -27,6 +27,7 @@ import {
   hasRealDataValue,
   isNonApplicationTemplateType,
   resolveEffectiveTemplateType,
+  resolvePostPdfUrl,
   resolvePostPortalUrl,
 } from './components/post/postHelpers';
 import {
@@ -39,6 +40,11 @@ import {
   EDITORIAL_AUTHOR_TEXT,
   getRelatedNoticesForPost,
 } from './components/post/postEnrichmentHelpers';
+import {
+  deriveStoredServiceFacts,
+  getClusterForServiceId,
+  type ServiceClusterSuggestion,
+} from './utils/serviceMetadata';
 
 function escapeHtml(str: unknown): string {
   if (str === null || str === undefined) return '';
@@ -59,6 +65,7 @@ export function renderPostSubstantiveHtml(
   const nonAppTemplate = isNonApplicationTemplateType(effectiveType);
   const orgName = item.org || resolvePostOrg(item);
   const portalUrl = resolvePostPortalUrl(item);
+  const pdfUrl = resolvePostPdfUrl(item, portalUrl);
 
   const safeTitle = escapeHtml(item.title);
   const safeOrg = escapeHtml(orgName);
@@ -140,26 +147,26 @@ export function renderPostSubstantiveHtml(
     </nav>
 
     <!-- Government Transparency Notice -->
-    <aside style="background:#fffbeb; border-left:4px solid #f59e0b; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:13px; color:#92400e;">
-      <strong>Independent Portal Notice:</strong> CSC DOST (cscdost.com) is an independent portal, not a government website, operated by Authorized CSC VLE Wasim Ahmad Khanday (VLE ID: 212515670018). Always confirm details on the official notification linked below.
+    <aside style="background:#fffbeb; border-left:4px solid #f59e0b; padding:10px 14px; border-radius:0 8px 8px 0; margin-bottom:18px; font-size:13px; color:#92400e;">
+      <strong>Independent Summary (${safeOrg}):</strong> Verify "${safeTitle}" directly on <a href="${safeOfficialLink}" target="_blank" rel="noopener noreferrer" style="color:#92400e; font-weight:700;">${escapeHtml(enrichment.sourceDomain)}</a>.
     </aside>
     ${isStale90 ? `
     <aside role="status" style="background:#fef2f2; border:1px solid #fecaca; border-left:4px solid #dc2626; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:14px; color:#7f1d1d;">
-      <strong>Closed:</strong> The submission deadline passed (${escapeHtml(safeLastDate)}${daysClosed !== null && daysClosed > 0 ? `, ${daysClosed} days ago` : ''}). This page is kept live for historical reference only; confirm any fresh cycles on the official authority website.
+      <strong>Closed (${escapeHtml(safeLastDate)}):</strong> "${safeTitle}" passed closing${daysClosed !== null && daysClosed > 0 ? ` ${daysClosed} days ago` : ''}; verify any new ${safeOrg} cycle on ${escapeHtml(enrichment.sourceDomain)}.
     </aside>
     ` : ''}
     ${!computed.canApplyOnline ? `
     <aside style="background:${computed.verificationStatus === 'needs_verification' ? '#fffbeb' : computed.isCancelled ? '#fff1f2' : '#f8fafc'}; border:1px solid ${computed.verificationStatus === 'needs_verification' ? '#fde68a' : computed.isCancelled ? '#fecdd3' : '#cbd5e1'}; border-left:4px solid ${computed.verificationStatus === 'needs_verification' ? '#d97706' : computed.isCancelled ? '#e11d48' : '#475569'}; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:13px; color:#0f172a;">
-      <strong>Status (${escapeHtml(computed.badgeLabel)}):</strong> ${
+      <strong>${escapeHtml(computed.badgeLabel)} (${safeOrg}):</strong> ${
         computed.verificationStatus === 'needs_verification'
-          ? 'This notice could not be freshly corroborated from the official portal and is paused for assisted application requests. Verify directly on the authority website.'
+          ? `Confirm "${safeTitle}" status directly on ${escapeHtml(enrichment.sourceDomain)}.`
           : computed.isCancelled
-          ? 'This notification has been cancelled or withdrawn by the issuing authority.'
+          ? `${safeOrg} cancelled or withdrew "${safeTitle}".`
           : computed.isClosed
-          ? escapeHtml(computed.closingTimeNote || `The application window concluded on ${safeLastDate}. Assisted applications are closed.`)
+          ? escapeHtml(computed.closingTimeNote || `"${safeTitle}" closed on ${safeLastDate}.`)
           : computed.isUpcoming
-          ? `Window is scheduled to open on ${safeStartDate}.`
-          : 'Check the official authority portal link below for downloads, schedules, or post-application instructions.'
+          ? `${safeOrg} scheduled opening for "${safeTitle}": ${safeStartDate}.`
+          : `Check ${escapeHtml(enrichment.sourceDomain)} for "${safeTitle}" updates.`
       }
     </aside>
     ` : ''}
@@ -378,20 +385,27 @@ export function renderPostSubstantiveHtml(
       <!-- Official Links Action Section -->
       <section style="background:#f1f5f9; border-radius:10px; padding:18px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
         <div>
-          <div style="font-weight:700; font-size:15px; color:#101A36;">Official Board Portal &amp; Verification Links</div>
-          <div style="font-size:13px; color:#475569;">Verify official notification details directly on the issuing authority portal.</div>
+          <div style="font-weight:700; font-size:15px; color:#101A36;">Official ${safeOrg} Source Links</div>
+          <div style="font-size:13px; color:#475569;">Confirm "${safeTitle}" on ${escapeHtml(enrichment.sourceDomain)}.</div>
         </div>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
           <a href="${safeOfficialLink}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
-            ${isSscTimetablePost ? 'Official Portal (ssc.gov.in) ↗' : isIgnouPost ? 'Official IGNOU Circular / Portal ↗' : 'Official Portal / Notice ↗'}
+            ${isSscTimetablePost ? 'Official Portal (ssc.gov.in) ↗' : isIgnouPost ? 'Official IGNOU Circular / Portal ↗' : `${safeOrg} Official Portal ↗`}
           </a>
+          ${
+            pdfUrl
+              ? `<a href="${escapeHtml(pdfUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#ffffff; color:#101A36; border:1px solid #cbd5e1; font-weight:700; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
+            Notification PDF ↗
+          </a>`
+              : ''
+          }
           ${!computed.canApplyOnline ? `
           <a href="/" style="display:inline-block; background:#ffffff; color:#101A36; border:1px solid #cbd5e1; font-weight:600; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
-            Return to Portal Homepage
+            CSC DOST Home
           </a>
           ` : `
-          <a href="/apply" style="display:inline-block; background:#101A36; color:#ffffff; font-weight:600; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
-            Assisted Application Desk
+          <a href="/apply?service=${encodeURIComponent(item.title)}" style="display:inline-block; background:#101A36; color:#ffffff; font-weight:600; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
+            Request Assistance
           </a>
           `}
         </div>
@@ -423,172 +437,213 @@ function renderSsrPolicyFooterHtml(): string {
 }
 
 export function renderServiceSubstantiveHtml(service: ServiceItem): string {
+  const facts = deriveStoredServiceFacts(service);
+  const cluster = getClusterForServiceId(service.id);
   const safeName = escapeHtml(service.name);
   const safeDescription = escapeHtml(service.description);
-  const hasFeeLines = Array.isArray(service.feeLines) && service.feeLines.length > 0;
-  const hasPrice = Boolean(service.price && service.price.trim().length > 0);
-  const safePrice = escapeHtml(hasPrice ? service.price.trim() : 'Ask us');
-  const safeFeeHtml = hasFeeLines
-    ? service.feeLines!.map((l) => `<div>${escapeHtml(l)}</div>`).join('')
-    : safePrice;
-  const hasTime = Boolean(service.estimatedTime && service.estimatedTime.trim().length > 0);
-  const safeTime = escapeHtml(service.estimatedTime?.trim() || '');
   const safeCategory = escapeHtml(service.category);
-  const safeOfficialUrl =
-    service.officialUrl && service.officialUrl.trim().length > 0
-      ? escapeHtml(service.officialUrl.trim())
-      : service.category === 'cards_adda'
-      ? ''
-      : '';
-  const safeDocs = Array.isArray(service.requirements) ? service.requirements.filter(Boolean) : [];
+  const safeAuthority = escapeHtml(facts.issuingAuthority);
+  const safeEligibility = escapeHtml(facts.eligibility);
+  const safeTime = escapeHtml(facts.estimatedTime);
+  const safeFeeHtml =
+    facts.feeLines.length > 0
+      ? facts.feeLines.map((l) => `<div>${escapeHtml(l)}</div>`).join('')
+      : escapeHtml(facts.feesText);
+
   const waEnquiryUrl = `https://wa.me/917006833767?text=${encodeURIComponent(
-    `Hello Wasim Ahmad Khanday (CSC DOST), I would like to enquire about ${service.name}: https://www.cscdost.com/service/${service.id}`
+    `Hello CSC DOST, enquiry for ${service.name} (${service.id})`
   )}`;
 
-  const faqItems = [
-    {
-      question: `What documents are needed for ${service.name}?`,
-      answer:
-        safeDocs.length > 0
-          ? `Listed documents: ${safeDocs.join(', ')}. Additional verification may be requested by the issuing authority.`
-          : 'Document requirements depend on your specific application case. Contact +91 70068 33767 before applying.',
-    },
-    {
-      question: `What are the charges for ${service.name}?`,
-      answer: `${hasPrice ? `Listed reference charge: ${service.price.trim()}. ` : 'Fee is confirmed on enquiry ("Ask us"). '}Final charges depend on the service and any government fee. Please confirm before applying.`,
-    },
-    {
-      question: `How long does ${service.name} typically take?`,
-      answer: hasTime
-        ? `Indicative timeline noted in the service entry: ${service.estimatedTime.trim()}. Actual completion depends on issuing authority verification.`
-        : 'Processing time depends on departmental verification. Contact +91 70068 33767 for current turnaround expectations.',
-    },
-  ];
-  const faqSchemaJson = JSON.stringify({
+  const serviceSchemaJson = JSON.stringify({
     '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((f) => ({
-      '@type': 'Question',
-      name: f.question,
-      acceptedAnswer: { '@type': 'Answer', text: f.answer },
-    })),
+    '@type': 'Service',
+    name: service.name,
+    description: service.description,
+    serviceType: service.category,
+    provider: {
+      '@type': 'LocalBusiness',
+      name: 'CSC DOST',
+      telephone: '+91-70068-33767',
+    },
+    url: `https://www.cscdost.com/service/${encodeURIComponent(service.id)}`,
   }).replace(/</g, '\\u003c');
 
   return `
   ${renderPrimaryCategoryNavHtml('services')}
-  <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:12px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:16px; color:#101A36; line-height:1.6;">
-    <nav aria-label="Breadcrumb" style="font-size:14px; color:#475569; margin-bottom:16px;">
+  <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:12px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:15px; color:#101A36; line-height:1.55;">
+    <nav aria-label="Breadcrumb" style="font-size:14px; color:#475569; margin-bottom:14px;">
       <a href="/" style="color:#101A36; font-weight:600; text-decoration:none;">Home</a>
       <span style="margin:0 6px;">/</span>
-      <a href="/services" style="color:#101A36; font-weight:600; text-decoration:none;">CSC E-Services</a>
+      <a href="/services" style="color:#101A36; font-weight:600; text-decoration:none;">Services</a>
       <span style="margin:0 6px;">/</span>
       <span style="color:#101A36; font-weight:700;">${safeName}</span>
     </nav>
 
-    <aside style="background:#FFFBEB; border-left:4px solid #F5A623; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:14px; color:#101A36;">
-      <strong>Fee &amp; Transparency Notice:</strong> Final charges depend on the service and any government fee. Please confirm before applying. Operated by Wasim Ahmad Khanday (CSC VLE ID: 212515670018, Sangran Qazigund, Anantnag, J&amp;K 192221).
-    </aside>
+    ${
+      cluster
+        ? `<div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:10px; padding:10px 14px; margin-bottom:14px; font-size:13px;">
+      <strong>${escapeHtml(cluster.title)}:</strong> <a href="${escapeHtml(cluster.hubPath)}" style="color:#1D4ED8; font-weight:700; text-decoration:underline;">View Hub Comparison →</a>
+    </div>`
+        : ''
+    }
 
-    <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:24px;">
-      <header style="border-bottom:1px solid #E2E8F0; padding-bottom:18px; margin-bottom:20px;">
-        <span style="display:inline-block; background:#ECFDF5; color:#1F9D6B; border:1px solid #A7F3D0; font-size:12px; font-weight:700; text-transform:uppercase; padding:4px 10px; border-radius:6px; margin-bottom:10px;">
-          ${safeCategory}
+    <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:22px;">
+      <header style="border-bottom:1px solid #E2E8F0; padding-bottom:14px; margin-bottom:18px;">
+        <span style="display:inline-block; background:#ECFDF5; color:#1F9D6B; border:1px solid #A7F3D0; font-size:11px; font-weight:700; text-transform:uppercase; padding:3px 9px; border-radius:6px; margin-bottom:8px;">
+          ${safeCategory}${facts.hasVerifyPlaceholders ? ' · [VERIFY]' : ' · Verified'}
         </span>
-        <h1 style="font-size:28px; line-height:1.3; font-weight:800; color:#101A36; margin:0 0 12px 0;">
-          ${safeName}
-        </h1>
-        <p style="font-size:16px; color:#475569; margin:0;">
-          ${safeDescription}
-        </p>
+        <h1 style="font-size:26px; line-height:1.28; font-weight:800; color:#101A36; margin:0 0 8px 0;">${safeName}</h1>
+        <p style="font-size:15px; color:#475569; margin:0;">${safeDescription}</p>
       </header>
 
-      <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:24px;">
-        <div style="background:#F6F8FC; border:1px solid #E2E8F0; border-radius:10px; padding:16px;">
-          <div style="font-size:12px; font-weight:600; color:#64748B; text-transform:uppercase;">Fee</div>
-          <div style="font-size:16px; font-weight:800; color:#1F9D6B; margin-top:4px; line-height:1.45;">${safeFeeHtml}</div>
+      <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-bottom:18px;">
+        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:14px;">
+          <h2 style="font-size:12px; font-weight:700; color:#475569; margin:0 0 4px 0;">${safeName} — Issuing Authority</h2>
+          <div style="font-size:14px; font-weight:700; color:${facts.authorityFromStoredData ? '#101A36' : '#B45309'};">${safeAuthority}</div>
         </div>
+        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:14px;">
+          <h2 style="font-size:12px; font-weight:700; color:#475569; margin:0 0 4px 0;">${safeName} — Fees</h2>
+          <div style="font-size:14px; font-weight:700; color:${facts.feesFromStoredData ? '#1F9D6B' : '#B45309'};">${safeFeeHtml}</div>
+        </div>
+        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:14px;">
+          <h2 style="font-size:12px; font-weight:700; color:#475569; margin:0 0 4px 0;">${safeName} — Processing Time</h2>
+          <div style="font-size:14px; font-weight:700; color:${facts.timeFromStoredData ? '#101A36' : '#B45309'};">${safeTime}</div>
+        </div>
+      </section>
+
+      <section style="margin-bottom:16px;">
+        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">${safeName} — Who Is Eligible</h2>
+        <p style="font-size:14px; color:${facts.eligibilityFromStoredData ? '#334155' : '#B45309'}; margin:0;">${safeEligibility}</p>
+      </section>
+
+      <section style="margin-bottom:16px;">
+        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">${safeName} — Exact Documents List</h2>
         ${
-          hasTime
-            ? `<div style="background:#F6F8FC; border:1px solid #E2E8F0; border-radius:10px; padding:16px;">
-          <div style="font-size:12px; font-weight:600; color:#64748B; text-transform:uppercase;">Typical Time</div>
-          <div style="font-size:18px; font-weight:800; color:#101A36; margin-top:4px;">${safeTime}</div>
-        </div>`
+          facts.requirements.length > 0
+            ? `<ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
+          ${facts.requirements.map((doc) => `<li>${escapeHtml(doc)}</li>`).join('')}
+        </ul>`
+            : `<p style="font-size:14px; color:#B45309; margin:0;">${safeName} documents: [VERIFY]</p>`
+        }
+      </section>
+
+      <section style="margin-bottom:16px;">
+        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">${safeName} — Step-by-Step Flow</h2>
+        ${
+          facts.stepFlow.length > 0
+            ? `<ol style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
+          ${facts.stepFlow.map((s) => `<li>${escapeHtml(s)}</li>`).join('')}
+        </ol>`
+            : `<p style="font-size:14px; color:#B45309; margin:0;">${safeName} steps: [VERIFY]</p>`
+        }
+      </section>
+
+      <section style="margin-bottom:16px;">
+        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">${safeName} — Common Rejection Reasons</h2>
+        ${
+          facts.rejectionReasons.length > 0
+            ? `<ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
+          ${facts.rejectionReasons.map((r) => `<li>${escapeHtml(r)}</li>`).join('')}
+        </ul>`
+            : `<p style="font-size:14px; color:#B45309; margin:0;">${safeName} rejections: [VERIFY]</p>`
+        }
+      </section>
+
+      <section style="margin-bottom:16px;">
+        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">${safeName} — Staff Pre-Submission Checks</h2>
+        ${
+          facts.staffChecks.length > 0
+            ? `<ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
+          ${facts.staffChecks.map((c) => `<li>${escapeHtml(c)}</li>`).join('')}
+        </ul>`
+            : `<p style="font-size:14px; color:#B45309; margin:0;">${safeName} checks: [VERIFY]</p>`
+        }
+      </section>
+
+      <details style="border:1px solid #E2E8F0; border-radius:8px; padding:10px 12px; margin-bottom:16px; background:#F8FAFC; font-size:13px;">
+        <summary style="font-weight:700; color:#101A36; cursor:pointer;">Disclaimer &amp; FAQ</summary>
+        <p style="margin:6px 0 0 0; color:#475569;">Independent CSC desk (VLE 212515670018, Qazigund). Confirm charges (+91 70068 33767) before applying.</p>
+      </details>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; padding-top:8px; border-top:1px solid #E2E8F0;">
+        <a href="${escapeHtml(waEnquiryUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:9px 16px; border-radius:10px; text-decoration:none;">WhatsApp</a>
+        <a href="tel:+917006833767" style="display:inline-block; background:#101A36; color:#ffffff; font-weight:700; font-size:14px; padding:9px 16px; border-radius:10px; text-decoration:none;">+91 70068 33767</a>
+        <a href="/apply?service=${encodeURIComponent(service.name)}" style="display:inline-block; background:#F8FAFC; color:#101A36; border:1px solid #CBD5E1; font-weight:700; font-size:14px; padding:9px 16px; border-radius:10px; text-decoration:none;">Request Filing</a>
+        ${
+          facts.officialPortalUrl
+            ? `<a href="${escapeHtml(facts.officialPortalUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#ffffff; color:#101A36; border:1px solid #CBD5E1; font-weight:600; font-size:14px; padding:9px 16px; border-radius:10px; text-decoration:none;">${escapeHtml(facts.officialPortalLabel || 'Portal')} ↗</a>`
             : ''
         }
-      </section>
-
-      <section style="margin-bottom:24px;">
-        <h2 style="font-size:20px; font-weight:700; color:#101A36; margin:0 0 12px 0;">Documents Checklist</h2>
-        ${
-          safeDocs.length > 0
-            ? `<ul style="padding-left:20px; font-size:15px; color:#334155; line-height:1.8; margin:0;">
-          ${safeDocs.map((doc) => `<li>${escapeHtml(doc)}</li>`).join('')}
-        </ul>`
-            : `<p style="font-size:15px; color:#475569; margin:0;">Ask us — document requirements depend on your specific application case.</p>`
-        }
-      </section>
-
-      <section style="margin-bottom:24px;">
-        <h2 style="font-size:20px; font-weight:700; color:#101A36; margin:0 0 12px 0;">Process Steps</h2>
-        <ol style="padding-left:20px; font-size:15px; color:#334155; line-height:1.8; margin:0;">
-          <li>Confirm required documents and total fee (${safePrice}) on WhatsApp or +91 70068 33767 before applying.</li>
-          <li>Submit clear supporting document scans online or at CSC DOST (Sangran Qazigund, Anantnag).</li>
-          <li>Application is filed on the relevant official portal with OTP or biometric verification where needed.</li>
-          <li>Save your submission receipt / reference number to monitor progress.</li>
-        </ol>
-      </section>
-
-      <section style="margin-bottom:24px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px;">
-        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 10px 0;">Service Scope &amp; Pre-Submission Verification</h2>
-        <p style="font-size:14px; color:#334155; margin:0 0 10px 0;">
-          CSC DOST provides independent citizen facilitation for <strong>${safeName}</strong> under the ${safeCategory} category through our Authorized Common Services Center kiosk (VLE ID: 212515670018, Sangran Qazigund, Anantnag). ${hasTime ? `Indicative timeline noted for this filing: ${safeTime}. ` : ''}Final acceptance and certificate issuance depend strictly on verification by the competent government department.
-        </p>
-        <ul style="padding-left:20px; font-size:14px; color:#334155; line-height:1.75; margin:0;">
-          <li>Ensure applicant name, parent name, and date of birth match across Aadhaar, Matriculation certificate, and revenue records before filing.</li>
-          <li>Confirm exact government fee plus CSC operator facilitation charges (${safePrice}) in advance before initiating any payment.</li>
-          <li>Keep an active mobile number ready for Aadhaar OTP or portal login verification alerts during form entry.</li>
-          <li>Retain your official acknowledgement slip and CSC tracking token to review application updates on <a href="/track" style="color:#1F9D6B; font-weight:600;">cscdost.com/track</a>.</li>
-        </ul>
-      </section>
-
-      <section style="margin-bottom:24px;">
-        <h2 style="font-size:20px; font-weight:700; color:#101A36; margin:0 0 10px 0;">Frequently Asked Questions</h2>
-        <div style="display:flex; flex-direction:column; gap:10px;">
-          ${faqItems
-            .map(
-              (f) => `
-          <details style="border:1px solid #E2E8F0; border-radius:10px; padding:12px;">
-            <summary style="font-weight:700; color:#101A36; cursor:pointer;">${escapeHtml(f.question)}</summary>
-            <p style="margin:8px 0 0 0; font-size:14px; color:#334155;">${escapeHtml(f.answer)}</p>
-          </details>`
-            )
-            .join('')}
-        </div>
-      </section>
-
-      <section style="background:#F6F8FC; border:1px solid #E2E8F0; border-radius:12px; padding:18px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
-        <div>
-          <div style="font-weight:700; font-size:16px; color:#101A36;">Enquire or Request Filing Help</div>
-          <div style="font-size:14px; color:#475569;">Final charges depend on the service and any government fee. Please confirm before applying.</div>
-        </div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <a href="${escapeHtml(waEnquiryUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">
-            Enquire on WhatsApp
-          </a>
-          <a href="tel:+917006833767" style="display:inline-block; background:#101A36; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">
-            Call +91 70068 33767
-          </a>
-          ${
-            safeOfficialUrl
-              ? `<a href="${safeOfficialUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#ffffff; color:#101A36; border:1px solid #CBD5E1; font-weight:600; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">
-            Official Portal ↗
-          </a>`
-              : ''
-          }
-        </div>
-      </section>
+      </div>
     </article>
-    <script type="application/ld+json">${faqSchemaJson}</script>
+    <script type="application/ld+json">${serviceSchemaJson}</script>
+    ${renderSsrPolicyFooterHtml()}
+  </main>
+  `;
+}
+
+export function renderServiceClusterHubHtml(
+  cluster: ServiceClusterSuggestion,
+  members: ServiceItem[]
+): string {
+  const safeTitle = escapeHtml(cluster.title);
+  return `
+  ${renderPrimaryCategoryNavHtml('services')}
+  <main class="ssr-article-wrapper" style="max-width:1040px; margin:0 auto; padding:12px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:15px; color:#101A36; line-height:1.6;">
+    <nav aria-label="Breadcrumb" style="font-size:14px; color:#475569; margin-bottom:14px;">
+      <a href="/" style="color:#101A36; font-weight:600; text-decoration:none;">Home</a>
+      <span style="margin:0 6px;">/</span>
+      <a href="/services" style="color:#101A36; font-weight:600; text-decoration:none;">Services</a>
+      <span style="margin:0 6px;">/</span>
+      <span style="color:#101A36; font-weight:700;">${safeTitle}</span>
+    </nav>
+
+    <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:24px;">
+      <header style="border-bottom:1px solid #E2E8F0; padding-bottom:16px; margin-bottom:20px;">
+        <span style="display:inline-block; background:#EFF6FF; color:#1D4ED8; font-size:11px; font-weight:700; text-transform:uppercase; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
+          Consolidated Service Hub · ${members.length} Services
+        </span>
+        <h1 style="font-size:26px; font-weight:800; color:#101A36; margin:0 0 8px 0;">${safeTitle}</h1>
+        <p style="font-size:15px; color:#475569; margin:0 0 8px 0;">${escapeHtml(cluster.summary)}</p>
+        <p style="font-size:13px; color:#334155; margin:0;"><strong>Issuing Authority:</strong> ${escapeHtml(cluster.issuingAuthority)}</p>
+      </header>
+
+      <div style="overflow-x:auto; margin-bottom:20px;">
+        <table style="width:100%; border-collapse:collapse; font-size:13px; border:1px solid #E2E8F0;">
+          <thead>
+            <tr style="background:#F8FAFC; text-align:left;">
+              <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Service</th>
+              <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Documents</th>
+              <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Fee</th>
+              <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Time</th>
+              <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${members
+              .map((m) => {
+                const f = deriveStoredServiceFacts(m);
+                const docsText = f.requirements.length > 0 ? f.requirements.join(', ') : '[VERIFY]';
+                return `
+                <tr style="border-bottom:1px solid #E2E8F0;">
+                  <td style="padding:10px; vertical-align:top;">
+                    <div style="font-weight:700; color:#101A36;">${escapeHtml(m.name)}</div>
+                    <div style="color:#475569; margin-top:2px;">${escapeHtml(m.description)}</div>
+                  </td>
+                  <td style="padding:10px; vertical-align:top; color:#334155;">${escapeHtml(docsText)}</td>
+                  <td style="padding:10px; vertical-align:top; font-weight:700; color:#1F9D6B;">${escapeHtml(f.feesText)}</td>
+                  <td style="padding:10px; vertical-align:top; color:#334155;">${escapeHtml(f.estimatedTime)}</td>
+                  <td style="padding:10px; vertical-align:top;">
+                    <a href="/apply?service=${encodeURIComponent(m.name)}" style="display:inline-block; background:#101A36; color:#ffffff; padding:5px 10px; border-radius:6px; font-weight:700; text-decoration:none;">Apply</a>
+                  </td>
+                </tr>`;
+              })
+              .join('')}
+          </tbody>
+        </table>
+      </div>
+    </article>
+    ${renderSsrPolicyFooterHtml()}
   </main>
   `;
 }
@@ -683,6 +738,11 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">4. Report an Error or Request a Correction</h2>
           <p>
             Readers who spot a typographical error, broken official PDF link, or updated date circular can report it directly to our editorial desk via email at <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a>, phone at <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a>, or through our <a href="/contact-us" style="color:#2563eb; font-weight:600;">Contact Helpdesk</a>. Verified corrections are applied within 24 hours.
+          </p>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">5. Service-Page Verification &amp; Advertising Independence</h2>
+          <p>
+            No scheme guide or CSC service fee sheet may be marked verified while any <code>[VERIFY]</code> gap remains open. Editorial selections, scheme summaries, and job rankings remain completely independent of third-party advertising networks and reflect only primary official notifications.
           </p>
         </section>
       </article>
@@ -826,7 +886,12 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
             <li>Cross-check fee exemptions, bank portal charges, and official last-date closing times in IST prior to making payment.</li>
           </ul>
 
-          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">5. Contact &amp; Questions</h2>
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">5. Assisted Filing Scope &amp; Non-Guarantee Policy</h2>
+          <p>
+            Using CSC DOST's informational guides, browser document tools, or assisted form-entry desk does not confer preference, shortcut approval, or guaranteed sanction from any recruitment board, university, or government department. Final scrutiny of eligibility certificates, merit lists, and payments always remains exclusively with the competent statutory authority.
+          </p>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">6. Contact &amp; Questions</h2>
           <p>
             If you have questions regarding this disclaimer or need to report an official circular update, please contact us at <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a> or phone: <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a>. Physical Office: Sangran Qazigund, District Anantnag, Jammu &amp; Kashmir 192221.
           </p>
@@ -970,6 +1035,10 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
           <p>
             Every notification published on CSC DOST is verified directly against primary government portals (<code>.gov.in</code>, <code>.nic.in</code>) and official university circulars before publication. Read our <a href="/editorial-policy" style="color:#2563eb; font-weight:600;">Editorial Policy</a> or <a href="/disclaimer" style="color:#2563eb; font-weight:600;">Government Non-Affiliation Disclaimer</a> to learn how we review updates and report corrections.
           </p>
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">Transparency &amp; Citizen Trust Commitments</h2>
+          <p>
+            Operating from Sangran Qazigund since registration under MSME Udyam (<code>UDYAM-JK-01-0041957</code>), we separate informational content—always free for every visitor—from optional counter facilitation. Whether an applicant visits in person across Anantnag and Kulgam or submits documents remotely with a tracking token, published timestamps, primary source URLs, and clear helpline escalation via <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a> remain standard across every page.
+          </p>
         </section>
       </article>
 
@@ -1035,6 +1104,10 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
           </ul>
           <p style="margin:12px 0 0 0;">
             You can also submit an online contact inquiry directly once the interactive helpdesk loads, or visit <a href="/editorial-policy" style="color:#2563eb; font-weight:600;">Editorial Policy</a> to report a correction on any published circular summary.
+          </p>
+          <h3 style="font-size:15px; font-weight:700; color:#0f172a; margin:14px 0 6px 0;">Escalation, Privacy &amp; Refund Requests</h3>
+          <p style="margin:0;">
+            For personal document deletion requests under DPDP Act 2023 guidelines, delayed UPI reconciliation checks, or duplicate fee refund follow-ups, email <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a> with your CSC tracking token and Razorpay reference ID. Grievance enquiries are logged directly by operator Wasim Ahmad Khanday (CSC VLE ID: 212515670018) and receive a written status reply within one to two working days, alongside our full <a href="/refund-policy" style="color:#2563eb; font-weight:600;">Refund &amp; Pricing Policy</a>.
           </p>
         </section>
       </article>
@@ -1519,10 +1592,14 @@ export function renderArchiveSubstantiveHtml(posts: SarkariItem[]): string {
       <p style="margin:0 0 8px 0;">
         Applicants checking historical advertisement numbers, past eligibility criteria, or old selection processes can still inspect every individual bulletin directly via its archived link above. However, online registration windows on those expired recruitments are closed and assisted filing requests are disabled.
       </p>
+      <p style="margin:0 0 8px 0;">
+        If an authority re-opens a suspended advertisement, publishes a supplementary merit list, or issues an extension circular, the updated bulletin is restored to active <a href="/jobs" style="color:#1F9D6B; font-weight:600;">Recruitment</a> or <a href="/education" style="color:#1F9D6B; font-weight:600;">Education</a> listings with refreshed dates and source links. Citizens researching upcoming cycles can also review active <a href="/deadlines" style="color:#1F9D6B; font-weight:600;">Closing Deadlines</a> or verify portal requirements with our desk on <a href="/contact-us" style="color:#1F9D6B; font-weight:600;">Contact Us</a>.
+      </p>
       <p style="margin:0;">
         Operated by Wasim Ahmad Khanday (Authorized CSC VLE ID: 212515670018, Sangran Qazigund, Anantnag, J&amp;K 192221). Always verify fresh cycles directly on the official issuing authority website before preparing any documents or fees.
       </p>
     </section>
+    ${renderSsrPolicyFooterHtml()}
   </main>
   `;
 }
@@ -1698,12 +1775,489 @@ export function renderSchemeSubstantiveHtml(guide: GuideArticle): string {
   `;
 }
 
+interface ToolRichSpec {
+  overview: string;
+  capabilities: string[];
+  workflow: string[];
+  specsNote: string;
+  faqs: Array<{ q: string; a: string }>;
+}
+
+const TOOL_RICH_SPECS: Record<string, ToolRichSpec> = {
+  'image-compressor': {
+    overview:
+      'Government recruitment portals such as JKSSB, SSC OTR, RRB Apply, and Kashmir University admit-card modules routinely reject raw smartphone portraits because modern camera sensors save 3 MB to 8 MB JPEG files while portals cap portrait uploads at 20 KB–50 KB or 10 KB–20 KB. Image Compressor solves that mismatch inside your device browser by iteratively running canvas re-encoding passes at descending JPEG/WebP quality ratios until the exported byte count sits cleanly below your selected kilobyte ceiling without distorting facial proportions or slicing off forehead margins.',
+    capabilities: [
+      'Instant one-tap byte ceilings for 20 KB, 50 KB, 100 KB, and 200 KB recruitment forms plus fine custom KB slider control.',
+      'Accepts JPG, JPEG, PNG, and WebP photographs up to 30 MB inside local device memory without remote cloud upload.',
+      'Live preview comparing original versus compressed clarity, pixel dimensions, and exact KB savings before saving.',
+      'Smart fallback step-down automatically trims excessive megapixel width if aggressive quantization alone cannot hit ultra-low 20 KB targets.',
+      'Strips bulky camera EXIF thumbnail blobs so precious kilobytes go toward keeping eyes, ears, and date stamps crisp.',
+    ],
+    workflow: [
+      'Choose a well-lit candidate portrait, scanned marksheet, or domicile image from phone storage or desktop.',
+      'Select the exact target ceiling published in your notification—typically 20–50 KB for passport photos or 100–200 KB for document scans.',
+      'Toggle JPEG output (universally required by Indian government portals) or WebP and let binary-search encoding converge just under the limit.',
+      'Inspect eyes, eyeglasses reflections, and small certificate serial digits in preview, then download the submission-ready file.',
+    ],
+    specsNote:
+      'JPEG quantization preserves edge luminance while trimming invisible high-frequency chrominance variance, keeping biometric features and stamped dates sharp during automated OTR validation. Always keep a slight 2–3 KB safety margin below portal maximums.',
+    faqs: [
+      {
+        q: 'Why does hitting exact 20 KB sometimes soften portrait backgrounds?',
+        a: 'Smaller byte budgets force stronger JPEG block compression; cropping empty wall space around the shoulders before compressing allocates more bits to the candidate face.',
+      },
+      {
+        q: 'Which image extension do JKSSB, SSC, and RRB portals expect?',
+        a: 'Almost every Indian recruitment portal mandates plain .jpg or .jpeg uploads for candidate photographs and signatures rather than .png or .webp.',
+      },
+      {
+        q: 'Can I compress a dense A4 certificate scan down to 50 KB without making text unreadable?',
+        a: 'Text documents carry lots of sharp black strokes, so pushing an A4 scan below 100 KB can blur small numbers; crop borders tightly and check legibility at 100% zoom.',
+      },
+      {
+        q: 'Does Image Compressor upload my ID documents or portraits to CSC DOST servers?',
+        a: 'No. Canvas decoding and JPEG quantization run strictly inside browser RAM and vanish once the tab closes.',
+      },
+    ],
+  },
+  'image-resizer': {
+    overview:
+      'Many admission and civil service forms enforce strict horizontal and vertical pixel frames—such as 160×200 px, 200×230 px, 140×60 px, or 300×400 px—where even a 2-pixel deviation triggers an immediate validation rejection. Image Resizer rescales candidate portraits, thumb impressions, and scanned slips to exact numeric pixel widths and heights inside HTML5 Canvas while giving you explicit control over aspect-ratio locking so faces never look unnaturally squished or vertically stretched.',
+    capabilities: [
+      'Exact numeric width × height pixel fields supporting both locked aspect scaling and manual custom target dimensions.',
+      'Built-in common recruitment preset sizes alongside freehand pixel entry down to small signature boxes.',
+      'Exports clean JPEG or PNG output with crisp white canvas fill when converting alpha-transparent graphics.',
+      'Zero-distortion proportional fit check warns before extreme aspect changes elongate or flatten facial features.',
+      'Displays before-and-after pixel geometry and rendered file size immediately upon adjustment.',
+    ],
+    workflow: [
+      'Load your already-cropped portrait, left-thumb impression, or document photograph into the resizer.',
+      'Enter required portal width and height in pixels, leaving Aspect Lock turned ON when proportional scaling fits within limits.',
+      'If an agency enforces a strict unmatched ratio (e.g., 200×230 px), crop surplus margin proportionally first before locking exact pixel dimensions.',
+      'Choose JPEG or PNG format, preview edge sharpness at full zoom, and download directly to your Downloads folder.',
+    ],
+    specsNote:
+      'Multi-step canvas downscaling interpolates oversized 4000×3000 px mobile photos smoothly, eliminating harsh jagged pixels along collar lines, hair edges, and inked signatures.',
+    faqs: [
+      {
+        q: 'Should I keep Aspect Ratio Lock enabled when changing pixel width?',
+        a: 'Yes whenever possible—locking proportions calculates the matching height automatically so heads and eyes are never stretched.',
+      },
+      {
+        q: 'How do I handle portals demanding 200×230 px when my photo is 35×45 mm?',
+        a: 'Use Passport Photo Maker or crop excess top/side backdrop lightly before applying exact 200×230 pixel dimensions so facial geometry stays accurate.',
+      },
+      {
+        q: 'Does reducing pixels from 3000 px down to 200 px automatically lower KB size?',
+        a: 'Yes, fewer pixels dramatically cut raw image bytes; pair Image Resizer with Image Compressor if you also need a strict 20–50 KB ceiling.',
+      },
+    ],
+  },
+  'image-to-pdf': {
+    overview:
+      'Scholarship portals, university verification counters, and J&K e-UNNAT service applications frequently request a single consolidated PDF file containing multiple certificate photographs—for instance Class 10th marksheet, Domicile Certificate, Aadhaar Card, and Category proof combined together. Image to PDF packs multiple JPG, PNG, and WebP photos onto cleanly aligned A4 or US Letter sheets directly inside your browser without altering certificate seals or uploading sensitive family records online.',
+    capabilities: [
+      'Combines multiple camera snaps or scanned JPG, PNG, and WebP certificates into one ordered portable PDF.',
+      'Interactive thumbnail drag-and-drop sequence ordering plus per-page 90-degree clockwise rotation for sideways phone shots.',
+      'Configurable A4 (210×297 mm) or US Letter page templates with clean white margins so corner serial numbers stay printable.',
+      'Auto-fit image scaling centres portrait and landscape certificates neatly without stretching aspect ratios.',
+      'Generates standard cross-platform PDF streams compatible with Adobe Reader, Chrome, and portal preview viewers.',
+    ],
+    workflow: [
+      'Select two or more academic marksheets, revenue extracts, or identity photographs from your device.',
+      'Verify each sheet faces upright using per-page rotate buttons and drag thumbnails into official checklist sequence.',
+      'Choose A4 sheet layout and safe margin padding so laser printers will not clip embossed seals or signatures.',
+      'Generate the combined PDF and verify every page opens sharply in your browser before submitting.',
+    ],
+    specsNote:
+      'Uniform A4 page embedding prevents awkward page-size jumps when clerks inspect or print merged multi-certificate dossiers at scrutiny desks.',
+    faqs: [
+      {
+        q: 'Can I put my 10th diploma first, 12th marksheet second, and Domicile third?',
+        a: 'Yes, drag the uploaded thumbnail cards into the exact checklist order prior to clicking export.',
+      },
+      {
+        q: 'My phone saved one certificate sideways—can I rotate just that page?',
+        a: 'Yes, use the individual 90-degree rotation control on that card without affecting the remaining pages.',
+      },
+      {
+        q: 'What if the combined PDF exceeds a portal 1 MB limit?',
+        a: 'Run the exported bundle through PDF Compressor or shrink very large camera photos first with Image Compressor before building the PDF.',
+      },
+    ],
+  },
+  'pdf-to-image': {
+    overview:
+      'Several admission counters, messaging helplines, and legacy portals refuse PDF attachments and accept only JPG or PNG uploads—even when your hall ticket, university provisional certificate, or e-Aadhaar slip arrives strictly as a multi-page PDF. PDF to Image decodes PDF vector glyphs, stamps, and barcodes page-by-page inside local browser memory using pdf.js canvas rendering and exports crisp raster images or a single bundled ZIP package.',
+    capabilities: [
+      'Client-side pdf.js rendering decodes multi-page notices, roll-number slips, and fee receipts cleanly without uploading files.',
+      'Selectable 150 DPI screen-friendly resolution or 300 DPI high-clarity print/barcode rendering.',
+      'Supports crisp lossless PNG exports for crisp text and lightweight JPG images for strict portal upload fields.',
+      'Per-page thumbnail preview lets you export a single required sheet instead of every appendix page.',
+      'One-click ZIP archive builder bundles all rendered pages together cleanly for multi-sheet circulars.',
+    ],
+    workflow: [
+      'Drop your admit card, marksheet PDF, or multi-page circular into the browser canvas reader.',
+      'Pick 300 DPI for small dense tables, QR codes, or tiny signatures, or 150 DPI for fast mobile sharing.',
+      'Choose PNG for crisp monochrome stamps or JPG for lightweight photo/document upload fields.',
+      'Download individual rendered pages directly or package the entire multi-page set inside a ZIP archive.',
+    ],
+    specsNote:
+      'Rendering dense official circulars at 300 DPI keeps micro-printed verification barcodes, candidate photographs, and embossed QR matrices readable on mobile screens and printouts alike.',
+    faqs: [
+      {
+        q: 'When should I choose 300 DPI over 150 DPI?',
+        a: 'Pick 300 DPI whenever small QR codes, marksheet subjects, or serial numbers need maximum clarity; pick 150 DPI when small file size matters most.',
+      },
+      {
+        q: 'Can I extract only page 2 of a 10-page admit card PDF as a JPG?',
+        a: 'Yes—wait for thumbnails to render, then click the download button beneath page 2 alone.',
+      },
+      {
+        q: 'Does PDF to Image handle password-locked e-Aadhaar PDFs?',
+        a: 'Remove or unlock standard reader passwords cleanly in your viewer first, or inspect unencrypted PDFs directly inside the browser.',
+      },
+    ],
+  },
+  'pdf-merge': {
+    overview:
+      'Recruitment document verification modules and scholarship portals often provide just one attachment slot labeled "Combined Qualification & Category Certificates PDF." Keeping five separate PDFs slows down filing and forces awkward re-scanning. PDF Merge stitches multiple existing PDF documents—such as Aadhaar, Domicile Certificate, Provisional Degree, and Fee Receipt—into one clean sequential document inside JavaScript RAM without degrading underlying vector fonts.',
+    capabilities: [
+      'Joins multiple standalone PDF documents into a single contiguous file without uploading records to remote servers.',
+      'Displays exact page count per queued PDF alongside drag reordering controls before assembly.',
+      'Copies underlying PDF page trees losslessly via pdf-lib so vector typography and line art stay razor-sharp.',
+      'Preserves mixed portrait and landscape page dimensions cleanly within the merged dossier.',
+      'Fast local assembly handles typical multi-certificate application packets in a couple of seconds.',
+    ],
+    workflow: [
+      'Select all separate PDF certificates, receipts, or annexures you want bundled together.',
+      'Drag the file rows into exact checklist sequence matching the board upload instructions.',
+      'Check individual page counts so blank trailing sheets or wrong attachments are caught early.',
+      'Click Merge PDFs and save your unified document; follow with PDF Compressor if total KB exceeds portal caps.',
+    ],
+    specsNote:
+      'Because pdf-lib transfers vector streams directly rather than rasterizing pages into bitmaps, crisp digital text from e-UNNAT and DigiLocker certificates retains infinite zoom clarity.',
+    faqs: [
+      {
+        q: 'Will merging two DigiLocker PDFs make the QR code or text blurry?',
+        a: 'No. PDF Merge copies original vector streams intact without rasterizing text into low-DPI images.',
+      },
+      {
+        q: 'Why does my merged PDF become larger than the portal 500 KB limit?',
+        a: 'Merging sums the byte weights of its source files; run the combined output through PDF Compressor afterward to stay within strict portal limits.',
+      },
+      {
+        q: 'Can I merge PDFs with image files directly?',
+        a: 'Convert JPG/PNG certificates to PDF first using Image to PDF, then combine everything cleanly in PDF Merge.',
+      },
+    ],
+  },
+  'pdf-split': {
+    overview:
+      'Official JKSSB selection gazettes, university examination date sheets, and consolidated family dossiers frequently run 40 to 200 pages long when you only need to save or upload two specific pages bearing your roll number or certificate. PDF Split extracts exact single pages or comma-separated intervals locally in your browser without damaging the original source PDF.',
+    capabilities: [
+      'Flexible range syntax accepting intervals and single indices such as "1-3, 7, 12-15".',
+      'Saves selected pages either as one trimmed single PDF or as separate individual per-page files packed in a ZIP.',
+      'Reports total page count immediately upon opening heavy circulars or multi-certificate packets.',
+      'Preserves original vector fonts, official watermarks, and table borders cleanly without re-rasterizing.',
+      'Leaves the original file untouched on device storage while creating a clean trimmed download.',
+    ],
+    workflow: [
+      'Load your multi-page gazette, syllabus PDF, or combined certificate scan.',
+      'Note the total page count and enter the exact page numbers or hyphenated intervals you want extracted.',
+      'Pick single trimmed PDF output for concise portal uploads, or ZIP per-page mode when splitting separate certificates.',
+      'Verify extracted pages open cleanly in your PDF viewer before sharing or uploading.',
+    ],
+    specsNote:
+      'Trimming an 80-page official PDF down to the two relevant pages trims megabytes cleanly while retaining exact original page geometry and digital legibility.',
+    faqs: [
+      {
+        q: 'Can I extract non-adjacent pages such as page 1, page 4, and pages 9-11 together?',
+        a: 'Yes—type "1, 4, 9-11" into the page range field to build a clean 5-page PDF in that exact order.',
+      },
+      {
+        q: 'How do I split a 4-page combined scan into four separate certificate PDFs?',
+        a: 'Select the per-page ZIP export option so every page downloads neatly as its own standalone file.',
+      },
+      {
+        q: 'Does splitting alter fonts inside university roll-number gazettes?',
+        a: 'No. Page objects are extracted verbatim without image conversion so search and print quality stay identical.',
+      },
+    ],
+  },
+  'pdf-compressor': {
+    overview:
+      'High-resolution mobile scanner apps routinely create 4 MB to 12 MB PDF scans for simple 2-page caste or revenue certificates, causing uploads to time out on 300 KB or 1 MB government portal forms. PDF Compressor compacts redundant PDF stream bloat and gives you Low, Medium, and High compression presets inside browser memory so you can trade byte weight against visual sharpness safely.',
+    capabilities: [
+      'Three selectable presets—Low, Medium, and High—tailored to sharp seals, standard portal uploads, and tight KB ceilings.',
+      'Shows live pre-compression and post-compression file size with exact percentage reduction saved.',
+      'Strips redundant embedded metadata streams and re-encodes bloated image scans efficiently inside the browser.',
+      'Works completely client-side so confidential bank passbooks, affidavits, and revenue extracts never touch remote servers.',
+      'Clean preview download ensures you can verify serial numbers before attaching to final forms.',
+    ],
+    workflow: [
+      'Select your oversized certificate PDF or merged multi-page verification dossier.',
+      'Begin with Medium compression for typical 500 KB–1 MB portal thresholds, or choose Low for delicate handwritten Patwari remarks.',
+      'Compare original versus output size readout; switch to High if a strict 200 KB–300 KB cap still needs extra trimming.',
+      'Open the saved PDF and confirm all official stamps, barcodes, and signature lines remain easy to read.',
+    ],
+    specsNote:
+      'Medium compression typically reduces camera-scanned multi-megabyte certificates by 60–80% while preserving dark ink legibility on Domicile, RBA, and marksheet scans.',
+    faqs: [
+      {
+        q: 'Which preset is safest for Domicile, Category, and Revenue Fard PDFs?',
+        a: 'Start with Medium; verify the Tehsildar seal and QR reference number remain crisp before submitting.',
+      },
+      {
+        q: 'Why does a tiny 80 KB vector DigiLocker PDF barely shrink under Low?',
+        a: 'Clean vector PDFs already contain compressed instructions rather than raw camera bitmaps, so only image-heavy PDFs see huge byte drops.',
+      },
+      {
+        q: 'What if I also need to remove unnecessary appendix pages before compressing?',
+        a: 'Run PDF Split first to drop unused sheets, then compress only the remaining essential pages.',
+      },
+    ],
+  },
+  'background-remover': {
+    overview:
+      'Recruitment agencies reject candidate portraits photographed against patterned curtains, wood doors, or dim room shadows. Background Remover isolates the candidate portrait foreground inside your browser without transmitting private photos to external cloud AI endpoints, allowing you to export either a crisp alpha-transparent PNG cutout or a clean studio-white backdrop ready for form sizing.',
+    capabilities: [
+      '100% browser-local foreground segmentation model keeps candidate portraits strictly on your device.',
+      'One-click switching between alpha-transparent PNG cutouts and solid pure-white (#FFFFFF) studio backdrops.',
+      'Smooth edge feathering handles collared shirts, headscarves, glasses frames, and shoulder contours cleanly.',
+      'Fast preview lets you inspect hairlines and ear margins before downloading.',
+      'Pairs smoothly with Passport Photo Maker and Image Compressor for complete form readiness.',
+    ],
+    workflow: [
+      'Pick a bright, front-facing portrait taken at arm’s length or tripod height with clear contrast behind the shoulders.',
+      'Run local foreground segmentation and wait a few seconds for mask extraction to finish inside browser memory.',
+      'Select solid pure-white backdrop for official exam applications (or transparent PNG for custom print layouts).',
+      'Inspect shoulder and ear edges closely, download the studio-clean image, then export to 35×45 mm JPEG if needed.',
+    ],
+    specsNote:
+      'Even front daylight facing a plain doorway with zero harsh flash shadows behind the head produces the cleanest automated hair and shoulder separation.',
+    faqs: [
+      {
+        q: 'Should I upload a transparent PNG cutout directly to SSC or JKSSB?',
+        a: 'No. Recruitment portals require solid white or light plain backgrounds saved as .jpg/.jpeg—choose white backdrop and convert with PNG to JPG if required.',
+      },
+      {
+        q: 'Is my portrait photo sent to a third-party GPU API for background removal?',
+        a: 'No. All foreground segmentation executes locally inside browser memory with zero remote photo upload.',
+      },
+      {
+        q: 'Why do messy dark hair edges sometimes look faintly haloed?',
+        a: 'Strong contrast between hair and wall behind you prevents dark color bleed; reshoot near an open window facing outside light for cleaner cutouts.',
+      },
+    ],
+  },
+  'passport-photo-maker': {
+    overview:
+      'Passport Photo Maker aligns front portraits accurately into official 35×45 mm (Indian passport, visa, JKSSB, SSC) or 2×2 inch (US visa / pan-card style) photo proportions without squishing facial width, and lets you generate printable A4 multi-copy studio sheets ready for matte or glossy photo paper printing.',
+    capabilities: [
+      'Precision physical frame presets including 35×45 mm (413×531 px at 300 DPI) and 2×2 inch studio cutouts.',
+      'Proportional interactive crop guides center eyes and shoulders without stretching vertical facial ratio.',
+      'Automated A4 (210×297 mm) print sheet builder arranging 6, 8, 12, or 16 crisp photo copies with clean cut spacing.',
+      'Supports exporting either a single digital file for online portal upload or the full A4 studio sheet.',
+      'Runs entirely offline inside HTML5 Canvas with zero distortion or third-party watermark.',
+    ],
+    workflow: [
+      'Upload a bright plain-background portrait (use Background Remover first if household clutter appears behind you).',
+      'Choose 35×45 mm or 2×2 inch target preset and center chin-to-crown alignment inside frame guides.',
+      'Download the single cropped portrait for online OTR forms—compress with Image Compressor if a strict 20–50 KB ceiling applies.',
+      'Or switch to A4 multi-copy layout (8 or 16 copies) and print at 100% Actual Size on glossy photo paper.',
+    ],
+    specsNote:
+      'Maintaining exact physical aspect ratios protects against automated biometric distortion rejection that happens when rectangular smartphone photos are squeezed directly into passport boxes.',
+    faqs: [
+      {
+        q: 'What printer scale setting should I choose for the 8-copy or 16-copy A4 sheet?',
+        a: 'Select A4 paper size and set print scale to 100% ("Actual Size")—never "Fit to Page"—so physical cutouts stay true 35×45 mm.',
+      },
+      {
+        q: 'Does Passport Photo Maker stretch my face to hit 35×45 mm?',
+        a: 'No. Excess margin outside the frame is trimmed proportionally so head width and eye spacing remain exact.',
+      },
+      {
+        q: 'Can I put date-of-photo or name labels cleanly?',
+        a: 'If a notice explicitly specifies white plain unlabelled portrait, leave clean margins without extra graphics.',
+      },
+    ],
+  },
+  'signature-resizer': {
+    overview:
+      'Smartphone photos of signatures written on notebook paper look muddy grey under indoor LEDs and routinely fail strict 10 KB–20 KB portal limits or automated ink contrast checks. Signature Resizer crops excess blank paper tightly around your pen strokes, boosts white paper thresholds cleanly, darkens blue/black ink clarity, and outputs compact 10–20 KB compliant JPEG signatures.',
+    capabilities: [
+      'Interactive tight crop frame removes empty margins so pen strokes fill the required 140×60 px or 300×120 px box cleanly.',
+      'Paper-whitening brightness and contrast threshold converts dull grey indoor lighting into uniform pure white.',
+      'Enhances blue or black ballpoint strokes for unmistakable stroke continuity against light backdrop.',
+      'Targets compact 10 KB–20 KB JPEG ceilings commonly enforced across JKSSB, SSC, IBPS, and RRB forms.',
+      'Processes handwritten signatures strictly inside your browser without storing biometric ink specimens remotely.',
+    ],
+    workflow: [
+      'Sign steadily on blank unruled white A4 paper using dark black or blue ballpoint ink in uniform daylight.',
+      'Snap a sharp straight overhead photo (avoid tilting the phone or casting hand shadows across the paper).',
+      'Crop closely around the full signature width, turn on paper-white cleanup, and match portal pixel/KB ceilings.',
+      'Confirm every letter loop looks clean and unbroken before downloading the final JPEG.',
+    ],
+    specsNote:
+      'Signing on ruled lined paper or using faint pale gel pens hurts cleanup thresholds; plain white printer paper plus dark ballpoint ink delivers crisp scanner-grade contrast.',
+    faqs: [
+      {
+        q: 'Why do examination boards reject signatures signed in ALL CAPS or on lined pages?',
+        a: 'Official instructions mandate running-hand signature (not block capitals) on clean unruled white paper so verification desks can match handwriting.',
+      },
+      {
+        q: 'My phone shadow turned half the paper dark yellow—will threshold cleanup fix it?',
+        a: 'Moderate lighting dullness cleans cleanly to bright white, though heavy diagonal arm shadows may darken pen edges; retake near window daylight for best results.',
+      },
+      {
+        q: 'What is the typical KB ceiling for exam signatures?',
+        a: 'Most boards (SSC, JKSSB, IBPS, NTA) ask for 10 KB to 20 KB JPEG files inside roughly 140×60 px to 200×80 px proportions.',
+      },
+    ],
+  },
+  'jpg-to-png': {
+    overview:
+      'JPG to PNG Converter decodes lossy JPEG scans or photographs inside an HTML5 Canvas pixel buffer and saves clean lossless PNG files. Switching from JPEG to PNG stops additional generational compression artifacts when you plan to edit graphics, insert transparent overlays, or preserve crisp sharp screenshots for design templates and documentation packets.',
+    capabilities: [
+      'Lossless PNG re-encoding preserves decoded pixel width, height, and color channels verbatim.',
+      'Eliminates further JPEG mosquito-noise artifacts during repeated cropping or graphical layout edits.',
+      'Batch-friendly browser execution converts files immediately without remote image hosting.',
+      'Displays exact source and exported dimensions before download.',
+      'Clean standard .png MIME headers compatible across desktop editors and print shops.',
+    ],
+    workflow: [
+      'Upload one or more .jpg / .jpeg graphics, logos, or scanned slips into the converter.',
+      'Review decoded dimensions and sharpness inside the preview panel.',
+      'Click convert to generate lossless PNG streams directly inside browser memory.',
+      'Save the .png files locally for transparent editing or sharp graphic placement.',
+    ],
+    specsNote:
+      'Remember that converting an already-compressed JPG into PNG freezes existing pixels losslessly—it stops future degradation, though PNG files naturally take more kilobytes than JPEGs.',
+    faqs: [
+      {
+        q: 'Why does a 45 KB JPG become 240 KB after converting to PNG?',
+        a: 'JPEG throws away subtle pixel variations using lossy math, whereas PNG stores every decoded RGB pixel losslessly.',
+      },
+      {
+        q: 'Should I convert JPG photos into PNG before uploading to JKSSB or SSC?',
+        a: 'No! Most government exam forms reject PNG uploads and explicitly require .jpg/.jpeg for portraits and signatures.',
+      },
+      {
+        q: 'Does converting JPG to PNG automatically erase the background?',
+        a: 'No—JPG files have no alpha channel; use Background Remover if you want a transparent PNG cutout.',
+      },
+    ],
+  },
+  'png-to-jpg': {
+    overview:
+      'Submitting transparent PNG signatures, logos, or mobile screenshots to government recruitment portals often triggers an "Invalid File Type" error—or worse, server-side scripts turn transparent pixels completely solid black, hiding dark ink completely. PNG to JPG Converter flattens alpha transparency cleanly onto a pure #FFFFFF white backdrop and exports standard web-ready JPEG images with adjustable byte quality.',
+    capabilities: [
+      'Automatically pre-fills solid #FFFFFF pure-white canvas behind transparent PNG alpha regions.',
+      'Prevents black-box signature corruption on legacy exam and university upload modules.',
+      'Adjustable JPEG quality slider lets you shrink oversized PNG screenshots cleanly below strict KB caps.',
+      'Converts lossless PNG files instantaneously inside browser RAM without network transfer.',
+      'Preserves original pixel aspect ratios while producing universally accepted .jpg output.',
+    ],
+    workflow: [
+      'Drop your transparent cutout, Canva graphic, or mobile screenshot PNG into the converter.',
+      'Confirm the live preview shows a crisp bright white backdrop behind all dark ink or edges.',
+      'Dial JPEG quality down slightly if you need the final .jpg file under a specific portal kilobyte cap.',
+      'Download the flattened JPEG image ready for upload.',
+    ],
+    specsNote:
+      'Pre-filling pure white before RGB encoding guarantees predictable brightness across older portal scripts that strip alpha transparency channels blindly.',
+    faqs: [
+      {
+        q: 'Why do transparent PNG signatures turn into a black rectangle on some exam forms?',
+        a: 'Legacy server-side thumbnail libraries discard alpha transparency (0,0,0,0) and leave RGB bytes as 0,0,0 (black). Flattening onto #FFFFFF white fixes this permanently.',
+      },
+      {
+        q: 'Will converting my screenshot from PNG to JPG shrink file size?',
+        a: 'Yes—lossy JPEG encoding typically shrinks large flat or photographic PNG files by 50% to 85% immediately.',
+      },
+      {
+        q: 'Can I keep transparency inside a JPG file?',
+        a: 'The JPEG specification does not support alpha transparency; choose PNG when transparent backgrounds are needed for graphic design.',
+      },
+    ],
+  },
+  'pdf-watermark-rotate': {
+    overview:
+      'Scanned property papers, ration cards, and identity PDFs frequently end up upside-down after quick phone scans—or need a clean diagonal "For Bank KYC Only" / "Self-Attested Copy" watermark stamped across every page before sharing over messaging apps. PDF Watermark & Page Rotator lets you rotate individual or all pages permanently by 90°, 180°, or 270° and stamp custom diagonal purpose watermarks locally in your browser.',
+    capabilities: [
+      'Permanent 90°, 180°, and 270° page rotation saved cleanly into PDF page orientation dictionaries.',
+      'Optional diagonal text watermark stamped transparently across every page without obscuring underlying ID numbers.',
+      'Adjustable watermark text label, opacity, and subtle angle suitable for purpose-scoped photocopy protection.',
+      'Runs completely offline inside pdf-lib so sensitive Aadhaar, PAN, and land records stay private.',
+      'Preserves underlying crisp text and scanned clarity without rasterizing vector pages.',
+    ],
+    workflow: [
+      'Select the sideways PDF scan or sensitive identity document you want prepared.',
+      'Click rotate buttons to orient skewed pages cleanly upright.',
+      'Optionally enter a concise diagonal purpose label (for example: "Submitted for Bank KYC · Nov 2026") and tune opacity.',
+      'Generate and inspect every rotated/watermarked page before sharing or printing.',
+    ],
+    specsNote:
+      'Stamping low-opacity diagonal purpose notes across identity PDFs clarifies submission context and deters unauthorized reuse while keeping QR codes and serial numbers scannable.',
+    faqs: [
+      {
+        q: 'Does page rotation stick permanently when clerks open the PDF on office Windows PCs?',
+        a: 'Yes. Standard /Rotate page dictionary flags are updated directly inside the downloaded PDF binary.',
+      },
+      {
+        q: 'Can I use this tool only to rotate upside-down pages without adding any watermark?',
+        a: 'Yes—leave the watermark text box empty and apply rotation alone.',
+      },
+      {
+        q: 'Will a semi-transparent diagonal watermark block barcode scanners?',
+        a: 'Using soft opacity (around 15–25%) keeps printed barcodes, seals, and numbers completely legible.',
+      },
+    ],
+  },
+  'pdf-metadata-cleaner': {
+    overview:
+      'Nearly every PDF generated by mobile scanning apps, office suites, or desktop print drivers secretly embeds hidden document properties—including Author account name, computer username, software build tags, CreationDate, and ModDate timestamps. PDF Metadata Cleaner inspects those trailer info fields inside browser memory and scrubs identifying metadata cleanly before you submit resumes or sensitive PDFs publicly.',
+    capabilities: [
+      'Reads and displays hidden Author, Creator, Producer, Title, Subject, Keywords, and timestamp fields.',
+      'One-click sanitization wipes personal author names, phone scanner app tags, and internal file titles.',
+      'Leaves visible page graphics, stamps, and vector fonts completely untouched.',
+      'Executes 100% locally in JavaScript RAM with zero upload of private resumes or legal filings.',
+      'Shows clean verification confirming empty metadata properties on the exported sanitized file.',
+    ],
+    workflow: [
+      'Open any exported resume, tender annexure, or scanned PDF inside PDF Metadata Cleaner.',
+      'Review the revealed hidden Info Dictionary tags embedded by your word processor or scanner app.',
+      'Click Clean Metadata to strip Author, Creator, Producer, Subject, and timestamp markers.',
+      'Download the scrubbed PDF copy safe for external portal or public submission.',
+    ],
+    specsNote:
+      'Stripping trailer dictionary tags modifies zero visible layout coordinates while removing personal workstation names and automated scanner software signatures.',
+    faqs: [
+      {
+        q: 'Will wiping PDF metadata erase any visible signature, stamp, or resume line?',
+        a: 'No. Visible content streams remain bit-for-bit intact; only non-visible header/trailer metadata strings are cleared.',
+      },
+      {
+        q: 'Why do phone scanner apps store Author and Producer strings inside PDFs?',
+        a: 'Scanning apps auto-fill your device account handle and app version into standard PDF info tags unless scrubbed manually.',
+      },
+      {
+        q: 'Can PDF Metadata Cleaner strip XMP XML metadata packets too?',
+        a: 'The sanitizer clears standard trailer metadata dictionary keys cleanly before re-saving your PDF stream.',
+      },
+    ],
+  },
+};
+
 export function renderToolDetailSubstantiveHtml(tool: ToolItem): string {
   const safeName = escapeHtml(tool.name);
   const safeDesc = escapeHtml(tool.shortDescription);
   const safeCat = escapeHtml(tool.categoryLabel);
   const safeSpecs = escapeHtml(tool.specs || 'Local browser HTML5 Canvas / JavaScript processing');
-  const usesPdfWorker = tool.id === 'pdf-compressor' || tool.id === 'pdf-to-image';
+  const rich = TOOL_RICH_SPECS[tool.id];
 
   return `
   ${renderPrimaryCategoryNavHtml('tools')}
@@ -1719,77 +2273,63 @@ export function renderToolDetailSubstantiveHtml(tool: ToolItem): string {
     <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:24px;">
       <header style="border-bottom:1px solid #E2E8F0; padding-bottom:18px; margin-bottom:20px;">
         <span style="display:inline-block; background:#ECFDF5; color:#1F9D6B; border:1px solid #A7F3D0; font-size:12px; font-weight:700; text-transform:uppercase; padding:4px 10px; border-radius:6px; margin-bottom:10px;">
-          ${safeCat} · Processed Locally in Browser
+          ${safeCat} · ${safeSpecs}
         </span>
         <h1 style="font-size:28px; font-weight:800; color:#101A36; margin:0 0 10px 0;">${safeName}</h1>
         <p style="font-size:16px; color:#475569; margin:0;">${safeDesc}</p>
       </header>
 
       <section style="background:#F6F8FC; border:1px solid #E2E8F0; border-radius:10px; padding:16px; margin-bottom:16px;">
-        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">How This Tool Works</h2>
-        <p style="font-size:15px; color:#334155; margin:0 0 8px 0;">${safeDesc}</p>
-        <p style="font-size:15px; color:#334155; margin:0;"><strong>Supported capabilities:</strong> ${safeSpecs}</p>
+        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Why &amp; How ${safeName} Works</h2>
+        <p style="font-size:15px; color:#334155; margin:0 0 10px 0;">${escapeHtml(rich?.overview || tool.shortDescription)}</p>
+        ${
+          rich
+            ? `<ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
+          ${rich.capabilities.map((cap) => `<li>${escapeHtml(cap)}</li>`).join('')}
+        </ul>`
+            : `<p style="font-size:14px; color:#334155; margin:0;"><strong>Specification:</strong> ${safeSpecs}</p>`
+        }
       </section>
 
       <section style="background:#ffffff; border:1px solid #E2E8F0; border-radius:10px; padding:16px; margin-bottom:16px;">
-        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Step-by-Step Usage</h2>
+        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">${safeName} Workflow</h2>
         <ol style="padding-left:20px; font-size:15px; color:#334155; line-height:1.75; margin:0 0 10px 0;">
-          <li>Select or drag your photograph, signature, or document file from your phone or computer.</li>
-          <li>Choose the target dimensions, DPI, or file-size limit matching your JKSSB, SSC, RRB, or university portal circular.</li>
-          <li>Preview the processed output right inside your browser to confirm clarity and legibility before saving.</li>
-          <li>Download the optimized file directly to your device and verify its KB size on the official portal upload screen.</li>
+          ${(rich?.workflow || [tool.shortDescription]).map((step) => `<li>${escapeHtml(step)}</li>`).join('')}
         </ol>
-        <p style="font-size:14px; color:#475569; margin:0;">
-          Use <strong>${safeName}</strong> when government or university forms reject high-resolution camera photos, oversized scanned PDFs, or signatures outside strict width-to-height bounds. Because no registration or login is required, citizens and CSC operators can format files in seconds.
-        </p>
-      </section>
-
-      <section style="background:#ECFDF5; border:1px solid #A7F3D0; border-radius:10px; padding:16px; margin-bottom:20px;">
-        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Privacy &amp; Portal Compatibility Note</h2>
-        <p style="font-size:15px; color:#334155; margin:0;">Files are processed in your browser using HTML5 Canvas and client-side JavaScript and are never uploaded to any external server. Operated by CSC DOST (Authorized CSC VLE ID: 212515670018, Sangran Qazigund, Anantnag, J&amp;K 192221) as a free citizen utility alongside our official recruitment, admission, and e-governance bulletins.</p>
         ${
-          usesPdfWorker
-            ? `<p style="font-size:13px; color:#334155; margin:8px 0 0 0;">Technical note: The open-source pdf.js worker script is loaded from cdnjs.cloudflare.com for local rendering while your PDF document itself never leaves your device.</p>`
+          rich
+            ? `<p style="font-size:14px; color:#475569; margin:0;">${escapeHtml(rich.specsNote)}</p>`
             : ''
         }
       </section>
 
-      <section style="background:#ffffff; border:1px solid #E2E8F0; border-radius:10px; padding:16px; margin-bottom:20px;">
-        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Official Portal Upload Standards &amp; Practical Guidance</h2>
-        <p style="font-size:14px; color:#334155; margin:0 0 8px 0;">
-          Most Indian recruitment and university portals (such as JKSSB OTR, SSC OTR, RRB apply, University of Kashmir examination portals, and IGNOU Samarth) enforce strict automated validation checks on file extension, pixel width/height ratio, and file size in kilobytes (KB). Files that look crisp on a phone screen are frequently rejected when camera defaults save multi-megabyte JPEG or HEIC photos.
-        </p>
-        <ul style="padding-left:20px; font-size:14px; color:#334155; line-height:1.75; margin:0 0 8px 0;">
-          <li><strong>Photographs:</strong> Use a plain light/white background with clear front-facing lighting and no heavy filters. Standard form uploads usually accept JPG/JPEG files between 20 KB and 50 KB.</li>
-          <li><strong>Signatures:</strong> Sign cleanly in black or blue ink on unruled white paper, crop tight around the stroke edges before resizing, and avoid blurry shadows or flash glare.</li>
-          <li><strong>Supporting PDFs:</strong> When compressing or combining Domicile certificates, Matriculation diplomas, or category certificates, inspect the preview to confirm serial numbers and authority seals remain clearly legible.</li>
-        </ul>
-        <p style="font-size:14px; color:#475569; margin:0;">
-          Use our <a href="/calculators" style="color:#1F9D6B; font-weight:700; text-decoration:none;">Photo &amp; Signature Spec Inspector</a> to verify your final file measurements before logging in to submit your application form.
-        </p>
-      </section>
-
-      <section style="margin-bottom:20px;">
-        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 10px 0;">Frequently Asked Questions</h2>
+      ${
+        rich && rich.faqs.length > 0
+          ? `<section style="margin-bottom:18px;">
+        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 10px 0;">${safeName} Questions</h2>
         <div style="display:flex; flex-direction:column; gap:10px;">
+          ${rich.faqs
+            .map(
+              (f) => `
           <details style="border:1px solid #E2E8F0; border-radius:10px; padding:12px;">
-            <summary style="font-weight:700; color:#101A36; cursor:pointer;">Are my photos or documents uploaded to CSC DOST servers?</summary>
-            <p style="margin:8px 0 0 0; font-size:14px; color:#334155;">No. ${safeName} runs completely inside your local browser session, so personal IDs, photos, and signatures remain strictly on your own device.</p>
-          </details>
-          <details style="border:1px solid #E2E8F0; border-radius:10px; padding:12px;">
-            <summary style="font-weight:700; color:#101A36; cursor:pointer;">Does ${safeName} work on Android phones and slower connections?</summary>
-            <p style="margin:8px 0 0 0; font-size:14px; color:#334155;">Yes. Once the page loads, processing takes place offline in device memory without sending large images over mobile data.</p>
-          </details>
-          <details style="border:1px solid #E2E8F0; border-radius:10px; padding:12px;">
-            <summary style="font-weight:700; color:#101A36; cursor:pointer;">Should I still verify portal upload rules before submitting my form?</summary>
-            <p style="margin:8px 0 0 0; font-size:14px; color:#334155;">Yes. Recruitment boards and universities sometimes update pixel dimensions or KB caps in individual circulars. Always verify exact upload requirements on the official portal.</p>
-          </details>
+            <summary style="font-weight:700; color:#101A36; cursor:pointer;">${escapeHtml(f.q)}</summary>
+            <p style="margin:8px 0 0 0; font-size:14px; color:#334155;">${escapeHtml(f.a)}</p>
+          </details>`
+            )
+            .join('')}
         </div>
-      </section>
+      </section>`
+          : ''
+      }
+
+      <details style="border:1px solid #E2E8F0; border-radius:8px; padding:10px 12px; margin-bottom:18px; background:#ECFDF5; font-size:13px;">
+        <summary style="font-weight:700; color:#101A36; cursor:pointer;">Local Privacy &amp; Portal Spec Check</summary>
+        <p style="margin:6px 0 0 0; color:#334155;">${safeName} processes files offline inside your device browser (zero server upload). Verify final pixel/KB figures with <a href="/calculators" style="color:#1F9D6B; font-weight:700;">Citizen Calculators</a>.</p>
+      </details>
 
       <div style="display:flex; flex-wrap:wrap; gap:10px;">
-        <a href="/tools" style="background:#101A36; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">Back to All Document Tools</a>
-        <a href="/calculators" style="background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">Citizen Calculators</a>
+        <a href="/tools" style="background:#101A36; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">All Document Tools</a>
+        <a href="/calculators" style="background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">Photo Spec Inspector</a>
       </div>
     </article>
     ${renderSsrPolicyFooterHtml()}
@@ -1858,6 +2398,17 @@ export function renderCategorySubstantiveHtml(
           })
           .join('')}
       </section>
+
+      <section style="margin-top:24px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:18px; font-size:14px; color:#334155; line-height:1.65;">
+        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 8px 0;">How Closing Deadlines Are Tracked &amp; Verified</h2>
+        <p style="margin:0 0 8px 0;">
+          All countdown dates on this page follow Indian Standard Time (<code>Asia/Kolkata</code>) and display exact closing times where explicitly notified by JKSSB, SSC, RRB, Kashmir University, Cluster University Srinagar, or IGNOU. Notifications whose closing date has already passed are automatically removed from this active tracker and tagged <strong>Closed</strong> on their individual summary pages.
+        </p>
+        <p style="margin:0;">
+          Avoid waiting for the final few hours before a deadline, as official recruitment and examination portals frequently slow down under heavy traffic. Always confirm fee payment cutoffs and edit-window notices on the issuing authority's primary website, or reach CSC DOST desk at <a href="tel:+917006833767" style="color:#1F9D6B; font-weight:700;">+91 70068 33767</a> (<a href="/contact-us" style="color:#1F9D6B; font-weight:600;">Sangran Qazigund, Anantnag</a>) for assisted online submission during working hours (Mon–Sat, 9 AM–7 PM IST). Browse full directories: <a href="/jobs" style="color:#1F9D6B; font-weight:600;">Jobs</a> · <a href="/education" style="color:#1F9D6B; font-weight:600;">Education</a> · <a href="/archive" style="color:#1F9D6B; font-weight:600;">Notice Archive</a>.
+        </p>
+      </section>
+      ${renderSsrPolicyFooterHtml()}
     </main>
     `;
   }

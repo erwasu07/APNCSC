@@ -288,42 +288,34 @@ export function buildPostEnrichmentData(
   const whoShouldApply: string[] = [];
   if (effectiveType === 'result' || effectiveType === 'admit_card' || effectiveType === 'dv' || effectiveType === 'exam' || effectiveType === 'answer_key') {
     whoShouldApply.push(
-      `Registered candidates / enrolled students of ${orgName} covered under ${
-        hasRealDataValue(item.learnerGroup) ? item.learnerGroup : qualStr
-      }.`
+      `Candidates registered under ${orgName} for ${item.title} (${hasRealDataValue(item.learnerGroup) ? item.learnerGroup : qualStr}).`
     );
     whoShouldApply.push(
       effectiveType === 'answer_key'
-        ? `Candidates who appeared in the examination and need to verify responses${
-            statusInfo.isClosingSoon && endLong ? ` or submit objections before ${endLong}` : ''
-          }.`
+        ? `Appeared examinees reviewing ${orgName} responses${statusInfo.isClosingSoon && endLong ? ` before ${endLong}` : ''}.`
         : effectiveType === 'dv'
-        ? 'Shortlisted applicants listed in the notice who hold original academic, identity, and category/domicile certificates.'
-        : `Applicants holding a valid registration, enrolment, or roll number issued by ${orgName}.`
+        ? `Shortlisted applicants carrying originals required by ${orgName}.`
+        : `Holders of valid ${orgName} roll/registration numbers for ${item.title}.`
     );
     if (item.jkDomicile) {
-      whoShouldApply.push(
-        'Domicile residents of Jammu & Kashmir eligible under the notified cadre or regional schedule.'
-      );
+      whoShouldApply.push(`Eligible J&K domicile residents covered in ${item.title}.`);
     }
   } else {
     whoShouldApply.push(
-      `Eligible candidates meeting the stated educational criteria (${qualStr}) as detailed in the ${orgName} notice.`
+      `Applicants fulfilling ${qualStr} as notified by ${orgName} in ${item.title}.`
     );
     if (hasRealDataValue(item.ageLimit) && !isGenericNoticePlaceholder(item.ageLimit)) {
       whoShouldApply.push(
-        `Applicants falling within the notified age limit (${item.ageLimit}) on the cutoff date specified in the official advertisement.`
+        `Candidates within ${orgName} age bounds (${item.ageLimit}) for ${item.title}.`
       );
     }
     if (item.jkDomicile) {
-      whoShouldApply.push(
-        'Permanent residents holding a valid Jammu & Kashmir Domicile Certificate issued by a competent authority.'
-      );
+      whoShouldApply.push(`Holders of valid Jammu & Kashmir Domicile Certificates for ${item.title}.`);
     }
     whoShouldApply.push(
       statusInfo.isClosed
-        ? 'Note: New registrations are closed — this bulletin remains available only for record reference.'
-        : `Applicants with active mobile number, email ID, and scanned documents ready before ${endLong || 'the closing date'}.`
+        ? `Window closed (${endLong || statusInfo.dateValue}); kept for reference.`
+        : `Candidates with active contact details ready before ${endLong || 'the deadline'} on ${sourceDomain}.`
     );
   }
 
@@ -332,58 +324,54 @@ export function buildPostEnrichmentData(
   if (statusInfo.isClosed || statusInfo.isCancelled) {
     whoShouldNotApply.push(
       statusInfo.isCancelled
-        ? `All applicants — this ${orgName} notice has been cancelled or withdrawn.`
-        : `New applicants — the closing deadline${endLong ? ` (${endLong})` : ''} has already passed and fresh submissions are not accepted.`
+        ? `All applicants — ${orgName} cancelled ${item.title}.`
+        : `New applicants — ${item.title} closed on ${endLong || statusInfo.dateValue}.`
     );
   }
   if (effectiveType === 'result' || effectiveType === 'admit_card' || effectiveType === 'dv' || effectiveType === 'answer_key' || effectiveType === 'exam') {
     whoShouldNotApply.push(
-      `Candidates who did not register or appear for the relevant ${orgName} cycle cannot submit new applications through this notice.`
+      `Unregistered applicants — ${item.title} covers existing ${orgName} candidates only.`
     );
   } else {
     whoShouldNotApply.push(
-      `Candidates whose final qualification, mark sheet result, or required certificate is awaited beyond the cutoff date specified by ${orgName} (unless explicitly permitted in the notification).`
+      `Awaited-result candidates beyond ${orgName} cutoff rules unless ${item.title} allows it.`
     );
     if (item.jkDomicile) {
-      whoShouldNotApply.push(
-        'Applicants without a valid J&K Domicile Certificate where Jammu & Kashmir domicile is mandatory under the advertisement rules.'
-      );
+      whoShouldNotApply.push(`Non-domicile applicants where ${orgName} mandates J&K domicile.`);
     }
     if (hasRealDataValue(item.ageLimit) && !isGenericNoticePlaceholder(item.ageLimit)) {
-      whoShouldNotApply.push(
-        `Candidates outside the notified age range (${item.ageLimit}) who do not qualify for an official category relaxation.`
-      );
+      whoShouldNotApply.push(`Candidates outside ${item.ageLimit} without ${orgName} relaxation.`);
     }
   }
 
   // 4. Common mistakes to avoid
   const commonMistakes: string[] = [
-    `Relying on third-party summaries without opening the official ${sourceDomain} notification PDF or portal circular.`,
+    `Skipping the original ${item.title} notice on ${sourceDomain}.`,
     effectiveType === 'application' || effectiveType === 'admission' || effectiveType === 'upcoming'
-      ? 'Uploading blurred passport photographs, dark-background signatures, or files exceeding the portal pixel/KB limits — resize documents accurately before login.'
-      : 'Missing roll number, registration ID, or date-of-birth formatting while checking status or downloading PDFs.',
-    'Entering mismatched spelling of candidate name, parent name, or date of birth that differs from the 10th/Matriculation certificate.',
+      ? `Uploading oversized/unclear scans to ${sourceDomain} instead of verifying KB/pixel specs.`
+      : `Mismatched roll number or DOB entry when checking ${item.title} on ${sourceDomain}.`,
+    `Spelling differences versus Class 10th records for ${orgName} verification.`,
     hasFee
-      ? 'Immediately paying the application fee twice if a bank receipt shows pending — check portal transaction status or wait before retrying.'
-      : 'Submitting forms in the final few hours before closing when portal traffic and server timeouts increase.',
+      ? `Double-paying ${item.title} fees before bank settlement checks.`
+      : `Waiting until closing hours on ${sourceDomain} when traffic peaks.`,
   ];
   if (item.jkDomicile || !isEdu) {
     commonMistakes.push(
-      'Selecting an incorrect reservation category (RBA, EWS, SC, ST, OBC) without holding a valid certificate dated on or before the closing deadline.'
+      `Claiming reserved categories without valid certificates dated by ${endLong || 'cutoff'}.`
     );
   }
 
   // 5. What to do next (dated action steps)
   const whatToDoNext: string[] = [
-    `Step 1 — Verify source notice (${postLong}): Open ${sourceDomain} and confirm all official eligibility lines and annexures.`,
+    `1. Confirm ${item.title} (${postLong}) directly on ${sourceDomain}.`,
     statusInfo.isClosed
-      ? `Step 2 — Check post-closing updates: Since ${endLong || 'the deadline'} has passed, watch ${sourceDomain} only for shortlist, edit-window, or exam date circulars.`
+      ? `2. Follow post-closing ${orgName} updates (${endLong || 'closed'}) on ${sourceDomain}.`
       : statusInfo.isUpcoming
-      ? `Step 2 — Keep documents ready for ${startLong || 'opening date'}: Verify certificate validity and scan photograph and signature in required dimensions.`
+      ? `2. Prepare certificates for ${item.title} ahead of ${startLong || 'opening'}.`
       : effectiveType === 'result' || effectiveType === 'admit_card' || effectiveType === 'answer_key'
-      ? `Step 2 — Keep login details ready: Use your registration number and date of birth on ${sourceDomain}${endLong ? ` before ${endLong}` : ''}.`
-      : `Step 2 — Complete online submission before ${endLong || 'closing'}: Fill details carefully${startLong ? ` (window opened ${startLong})` : ''} and preview every field prior to final lock.`,
-    `Step 3 — Save official proof: Download and print the confirmation PDF, payment receipt, or hall ticket for future verification stages.`,
+      ? `2. Sign in on ${sourceDomain} with registration ID${endLong ? ` before ${endLong}` : ''} for ${item.title}.`
+      : `2. Submit ${item.title} on ${sourceDomain} before ${endLong || 'closing'}${startLong ? ` (opened ${startLong})` : ''}.`,
+    `3. Save the official ${orgName} PDF or confirmation receipt for ${item.title}.`,
   ];
 
   return {
