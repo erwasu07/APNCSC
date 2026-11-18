@@ -29,6 +29,8 @@ interface DatabaseSchema {
   guideVerificationLogs?: GuideVerificationLog[];
   postHealthOverrides?: Record<string, PostHealthOverride>;
   serviceHealthOverrides?: Record<string, ServiceHealthOverride>;
+  serviceClusterOverrides?: Record<string, ServiceClusterOverrideRecord>;
+  serviceStats?: Record<string, ServiceDemandRecord>;
   approvedServiceMerges?: Record<string, ApprovedServiceMerge>;
   contentHealthLogs?: ContentHealthLog[];
 }
@@ -92,6 +94,8 @@ const DEFAULT_DB: DatabaseSchema = {
   guideVerificationLogs: [],
   postHealthOverrides: {},
   serviceHealthOverrides: {},
+  serviceClusterOverrides: {},
+  serviceStats: {},
   approvedServiceMerges: {},
   contentHealthLogs: []
 };
@@ -145,6 +149,8 @@ export function getDb(): DatabaseSchema {
       if (!Array.isArray(parsed.guideVerificationLogs)) parsed.guideVerificationLogs = [];
       if (!parsed.postHealthOverrides || typeof parsed.postHealthOverrides !== 'object') parsed.postHealthOverrides = {};
       if (!parsed.serviceHealthOverrides || typeof parsed.serviceHealthOverrides !== 'object') parsed.serviceHealthOverrides = {};
+      if (!parsed.serviceClusterOverrides || typeof parsed.serviceClusterOverrides !== 'object') parsed.serviceClusterOverrides = {};
+      if (!parsed.serviceStats || typeof parsed.serviceStats !== 'object') parsed.serviceStats = {};
       if (!parsed.approvedServiceMerges || typeof parsed.approvedServiceMerges !== 'object') parsed.approvedServiceMerges = {};
       if (!Array.isArray(parsed.contentHealthLogs)) parsed.contentHealthLogs = [];
 
@@ -1526,6 +1532,8 @@ export interface ServiceHealthOverride {
   name?: string;
   description?: string;
   issuingAuthority?: string;
+  officialFee?: string;
+  cscCharge?: string;
   eligibility?: string;
   requirements?: string[];
   estimatedTime?: string;
@@ -1536,8 +1544,28 @@ export interface ServiceHealthOverride {
   staffChecks?: string[];
   rejectionReasons?: string[];
   verifiedBy?: string;
+  lastVerifiedDate?: string;
   updatedAt: string;
   updatedBy?: string;
+}
+
+export interface ServiceClusterOverrideRecord {
+  clusterId: string;
+  whatDocumentIsFor?: string;
+  howServicesDiffer?: string;
+  commonMistakes?: string[];
+  officialSources?: Array<{ label: string; url: string }>;
+  perServiceDifferences?: Record<string, string>;
+  lastVerifiedDate?: string;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+export interface ServiceDemandRecord {
+  views: number;
+  clicks: number;
+  enquiries: number;
+  lastViewedAt?: string;
 }
 
 export interface ApprovedServiceMerge {
@@ -1564,6 +1592,8 @@ export interface ContentHealthLog {
     | 'service_save'
     | 'service_publish'
     | 'service_draft'
+    | 'service_csv_import'
+    | 'service_cluster_save'
     | 'approve_service_merge'
     | 'revert_service_merge';
   actor: string;
@@ -1830,6 +1860,59 @@ export function bulkNoindexClassDItems(
 
   saveDb(db);
   return { updatedCount: totalCount, updatedPostIds, updatedServiceIds };
+}
+
+export function getServiceClusterOverrides(): Record<string, ServiceClusterOverrideRecord> {
+  const db = getDb();
+  return db.serviceClusterOverrides && typeof db.serviceClusterOverrides === 'object'
+    ? db.serviceClusterOverrides
+    : {};
+}
+
+export function upsertServiceClusterOverride(
+  record: ServiceClusterOverrideRecord
+): ServiceClusterOverrideRecord {
+  const db = getDb();
+  if (!db.serviceClusterOverrides || typeof db.serviceClusterOverrides !== 'object') {
+    db.serviceClusterOverrides = {};
+  }
+  const prev = db.serviceClusterOverrides[record.clusterId] || { clusterId: record.clusterId };
+  const merged: ServiceClusterOverrideRecord = {
+    ...prev,
+    ...record,
+    updatedAt: record.updatedAt || new Date().toISOString().slice(0, 10),
+  };
+  db.serviceClusterOverrides[record.clusterId] = merged;
+  saveDb(db);
+  return merged;
+}
+
+export function recordServiceDemandEvent(
+  serviceId: string,
+  eventType: 'view' | 'click' | 'enquiry' = 'view'
+): ServiceDemandRecord {
+  const db = getDb();
+  if (!db.serviceStats || typeof db.serviceStats !== 'object') {
+    db.serviceStats = {};
+  }
+  const cleanId = String(serviceId || '').trim();
+  const prev = db.serviceStats[cleanId] || { views: 0, clicks: 0, enquiries: 0 };
+  const next: ServiceDemandRecord = {
+    views: prev.views + (eventType === 'view' ? 1 : 0),
+    clicks: prev.clicks + (eventType === 'click' ? 1 : 0),
+    enquiries: prev.enquiries + (eventType === 'enquiry' ? 1 : 0),
+    lastViewedAt: new Date().toISOString(),
+  };
+  if (cleanId) {
+    db.serviceStats[cleanId] = next;
+    saveDb(db);
+  }
+  return next;
+}
+
+export function getServiceDemandStats(): Record<string, ServiceDemandRecord> {
+  const db = getDb();
+  return db.serviceStats && typeof db.serviceStats === 'object' ? db.serviceStats : {};
 }
 
 

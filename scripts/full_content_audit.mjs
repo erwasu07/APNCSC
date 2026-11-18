@@ -1,14 +1,18 @@
 #!/usr/bin/env node
 /**
  * Full-Site Content Quality & AdSense Readiness Audit
- * Crawls every URL in /sitemap.xml against a live/local Express SSR server,
- * measures main-content-only word count, metadata, outbound official links,
- * Last Updated timestamps, FAQ/How-To presence, consecutive copied sentences,
- * and pairwise 5-word-shingle Jaccard near-duplicates.
  *
- * Outputs:
- *   /reports/content_audit.json
- *   /reports/content_audit.md
+ * Crawls every URL in /sitemap.xml PLUS all active /service/* and /services/cluster/* routes
+ * from /api/audit/public-urls so that noindexed/incomplete service pages and hubs are audited
+ * separately from indexable pages.
+ *
+ * Rules enforced:
+ *  - Public hygiene: zero literal [VERIFY] or "Ask us" leaks in public HTML.
+ *  - Incomplete /service/* (<11 fields or <400 words) and incomplete /services/cluster/* (<800 words or missing data)
+ *    must carry <meta name="robots" content="noindex, follow"> and MUST be excluded from /sitemap.xml.
+ *  - Indexable pages are tested for 50%+ pairwise 5-word-shingle overlap after stripping boilerplate chrome/footer/disclosures.
+ *  - Outputs totalIndexablePages, totalNoindexedPages (noindex-because-incomplete vs other),
+ *    indexable Class A/B/C/D counts, and 20 worst indexable URLs.
  */
 
 import fs from 'node:fs';
@@ -16,6 +20,7 @@ import path from 'node:path';
 
 const BASE = (process.env.AUDIT_BASE_URL || 'http://127.0.0.1:3108').replace(/\/+$/, '');
 const CONCURRENCY = Number(process.env.AUDIT_CONCURRENCY || 8);
+const JACCARD_THRESHOLD = 0.50;
 
 const CLASS_SEVERITY = { D: 0, C: 1, B: 2, A: 3 };
 
@@ -63,6 +68,18 @@ function stripChromeForMainContent(rootHtml) {
     .replace(/<footer\b[\s\S]*?<\/footer>/gi, ' ')
     .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
     .replace(/<style\b[\s\S]*?<\/style>/gi, ' ');
+}
+
+function stripBoilerplateForShingles(rootHtml) {
+  const withoutBlocks = stripChromeForMainContent(rootHtml)
+    .replace(/<aside\b[\s\S]*?<\/aside>/gi, ' ')
+    .replace(/<details\b[\s\S]*?<\/details>/gi, ' ');
+  return htmlToPlainText(withoutBlocks)
+    .replace(/CSC DOST[^.]*independent[^.]*\./gi, ' ')
+    .replace(/Wasim Ahmad Khanday[^.]*\./gi, ' ')
+    .replace(/Sangran Qazigund[^.]*\./gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function htmlToPlainText(html) {
@@ -197,6 +214,8 @@ function classifyPage(item) {
   const reasons = [];
   const cleanPath = item.path || '/';
   const isPostRoute = /^\/(post|job|notice)\//i.test(cleanPath);
+  const isServiceRoute = /^\/service\//i.test(cleanPath);
+  const isClusterHubRoute = /^\/services\/cluster\//i.test(cleanPath);
   const isToolOrUtilityRoute =
     /^\/tools(\/|$)/i.test(cleanPath) ||
     cleanPath === '/calculators' ||
@@ -217,19 +236,55 @@ function classifyPage(item) {
   if (item.h1Count !== 1) {
     reasons.push(`Expected 1 <h1>, found ${item.h1Count}`);
   }
+  if (item.hasVerifyLeak) {
+    reasons.push('Literal [VERIFY] string leaked in public HTML');
+  }
+  if (item.hasAskUsLeak) {
+    reasons.push('Placeholder "Ask us" leaked in public HTML');
+  }
+  if (item.isNoindex && item.inSitemap) {
+    reasons.push('Noindex page is improperly listed inside /sitemap.xml');
+  }
 
   if (item.httpStatus >= 400 || item.httpStatus === 0 || item.httpStatus >= 300) {
+    return { auditClass: 'D', reasons };
+  }
+  if (item.hasVerifyLeak || item.hasAskUsLeak) {
+    return { auditClass: 'D', reasons };
+  }
+  if (item.isNoindex && item.inSitemap) {
     return { auditClass: 'D', reasons };
   }
   if (item.copiedRunLength > 2) {
     reasons.push(`${item.copiedRunLength} consecutive sentences match raw source (>2)`);
     return { auditClass: 'D', reasons };
   }
-  if (item.highestJaccardScore >= 0.65 && item.nearDuplicateOf) {
+  if (!item.isNoindex && item.highestJaccardScore >= JACCARD_THRESHOLD && item.nearDuplicateOf) {
     reasons.push(
-      `Near-duplicate ${(item.highestJaccardScore * 100).toFixed(0)}% with ${item.nearDuplicateOf}`
+      `Near-duplicate ${(item.highestJaccardScore * 100).toFixed(0)}% overlap with ${item.nearDuplicateOf}`
     );
     return { auditClass: 'D', reasons };
+  }
+
+  // Explicitly handled noindex-because-incomplete routes (not indexable thin C!)
+  if (item.isNoindex) {
+    if (isServiceRoute || isClusterHubRoute) {
+      reasons.push(
+        `Held at noindex, follow & excluded from sitemap until verified data & min words complete (${item.wordCount} words)`
+      );
+    } else {
+      reasons.push(`Explicit noindex (${item.wordCount} words)`);
+    }
+    return { auditClass: 'C', reasons };
+  }
+
+  if (isServiceRoute && item.wordCount < 400) {
+    reasons.push(`Indexable /service/* under 400-word requirement (${item.wordCount} words)`);
+    return { auditClass: 'C', reasons };
+  }
+  if (isClusterHubRoute && item.wordCount < 800) {
+    reasons.push(`Indexable cluster hub under 800-word requirement (${item.wordCount} words)`);
+    return { auditClass: 'C', reasons };
   }
 
   if (item.wordCount < 300) {
@@ -244,7 +299,7 @@ function classifyPage(item) {
   if (isPostRoute && !item.hasLastUpdated) {
     reasons.push('Missing visible Last updated / Last Verified timestamp');
   }
-  if (!item.hasFaqOrHowTo && (isPostRoute || cleanPath.startsWith('/scheme/') || cleanPath.startsWith('/service/'))) {
+  if (!item.hasFaqOrHowTo && (isPostRoute || cleanPath.startsWith('/scheme/') || isServiceRoute)) {
     reasons.push('Missing FAQ or step-by-step How-to section');
   }
 
@@ -260,7 +315,8 @@ function classifyPage(item) {
     item.h1Count === 1 &&
     Boolean(item.title) &&
     Boolean(item.metaDescription) &&
-    (!isPostRoute || (item.hasOfficialLink && item.hasLastUpdated))
+    (!isPostRoute || (item.hasOfficialLink && item.hasLastUpdated)) &&
+    (!isClusterHubRoute || item.wordCount >= 800)
   ) {
     return {
       auditClass: 'A',
@@ -291,14 +347,14 @@ async function mapWithConcurrency(items, limit, worker) {
 }
 
 async function main() {
-  console.log(`\nRunning Full-Site Content Quality Audit against ${BASE}...\n`);
+  console.log(`\nRunning Full-Site Content Quality & Public Hygiene Audit against ${BASE}...\n`);
 
   const smRes = await fetch(`${BASE}/sitemap.xml`);
   if (!smRes.ok) {
     throw new Error(`Failed to fetch ${BASE}/sitemap.xml: HTTP ${smRes.status}`);
   }
   const smXml = await smRes.text();
-  const rawPaths = [...smXml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => {
+  const sitemapPaths = [...smXml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => {
     try {
       const u = new URL(m[1].trim());
       return u.pathname + u.search;
@@ -306,10 +362,38 @@ async function main() {
       return m[1].trim();
     }
   });
-  const uniquePaths = Array.from(new Set(rawPaths));
-  console.log(`Discovered ${uniquePaths.length} unique URLs in /sitemap.xml.`);
+  const inSitemapSet = new Set(sitemapPaths);
 
-  // Optional: fetch stored posts to access any sourceExcerpt fields for copy detection
+  // Also fetch non-sitemap active public /service/* and /services/cluster/* URLs
+  const extraPaths = [];
+  const incompleteMetaMap = new Map();
+  try {
+    const pubRes = await fetch(`${BASE}/api/audit/public-urls`);
+    if (pubRes.ok) {
+      const pubData = await pubRes.json();
+      for (const s of pubData.serviceEntries || []) {
+        if (s?.path) {
+          extraPaths.push(s.path);
+          incompleteMetaMap.set(s.path, s);
+        }
+      }
+      for (const c of pubData.clusterEntries || []) {
+        if (c?.path) {
+          extraPaths.push(c.path);
+          incompleteMetaMap.set(c.path, c);
+        }
+      }
+    }
+  } catch {}
+
+  const uniquePaths = Array.from(new Set([...sitemapPaths, ...extraPaths]));
+  console.log(
+    `Discovered ${inSitemapSet.size} URL(s) in /sitemap.xml + ${
+      uniquePaths.length - inSitemapSet.size
+    } non-sitemap service/cluster URL(s) (${uniquePaths.length} total).`
+  );
+
+  // Fetch stored posts to access any sourceExcerpt fields for copy detection
   const sourceExcerptByPostId = new Map();
   try {
     const postsRes = await fetch(`${BASE}/api/sarkari-posts`);
@@ -327,6 +411,7 @@ async function main() {
 
   const crawled = await mapWithConcurrency(uniquePaths, CONCURRENCY, async (urlPath) => {
     const targetUrl = `${BASE}${urlPath}`;
+    const inSitemap = inSitemapSet.has(urlPath);
     try {
       const res = await fetch(targetUrl, { redirect: 'manual' });
       const html = await res.text();
@@ -358,6 +443,12 @@ async function main() {
       const wordCount = countWords(mainText);
       const h1Count = (rootHtml.match(/<h1\b/gi) || []).length;
 
+      const isNoindex = /noindex/i.test(robotsMeta || '');
+      const hasVerifyLeak = /\[VERIFY\]/i.test(`${title} ${metaDescription} ${mainText}`);
+      const hasAskUsLeak =
+        (urlPath.startsWith('/service/') || urlPath.startsWith('/services/cluster/') || urlPath === '/services' || urlPath === '/schemes') &&
+        /\bask us\b/i.test(`${metaDescription} ${mainText}`);
+
       const outboundOfficialLinks = detectOutboundOfficialLinks(mainHtml);
       const hasOfficialLink = outboundOfficialLinks.length > 0;
       const hasLastUpdated = /last\s+(updated|verified)/i.test(mainText);
@@ -378,9 +469,19 @@ async function main() {
         }
       }
 
+      const shingleText = stripBoilerplateForShingles(rootHtml);
+
       return {
         path: urlPath,
         url: `https://www.cscdost.com${urlPath}`,
+        inSitemap,
+        isNoindex,
+        noindexCategory:
+          isNoindex && (urlPath.startsWith('/service/') || urlPath.startsWith('/services/cluster/'))
+            ? 'noindex-because-incomplete'
+            : isNoindex
+              ? 'other-noindex'
+              : 'indexable',
         httpStatus: res.status,
         title,
         metaDescription,
@@ -389,6 +490,8 @@ async function main() {
         canonicalMismatch,
         h1Count,
         wordCount,
+        hasVerifyLeak,
+        hasAskUsLeak,
         hasOfficialLink,
         outboundOfficialLinks,
         hasLastUpdated,
@@ -397,12 +500,15 @@ async function main() {
         matchedSnippet,
         highestJaccardScore: 0,
         nearDuplicateOf: null,
-        shingles: buildWordShingles(mainText, 5),
+        shingles: buildWordShingles(shingleText, 5),
       };
     } catch (err) {
       return {
         path: urlPath,
         url: `https://www.cscdost.com${urlPath}`,
+        inSitemap,
+        isNoindex: false,
+        noindexCategory: 'indexable',
         httpStatus: 0,
         title: '',
         metaDescription: '',
@@ -411,6 +517,8 @@ async function main() {
         canonicalMismatch: true,
         h1Count: 0,
         wordCount: 0,
+        hasVerifyLeak: false,
+        hasAskUsLeak: false,
         hasOfficialLink: false,
         outboundOfficialLinks: [],
         hasLastUpdated: false,
@@ -425,24 +533,24 @@ async function main() {
     }
   });
 
-  // Compute pairwise Jaccard near-duplicates
+  // Compute pairwise Jaccard near-duplicates (50% threshold) across INDEXABLE pages
   const duplicatePairs = [];
   for (let i = 0; i < crawled.length; i++) {
     const a = crawled[i];
-    if (a.httpStatus !== 200 || a.shingles.size < 15) continue;
+    if (a.isNoindex || a.httpStatus !== 200 || a.shingles.size < 15) continue;
     for (let j = i + 1; j < crawled.length; j++) {
       const b = crawled[j];
-      if (b.httpStatus !== 200 || b.shingles.size < 15) continue;
+      if (b.isNoindex || b.httpStatus !== 200 || b.shingles.size < 15) continue;
       const sim = jaccardSimilarity(a.shingles, b.shingles);
       if (sim > a.highestJaccardScore) {
         a.highestJaccardScore = Number(sim.toFixed(4));
-        if (sim >= 0.65) a.nearDuplicateOf = b.path;
+        if (sim >= JACCARD_THRESHOLD) a.nearDuplicateOf = b.path;
       }
       if (sim > b.highestJaccardScore) {
         b.highestJaccardScore = Number(sim.toFixed(4));
-        if (sim >= 0.65) b.nearDuplicateOf = a.path;
+        if (sim >= JACCARD_THRESHOLD) b.nearDuplicateOf = a.path;
       }
-      if (sim >= 0.65) {
+      if (sim >= JACCARD_THRESHOLD) {
         duplicatePairs.push({
           a: a.path,
           b: b.path,
@@ -452,7 +560,6 @@ async function main() {
     }
   }
 
-  // Classify every page and strip internal shingle sets before serializing
   const pages = crawled.map(({ shingles: _shingles, ...item }) => {
     const { auditClass, reasons } = classifyPage(item);
     return {
@@ -462,27 +569,52 @@ async function main() {
     };
   });
 
-  const summary = { A: 0, B: 0, C: 0, D: 0 };
-  for (const p of pages) {
-    summary[p.auditClass] = (summary[p.auditClass] || 0) + 1;
+  const indexablePages = pages.filter((p) => !p.isNoindex);
+  const noindexedPages = pages.filter((p) => p.isNoindex);
+  const noindexBecauseIncomplete = noindexedPages.filter(
+    (p) => p.noindexCategory === 'noindex-because-incomplete'
+  );
+  const otherNoindexed = noindexedPages.filter(
+    (p) => p.noindexCategory !== 'noindex-because-incomplete'
+  );
+
+  const indexableSummary = { A: 0, B: 0, C: 0, D: 0 };
+  for (const p of indexablePages) {
+    indexableSummary[p.auditClass] = (indexableSummary[p.auditClass] || 0) + 1;
   }
 
-  const worstUrls = [...pages]
+  const overallSummary = { A: 0, B: 0, C: 0, D: 0 };
+  for (const p of pages) {
+    overallSummary[p.auditClass] = (overallSummary[p.auditClass] || 0) + 1;
+  }
+
+  const verifyLeaks = pages.filter((p) => p.hasVerifyLeak || p.hasAskUsLeak);
+  const sitemapNoindexViolations = noindexedPages.filter((p) => p.inSitemap);
+
+  const worstIndexableUrls = [...indexablePages]
     .filter((p) => p.auditClass !== 'A')
     .sort((a, b) => {
       const sevDiff = CLASS_SEVERITY[a.auditClass] - CLASS_SEVERITY[b.auditClass];
       if (sevDiff !== 0) return sevDiff;
       return a.wordCount - b.wordCount;
     })
-    .slice(0, 30);
+    .slice(0, 20);
 
   const reportObj = {
     generatedAt: new Date().toISOString(),
     baseUrl: BASE,
+    nearDuplicateThreshold: JACCARD_THRESHOLD,
     totalUrls: pages.length,
-    summary,
+    totalIndexablePages: indexablePages.length,
+    totalNoindexedPages: noindexedPages.length,
+    noindexBecauseIncompleteCount: noindexBecauseIncomplete.length,
+    otherNoindexedCount: otherNoindexed.length,
+    verifyLeakCount: verifyLeaks.length,
+    sitemapNoindexViolationCount: sitemapNoindexViolations.length,
+    indexableSummary,
+    summary: overallSummary,
     duplicatePairs,
-    worstUrls: worstUrls.map((u) => ({
+    worstIndexableUrls: worstIndexableUrls.map((u) => ({
       path: u.path,
       auditClass: u.auditClass,
       httpStatus: u.httpStatus,
@@ -508,72 +640,70 @@ async function main() {
     '',
     `- **Generated At**: ${reportObj.generatedAt}`,
     `- **Audited Origin**: ${BASE}`,
-    `- **Total Sitemap URLs Crawled**: ${pages.length}`,
+    `- **Total Pages Audited**: ${pages.length}`,
+    `- **Total Indexable Pages (in /sitemap.xml & index, follow)**: ${indexablePages.length}`,
+    `- **Total Noindexed Pages**: ${noindexedPages.length} (**${noindexBecauseIncomplete.length}** noindex-because-incomplete services/hubs, **${otherNoindexed.length}** other noindex)`,
+    `- **Public [VERIFY] / "Ask us" Leaks**: ${verifyLeaks.length}`,
+    `- **Noindex URLs improperly inside /sitemap.xml**: ${sitemapNoindexViolations.length}`,
     '',
-    '## Classification Summary',
+    '## Indexable Pages by Class',
     '',
-    '| Class | Description | Count |',
+    '| Class | Description | Indexable Count |',
     '|---|---|---|',
-    `| **A** | Strong (>=400 main words, unique meta/title, 1 H1, official link + Last updated) | **${summary.A}** |`,
-    `| **B** | Needs expansion (<400 words, missing FAQ/how-to, or minor signal gaps) | **${summary.B}** |`,
-    `| **C** | Thin (<300 words or canonical issue on post route — candidate for enrichment or noindex) | **${summary.C}** |`,
-    `| **D** | Broken status, excessive verbatim source copying, or >=65% Jaccard near-duplicate | **${summary.D}** |`,
+    `| **A** | Strong (>=400 main words, unique meta/title, 1 H1, official link + Last updated) | **${indexableSummary.A}** |`,
+    `| **B** | Needs expansion (300–399 words or minor signal gaps) | **${indexableSummary.B}** |`,
+    `| **C** | Indexable Thin (<300 words, or <400w on service, or <800w on cluster hub) | **${indexableSummary.C}** |`,
+    `| **D** | Broken HTTP, [VERIFY] leak, copied source, or >=50% boilerplate-free Jaccard overlap | **${indexableSummary.D}** |`,
     '',
-    `## Near-Duplicate Pairs (Jaccard >= 0.65): ${duplicatePairs.length}`,
+    `## Near-Duplicate Indexable Pairs (Jaccard >= 0.50): ${duplicatePairs.length}`,
     '',
     ...(duplicatePairs.length === 0
-      ? ['No near-duplicate pairs >= 65% similarity found across crawled sitemap URLs.']
+      ? ['No near-duplicate indexable pairs >= 50% similarity found.']
       : duplicatePairs.slice(0, 50).map(
           (pair) => `- \`${pair.a}\` <-> \`${pair.b}\` (**${(pair.similarity * 100).toFixed(1)}%**)`
         )),
     '',
-    '## 30 Worst URLs Requiring Priority Review',
+    '## 20 Worst Indexable URLs',
     '',
-    '| # | Class | Path | Status | Words | Official Link | Last Updated | Issues |',
-    '|---|---|---|---|---|---|---|---|',
-    ...(worstUrls.length === 0
-      ? ['| - | A | All crawled URLs passed Class A! | 200 | - | - | - | - |']
-      : worstUrls.map(
+    '| # | Class | Path | Status | Words | Overlap | Issues |',
+    '|---|---|---|---|---|---|---|',
+    ...(worstIndexableUrls.length === 0
+      ? ['| - | A | All indexable URLs are Class A! | 200 | - | - | - |']
+      : worstIndexableUrls.map(
           (u, i) =>
-            `| ${i + 1} | **${u.auditClass}** | \`${u.path}\` | ${u.httpStatus} | ${u.wordCount} | ${
-              u.hasOfficialLink ? 'Yes' : 'No'
-            } | ${u.hasLastUpdated ? 'Yes' : 'No'} | ${u.reasons.join('; ').replace(/\|/g, '/')} |`
+            `| ${i + 1} | **${u.auditClass}** | \`${u.path}\` | ${u.httpStatus} | ${u.wordCount} | ${(
+              (u.highestJaccardScore || 0) * 100
+            ).toFixed(0)}% | ${u.reasons.join('; ').replace(/\|/g, '/')} |`
         )),
     '',
-    '## Full Non-Class-A Breakdown',
+    '## Noindex-Because-Incomplete Summary',
     '',
+    `- Services & Cluster Hubs automatically set to \`noindex, follow\` and excluded from \`/sitemap.xml\`: **${noindexBecauseIncomplete.length}**`,
   ];
-
-  const nonA = pages
-    .filter((p) => p.auditClass !== 'A')
-    .sort((a, b) => CLASS_SEVERITY[a.auditClass] - CLASS_SEVERITY[b.auditClass] || a.wordCount - b.wordCount);
-
-  if (nonA.length === 0) {
-    mdLines.push('All sitemap URLs meet Class A requirements.');
-  } else {
-    for (const p of nonA) {
-      mdLines.push(
-        `- **[${p.auditClass}]** \`${p.path}\` (${p.wordCount} words, HTTP ${p.httpStatus}) — ${p.reasons.join('; ')}`
-      );
-    }
-  }
 
   fs.writeFileSync(mdPath, mdLines.join('\n') + '\n', 'utf-8');
 
-  console.log('=== AUDIT TOTALS BY CLASS ===');
-  console.log(`Total URLs: ${pages.length}`);
-  console.log(`  Class A (Strong):          ${summary.A}`);
-  console.log(`  Class B (Needs Expansion): ${summary.B}`);
-  console.log(`  Class C (Thin / Noindex):  ${summary.C}`);
-  console.log(`  Class D (Duplicate/Broken):${summary.D}`);
-  console.log(`  Near-duplicate pairs:      ${duplicatePairs.length}`);
-  console.log('\n=== 30 WORST URLS ===');
-  if (worstUrls.length === 0) {
-    console.log('None — all pages are Class A!');
+  console.log('=== INDEXABILITY & HYGIENE TOTALS ===');
+  console.log(`Total Audited Pages:            ${pages.length}`);
+  console.log(`  Total Indexable Pages:        ${indexablePages.length}`);
+  console.log(`  Total Noindexed Pages:        ${noindexedPages.length}`);
+  console.log(`    - noindex-because-incomplete: ${noindexBecauseIncomplete.length}`);
+  console.log(`    - other noindex:              ${otherNoindexed.length}`);
+  console.log(`  Public [VERIFY]/Ask us Leaks: ${verifyLeaks.length}`);
+  console.log(`  Noindex-in-Sitemap Violations:${sitemapNoindexViolations.length}`);
+  console.log('\n=== INDEXABLE PAGES BY CLASS ===');
+  console.log(`  Indexable Class A: ${indexableSummary.A}`);
+  console.log(`  Indexable Class B: ${indexableSummary.B}`);
+  console.log(`  Indexable Class C: ${indexableSummary.C}`);
+  console.log(`  Indexable Class D: ${indexableSummary.D}`);
+  console.log(`  Near-duplicate pairs (>=50%): ${duplicatePairs.length}`);
+  console.log('\n=== 20 WORST INDEXABLE URLS ===');
+  if (worstIndexableUrls.length === 0) {
+    console.log('None — all indexable pages are Class A!');
   } else {
-    worstUrls.forEach((u, idx) => {
+    worstIndexableUrls.forEach((u, idx) => {
       console.log(
-        `${String(idx + 1).padStart(2, ' ')}. [Class ${u.auditClass}] ${u.path.padEnd(55)} | HTTP ${u.httpStatus} | ${String(u.wordCount).padStart(4)} words | ${u.reasons.join('; ')}`
+        `${String(idx + 1).padStart(2, ' ')}. [Class ${u.auditClass}] ${u.path.padEnd(55)} | HTTP ${u.httpStatus} | ${String(u.wordCount).padStart(4)}w | ${(u.highestJaccardScore * 100).toFixed(0)}% overlap | ${u.reasons.join('; ')}`
       );
     });
   }

@@ -10,6 +10,8 @@ export interface ServiceItem {
   officialUrl?: string;
   popular?: boolean;
   issuingAuthority?: string;
+  officialFee?: string;
+  cscCharge?: string;
   eligibility?: string;
   rejectionReasons?: string[];
   stepFlow?: string[];
@@ -17,6 +19,7 @@ export interface ServiceItem {
   publicationStatus?: 'published' | 'draft' | 'archived';
   robotsNoindex?: boolean;
   duplicateOfId?: string;
+  lastVerifiedDate?: string;
   updatedAt?: string;
   verifiedBy?: string;
 }

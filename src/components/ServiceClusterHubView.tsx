@@ -1,13 +1,29 @@
 import React, { useMemo } from 'react';
-import { ArrowLeft, ArrowRight, Building2, Layers, MessageCircle, PhoneCall } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  ExternalLink,
+  Layers,
+  MessageCircle,
+  PhoneCall,
+} from 'lucide-react';
 import type { ServiceItem } from '../servicesData';
 import { SERVICES_LIST } from '../servicesData';
-import { deriveStoredServiceFacts, getServiceClusterById } from '../utils/serviceMetadata';
+import {
+  deriveStoredServiceFacts,
+  getServiceClusterById,
+  hasExplicitContent,
+  hasExplicitList,
+  isValidHttpUrl,
+  type ServiceClusterHubOverride,
+} from '../utils/serviceMetadata';
 import { Breadcrumbs, Card, Chip } from './ui';
 
 interface ServiceClusterHubViewProps {
   clusterId: string;
   allServices?: ServiceItem[];
+  hubOverride?: ServiceClusterHubOverride;
   onBack: () => void;
   onApplyService: (serviceName: string) => void;
   onNavigateRoute?: (path: string) => void;
@@ -16,6 +32,7 @@ interface ServiceClusterHubViewProps {
 export default function ServiceClusterHubView({
   clusterId,
   allServices = SERVICES_LIST,
+  hubOverride,
   onBack,
   onApplyService,
   onNavigateRoute,
@@ -44,6 +61,16 @@ export default function ServiceClusterHubView({
       </div>
     );
   }
+
+  const hasWhatFor = hasExplicitContent(hubOverride?.whatDocumentIsFor);
+  const hasHowDiff = hasExplicitContent(hubOverride?.howServicesDiffer);
+  const commonMistakes =
+    Array.isArray(hubOverride?.commonMistakes) && hasExplicitList(hubOverride.commonMistakes)
+      ? hubOverride.commonMistakes.map((s) => s.trim()).filter(Boolean)
+      : [];
+  const officialSources = Array.isArray(hubOverride?.officialSources)
+    ? hubOverride.officialSources.filter((s) => hasExplicitContent(s?.label) && isValidHttpUrl(s?.url))
+    : [];
 
   const navigateRoute = (href: string) => {
     if (onNavigateRoute) {
@@ -87,6 +114,11 @@ export default function ServiceClusterHubView({
                 Consolidated Service Hub · {members.length} Services
               </span>
             </Chip>
+            {hasExplicitContent(hubOverride?.lastVerifiedDate) && (
+              <span className="text-xs font-semibold text-[var(--text-secondary)]">
+                Last verified: {hubOverride!.lastVerifiedDate}
+              </span>
+            )}
           </div>
           <h1
             id="cluster-hub-h1"
@@ -97,21 +129,45 @@ export default function ServiceClusterHubView({
           <p className="text-sm text-[var(--text-secondary)] leading-relaxed m-0">
             {cluster.summary}
           </p>
-          <div className="flex items-center gap-2 text-xs sm:text-sm text-[var(--text-primary)] font-semibold pt-1">
-            <Building2 className="w-4 h-4 text-[#1F9D6B] shrink-0" aria-hidden="true" />
-            <span>Issuing Authority: {cluster.issuingAuthority}</span>
-          </div>
         </header>
 
+        {hasWhatFor && (
+          <Card className="p-4 sm:p-5 space-y-2 text-start">
+            <h2 className="text-lg font-extrabold text-[var(--text-primary)] m-0">
+              What These Documents &amp; Services Are For
+            </h2>
+            <p className="text-sm text-[var(--text-secondary)] leading-relaxed m-0 whitespace-pre-line">
+              {hubOverride!.whatDocumentIsFor}
+            </p>
+          </Card>
+        )}
+
+        {hasHowDiff && (
+          <Card className="p-4 sm:p-5 space-y-2 text-start">
+            <h2 className="text-lg font-extrabold text-[var(--text-primary)] m-0">
+              How These Services Differ From Each Other
+            </h2>
+            <p className="text-sm text-[var(--text-secondary)] leading-relaxed m-0 whitespace-pre-line">
+              {hubOverride!.howServicesDiffer}
+            </p>
+          </Card>
+        )}
+
         <Card className="p-0 overflow-hidden">
+          <div className="px-4 py-3 border-b border-[var(--border-default)] text-start">
+            <h2 className="text-base font-extrabold text-[var(--text-primary)] m-0">
+              Comparison Table
+            </h2>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs sm:text-sm">
               <thead>
                 <tr className="bg-[var(--bg-surface)] border-b border-[var(--border-default)] text-[var(--text-secondary)]">
                   <th className="p-3.5 font-bold">Service</th>
-                  <th className="p-3.5 font-bold">Required Documents</th>
-                  <th className="p-3.5 font-bold whitespace-nowrap">Fee</th>
-                  <th className="p-3.5 font-bold whitespace-nowrap">Processing Time</th>
+                  <th className="p-3.5 font-bold">Issuing Authority</th>
+                  <th className="p-3.5 font-bold">Who It Is For</th>
+                  <th className="p-3.5 font-bold whitespace-nowrap">Typical Time</th>
+                  <th className="p-3.5 font-bold whitespace-nowrap">Fee Note</th>
                   <th className="p-3.5 font-bold text-right">Action</th>
                 </tr>
               </thead>
@@ -120,11 +176,8 @@ export default function ServiceClusterHubView({
                   const facts = deriveStoredServiceFacts(member);
                   return (
                     <tr key={member.id} className="hover:bg-[var(--bg-surface)]/60">
-                      <td className="p-3.5 align-top min-w-[210px]">
+                      <td className="p-3.5 align-top min-w-[200px]">
                         <div className="font-bold text-[var(--text-primary)]">{member.name}</div>
-                        <p className="text-xs text-[var(--text-secondary)] mt-1 mb-0 leading-relaxed">
-                          {member.description}
-                        </p>
                         {!member.duplicateOfId && (
                           <a
                             href={`/service/${member.id}`}
@@ -140,29 +193,24 @@ export default function ServiceClusterHubView({
                           </a>
                         )}
                       </td>
-                      <td className="p-3.5 align-top min-w-[200px] text-xs text-[var(--text-secondary)]">
-                        {facts.requirements.length > 0 ? (
-                          <ul className="list-disc pl-4 m-0 space-y-0.5">
-                            {facts.requirements.map((doc, idx) => (
-                              <li key={`${member.id}-doc-${idx}`}>{doc}</li>
-                            ))}
-                          </ul>
+                      <td className="p-3.5 align-top min-w-[160px] text-xs text-[var(--text-secondary)]">
+                        {facts.authorityFromStoredData ? facts.issuingAuthority : ''}
+                      </td>
+                      <td className="p-3.5 align-top min-w-[180px] text-xs text-[var(--text-secondary)]">
+                        {facts.eligibilityFromStoredData ? facts.eligibility : ''}
+                      </td>
+                      <td className="p-3.5 align-top whitespace-nowrap text-xs">
+                        {facts.timeFromStoredData ? (
+                          <span className="text-[var(--text-primary)] font-semibold">{facts.estimatedTime}</span>
                         ) : (
-                          <span className="font-mono font-bold text-amber-600">[VERIFY]</span>
+                          ''
                         )}
                       </td>
                       <td className="p-3.5 align-top whitespace-nowrap font-bold text-xs">
                         {facts.feesFromStoredData ? (
                           <span className="text-[#1F9D6B]">{facts.feesText}</span>
                         ) : (
-                          <span className="font-mono text-amber-600">{facts.feesText}</span>
-                        )}
-                      </td>
-                      <td className="p-3.5 align-top whitespace-nowrap text-xs">
-                        {facts.timeFromStoredData ? (
-                          <span className="text-[var(--text-primary)] font-semibold">{facts.estimatedTime}</span>
-                        ) : (
-                          <span className="font-mono font-bold text-amber-600">[VERIFY]</span>
+                          ''
                         )}
                       </td>
                       <td className="p-3.5 align-top text-right whitespace-nowrap">
@@ -182,6 +230,85 @@ export default function ServiceClusterHubView({
             </table>
           </div>
         </Card>
+
+        <Card className="p-4 sm:p-5 space-y-3 text-start">
+          <h2 className="text-lg font-extrabold text-[var(--text-primary)] m-0">
+            Service-by-Service Breakdown &amp; Specific Differences
+          </h2>
+          <div className="space-y-3">
+            {members.map((member) => {
+              const facts = deriveStoredServiceFacts(member);
+              const diffNote = hubOverride?.perServiceDifferences?.[member.id];
+              return (
+                <div
+                  key={member.id}
+                  className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-3.5 space-y-1.5"
+                >
+                  <h3 className="text-sm sm:text-base font-bold text-[var(--text-primary)] m-0">
+                    {member.name}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-[var(--text-secondary)] m-0 leading-relaxed">
+                    {member.description}
+                  </p>
+                  {hasExplicitContent(diffNote) && (
+                    <p className="text-xs sm:text-sm text-[var(--text-primary)] m-0 leading-relaxed">
+                      <strong>Specific Difference:</strong> {diffNote}
+                    </p>
+                  )}
+                  {facts.eligibilityFromStoredData && (
+                    <p className="text-xs text-[var(--text-secondary)] m-0">
+                      <strong>Eligibility:</strong> {facts.eligibility}
+                    </p>
+                  )}
+                  {facts.requirements.length > 0 && (
+                    <p className="text-xs text-[var(--text-secondary)] m-0">
+                      <strong>Documents:</strong> {facts.requirements.join(', ')}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+
+        {commonMistakes.length > 0 && (
+          <Card className="p-4 sm:p-5 space-y-2.5 text-start">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" aria-hidden="true" />
+              <h2 className="text-lg font-extrabold text-[var(--text-primary)] m-0">
+                Common Mistakes to Avoid
+              </h2>
+            </div>
+            <ul className="list-disc pl-5 m-0 space-y-1.5 text-sm text-[var(--text-secondary)]">
+              {commonMistakes.map((mistake, idx) => (
+                <li key={`${cluster.clusterId}-mistake-${idx}`}>{mistake}</li>
+              ))}
+            </ul>
+          </Card>
+        )}
+
+        {officialSources.length > 0 && (
+          <Card className="p-4 sm:p-5 space-y-2.5 text-start">
+            <h2 className="text-lg font-extrabold text-[var(--text-primary)] m-0">
+              Official Portals &amp; Sources
+            </h2>
+            <ul className="list-disc pl-5 m-0 space-y-1.5 text-sm">
+              {officialSources.map((src, idx) => (
+                <li key={`${cluster.clusterId}-src-${idx}`}>
+                  <a
+                    href={src.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sky-700 dark:text-sky-300 font-semibold hover:underline inline-flex items-center gap-1"
+                  >
+                    <span>{src.label}</span>
+                    <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
 
         <Card className="p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
           <div className="text-xs sm:text-sm text-[var(--text-secondary)]">

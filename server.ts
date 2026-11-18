@@ -25,6 +25,8 @@ import {
   getClusterForServiceId,
   deriveStoredServiceFacts,
   validateServiceReadyToPublish,
+  evaluateClusterHubReadiness,
+  ServiceClusterHubOverride,
 } from './src/utils/serviceMetadata';
 import {
   GUIDE_ARTICLES as ALL_GUIDE_ARTICLES,
@@ -44,6 +46,7 @@ import {
   detectOutboundOfficialLinks,
   evaluatePostCopyAndWords,
   jaccardSimilarity,
+  stripBoilerplateForAudit,
 } from './src/utils/contentAuditRules';
 import { validatePostPublishQuality } from './src/utils/contentQualityValidator';
 import { PUBLIC_CONTACT_EMAIL } from './src/config/siteContact';
@@ -165,7 +168,12 @@ import {
   revertServiceMergeGroup,
   bulkNoindexClassDItems,
   addContentHealthLog,
-  getContentHealthLogs
+  getContentHealthLogs,
+  getServiceClusterOverrides,
+  upsertServiceClusterOverride,
+  recordServiceDemandEvent,
+  getServiceDemandStats,
+  ServiceClusterOverrideRecord
 } from './src/dbServer';
 import { buildWhatsAppNotification, buildServiceWhatsAppNotification } from './src/utils/whatsappFormatter';
 import {
@@ -512,6 +520,18 @@ app.all('/api/tracker/view', (req, res) => {
   }
   const analytics = getAnalytics();
   res.json({ success: true, totalViews: analytics.views });
+});
+
+app.post('/api/tracker/service-view', (req: Request, res: Response) => {
+  const serviceId = String(req.body?.serviceId || '').trim();
+  const rawType = String(req.body?.type || 'view').trim();
+  const eventType: 'view' | 'click' | 'enquiry' =
+    rawType === 'click' ? 'click' : rawType === 'enquiry' ? 'enquiry' : 'view';
+  if (!serviceId) {
+    return res.status(400).json({ success: false, error: 'Missing serviceId.' });
+  }
+  const stats = recordServiceDemandEvent(serviceId, eventType);
+  res.json({ success: true, stats });
 });
 
 // Public API: Retrieve active announcements and public info
@@ -4415,6 +4435,8 @@ function getAllMergedServices(): ServiceItem[] {
         description: ov.description !== undefined ? ov.description : next.description,
         issuingAuthority: ov.issuingAuthority !== undefined ? ov.issuingAuthority : next.issuingAuthority,
         eligibility: ov.eligibility !== undefined ? ov.eligibility : next.eligibility,
+        officialFee: ov.officialFee !== undefined ? ov.officialFee : next.officialFee,
+        cscCharge: ov.cscCharge !== undefined ? ov.cscCharge : next.cscCharge,
         requirements: Array.isArray(ov.requirements) ? ov.requirements : next.requirements,
         estimatedTime: ov.estimatedTime !== undefined ? ov.estimatedTime : next.estimatedTime,
         price: ov.price !== undefined ? ov.price : next.price,
@@ -4424,6 +4446,7 @@ function getAllMergedServices(): ServiceItem[] {
         staffChecks: Array.isArray(ov.staffChecks) ? ov.staffChecks : next.staffChecks,
         rejectionReasons: Array.isArray(ov.rejectionReasons) ? ov.rejectionReasons : next.rejectionReasons,
         verifiedBy: ov.verifiedBy || next.verifiedBy,
+        lastVerifiedDate: ov.lastVerifiedDate !== undefined ? ov.lastVerifiedDate : next.lastVerifiedDate,
         updatedAt: ov.updatedAt || next.updatedAt,
       };
     }
@@ -4435,9 +4458,89 @@ function getAllMergedServices(): ServiceItem[] {
   });
 }
 
-app.get('/api/services', (_req: Request, res: Response) => {
+function getClusterHubEvaluations(mergedServices: ServiceItem[]) {
+  const byId = new Map(mergedServices.map((s) => [s.id, s]));
+  const clusterOverrides = getServiceClusterOverrides();
+  const map: Record<
+    string,
+    {
+      wordCount: number;
+      override: ServiceClusterHubOverride;
+      readiness: ReturnType<typeof evaluateClusterHubReadiness>;
+    }
+  > = {};
+
+  for (const c of SERVICE_MERGE_CLUSTERS) {
+    const members = c.memberIds.map((id) => byId.get(id)).filter((s): s is ServiceItem => Boolean(s));
+    const override = (clusterOverrides[c.clusterId] || { clusterId: c.clusterId }) as ServiceClusterHubOverride;
+    const html = renderServiceClusterHubHtml(c, members, override);
+    const wordCount = extractMainTextWordCount(html).wordCount;
+    const readiness = evaluateClusterHubReadiness(c, members, override, wordCount);
+    map[c.clusterId] = { wordCount, override, readiness };
+  }
+  return { clusterOverrides, evaluations: map };
+}
+
+function isServiceReadyAndIndexable(service: ServiceItem): {
+  isIndexable: boolean;
+  wordCount: number;
+  validation: ReturnType<typeof validateServiceReadyToPublish>;
+} {
+  const html = renderServiceSubstantiveHtml(service);
+  const wordCount = extractMainTextWordCount(html).wordCount;
+  const validation = validateServiceReadyToPublish(service, wordCount);
+  const isBlocked =
+    service.publicationStatus === 'draft' ||
+    service.publicationStatus === 'archived' ||
+    Boolean(service.duplicateOfId) ||
+    Boolean(service.robotsNoindex);
+  return {
+    isIndexable: !isBlocked && validation.canPublish,
+    wordCount,
+    validation,
+  };
+}
+
+function computeServiceDemandScores(services: ServiceItem[]): Map<string, number> {
+  const stats = getServiceDemandStats();
+  const db = getDb();
+  const scores = new Map<string, number>();
+
+  for (const s of services) {
+    const rec = stats[s.id];
+    const base = rec ? rec.views + rec.clicks * 2 + rec.enquiries * 5 : 0;
+    scores.set(s.id, base);
+  }
+
+  const apps = Array.isArray(db.appointments) ? db.appointments : [];
+  for (const appItem of apps) {
+    const svcId = String((appItem as any)?.serviceId || '').trim();
+    const svcName = String((appItem as any)?.service || (appItem as any)?.serviceName || '').toLowerCase();
+    for (const s of services) {
+      if ((svcId && svcId === s.id) || (svcName && svcName.includes(s.name.toLowerCase()))) {
+        scores.set(s.id, (scores.get(s.id) || 0) + 10);
+      }
+    }
+  }
+
+  const reqs = Array.isArray(db.contactRequests) ? db.contactRequests : [];
+  for (const r of reqs) {
+    const msg = `${(r as any)?.subject || ''} ${(r as any)?.message || ''}`.toLowerCase();
+    if (!msg.trim()) continue;
+    for (const s of services) {
+      if (msg.includes(s.id.toLowerCase()) || msg.includes(s.name.toLowerCase())) {
+        scores.set(s.id, (scores.get(s.id) || 0) + 5);
+      }
+    }
+  }
+
+  return scores;
+}
+
+app.get('/api/services', (req: Request, res: Response) => {
   const merged = getAllMergedServices();
   const approvedMerges = getApprovedServiceMerges();
+  const { clusterOverrides, evaluations } = getClusterHubEvaluations(merged);
   const redirectMap: Record<string, string> = {};
   for (const s of merged) {
     if (s.duplicateOfId) {
@@ -4447,14 +4550,64 @@ app.get('/api/services', (_req: Request, res: Response) => {
   const visible = merged.filter(
     (s) => s.publicationStatus !== 'draft' && s.publicationStatus !== 'archived' && !s.duplicateOfId
   );
+  const clusterReadiness: Record<string, boolean> = {};
+  for (const c of SERVICE_MERGE_CLUSTERS) {
+    clusterReadiness[c.clusterId] = Boolean(evaluations[c.clusterId]?.readiness.isIndexable);
+  }
+  const includeAll = req.query.includeAll === '1' || req.query.includeIncomplete === '1';
   res.json({
     success: true,
     services: visible,
     redirectMap,
+    clusterOverrides,
+    clusterReadiness,
     clusters: SERVICE_MERGE_CLUSTERS.map((c) => ({
       ...c,
       approved: Boolean(approvedMerges[c.clusterId]?.approved),
+      isIndexable: Boolean(evaluations[c.clusterId]?.readiness.isIndexable),
+      wordCount: evaluations[c.clusterId]?.wordCount || 0,
     })),
+    ...(includeAll
+      ? {
+          auditPublicUrls: {
+            serviceUrls: visible.map((s) => `/service/${s.id}`),
+            clusterUrls: SERVICE_MERGE_CLUSTERS.map((c) => c.hubPath),
+          },
+        }
+      : {}),
+  });
+});
+
+app.get('/api/audit/public-urls', (_req: Request, res: Response) => {
+  const merged = getAllMergedServices();
+  const { evaluations } = getClusterHubEvaluations(merged);
+  const visibleServices = merged.filter(
+    (s) => s.publicationStatus !== 'draft' && s.publicationStatus !== 'archived' && !s.duplicateOfId
+  );
+  const serviceEntries = visibleServices.map((s) => {
+    const check = isServiceReadyAndIndexable(s);
+    return {
+      path: `/service/${s.id}`,
+      id: s.id,
+      isIndexable: check.isIndexable,
+      wordCount: check.wordCount,
+      missingFields: check.validation.missingFields,
+    };
+  });
+  const clusterEntries = SERVICE_MERGE_CLUSTERS.map((c) => {
+    const ev = evaluations[c.clusterId];
+    return {
+      path: c.hubPath,
+      clusterId: c.clusterId,
+      isIndexable: Boolean(ev?.readiness.isIndexable),
+      wordCount: ev?.wordCount || 0,
+      missingCount: ev?.readiness.missingData.length || 0,
+    };
+  });
+  res.json({
+    success: true,
+    serviceEntries,
+    clusterEntries,
   });
 });
 
@@ -4631,7 +4784,7 @@ app.get('/api/staff/content-health', authenticateAdmin, (_req: Request, res: Res
     const metrics = extractMainTextWordCount(html);
     postMetricsMap.set(urlPath, metrics);
     if (!post.robotsNoindex && !isStaleOver90Days(post)) {
-      shingleCandidates.push({ path: urlPath, shingles: buildWordShingles(html.replace(/<[^>]+>/g, ' '), 5) });
+      shingleCandidates.push({ path: urlPath, shingles: buildWordShingles(stripBoilerplateForAudit(html), 5) });
     }
   }
 
@@ -4641,8 +4794,8 @@ app.get('/api/staff/content-health', authenticateAdmin, (_req: Request, res: Res
     const html = renderServiceSubstantiveHtml(svc);
     const metrics = extractMainTextWordCount(html);
     serviceMetricsMap.set(urlPath, metrics);
-    if (svc.publicationStatus !== 'draft' && svc.publicationStatus !== 'archived' && !svc.duplicateOfId && !svc.robotsNoindex) {
-      shingleCandidates.push({ path: urlPath, shingles: buildWordShingles(html.replace(/<[^>]+>/g, ' '), 5) });
+    if (isServiceReadyAndIndexable(svc).isIndexable) {
+      shingleCandidates.push({ path: urlPath, shingles: buildWordShingles(stripBoilerplateForAudit(html), 5) });
     }
   }
 
@@ -4652,7 +4805,7 @@ app.get('/api/staff/content-health', authenticateAdmin, (_req: Request, res: Res
     const html = renderToolDetailSubstantiveHtml(tool);
     const metrics = extractMainTextWordCount(html);
     toolMetricsMap.set(urlPath, metrics);
-    shingleCandidates.push({ path: urlPath, shingles: buildWordShingles(html.replace(/<[^>]+>/g, ' '), 5) });
+    shingleCandidates.push({ path: urlPath, shingles: buildWordShingles(stripBoilerplateForAudit(html), 5) });
   }
 
   const liveJaccardMap = new Map<string, { score: number; peer: string }>();
@@ -4734,9 +4887,10 @@ app.get('/api/staff/content-health', authenticateAdmin, (_req: Request, res: Res
     const urlPath = `/service/${svc.id}`;
     const facts = deriveStoredServiceFacts(svc);
     const metrics = serviceMetricsMap.get(urlPath) || { wordCount: 0, hasOfficialLink: false, hasLastUpdated: false };
+    const readyCheck = validateServiceReadyToPublish(svc, metrics.wordCount);
     const liveDup = liveJaccardMap.get(urlPath);
     const highestJaccard = liveDup?.score || 0;
-    const feeText = svc.price?.trim() ? ` Fee: ${svc.price.trim()}.` : ' Fee: [VERIFY].';
+    const feeText = facts.feesFromStoredData ? ` Fee: ${facts.feesText}.` : '';
     const cls = classifyAuditPage({
       url: `${SITE_ORIGIN}${urlPath}`,
       httpStatus: 200,
@@ -4745,13 +4899,15 @@ app.get('/api/staff/content-health', authenticateAdmin, (_req: Request, res: Res
       h1Count: 1,
       wordCount: metrics.wordCount,
       hasOfficialLink: Boolean(facts.officialPortalUrl),
-      hasLastUpdated: Boolean(svc.updatedAt),
+      hasLastUpdated: Boolean(facts.lastVerifiedDate),
       hasFaqOrHowTo: facts.stepFlow.length > 0,
       copiedRunLength: 0,
       highestJaccardScore: highestJaccard,
       nearDuplicateOf: liveDup?.peer || svc.duplicateOfId,
       canonicalMismatch: Boolean(svc.duplicateOfId),
     });
+
+    const effectiveNoindex = Boolean(svc.robotsNoindex || svc.duplicateOfId || !readyCheck.canPublish);
 
     items.push({
       id: svc.id,
@@ -4761,9 +4917,9 @@ app.get('/api/staff/content-health', authenticateAdmin, (_req: Request, res: Res
       auditClass: svc.duplicateOfId ? 'D' : cls.auditClass,
       wordCount: metrics.wordCount,
       hasOfficialLink: Boolean(facts.officialPortalUrl),
-      hasLastUpdated: Boolean(svc.updatedAt),
+      hasLastUpdated: Boolean(facts.lastVerifiedDate),
       publicationStatus: svc.publicationStatus || 'published',
-      robotsNoindex: Boolean(svc.robotsNoindex || svc.duplicateOfId),
+      robotsNoindex: effectiveNoindex,
       duplicateOfId: svc.duplicateOfId,
       hasVerifyPlaceholders: facts.hasVerifyPlaceholders,
       missingVerifyFields: facts.missingVerifyFields,
@@ -4774,16 +4930,19 @@ app.get('/api/staff/content-health', authenticateAdmin, (_req: Request, res: Res
         name: svc.name,
         category: svc.category,
         description: svc.description,
-        issuingAuthority: svc.issuingAuthority || (facts.authorityFromStoredData ? facts.issuingAuthority : ''),
+        issuingAuthority: svc.issuingAuthority || '',
+        officialFee: svc.officialFee || '',
+        cscCharge: svc.cscCharge || '',
         eligibility: svc.eligibility || '',
-        requirements: svc.requirements || [],
-        estimatedTime: svc.estimatedTime || '',
+        requirements: facts.requirements,
+        estimatedTime: facts.estimatedTime,
         price: svc.price || '',
         feeLines: svc.feeLines || [],
-        officialUrl: svc.officialUrl || facts.officialPortalUrl || '',
-        stepFlow: svc.stepFlow || [],
-        staffChecks: svc.staffChecks || [],
-        rejectionReasons: svc.rejectionReasons || [],
+        officialUrl: svc.officialUrl || '',
+        stepFlow: facts.stepFlow,
+        staffChecks: facts.staffChecks,
+        rejectionReasons: facts.rejectionReasons,
+        lastVerifiedDate: svc.lastVerifiedDate || '',
         notes: svcOverrides[svc.id]?.verifiedBy || svc.verifiedBy || '',
       },
     });
@@ -4983,6 +5142,8 @@ app.post('/api/staff/content-health/service/save', authenticateAdmin, (req: Requ
     name: body.name !== undefined ? String(body.name).trim() || target.name : target.name,
     description: body.description !== undefined ? String(body.description).trim() : target.description,
     issuingAuthority: body.issuingAuthority !== undefined ? String(body.issuingAuthority).trim() : target.issuingAuthority,
+    officialFee: body.officialFee !== undefined ? String(body.officialFee).trim() : target.officialFee,
+    cscCharge: body.cscCharge !== undefined ? String(body.cscCharge).trim() : target.cscCharge,
     eligibility: body.eligibility !== undefined ? String(body.eligibility).trim() : target.eligibility,
     requirements: Array.isArray(body.requirements) ? body.requirements.map((s: any) => String(s).trim()).filter(Boolean) : target.requirements,
     estimatedTime: body.estimatedTime !== undefined ? String(body.estimatedTime).trim() : target.estimatedTime,
@@ -4992,28 +5153,33 @@ app.post('/api/staff/content-health/service/save', authenticateAdmin, (req: Requ
     stepFlow: Array.isArray(body.stepFlow) ? body.stepFlow.map((s: any) => String(s).trim()).filter(Boolean) : target.stepFlow,
     staffChecks: Array.isArray(body.staffChecks) ? body.staffChecks.map((s: any) => String(s).trim()).filter(Boolean) : target.staffChecks,
     rejectionReasons: Array.isArray(body.rejectionReasons) ? body.rejectionReasons.map((s: any) => String(s).trim()).filter(Boolean) : target.rejectionReasons,
+    lastVerifiedDate: body.lastVerifiedDate !== undefined ? String(body.lastVerifiedDate).trim() : target.lastVerifiedDate,
     verifiedBy: actor,
     updatedAt: nowDate,
   };
 
-  if (publicationStatus === 'published') {
-    const check = validateServiceReadyToPublish(candidateService);
-    if (!check.canPublish) {
-      return res.status(400).json({
-        success: false,
-        error: check.errors[0] || 'Cannot publish service with [VERIFY] placeholders remaining.',
-        errors: check.errors,
-        missingFields: check.missingFields,
-      });
-    }
+  const renderedWordCount = extractMainTextWordCount(renderServiceSubstantiveHtml(candidateService)).wordCount;
+  const check = validateServiceReadyToPublish(candidateService, renderedWordCount);
+
+  if (publicationStatus === 'published' && !check.canPublish) {
+    return res.status(400).json({
+      success: false,
+      error: check.errors[0] || 'Cannot publish service with missing verified fields or under 400 words.',
+      errors: check.errors,
+      missingFields: check.missingFields,
+      wordCount: renderedWordCount,
+    });
   }
 
   const saved = upsertServiceHealthOverride({
     id: serviceId,
     publicationStatus,
+    robotsNoindex: !check.canPublish,
     name: candidateService.name,
     description: candidateService.description,
     issuingAuthority: candidateService.issuingAuthority,
+    officialFee: candidateService.officialFee,
+    cscCharge: candidateService.cscCharge,
     eligibility: candidateService.eligibility,
     requirements: candidateService.requirements,
     estimatedTime: candidateService.estimatedTime,
@@ -5024,22 +5190,490 @@ app.post('/api/staff/content-health/service/save', authenticateAdmin, (req: Requ
     staffChecks: candidateService.staffChecks,
     rejectionReasons: candidateService.rejectionReasons,
     verifiedBy: actor,
+    lastVerifiedDate: candidateService.lastVerifiedDate,
     updatedAt: nowDate,
     updatedBy: actor,
   });
 
   addContentHealthLog({
     postId: serviceId,
-    action: publicationStatus === 'published' ? 'service_publish' : 'service_save',
+    action: publicationStatus === 'published' && check.canPublish ? 'service_publish' : 'service_save',
     actor,
     timestamp: new Date().toISOString(),
     details:
-      publicationStatus === 'published'
-        ? 'Verified all service fields and published /service/' + serviceId
-        : 'Saved service verification draft edits',
+      publicationStatus === 'published' && check.canPublish
+        ? `Verified all 11 fields (${renderedWordCount} words) and indexed /service/${serviceId}`
+        : `Saved service draft edits (${renderedWordCount} words, ${check.missingFields.length} missing fields)`,
   });
 
-  res.json({ success: true, override: saved });
+  res.json({ success: true, override: saved, wordCount: renderedWordCount, validation: check });
+});
+
+// ============================================================
+// SERVICE FACTS STAFF DATA-ENTRY & CLUSTER HUB WORKBENCH
+// ============================================================
+function sanitizeStaffCsvText(val: any): string {
+  const s = String(val ?? '').trim();
+  if (!s) return '';
+  if (/\[VERIFY\]/i.test(s) || /\bask us\b/i.test(s)) return '';
+  return s;
+}
+
+function splitStaffListInput(val: any): string[] {
+  if (Array.isArray(val)) {
+    return val.map((item) => sanitizeStaffCsvText(item)).filter(Boolean);
+  }
+  return String(val ?? '')
+    .split(/\r?\n|\s*\|\s*/)
+    .map((item) => sanitizeStaffCsvText(item))
+    .filter(Boolean);
+}
+
+app.get('/api/staff/service-facts', authenticateAdmin, (_req: Request, res: Response) => {
+  const allServices = getAllMergedServices();
+  const demandScores = computeServiceDemandScores(allServices);
+  const demandStats = getServiceDemandStats();
+
+  const sorted = [...allServices].sort((a, b) => {
+    const scoreDiff = (demandScores.get(b.id) || 0) - (demandScores.get(a.id) || 0);
+    if (scoreDiff !== 0) return scoreDiff;
+    return a.name.localeCompare(b.name);
+  });
+
+  const enriched = sorted.map((svc, idx) => {
+    const facts = deriveStoredServiceFacts(svc);
+    const wordCount = extractMainTextWordCount(renderServiceSubstantiveHtml(svc)).wordCount;
+    const validation = validateServiceReadyToPublish(svc, wordCount);
+    const stat = demandStats[svc.id] || { views: 0, clicks: 0, enquiries: 0 };
+    return {
+      priorityRank: idx + 1,
+      demandScore: demandScores.get(svc.id) || 0,
+      demandBreakdown: stat,
+      id: svc.id,
+      name: svc.name,
+      category: svc.category,
+      description: svc.description,
+      legacyPriceNote: svc.price || '',
+      issuingAuthority: facts.authorityFromStoredData ? facts.issuingAuthority : '',
+      officialFee: facts.officialFeeFromStoredData ? facts.officialFee : '',
+      cscCharge: facts.cscChargeFromStoredData ? facts.cscCharge : '',
+      estimatedTime: facts.timeFromStoredData ? facts.estimatedTime : '',
+      eligibility: facts.eligibilityFromStoredData ? facts.eligibility : '',
+      requirements: facts.requirements,
+      stepFlow: facts.stepFlow,
+      rejectionReasons: facts.rejectionReasons,
+      staffChecks: facts.staffChecks,
+      officialUrl: facts.officialUrlFromStoredData ? facts.officialPortalUrl : '',
+      lastVerifiedDate: facts.lastVerifiedFromStoredData ? facts.lastVerifiedDate : '',
+      wordCount,
+      missingFields: validation.missingFields,
+      validationErrors: validation.errors,
+      isComplete: validation.canPublish,
+      isIndexable: validation.canPublish && !svc.robotsNoindex && !svc.duplicateOfId,
+      robotsNoindex: Boolean(svc.robotsNoindex || !validation.canPublish),
+      duplicateOfId: svc.duplicateOfId || '',
+      clusterId: getClusterForServiceId(svc.id)?.clusterId || '',
+    };
+  });
+
+  const { evaluations } = getClusterHubEvaluations(allServices);
+  const clusters = SERVICE_MERGE_CLUSTERS.map((c) => {
+    const ev = evaluations[c.clusterId];
+    const memberSet = new Set(c.memberIds);
+    const membersSummary = enriched
+      .filter((s) => memberSet.has(s.id))
+      .map((s) => ({
+        id: s.id,
+        name: s.name,
+        isComplete: s.isComplete,
+        missingFields: s.missingFields,
+      }));
+    return {
+      clusterId: c.clusterId,
+      title: c.title,
+      hubPath: c.hubPath,
+      summary: c.summary,
+      wordCount: ev?.wordCount || 0,
+      isIndexable: Boolean(ev?.readiness.isIndexable),
+      missingData: ev?.readiness.missingData || [],
+      sectionStatus: ev?.readiness.sectionStatus,
+      override: ev?.override || { clusterId: c.clusterId },
+      members: membersSummary,
+    };
+  });
+
+  res.json({
+    success: true,
+    totalServices: enriched.length,
+    completeCount: enriched.filter((s) => s.isComplete).length,
+    indexableCount: enriched.filter((s) => s.isIndexable).length,
+    services: enriched,
+    clusters,
+    logs: getContentHealthLogs(40),
+  });
+});
+
+app.post('/api/staff/service-facts/save', authenticateAdmin, (req: Request, res: Response) => {
+  const body = req.body || {};
+  const serviceId = String(body.id || '').trim();
+  if (!serviceId) {
+    return res.status(400).json({ success: false, error: 'Missing service ID.' });
+  }
+  const allServices = getAllMergedServices();
+  const target = allServices.find((s) => s.id === serviceId);
+  if (!target) {
+    return res.status(404).json({ success: false, error: 'Service not found.' });
+  }
+
+  const actor = (req as any).adminUser?.email || (req as any).adminUser?.username || 'Staff Admin';
+  const nowDate = new Date().toISOString().slice(0, 10);
+  const requireComplete = Boolean(body.requireComplete);
+
+  const nextOfficialFee =
+    body.officialFee !== undefined ? sanitizeStaffCsvText(body.officialFee) : (target.officialFee || '');
+  const nextCscCharge =
+    body.cscCharge !== undefined ? sanitizeStaffCsvText(body.cscCharge) : (target.cscCharge || '');
+
+  const computedFeeLines: string[] = [];
+  if (nextOfficialFee) computedFeeLines.push(`Official Fee: ${nextOfficialFee}`);
+  if (nextCscCharge) computedFeeLines.push(`CSC DOST Charge: ${nextCscCharge}`);
+
+  const candidateService: ServiceItem = {
+    ...target,
+    name: body.name !== undefined ? sanitizeStaffCsvText(body.name) || target.name : target.name,
+    description: body.description !== undefined ? sanitizeStaffCsvText(body.description) || target.description : target.description,
+    issuingAuthority: body.issuingAuthority !== undefined ? sanitizeStaffCsvText(body.issuingAuthority) : target.issuingAuthority,
+    officialFee: nextOfficialFee,
+    cscCharge: nextCscCharge,
+    feeLines: computedFeeLines.length > 0 ? computedFeeLines : target.feeLines,
+    estimatedTime: body.estimatedTime !== undefined ? sanitizeStaffCsvText(body.estimatedTime) : target.estimatedTime,
+    eligibility: body.eligibility !== undefined ? sanitizeStaffCsvText(body.eligibility) : target.eligibility,
+    requirements: body.requirements !== undefined ? splitStaffListInput(body.requirements) : target.requirements,
+    stepFlow: body.stepFlow !== undefined ? splitStaffListInput(body.stepFlow) : target.stepFlow,
+    rejectionReasons: body.rejectionReasons !== undefined ? splitStaffListInput(body.rejectionReasons) : target.rejectionReasons,
+    staffChecks: body.staffChecks !== undefined ? splitStaffListInput(body.staffChecks) : target.staffChecks,
+    officialUrl: body.officialUrl !== undefined ? sanitizeStaffCsvText(body.officialUrl) : target.officialUrl,
+    lastVerifiedDate: body.lastVerifiedDate !== undefined ? sanitizeStaffCsvText(body.lastVerifiedDate) : target.lastVerifiedDate,
+    verifiedBy: actor,
+    updatedAt: nowDate,
+  };
+
+  const wordCount = extractMainTextWordCount(renderServiceSubstantiveHtml(candidateService)).wordCount;
+  const check = validateServiceReadyToPublish(candidateService, wordCount);
+
+  if (requireComplete && !check.canPublish) {
+    return res.status(400).json({
+      success: false,
+      error: check.errors[0] || 'Complete all 11 fields and reach 400+ words before marking indexable.',
+      errors: check.errors,
+      missingFields: check.missingFields,
+      wordCount,
+    });
+  }
+
+  const saved = upsertServiceHealthOverride({
+    id: serviceId,
+    publicationStatus: 'published',
+    robotsNoindex: target.duplicateOfId ? true : !check.canPublish,
+    name: candidateService.name,
+    description: candidateService.description,
+    issuingAuthority: candidateService.issuingAuthority,
+    officialFee: candidateService.officialFee,
+    cscCharge: candidateService.cscCharge,
+    feeLines: candidateService.feeLines,
+    estimatedTime: candidateService.estimatedTime,
+    eligibility: candidateService.eligibility,
+    requirements: candidateService.requirements,
+    stepFlow: candidateService.stepFlow,
+    rejectionReasons: candidateService.rejectionReasons,
+    staffChecks: candidateService.staffChecks,
+    officialUrl: candidateService.officialUrl,
+    lastVerifiedDate: candidateService.lastVerifiedDate,
+    verifiedBy: actor,
+    updatedAt: nowDate,
+    updatedBy: actor,
+  });
+
+  addContentHealthLog({
+    postId: serviceId,
+    action: check.canPublish ? 'service_publish' : 'service_save',
+    actor,
+    timestamp: new Date().toISOString(),
+    details: check.canPublish
+      ? `Service Facts complete (${wordCount} words) — /service/${serviceId} now indexable`
+      : `Saved Service Facts draft (${wordCount} words, ${check.missingFields.length} field(s) remaining)`,
+  });
+
+  res.json({
+    success: true,
+    override: saved,
+    wordCount,
+    isComplete: check.canPublish,
+    missingFields: check.missingFields,
+    errors: check.errors,
+  });
+});
+
+app.get('/api/staff/service-facts/export.csv', authenticateAdmin, (_req: Request, res: Response) => {
+  const allServices = getAllMergedServices();
+  const demandScores = computeServiceDemandScores(allServices);
+  const sorted = [...allServices].sort((a, b) => {
+    const scoreDiff = (demandScores.get(b.id) || 0) - (demandScores.get(a.id) || 0);
+    if (scoreDiff !== 0) return scoreDiff;
+    return a.name.localeCompare(b.name);
+  });
+
+  const csvCell = (value: string | number): string => {
+    const str = String(value ?? '');
+    if (/[",\r\n]/.test(str)) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+
+  const headers = [
+    'id',
+    'name',
+    'category',
+    'priorityRank',
+    'demandScore',
+    'issuingAuthority',
+    'officialFee',
+    'cscCharge',
+    'estimatedTime',
+    'eligibility',
+    'requirements',
+    'stepFlow',
+    'rejectionReasons',
+    'staffChecks',
+    'officialUrl',
+    'lastVerifiedDate',
+    'wordCount',
+    'isComplete',
+  ];
+
+  const rows = [headers.join(',')];
+  sorted.forEach((svc, idx) => {
+    const facts = deriveStoredServiceFacts(svc);
+    const wordCount = extractMainTextWordCount(renderServiceSubstantiveHtml(svc)).wordCount;
+    const ready = validateServiceReadyToPublish(svc, wordCount).canPublish;
+    const row = [
+      svc.id,
+      svc.name,
+      svc.category,
+      idx + 1,
+      demandScores.get(svc.id) || 0,
+      facts.authorityFromStoredData ? facts.issuingAuthority : '',
+      facts.officialFeeFromStoredData ? facts.officialFee : '',
+      facts.cscChargeFromStoredData ? facts.cscCharge : '',
+      facts.timeFromStoredData ? facts.estimatedTime : '',
+      facts.eligibilityFromStoredData ? facts.eligibility : '',
+      facts.requirements.join(' | '),
+      facts.stepFlow.join(' | '),
+      facts.rejectionReasons.join(' | '),
+      facts.staffChecks.join(' | '),
+      facts.officialUrlFromStoredData ? facts.officialPortalUrl : '',
+      facts.lastVerifiedFromStoredData ? facts.lastVerifiedDate : '',
+      wordCount,
+      ready ? 'YES' : 'NO',
+    ];
+    rows.push(row.map(csvCell).join(','));
+  });
+
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="cscdost_service_facts.csv"');
+  res.send(rows.join('\n'));
+});
+
+app.post('/api/staff/service-facts/import', authenticateAdmin, (req: Request, res: Response) => {
+  const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
+  if (rows.length === 0) {
+    return res.status(400).json({ success: false, error: 'No CSV rows supplied.' });
+  }
+
+  const allServices = getAllMergedServices();
+  const byId = new Map(allServices.map((s) => [s.id, s]));
+  const actor = (req as any).adminUser?.email || (req as any).adminUser?.username || 'Staff Admin';
+  const nowDate = new Date().toISOString().slice(0, 10);
+
+  let updatedCount = 0;
+  let skippedCount = 0;
+  const unknownIds: string[] = [];
+
+  for (const row of rows) {
+    const id = String(row?.id || '').trim();
+    if (!id) {
+      skippedCount++;
+      continue;
+    }
+    const existing = byId.get(id);
+    if (!existing) {
+      unknownIds.push(id);
+      continue;
+    }
+
+    const issuingAuthority = sanitizeStaffCsvText(row.issuingAuthority);
+    const officialFee = sanitizeStaffCsvText(row.officialFee);
+    const cscCharge = sanitizeStaffCsvText(row.cscCharge);
+    const estimatedTime = sanitizeStaffCsvText(row.estimatedTime);
+    const eligibility = sanitizeStaffCsvText(row.eligibility);
+    const requirements = splitStaffListInput(row.requirements);
+    const stepFlow = splitStaffListInput(row.stepFlow);
+    const rejectionReasons = splitStaffListInput(row.rejectionReasons);
+    const staffChecks = splitStaffListInput(row.staffChecks);
+    const officialUrl = sanitizeStaffCsvText(row.officialUrl);
+    const lastVerifiedDate = sanitizeStaffCsvText(row.lastVerifiedDate);
+
+    const hasAnyValue = Boolean(
+      issuingAuthority ||
+        officialFee ||
+        cscCharge ||
+        estimatedTime ||
+        eligibility ||
+        requirements.length ||
+        stepFlow.length ||
+        rejectionReasons.length ||
+        staffChecks.length ||
+        officialUrl ||
+        lastVerifiedDate
+    );
+    if (!hasAnyValue) {
+      skippedCount++;
+      continue;
+    }
+
+    const nextOfficialFee = officialFee || existing.officialFee || '';
+    const nextCscCharge = cscCharge || existing.cscCharge || '';
+    const nextFeeLines: string[] = [];
+    if (nextOfficialFee) nextFeeLines.push(`Official Fee: ${nextOfficialFee}`);
+    if (nextCscCharge) nextFeeLines.push(`CSC DOST Charge: ${nextCscCharge}`);
+
+    const candidate: ServiceItem = {
+      ...existing,
+      issuingAuthority: issuingAuthority || existing.issuingAuthority,
+      officialFee: nextOfficialFee || undefined,
+      cscCharge: nextCscCharge || undefined,
+      feeLines: nextFeeLines.length > 0 ? nextFeeLines : existing.feeLines,
+      estimatedTime: estimatedTime || existing.estimatedTime,
+      eligibility: eligibility || existing.eligibility,
+      requirements: requirements.length > 0 ? requirements : existing.requirements,
+      stepFlow: stepFlow.length > 0 ? stepFlow : existing.stepFlow,
+      rejectionReasons: rejectionReasons.length > 0 ? rejectionReasons : existing.rejectionReasons,
+      staffChecks: staffChecks.length > 0 ? staffChecks : existing.staffChecks,
+      officialUrl: officialUrl || existing.officialUrl,
+      lastVerifiedDate: lastVerifiedDate || existing.lastVerifiedDate,
+      verifiedBy: actor,
+      updatedAt: nowDate,
+    };
+
+    const wordCount = extractMainTextWordCount(renderServiceSubstantiveHtml(candidate)).wordCount;
+    const check = validateServiceReadyToPublish(candidate, wordCount);
+
+    upsertServiceHealthOverride({
+      id,
+      publicationStatus: 'published',
+      robotsNoindex: existing.duplicateOfId ? true : !check.canPublish,
+      issuingAuthority: candidate.issuingAuthority,
+      officialFee: candidate.officialFee,
+      cscCharge: candidate.cscCharge,
+      feeLines: candidate.feeLines,
+      estimatedTime: candidate.estimatedTime,
+      eligibility: candidate.eligibility,
+      requirements: candidate.requirements,
+      stepFlow: candidate.stepFlow,
+      rejectionReasons: candidate.rejectionReasons,
+      staffChecks: candidate.staffChecks,
+      officialUrl: candidate.officialUrl,
+      lastVerifiedDate: candidate.lastVerifiedDate,
+      verifiedBy: actor,
+      updatedAt: nowDate,
+      updatedBy: actor,
+    });
+    updatedCount++;
+  }
+
+  if (updatedCount > 0) {
+    addContentHealthLog({
+      postId: `CSV_IMPORT(${updatedCount})`,
+      action: 'service_csv_import',
+      actor,
+      timestamp: new Date().toISOString(),
+      details: `Imported verified service facts via CSV (${updatedCount} updated, ${skippedCount} skipped)`,
+    });
+  }
+
+  res.json({
+    success: true,
+    updatedCount,
+    skippedCount,
+    unknownIds,
+  });
+});
+
+app.post('/api/staff/service-facts/cluster/save', authenticateAdmin, (req: Request, res: Response) => {
+  const body = req.body || {};
+  const clusterId = String(body.clusterId || '').trim();
+  const cluster = getServiceClusterById(clusterId);
+  if (!cluster) {
+    return res.status(404).json({ success: false, error: 'Cluster hub not found.' });
+  }
+
+  const actor = (req as any).adminUser?.email || (req as any).adminUser?.username || 'Staff Admin';
+  const nowDate = new Date().toISOString().slice(0, 10);
+
+  const whatDocumentIsFor = sanitizeStaffCsvText(body.whatDocumentIsFor);
+  const howServicesDiffer = sanitizeStaffCsvText(body.howServicesDiffer);
+  const commonMistakes = splitStaffListInput(body.commonMistakes);
+  const rawSources = Array.isArray(body.officialSources) ? body.officialSources : [];
+  const officialSources = rawSources
+    .map((s: any) => ({
+      label: sanitizeStaffCsvText(s?.label),
+      url: sanitizeStaffCsvText(s?.url),
+    }))
+    .filter((s: { label: string; url: string }) => s.label && s.url);
+
+  const perServiceDifferences: Record<string, string> = {};
+  if (body.perServiceDifferences && typeof body.perServiceDifferences === 'object') {
+    for (const [k, v] of Object.entries(body.perServiceDifferences)) {
+      const cleaned = sanitizeStaffCsvText(v);
+      if (cleaned) perServiceDifferences[k] = cleaned;
+    }
+  }
+  const lastVerifiedDate = sanitizeStaffCsvText(body.lastVerifiedDate) || nowDate;
+
+  const saved = upsertServiceClusterOverride({
+    clusterId,
+    whatDocumentIsFor,
+    howServicesDiffer,
+    commonMistakes,
+    officialSources,
+    perServiceDifferences,
+    lastVerifiedDate,
+    updatedAt: nowDate,
+    updatedBy: actor,
+  });
+
+  const mergedServices = getAllMergedServices();
+  const byId = new Map(mergedServices.map((s) => [s.id, s]));
+  const members = cluster.memberIds.map((id) => byId.get(id)).filter((s): s is ServiceItem => Boolean(s));
+  const html = renderServiceClusterHubHtml(cluster, members, saved);
+  const wordCount = extractMainTextWordCount(html).wordCount;
+  const readiness = evaluateClusterHubReadiness(cluster, members, saved, wordCount);
+
+  addContentHealthLog({
+    postId: clusterId,
+    action: 'service_cluster_save',
+    actor,
+    timestamp: new Date().toISOString(),
+    details: `Saved cluster hub guide ${clusterId} (${wordCount} words, ${readiness.isIndexable ? 'indexable' : `${readiness.missingData.length} missing item(s)`})`,
+  });
+
+  res.json({
+    success: true,
+    override: saved,
+    wordCount,
+    readiness,
+  });
 });
 
 app.post('/api/staff/content-health/merge-group', authenticateAdmin, (req: Request, res: Response) => {
@@ -6046,17 +6680,20 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       const mergedServices = getAllMergedServices();
       const byId = new Map(mergedServices.map((s) => [s.id, s]));
       const members = cluster.memberIds.map((id) => byId.get(id)).filter((s): s is ServiceItem => Boolean(s));
+      const hubOverride = getServiceClusterOverrides()[cluster.clusterId];
+      substantiveBodyHtml = renderServiceClusterHubHtml(cluster, members, hubOverride);
+      const hubWordCount = extractMainTextWordCount(substantiveBodyHtml).wordCount;
+      const hubReadiness = evaluateClusterHubReadiness(cluster, members, hubOverride, hubWordCount);
       title = formatSeoTitle(cluster.title);
       description = formatSeoDescription(cluster.summary);
       canonicalUrl = `${SITE_ORIGIN}${cluster.hubPath}`;
-      robotsContent = 'index, follow';
+      robotsContent = hubReadiness.isIndexable ? 'index, follow' : 'noindex, follow';
       ogType = 'website';
       breadcrumbItems = [
         { name: 'Home', url: `${SITE_ORIGIN}/` },
         { name: 'CSC E-Services', url: `${SITE_ORIGIN}/services` },
         { name: cluster.title, url: canonicalUrl }
       ];
-      substantiveBodyHtml = renderServiceClusterHubHtml(cluster, members);
     } else {
       isNotFound = true;
       title = PRIVATE_NOINDEX_META.notfound.title;
@@ -6074,20 +6711,26 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
         s.publicationStatus !== 'archived'
     );
     if (service) {
+      const svcFacts = deriveStoredServiceFacts(service);
+      substantiveBodyHtml = renderServiceSubstantiveHtml(service);
+      const svcWordCount = extractMainTextWordCount(substantiveBodyHtml).wordCount;
+      const svcCheck = validateServiceReadyToPublish(service, svcWordCount);
       title = formatSeoTitle(service.name);
-      const feeText = service.price?.trim() ? ` Fee: ${service.price.trim()}.` : ' Fee: [VERIFY].';
-      const timeText = service.estimatedTime?.trim() ? ` Typical time: ${service.estimatedTime.trim()}.` : '';
+      const feeText = svcFacts.feesFromStoredData ? ` Fee: ${svcFacts.feesText}.` : '';
+      const timeText = svcFacts.timeFromStoredData ? ` Typical time: ${svcFacts.estimatedTime}.` : '';
       description = formatSeoDescription(`${service.description}${timeText}${feeText}`);
       ogImage = `${baseOrigin}/api/og-image/${encodeURIComponent(service.id)}.png?v=srv_v3`;
       canonicalUrl = `${SITE_ORIGIN}/service/${service.id}`;
-      robotsContent = service.robotsNoindex || service.duplicateOfId ? 'noindex, follow' : 'index, follow';
+      robotsContent =
+        service.robotsNoindex || service.duplicateOfId || !svcCheck.canPublish
+          ? 'noindex, follow'
+          : 'index, follow';
       ogType = 'website';
       breadcrumbItems = [
         { name: 'Home', url: `${SITE_ORIGIN}/` },
         { name: 'CSC E-Services', url: `${SITE_ORIGIN}/services` },
         { name: service.name, url: canonicalUrl }
       ];
-      substantiveBodyHtml = renderServiceSubstantiveHtml(service);
     } else if (matchService) {
       isNotFound = true;
       title = PRIVATE_NOINDEX_META.notfound.title;
@@ -6471,23 +7114,25 @@ app.get('/sitemap.xml', (req: Request, res: Response) => {
     }
 
     const mergedServices = getAllMergedServices();
-    const approvedMerges = getApprovedServiceMerges();
+    const { evaluations: clusterEvaluations } = getClusterHubEvaluations(mergedServices);
     for (const s of mergedServices) {
-      if (s.publicationStatus === 'draft' || s.publicationStatus === 'archived' || s.duplicateOfId || s.robotsNoindex) {
+      const readyCheck = isServiceReadyAndIndexable(s);
+      if (!readyCheck.isIndexable) {
         continue;
       }
       xml += '  <url>\n';
       xml += `    <loc>${BASE_URL}/service/${encodeURIComponent(s.id)}</loc>\n`;
-      xml += `    <lastmod>${s.updatedAt || VERIFIED_STATIC_DATE}</lastmod>\n`;
+      xml += `    <lastmod>${s.lastVerifiedDate || s.updatedAt || VERIFIED_STATIC_DATE}</lastmod>\n`;
       xml += '    <changefreq>monthly</changefreq>\n';
       xml += '    <priority>0.8</priority>\n';
       xml += '  </url>\n';
     }
     for (const c of SERVICE_MERGE_CLUSTERS) {
-      if (approvedMerges[c.clusterId]?.approved) {
+      const ev = clusterEvaluations[c.clusterId];
+      if (ev?.readiness.isIndexable) {
         xml += '  <url>\n';
         xml += `    <loc>${BASE_URL}${c.hubPath}</loc>\n`;
-        xml += `    <lastmod>${VERIFIED_STATIC_DATE}</lastmod>\n`;
+        xml += `    <lastmod>${ev.override.lastVerifiedDate || ev.override.updatedAt || VERIFIED_STATIC_DATE}</lastmod>\n`;
         xml += '    <changefreq>monthly</changefreq>\n';
         xml += '    <priority>0.8</priority>\n';
         xml += '  </url>\n';

@@ -13,8 +13,25 @@ export const DEFAULT_AUDIT_THRESHOLDS: ContentAuditThresholds = {
   minClassAWords: 400,
   thinWordThreshold: 300,
   maxConsecutiveCopiedAllowed: 2,
-  nearDuplicateJaccardThreshold: 0.65,
+  nearDuplicateJaccardThreshold: 0.50,
 };
+
+export function stripBoilerplateForAudit(htmlOrText: string): string {
+  return String(htmlOrText || '')
+    .replace(/<header\b[^>]*class=["'][^"']*ssr-site-header[^"']*["'][^>]*>[\s\S]*?<\/header>/gi, ' ')
+    .replace(/<nav\b[\s\S]*?<\/nav>/gi, ' ')
+    .replace(/<footer\b[\s\S]*?<\/footer>/gi, ' ')
+    .replace(/<aside\b[\s\S]*?<\/aside>/gi, ' ')
+    .replace(/<details\b[\s\S]*?<\/details>/gi, ' ')
+    .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style\b[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/CSC DOST[^.]*independent[^.]*\./gi, ' ')
+    .replace(/Wasim Ahmad Khanday[^.]*\./gi, ' ')
+    .replace(/Sangran Qazigund[^.]*\./gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 export function normalizeTextForAudit(text: string): string {
   return String(text || '')

@@ -3,6 +3,10 @@ import type { ServiceItem } from '../servicesData';
 export interface DerivedServiceFacts {
   issuingAuthority: string;
   authorityFromStoredData: boolean;
+  officialFee: string;
+  officialFeeFromStoredData: boolean;
+  cscCharge: string;
+  cscChargeFromStoredData: boolean;
   eligibility: string;
   eligibilityFromStoredData: boolean;
   requirements: string[];
@@ -20,6 +24,9 @@ export interface DerivedServiceFacts {
   rejectionReasonsFromStoredData: boolean;
   officialPortalUrl: string;
   officialPortalLabel: string;
+  officialUrlFromStoredData: boolean;
+  lastVerifiedDate: string;
+  lastVerifiedFromStoredData: boolean;
   missingVerifyFields: string[];
   hasVerifyPlaceholders: boolean;
 }
@@ -33,14 +40,40 @@ export interface ServiceClusterSuggestion {
   memberIds: string[];
 }
 
+export interface ServiceClusterHubOverride {
+  clusterId: string;
+  whatDocumentIsFor?: string;
+  howServicesDiffer?: string;
+  commonMistakes?: string[];
+  officialSources?: Array<{ label: string; url: string }>;
+  perServiceDifferences?: Record<string, string>;
+  lastVerifiedDate?: string;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+export interface ClusterHubReadinessResult {
+  isIndexable: boolean;
+  missingData: string[];
+  sectionStatus: {
+    whatDocumentIsFor: boolean;
+    howServicesDiffer: boolean;
+    comparisonTableComplete: boolean;
+    perServiceDifferences: boolean;
+    commonMistakes: boolean;
+    officialSources: boolean;
+    minWordCount800: boolean;
+  };
+}
+
 export const SERVICE_MERGE_CLUSTERS: ServiceClusterSuggestion[] = [
   {
     clusterId: 'jk-category-certificates',
     title: 'J&K Caste, Category & Reservation Certificates',
     hubPath: '/services/cluster/jk-category-certificates',
     summary:
-      'Consolidated hub comparing SC, ST, OBC/OSC, RBA, ALC/IB, Pahari, EWS, and state reservation certificate services issued via J&K ServiceOnline / Tehsildar.',
-    issuingAuthority: 'Competent Tehsildar / Revenue Authority via J&K e-UNNAT (ServiceOnline)',
+      'Consolidated comparison of SC, ST, OBC/OSC, RBA, ALC/IB, Pahari, EWS, and state reservation certificates.',
+    issuingAuthority: 'Competent Revenue Authority (Tehsildar) via J&K e-UNNAT',
     memberIds: [
       'jk-rba-cert',
       'jk-obc-cert',
@@ -57,8 +90,8 @@ export const SERVICE_MERGE_CLUSTERS: ServiceClusterSuggestion[] = [
     title: 'J&K Domicile, Civil & Identity Certificates',
     hubPath: '/services/cluster/jk-civil-certificates',
     summary:
-      'Consolidated hub for Domicile, Birth, Death, Marriage, Character, Dependent, Unemployment, and Senior Citizen certificates in Jammu & Kashmir.',
-    issuingAuthority: 'Competent Tehsildar / Registrar via J&K e-UNNAT Portal',
+      'Consolidated overview of Domicile, Birth, Death, Marriage, Character, Dependent, Unemployment, and Senior Citizen certificates.',
+    issuingAuthority: 'Competent Tehsildar / Civil Registrar via J&K e-UNNAT',
     memberIds: [
       'jk-domicile-cert',
       'jk-birth-cert',
@@ -75,8 +108,8 @@ export const SERVICE_MERGE_CLUSTERS: ServiceClusterSuggestion[] = [
     title: 'J&K Revenue & Land Records (rev-*)',
     hubPath: '/services/cluster/jk-revenue-land-records',
     summary:
-      'Unified comparison of J&K Revenue Department land extracts, mutations (Inteqal), Jamabandi, Girdawari, Fard, Legal Heir, and Income certificates.',
-    issuingAuthority: 'Revenue Department, Govt. of Jammu & Kashmir (Tehsildar / Patwari Circle)',
+      'Unified reference for J&K Revenue land extracts, mutations, Jamabandi, Girdawari, Fard, Legal Heir, and Income certificates.',
+    issuingAuthority: 'Revenue Department, Govt. of Jammu & Kashmir',
     memberIds: [
       'rev-attestation-mutation',
       'rev-clu',
@@ -104,8 +137,8 @@ export const SERVICE_MERGE_CLUSTERS: ServiceClusterSuggestion[] = [
     title: 'Instant PVC & Smart Card Printing (ca-*-pvc)',
     hubPath: '/services/cluster/instant-pvc-smart-cards',
     summary:
-      'Combined desk overview for Ayushman, Driving Licence, Vehicle RC, Aadhaar, Voter EPIC, and Ration PVC smart card print requests.',
-    issuingAuthority: 'Respective Central/State Portals + Local CSC DOST Print Desk',
+      'Comparison hub for Ayushman, Driving Licence, Vehicle RC, Aadhaar, Voter EPIC, and Ration PVC smart card print requests.',
+    issuingAuthority: 'Respective Official Portals & CSC DOST Print Desk',
     memberIds: [
       'ca-ayushman-pvc',
       'ca-dl-pvc',
@@ -125,196 +158,167 @@ export function getClusterForServiceId(serviceId: string): ServiceClusterSuggest
   return SERVICE_MERGE_CLUSTERS.find((c) => c.memberIds.includes(serviceId));
 }
 
+export function isValidHttpUrl(val?: string | null): boolean {
+  const s = String(val || '').trim();
+  if (!s || /\[VERIFY\]/i.test(s)) return false;
+  try {
+    const parsed = new URL(s);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+export function hasExplicitContent(val?: string | null): boolean {
+  const s = String(val || '').trim();
+  if (!s) return false;
+  if (/\[VERIFY\]/i.test(s)) return false;
+  if (/^ask us\b/i.test(s) || /\bask us\b/i.test(s)) return false;
+  if (/^refer official/i.test(s) || /^as per official/i.test(s)) return false;
+  return true;
+}
+
+export function isNonPlaceholderFeeNote(val?: string | null): boolean {
+  const s = String(val || '').trim();
+  if (!s) return false;
+  if (/\[VERIFY\]/i.test(s)) return false;
+  if (/\bask us\b/i.test(s)) return false;
+  if (/depends on/i.test(s)) return false;
+  return true;
+}
+
+export function hasExplicitList(arr?: string[] | null): boolean {
+  if (!Array.isArray(arr) || arr.length === 0) return false;
+  const clean = arr.map((item) => String(item || '').trim()).filter(Boolean);
+  return clean.length > 0 && !clean.some((item) => /\[VERIFY\]/i.test(item) || /\bask us\b/i.test(item));
+}
+
 export function resolveServiceOfficialPortal(service: ServiceItem): { label: string; url: string } {
-  if (service.officialUrl && service.officialUrl.trim().length > 0) {
-    return { label: 'Official Portal', url: service.officialUrl.trim() };
-  }
-  if (service.category === 'cards_adda') {
-    const sId = service.id.toLowerCase();
-    if (sId.includes('ayushman')) return { label: 'NHA PM-JAY Portal', url: 'https://beneficiary.nha.gov.in' };
-    if (sId.includes('dl') || sId.includes('rc')) return { label: 'Parivahan Sewa', url: 'https://parivahan.gov.in' };
-    if (sId.includes('aadhaar')) return { label: 'UIDAI myAadhaar', url: 'https://myaadhaar.uidai.gov.in' };
-    if (sId.includes('voter')) return { label: 'ECI Voters Portal', url: 'https://voters.eci.gov.in' };
-    if (sId.includes('pan')) return { label: 'NSDL Protean', url: 'https://www.onlineservices.nsdl.com/paam/endUserRegisterContact.html' };
-    if (sId.includes('gst')) return { label: 'GST Portal (GSTN)', url: 'https://www.gst.gov.in' };
-    return { label: '', url: '' };
-  }
-  const sId = service.id.toLowerCase();
-  const sName = service.name.toLowerCase();
-  if (sId.includes('pan') || sName.includes('pan')) {
-    return { label: 'NSDL Protean / Income Tax Portal', url: 'https://www.onlineservices.nsdl.com/paam/endUserRegisterContact.html' };
-  }
-  if (sId.includes('aadhaar') || sName.includes('aadhaar')) {
-    return { label: 'UIDAI myAadhaar Portal', url: 'https://myaadhaar.uidai.gov.in' };
-  }
-  if (sId.includes('ayushman') || sName.includes('ayushman') || sName.includes('golden')) {
-    return { label: 'NHA PM-JAY Beneficiary Portal', url: 'https://beneficiary.nha.gov.in' };
-  }
-  if (sId.includes('voter') || sName.includes('voter')) {
-    return { label: 'ECI Voters Portal', url: 'https://voters.eci.gov.in' };
-  }
-  if (sId.includes('pmkisan') || sName.includes('kisan')) {
-    return { label: 'PM-KISAN Official Portal', url: 'https://pmkisan.gov.in' };
-  }
-  if (sId.includes('passport') || sName.includes('passport')) {
-    return { label: 'Passport Seva (MEA)', url: 'https://www.passportindia.gov.in' };
-  }
-  if (sId.includes('dl') || sName.includes('driving')) {
-    return { label: 'Parivahan Sewa (MoRTH)', url: 'https://parivahan.gov.in' };
-  }
-  if (sId.includes('eshram') || sName.includes('shram')) {
-    return { label: 'e-Shram Official Portal', url: 'https://eshram.gov.in' };
-  }
-  if (sId.includes('udyam')) {
-    return { label: 'Udyam Registration (MSME)', url: 'https://udyamregistration.gov.in' };
-  }
-  if (sId.includes('gst')) {
-    return { label: 'GST Portal (GSTN)', url: 'https://www.gst.gov.in' };
-  }
-  if (service.category === 'jk_state' || service.category === 'revenue') {
-    return { label: 'J&K e-UNNAT / ServiceOnline Portal', url: 'https://eunnat.jk.gov.in' };
+  if (isValidHttpUrl(service.officialUrl)) {
+    try {
+      const host = new URL(service.officialUrl!.trim()).hostname.replace(/^www\./i, '');
+      return { label: `Official Portal (${host})`, url: service.officialUrl!.trim() };
+    } catch {
+      return { label: 'Official Portal', url: service.officialUrl!.trim() };
+    }
   }
   return { label: '', url: '' };
 }
 
-function resolveStoredAuthority(service: ServiceItem): { value: string; stored: boolean } {
-  if (service.issuingAuthority && service.issuingAuthority.trim() && !/\[VERIFY\]/i.test(service.issuingAuthority)) {
-    return { value: service.issuingAuthority.trim(), stored: true };
-  }
-  const sId = service.id.toLowerCase();
-  if (service.category === 'revenue') {
-    return {
-      value: 'J&K Revenue Dept. (Tehsildar / Patwari)',
-      stored: true,
-    };
-  }
-  if (service.category === 'jk_state') {
-    if (sId === 'jk-marriage-cert') return { value: 'Registrar of Marriages (J&K)', stored: true };
-    if (sId === 'jk-building-licenses') return { value: 'SMC / JMC Municipal Authority', stored: true };
-    if (sId === 'jk-drone-permission') return { value: 'District Magistrate (J&K)', stored: true };
-    if (sId === 'jk-mgnrega-jobcard') return { value: 'Rural Development Dept., J&K', stored: true };
-    if (sId === 'jk-horticulture-passbook') return { value: 'Dept. of Horticulture, J&K', stored: true };
-    return {
-      value: 'Tehsildar / J&K e-UNNAT',
-      stored: true,
-    };
-  }
-  if (sId === 'csc-pan' || sId === 'ca-epan-download' || sId === 'ca-lost-pan-find' || sId === 'ca-nsdl-instant-pan') {
-    return { value: 'Income Tax Dept. (NSDL / UTIITSL)', stored: true };
-  }
-  if (sId === 'csc-aadhaar' || sId === 'ca-aadhaar-pvc') {
-    return { value: 'UIDAI (Aadhaar Authority)', stored: true };
-  }
-  if (sId === 'csc-voter' || sId === 'ca-voter-pvc' || sId === 'ca-voter-mobile-link') {
-    return { value: 'Election Commission (ECI)', stored: true };
-  }
-  if (sId === 'csc-ayushman' || sId === 'ca-ayushman-pvc') {
-    return { value: 'National Health Authority (PM-JAY)', stored: true };
-  }
-  if (sId === 'csc-pmkisan') {
-    return { value: 'Ministry of Agriculture (PM-KISAN)', stored: true };
-  }
-  if (sId === 'csc-eshram') {
-    return { value: 'Ministry of Labour (e-Shram)', stored: true };
-  }
-  if (sId === 'csc-passport') {
-    return { value: 'Passport Seva (MEA)', stored: true };
-  }
-  if (sId === 'csc-dl' || sId === 'ca-dl-pvc' || sId === 'ca-vehicle-rc-pvc') {
-    return { value: 'MoRTH / RTO (Parivahan)', stored: true };
-  }
-  if (sId === 'biz-gst' || sId === 'ca-gst-registration') {
-    return { value: 'GST Network (GSTN)', stored: true };
-  }
-  if (sId === 'biz-udyam') {
-    return { value: 'Ministry of MSME', stored: true };
-  }
-  if (service.category === 'digital') {
-    return { value: 'CSC DOST Desk, Qazigund', stored: true };
-  }
-  return { value: '[VERIFY]', stored: false };
-}
-
-function hasExplicitContent(val?: string | null): boolean {
-  const s = String(val || '').trim();
-  return Boolean(s && !/\[VERIFY\]/i.test(s) && !/^ask us$/i.test(s));
-}
-
-function hasExplicitList(arr?: string[] | null): boolean {
-  return (
-    Array.isArray(arr) &&
-    arr.filter((item) => Boolean(item && item.trim() && !/\[VERIFY\]/i.test(item))).length > 0
-  );
-}
-
 export function deriveStoredServiceFacts(service: ServiceItem): DerivedServiceFacts {
-  const auth = resolveStoredAuthority(service);
-  const portal = resolveServiceOfficialPortal(service);
+  const authorityFromStoredData = hasExplicitContent(service.issuingAuthority);
+  const issuingAuthority = authorityFromStoredData ? service.issuingAuthority!.trim() : '';
 
-  const eligibilityStored = hasExplicitContent(service.eligibility);
-  const eligibility = eligibilityStored ? service.eligibility!.trim() : '[VERIFY]';
+  const officialFeeFromStoredData = hasExplicitContent(service.officialFee);
+  const officialFee = officialFeeFromStoredData ? service.officialFee!.trim() : '';
+
+  const cscChargeFromStoredData = hasExplicitContent(service.cscCharge);
+  const cscCharge = cscChargeFromStoredData ? service.cscCharge!.trim() : '';
+
+  const portal = resolveServiceOfficialPortal(service);
+  const officialUrlFromStoredData = isValidHttpUrl(service.officialUrl);
+
+  const eligibilityFromStoredData = hasExplicitContent(service.eligibility);
+  const eligibility = eligibilityFromStoredData ? service.eligibility!.trim() : '';
 
   const reqList = Array.isArray(service.requirements)
-    ? service.requirements.map((r) => r.trim()).filter(Boolean)
+    ? service.requirements.map((r) => String(r || '').trim()).filter((r) => r && !/\[VERIFY\]/i.test(r) && !/\bask us\b/i.test(r))
     : [];
-  const requirementsStored = reqList.length > 0 && !reqList.some((r) => /\[VERIFY\]/i.test(r));
+  const requirementsFromStoredData = hasExplicitList(service.requirements);
 
-  const feeLines = Array.isArray(service.feeLines) ? service.feeLines.filter(Boolean) : [];
+  const storedFeeLines = Array.isArray(service.feeLines)
+    ? service.feeLines.map((l) => String(l || '').trim()).filter((l) => isNonPlaceholderFeeNote(l))
+    : [];
+
+  let computedFeeLines: string[] = [];
+  if (officialFeeFromStoredData || cscChargeFromStoredData) {
+    if (officialFeeFromStoredData) computedFeeLines.push(`Official Government Fee: ${officialFee}`);
+    if (cscChargeFromStoredData) computedFeeLines.push(`CSC DOST Service Charge: ${cscCharge}`);
+  } else if (storedFeeLines.length > 0) {
+    computedFeeLines = storedFeeLines;
+  }
+
   const rawPrice = String(service.price || '').trim();
-  const feesStored =
-    (feeLines.length > 0 || (Boolean(rawPrice) && !/^ask us$/i.test(rawPrice))) &&
-    !/\[VERIFY\]/i.test(rawPrice);
-  const feesText = rawPrice ? (feesStored ? rawPrice : `${rawPrice} [VERIFY]`) : '[VERIFY]';
+  const hasDisplayFeeNote =
+    computedFeeLines.length > 0 || isNonPlaceholderFeeNote(rawPrice);
+
+  let feesText = '';
+  if (officialFeeFromStoredData && cscChargeFromStoredData) {
+    feesText = `${officialFee} (Official Fee) + ${cscCharge} (CSC DOST Charge)`;
+  } else if (computedFeeLines.length > 0) {
+    feesText = computedFeeLines.join(' · ');
+  } else if (isNonPlaceholderFeeNote(rawPrice)) {
+    feesText = rawPrice;
+  }
 
   const rawTime = String(service.estimatedTime || '').trim();
-  const timeStored = hasExplicitContent(rawTime);
-  const estimatedTime = timeStored ? rawTime : '[VERIFY]';
+  const timeFromStoredData = hasExplicitContent(rawTime);
+  const estimatedTime = timeFromStoredData ? rawTime : '';
 
-  const stepFlowStored = hasExplicitList(service.stepFlow);
-  const stepFlow = stepFlowStored ? service.stepFlow!.filter(Boolean) : [];
+  const stepFlowFromStoredData = hasExplicitList(service.stepFlow);
+  const stepFlow = stepFlowFromStoredData ? service.stepFlow!.map((s) => s.trim()).filter(Boolean) : [];
 
-  const staffChecksStored = hasExplicitList(service.staffChecks);
-  const staffChecks = staffChecksStored ? service.staffChecks!.filter(Boolean) : [];
+  const staffChecksFromStoredData = hasExplicitList(service.staffChecks);
+  const staffChecks = staffChecksFromStoredData ? service.staffChecks!.map((s) => s.trim()).filter(Boolean) : [];
 
-  const rejectionReasonsStored = hasExplicitList(service.rejectionReasons);
-  const rejectionReasons = rejectionReasonsStored ? service.rejectionReasons!.filter(Boolean) : [];
+  const rejectionReasonsFromStoredData = hasExplicitList(service.rejectionReasons);
+  const rejectionReasons = rejectionReasonsFromStoredData
+    ? service.rejectionReasons!.map((s) => s.trim()).filter(Boolean)
+    : [];
+
+  const rawLastVerified = String(service.lastVerifiedDate || service.updatedAt || '').trim();
+  const lastVerifiedFromStoredData = hasExplicitContent(rawLastVerified);
+  const lastVerifiedDate = lastVerifiedFromStoredData ? rawLastVerified : '';
 
   const missingVerifyFields: string[] = [];
-  if (!auth.stored) missingVerifyFields.push('issuingAuthority');
-  if (!eligibilityStored) missingVerifyFields.push('eligibility');
-  if (!requirementsStored) missingVerifyFields.push('requirements');
-  if (!feesStored) missingVerifyFields.push('fees');
-  if (!timeStored) missingVerifyFields.push('estimatedTime');
-  if (!stepFlowStored) missingVerifyFields.push('stepFlow');
-  if (!staffChecksStored) missingVerifyFields.push('staffChecks');
-  if (!rejectionReasonsStored) missingVerifyFields.push('rejectionReasons');
+  if (!authorityFromStoredData) missingVerifyFields.push('issuingAuthority');
+  if (!officialFeeFromStoredData) missingVerifyFields.push('officialFee');
+  if (!cscChargeFromStoredData) missingVerifyFields.push('cscCharge');
+  if (!timeFromStoredData) missingVerifyFields.push('estimatedTime');
+  if (!eligibilityFromStoredData) missingVerifyFields.push('eligibility');
+  if (!requirementsFromStoredData) missingVerifyFields.push('requirements');
+  if (!stepFlowFromStoredData) missingVerifyFields.push('stepFlow');
+  if (!rejectionReasonsFromStoredData) missingVerifyFields.push('rejectionReasons');
+  if (!staffChecksFromStoredData) missingVerifyFields.push('staffChecks');
+  if (!officialUrlFromStoredData) missingVerifyFields.push('officialUrl');
+  if (!lastVerifiedFromStoredData) missingVerifyFields.push('lastVerifiedDate');
 
   return {
-    issuingAuthority: auth.value,
-    authorityFromStoredData: auth.stored,
+    issuingAuthority,
+    authorityFromStoredData,
+    officialFee,
+    officialFeeFromStoredData,
+    cscCharge,
+    cscChargeFromStoredData,
     eligibility,
-    eligibilityFromStoredData: eligibilityStored,
+    eligibilityFromStoredData,
     requirements: reqList,
-    requirementsFromStoredData: requirementsStored,
+    requirementsFromStoredData,
     feesText,
-    feeLines,
-    feesFromStoredData: feesStored,
+    feeLines: computedFeeLines,
+    feesFromStoredData: hasDisplayFeeNote,
     estimatedTime,
-    timeFromStoredData: timeStored,
+    timeFromStoredData,
     stepFlow,
-    stepFlowFromStoredData: stepFlowStored,
+    stepFlowFromStoredData,
     staffChecks,
-    staffChecksFromStoredData: staffChecksStored,
+    staffChecksFromStoredData,
     rejectionReasons,
-    rejectionReasonsFromStoredData: rejectionReasonsStored,
+    rejectionReasonsFromStoredData,
     officialPortalUrl: portal.url,
     officialPortalLabel: portal.label,
+    officialUrlFromStoredData,
+    lastVerifiedDate,
+    lastVerifiedFromStoredData,
     missingVerifyFields,
     hasVerifyPlaceholders: missingVerifyFields.length > 0,
   };
 }
 
-export function validateServiceReadyToPublish(service: ServiceItem): {
+export function validateServiceReadyToPublish(
+  service: ServiceItem,
+  renderedWordCount?: number
+): {
   canPublish: boolean;
   missingFields: string[];
   errors: string[];
@@ -323,33 +327,128 @@ export function validateServiceReadyToPublish(service: ServiceItem): {
   const errors: string[] = [];
 
   if (!facts.authorityFromStoredData) {
-    errors.push('Issuing Authority still contains [VERIFY] or is missing.');
+    errors.push('Issuing Authority is missing or marked [VERIFY].');
   }
-  if (!facts.eligibilityFromStoredData) {
-    errors.push('Who Is Eligible still contains [VERIFY] or is empty.');
+  if (!facts.officialFeeFromStoredData) {
+    errors.push('Official Fee is missing or marked [VERIFY] / Ask us.');
   }
-  if (!facts.requirementsFromStoredData) {
-    errors.push('Exact Documents Checklist is incomplete or contains [VERIFY].');
-  }
-  if (!facts.feesFromStoredData) {
-    errors.push('Fees field is missing or marked Ask us / [VERIFY].');
+  if (!facts.cscChargeFromStoredData) {
+    errors.push('CSC DOST Service Charge is missing or marked [VERIFY].');
   }
   if (!facts.timeFromStoredData) {
-    errors.push('Processing Time is missing or contains [VERIFY].');
+    errors.push('Real Processing Time is missing or marked [VERIFY].');
+  }
+  if (!facts.eligibilityFromStoredData) {
+    errors.push('Eligibility is missing or marked [VERIFY].');
+  }
+  if (!facts.requirementsFromStoredData) {
+    errors.push('Exact Documents List is incomplete or contains [VERIFY].');
   }
   if (!facts.stepFlowFromStoredData) {
-    errors.push('Step-by-Step Flow still contains [VERIFY] or has no steps.');
-  }
-  if (!facts.staffChecksFromStoredData) {
-    errors.push('CSC DOST Staff Pre-Submission Checks still contain [VERIFY] or are empty.');
+    errors.push('Step Flow is missing or contains [VERIFY].');
   }
   if (!facts.rejectionReasonsFromStoredData) {
-    errors.push('Common Rejection Reasons still contain [VERIFY] or are empty.');
+    errors.push('Common Rejection Reasons are missing or contain [VERIFY].');
+  }
+  if (!facts.staffChecksFromStoredData) {
+    errors.push('Staff Pre-Submission Checks are missing or contain [VERIFY].');
+  }
+  if (!facts.officialUrlFromStoredData) {
+    errors.push('Official Portal URL is missing or invalid (must start with https:// or http://).');
+  }
+  if (!facts.lastVerifiedFromStoredData) {
+    errors.push('Last Verified Date is missing.');
+  }
+  if (typeof renderedWordCount === 'number' && renderedWordCount < 400) {
+    errors.push(`Original main content is ${renderedWordCount} words (requires 400+ words before indexing).`);
   }
 
   return {
     canPublish: errors.length === 0,
     missingFields: facts.missingVerifyFields,
     errors,
+  };
+}
+
+export function evaluateClusterHubReadiness(
+  cluster: ServiceClusterSuggestion,
+  members: ServiceItem[],
+  override?: ServiceClusterHubOverride,
+  renderedWordCount?: number
+): ClusterHubReadinessResult {
+  const missingData: string[] = [];
+
+  const hasWhatFor = hasExplicitContent(override?.whatDocumentIsFor);
+  if (!hasWhatFor) {
+    missingData.push('Hub section: "What the document/service is for" is missing.');
+  }
+
+  const hasHowDiff = hasExplicitContent(override?.howServicesDiffer);
+  if (!hasHowDiff) {
+    missingData.push('Hub section: "How the services differ from each other" is missing.');
+  }
+
+  const hasCommonMistakes = hasExplicitList(override?.commonMistakes);
+  if (!hasCommonMistakes) {
+    missingData.push('Hub section: "Common mistakes" list is missing.');
+  }
+
+  const validSources = Array.isArray(override?.officialSources)
+    ? override!.officialSources.filter((s) => hasExplicitContent(s?.label) && isValidHttpUrl(s?.url))
+    : [];
+  const hasOfficialSources = validSources.length > 0;
+  if (!hasOfficialSources) {
+    missingData.push('Hub section: "Official sources list" is missing or has no valid URL.');
+  }
+
+  let tableComplete = true;
+  let perServiceDiffsComplete = true;
+  for (const m of members) {
+    const f = deriveStoredServiceFacts(m);
+    if (!f.authorityFromStoredData) {
+      tableComplete = false;
+      missingData.push(`${m.name} (${m.id}): missing Issuing Authority`);
+    }
+    if (!f.eligibilityFromStoredData) {
+      tableComplete = false;
+      missingData.push(`${m.name} (${m.id}): missing Who It Is For (Eligibility)`);
+    }
+    if (!f.timeFromStoredData) {
+      tableComplete = false;
+      missingData.push(`${m.name} (${m.id}): missing Typical Processing Time`);
+    }
+    if (!f.feesFromStoredData) {
+      tableComplete = false;
+      missingData.push(`${m.name} (${m.id}): missing Official Fee / CSC Charge note`);
+    }
+    const diffNote = override?.perServiceDifferences?.[m.id];
+    if (!hasExplicitContent(diffNote)) {
+      perServiceDiffsComplete = false;
+      missingData.push(`${m.name} (${m.id}): missing specific per-service difference note`);
+    }
+  }
+
+  const minWordCount800 =
+    typeof renderedWordCount === 'number' ? renderedWordCount >= 800 : false;
+  if (typeof renderedWordCount === 'number' && renderedWordCount < 800) {
+    missingData.push(
+      `Word count threshold: currently ${renderedWordCount} words (requires 800+ original words).`
+    );
+  } else if (renderedWordCount === undefined) {
+    missingData.push('Word count threshold: requires 800+ original words.');
+  }
+
+  return {
+    isIndexable: missingData.length === 0,
+    missingData,
+    sectionStatus: {
+      whatDocumentIsFor: hasWhatFor,
+      howServicesDiffer: hasHowDiff,
+      comparisonTableComplete: tableComplete,
+      perServiceDifferences: perServiceDiffsComplete,
+      commonMistakes: hasCommonMistakes,
+      officialSources: hasOfficialSources,
+      minWordCount800,
+    },
   };
 }

@@ -61,7 +61,11 @@ import {
   SITE_ORIGIN,
   CORE_CATEGORIES,
 } from './utils/seoConfig';
-import { getServiceClusterById } from './utils/serviceMetadata';
+import {
+  getServiceClusterById,
+  validateServiceReadyToPublish,
+  ServiceClusterHubOverride,
+} from './utils/serviceMetadata';
 
 // Lightweight Skeleton Fallback for Section Containers (Prevents Layout Shift)
 function SectionSkeleton({ height = 'min-h-[360px]', title = 'Loading Desk...' }: { height?: string; title?: string }) {
@@ -155,6 +159,8 @@ export default function App() {
   const [publishedGuides, setPublishedGuides] = useState<GuideArticle[]>(STATIC_PUBLISHED_GUIDES);
   const [mergedServices, setMergedServices] = useState<ServiceItem[]>(SERVICES_LIST);
   const [serviceRedirectMap, setServiceRedirectMap] = useState<Record<string, string>>({});
+  const [clusterOverrides, setClusterOverrides] = useState<Record<string, ServiceClusterHubOverride>>({});
+  const [clusterReadiness, setClusterReadiness] = useState<Record<string, boolean>>({});
   const [activeClusterId, setActiveClusterId] = useState<string | null>(null);
 
   const [activeLegalPage, setActiveLegalPage] = useState<LegalPageType | null>(null);
@@ -247,9 +253,24 @@ export default function App() {
         if (data?.redirectMap && typeof data.redirectMap === 'object') {
           setServiceRedirectMap(data.redirectMap);
         }
+        if (data?.clusterOverrides && typeof data.clusterOverrides === 'object') {
+          setClusterOverrides(data.clusterOverrides);
+        }
+        if (data?.clusterReadiness && typeof data.clusterReadiness === 'object') {
+          setClusterReadiness(data.clusterReadiness);
+        }
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!activeServicePost?.id) return;
+    fetch('/api/tracker/service-view', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ serviceId: activeServicePost.id, type: 'view' }),
+    }).catch(() => {});
+  }, [activeServicePost?.id]);
 
   // Track route changes and keep post resolution synced with published posts
   useEffect(() => {
@@ -968,7 +989,7 @@ export default function App() {
           title: formatSeoTitle(cluster.title),
           description: formatSeoDescription(cluster.summary),
           canonicalUrl: `${SITE_ORIGIN}${cluster.hubPath}`,
-          robots: 'index, follow',
+          robots: clusterReadiness[cluster.clusterId] ? 'index, follow' : 'noindex, follow',
           ogType: 'website',
         });
         return;
@@ -979,12 +1000,13 @@ export default function App() {
         activeServicePost.estimatedTime && activeServicePost.estimatedTime.trim()
           ? ` Estimated time: ${activeServicePost.estimatedTime.trim()}.`
           : '';
+      const svcReady = validateServiceReadyToPublish(activeServicePost).canPublish;
       applyClientSeo({
         title: formatSeoTitle(activeServicePost.name),
         description: formatSeoDescription(`${activeServicePost.description}${svcTime}`),
         canonicalUrl: `${SITE_ORIGIN}/service/${activeServicePost.id}`,
         robots:
-          activeServicePost.robotsNoindex || activeServicePost.duplicateOfId
+          activeServicePost.robotsNoindex || activeServicePost.duplicateOfId || !svcReady
             ? 'noindex, follow'
             : 'index, follow',
         ogType: 'website',
@@ -1372,6 +1394,7 @@ export default function App() {
               <ServiceClusterHubView
                 clusterId={activeClusterId}
                 allServices={mergedServices}
+                hubOverride={clusterOverrides[activeClusterId]}
                 onBack={() => navigateToPath('/services')}
                 onNavigateRoute={navigateToPath}
                 onApplyService={(service) => {

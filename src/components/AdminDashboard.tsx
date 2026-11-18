@@ -85,6 +85,7 @@ import AdminReviewQueue from './AdminReviewQueue';
 import AdminWhatsAppAlerts from './AdminWhatsAppAlerts';
 import AdminContentHealthTab from './AdminContentHealthTab';
 import AdminGuideVerificationTab from './AdminGuideVerificationTab';
+import AdminServiceFactsTab from './AdminServiceFactsTab';
 
 interface AdminDashboardProps {
   cafeName: string;
@@ -106,6 +107,7 @@ type NavSectionId =
   | 'push_publisher'
   | 'review_queue'
   | 'content_health'
+  | 'service_facts'
   | 'guide_verification'
   | 'alerts'
   | 'reports';
@@ -2380,6 +2382,11 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       subtitle: 'Inspect Class A/B/C/D audit metrics, enrich thin posts, mark noindex, or merge duplicates with 301 redirects.',
       breadcrumb: 'Operations / Content Health'
     },
+    service_facts: {
+      title: 'Service Facts — Verified Data Entry',
+      subtitle: 'Fill 11 verified service facts & 800-word cluster hub guides one by one or via CSV import/export.',
+      breadcrumb: 'Operations / Service Facts'
+    },
     guide_verification: {
       title: 'Guide Verification & Publishing Queue',
       subtitle: 'Review [VERIFY] markers on draft guides, confirm details on official portals, and publish live.',
@@ -2512,6 +2519,7 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     { id: 'push_publisher', label: 'Web Push Publisher', icon: Bell },
     { id: 'review_queue', label: 'Review Queue', icon: Activity },
     { id: 'content_health', label: 'Content Health', icon: FileCheck },
+    { id: 'service_facts', label: 'Service Facts', icon: SlidersHorizontal },
     { id: 'guide_verification', label: 'Guide Verification', icon: BookOpen },
     { id: 'alerts', label: 'Alerts', icon: MessageSquare },
     { id: 'reports', label: 'Reports & Export', icon: FileSpreadsheet }
@@ -4484,6 +4492,15 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           {activeNav === 'content_health' && (
             <section aria-label="Content Health and Thin-Page Hygiene" className="space-y-4">
               <AdminContentHealthTab adminToken={getSafeSession('csc_admin_token')} />
+            </section>
+          )}
+
+          {/* ================================================================ */}
+          {/* 8C2b. SERVICE FACTS VERIFIED DATA ENTRY                          */}
+          {/* ================================================================ */}
+          {activeNav === 'service_facts' && (
+            <section aria-label="Service Facts Verified Data Entry" className="space-y-4">
+              <AdminServiceFactsTab adminToken={getSafeSession('csc_admin_token')} />
             </section>
           )}
 

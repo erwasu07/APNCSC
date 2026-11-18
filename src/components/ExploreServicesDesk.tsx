@@ -286,11 +286,12 @@ export default function ExploreServicesDesk({
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 lg:gap-4">
             {displayedServices.map((item) => {
-              const hasPrice = Boolean(item.price && item.price.trim().length > 0);
-              const feeText = hasPrice ? item.price.trim() : t.servicesAskUs;
-              const hasTime = Boolean(item.estimatedTime && item.estimatedTime.trim().length > 0);
+              const rawPrice = String(item.price || '').trim();
+              const isPlaceholderFee = !rawPrice || /\bask us\b/i.test(rawPrice) || /\[VERIFY\]/i.test(rawPrice) || /depends on/i.test(rawPrice);
+              const feeText = isPlaceholderFee ? '' : rawPrice;
+              const hasTime = Boolean(item.estimatedTime && item.estimatedTime.trim().length > 0 && !/\[VERIFY\]/i.test(item.estimatedTime));
               const docsList = Array.isArray(item.requirements)
-                ? item.requirements.filter((r) => Boolean(r && r.trim()))
+                ? item.requirements.filter((r) => Boolean(r && r.trim() && !/\[VERIFY\]/i.test(r)))
                 : [];
               const whatsappEnquiryUrl = `https://wa.me/917006833767?text=${encodeURIComponent(
                 `Hello Wasim Ahmad Khanday (CSC DOST), I would like to enquire about: ${item.name} (https://www.cscdost.com/service/${item.id})`
@@ -333,12 +334,11 @@ export default function ExploreServicesDesk({
                       </p>
                     </a>
 
-                    {/* Documents Needed (Strictly from existing data) */}
-                    <div className="space-y-1.5 pt-2 border-t border-[var(--border-default)]">
-                      <div className="text-xs font-bold uppercase tracking-wide text-[var(--text-muted)]">
-                        {t.servicesDocsNeeded}
-                      </div>
-                      {docsList.length > 0 ? (
+                    {docsList.length > 0 && (
+                      <div className="space-y-1.5 pt-2 border-t border-[var(--border-default)]">
+                        <div className="text-xs font-bold uppercase tracking-wide text-[var(--text-muted)]">
+                          {t.servicesDocsNeeded}
+                        </div>
                         <ul className="space-y-1 list-none m-0 p-0">
                           {docsList.slice(0, 3).map((doc, idx) => (
                             <li
@@ -358,45 +358,44 @@ export default function ExploreServicesDesk({
                             </li>
                           )}
                         </ul>
-                      ) : (
-                        <p className="text-xs font-semibold text-[var(--text-secondary)] m-0">
-                          {t.servicesAskUs}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Fee & Typical Time Summary Row */}
-                    <div className="rounded-xl bg-[var(--bg-surface)] border border-[var(--border-default)] p-2.5 space-y-1.5 text-xs">
-                      <div className="flex items-start gap-1.5 min-w-0">
-                        <Tag className="w-3.5 h-3.5 text-[#1F9D6B] shrink-0 mt-0.5" aria-hidden="true" />
-                        <div className="min-w-0 flex-1 space-y-0.5">
-                          <span className="font-semibold text-[var(--text-muted)] me-1">
-                            {t.servicesFeeLabel}:
-                          </span>
-                          {Array.isArray(item.feeLines) && item.feeLines.length > 0 ? (
-                            <div className="space-y-0.5 mt-0.5">
-                              {item.feeLines.map((line, lineIdx) => (
-                                <div
-                                  key={`${item.id}-fee-${lineIdx}`}
-                                  className="font-bold text-[var(--text-primary)] leading-snug break-words"
-                                >
-                                  {line}
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <span className="font-bold text-[var(--text-primary)] break-words">
-                              {feeText}
-                            </span>
-                          )}
-                        </div>
                       </div>
-                      {hasTime && (
-                        <div className="text-xs font-semibold text-[var(--text-secondary)] pt-1 border-t border-[var(--border-default)]">
-                          {t.servicesTypicalTime}: <strong className="text-[var(--text-primary)]">{item.estimatedTime.trim()}</strong>
-                        </div>
-                      )}
-                    </div>
+                    )}
+
+                    {(feeText || (Array.isArray(item.feeLines) && item.feeLines.length > 0) || hasTime) && (
+                      <div className="rounded-xl bg-[var(--bg-surface)] border border-[var(--border-default)] p-2.5 space-y-1.5 text-xs">
+                        {(feeText || (Array.isArray(item.feeLines) && item.feeLines.length > 0)) && (
+                          <div className="flex items-start gap-1.5 min-w-0">
+                            <Tag className="w-3.5 h-3.5 text-[#1F9D6B] shrink-0 mt-0.5" aria-hidden="true" />
+                            <div className="min-w-0 flex-1 space-y-0.5">
+                              <span className="font-semibold text-[var(--text-muted)] me-1">
+                                {t.servicesFeeLabel}:
+                              </span>
+                              {Array.isArray(item.feeLines) && item.feeLines.length > 0 ? (
+                                <div className="space-y-0.5 mt-0.5">
+                                  {item.feeLines.map((line, lineIdx) => (
+                                    <div
+                                      key={`${item.id}-fee-${lineIdx}`}
+                                      className="font-bold text-[var(--text-primary)] leading-snug break-words"
+                                    >
+                                      {line}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="font-bold text-[var(--text-primary)] break-words">
+                                  {feeText}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        {hasTime && (
+                          <div className={`text-xs font-semibold text-[var(--text-secondary)] ${(feeText || (Array.isArray(item.feeLines) && item.feeLines.length > 0)) ? 'pt-1 border-t border-[var(--border-default)]' : ''}`}>
+                            {t.servicesTypicalTime}: <strong className="text-[var(--text-primary)]">{item.estimatedTime.trim()}</strong>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Direct WhatsApp + Call + Details/Apply Actions */}

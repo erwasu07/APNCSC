@@ -43,6 +43,11 @@ import {
 import {
   deriveStoredServiceFacts,
   getClusterForServiceId,
+  isNonPlaceholderFeeNote,
+  isValidHttpUrl,
+  hasExplicitContent,
+  hasExplicitList,
+  type ServiceClusterHubOverride,
   type ServiceClusterSuggestion,
 } from './utils/serviceMetadata';
 
@@ -442,13 +447,13 @@ export function renderServiceSubstantiveHtml(service: ServiceItem): string {
   const safeName = escapeHtml(service.name);
   const safeDescription = escapeHtml(service.description);
   const safeCategory = escapeHtml(service.category);
-  const safeAuthority = escapeHtml(facts.issuingAuthority);
-  const safeEligibility = escapeHtml(facts.eligibility);
-  const safeTime = escapeHtml(facts.estimatedTime);
+
   const safeFeeHtml =
     facts.feeLines.length > 0
       ? facts.feeLines.map((l) => `<div>${escapeHtml(l)}</div>`).join('')
-      : escapeHtml(facts.feesText);
+      : facts.feesText
+        ? escapeHtml(facts.feesText)
+        : '';
 
   const waEnquiryUrl = `https://wa.me/917006833767?text=${encodeURIComponent(
     `Hello CSC DOST, enquiry for ${service.name} (${service.id})`
@@ -467,6 +472,29 @@ export function renderServiceSubstantiveHtml(service: ServiceItem): string {
     },
     url: `https://www.cscdost.com/service/${encodeURIComponent(service.id)}`,
   }).replace(/</g, '\\u003c');
+
+  const summaryCards: string[] = [];
+  if (facts.authorityFromStoredData) {
+    summaryCards.push(`
+        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:14px;">
+          <h2 style="font-size:12px; font-weight:700; color:#475569; margin:0 0 4px 0;">Issuing Authority</h2>
+          <div style="font-size:14px; font-weight:700; color:#101A36;">${escapeHtml(facts.issuingAuthority)}</div>
+        </div>`);
+  }
+  if (facts.feesFromStoredData && safeFeeHtml) {
+    summaryCards.push(`
+        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:14px;">
+          <h2 style="font-size:12px; font-weight:700; color:#475569; margin:0 0 4px 0;">Fees &amp; Charges</h2>
+          <div style="font-size:14px; font-weight:700; color:#1F9D6B;">${safeFeeHtml}</div>
+        </div>`);
+  }
+  if (facts.timeFromStoredData) {
+    summaryCards.push(`
+        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:14px;">
+          <h2 style="font-size:12px; font-weight:700; color:#475569; margin:0 0 4px 0;">Processing Time</h2>
+          <div style="font-size:14px; font-weight:700; color:#101A36;">${escapeHtml(facts.estimatedTime)}</div>
+        </div>`);
+  }
 
   return `
   ${renderPrimaryCategoryNavHtml('services')}
@@ -489,76 +517,80 @@ export function renderServiceSubstantiveHtml(service: ServiceItem): string {
 
     <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:22px;">
       <header style="border-bottom:1px solid #E2E8F0; padding-bottom:14px; margin-bottom:18px;">
-        <span style="display:inline-block; background:#ECFDF5; color:#1F9D6B; border:1px solid #A7F3D0; font-size:11px; font-weight:700; text-transform:uppercase; padding:3px 9px; border-radius:6px; margin-bottom:8px;">
-          ${safeCategory}${facts.hasVerifyPlaceholders ? ' · [VERIFY]' : ' · Verified'}
-        </span>
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:8px;">
+          <span style="display:inline-block; background:#ECFDF5; color:#1F9D6B; border:1px solid #A7F3D0; font-size:11px; font-weight:700; text-transform:uppercase; padding:3px 9px; border-radius:6px;">
+            ${safeCategory}${facts.hasVerifyPlaceholders ? '' : ' · Verified'}
+          </span>
+          ${
+            facts.lastVerifiedFromStoredData
+              ? `<span style="font-size:12px; color:#64748B; font-weight:600;">Last verified: ${escapeHtml(facts.lastVerifiedDate)}</span>`
+              : ''
+          }
+        </div>
         <h1 style="font-size:26px; line-height:1.28; font-weight:800; color:#101A36; margin:0 0 8px 0;">${safeName}</h1>
         <p style="font-size:15px; color:#475569; margin:0;">${safeDescription}</p>
       </header>
 
-      <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-bottom:18px;">
-        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:14px;">
-          <h2 style="font-size:12px; font-weight:700; color:#475569; margin:0 0 4px 0;">${safeName} — Issuing Authority</h2>
-          <div style="font-size:14px; font-weight:700; color:${facts.authorityFromStoredData ? '#101A36' : '#B45309'};">${safeAuthority}</div>
-        </div>
-        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:14px;">
-          <h2 style="font-size:12px; font-weight:700; color:#475569; margin:0 0 4px 0;">${safeName} — Fees</h2>
-          <div style="font-size:14px; font-weight:700; color:${facts.feesFromStoredData ? '#1F9D6B' : '#B45309'};">${safeFeeHtml}</div>
-        </div>
-        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:14px;">
-          <h2 style="font-size:12px; font-weight:700; color:#475569; margin:0 0 4px 0;">${safeName} — Processing Time</h2>
-          <div style="font-size:14px; font-weight:700; color:${facts.timeFromStoredData ? '#101A36' : '#B45309'};">${safeTime}</div>
-        </div>
-      </section>
+      ${
+        summaryCards.length > 0
+          ? `<section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-bottom:18px;">
+        ${summaryCards.join('')}
+      </section>`
+          : ''
+      }
 
-      <section style="margin-bottom:16px;">
-        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">${safeName} — Who Is Eligible</h2>
-        <p style="font-size:14px; color:${facts.eligibilityFromStoredData ? '#334155' : '#B45309'}; margin:0;">${safeEligibility}</p>
-      </section>
+      ${
+        facts.eligibilityFromStoredData
+          ? `<section style="margin-bottom:16px;">
+        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">Who Is Eligible — ${safeName}</h2>
+        <p style="font-size:14px; color:#334155; margin:0; white-space:pre-line;">${escapeHtml(facts.eligibility)}</p>
+      </section>`
+          : ''
+      }
 
-      <section style="margin-bottom:16px;">
-        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">${safeName} — Exact Documents List</h2>
-        ${
-          facts.requirements.length > 0
-            ? `<ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
+      ${
+        facts.requirements.length > 0
+          ? `<section style="margin-bottom:16px;">
+        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">Exact Documents List — ${safeName}</h2>
+        <ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
           ${facts.requirements.map((doc) => `<li>${escapeHtml(doc)}</li>`).join('')}
-        </ul>`
-            : `<p style="font-size:14px; color:#B45309; margin:0;">${safeName} documents: [VERIFY]</p>`
-        }
-      </section>
+        </ul>
+      </section>`
+          : ''
+      }
 
-      <section style="margin-bottom:16px;">
-        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">${safeName} — Step-by-Step Flow</h2>
-        ${
-          facts.stepFlow.length > 0
-            ? `<ol style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
+      ${
+        facts.stepFlow.length > 0
+          ? `<section style="margin-bottom:16px;">
+        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">Step-by-Step Flow — ${safeName}</h2>
+        <ol style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
           ${facts.stepFlow.map((s) => `<li>${escapeHtml(s)}</li>`).join('')}
-        </ol>`
-            : `<p style="font-size:14px; color:#B45309; margin:0;">${safeName} steps: [VERIFY]</p>`
-        }
-      </section>
+        </ol>
+      </section>`
+          : ''
+      }
 
-      <section style="margin-bottom:16px;">
-        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">${safeName} — Common Rejection Reasons</h2>
-        ${
-          facts.rejectionReasons.length > 0
-            ? `<ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
+      ${
+        facts.rejectionReasons.length > 0
+          ? `<section style="margin-bottom:16px;">
+        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">Common Rejection Reasons — ${safeName}</h2>
+        <ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
           ${facts.rejectionReasons.map((r) => `<li>${escapeHtml(r)}</li>`).join('')}
-        </ul>`
-            : `<p style="font-size:14px; color:#B45309; margin:0;">${safeName} rejections: [VERIFY]</p>`
-        }
-      </section>
+        </ul>
+      </section>`
+          : ''
+      }
 
-      <section style="margin-bottom:16px;">
-        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">${safeName} — Staff Pre-Submission Checks</h2>
-        ${
-          facts.staffChecks.length > 0
-            ? `<ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
+      ${
+        facts.staffChecks.length > 0
+          ? `<section style="margin-bottom:16px;">
+        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">CSC DOST Staff Pre-Submission Checks</h2>
+        <ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
           ${facts.staffChecks.map((c) => `<li>${escapeHtml(c)}</li>`).join('')}
-        </ul>`
-            : `<p style="font-size:14px; color:#B45309; margin:0;">${safeName} checks: [VERIFY]</p>`
-        }
-      </section>
+        </ul>
+      </section>`
+          : ''
+      }
 
       <details style="border:1px solid #E2E8F0; border-radius:8px; padding:10px 12px; margin-bottom:16px; background:#F8FAFC; font-size:13px;">
         <summary style="font-weight:700; color:#101A36; cursor:pointer;">Disclaimer &amp; FAQ</summary>
@@ -571,7 +603,7 @@ export function renderServiceSubstantiveHtml(service: ServiceItem): string {
         <a href="/apply?service=${encodeURIComponent(service.name)}" style="display:inline-block; background:#F8FAFC; color:#101A36; border:1px solid #CBD5E1; font-weight:700; font-size:14px; padding:9px 16px; border-radius:10px; text-decoration:none;">Request Filing</a>
         ${
           facts.officialPortalUrl
-            ? `<a href="${escapeHtml(facts.officialPortalUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#ffffff; color:#101A36; border:1px solid #CBD5E1; font-weight:600; font-size:14px; padding:9px 16px; border-radius:10px; text-decoration:none;">${escapeHtml(facts.officialPortalLabel || 'Portal')} ↗</a>`
+            ? `<a href="${escapeHtml(facts.officialPortalUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#ffffff; color:#101A36; border:1px solid #CBD5E1; font-weight:600; font-size:14px; padding:9px 16px; border-radius:10px; text-decoration:none;">${escapeHtml(facts.officialPortalLabel || 'Official Portal')} ↗</a>`
             : ''
         }
       </div>
@@ -584,9 +616,19 @@ export function renderServiceSubstantiveHtml(service: ServiceItem): string {
 
 export function renderServiceClusterHubHtml(
   cluster: ServiceClusterSuggestion,
-  members: ServiceItem[]
+  members: ServiceItem[],
+  hubOverride?: ServiceClusterHubOverride
 ): string {
   const safeTitle = escapeHtml(cluster.title);
+  const hasWhatFor = hasExplicitContent(hubOverride?.whatDocumentIsFor);
+  const hasHowDiff = hasExplicitContent(hubOverride?.howServicesDiffer);
+  const commonMistakes = Array.isArray(hubOverride?.commonMistakes) && hasExplicitList(hubOverride.commonMistakes)
+    ? hubOverride.commonMistakes.map((s) => s.trim()).filter(Boolean)
+    : [];
+  const officialSources = Array.isArray(hubOverride?.officialSources)
+    ? hubOverride.officialSources.filter((s) => hasExplicitContent(s?.label) && isValidHttpUrl(s?.url))
+    : [];
+
   return `
   ${renderPrimaryCategoryNavHtml('services')}
   <main class="ssr-article-wrapper" style="max-width:1040px; margin:0 auto; padding:12px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:15px; color:#101A36; line-height:1.6;">
@@ -600,48 +642,128 @@ export function renderServiceClusterHubHtml(
 
     <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:24px;">
       <header style="border-bottom:1px solid #E2E8F0; padding-bottom:16px; margin-bottom:20px;">
-        <span style="display:inline-block; background:#EFF6FF; color:#1D4ED8; font-size:11px; font-weight:700; text-transform:uppercase; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
-          Consolidated Service Hub · ${members.length} Services
-        </span>
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:8px;">
+          <span style="display:inline-block; background:#EFF6FF; color:#1D4ED8; font-size:11px; font-weight:700; text-transform:uppercase; padding:4px 10px; border-radius:6px;">
+            Consolidated Service Hub · ${members.length} Services
+          </span>
+          ${
+            hasExplicitContent(hubOverride?.lastVerifiedDate)
+              ? `<span style="font-size:12px; color:#64748B; font-weight:600;">Last verified: ${escapeHtml(hubOverride!.lastVerifiedDate!)}</span>`
+              : ''
+          }
+        </div>
         <h1 style="font-size:26px; font-weight:800; color:#101A36; margin:0 0 8px 0;">${safeTitle}</h1>
-        <p style="font-size:15px; color:#475569; margin:0 0 8px 0;">${escapeHtml(cluster.summary)}</p>
-        <p style="font-size:13px; color:#334155; margin:0;"><strong>Issuing Authority:</strong> ${escapeHtml(cluster.issuingAuthority)}</p>
+        <p style="font-size:15px; color:#475569; margin:0;">${escapeHtml(cluster.summary)}</p>
       </header>
 
-      <div style="overflow-x:auto; margin-bottom:20px;">
-        <table style="width:100%; border-collapse:collapse; font-size:13px; border:1px solid #E2E8F0;">
-          <thead>
-            <tr style="background:#F8FAFC; text-align:left;">
-              <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Service</th>
-              <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Documents</th>
-              <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Fee</th>
-              <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Time</th>
-              <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${members
-              .map((m) => {
-                const f = deriveStoredServiceFacts(m);
-                const docsText = f.requirements.length > 0 ? f.requirements.join(', ') : '[VERIFY]';
-                return `
-                <tr style="border-bottom:1px solid #E2E8F0;">
-                  <td style="padding:10px; vertical-align:top;">
-                    <div style="font-weight:700; color:#101A36;">${escapeHtml(m.name)}</div>
-                    <div style="color:#475569; margin-top:2px;">${escapeHtml(m.description)}</div>
-                  </td>
-                  <td style="padding:10px; vertical-align:top; color:#334155;">${escapeHtml(docsText)}</td>
-                  <td style="padding:10px; vertical-align:top; font-weight:700; color:#1F9D6B;">${escapeHtml(f.feesText)}</td>
-                  <td style="padding:10px; vertical-align:top; color:#334155;">${escapeHtml(f.estimatedTime)}</td>
-                  <td style="padding:10px; vertical-align:top;">
-                    <a href="/apply?service=${encodeURIComponent(m.name)}" style="display:inline-block; background:#101A36; color:#ffffff; padding:5px 10px; border-radius:6px; font-weight:700; text-decoration:none;">Apply</a>
-                  </td>
-                </tr>`;
-              })
-              .join('')}
-          </tbody>
-        </table>
-      </div>
+      ${
+        hasWhatFor
+          ? `<section style="margin-bottom:20px;">
+        <h2 style="font-size:19px; font-weight:800; color:#101A36; margin:0 0 8px 0;">What These Documents &amp; Services Are For</h2>
+        <div style="font-size:15px; color:#334155; line-height:1.65; white-space:pre-line;">${escapeHtml(hubOverride!.whatDocumentIsFor!)}</div>
+      </section>`
+          : ''
+      }
+
+      ${
+        hasHowDiff
+          ? `<section style="margin-bottom:20px;">
+        <h2 style="font-size:19px; font-weight:800; color:#101A36; margin:0 0 8px 0;">How These Services Differ From Each Other</h2>
+        <div style="font-size:15px; color:#334155; line-height:1.65; white-space:pre-line;">${escapeHtml(hubOverride!.howServicesDiffer!)}</div>
+      </section>`
+          : ''
+      }
+
+      <section style="margin-bottom:22px;">
+        <h2 style="font-size:19px; font-weight:800; color:#101A36; margin:0 0 10px 0;">Comparison Table</h2>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:13px; border:1px solid #E2E8F0;">
+            <thead>
+              <tr style="background:#F8FAFC; text-align:left;">
+                <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Service</th>
+                <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Issuing Authority</th>
+                <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Who It Is For</th>
+                <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Typical Time</th>
+                <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Fee Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${members
+                .map((m) => {
+                  const f = deriveStoredServiceFacts(m);
+                  return `
+                  <tr style="border-bottom:1px solid #E2E8F0;">
+                    <td style="padding:10px; vertical-align:top; font-weight:700; color:#101A36;">${escapeHtml(m.name)}</td>
+                    <td style="padding:10px; vertical-align:top; color:#334155;">${f.authorityFromStoredData ? escapeHtml(f.issuingAuthority) : ''}</td>
+                    <td style="padding:10px; vertical-align:top; color:#334155;">${f.eligibilityFromStoredData ? escapeHtml(f.eligibility) : ''}</td>
+                    <td style="padding:10px; vertical-align:top; color:#334155;">${f.timeFromStoredData ? escapeHtml(f.estimatedTime) : ''}</td>
+                    <td style="padding:10px; vertical-align:top; font-weight:700; color:#1F9D6B;">${f.feesFromStoredData ? escapeHtml(f.feesText) : ''}</td>
+                  </tr>`;
+                })
+                .join('')}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section style="margin-bottom:22px;">
+        <h2 style="font-size:19px; font-weight:800; color:#101A36; margin:0 0 12px 0;">Service-by-Service Breakdown &amp; Specific Differences</h2>
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          ${members
+            .map((m) => {
+              const f = deriveStoredServiceFacts(m);
+              const diffNote = hubOverride?.perServiceDifferences?.[m.id];
+              return `
+              <div style="border:1px solid #E2E8F0; border-radius:10px; padding:14px; background:#F8FAFC;">
+                <h3 style="font-size:16px; font-weight:700; color:#101A36; margin:0 0 6px 0;">${escapeHtml(m.name)}</h3>
+                <p style="font-size:14px; color:#334155; margin:0 0 6px 0;">${escapeHtml(m.description)}</p>
+                ${
+                  hasExplicitContent(diffNote)
+                    ? `<p style="font-size:14px; color:#1E293B; margin:0 0 6px 0;"><strong>Key Difference:</strong> ${escapeHtml(diffNote!)}</p>`
+                    : ''
+                }
+                ${
+                  f.eligibilityFromStoredData
+                    ? `<p style="font-size:13px; color:#334155; margin:0 0 6px 0;"><strong>Eligibility:</strong> ${escapeHtml(f.eligibility)}</p>`
+                    : ''
+                }
+                ${
+                  f.requirements.length > 0
+                    ? `<div style="font-size:13px; color:#334155;"><strong>Stored Documents Checklist:</strong> ${f.requirements.map((r) => escapeHtml(r)).join(', ')}</div>`
+                    : ''
+                }
+              </div>`;
+            })
+            .join('')}
+        </div>
+      </section>
+
+      ${
+        commonMistakes.length > 0
+          ? `<section style="margin-bottom:20px;">
+        <h2 style="font-size:19px; font-weight:800; color:#101A36; margin:0 0 8px 0;">Common Mistakes &amp; Rejection Causes</h2>
+        <ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
+          ${commonMistakes.map((mistake) => `<li style="margin-bottom:4px;">${escapeHtml(mistake)}</li>`).join('')}
+        </ul>
+      </section>`
+          : ''
+      }
+
+      ${
+        officialSources.length > 0
+          ? `<section style="margin-bottom:12px;">
+        <h2 style="font-size:19px; font-weight:800; color:#101A36; margin:0 0 8px 0;">Official Portals &amp; Sources</h2>
+        <ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
+          ${officialSources
+            .map(
+              (src) =>
+                `<li style="margin-bottom:4px;"><a href="${escapeHtml(src.url)}" target="_blank" rel="noopener noreferrer" style="color:#1D4ED8; font-weight:600;">${escapeHtml(src.label)} ↗</a></li>`
+            )
+            .join('')}
+        </ul>
+      </section>`
+          : ''
+      }
     </article>
     ${renderSsrPolicyFooterHtml()}
   </main>
@@ -742,7 +864,7 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">5. Service-Page Verification &amp; Advertising Independence</h2>
           <p>
-            No scheme guide or CSC service fee sheet may be marked verified while any <code>[VERIFY]</code> gap remains open. Editorial selections, scheme summaries, and job rankings remain completely independent of third-party advertising networks and reflect only primary official notifications.
+            No scheme guide or CSC service fee sheet may be marked verified while any verification gap remains open. Editorial selections, scheme summaries, and job rankings remain completely independent of third-party advertising networks and reflect only primary official notifications.
           </p>
         </section>
       </article>
@@ -2660,7 +2782,7 @@ export function renderCategorySubstantiveHtml(
             </h2>
             <p style="font-size:14px; color:#475569; line-height:1.4; margin:0 0 10px 0;">${escapeHtml(s.description)}</p>
             <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; border-top:1px solid #F1F5F9; padding-top:10px;">
-              <span style="font-weight:700; color:#101A36;">${escapeHtml(s.price?.trim() || 'Ask us')}</span>
+              ${isNonPlaceholderFeeNote(s.price) ? `<span style="font-weight:700; color:#101A36;">${escapeHtml(s.price!.trim())}</span>` : '<span></span>'}
               <a href="/service/${escapeHtml(s.id)}" style="color:#1F9D6B; font-weight:700; text-decoration:none;">View Service Details →</a>
             </div>
           </article>
@@ -2693,11 +2815,13 @@ export function renderCategorySubstantiveHtml(
 
       <section style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
         ${services.map(s => {
-          const docs = Array.isArray(s.requirements) && s.requirements.length > 0 ? s.requirements.join(', ') : 'Ask us';
-          const fee = s.price && s.price.trim() ? s.price.trim() : 'Ask us';
-          const feeHtml = Array.isArray(s.feeLines) && s.feeLines.length > 0
-            ? s.feeLines.map(line => `<div>${escapeHtml(line)}</div>`).join('')
-            : escapeHtml(fee);
+          const facts = deriveStoredServiceFacts(s);
+          const docs = facts.requirements.length > 0 ? facts.requirements.join(', ') : '';
+          const feeHtml = facts.feeLines.length > 0
+            ? facts.feeLines.map(line => `<div>${escapeHtml(line)}</div>`).join('')
+            : facts.feesFromStoredData
+              ? escapeHtml(facts.feesText)
+              : '';
           const waHref = `https://wa.me/917006833767?text=${encodeURIComponent(`Hello Wasim Ahmad Khanday (CSC DOST), I would like to enquire about ${s.name}`)}`;
           return `
           <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:18px; display:flex; flex-direction:column; justify-content:space-between; gap:10px;">
@@ -2707,9 +2831,9 @@ export function renderCategorySubstantiveHtml(
                 <a href="/service/${escapeHtml(s.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(s.name)}</a>
               </h2>
               <p style="font-size:14px; color:#475569; line-height:1.45; margin:0 0 8px 0;">${escapeHtml(s.description)}</p>
-              <div style="font-size:13px; color:#334155; margin-bottom:4px;"><strong>Documents needed:</strong> ${escapeHtml(docs)}</div>
-              ${s.estimatedTime && s.estimatedTime.trim() ? `<div style="font-size:13px; color:#334155; margin-bottom:4px;"><strong>Typical time:</strong> ${escapeHtml(s.estimatedTime.trim())}</div>` : ''}
-              <div style="font-size:13px; font-weight:700; color:#101A36;"><strong>Fee:</strong> ${feeHtml}</div>
+              ${docs ? `<div style="font-size:13px; color:#334155; margin-bottom:4px;"><strong>Documents needed:</strong> ${escapeHtml(docs)}</div>` : ''}
+              ${facts.timeFromStoredData ? `<div style="font-size:13px; color:#334155; margin-bottom:4px;"><strong>Typical time:</strong> ${escapeHtml(facts.estimatedTime)}</div>` : ''}
+              ${feeHtml ? `<div style="font-size:13px; font-weight:700; color:#101A36;"><strong>Fee:</strong> ${feeHtml}</div>` : ''}
             </div>
             <div style="border-top:1px solid #F1F5F9; padding-top:10px; display:flex; flex-wrap:wrap; gap:8px; font-size:13px;">
               <a href="${escapeHtml(waHref)}" target="_blank" rel="noopener noreferrer" style="background:#1F9D6B; color:#ffffff; padding:6px 10px; border-radius:8px; font-weight:700; text-decoration:none;">Enquire on WhatsApp</a>

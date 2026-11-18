@@ -57,6 +57,8 @@ interface ContentHealthItem {
     category: ServiceItem['category'];
     description: string;
     issuingAuthority?: string;
+    officialFee?: string;
+    cscCharge?: string;
     eligibility?: string;
     requirements?: string[];
     estimatedTime?: string;
@@ -66,6 +68,7 @@ interface ContentHealthItem {
     stepFlow?: string[];
     staffChecks?: string[];
     rejectionReasons?: string[];
+    lastVerifiedDate?: string;
     notes?: string;
   };
 }
@@ -129,6 +132,8 @@ export default function AdminContentHealthTab({ adminToken }: AdminContentHealth
   const [svcName, setSvcName] = useState('');
   const [svcDescription, setSvcDescription] = useState('');
   const [svcAuthority, setSvcAuthority] = useState('');
+  const [svcOfficialFee, setSvcOfficialFee] = useState('');
+  const [svcCscCharge, setSvcCscCharge] = useState('');
   const [svcEligibility, setSvcEligibility] = useState('');
   const [svcRequirements, setSvcRequirements] = useState('');
   const [svcEstimatedTime, setSvcEstimatedTime] = useState('');
@@ -138,6 +143,7 @@ export default function AdminContentHealthTab({ adminToken }: AdminContentHealth
   const [svcStepFlow, setSvcStepFlow] = useState('');
   const [svcStaffChecks, setSvcStaffChecks] = useState('');
   const [svcRejectionReasons, setSvcRejectionReasons] = useState('');
+  const [svcLastVerifiedDate, setSvcLastVerifiedDate] = useState('');
 
   // Merge 301 modal & Cluster Merge confirmation
   const [mergeSource, setMergeSource] = useState<ContentHealthItem | null>(null);
@@ -247,6 +253,8 @@ export default function AdminContentHealthTab({ adminToken }: AdminContentHealth
       setSvcName(s.name || item.title || '');
       setSvcDescription(s.description || '');
       setSvcAuthority(s.issuingAuthority || '');
+      setSvcOfficialFee(s.officialFee || '');
+      setSvcCscCharge(s.cscCharge || '');
       setSvcEligibility(s.eligibility || '');
       setSvcRequirements((s.requirements || []).join('\n'));
       setSvcEstimatedTime(s.estimatedTime || '');
@@ -256,6 +264,7 @@ export default function AdminContentHealthTab({ adminToken }: AdminContentHealth
       setSvcStepFlow((s.stepFlow || []).join('\n'));
       setSvcStaffChecks((s.staffChecks || []).join('\n'));
       setSvcRejectionReasons((s.rejectionReasons || []).join('\n'));
+      setSvcLastVerifiedDate(s.lastVerifiedDate || '');
       return;
     }
     const p = item.rawPost;
@@ -310,6 +319,8 @@ export default function AdminContentHealthTab({ adminToken }: AdminContentHealth
       category: enrichItem.rawService.category,
       description: svcDescription.trim(),
       issuingAuthority: svcAuthority.trim(),
+      officialFee: svcOfficialFee.trim(),
+      cscCharge: svcCscCharge.trim(),
       eligibility: svcEligibility.trim(),
       requirements: svcRequirements.split('\n').map((s) => s.trim()).filter(Boolean),
       estimatedTime: svcEstimatedTime.trim(),
@@ -319,6 +330,7 @@ export default function AdminContentHealthTab({ adminToken }: AdminContentHealth
       stepFlow: svcStepFlow.split('\n').map((s) => s.trim()).filter(Boolean),
       staffChecks: svcStaffChecks.split('\n').map((s) => s.trim()).filter(Boolean),
       rejectionReasons: svcRejectionReasons.split('\n').map((s) => s.trim()).filter(Boolean),
+      lastVerifiedDate: svcLastVerifiedDate.trim(),
       requirementsList: [],
     } as ServiceItem;
     return validateServiceReadyToPublish(candidate);
@@ -327,6 +339,8 @@ export default function AdminContentHealthTab({ adminToken }: AdminContentHealth
     svcName,
     svcDescription,
     svcAuthority,
+    svcOfficialFee,
+    svcCscCharge,
     svcEligibility,
     svcRequirements,
     svcEstimatedTime,
@@ -336,6 +350,7 @@ export default function AdminContentHealthTab({ adminToken }: AdminContentHealth
     svcStepFlow,
     svcStaffChecks,
     svcRejectionReasons,
+    svcLastVerifiedDate,
   ]);
 
   const handleSaveEnrich = async (targetStatus: 'draft' | 'published') => {
@@ -356,6 +371,8 @@ export default function AdminContentHealthTab({ adminToken }: AdminContentHealth
             name: svcName.trim(),
             description: svcDescription.trim(),
             issuingAuthority: svcAuthority.trim(),
+            officialFee: svcOfficialFee.trim(),
+            cscCharge: svcCscCharge.trim(),
             eligibility: svcEligibility.trim(),
             requirements: svcRequirements.split('\n').map((s) => s.trim()).filter(Boolean),
             estimatedTime: svcEstimatedTime.trim(),
@@ -365,6 +382,7 @@ export default function AdminContentHealthTab({ adminToken }: AdminContentHealth
             stepFlow: svcStepFlow.split('\n').map((s) => s.trim()).filter(Boolean),
             staffChecks: svcStaffChecks.split('\n').map((s) => s.trim()).filter(Boolean),
             rejectionReasons: svcRejectionReasons.split('\n').map((s) => s.trim()).filter(Boolean),
+            lastVerifiedDate: svcLastVerifiedDate.trim(),
           }),
         });
         const data = await res.json();
@@ -999,19 +1017,36 @@ export default function AdminContentHealthTab({ adminToken }: AdminContentHealth
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block font-bold mb-1">
-                        Fees Summary (avoid Ask us / [VERIFY])
-                        {FLAG_VERIFY_HINT(svcPrice) && !svcFeeLines.trim() && (
+                        Official Government Fee{' '}
+                        {FLAG_VERIFY_HINT(svcOfficialFee) && (
                           <span className="text-amber-600 font-mono ml-1">[VERIFY]</span>
                         )}
                       </label>
                       <input
                         type="text"
-                        value={svcPrice}
-                        onChange={(e) => setSvcPrice(e.target.value)}
-                        placeholder="e.g. ₹20 (Govt) + ₹70 (CSC)"
+                        value={svcOfficialFee}
+                        onChange={(e) => setSvcOfficialFee(e.target.value)}
+                        placeholder="Verified statutory fee"
                         className="w-full px-3 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)]"
                       />
                     </div>
+                    <div>
+                      <label className="block font-bold mb-1">
+                        CSC DOST Service Charge{' '}
+                        {FLAG_VERIFY_HINT(svcCscCharge) && (
+                          <span className="text-amber-600 font-mono ml-1">[VERIFY]</span>
+                        )}
+                      </label>
+                      <input
+                        type="text"
+                        value={svcCscCharge}
+                        onChange={(e) => setSvcCscCharge(e.target.value)}
+                        placeholder="Verified CSC service charge"
+                        className="w-full px-3 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)]"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block font-bold mb-1">
                         Processing Time{' '}
@@ -1023,8 +1058,22 @@ export default function AdminContentHealthTab({ adminToken }: AdminContentHealth
                         type="text"
                         value={svcEstimatedTime}
                         onChange={(e) => setSvcEstimatedTime(e.target.value)}
-                        placeholder="e.g. 5–7 working days"
+                        placeholder="Verified processing time"
                         className="w-full px-3 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold mb-1">
+                        Last Verified Date{' '}
+                        {FLAG_VERIFY_HINT(svcLastVerifiedDate) && (
+                          <span className="text-amber-600 font-mono">[VERIFY]</span>
+                        )}
+                      </label>
+                      <input
+                        type="date"
+                        value={svcLastVerifiedDate}
+                        onChange={(e) => setSvcLastVerifiedDate(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] font-mono"
                       />
                     </div>
                   </div>
