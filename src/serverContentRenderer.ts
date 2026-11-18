@@ -1166,24 +1166,23 @@ export function renderHomepageSubstantiveHtml(
     (g) => g.category === 'Central Scheme' || g.category === 'State Services' || g.category === 'Identity & Tax'
   ).slice(0, 4);
 
-  const featuredToolIds = ['image-compressor', 'passport-photo-maker', 'signature-resizer', 'pdf-merge'];
-  const topTools = featuredToolIds
-    .map((id) => TOOLS_LIST.find((t) => t.id === id))
-    .filter((t): t is ToolItem => Boolean(t));
-
   const featuredServices = services.slice(0, 6);
   const waUrl = alertsConfig?.whatsappUrl || 'https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI';
   const telegramUrl = alertsConfig?.telegramUrl || '';
 
   const categoryCards = [
-    { href: '/jobs', title: 'Jobs' },
-    { href: '/jobs?tab=exams', title: 'Admit Card' },
+    { href: '/jobs', title: 'Jobs & Recruitment' },
+    { href: '/jobs?tab=exams', title: 'Admit Cards' },
     { href: '/jobs?tab=results', title: 'Results' },
-    { href: '/jobs?tab=results&filter=answer_key', title: 'Answer Key' },
-    { href: '/education', title: 'Admission' },
-    { href: '/schemes', title: 'Schemes' },
-    { href: '/tools', title: 'Tools' },
-    { href: '/deadlines', title: 'News' },
+    { href: '/jobs?tab=results&filter=answer_key', title: 'Answer Keys' },
+    { href: '/education', title: 'Admissions & Exams' },
+    { href: '/education/ignou', title: 'IGNOU Hub' },
+    { href: '/schemes', title: 'Govt Schemes' },
+    { href: '/services', title: 'CSC E-Services' },
+    { href: '/tools', title: 'Document Tools' },
+    { href: '/calculators', title: 'Citizen Calculators' },
+    { href: '/deadlines', title: 'Closing Deadlines' },
+    { href: '/archive', title: 'Notice Archive' },
   ];
 
   const closingSoonHtml =
@@ -1212,10 +1211,12 @@ export function renderHomepageSubstantiveHtml(
       <nav aria-label="Primary sections" style="display:flex; flex-wrap:wrap; gap:14px; font-size:13px; font-weight:700;">
         <a href="/jobs" style="color:#2455E6; text-decoration:none;">Jobs</a>
         <a href="/education" style="color:#2455E6; text-decoration:none;">Admissions</a>
+        <a href="/education/ignou" style="color:#2455E6; text-decoration:none;">IGNOU</a>
         <a href="/schemes" style="color:#2455E6; text-decoration:none;">Schemes</a>
         <a href="/services" style="color:#2455E6; text-decoration:none;">Services</a>
         <a href="/tools" style="color:#2455E6; text-decoration:none;">Tools</a>
         <a href="/calculators" style="color:#2455E6; text-decoration:none;">Calculators</a>
+        <a href="/deadlines" style="color:#2455E6; text-decoration:none;">Deadlines</a>
       </nav>
     </div>
     <div style="background:#FFFBEB; border-top:1px solid #FDE68A; padding:6px 16px; text-align:center; font-size:11.5px; color:#78350F; font-weight:600;">
@@ -1258,7 +1259,7 @@ export function renderHomepageSubstantiveHtml(
       </section>
 
       <section aria-label="Categories" style="margin-bottom:14px;">
-        <h2 style="font-size:15px; font-weight:800; margin:0 0 8px 0;">Categories</h2>
+        <h2 style="font-size:15px; font-weight:800; margin:0 0 8px 0;">Browse All Categories</h2>
         <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px;">
           ${categoryCards
             .map(
@@ -1311,12 +1312,12 @@ export function renderHomepageSubstantiveHtml(
 
       <section aria-labelledby="ssr-services-heading" style="margin-bottom:14px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <h2 id="ssr-services-heading" style="font-size:15px; font-weight:800; margin:0;">CSC services</h2>
-          <a href="/services" style="font-size:12px; font-weight:700; color:#2455E6; text-decoration:none;">All →</a>
+          <h2 id="ssr-services-heading" style="font-size:15px; font-weight:800; margin:0;">CSC E-Services</h2>
+          <a href="/services" style="font-size:12px; font-weight:700; color:#2455E6; text-decoration:none;">All Services →</a>
         </div>
         <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px;">
           ${featuredServices
-            .slice(0, 4)
+            .slice(0, 6)
             .map(
               (svc) => `
             <a href="/service/${escapeHtml(svc.id)}" style="background:#ffffff; border:1px solid #E3E8F2; border-radius:12px; padding:10px; text-decoration:none; font-size:12px; font-weight:700; color:#101A36;">
@@ -1329,18 +1330,19 @@ export function renderHomepageSubstantiveHtml(
 
       <section aria-labelledby="ssr-tools-heading" style="margin-bottom:14px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <h2 id="ssr-tools-heading" style="font-size:15px; font-weight:800; margin:0;">Free tools</h2>
-          <a href="/tools" style="font-size:12px; font-weight:700; color:#2455E6; text-decoration:none;">All →</a>
+          <h2 id="ssr-tools-heading" style="font-size:15px; font-weight:800; margin:0;">Free Citizen Document Tools &amp; Calculators</h2>
+          <a href="/tools" style="font-size:12px; font-weight:700; color:#2455E6; text-decoration:none;">Tools Hub →</a>
         </div>
         <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px;">
-          ${topTools
-            .map(
-              (tool) => `
+          ${TOOLS_LIST.map(
+            (tool) => `
             <a href="/tools/${escapeHtml(tool.id)}" style="background:#ffffff; border:1px solid #E3E8F2; border-radius:12px; padding:10px; text-decoration:none; font-size:12px; font-weight:700; color:#101A36;">
               ${escapeHtml(tool.name)}
             </a>`
-            )
-            .join('')}
+          ).join('')}
+          <a href="/calculators" style="background:#ffffff; border:1px solid #E3E8F2; border-radius:12px; padding:10px; text-decoration:none; font-size:12px; font-weight:700; color:#2455E6;">
+            Age, Fee &amp; Percentage Calculators →
+          </a>
         </div>
       </section>
 

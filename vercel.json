@@ -5,50 +5,64 @@
       "includeFiles": "{server.js,dist/**,index.html,public/**}"
     }
   },
-  "rewrites": [
+  "routes": [
     {
-      "source": "/",
-      "destination": "/api"
+      "src": "^/(.*)$",
+      "headers": {
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "SAMEORIGIN",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload"
+      },
+      "continue": true
     },
     {
-      "source": "/(sitemap\\.xml|robots\\.txt)",
-      "destination": "/api"
+      "src": "^/sw\\.js$",
+      "headers": {
+        "Content-Type": "application/javascript; charset=utf-8",
+        "Service-Worker-Allowed": "/",
+        "Cache-Control": "no-cache, no-store, must-revalidate"
+      },
+      "continue": true
     },
     {
-      "source": "/api/(.*)",
-      "destination": "/api"
+      "src": "^/$",
+      "dest": "/api",
+      "check": true
     },
     {
-      "source": "/thumbnails/(.*)",
-      "destination": "/api"
+      "src": "^/index\\.html$",
+      "dest": "/api",
+      "check": true
     },
     {
-      "source": "/og-image/(.*)",
-      "destination": "/api"
+      "src": "^/(sitemap\\.xml|robots\\.txt)$",
+      "dest": "/api",
+      "check": true
     },
     {
-      "source": "/((?!assets/|csc-dost|favicon|apple-touch-icon|og-banner|manifest\\.json|site\\.webmanifest|sw\\.js|ads\\.txt|google[a-zA-Z0-9_-]+\\.html|.*\\.(?:js|mjs|css|png|jpg|jpeg|gif|webp|avif|svg|ico|woff|woff2|ttf|eot|map|pdf|txt|json|webmanifest)$).*)",
-      "destination": "/api"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
-        { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains; preload" }
-      ]
+      "src": "^/api/(.*)$",
+      "dest": "/api",
+      "check": true
     },
     {
-      "source": "/sw.js",
-      "headers": [
-        { "key": "Content-Type", "value": "application/javascript; charset=utf-8" },
-        { "key": "Service-Worker-Allowed", "value": "/" },
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
-      ]
+      "src": "^/thumbnails/(.*)$",
+      "dest": "/api",
+      "check": true
+    },
+    {
+      "src": "^/og-image/(.*)$",
+      "dest": "/api",
+      "check": true
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "^/((?!assets/|csc-dost|favicon|apple-touch-icon|og-banner|manifest\\.json|site\\.webmanifest|sw\\.js|ads\\.txt|google[a-zA-Z0-9_-]+\\.html|.*\\.(?:js|mjs|css|png|jpg|jpeg|gif|webp|avif|svg|ico|woff|woff2|ttf|eot|map|pdf|txt|json|webmanifest)$).*)$",
+      "dest": "/api",
+      "check": true
     }
   ]
 }

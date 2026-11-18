@@ -1,9 +1,10 @@
 // server.ts
+import "dotenv/config";
 import express from "express";
-import path5 from "path";
-import fs5 from "fs";
+import path4 from "path";
+import fs4 from "fs";
 import Razorpay from "razorpay";
-import crypto2 from "crypto";
+import crypto3 from "crypto";
 import sharp3 from "sharp";
 
 // src/utils/sarkariStatus.ts
@@ -907,6 +908,9 @@ function normalizeSarkariItem(raw, customNow) {
     migrationReviewReasons: auditReasons.length > 0 ? auditReasons : void 0
   };
 }
+function getDeduplicatedSarkariPosts(items) {
+  return items.filter((item) => !item.duplicateOfId && !KNOWN_DUPLICATE_MAP[item.id]);
+}
 
 // src/data/sarkariData.ts
 var SARKARI_CATEGORIES = {
@@ -930,6 +934,7 @@ function isPublishedSarkariItem(item) {
   return !item.publicationStatus || item.publicationStatus === "published";
 }
 function isIgnouItem(item) {
+  if (item.section === "jobs") return false;
   return item.category === "ignou" || item.institution === "IGNOU";
 }
 function isEducationSarkariItem(item) {
@@ -948,6 +953,616 @@ function parseSarkariDateSortValue(dateStr) {
   return y * 1e4 + mo * 100 + d;
 }
 var RAW_SARKARI_DATA = [
+  // 📰 DAILY OFFICIAL UPDATE VERIFIED 16/11/2026 IST (Approved & Published)
+  {
+    id: "jkssb-accounts-assistant-finance-answer-key-2026",
+    title: "JKSSB Accounts Assistant Answer Key Notice 2026",
+    category: "jkssb",
+    org: "JKSSB",
+    department: "Finance Department, Government of Jammu & Kashmir",
+    postType: "Result",
+    noticeType: "answer_key",
+    stage: "objection_window",
+    publicationStatus: "published",
+    isNew: true,
+    postDate: "15/11/2026",
+    documentDate: "15/11/2026",
+    startDate: "16/11/2026",
+    lastDate: "18/11/2026",
+    closingTime: "17:00 IST",
+    advertisementNo: "JKSSB-COE0EXAM(UT)/27/2026-03 (7987676) | Advt No. 10 of 2025 (Item No. 271)",
+    recruitmentYear: "2025",
+    shortInfo: "JKSSB released the Provisional Answer Key (Series A-D) for Accounts Assistant (Finance) OMR exam held 15/11/2026; offline objections open from 16/11/2026.",
+    ageLimit: "Not stated in the notice",
+    eligibility: "Candidates who appeared in the OMR Based Written Examination for Accounts Assistant (Finance Dept), Advt No. 10 of 2025 (Item No. 271) on 15/11/2026.",
+    totalPosts: "Not stated in the notice",
+    officialLink: "https://jkssb.nic.in/Pdf/PROV_ANSKEY_FAA_15112026.pdf",
+    officialNotificationUrl: "https://jkssb.nic.in/Pdf/PROV_ANSKEY_FAA_15112026.pdf",
+    officialApplicationUrl: "https://jkssb.nic.in/WhatsNew.html",
+    fees: {
+      genObc: "\u20B9200/- per question (Demand Draft in favour of Accounts Officer, JKSSB; refundable if genuine/correct)",
+      scSt: "\u20B9200/- per question (No category exemption stated in the notice)"
+    },
+    paymentInstructions: "\u20B9200/- per question via Demand Draft in favour of Accounts Officer, J&K Services Selection Board, submitted offline with Annexure B proforma and hard-copy proof.",
+    documentsRequired: [
+      "Filled Objection Proforma (Annexure B \u2014 separate page for each question)",
+      "Hard copies of documentary proof / evidence substantiating the objection",
+      "Demand Draft of \u20B9200/- per question in favour of Accounts Officer, JKSSB",
+      "Candidate bank account details (16-digit account number & IFSC) for refund processing"
+    ],
+    selectionProcess: [
+      "OMR Based Written Examination conducted on 15/11/2026 (120 questions across Series A, B, C, D).",
+      "Offline objection submission at JKSSB Jammu (Muthi, Akhnoor Road) or Srinagar (Zamzam Building, Rambagh) for 3 working days from 16/11/2026 (11:00 AM to 05:00 PM).",
+      "Final revision of Answer Key for all candidates upon Board verification of valid objections."
+    ],
+    faq: [
+      {
+        question: "How can candidates challenge the JKSSB Accounts Assistant (Finance) Provisional Answer Key 2026?",
+        answer: "Objections can be submitted in offline mode only at the JKSSB offices in Muthi, Akhnoor Road, Jammu or Zamzam Building, Rambagh, Srinagar during three working days starting from 16/11/2026 between 11:00 AM and 05:00 PM."
+      },
+      {
+        question: "What is the objection fee per question?",
+        answer: "Candidates must attach a Demand Draft of \u20B9200/- per question in favour of the Accounts Officer, J&K Services Selection Board, which is refundable if the objection is found genuine/correct."
+      }
+    ],
+    verificationStatus: "verified",
+    verification: {
+      status: "verified",
+      verificationStatus: "verified",
+      verifiedAt: "16/11/2026",
+      lastVerified: "16/11/2026",
+      officialNotificationUrl: "https://jkssb.nic.in/Pdf/PROV_ANSKEY_FAA_15112026.pdf",
+      officialApplicationUrl: "https://jkssb.nic.in/WhatsNew.html",
+      advertisementNo: "JKSSB-COE0EXAM(UT)/27/2026-03 (7987676) | Advt No. 10 of 2025",
+      recruitmentYear: "2025",
+      verifiedOpeningDate: "16/11/2026",
+      verifiedClosingDate: "18/11/2026",
+      closingTime: "17:00 IST",
+      sourceHistory: [
+        "Official JKSSB notice PROV_ANSKEY_FAA_15112026.pdf (dated 15/11/2026) verified on 16/11/2026."
+      ]
+    }
+  },
+  {
+    id: "jkssb-head-assistant-home-final-selection-2026",
+    title: "JKSSB Head Assistant Final Selection List 2026",
+    category: "jkssb",
+    org: "JKSSB",
+    department: "Home Department, Government of Jammu & Kashmir",
+    postType: "Result",
+    noticeType: "result",
+    stage: "result",
+    publicationStatus: "published",
+    isNew: true,
+    postDate: "16/11/2026",
+    documentDate: "12/11/2026",
+    startDate: "16/11/2026",
+    lastDate: "Informational",
+    advertisementNo: "Notification No. 36-Selection of 2026 | JKSSB-Scry/23/2025-03 (E-7731861) | Advt 06/2020 Item 214",
+    recruitmentYear: "2020",
+    shortInfo: "JKSSB uploaded the Final Selection List (Notification 36-Selection of 2026) for 01 Head Assistant post (Home Dept, District Reasi) under Advt 06/2020.",
+    ageLimit: "Not stated in the notice",
+    eligibility: "Deemed Graduate from Defence Services / recognized University; retired JCO or equivalent rank from Navy/Air Force; preferably knowledge of Accounts; exemplary character per discharge book; qualified entrance test.",
+    totalPosts: "01 Post (District Reasi: OM 01)",
+    officialLink: "https://jkssb.nic.in/Pdf/Final_Selection_list_HA_16112026.pdf",
+    officialNotificationUrl: "https://jkssb.nic.in/Pdf/Final_Selection_list_HA_16112026.pdf",
+    officialApplicationUrl: "https://jkssb.nic.in/WhatsNew.html",
+    fees: {
+      genObc: "Not stated in the notice",
+      scSt: "Not stated in the notice"
+    },
+    documentsRequired: [
+      "Original certificates and self-declaration already submitted during DV (formal recommendation forwarded separately to Home Department)"
+    ],
+    selectionProcess: [
+      "OMR based written examination held on 02/02/2025; result/score-sheet notified on 15/04/2025.",
+      "Document Verification conducted on 07/05/2025 and supplementary DV on 17/06/2025.",
+      "Provisional Selection List notified on 05/06/2026; Final Selection List approved in 364th Board meeting on 16/09/2026 and notified on 12/11/2026 (uploaded 16/11/2026)."
+    ],
+    faq: [
+      {
+        question: "How many candidates were selected for JKSSB Head Assistant (Advt 06/2020 Item 214)?",
+        answer: "One candidate (Roll No. 2130001, Score 64.50) was selected under the Open Merit (OM) category for District Cadre Reasi. The OM Waiting List remained unfilled due to non-availability of a suitable candidate."
+      }
+    ],
+    verificationStatus: "verified",
+    verification: {
+      status: "verified",
+      verificationStatus: "verified",
+      verifiedAt: "16/11/2026",
+      lastVerified: "16/11/2026",
+      officialNotificationUrl: "https://jkssb.nic.in/Pdf/Final_Selection_list_HA_16112026.pdf",
+      officialApplicationUrl: "https://jkssb.nic.in/WhatsNew.html",
+      advertisementNo: "Notification No. 36-Selection of 2026 | Advt 06/2020 Item 214",
+      recruitmentYear: "2020",
+      sourceHistory: [
+        "Official JKSSB scanned PDF Final_Selection_list_HA_16112026.pdf (notified 12/11/2026, uploaded 16/11/2026) verified visually on 16/11/2026."
+      ]
+    }
+  },
+  {
+    id: "jkssb-telephone-operator-final-selection-2026",
+    title: "JKSSB Telephone Operator Selection List 2026",
+    category: "jkssb",
+    org: "JKSSB",
+    department: "Estates Department, Government of Jammu & Kashmir",
+    postType: "Result",
+    noticeType: "result",
+    stage: "result",
+    publicationStatus: "published",
+    isNew: true,
+    postDate: "16/11/2026",
+    documentDate: "12/11/2026",
+    startDate: "16/11/2026",
+    lastDate: "Informational",
+    advertisementNo: "Notification No. 38-Selection of 2026 | JKSSB-Scry/22/2025-06 (E-7731805) | Advt 04/2022 Item 130",
+    recruitmentYear: "2022",
+    shortInfo: "JKSSB uploaded the Final Selection List (Notification 38-Selection of 2026) for 03 Telephone Operator posts in Estates Department under Advt 04 of 2022.",
+    ageLimit: "Not stated in the notice",
+    eligibility: "Matric with ITI/diploma in electronics and communication trade.",
+    totalPosts: "03 Posts (UT Cadre: OM 02, SC 01)",
+    officialLink: "https://jkssb.nic.in/Pdf/Final_Selection_list_TelephoneOperator_16112026.pdf",
+    officialNotificationUrl: "https://jkssb.nic.in/Pdf/Final_Selection_list_TelephoneOperator_16112026.pdf",
+    officialApplicationUrl: "https://jkssb.nic.in/WhatsNew.html",
+    fees: {
+      genObc: "Not stated in the notice",
+      scSt: "Not stated in the notice"
+    },
+    documentsRequired: [
+      "Verification of original certificates by Indenting Department (Estates Department) upon formal recommendation"
+    ],
+    selectionProcess: [
+      "OMR based written examination held on 02/03/2025; result declared on 14/05/2025.",
+      "Document Verification held on 04/06/2025 and supplementary DV from 24/06/2025 to 25/06/2025.",
+      "Provisional Selection List notified on 26/05/2026; Final Selection List approved in 364th Board meeting on 16/09/2026 and notified on 12/11/2026 (uploaded 16/11/2026)."
+    ],
+    faq: [
+      {
+        question: "How many vacancies are covered in the JKSSB Telephone Operator Final Selection List 2026?",
+        answer: "Three UT Cadre posts (02 Open Merit and 01 SC) in the Estates Department under Advt No. 04 of 2022 (Item No. 130) are covered, with all 3 candidates selected in Annexure-A."
+      }
+    ],
+    verificationStatus: "verified",
+    verification: {
+      status: "verified",
+      verificationStatus: "verified",
+      verifiedAt: "16/11/2026",
+      lastVerified: "16/11/2026",
+      officialNotificationUrl: "https://jkssb.nic.in/Pdf/Final_Selection_list_TelephoneOperator_16112026.pdf",
+      officialApplicationUrl: "https://jkssb.nic.in/WhatsNew.html",
+      advertisementNo: "Notification No. 38-Selection of 2026 | Advt 04/2022 Item 130",
+      recruitmentYear: "2022",
+      sourceHistory: [
+        "Official JKSSB scanned PDF Final_Selection_list_TelephoneOperator_16112026.pdf (notified 12/11/2026, uploaded 16/11/2026) verified visually on 16/11/2026."
+      ]
+    }
+  },
+  {
+    id: "jkssb-screen-technician-final-selection-2026",
+    title: "JKSSB Screen Technician Selection List 2026",
+    category: "jkssb",
+    org: "JKSSB",
+    department: "Health & Medical Education Department, Government of Jammu & Kashmir",
+    postType: "Result",
+    noticeType: "result",
+    stage: "result",
+    publicationStatus: "published",
+    isNew: true,
+    postDate: "16/11/2026",
+    documentDate: "12/11/2026",
+    startDate: "16/11/2026",
+    lastDate: "Informational",
+    advertisementNo: "Notification No. 37-Selection of 2026 | JKSSB-Scry/21/2025-03 (E-7731566) | Advt 02/2021 Item 309",
+    recruitmentYear: "2021",
+    shortInfo: "JKSSB issued the Final Selection List (Notification 37-Selection of 2026) for 01 Screen Technician post (H&ME Dept, Div. Jammu) under Advt 02 of 2021.",
+    ageLimit: "Not stated in the notice",
+    eligibility: "Matric (as per SRO-20).",
+    totalPosts: "01 Post (Div. Jammu: OM 01)",
+    officialLink: "https://jkssb.nic.in/Pdf/Final_Selection_list_ScreenTechnician_16112026.pdf",
+    officialNotificationUrl: "https://jkssb.nic.in/Pdf/Final_Selection_list_ScreenTechnician_16112026.pdf",
+    officialApplicationUrl: "https://jkssb.nic.in/WhatsNew.html",
+    fees: {
+      genObc: "Not stated in the notice",
+      scSt: "Not stated in the notice"
+    },
+    documentsRequired: [
+      "Original Matric/qualification certificates subject to verification by Health & Medical Education Department"
+    ],
+    selectionProcess: [
+      "OMR based written examination held on 09/02/2025; result declared on 18/04/2025.",
+      "Document Verification held on 08/05/2025 and supplementary DV w.e.f. 19/06/2025.",
+      "Provisional Selection List notified on 04/12/2025; Final Selection List approved on 16/09/2026 and notified on 12/11/2026 (uploaded 16/11/2026)."
+    ],
+    faq: [
+      {
+        question: "Does Notification No. 37-Selection of 2026 include a waiting list for Screen Technician?",
+        answer: "Yes, Annexure-A lists 01 selected candidate under OM (Roll No. 1320289, Score 74.00) and 01 candidate in the OM Waiting List (Roll No. 1400051, Score 73.75)."
+      }
+    ],
+    verificationStatus: "verified",
+    verification: {
+      status: "verified",
+      verificationStatus: "verified",
+      verifiedAt: "16/11/2026",
+      lastVerified: "16/11/2026",
+      officialNotificationUrl: "https://jkssb.nic.in/Pdf/Final_Selection_list_ScreenTechnician_16112026.pdf",
+      officialApplicationUrl: "https://jkssb.nic.in/WhatsNew.html",
+      advertisementNo: "Notification No. 37-Selection of 2026 | Advt 02/2021 Item 309",
+      recruitmentYear: "2021",
+      sourceHistory: [
+        "Official JKSSB scanned PDF Final_Selection_list_ScreenTechnician_16112026.pdf (notified 12/11/2026, uploaded 16/11/2026) verified visually on 16/11/2026."
+      ]
+    }
+  },
+  {
+    id: "ssc-cpo-si-2026-paper1-city-admit-card",
+    title: "SSC SI CPO 2026 Paper-I City & Admit Card",
+    category: "ssc_jobs",
+    org: "SSC",
+    department: "Staff Selection Commission (SSC)",
+    postType: "Job",
+    noticeType: "admit_card",
+    stage: "admit_card",
+    publicationStatus: "published",
+    isNew: true,
+    postDate: "13/11/2026",
+    documentDate: "13/11/2026",
+    startDate: "23/11/2026",
+    lastDate: "28/11/2026",
+    advertisementNo: "Not stated in the notice (SI in Delhi Police and CAPFs Exam, 2026 Paper-I)",
+    recruitmentYear: "2026",
+    shortInfo: "SSC Paper-I city status is live for SI Delhi Police & CAPFs Exam 2026 (23\u201328 Nov); affected candidates must upload Class 10 marksheet before 20 Nov.",
+    ageLimit: "Not stated in the notice",
+    eligibility: "Candidates scheduled for Paper-I of Sub-Inspector in Delhi Police and CAPFs Examination, 2026. ~21,000 candidates with matriculation discrepancies must upload Class 10 marksheet before 20/11/2026.",
+    totalPosts: "Not stated in the notice",
+    officialLink: "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/City%20live%20CPO%20Exam%20notice_13112026.pdf",
+    officialNotificationUrl: "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/City%20live%20CPO%20Exam%20notice_13112026.pdf",
+    officialApplicationUrl: "https://ssc.gov.in/",
+    fees: {
+      genObc: "Not stated in the notice",
+      scSt: "Not stated in the notice"
+    },
+    documentsRequired: [
+      "SSC Candidate Portal Login credentials (ssc.gov.in)",
+      "Class 10 marksheet copy (mandatory upload before 20/11/2026 for ~21,000 candidates with matriculation discrepancies)",
+      "Printed Admission Certificate (available 2-3 days prior to exam date)"
+    ],
+    selectionProcess: [
+      "Log in at https://ssc.gov.in/ to view Paper-I Examination City details.",
+      "Affected candidates (~21,000) with matriculation discrepancies must upload their Class 10 marksheet via City Live / Admit Card Status page before 20/11/2026.",
+      "Download Admission Certificate 2\u20133 days before respective exam date (Paper-I scheduled 23/11/2026 to 28/11/2026)."
+    ],
+    faq: [
+      {
+        question: "When will SSC SI CPO 2026 Paper-I Admit Card be available?",
+        answer: "According to the SSC notice dated 13/11/2026, Paper-I is scheduled from 23 to 28 November 2026 and the Admission Certificate will tentatively be available 2\u20133 days prior to each candidate\u2019s exam date."
+      },
+      {
+        question: "Who needs to upload the Class 10 marksheet before 20 November 2026?",
+        answer: "Approximately 21,000 candidates whose matriculation qualification details showed discrepancies have been provisionally permitted to appear and must upload their Class 10 marksheet on ssc.gov.in before 20/11/2026."
+      }
+    ],
+    verificationStatus: "verified",
+    verification: {
+      status: "verified",
+      verificationStatus: "verified",
+      verifiedAt: "16/11/2026",
+      lastVerified: "16/11/2026",
+      officialNotificationUrl: "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/City%20live%20CPO%20Exam%20notice_13112026.pdf",
+      officialApplicationUrl: "https://ssc.gov.in/",
+      recruitmentYear: "2026",
+      verifiedOpeningDate: "23/11/2026",
+      verifiedClosingDate: "28/11/2026",
+      sourceHistory: [
+        "Official SSC notice City live CPO Exam notice_13112026.pdf (dated 13/11/2026) verified on 16/11/2026."
+      ]
+    }
+  },
+  {
+    id: "cus-result-472-ug-4th-sem-backlog-2026",
+    title: "CUS Result 472: UG 4th Sem Backlog (2022-23)",
+    category: "cluster_univ",
+    org: "Cluster University Srinagar",
+    department: "Office of the Controller of Examinations, Cluster University Srinagar",
+    postType: "Result",
+    noticeType: "result",
+    stage: "result",
+    publicationStatus: "published",
+    isNew: true,
+    postDate: "16/11/2026",
+    documentDate: "16/11/2026",
+    startDate: "16/11/2026",
+    lastDate: "Informational",
+    advertisementNo: "Result Notification No. 472 | CUS/Result/1/IV/472/26",
+    recruitmentYear: "2026",
+    session: "Batches 2022\u20132023 (FYUP NEP-2020)",
+    shortInfo: "Cluster University Srinagar declared Result Notification No. 472 (dated 16/11/2026) for UG 4th Semester Backlog Batches 2022\u20132023 under FYUP NEP-2020.",
+    ageLimit: "Not stated in the notice",
+    eligibility: "Candidates of backlog batches 2022\u20132023 of U.G. 4th Semester under FYUP of NEP\u20132020.",
+    totalPosts: "Not stated in the notice",
+    officialLink: "https://www.cusrinagar.edu.in/foldermanager/notification/f7c522d047b94ca1b28cb591f0e46d4a.pdf",
+    officialNotificationUrl: "https://www.cusrinagar.edu.in/foldermanager/notification/f7c522d047b94ca1b28cb591f0e46d4a.pdf",
+    officialApplicationUrl: "https://www.cusrinagar.edu.in/",
+    fees: {
+      genObc: "Not stated in the notice",
+      scSt: "Not stated in the notice"
+    },
+    documentsRequired: [
+      "University Registration / Roll Number to check result at www.cusrinagar.edu.in",
+      "For LO or NA status rectification: Report to the university within 15 days of publication"
+    ],
+    selectionProcess: [
+      "Check Result Notification No. 472 (CUS/Result/1/IV/472/26) on www.cusrinagar.edu.in.",
+      "Students with LO or NA status not updated within 15 days must report to the university for rectification.",
+      "No representation is entertained after 1 year from the date of the result notification."
+    ],
+    faq: [
+      {
+        question: "What should students with LO or NA status in CUS Result 472 do?",
+        answer: "Students whose results show LO or NA and are not updated within 15 days of publication (16/11/2026) must report to Cluster University Srinagar for rectification."
+      }
+    ],
+    verificationStatus: "verified",
+    verification: {
+      status: "verified",
+      verificationStatus: "verified",
+      verifiedAt: "16/11/2026",
+      lastVerified: "16/11/2026",
+      officialNotificationUrl: "https://www.cusrinagar.edu.in/foldermanager/notification/f7c522d047b94ca1b28cb591f0e46d4a.pdf",
+      officialApplicationUrl: "https://www.cusrinagar.edu.in/",
+      advertisementNo: "Result Notification No. 472 | CUS/Result/1/IV/472/26",
+      recruitmentYear: "2026",
+      sourceHistory: [
+        "Official Cluster University Srinagar PDF f7c522d047b94ca1b28cb591f0e46d4a.pdf (dated 16/11/2026) verified on 16/11/2026."
+      ]
+    }
+  },
+  {
+    id: "ignou-piu-consultants-recruitment-2026",
+    title: "IGNOU PIU Contractual Consultants Hiring 2026",
+    category: "jobs",
+    section: "jobs",
+    org: "IGNOU",
+    department: "Administration Division, Public Information Unit (PIU), IGNOU, New Delhi",
+    postType: "Job",
+    noticeType: "recruitment",
+    stage: "recruitment",
+    publicationStatus: "published",
+    isNew: true,
+    postDate: "16/11/2026",
+    startDate: "16/11/2026",
+    lastDate: "11/12/2026",
+    advertisementNo: "Not stated in the notice",
+    recruitmentYear: "2026",
+    shortInfo: "IGNOU invited offline applications (last date 11/12/2026) for 03 full-time contractual Consultants in Public Information Unit (PIU), New Delhi.",
+    ageLimit: "Maximum engagement 2 years or up to attaining age of 70 years, whichever is earlier (age as on 11/12/2026)",
+    eligibility: "PG Diploma in Photography / Advertising & PR / Journalism OR relevant Master\u2019s Degree (Mass Communication, Journalism, Convergent Journalism, Corporate Communication, MBA Marketing, etc.) from a recognised University/Institution plus required experience.",
+    totalPosts: "03 Posts (Photography & Digital Content: 01 | Social Media & Communication: 01 | Journalism: 01)",
+    officialLink: "https://www.ignou.ac.in/viewFile/AD/notification/Job-AD.pdf",
+    officialNotificationUrl: "https://www.ignou.ac.in/viewFile/AD/notification/Job-AD.pdf",
+    officialApplicationUrl: "https://www.ignou.ac.in/announcements/0?nav=1",
+    fees: {
+      genObc: "Not stated in the notice",
+      scSt: "Not stated in the notice"
+    },
+    departmentBreakdown: [
+      {
+        department: "Public Information Unit (PIU), IGNOU New Delhi",
+        postName: "Consultant - Photography & Digital Content Creation",
+        posts: 1,
+        qualification: "PG Diploma in Photography or Master\u2019s Degree in Mass Communication/Journalism or related field + DSLR/mirrorless/drone/editing & Reels/Shorts experience",
+        fee: "\u20B940,000\u201360,000/month"
+      },
+      {
+        department: "Public Information Unit (PIU), IGNOU New Delhi",
+        postName: "Consultant - Social Media & Communication",
+        posts: 1,
+        qualification: "PG Diploma in Advertising & PR or Master\u2019s Degree in Mass Comm/Convergent Journalism/New Media/Marketing or related field + SEO/Meta Ads/LinkedIn skills",
+        fee: "\u20B940,000\u201360,000/month"
+      },
+      {
+        department: "Public Information Unit (PIU), IGNOU New Delhi",
+        postName: "Consultant - Journalism",
+        posts: 1,
+        qualification: "PG Diploma in Journalism or Master\u2019s Degree in Mass Communication/Journalism or related field + English/Hindi communication, copyediting, Canva & AI tools",
+        fee: "\u20B940,000\u201360,000/month"
+      }
+    ],
+    documentsRequired: [
+      "Filled Application Form (Pages 4\u20135 of Job-AD.pdf) with recent passport-size photograph",
+      "Self-attested copies of educational qualifications, Last Pay Certificate & Experience Certificates",
+      "Signed Declaration of Vigilance/Criminal Proceedings (Page 6 of Job-AD.pdf)"
+    ],
+    selectionProcess: [
+      "Offline application submission by 11/12/2026 to Deputy Registrar, Recruitment Cell, Admin Division, Block-7, Room No. 13, IGNOU, Maidan Garhi, New Delhi \u2013 110068.",
+      "Interview / Selection Committee review (No TA/DA paid for interview; remuneration \u20B940,000\u201360,000/- decided by Selection Committee)."
+    ],
+    faq: [
+      {
+        question: "What is the last date and address to apply for IGNOU PIU Consultants 2026?",
+        answer: "Duly completed offline applications with self-attested testimonials must reach the Deputy Registrar, Recruitment Cell, Administration Division, Block-7, Room No. 13, IGNOU, Maidan Garhi, New Delhi \u2013 110068 on or before 11 December 2026."
+      }
+    ],
+    verificationStatus: "verified",
+    verification: {
+      status: "verified",
+      verificationStatus: "verified",
+      verifiedAt: "16/11/2026",
+      lastVerified: "16/11/2026",
+      officialNotificationUrl: "https://www.ignou.ac.in/viewFile/AD/notification/Job-AD.pdf",
+      officialApplicationUrl: "https://www.ignou.ac.in/announcements/0?nav=1",
+      recruitmentYear: "2026",
+      verifiedOpeningDate: "16/11/2026",
+      verifiedClosingDate: "11/12/2026",
+      sourceHistory: [
+        "Official IGNOU Administration Division PDF Job-AD.pdf verified on 16/11/2026 (last date 11/12/2026)."
+      ]
+    }
+  },
+  {
+    id: "ibps-crp-po-mt-xv-reserve-list-2026",
+    title: "IBPS PO/MT-XV Reserve List Allotment 2026",
+    category: "banking_jobs",
+    org: "IBPS",
+    department: "Institute of Banking Personnel Selection (IBPS)",
+    postType: "Result",
+    noticeType: "result",
+    stage: "result",
+    publicationStatus: "published",
+    isNew: true,
+    postDate: "16/11/2026",
+    documentDate: "16/11/2026",
+    startDate: "16/11/2026",
+    lastDate: "15/12/2026",
+    advertisementNo: "CRP PO/MT-XV (Vacancies of 2026-27)",
+    recruitmentYear: "2026",
+    shortInfo: "IBPS issued the CRP PO/MT-XV Reserve List provisional allotment notice (16/11/2026) with category cut-offs; allotment list due by 15/12/2026.",
+    ageLimit: "Not stated in the notice",
+    eligibility: "Reserve List candidates under CRP PO/MT-XV (based on merit-cum-preference and actual vacancies provided by Participating Public Sector Banks).",
+    totalPosts: "Not stated in the notice (Cut-offs out of 100: OBC(NCL) 43.44, EWS 42.84, UR 45.31; SC/ST/PwBD marked NA)",
+    officialLink: "https://www.ibps.in/wp-content/uploads/PO_MT_XV_WEB_NOTICE_PHASE_3_non_printable.pdf",
+    officialNotificationUrl: "https://www.ibps.in/wp-content/uploads/PO_MT_XV_WEB_NOTICE_PHASE_3_non_printable.pdf",
+    officialApplicationUrl: "https://www.ibps.in/index.php/management-trainees-xv/",
+    fees: {
+      genObc: "Not stated in the notice",
+      scSt: "Not stated in the notice"
+    },
+    selectionProcess: [
+      "Provisional allotment from Reserve List done on 16/11/2026 based on merit-cum-preference (tie-breaker: senior in age by DOB).",
+      "Individual intimation sent to registered email and mobile number; full list to be displayed on www.ibps.in on or before 15/12/2026.",
+      "Offer of appointment and document/biometric verification to be issued in due course by the respective allotted Participating Bank."
+    ],
+    faq: [
+      {
+        question: "What are the minimum combined scores for the IBPS CRP PO/MT-XV Reserve List allotment dated 16/11/2026?",
+        answer: "Per the official notice, minimum combined scores (out of 100) are OBC(NCL): 43.44, EWS: 42.84, and UR: 45.31. SC, ST, HI, OC, VI, and ID show NA (No Vacancy / No Candidate Available)."
+      }
+    ],
+    verificationStatus: "verified",
+    verification: {
+      status: "verified",
+      verificationStatus: "verified",
+      verifiedAt: "16/11/2026",
+      lastVerified: "16/11/2026",
+      officialNotificationUrl: "https://www.ibps.in/wp-content/uploads/PO_MT_XV_WEB_NOTICE_PHASE_3_non_printable.pdf",
+      officialApplicationUrl: "https://www.ibps.in/index.php/management-trainees-xv/",
+      advertisementNo: "CRP PO/MT-XV (Vacancies of 2026-27)",
+      recruitmentYear: "2026",
+      sourceHistory: [
+        "Official IBPS PDF PO_MT_XV_WEB_NOTICE_PHASE_3_non_printable.pdf (dated 16/11/2026) verified on 16/11/2026."
+      ]
+    }
+  },
+  {
+    id: "ibps-crp-spl-xv-reserve-list-2026",
+    title: "IBPS SPL-XV Reserve List Allotment 2026",
+    category: "banking_jobs",
+    org: "IBPS",
+    department: "Institute of Banking Personnel Selection (IBPS)",
+    postType: "Result",
+    noticeType: "result",
+    stage: "result",
+    publicationStatus: "published",
+    isNew: true,
+    postDate: "16/11/2026",
+    documentDate: "16/11/2026",
+    startDate: "16/11/2026",
+    lastDate: "15/12/2026",
+    advertisementNo: "CRP SPL-XV (Vacancies of 2026-27)",
+    recruitmentYear: "2026",
+    shortInfo: "IBPS released the CRP SPL-XV Specialist Officer Reserve List allotment notice (16/11/2026) with post-wise cut-off scores; list due by 15/12/2026.",
+    ageLimit: "Not stated in the notice",
+    eligibility: "Reserve List candidates under CRP-SPL-XV for Specialist Officers in Participating Public Sector Banks.",
+    totalPosts: "Not stated in the notice (Cut-offs: I.T. Officer OBC 49.00, Rajbhasha ST 47.73, Marketing OBC 72.07; AFO/Law/HR: NA)",
+    officialLink: "https://www.ibps.in/wp-content/uploads/SPL_XV_PHASE-III_WEB_NOTICE_NON_PRINTABLE.pdf",
+    officialNotificationUrl: "https://www.ibps.in/wp-content/uploads/SPL_XV_PHASE-III_WEB_NOTICE_NON_PRINTABLE.pdf",
+    officialApplicationUrl: "https://www.ibps.in/index.php/specialist-officers-xv/",
+    fees: {
+      genObc: "Not stated in the notice",
+      scSt: "Not stated in the notice"
+    },
+    selectionProcess: [
+      "Provisional allotment under Reserve List notified on 16/11/2026 with individual email/SMS intimation.",
+      "Post-wise provisionally allotted candidates list to be displayed on www.ibps.in on or before 15/12/2026.",
+      "Allotted Participating Bank handles verification, offer of appointment, and joining formalities."
+    ],
+    faq: [
+      {
+        question: "Which Specialist Officer posts had Reserve List allotment in IBPS CRP SPL-XV on 16/11/2026?",
+        answer: "Annexure I reports minimum scores for I.T. Officer Scale-I (OBC 49.00), Rajbhasha Adhikari Scale-I (ST 47.73), and Marketing Officer Scale-I (OBC 72.07), while Agricultural Field Officer, Law Officer, and HR/Personnel Officer are marked NA."
+      }
+    ],
+    verificationStatus: "verified",
+    verification: {
+      status: "verified",
+      verificationStatus: "verified",
+      verifiedAt: "16/11/2026",
+      lastVerified: "16/11/2026",
+      officialNotificationUrl: "https://www.ibps.in/wp-content/uploads/SPL_XV_PHASE-III_WEB_NOTICE_NON_PRINTABLE.pdf",
+      officialApplicationUrl: "https://www.ibps.in/index.php/specialist-officers-xv/",
+      advertisementNo: "CRP SPL-XV (Vacancies of 2026-27)",
+      recruitmentYear: "2026",
+      sourceHistory: [
+        "Official IBPS PDF SPL_XV_PHASE-III_WEB_NOTICE_NON_PRINTABLE.pdf (dated 16/11/2026) verified on 16/11/2026."
+      ]
+    }
+  },
+  {
+    id: "ju-ug-3rd-sem-nep-centre-shift-2026",
+    title: "Jammu Univ UG 3rd Sem NEP Centre Shift Notice",
+    category: "exam_forms",
+    section: "education",
+    org: "University of Jammu",
+    department: "Controller of Examinations, University of Jammu",
+    postType: "Admission",
+    noticeType: "date_sheet",
+    stage: "admit_card",
+    publicationStatus: "published",
+    isNew: true,
+    postDate: "16/11/2026",
+    documentDate: "13/11/2026",
+    startDate: "25/11/2026",
+    lastDate: "25/11/2026",
+    advertisementNo: "No. Exams./Sem-III/2026/1531-1535 (Dated 13/11/2026)",
+    recruitmentYear: "2026",
+    session: "UG 3rd Semester NEP 2026-2027",
+    shortInfo: "University of Jammu shifted UG 3rd Sem NEP exam centres (exams from 25/11/2026) from GDC Boys Udhampur Hall-I & J to GDC Neeli Nallah Hall B & C.",
+    ageLimit: "Not stated in the notice",
+    eligibility: "Concerned candidates of Undergraduate Four Year Degree (General) Course 3rd Semester (NEP) Examination 2026-2027 whose roll numbers are listed in the centre shift notice.",
+    totalPosts: "Not stated in the notice (Centre shift from GDC Boys Udhampur Hall-I & Hall-J to GDC Neeli Nallah Hall B & Hall C)",
+    officialLink: "https://www.coeju.com/det.aspx?type=2&id=4934",
+    officialNotificationUrl: "https://www.coeju.com/det.aspx?type=2&id=4934",
+    officialApplicationUrl: "https://www.coeju.com/",
+    fees: {
+      genObc: "Not stated in the notice",
+      scSt: "Not stated in the notice"
+    },
+    selectionProcess: [
+      "Examinations commence from 25/11/2026.",
+      "Affected candidates previously allotted Centre No. 26 (GDC Boys Udhampur Hall-I) and GDC Boys Udhampur Hall-J must report to GDC Neeli Nallah Hall B and Hall C respectively.",
+      "Download the official notice PDF from coeju.com (det.aspx?type=2&id=4934) to confirm exact roll number ranges."
+    ],
+    faq: [
+      {
+        question: "When do the University of Jammu UG 3rd Semester NEP examinations begin?",
+        answer: "Per the University of Jammu notification dated 13/11/2026 (uploaded on coeju.com on 16/11/2026), examinations commence from 25/11/2026."
+      }
+    ],
+    verificationStatus: "verified",
+    verification: {
+      status: "verified",
+      verificationStatus: "verified",
+      verifiedAt: "16/11/2026",
+      lastVerified: "16/11/2026",
+      officialNotificationUrl: "https://www.coeju.com/det.aspx?type=2&id=4934",
+      officialApplicationUrl: "https://www.coeju.com/",
+      advertisementNo: "No. Exams./Sem-III/2026/1531-1535 (Dated 13/11/2026)",
+      recruitmentYear: "2026",
+      sourceHistory: [
+        "Official University of Jammu notice 11202616039172.pdf via coeju.com/det.aspx?type=2&id=4934 (dated 13/11/2026, uploaded 16/11/2026) verified on 16/11/2026."
+      ]
+    }
+  },
   // 🎓 VERIFIED IGNOU STUDENT NOTIFICATIONS (Verified 14/11/2026 IST from ignou.ac.in/announcements/0)
   {
     id: "ignou-rc-srinagar-campus-placement-drive-nov-2026",
@@ -2294,15 +2909,17 @@ var RAW_SARKARI_DATA = [
       scSt: "\u20B90/-"
     },
     selectionProcess: [
-      "Shortlisting of applications based on JEE (Mains) 2026 CRL ranks.",
-      "Services Selection Board (SSB) Interview (5-Stage Selection Process).",
-      "Special Medical Examination Board (SMB) Medical Examination."
+      "Shortlisting of applications based on JEE (Mains) 2026 Common Rank List (CRL) ranks.",
+      "Two-stage Services Selection Board (SSB) Interview (5 days) at Selection Centres (Prayagraj, Bhopal, Bengaluru, or Jalandhar) comprising Psychological Tests, GTO Tasks, and Personal Interview.",
+      "Special Medical Examination Board (SMB) Medical Examination at designated Military Hospitals.",
+      "Final Merit List and 4-year training (1 year basic military training + 3 years engineering degree course) leading to Permanent Commission in the rank of Lieutenant (no CEE or physical rally is conducted)."
     ],
     documentsRequired: [
       "Class 10th Certificate / Marksheet showing Date of Birth.",
-      "Class 12th Marksheet with PCM marks verification.",
-      "JEE (Mains) 2026 Scorecard / Rank card.",
-      "Valid Photo Identity Proof (Aadhaar / Voter ID / Passport)."
+      "Class 12th Marksheet with PCM marks verification (minimum 60% aggregate).",
+      "JEE (Mains) 2026 Scorecard / CRL Rank card.",
+      "Valid Photo Identity Proof (Aadhaar / Voter ID / Passport).",
+      "Clear passport-size photograph (5\u201320 KB) and signature (5\u201310 KB) as per JIA portal specifications."
     ],
     verificationStatus: "verified",
     verification: {
@@ -2348,7 +2965,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "1,033 Posts",
     officialLink: "https://jkb.bank.in/",
     officialNotificationUrl: "/assets/aistudio/JK_BANK_b62482f5.pdf",
-    officialApplicationUrl: "https://jkb.bank.in/",
+    officialApplicationUrl: "https://ibpsreg.ibps.in/jkbvpocto26/",
     fees: {
       genObc: "\u20B9800/- (excluding GST) for General, EWS and other candidates",
       scSt: "\u20B9600/- (excluding GST) for SC / ST / SEBC / PwBD / ESM candidates"
@@ -2388,9 +3005,9 @@ var RAW_SARKARI_DATA = [
       status: "verified",
       verificationStatus: "verified",
       verifiedAt: "07/11/2026",
-      lastVerified: "07/11/2026",
+      lastVerified: "16/11/2026",
       officialNotificationUrl: "/assets/aistudio/JK_BANK_b62482f5.pdf",
-      officialApplicationUrl: "https://jkb.bank.in/",
+      officialApplicationUrl: "https://ibpsreg.ibps.in/jkbvpocto26/",
       advertisementNo: "JKB/HR/Rectt/2026-493",
       recruitmentYear: "2026",
       verifiedOpeningDate: "07/11/2026",
@@ -2399,7 +3016,8 @@ var RAW_SARKARI_DATA = [
       feePaymentDeadline: "26/11/2026 (23:59 IST)",
       sourceHistory: [
         "Official Advertisement Notification No: JKB/HR/Rectt/2026-493 dated 07-11-2026 issued by General Manager - HR, Corporate Headquarters, M.A. Road, Srinagar, J&K Bank Ltd.",
-        "Recruitment of Banking Associates - UT of J&K (1,033 vacancies). Online exam conducted by IBPS."
+        "Recruitment of Banking Associates - UT of J&K (1,033 vacancies). Online exam conducted by IBPS.",
+        "Verified direct IBPS online application registration link (https://ibpsreg.ibps.in/jkbvpocto26/) on 16/11/2026."
       ]
     },
     isNew: true
@@ -2751,7 +3369,7 @@ var RAW_SARKARI_DATA = [
     department: "Staff Selection Commission (SSC)",
     postType: "Result",
     status: "Closed",
-    shortInfo: "Staff Selection Commission (SSC) uploaded the Tentative Answer Keys along with candidates\u2019 Response Sheets for the Combined Graduate Level Examination (Tier-I), 2026. The online representation and objection challenge window (\u20B950 per question) officially closed on 07th November 2026 at 21:00 hrs IST.",
+    shortInfo: "Staff Selection Commission (SSC) uploaded the Tentative Answer Keys along with candidates\u2019 Response Sheets for the Combined Graduate Level Examination (Tier-I), 2026 on 04/11/2026 (21:00 IST). The online representation and objection challenge window (\u20B950 per question) officially closed on 07th November 2026 at 21:00 hrs IST.",
     ageLimit: "Not Applicable (Answer Key & Challenge Window Closed)",
     eligibility: "All candidates who appeared in the SSC Combined Graduate Level (Tier-I) Computer Based Examination 2026.",
     totalPosts: "17,727 Posts Tier-I Exam Key & Response Sheets",
@@ -3026,20 +3644,21 @@ var RAW_SARKARI_DATA = [
   // 🇮🇳 STAFF SELECTION COMMISSION (SSC) CPO SI PET/PST RESULT & PAPER-II NOTICE (30 OCTOBER 2026)
   {
     id: "ssc-cpo-pet-pst-result-paper-2-exam-date-2026",
-    title: "SSC Sub-Inspector in Delhi Police & CAPFs Exam 2026: PET/PST Result Declared & Paper-II Exam Date Announced",
+    title: "SSC Sub-Inspector in Delhi Police & CAPFs Exam 2025: PET/PST Result, Corrigendum (16 Nov) & Paper-II Date (28 Nov 2026)",
     category: "ssc_jobs",
     postDate: "30/10/2026",
+    documentDate: "16/11/2026",
     startDate: "30/10/2026",
     lastDate: "28/11/2026",
     closingTime: "17:00 IST",
-    advertisementNo: "F.No- E/13/2025-C-2 (SI in Delhi Police & CAPFs)",
-    recruitmentYear: "2026",
-    shortInfo: "Staff Selection Commission (SSC) has officially declared the Physical Endurance Test (PET) and Physical Standard Test (PST) results for Sub-Inspector in Delhi Police and Central Armed Police Forces (CAPFs) Examination. A total of 10,676 candidates have qualified for Paper-II, which is scheduled to be conducted on 28th November 2026 in Computer-Based Examination mode.",
+    advertisementNo: "F.No- E/13/2025-C-2 (SI in Delhi Police & CAPFs Exam 2025)",
+    recruitmentYear: "2025",
+    shortInfo: "SSC declared PET/PST results for SI in Delhi Police & CAPFs Exam 2025 (10,676 qualified for Paper-II on 28/11/2026) and issued a Corrigendum on 16/11/2026 amending Para 5 petitioner roll numbers (inserting 225130051041, 225130047683, 625130000489; deleting 225130005272; correcting 225130058585 to 225130058588).",
     ageLimit: "20 to 25 Years (As per original recruitment rules)",
-    eligibility: "Candidates who qualified both Paper-I and PET/PST stages of Sub-Inspector in Delhi Police & CAPFs Examination.",
+    eligibility: "Candidates who qualified both Paper-I and PET/PST stages of Sub-Inspector in Delhi Police & CAPFs Examination, 2025 (including Corrigendum dated 16/11/2026 petitioner list updates).",
     totalPosts: "10,676 Qualified Candidates for Paper-II (4,187 Total Vacancies)",
     officialLink: "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/writeup_29102026.pdf",
-    officialNotificationUrl: "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/writeup_29102026.pdf",
+    officialNotificationUrl: "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/corrigendum_16112026.pdf",
     officialApplicationUrl: "https://ssc.gov.in",
     fees: {
       genObc: "\u20B90/- (Exempted - Result & Exam Schedule Notice)",
@@ -3050,17 +3669,22 @@ var RAW_SARKARI_DATA = [
     verificationStatus: "verified",
     verification: {
       status: "verified",
+      verificationStatus: "verified",
       verifiedAt: "14/11/2026",
-      lastVerified: "14/11/2026",
+      lastVerified: "16/11/2026",
       officialNotificationUrl: "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/writeup_29102026.pdf",
+      amendmentUrls: [
+        "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/corrigendum_16112026.pdf"
+      ],
       officialApplicationUrl: "https://ssc.gov.in",
-      advertisementNo: "F.No- E/13/2025-C-2",
-      recruitmentYear: "2026",
+      advertisementNo: "F.No- E/13/2025-C-2 (Exam 2025)",
+      recruitmentYear: "2025",
       verifiedOpeningDate: "30/10/2026",
       verifiedClosingDate: "28/11/2026",
       closingTime: "17:00 IST",
       correctionHistory: [
-        "Verified direct official SSC PDF writeup_29102026.pdf on 14/11/2026 (10,676 qualified for Paper-II on 28/11/2026)."
+        "Verified direct official SSC PDF writeup_29102026.pdf on 14/11/2026 (10,676 qualified for Paper-II on 28/11/2026).",
+        "Verified Corrigendum dated 16/11/2026 (corrigendum_16112026.pdf) amending Para 5 petitioner roll numbers (added 225130051041, 225130047683, 625130000489; deleted 225130005272; corrected 225130058585 to 225130058588); Paper-II date remains 28/11/2026."
       ]
     },
     isNew: true
@@ -3119,14 +3743,14 @@ var RAW_SARKARI_DATA = [
     recruitmentYear: "2026",
     shortInfo: "Cluster University of Srinagar Controller of Examinations notified the online examination form submission schedule for B.Ed 4th Semester Supplementary / Backlog candidates (Batch 2024). Submission closed on 12th November 2026.",
     ageLimit: "N/A (Enrolled B.Ed Students)",
-    eligibility: "Students of constituent colleges enrolled in 2-Year B.Ed Programme (Batch 2024) with backlogs or supplementary status in 4th Semester.",
+    eligibility: "Students enrolled in 2-Year B.Ed Programme (Batch 2024 & eligible backlog batches) at IAES / Constituent Colleges with backlogs or supplementary status in 4th Semester, alongside Design Your Degree (DYD) NEP-2020 Undergraduate streams of Cluster University Srinagar.",
     totalPosts: "B.Ed 4th Semester Supplementary Candidates",
     officialLink: "https://www.cusrinagar.edu.in",
     officialNotificationUrl: "https://www.cusrinagar.edu.in",
     officialApplicationUrl: "https://www.cusrinagar.edu.in",
     fees: {
       genObc: "\u20B91,200/- per semester examination fee",
-      scSt: "\u20B91,200/- per semester examination fee"
+      scSt: "\u20B91,200/- per semester examination fee (Specially-Abled PwD & Orphan Category exemption as per University norms, verify on the official notice)"
     },
     stage: "exam_form",
     status: "Closed",
@@ -3786,21 +4410,22 @@ var RAW_SARKARI_DATA = [
   },
   {
     id: "jkssb-advt-10-of-2026-je-mechanical-pwd",
-    title: "JKSSB Advt 10 of 2026: Recruitment for 127 Junior Engineer (Mechanical) Posts in Public Works (R&B) Department",
+    title: "JKSSB Advt 10 of 2026: Recruitment for 127 Junior Engineer (Mechanical) Posts in PW(R&B) Dept (Online Form Postponed)",
     category: "jkssb",
     noticeType: "recruitment",
     stage: "recruitment",
     postDate: "21/10/2026",
-    startDate: "16/11/2026",
-    lastDate: "15/12/2026",
+    documentDate: "15/11/2026",
+    startDate: "Postponed (Fresh dates to be notified separately)",
+    lastDate: "Postponed (Fresh dates to be notified separately)",
     postType: "Job",
-    status: "Open",
-    advertisementNo: "Advertisement Notification No. 10 of 2026 (Dated: 21.10.2026)",
-    shortInfo: "Jammu and Kashmir Services Selection Board (JKSSB) invites online applications from 16/11/2026 to 15/12/2026 for 127 UT Cadre posts of Junior Engineer (Mechanical) in Pay Level-6 (\u20B935,400 - \u20B91,12,400) under Public Works (R&B) Department.",
+    status: "Upcoming",
+    advertisementNo: "Advertisement Notification No. 10 of 2026 (Dated: 21.10.2026) | Postponement Notice No. 15.11.2026",
+    shortInfo: "JKSSB issued an official notice dated 15/11/2026 postponing the online application form window (earlier 16/11/2026 to 15/12/2026) for 127 Junior Engineer (Mechanical) posts in Public Works (R&B) Department under Advt No. 10 of 2026. Fresh dates for online registration will be notified separately on jkssb.nic.in.",
     ageLimit: "Open Merit (OM): 40 Years (as on 01.01.2026) | SC / ST-1 / ST-2 / RBA / ALC-IB / EWS / OBC: 43 Years | PwBD: 42 Years | In-Service / Contractual: 40 Years",
     eligibility: "Three Years Diploma in Mechanical Engineering from a Government recognized Institute / Indian University, OR Degree in Mechanical Engineering / AMIE Section (A&B) in Mechanical Engineering. Candidate must be a Domicile of UT of J&K.",
     totalPosts: "127 Posts (OM: 51 | SC: 11 | ST-1: 12 | ST-2: 13 | OBC: 10 | ALC/IB: 05 | RBA: 13 | EWS: 12)",
-    officialLink: "https://jkssb.nic.in/Pdf/Advt_notification_10OF2026_21102026.pdf",
+    officialLink: "https://jkssb.nic.in/Pdf/Notice_10OF2026_15112026.pdf",
     officialNotificationUrl: "https://jkssb.nic.in/Pdf/Advt_notification_10OF2026_21102026.pdf",
     officialApplicationUrl: "https://jkssb.nic.in",
     fees: {
@@ -3812,15 +4437,19 @@ var RAW_SARKARI_DATA = [
       status: "verified",
       verificationStatus: "verified",
       verifiedAt: "14/11/2026",
-      lastVerified: "14/11/2026",
+      lastVerified: "16/11/2026",
       officialNotificationUrl: "https://jkssb.nic.in/Pdf/Advt_notification_10OF2026_21102026.pdf",
+      amendmentUrls: [
+        "https://jkssb.nic.in/Pdf/Notice_10OF2026_15112026.pdf"
+      ],
       officialApplicationUrl: "https://jkssb.nic.in",
       advertisementNo: "Advt No. 10 of 2026",
       recruitmentYear: "2026",
-      verifiedOpeningDate: "16/11/2026",
-      verifiedClosingDate: "15/12/2026",
+      verifiedOpeningDate: "Postponed (Fresh dates to be notified separately)",
+      verifiedClosingDate: "Postponed (Fresh dates to be notified separately)",
       sourceHistory: [
-        "Verified direct official PDF Advt_notification_10OF2026_21102026.pdf dated 21/10/2026 on 14/11/2026 (applications open 16/11/2026 to 15/12/2026)."
+        "Verified direct official PDF Advt_notification_10OF2026_21102026.pdf dated 21/10/2026 on 14/11/2026 (applications originally scheduled 16/11/2026 to 15/12/2026).",
+        "Verified official postponement notice Notice_10OF2026_15112026.pdf (dated 15/11/2026) on 16/11/2026: online submission of application forms postponed; fresh dates will be notified separately."
       ]
     },
     isNew: true
@@ -4166,8 +4795,8 @@ var RAW_SARKARI_DATA = [
     lastDate: "22/09/2026",
     advertisementNo: "F.No. SSC/HQ/Steno-2026/08",
     shortInfo: "Staff Selection Commission invites online applications from eligible candidates for Computer Based Examination for recruitment of Stenographers Grade \u2018C\u2019 (Group B Non-Gazetted) and Grade \u2018D\u2019 (Group C) for various Central Government Ministries and Departments.",
-    ageLimit: "18 to 30 Years for Grade C, 18 to 27 Years for Grade D (Age relaxation applicable)",
-    eligibility: "12th Standard or equivalent qualification + Shorthand/Typing Speed in Hindi or English",
+    ageLimit: "18 to 30 Years for Grade C, 18 to 27 Years for Grade D as of 01/08/2026 (Age relaxation applicable)",
+    eligibility: "12th Standard (10+2) or equivalent qualification from a recognized Board + Shorthand Stenography Skill Test (100 wpm for Grade C, 80 wpm for Grade D in Hindi or English)",
     totalPosts: "2,140 Vacancies (Tentative)",
     officialLink: "https://ssc.gov.in",
     fees: {
@@ -4396,7 +5025,7 @@ var RAW_SARKARI_DATA = [
     lastDate: "18/09/2026",
     advertisementNo: "SSC/HQ/JHT-Exam-2026",
     shortInfo: "Staff Selection Commission (SSC) notifies competitive computer-based examination for recruitment of Junior Hindi Translator, Junior Translation Officer, Senior Hindi Translator, and Senior Translation Officer in various Central Government Ministries and Departments.",
-    ageLimit: "18 to 30 Years (Age relaxation applicable as per Govt of India rules)",
+    ageLimit: "18 to 30 Years (OBC +3 Years, SC/ST +5 Years, PwD +10 Years as per Govt of India rules)",
     eligibility: "Master's Degree in Hindi with English as a compulsory/elective subject OR Master's Degree in English with Hindi + Recognized Diploma/Certificate in Translation from Hindi to English & vice-versa",
     totalPosts: "412 Posts across Central Ministries",
     officialLink: "https://ssc.gov.in",
@@ -8374,8 +9003,535 @@ var GUIDE_ARTICLES = [
         answer: "UIDAI standard government fees are: (1) Mandatory Biometric Update (Children aged 5 & 15 years): FREE, (2) Demographic Update (Name/Address/DOB/Mobile): \u20B950, (3) Biometric Update with Demographic: \u20B9100."
       }
     ]
+  },
+  // =========================================================================
+  // EVERGREEN CITIZEN GUIDES IN DRAFT REVIEW (NOT PUBLIC UNTIL VERIFIED)
+  // =========================================================================
+  {
+    id: "jk-domicile-certificate-guide-draft",
+    status: "draft",
+    title: "Jammu & Kashmir Domicile Certificate: Eligibility, Documents & Online Process (Draft)",
+    hindiTitle: "\u091C\u092E\u094D\u092E\u0942-\u0915\u0936\u094D\u092E\u0940\u0930 \u0905\u0927\u093F\u0935\u093E\u0938 \u092A\u094D\u0930\u092E\u093E\u0923 \u092A\u0924\u094D\u0930 (\u0921\u094B\u092E\u093F\u0938\u093E\u0907\u0932) \u0917\u093E\u0907\u0921 (\u0921\u094D\u0930\u093E\u092B\u094D\u091F)",
+    category: "State Services",
+    readTime: "6 min read",
+    lastUpdated: "November 17, 2026",
+    author: "CSC DOST Editorial Desk",
+    officialPortal: "jkeservices.gov.in [VERIFY]",
+    officialUrl: "https://jkeservices.gov.in",
+    responsibleDepartment: "Revenue Department / Tehsil Office, Government of J&K",
+    intendedBeneficiaries: "Permanent residents and eligible 15-year residents of Jammu & Kashmir",
+    benefitSummary: "Primary domicile proof required for J&K UT government jobs and university quotas [VERIFY]",
+    applicableRegion: "Jammu & Kashmir",
+    verifyNotes: [
+      "Verify current active portal URL on jkeservices.gov.in / jan-sugam portal before publishing.",
+      "Verify latest statutory application/CSC service fee tariff and PSGA timeline with Tehsil office."
+    ],
+    summary: "Step-by-step citizen draft guide explaining J&K Domicile Certificate eligibility categories, PRC conversion rules, required Tehsil supporting proofs, and online tracking steps. [VERIFY all portal charges and turnaround days from official jkeservices.gov.in circular before publishing.]",
+    tableOfContents: [
+      "Who Is Eligible for J&K Domicile Certificate",
+      "Mandatory Supporting Documents",
+      "Online Application Workflow",
+      "Checking Status & Downloading Digitally Signed Certificate"
+    ],
+    sections: [
+      {
+        heading: "1. Who Is Eligible for a J&K Domicile Certificate",
+        content: "Under the J&K Grant of Domicile Certificate rules, eligibility covers Permanent Resident Certificate (PRC) holders, residents living in J&K for 15 years, students who studied for 7 years and appeared in Class 10/12 exams in J&K, and eligible central government employees or their children. [VERIFY exact clause wording in current J&K Revenue Department notification.]"
+      },
+      {
+        heading: "2. Common Reasons Tehsil Offices Raise Queries",
+        content: "Applications frequently stall when applicant name or parentage differs between Aadhaar, ration card, and old PRC/revenue extracts, or when scan uploads are blurred.",
+        tips: "Keep clear PDF scans under portal size limits [VERIFY KB limit on jkeservices.gov.in] before initiating submission."
+      }
+    ],
+    eligibility: [
+      "Former PRC holders and their eligible children [VERIFY category code on portal]",
+      "Residents completing prescribed continuous stay or schooling criteria in Jammu & Kashmir [VERIFY exact documentary proof matrix]"
+    ],
+    documentsRequired: [
+      "Permanent Resident Certificate (PRC) OR 15-year residence proof (Ration Card / Electoral Roll / Utility Record) [VERIFY accepted alternatives]",
+      "Aadhaar Card and Date of Birth Proof (Matriculation Certificate / Birth Certificate)",
+      "Passport-size colour photograph and signed self-declaration form"
+    ],
+    stepByStep: [
+      "Register or log in on the official J&K e-Services / Jan Sugam portal [VERIFY current citizen login link].",
+      'Select "Issuance of Domicile Certificate" under the Revenue Department menu and pick the appropriate eligibility clause.',
+      "Enter Tehsil, District, Halqa/Patwar details, and family particulars carefully matching revenue records.",
+      "Upload readable scans of PRC / 15-year proof and submit for Tehsildar verification.",
+      "Pay prescribed fee [VERIFY current statutory fee / CSC service tariff] and save the acknowledgement reference number."
+    ],
+    faqs: [
+      {
+        question: "How long does Tehsildar approval take for a Domicile Certificate?",
+        answer: "Under J&K Public Services Guarantee Act (PSGA) norms, PRC-based applications typically have a shorter statutory timeline than fresh 15-year verification cases [VERIFY exact working days under latest PSGA schedule]."
+      }
+    ]
+  },
+  {
+    id: "nsp-jk-scholarship-guide-draft",
+    status: "draft",
+    title: "National Scholarship Portal (NSP) & OTR Guide for J&K Students (Draft)",
+    hindiTitle: "\u0928\u0947\u0936\u0928\u0932 \u0938\u094D\u0915\u0949\u0932\u0930\u0936\u093F\u092A \u092A\u094B\u0930\u094D\u091F\u0932 (NSP) \u0914\u0930 OTR \u092A\u0902\u091C\u0940\u0915\u0930\u0923 \u0917\u093E\u0907\u0921 (\u0921\u094D\u0930\u093E\u092B\u094D\u091F)",
+    category: "Education",
+    readTime: "6 min read",
+    lastUpdated: "November 17, 2026",
+    author: "CSC DOST Editorial Desk",
+    officialPortal: "scholarships.gov.in",
+    officialUrl: "https://scholarships.gov.in",
+    responsibleDepartment: "Ministry of Electronics & IT / Respective Ministries & J&K Higher Education Dept",
+    intendedBeneficiaries: "School, college, and professional course students across J&K and India",
+    benefitSummary: "Pre-Matric, Post-Matric & Merit-cum-Means scholarships via Aadhaar-linked DBT [VERIFY]",
+    applicableRegion: "All India & Jammu & Kashmir",
+    verifyNotes: [
+      "Verify active academic session closing dates on scholarships.gov.in before publishing.",
+      "Verify latest OTR / face-authentication Android app requirements on NSP announcements."
+    ],
+    summary: "Draft guide covering One Time Registration (OTR) on National Scholarship Portal (NSP 2.0), Aadhaar NPCI DBT bank seeding, institutional verification, and defect handling for J&K students. [VERIFY current session schedule on scholarships.gov.in.]",
+    tableOfContents: [
+      "NSP One Time Registration (OTR)",
+      "Fresh vs Renewal Applications",
+      "Mandatory Documents & Bonafide Rules",
+      "Common Defect & Bank Rejection Fixes"
+    ],
+    sections: [
+      {
+        heading: "1. Understanding NSP One Time Registration (OTR)",
+        content: "NSP issues a unique 14-digit OTR linked to Aadhaar / EID so students do not create duplicate student profiles across academic sessions. Face authentication via the official AadhaarFaceRD and NSP OTR app may be required. [VERIFY active OTR steps on scholarships.gov.in]."
+      },
+      {
+        heading: "2. DBT Bank Seeding Is Mandatory",
+        content: "Disbursements move through Aadhaar Payment Bridge (APB) rather than plain IFSC account entry. Ensure your bank account is NPCI Aadhaar-seeded before scholarship sanction."
+      }
+    ],
+    eligibility: [
+      "Enrolled regular students in recognized schools, colleges, or universities matching scheme-specific income and minimum percentage caps [VERIFY scheme guidelines PDF]"
+    ],
+    documentsRequired: [
+      "NSP OTR ID & Aadhaar Card",
+      "Bonafide Student Certificate stamped by Institution Head (for applicable fee thresholds) [VERIFY threshold]",
+      "Income Certificate issued by competent authority & Category / Domicile Certificate where applicable",
+      "Previous year marksheet and fee receipt"
+    ],
+    stepByStep: [
+      "Generate your OTR number via scholarships.gov.in and complete e-KYC [VERIFY mobile app prompt].",
+      "Log in with OTR, select the eligible Pre-Matric, Post-Matric, or Top Class scheme, and complete academic details.",
+      "Upload required certificates only where prompted by the scheme threshold and submit.",
+      "Inform your School/College Nodal Officer to complete INO verification before the institute verification deadline [VERIFY dates]."
+    ],
+    faqs: [
+      {
+        question: "Should a student apply as Fresh or Renewal if promoted to the next semester?",
+        answer: "Students continuing the same course who received scholarship on NSP in the prior year apply as Renewal; students starting a new degree or applying for the first time apply as Fresh. [VERIFY specific ministry renewal rule]."
+      }
+    ]
+  },
+  {
+    id: "jk-ration-card-ekyc-guide-draft",
+    status: "draft",
+    title: "J&K Ration Card (NFSA): Member Addition, Deletion & Mandatory e-KYC Guide (Draft)",
+    hindiTitle: "\u091C\u092E\u094D\u092E\u0942-\u0915\u0936\u094D\u092E\u0940\u0930 \u0930\u093E\u0936\u0928 \u0915\u093E\u0930\u094D\u0921: \u0938\u0926\u0938\u094D\u092F \u091C\u094B\u0921\u093C\u0928\u093E \u0914\u0930 \u0908-\u0915\u0947\u0935\u093E\u0908\u0938\u0940 \u0917\u093E\u0907\u0921 (\u0921\u094D\u0930\u093E\u092B\u094D\u091F)",
+    category: "State Services",
+    readTime: "5 min read",
+    lastUpdated: "November 17, 2026",
+    author: "CSC DOST Editorial Desk",
+    officialPortal: "fcsca.jk.gov.in / jkpds [VERIFY]",
+    officialUrl: "https://jkeservices.gov.in",
+    responsibleDepartment: "Department of Food, Civil Supplies & Consumer Affairs (FCS&CA), J&K",
+    intendedBeneficiaries: "AAY, PHH, and NPHH ration card holders in Jammu & Kashmir",
+    benefitSummary: "Uninterrupted monthly foodgrain allocation & Ayushman Bharat household linkage [VERIFY]",
+    applicableRegion: "Jammu & Kashmir",
+    verifyNotes: [
+      "Verify latest J&K FCS&CA e-KYC deadline circular and Mera eKYC app / Tehsil Supply Officer (TSO) workflow.",
+      "Verify current active portal endpoint (jkeservices.gov.in vs rcms) before publishing."
+    ],
+    summary: "Draft citizen walkthrough on keeping J&K Ration Card records updated under NFSA \u2014 including Aadhaar seeding, e-KYC at Fair Price Shops, adding newborn children, and marriage transfer/deletion certificates. [VERIFY active deadlines from FCS&CA J&K.]",
+    tableOfContents: [
+      "Why Ration Card e-KYC Is Required",
+      "Adding a New Member or Newborn",
+      "Transfer / Deletion Certificate (Surrender)",
+      "Checking Ration Card Status Online"
+    ],
+    sections: [
+      {
+        heading: "1. Aadhaar Seeding & Biometric e-KYC",
+        content: "Every family member listed on PHH/AAY ration cards must complete Aadhaar biometric authentication through the Fair Price Shop (FPS) PoS machine or official mobile KYC route notified by FCS&CA [VERIFY current allowed channels]."
+      }
+    ],
+    eligibility: [
+      "Existing J&K AAY, PHH, or NPHH ration card households registered with FCS&CA [VERIFY income cutoffs for PHH]"
+    ],
+    documentsRequired: [
+      "Existing Ration Card Number & Head of Family Aadhaar Card",
+      "Aadhaar Card of every family member + Birth Certificate (for child addition)",
+      "Surrender / Deletion Certificate from parent ration card (for newly married member addition)"
+    ],
+    stepByStep: [
+      "Visit your nearest Fair Price Shop (Depot) or Tehsil Supply Officer (TSO) portal desk for family e-KYC status check.",
+      "For member addition/deletion, submit an online modification form on the official J&K portal [VERIFY active link] with Birth/Marriage/Surrender proof.",
+      "Track TSO inspection approval and download the updated digital ration card slip."
+    ],
+    faqs: [
+      {
+        question: "Does Ration Card member data affect Ayushman Bharat SEHAT / PM-JAY card generation?",
+        answer: "Yes. In J&K, updated NFSA ration card family databases are commonly used for SEHAT family verification [VERIFY current SEHAT data source rule]."
+      }
+    ]
+  },
+  {
+    id: "voter-id-nvsp-form6-guide-draft",
+    status: "draft",
+    title: "Voter ID (EPIC): Form 6 Registration & Form 8 Correction on Voters Portal (Draft)",
+    hindiTitle: "\u0935\u094B\u091F\u0930 \u0906\u0908\u0921\u0940 (EPIC): \u092B\u0949\u0930\u094D\u092E 6 \u092A\u0902\u091C\u0940\u0915\u0930\u0923 \u0914\u0930 \u092B\u0949\u0930\u094D\u092E 8 \u0938\u0941\u0927\u093E\u0930 \u0917\u093E\u0907\u0921 (\u0921\u094D\u0930\u093E\u092B\u094D\u091F)",
+    category: "Identity & Tax",
+    readTime: "5 min read",
+    lastUpdated: "November 17, 2026",
+    author: "CSC DOST Editorial Desk",
+    officialPortal: "voters.eci.gov.in",
+    officialUrl: "https://voters.eci.gov.in",
+    responsibleDepartment: "Election Commission of India (ECI)",
+    intendedBeneficiaries: "Indian citizens aged 18+ enrolling or updating electoral roll particulars",
+    benefitSummary: "Free voter registration, constituency shift, & e-EPIC PDF download",
+    applicableRegion: "All India & Jammu & Kashmir",
+    verifyNotes: [
+      "Verify latest qualifying dates (1 Jan / 1 Apr / 1 Jul / 1 Oct) and accepted document list on voters.eci.gov.in."
+    ],
+    summary: "Draft guide covering new voter enrolment (Form 6), address/constituency shifting or photo/name correction (Form 8), BLO verification, and free digital e-EPIC download on voters.eci.gov.in. [VERIFY latest Form 6B / document norms on ECI portal.]",
+    tableOfContents: [
+      "Form 6 vs Form 8: Which Form to Choose",
+      "Required Age & Residence Proofs",
+      "Online Application & BLO Field Check",
+      "Downloading e-EPIC PDF"
+    ],
+    sections: [
+      {
+        heading: "1. Form 6 vs Form 8 Explained Simply",
+        content: "Use Form 6 only if your name is not registered in any Assembly constituency across India. Use Form 8 if you already hold an EPIC number and need address shifting, name/DOB correction, or replacement card issuance."
+      }
+    ],
+    eligibility: [
+      "Indian citizen aged 18 years or above on qualifying date (17+ citizens can pre-apply under ECI quarterly qualifying dates) [VERIFY quarterly calendar]"
+    ],
+    documentsRequired: [
+      "Recent passport-size colour photograph (white/light background)",
+      "Age Proof (Birth Certificate, Class 10 Marksheet, Aadhaar, Passport, or PAN) [VERIFY ECI list]",
+      "Ordinary Residence Proof (Electricity/Water bill, Bank Passbook, Ration Card, Aadhaar)"
+    ],
+    stepByStep: [
+      "Create or sign in to an account at voters.eci.gov.in using mobile OTP.",
+      "Select Form 6 (New) or Form 8 (Correction/Shift) and enter State, District, and Assembly Constituency.",
+      "Upload clear scans of photograph, age proof, and address proof, then note the 18-character Reference ID.",
+      "Track BLO verification status online; once EPIC is generated, download e-EPIC via OTP."
+    ],
+    faqs: [
+      {
+        question: "Is there any government fee to apply for a new Voter ID or Form 8 correction?",
+        answer: "Official ECI registration and e-EPIC download on voters.eci.gov.in are free of charge [VERIFY whether duplicate physical PVC replacement carries any nominal charge]."
+      }
+    ]
+  },
+  {
+    id: "jk-isss-nsap-pension-guide-draft",
+    status: "draft",
+    title: "J&K Social Welfare Pensions (ISSS & NSAP): Old Age, Widow & Disability Guide (Draft)",
+    hindiTitle: "\u091C\u092E\u094D\u092E\u0942-\u0915\u0936\u094D\u092E\u0940\u0930 \u0938\u093E\u092E\u093E\u091C\u093F\u0915 \u0938\u0941\u0930\u0915\u094D\u0937\u093E \u092A\u0947\u0902\u0936\u0928 (ISSS / NSAP) \u0917\u093E\u0907\u0921 (\u0921\u094D\u0930\u093E\u092B\u094D\u091F)",
+    category: "Central Scheme",
+    readTime: "6 min read",
+    lastUpdated: "November 17, 2026",
+    author: "CSC DOST Editorial Desk",
+    officialPortal: "jkeservices.gov.in / nsap.nic.in [VERIFY]",
+    officialUrl: "https://jkeservices.gov.in",
+    responsibleDepartment: "Social Welfare Department, Government of Jammu & Kashmir",
+    intendedBeneficiaries: "Eligible senior citizens, widows/destitute women & persons with benchmark disability",
+    benefitSummary: "Monthly DBT social security pension support [VERIFY exact monthly slab amount]",
+    applicableRegion: "Jammu & Kashmir",
+    verifyNotes: [
+      "Verify exact current monthly pension slab rates (age slabs & J&K Social Welfare G.O.) before publishing.",
+      "Verify whether ration card category / annual household income limit applies under latest ISSS rules."
+    ],
+    summary: "Draft informational overview of J&K Integrated Social Security Scheme (ISSS) and NSAP (IGNOAPS, IGNWPS, IGNDPS) pensions, detailing required certificates, Tehsil Social Welfare Officer verification, and DBT account norms. [VERIFY monthly pension rates and income caps.]",
+    tableOfContents: [
+      "ISSS vs NSAP Pension Categories",
+      "Age, Income & Disability Requirements",
+      "Mandatory Certificates & Medical Proofs",
+      "Life Verification / KYC Continuity"
+    ],
+    sections: [
+      {
+        heading: "1. Major Pension Categories in J&K",
+        content: "Social Welfare pensions cover Old Age Pension, Women in Distress / Widow Pension, Physically Challenged / Disability Pension, and Transgender financial assistance. [VERIFY latest exact age thresholds and monthly pension rupee slabs from Social Welfare Dept J&K order.]"
+      }
+    ],
+    eligibility: [
+      "Domicile resident of Jammu & Kashmir meeting age/widowhood/40%+ UDID disability criteria and prescribed income limit [VERIFY exact annual income cap in latest J&K order]",
+      "Must not be receiving any other regular government salary or service pension"
+    ],
+    documentsRequired: [
+      "Domicile Certificate & Aadhaar Card linked with active bank account",
+      "Age Proof / CMO Certificate / UDID Card (for disability pension) / Death Certificate of spouse (for widow pension)",
+      "Income / BPL / AAY / PHH Ration Card proof [VERIFY accepted proof]"
+    ],
+    stepByStep: [
+      "Prepare digital copies of Domicile, Age/UDID/Death proof, Bank Passbook, and Aadhaar.",
+      "Apply through the official J&K Jan Sugam / Social Welfare service portal [VERIFY active service URL] selecting ISSS or NSAP scheme.",
+      "Submit physical/verifiable proof at the Tehsil Social Welfare Office (TSWO) if called for verification.",
+      "Ensure Aadhaar-seeded DBT bank account remains active for monthly credit."
+    ],
+    faqs: [
+      {
+        question: "What disability percentage is required for disability pension?",
+        answer: "Generally a benchmark disability of 40% or above certified via UDID / Medical Board is required [VERIFY specific threshold under current J&K ISSS order]."
+      }
+    ]
+  },
+  {
+    id: "jk-income-category-certificate-guide-draft",
+    status: "draft",
+    title: "J&K Income, EWS & Reserved Category Certificates (RBA, SC, ST, OBC): Guide (Draft)",
+    hindiTitle: "\u091C\u092E\u094D\u092E\u0942-\u0915\u0936\u094D\u092E\u0940\u0930 \u0906\u092F, EWS \u0914\u0930 \u0906\u0930\u0915\u094D\u0937\u093F\u0924 \u0936\u094D\u0930\u0947\u0923\u0940 (RBA/SC/ST) \u092A\u094D\u0930\u092E\u093E\u0923 \u092A\u0924\u094D\u0930 \u0917\u093E\u0907\u0921 (\u0921\u094D\u0930\u093E\u092B\u094D\u091F)",
+    category: "State Services",
+    readTime: "6 min read",
+    lastUpdated: "November 17, 2026",
+    author: "CSC DOST Editorial Desk",
+    officialPortal: "jkeservices.gov.in [VERIFY]",
+    officialUrl: "https://jkeservices.gov.in",
+    responsibleDepartment: "Revenue Department / Tehsildar / Competent Authority, J&K",
+    intendedBeneficiaries: "J&K students and job applicants seeking reservation or scholarship benefits",
+    benefitSummary: "Mandatory validity certificates for JKSSB, NEET, CUET & NSP applications [VERIFY]",
+    applicableRegion: "Jammu & Kashmir",
+    verifyNotes: [
+      "Verify latest J&K Reservation Rules amendments (RBA, ALC/IB, Pahari, OBC/EWS) & certificate validity periods before publishing."
+    ],
+    summary: "Draft checklist for citizens preparing Income, Economically Weaker Section (EWS), Resident of Backward Area (RBA), SC, ST, or OBC certificates in Jammu & Kashmir, including validity renewals and Patwari/Girdawar field reporting steps. [VERIFY latest reservation categories & validity dates.]",
+    tableOfContents: [
+      "Choosing the Correct Certificate Type",
+      "Validity Period Before Exam Cutoffs",
+      "Patwari & Tehsil Verification Documents",
+      "Common Application Mistakes"
+    ],
+    sections: [
+      {
+        heading: "1. Financial-Year Validity Rules",
+        content: "Income and EWS certificates are generally valid only for the specific financial year or validity window stated on the certificate, whereas SC/ST or RBA certificates follow rules specified in the J&K Reservation Act/Rules. [VERIFY exact validity duration in years for RBA/EWS/OBC.]"
+      }
+    ],
+    eligibility: [
+      "Applicants satisfying J&K domicile, village/area notification (for RBA/ALC), caste listing, or family gross annual income ceilings [VERIFY latest J&K Reservation Rules threshold]"
+    ],
+    documentsRequired: [
+      "Domicile Certificate & Aadhaar Card of applicant and parents",
+      "Ration Card, Revenue Extract (Jamabandi / Girdawari where applicable for RBA/EWS asset check)",
+      "Salary Slip / Income Affidavit / Halqa Patwari Report [VERIFY format required by concerned Tehsil]"
+    ],
+    stepByStep: [
+      "Log in to the official J&K e-Services / Jan Sugam portal [VERIFY link] and pick Income, EWS, RBA, SC, ST, or OBC service.",
+      "Fill correct Patwar Halqa, Tehsil, and annual family income across all sources.",
+      "Upload signed affidavit and supporting revenue/ration documents, then track Patwari/Naib-Tehsildar verification.",
+      "Download the digitally signed certificate and verify QR/barcode authenticity before job submission."
+    ],
+    faqs: [
+      {
+        question: "Can an expired EWS or RBA certificate be used for JKSSB or SSC forms?",
+        answer: "No. Recruitment boards strictly require a valid category certificate issued on or before the closing cutoff date specified in the advertisement."
+      }
+    ]
+  },
+  {
+    id: "digilocker-apaar-abc-id-guide-draft",
+    status: "draft",
+    title: "DigiLocker & APAAR / ABC Academic ID: Student Setup & Document Pull Guide (Draft)",
+    hindiTitle: "\u0921\u093F\u091C\u093F\u0932\u0949\u0915\u0930 \u0914\u0930 APAAR / ABC \u0905\u0915\u093E\u0926\u092E\u093F\u0915 \u0906\u0908\u0921\u0940 \u0917\u093E\u0907\u0921 (\u0921\u094D\u0930\u093E\u092B\u094D\u091F)",
+    category: "Education",
+    readTime: "5 min read",
+    lastUpdated: "November 17, 2026",
+    author: "CSC DOST Editorial Desk",
+    officialPortal: "digilocker.gov.in / abc.gov.in",
+    officialUrl: "https://www.digilocker.gov.in",
+    responsibleDepartment: "National e-Governance Division (NeGD) & Ministry of Education",
+    intendedBeneficiaries: "School, IGNOU, University of Kashmir & Cluster University students",
+    benefitSummary: "Mandatory 12-digit APAAR/ABC ID for university admissions & digital marksheets",
+    applicableRegion: "All India & Jammu & Kashmir",
+    verifyNotes: [
+      "Verify latest UGC/IGNOU/KU Samarth portal integration prompts for APAAR ID before publishing."
+    ],
+    summary: "Draft guide explaining how students generate a 12-digit APAAR (Academic Bank of Credits) ID through DigiLocker, fetch verified JKBOSE/CBSE marksheets, and resolve Aadhaar name mismatch errors before college admission deadlines. [VERIFY current ABC portal steps.]",
+    tableOfContents: [
+      "What Is APAAR / ABC ID",
+      "Linking DigiLocker With Aadhaar",
+      "Generating ABC ID for University Admissions",
+      "Fixing Name or DOB Mismatch Errors"
+    ],
+    sections: [
+      {
+        heading: "1. Why Universities Ask for APAAR / ABC ID",
+        content: "Indian universities including IGNOU, University of Kashmir, and Cluster University use the 12-digit Academic Bank of Credits (ABC) / APAAR ID on admission and examination portals to store earned semester credits digitally."
+      }
+    ],
+    eligibility: [
+      "Students holding an Aadhaar number linked to an active mobile number for DigiLocker OTP authentication [VERIFY college-level alternate flow if Aadhaar name differs]"
+    ],
+    documentsRequired: [
+      "Aadhaar Card with active OTP mobile number",
+      "University / College Roll Number, Registration Number, or Admission Year",
+      "Class 10 / 12 Board Roll Number (to pull marksheets into DigiLocker)"
+    ],
+    stepByStep: [
+      "Sign in at digilocker.gov.in or the DigiLocker mobile app using your Aadhaar-linked mobile number.",
+      'Open "Search Documents" -> search for "Academic Bank of Credits" or "APAAR ID".',
+      "Select your Institution Name (e.g., University of Kashmir, IGNOU, Cluster University Srinagar), Identity Type, and Admission Year.",
+      'Click "Get Document" to generate your 12-digit ABC/APAAR ID and copy it accurately onto your admission or exam form.'
+    ],
+    faqs: [
+      {
+        question: "What if my name on Aadhaar does not match my JKBOSE marksheet?",
+        answer: "ABC/APAAR generation relies on Aadhaar demographic data. If spelling differs significantly from academic records, update Aadhaar demographic details at an authorized centre before university verification."
+      }
+    ]
   }
 ];
+var PUBLISHED_GUIDE_ARTICLES = GUIDE_ARTICLES.filter(
+  (guide) => guide.status !== "draft"
+);
+
+// src/utils/contentQualityValidator.ts
+function countWords(text) {
+  const cleaned = String(text || "").replace(/<[^>]+>/g, " ").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  if (!cleaned) return 0;
+  return cleaned.split(/\s+/).filter(Boolean).length;
+}
+function normalizeSentenceForCompare(sentence) {
+  return String(sentence || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+function splitIntoSentences(text) {
+  const clean = String(text || "").replace(/\s+/g, " ").trim();
+  if (!clean) return [];
+  return clean.split(/(?<=[.!?।])\s+|\n+/).map((s) => s.trim()).filter((s) => countWords(s) >= 4);
+}
+function checkConsecutiveCopiedSentences(candidateText, sourceText, maxConsecutive = 2) {
+  const sourceNormalized = splitIntoSentences(sourceText || "").map(normalizeSentenceForCompare);
+  const candidateSentences = splitIntoSentences(candidateText);
+  if (sourceNormalized.length === 0 || candidateSentences.length === 0) {
+    return { hasExcessiveCopy: false, runLength: 0 };
+  }
+  const candidateNormalized = candidateSentences.map(normalizeSentenceForCompare);
+  let longestRun = 0;
+  let matchedSnippet;
+  for (let i = 0; i < candidateNormalized.length; i++) {
+    for (let j = 0; j < sourceNormalized.length; j++) {
+      let run = 0;
+      while (i + run < candidateNormalized.length && j + run < sourceNormalized.length && candidateNormalized[i + run].length >= 24 && candidateNormalized[i + run] === sourceNormalized[j + run]) {
+        run++;
+      }
+      if (run > longestRun) {
+        longestRun = run;
+        if (run > maxConsecutive) {
+          matchedSnippet = candidateSentences.slice(i, i + run).join(" ").slice(0, 180);
+        }
+      }
+    }
+  }
+  return {
+    hasExcessiveCopy: longestRun > maxConsecutive,
+    runLength: longestRun,
+    matchedSnippet
+  };
+}
+function isValidHttpUrl(rawUrl) {
+  const trimmed = String(rawUrl || "").trim();
+  if (!trimmed) return false;
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+function collectCombinedOriginalText(input) {
+  const parts = [];
+  if (input.title) parts.push(input.title);
+  if (input.shortInfo) parts.push(input.shortInfo);
+  if (input.summary) parts.push(input.summary);
+  if (input.originalAnalysis) parts.push(input.originalAnalysis);
+  if (input.eligibility) parts.push(input.eligibility);
+  if (input.notes) parts.push(input.notes);
+  if (Array.isArray(input.howToApply)) parts.push(input.howToApply.join(" "));
+  else if (input.howToApply) parts.push(input.howToApply);
+  if (Array.isArray(input.selectionProcess)) parts.push(input.selectionProcess.join(" "));
+  else if (input.selectionProcess) parts.push(input.selectionProcess);
+  if (Array.isArray(input.documentsRequired)) parts.push(input.documentsRequired.join(" "));
+  return parts.join(" ").trim();
+}
+function validatePostPublishQuality(input, options = {}) {
+  const minWordCount = options.minWordCount ?? 400;
+  const maxConsecutive = options.maxConsecutiveCopiedSentences ?? 2;
+  const requireUpdatedDate = options.requireUpdatedDate ?? true;
+  const enforceWordCount = options.enforceWordCount ?? true;
+  const missingFields = [];
+  const errors = [];
+  const warnings = [];
+  const title = String(input.title || "").trim();
+  if (!title || countWords(title) < 3) {
+    missingFields.push("title");
+    errors.push("A descriptive Notification Title (at least 3 words) is required.");
+  }
+  const officialUrl = String(input.officialNotificationUrl || input.officialLink || "").trim();
+  if (!isValidHttpUrl(officialUrl)) {
+    missingFields.push("officialSourceUrl");
+    errors.push("A valid Official Source / Notification URL (https:// or http://) is mandatory.");
+  }
+  const hasDate = Boolean(
+    String(input.updatedAt || input.postDate || "").trim()
+  );
+  if (requireUpdatedDate && !hasDate) {
+    missingFields.push("lastUpdated");
+    errors.push("Last updated or official notice date must be specified.");
+  }
+  const hasSummary = countWords(String(input.summary || input.shortInfo || input.originalAnalysis || "")) >= 15;
+  if (!hasSummary) {
+    missingFields.push("summary");
+    errors.push("Original summary / explanation section must contain at least 15 meaningful words.");
+  }
+  const hasEligibility = Boolean(String(input.eligibility || "").trim()) && !/^(refer|see|check)\s+official/i.test(String(input.eligibility || "").trim());
+  if (!String(input.eligibility || "").trim()) {
+    missingFields.push("eligibility");
+    errors.push("Eligibility / target group details must be filled.");
+  } else if (!hasEligibility) {
+    warnings.push("Replace generic eligibility placeholder with exact qualification or learner group criteria.");
+  }
+  if (!String(input.lastDate || "").trim()) {
+    missingFields.push("lastDate");
+    errors.push('Closing / examination / reference date field must be populated (or marked "As per official notice").');
+  }
+  const combinedText = collectCombinedOriginalText(input);
+  const wordCount = countWords(combinedText);
+  if (enforceWordCount && wordCount < minWordCount) {
+    errors.push(
+      `Original explanation and guidance content is too thin (${wordCount} words). Minimum ${minWordCount} original words are required before publishing live.`
+    );
+  } else if (wordCount < minWordCount) {
+    warnings.push(
+      `Content currently has ${wordCount} words (recommended minimum: ${minWordCount} words before publishing live).`
+    );
+  }
+  const copiedCheck = checkConsecutiveCopiedSentences(
+    combinedText,
+    input.sourceExcerpt,
+    maxConsecutive
+  );
+  if (copiedCheck.hasExcessiveCopy) {
+    errors.push(
+      `Anti-copy check failed: ${copiedCheck.runLength} consecutive sentences match the raw official source excerpt (maximum ${maxConsecutive} allowed). Rewrite the explanation in original plain language.`
+    );
+  }
+  return {
+    valid: errors.length === 0,
+    wordCount,
+    minWordCount,
+    missingFields,
+    errors,
+    warnings,
+    copiedCheck
+  };
+}
 
 // src/ogImageGenerator.ts
 import sharp from "sharp";
@@ -10416,6 +11572,28 @@ var CURATED_RELATED_CLUSTERS = [
       "ssc-cgl-tier-1-tentative-answer-key-objection-notice-2026": "SSC CGL 2026 Tier-1 Answer Key",
       "ssc-cgl-2026": "SSC CGL 2026 Main Recruitment"
     }
+  },
+  {
+    // JKSSB Accounts Assistant (Finance) Advt 10/2025 Item 271 stages
+    ids: [
+      "jkssb-accounts-assistant-finance-answer-key-2026",
+      "jkssb-accounts-assistant-finance-exam-date-admit-card-2026"
+    ],
+    labels: {
+      "jkssb-accounts-assistant-finance-answer-key-2026": "Provisional Answer Key & Objections (16\u201318 Nov)",
+      "jkssb-accounts-assistant-finance-exam-date-admit-card-2026": "OMR Exam & E-Admit Card (15 Nov 2026)"
+    }
+  },
+  {
+    // SSC SI Delhi Police & CAPFs Exam 2026 stages
+    ids: [
+      "ssc-cpo-si-2026-paper1-city-admit-card",
+      "ssc-cpo-si-delhi-police-capf-2026"
+    ],
+    labels: {
+      "ssc-cpo-si-2026-paper1-city-admit-card": "Paper-I City Intimation & Admit Card (23\u201328 Nov)",
+      "ssc-cpo-si-delhi-police-capf-2026": "Main Recruitment Notice \xB7 4,187 Vacancies"
+    }
   }
 ];
 function getRelatedNoticesForPost(item, allPosts, maxItems = 4) {
@@ -10836,6 +12014,7 @@ function renderPostSubstantiveHtml(item, allPosts = SARKARI_DATA) {
       <section style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px; margin-bottom:20px; font-size:14px; color:#334155;">
         <h2 style="font-size:16px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Source and last verified</h2>
         <p style="margin:0 0 6px 0;"><strong>Official source:</strong> <a href="${safeOfficialLink}" target="_blank" rel="noopener noreferrer" style="color:#1F9D6B; font-weight:700;">${escapeHtml(enrichment.sourceDomain)}</a></p>
+        ${Array.isArray(item.verification?.amendmentUrls) && item.verification.amendmentUrls.length > 0 ? `<p style="margin:0 0 6px 0;"><strong>Latest circular / amendment:</strong> ${item.verification.amendmentUrls.map((u, idx) => `<a href="${escapeHtml(u)}" target="_blank" rel="noopener noreferrer" style="color:#1F9D6B; font-weight:600;">Official Amendment PDF${item.verification.amendmentUrls.length > 1 ? ` #${idx + 1}` : ""} \u2197</a>`).join(" \xB7 ")}</p>` : ""}
         <p style="margin:0 0 8px 0;"><strong>Last verified:</strong> ${escapeHtml(enrichment.verifiedDateText)}</p>
         <p style="margin:0; padding-top:8px; border-top:1px solid #e2e8f0;">
           <strong>Editorial review:</strong> ${escapeHtml(EDITORIAL_AUTHOR_TEXT)}. <a href="/about-us" style="color:#1F9D6B; font-weight:600;">About CSC DOST Editorial Desk \u2192</a>
@@ -10881,18 +12060,24 @@ function renderPostSubstantiveHtml(item, allPosts = SARKARI_DATA) {
     <script type="application/ld+json">${faqSchemaJson}</script>
 
     <!-- Footer Disclaimers -->
-    <footer style="margin-top:30px; font-size:12px; color:#475569; text-align:center; line-height:1.6;">
-      <p>Published by CSC DOST | Operator: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) | Sangran Qazigund, Anantnag, J&amp;K 192221 \xB7 +91 70068 33767</p>
-      <p>
-        <a href="/about-us" style="color:#101A36; font-weight:600; text-decoration:none;">About</a> \u2022
-        <a href="/contact-us" style="color:#101A36; font-weight:600; text-decoration:none;">Contact</a> \u2022
-        <a href="/privacy-policy" style="color:#101A36; font-weight:600; text-decoration:none;">Privacy Policy</a> \u2022
-        <a href="/terms-of-service" style="color:#101A36; font-weight:600; text-decoration:none;">Terms of Service</a> \u2022
-        <a href="/disclaimer" style="color:#101A36; font-weight:600; text-decoration:none;">Disclaimer</a>
-      </p>
-    </footer>
+    ${renderSsrPolicyFooterHtml()}
   </main>
   `;
+}
+function renderSsrPolicyFooterHtml() {
+  return `
+    <footer style="margin-top:30px; font-size:12px; color:#475569; text-align:center; line-height:1.7; border-top:1px solid #E2E8F0; padding-top:16px;">
+      <p style="margin:0 0 6px 0;">Published by CSC DOST | Operator: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) | Sangran Qazigund, Anantnag, J&amp;K 192221 \xB7 +91 70068 33767</p>
+      <p style="margin:0;">
+        <a href="/about-us" style="color:#101A36; font-weight:600; text-decoration:none;">About</a> \u2022
+        <a href="/contact-us" style="color:#101A36; font-weight:600; text-decoration:none;">Contact</a> \u2022
+        <a href="/editorial-policy" style="color:#101A36; font-weight:600; text-decoration:none;">Editorial Policy</a> \u2022
+        <a href="/privacy-policy" style="color:#101A36; font-weight:600; text-decoration:none;">Privacy Policy</a> \u2022
+        <a href="/terms-of-service" style="color:#101A36; font-weight:600; text-decoration:none;">Terms of Service</a> \u2022
+        <a href="/disclaimer" style="color:#101A36; font-weight:600; text-decoration:none;">Disclaimer</a> \u2022
+        <a href="/refund-policy" style="color:#101A36; font-weight:600; text-decoration:none;">Refund Policy</a>
+      </p>
+    </footer>`;
 }
 function renderServiceSubstantiveHtml(service) {
   const safeName = escapeHtml(service.name);
@@ -11041,12 +12226,13 @@ function renderLegalPageSubstantiveHtml(pageType) {
   const navTabs = [
     { key: "about", href: "/about-us", label: "About Us" },
     { key: "contact", href: "/contact-us", label: "Contact Helpdesk" },
+    { key: "editorial", href: "/editorial-policy", label: "Editorial Policy" },
     { key: "privacy", href: "/privacy-policy", label: "Privacy Policy" },
     { key: "terms", href: "/terms-of-service", label: "Terms of Service" },
     { key: "disclaimer", href: "/disclaimer", label: "Disclaimer" },
     { key: "refund", href: "/refund-policy", label: "Refund Policy" }
   ];
-  const activeTabKey = norm.includes("privacy") ? "privacy" : norm.includes("disclaimer") ? "disclaimer" : norm.includes("terms") ? "terms" : norm.includes("about") ? "about" : norm.includes("contact") ? "contact" : "refund";
+  const activeTabKey = norm.includes("privacy") ? "privacy" : norm.includes("disclaimer") ? "disclaimer" : norm.includes("terms") ? "terms" : norm.includes("about") ? "about" : norm.includes("contact") ? "contact" : norm.includes("editorial") ? "editorial" : "refund";
   const legalHeaderShell = `
   ${renderPrimaryCategoryNavHtml()}
   <div style="max-width:960px; margin:0 auto; padding:4px 16px 0 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
@@ -11059,6 +12245,57 @@ function renderLegalPageSubstantiveHtml(pageType) {
   ).join("")}
     </nav>
   </div>`;
+  if (norm.includes("editorial")) {
+    return `${legalHeaderShell}
+    <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.7;">
+      <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
+        <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+        <span style="margin:0 6px;">/</span>
+        <span style="color:#0f172a; font-weight:600;">Editorial Policy</span>
+      </nav>
+
+      <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:28px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <header style="border-bottom:1px solid #e2e8f0; padding-bottom:18px; margin-bottom:20px;">
+          <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
+            Verification &amp; Publishing Standards
+          </span>
+          <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Editorial Policy &amp; Fact-Checking Standards</h1>
+          <p style="font-size:13px; color:#64748b; margin:0;">Editor-in-Chief: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) \u2022 Last Reviewed: November 2026</p>
+        </header>
+
+        <section style="font-size:15px; color:#334155; line-height:1.75;">
+          <p>
+            <strong>CSC DOST</strong> (<code>https://www.cscdost.com</code>) publishes structured recruitment guides, university examination summaries, and citizen e-governance instructions for Jammu &amp; Kashmir and all-India applicants. Every article published on this website follows strict editorial verification rules designed to prevent misinformation and low-value thin content.
+          </p>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">1. Official Primary Sources Only</h2>
+          <p>
+            Our editorial desk checks and cites only primary official portals and official PDFs (<code>.gov.in</code>, <code>.nic.in</code>, JKSSB, SSC, RRB, Join Indian Army, University of Kashmir, Cluster University Srinagar, and IGNOU). We never copy or republish rumours from unverified blogs, social media forwards, or third-party aggregator websites.
+          </p>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">2. Human Verification &amp; Plain-Language Value</h2>
+          <ul style="padding-left:20px; margin:0 0 16px 0;">
+            <li>Every recruitment notice, date sheet, or scheme guide must be reviewed by a human editor (<strong>Wasim Ahmad Khanday</strong>) before publication.</li>
+            <li>Automated portal monitoring creates internal review drafts only and is strictly prohibited from auto-publishing live articles without human review and original rewriting.</li>
+            <li>Each published post includes verified eligibility rules, important schedule milestones, document checklists, step-by-step application guidance, and a direct link to the primary official circular.</li>
+            <li>Where an official notice does not specify a value (such as vacancy breakup, fee exemption, or cut-off time), CSC DOST explicitly instructs readers to check the official notification instead of guessing figures.</li>
+          </ul>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">3. Timestamps, Closing Deadlines &amp; Corrections</h2>
+          <p>
+            All articles carry clear <strong>Published</strong> and <strong>Last Updated</strong> dates. Expired recruitment circulars are visibly marked as <strong>Closed</strong> after the deadline passes and moved out of active job feeds into our <a href="/archive" style="color:#2563eb; font-weight:600;">Notice Archive</a> after 12 months. Whenever an issuing authority releases a corrigendum or last-date extension, we update the bulletin and note the revision date.
+          </p>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">4. Report an Error or Request a Correction</h2>
+          <p>
+            Readers who spot a typographical error, broken official PDF link, or updated date circular can report it directly to our editorial desk via email at <a href="mailto:support@cscdost.com" style="color:#2563eb;">support@cscdost.com</a>, phone at <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a>, or through our <a href="/contact-us" style="color:#2563eb; font-weight:600;">Contact Helpdesk</a>. Verified corrections are applied within 24 hours.
+          </p>
+        </section>
+      </article>
+      ${renderSsrPolicyFooterHtml()}
+    </main>
+    `;
+  }
   if (norm.includes("privacy")) {
     return `${legalHeaderShell}
     <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.7;">
@@ -11091,7 +12328,7 @@ function renderLegalPageSubstantiveHtml(pageType) {
           <ul style="padding-left:20px; margin:0 0 16px 0; line-height:1.8;">
             <li><strong>Informational Visitors:</strong> We collect standard, anonymous server log files (IP addresses, browser type, referring pages, date/time stamps) strictly for aggregate security analytics and system health monitoring.</li>
             <li><strong>Assisted Form Applicants:</strong> When you voluntarily submit an application assistance request, we collect only necessary personal data: Full Name, Father's Name, Date of Birth, Gender, Mobile Number, Email Address, and uploaded proof documents (e.g. Matriculation diploma, Domicile certificate, Photograph, Signature).</li>
-            <li><strong>Web Push Subscribers:</strong> If you grant browser notification permissions, we store your anonymous cryptographic Web Push subscription endpoint and keys to deliver official job notifications and exam alerts. No identity data is associated with push tokens.</li>
+            <li><strong>Web Push Subscribers:</strong> If you click &ldquo;Enable Notifications&rdquo; and grant browser notification permission, we store your browser push subscription endpoint URL, cryptographic encryption keys (<code>p256dh</code> and <code>auth</code>), browser user-agent, the page you subscribed from, and timestamps strictly to deliver requested recruitment, exam date-sheet, admission, and CSC welfare scheme alerts. No personal identity is linked to push subscriptions. You can <strong>unsubscribe at any time</strong> by clicking &ldquo;Unsubscribe&rdquo; in Notification Preferences or blocking Notifications in your browser site settings; unsubscribed or expired (HTTP 404/410) rows are permanently deleted from our database.</li>
             <li><strong>Payment Information:</strong> Online fee transactions are processed directly by <strong>Razorpay (PCI-DSS Level 1 compliant gateway)</strong>. CSC DOST does <strong>not</strong> collect, store, or view your debit/credit card numbers, CVVs, net-banking passwords, or UPI PINs.</li>
           </ul>
 
@@ -11137,9 +12374,7 @@ function renderLegalPageSubstantiveHtml(pageType) {
         </section>
       </article>
 
-      <footer style="margin-top:30px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
-        <p>CSC DOST (cscdost.com) | Authorized CSC VLE ID: 212515670018 | Sangran Qazigund, Anantnag, J&amp;K</p>
-      </footer>
+      ${renderSsrPolicyFooterHtml()}
     </main>
     `;
   }
@@ -11201,9 +12436,7 @@ function renderLegalPageSubstantiveHtml(pageType) {
         </section>
       </article>
 
-      <footer style="margin-top:30px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
-        <p>CSC DOST (cscdost.com) | Authorized CSC VLE ID: 212515670018 | Sangran Qazigund, Anantnag, J&amp;K</p>
-      </footer>
+      ${renderSsrPolicyFooterHtml()}
     </main>
     `;
   }
@@ -11285,9 +12518,7 @@ function renderLegalPageSubstantiveHtml(pageType) {
         </section>
       </article>
 
-      <footer style="margin-top:30px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
-        <p>CSC DOST (cscdost.com) | Authorized CSC VLE ID: 212515670018 | Sangran Qazigund, Anantnag, J&amp;K</p>
-      </footer>
+      ${renderSsrPolicyFooterHtml()}
     </main>
     `;
   }
@@ -11336,12 +12567,14 @@ function renderLegalPageSubstantiveHtml(pageType) {
             <li><strong>Browser-Based Document Tools:</strong> Free client-side image resizers, photo signature joiners, and document optimizers designed to meet exact government pixel and kilobyte specifications without sending files to private external servers.</li>
             <li><strong>Assisted Application Desk:</strong> Optional citizen facilitation where applicants who cannot complete complex online forms can book physical or virtual assistance from our certified VLE center.</li>
           </ul>
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">Editorial Independence &amp; Official Source Standards</h2>
+          <p>
+            Every notification published on CSC DOST is verified directly against primary government portals (<code>.gov.in</code>, <code>.nic.in</code>) and official university circulars before publication. Read our <a href="/editorial-policy" style="color:#2563eb; font-weight:600;">Editorial Policy</a> or <a href="/disclaimer" style="color:#2563eb; font-weight:600;">Government Non-Affiliation Disclaimer</a> to learn how we review updates and report corrections.
+          </p>
         </section>
       </article>
 
-      <footer style="margin-top:30px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
-        <p>CSC DOST (cscdost.com) | Authorized CSC VLE ID: 212515670018 | Sangran Qazigund, Anantnag, J&amp;K</p>
-      </footer>
+      ${renderSsrPolicyFooterHtml()}
     </main>
     `;
   }
@@ -11400,12 +12633,13 @@ function renderLegalPageSubstantiveHtml(pageType) {
             <li>Your Application Tracking Token (if checking progress or payment status for an existing request).</li>
             <li>Clear scans of academic, identity, or domicile certificates where eligibility verification or document resizing is needed.</li>
           </ul>
+          <p style="margin:12px 0 0 0;">
+            You can also submit an online contact inquiry directly once the interactive helpdesk loads, or visit <a href="/editorial-policy" style="color:#2563eb; font-weight:600;">Editorial Policy</a> to report a correction on any published circular summary.
+          </p>
         </section>
       </article>
 
-      <footer style="margin-top:30px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
-        <p>CSC DOST (cscdost.com) | Authorized CSC VLE ID: 212515670018 | Sangran Qazigund, Anantnag, J&amp;K</p>
-      </footer>
+      ${renderSsrPolicyFooterHtml()}
     </main>
     `;
   }
@@ -11461,9 +12695,7 @@ function renderLegalPageSubstantiveHtml(pageType) {
       </section>
     </article>
 
-    <footer style="margin-top:30px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
-      <p>CSC DOST (cscdost.com) | Authorized CSC VLE ID: 212515670018 | Sangran Qazigund, Anantnag, J&amp;K</p>
-    </footer>
+    ${renderSsrPolicyFooterHtml()}
   </main>
   `;
 }
@@ -11486,10 +12718,14 @@ function renderPrimaryCategoryNavHtml(activeCategory) {
   ).join("")}
       </nav>
     </div>
+    <div style="background:#0B132B; border-top:1px solid rgba(255,255,255,0.12); padding:6px 16px; text-align:center; font-size:11.5px; color:#E2E8F0;">
+      Independent citizen portal \u2014 not an official government website. <a href="/disclaimer" style="color:#93C5FD; font-weight:700; text-decoration:underline;">Read Disclaimer \u2192</a>
+    </div>
   </header>`;
 }
 function renderHomepageSubstantiveHtml(posts, services, alertsConfig) {
-  const verifiedVisiblePosts = posts.filter((p) => {
+  const dedupedPosts = getDeduplicatedSarkariPosts(posts);
+  const verifiedVisiblePosts = dedupedPosts.filter((p) => {
     if (!isPublishedSarkariItem(p)) return false;
     if (isOlderThan12Months(p)) return false;
     const st = computeSarkariStatus(p);
@@ -11497,30 +12733,32 @@ function renderHomepageSubstantiveHtml(posts, services, alertsConfig) {
   }).sort(
     (a, b) => parseSarkariDateSortValue(b.postDate || b.documentDate) - parseSarkariDateSortValue(a.postDate || a.documentDate)
   );
-  const closingSoonDeadlines = getActiveClosingDeadlines(posts, { maxDays: 7 }).slice(0, 4);
+  const closingSoonDeadlines = getActiveClosingDeadlines(dedupedPosts, { maxDays: 7 }).slice(0, 4);
   const recruitmentPool = verifiedVisiblePosts.filter((p) => isRecruitmentSarkariItem(p));
   const latestTwelveJobs = recruitmentPool.length >= 12 ? recruitmentPool.slice(0, 12) : [
     ...recruitmentPool,
     ...verifiedVisiblePosts.filter((p) => !recruitmentPool.some((r) => r.id === p.id))
   ].slice(0, 12);
   const educationPosts = verifiedVisiblePosts.filter((p) => isEducationSarkariItem(p)).slice(0, 6);
-  const popularSchemes = GUIDE_ARTICLES.filter(
+  const popularSchemes = PUBLISHED_GUIDE_ARTICLES.filter(
     (g) => g.category === "Central Scheme" || g.category === "State Services" || g.category === "Identity & Tax"
   ).slice(0, 4);
-  const featuredToolIds = ["image-compressor", "passport-photo-maker", "signature-resizer", "pdf-merge"];
-  const topTools = featuredToolIds.map((id) => TOOLS_LIST.find((t) => t.id === id)).filter((t) => Boolean(t));
   const featuredServices = services.slice(0, 6);
   const waUrl = alertsConfig?.whatsappUrl || "https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI";
   const telegramUrl = alertsConfig?.telegramUrl || "";
   const categoryCards = [
-    { href: "/jobs", title: "Jobs" },
-    { href: "/jobs?tab=exams", title: "Admit Card" },
+    { href: "/jobs", title: "Jobs & Recruitment" },
+    { href: "/jobs?tab=exams", title: "Admit Cards" },
     { href: "/jobs?tab=results", title: "Results" },
-    { href: "/jobs?tab=results&filter=answer_key", title: "Answer Key" },
-    { href: "/education", title: "Admission" },
-    { href: "/schemes", title: "Schemes" },
-    { href: "/tools", title: "Tools" },
-    { href: "/deadlines", title: "News" }
+    { href: "/jobs?tab=results&filter=answer_key", title: "Answer Keys" },
+    { href: "/education", title: "Admissions & Exams" },
+    { href: "/education/ignou", title: "IGNOU Hub" },
+    { href: "/schemes", title: "Govt Schemes" },
+    { href: "/services", title: "CSC E-Services" },
+    { href: "/tools", title: "Document Tools" },
+    { href: "/calculators", title: "Citizen Calculators" },
+    { href: "/deadlines", title: "Closing Deadlines" },
+    { href: "/archive", title: "Notice Archive" }
   ];
   const closingSoonHtml = closingSoonDeadlines.length > 0 ? `
     <section aria-label="Closing Today &amp; Soon" style="background:#FEF2F2; border:1px solid #FECACA; border-radius:12px; padding:10px 12px; margin-bottom:14px;">
@@ -11536,17 +12774,22 @@ function renderHomepageSubstantiveHtml(posts, services, alertsConfig) {
     </section>` : "";
   return `
   <div style="min-height:100vh; background:#F4F6FB; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:14px; color:#101A36; line-height:1.5;">
-  <header style="background:#ffffff; border-bottom:1px solid #E3E8F2; padding:12px 24px;">
-    <div style="max-width:1180px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:16px;">
+  <header style="background:#ffffff; border-bottom:1px solid #E3E8F2;">
+    <div style="max-width:1180px; margin:0 auto; padding:12px 24px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px;">
       <a href="/" style="display:inline-flex; align-items:center; gap:8px; font-size:17px; font-weight:800; color:#101A36; text-decoration:none;">CSC DOST</a>
       <nav aria-label="Primary sections" style="display:flex; flex-wrap:wrap; gap:14px; font-size:13px; font-weight:700;">
         <a href="/jobs" style="color:#2455E6; text-decoration:none;">Jobs</a>
-        <a href="/jobs?tab=exams" style="color:#2455E6; text-decoration:none;">Admit Card</a>
-        <a href="/jobs?tab=results" style="color:#2455E6; text-decoration:none;">Results</a>
         <a href="/education" style="color:#2455E6; text-decoration:none;">Admissions</a>
+        <a href="/education/ignou" style="color:#2455E6; text-decoration:none;">IGNOU</a>
+        <a href="/schemes" style="color:#2455E6; text-decoration:none;">Schemes</a>
         <a href="/services" style="color:#2455E6; text-decoration:none;">Services</a>
         <a href="/tools" style="color:#2455E6; text-decoration:none;">Tools</a>
+        <a href="/calculators" style="color:#2455E6; text-decoration:none;">Calculators</a>
+        <a href="/deadlines" style="color:#2455E6; text-decoration:none;">Deadlines</a>
       </nav>
+    </div>
+    <div style="background:#FFFBEB; border-top:1px solid #FDE68A; padding:6px 16px; text-align:center; font-size:11.5px; color:#78350F; font-weight:600;">
+      Independent citizen portal \u2014 not an official government website. <a href="/disclaimer" style="color:#B45309; font-weight:700; text-decoration:underline;">Read Disclaimer \u2192</a>
     </div>
   </header>
   <div style="max-width:1180px; margin:0 auto;">
@@ -11585,7 +12828,7 @@ function renderHomepageSubstantiveHtml(posts, services, alertsConfig) {
       </section>
 
       <section aria-label="Categories" style="margin-bottom:14px;">
-        <h2 style="font-size:15px; font-weight:800; margin:0 0 8px 0;">Categories</h2>
+        <h2 style="font-size:15px; font-weight:800; margin:0 0 8px 0;">Browse All Categories</h2>
         <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px;">
           ${categoryCards.map(
     (card) => `
@@ -11632,11 +12875,11 @@ function renderHomepageSubstantiveHtml(posts, services, alertsConfig) {
 
       <section aria-labelledby="ssr-services-heading" style="margin-bottom:14px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <h2 id="ssr-services-heading" style="font-size:15px; font-weight:800; margin:0;">CSC services</h2>
-          <a href="/services" style="font-size:12px; font-weight:700; color:#2455E6; text-decoration:none;">All \u2192</a>
+          <h2 id="ssr-services-heading" style="font-size:15px; font-weight:800; margin:0;">CSC E-Services</h2>
+          <a href="/services" style="font-size:12px; font-weight:700; color:#2455E6; text-decoration:none;">All Services \u2192</a>
         </div>
         <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px;">
-          ${featuredServices.slice(0, 4).map(
+          ${featuredServices.slice(0, 6).map(
     (svc) => `
             <a href="/service/${escapeHtml(svc.id)}" style="background:#ffffff; border:1px solid #E3E8F2; border-radius:12px; padding:10px; text-decoration:none; font-size:12px; font-weight:700; color:#101A36;">
               ${escapeHtml(svc.name)}
@@ -11647,16 +12890,19 @@ function renderHomepageSubstantiveHtml(posts, services, alertsConfig) {
 
       <section aria-labelledby="ssr-tools-heading" style="margin-bottom:14px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <h2 id="ssr-tools-heading" style="font-size:15px; font-weight:800; margin:0;">Free tools</h2>
-          <a href="/tools" style="font-size:12px; font-weight:700; color:#2455E6; text-decoration:none;">All \u2192</a>
+          <h2 id="ssr-tools-heading" style="font-size:15px; font-weight:800; margin:0;">Free Citizen Document Tools &amp; Calculators</h2>
+          <a href="/tools" style="font-size:12px; font-weight:700; color:#2455E6; text-decoration:none;">Tools Hub \u2192</a>
         </div>
         <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px;">
-          ${topTools.map(
+          ${TOOLS_LIST.map(
     (tool) => `
             <a href="/tools/${escapeHtml(tool.id)}" style="background:#ffffff; border:1px solid #E3E8F2; border-radius:12px; padding:10px; text-decoration:none; font-size:12px; font-weight:700; color:#101A36;">
               ${escapeHtml(tool.name)}
             </a>`
   ).join("")}
+          <a href="/calculators" style="background:#ffffff; border:1px solid #E3E8F2; border-radius:12px; padding:10px; text-decoration:none; font-size:12px; font-weight:700; color:#2455E6;">
+            Age, Fee &amp; Percentage Calculators \u2192
+          </a>
         </div>
       </section>
 
@@ -11706,6 +12952,7 @@ function renderHomepageSubstantiveHtml(posts, services, alertsConfig) {
         <p style="margin:0 0 6px 0; display:flex; flex-wrap:wrap; gap:10px;">
           <a href="/about-us" style="color:#ffffff; text-decoration:none;">About Us</a>
           <a href="/contact-us" style="color:#ffffff; text-decoration:none;">Contact Us</a>
+          <a href="/editorial-policy" style="color:#ffffff; text-decoration:none;">Editorial Policy</a>
           <a href="/privacy-policy" style="color:#ffffff; text-decoration:none;">Privacy Policy</a>
           <a href="/terms-of-service" style="color:#ffffff; text-decoration:none;">Terms of Service</a>
           <a href="/disclaimer" style="color:#ffffff; text-decoration:none;">Disclaimer</a>
@@ -11723,7 +12970,7 @@ function renderHomepageSubstantiveHtml(posts, services, alertsConfig) {
   `;
 }
 function renderArchiveSubstantiveHtml(posts) {
-  const archivedPosts = posts.filter((p) => isPublishedSarkariItem(p) && isOlderThan12Months(p)).sort(
+  const archivedPosts = getDeduplicatedSarkariPosts(posts).filter((p) => isPublishedSarkariItem(p) && isOlderThan12Months(p)).sort(
     (a, b) => parseSarkariDateSortValue(b.postDate || b.documentDate) - parseSarkariDateSortValue(a.postDate || a.documentDate)
   );
   return `
@@ -11978,6 +13225,21 @@ function renderToolDetailSubstantiveHtml(tool) {
         ${usesPdfWorker ? `<p style="font-size:13px; color:#334155; margin:8px 0 0 0;">Technical note: The open-source pdf.js worker script is loaded from cdnjs.cloudflare.com for local rendering while your PDF document itself never leaves your device.</p>` : ""}
       </section>
 
+      <section style="background:#ffffff; border:1px solid #E2E8F0; border-radius:10px; padding:16px; margin-bottom:20px;">
+        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Official Portal Upload Standards &amp; Practical Guidance</h2>
+        <p style="font-size:14px; color:#334155; margin:0 0 8px 0;">
+          Most Indian recruitment and university portals (such as JKSSB OTR, SSC OTR, RRB apply, University of Kashmir examination portals, and IGNOU Samarth) enforce strict automated validation checks on file extension, pixel width/height ratio, and file size in kilobytes (KB). Files that look crisp on a phone screen are frequently rejected when camera defaults save multi-megabyte JPEG or HEIC photos.
+        </p>
+        <ul style="padding-left:20px; font-size:14px; color:#334155; line-height:1.75; margin:0 0 8px 0;">
+          <li><strong>Photographs:</strong> Use a plain light/white background with clear front-facing lighting and no heavy filters. Standard form uploads usually accept JPG/JPEG files between 20 KB and 50 KB.</li>
+          <li><strong>Signatures:</strong> Sign cleanly in black or blue ink on unruled white paper, crop tight around the stroke edges before resizing, and avoid blurry shadows or flash glare.</li>
+          <li><strong>Supporting PDFs:</strong> When compressing or combining Domicile certificates, Matriculation diplomas, or category certificates, inspect the preview to confirm serial numbers and authority seals remain clearly legible.</li>
+        </ul>
+        <p style="font-size:14px; color:#475569; margin:0;">
+          Use our <a href="/calculators" style="color:#1F9D6B; font-weight:700; text-decoration:none;">Photo &amp; Signature Spec Inspector</a> to verify your final file measurements before logging in to submit your application form.
+        </p>
+      </section>
+
       <section style="margin-bottom:20px;">
         <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 10px 0;">Frequently Asked Questions</h2>
         <div style="display:flex; flex-direction:column; gap:10px;">
@@ -12001,11 +13263,13 @@ function renderToolDetailSubstantiveHtml(tool) {
         <a href="/calculators" style="background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">Citizen Calculators</a>
       </div>
     </article>
+    ${renderSsrPolicyFooterHtml()}
   </main>
   `;
 }
 function renderCategorySubstantiveHtml(categoryType, posts, services) {
-  const verifiedPosts = posts.filter((p) => {
+  const dedupedPosts = getDeduplicatedSarkariPosts(posts);
+  const verifiedPosts = dedupedPosts.filter((p) => {
     if (!isPublishedSarkariItem(p)) return false;
     if (isOlderThan12Months(p)) return false;
     const st = computeSarkariStatus(p);
@@ -12014,7 +13278,7 @@ function renderCategorySubstantiveHtml(categoryType, posts, services) {
     (a, b) => parseSarkariDateSortValue(b.postDate || b.documentDate) - parseSarkariDateSortValue(a.postDate || a.documentDate)
   );
   if (categoryType === "deadlines") {
-    const activeDeadlines = getActiveClosingDeadlines(posts, { includeAllActive: true });
+    const activeDeadlines = getActiveClosingDeadlines(dedupedPosts, { includeAllActive: true });
     return `
     ${renderPrimaryCategoryNavHtml("jobs")}
     <main class="ssr-category-wrapper" style="max-width:1100px; margin:0 auto; padding:8px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:16px; color:#101A36; line-height:1.6;">
@@ -12267,7 +13531,7 @@ function renderCategorySubstantiveHtml(categoryType, posts, services) {
       </header>
 
       <section style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px; margin-bottom:28px;">
-        ${GUIDE_ARTICLES.map((g) => `
+        ${PUBLISHED_GUIDE_ARTICLES.map((g) => `
           <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:18px;">
             <div style="font-size:11px; font-weight:700; color:#1F9D6B; text-transform:uppercase; margin-bottom:6px;">${escapeHtml(g.category)} \xB7 ${escapeHtml(g.readTime)}</div>
             <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 8px 0;">
@@ -12433,7 +13697,13 @@ function renderCategorySubstantiveHtml(categoryType, posts, services) {
       </section>
 
       <section style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:20px; margin-bottom:20px;">
-        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 10px 0;">How to Use Citizen Calculators</h2>
+        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 10px 0;">How Calculations Work, Official Verification &amp; Limitations</h2>
+        <p style="font-size:14px; color:#334155; margin:0 0 10px 0; line-height:1.65;">
+          Government recruitment rules determine age eligibility on a specific crucial cutoff date (commonly 01 January of the recruitment year for JKSSB posts, or 01 August / 01 July for SSC and RRB cycles). Our Age Calculator computes calendar years, months, and remaining days strictly between your Matriculation certificate Date of Birth and the chosen reference date, accounting for leap years.
+        </p>
+        <p style="font-size:14px; color:#334155; margin:0 0 10px 0; line-height:1.65;">
+          Category age limits (such as General/OM 40 years or SC/ST/RBA 43 years under standard J&amp;K civil services rules, versus 18\u201325/27/30 brackets for SSC and Defence entries) vary sharply by post and advertisement. Likewise, indicative CSC facilitation and statutory fee totals shown in the Fee Estimator represent common desk ranges and can vary with departmental revisions or GST updates. Always confirm exact age cutoffs, relaxation clauses, and payable fees in the official notification PDF before paying or submitting your form.
+        </p>
         <ol style="padding-left:20px; font-size:14px; color:#334155; line-height:1.75; margin:0;">
           <li><strong>Age Eligibility Calculator:</strong> Enter your Date of Birth from your Matriculation certificate and select the exact cutoff date printed in the JKSSB, SSC, RRB, or Army advertisement.</li>
           <li><strong>Photo &amp; Signature Spec Inspector:</strong> Select your prepared JPG/PNG image to inspect its exact dimensions in pixels and file size in kilobytes before uploading to an exam portal.</li>
@@ -12458,6 +13728,7 @@ function renderCategorySubstantiveHtml(categoryType, posts, services) {
           </details>
         </div>
       </section>
+      ${renderSsrPolicyFooterHtml()}
     </main>
     `;
   }
@@ -12600,6 +13871,14 @@ var POST_EXACT_SEO_MAP = {
   "jkssb-dv-notice-advt06-2026-works-supervisor": {
     title: "JKSSB Advt 06/2026 DV Notice (Draftsman) | CSC DOST",
     description: "JKSSB Advt 06/2026 Document Verification (DV Notice) for 357 Draftsman (Civil) & Works Supervisor posts (DV until 24/09/2026). Check schedule & docs."
+  },
+  "jkssb-advt-10-of-2026-je-mechanical-pwd": {
+    title: "JKSSB Advt 10/2026 JE Mechanical Postponed | CSC DOST",
+    description: "JKSSB Advt 10 of 2026 (127 Junior Engineer Mechanical posts in PW(R&B) Dept) online form postponed per 15/11/2026 notice. Fresh dates to be notified."
+  },
+  "ssc-cpo-pet-pst-result-paper-2-exam-date-2026": {
+    title: "SSC CPO SI 2025 PET/PST Result & Corrigendum | CSC DOST",
+    description: "SSC SI Delhi Police & CAPFs Exam 2025 PET/PST result (10,676 qualified), Corrigendum dated 16/11/2026, and Paper-II exam date 28/11/2026 on CSC DOST."
   }
 };
 function formatPostSeoTitle(item) {
@@ -12807,6 +14086,17 @@ var LEGAL_SEO_MAP = {
       { name: "Home", url: `${SITE_ORIGIN}/` },
       { name: "Refund Policy", url: `${SITE_ORIGIN}/refund-policy` }
     ]
+  },
+  editorial: {
+    title: "Editorial & Corrections Policy | CSC DOST",
+    description: "Read how CSC DOST verifies notices from official .gov.in and university portals, timestamps updates, and handles corrections.",
+    canonicalUrl: `${SITE_ORIGIN}/editorial-policy`,
+    robots: "index, follow",
+    ogType: "website",
+    breadcrumbs: [
+      { name: "Home", url: `${SITE_ORIGIN}/` },
+      { name: "Editorial Policy", url: `${SITE_ORIGIN}/editorial-policy` }
+    ]
   }
 };
 var PRIVATE_NOINDEX_META = {
@@ -12912,8 +14202,29 @@ var DEFAULT_DB = {
   postThumbnails: {},
   pushSubscriptions: [],
   pushNotifications: [],
-  pushSettings: { autoPublishPush: false, welcomePushEnabled: true },
-  paymentTransactions: []
+  pushSettings: { autoPublishPush: true, welcomePushEnabled: true },
+  paymentTransactions: [],
+  monitorSources: [],
+  reviewQueue: [],
+  monitorRuns: [],
+  whatsappAlertSettings: {
+    enabled: true,
+    dailySummary: true,
+    urgentAlerts: true,
+    failureAlerts: true,
+    quietHoursEnabled: true,
+    quietStartIst: "22:00",
+    quietEndIst: "06:30"
+  },
+  whatsappAlertState: {
+    queuedDuringQuietHours: null,
+    lastUrgentAlertByKey: {},
+    dailySentCounts: {},
+    limitReachedSentDate: "",
+    lastFailureWarning: null,
+    lastScheduledSlotKey: ""
+  },
+  whatsappAlertLogs: []
 };
 var memoryDb = null;
 function initDb() {
@@ -12949,8 +14260,14 @@ function getDb() {
       if (!parsed.postThumbnails) parsed.postThumbnails = {};
       if (!parsed.pushSubscriptions) parsed.pushSubscriptions = [];
       if (!parsed.pushNotifications) parsed.pushNotifications = [];
-      if (!parsed.pushSettings) parsed.pushSettings = { autoPublishPush: false, welcomePushEnabled: true };
+      if (!parsed.pushSettings) parsed.pushSettings = { autoPublishPush: true, welcomePushEnabled: true };
       if (!parsed.paymentTransactions) parsed.paymentTransactions = [];
+      if (!Array.isArray(parsed.monitorSources)) parsed.monitorSources = [];
+      if (!Array.isArray(parsed.reviewQueue)) parsed.reviewQueue = [];
+      if (!Array.isArray(parsed.monitorRuns)) parsed.monitorRuns = [];
+      if (!parsed.whatsappAlertSettings) parsed.whatsappAlertSettings = { ...DEFAULT_WHATSAPP_ALERT_SETTINGS };
+      if (!parsed.whatsappAlertState) parsed.whatsappAlertState = { ...DEFAULT_WHATSAPP_ALERT_STATE };
+      if (!Array.isArray(parsed.whatsappAlertLogs)) parsed.whatsappAlertLogs = [];
       if (Array.isArray(parsed.deletedAppointmentIds) && parsed.deletedAppointmentIds.length > 0) {
         const delSet = new Set(parsed.deletedAppointmentIds.map((s) => String(s).trim().toLowerCase()));
         parsed.appointments = parsed.appointments.filter((a) => {
@@ -13488,9 +14805,11 @@ function upsertPushSubscription(payload) {
       keys: payload.keys || existing.keys,
       deviceType: payload.deviceType || existing.deviceType || "unknown",
       userAgent: payload.userAgent || existing.userAgent,
+      subscribedFrom: payload.subscribedFrom || existing.subscribedFrom || "/",
       preferences: { ...existing.preferences, ...defaultPreferences },
       status: "active",
       failureCount: 0,
+      lastSeen: nowIso,
       updatedAt: nowIso
     };
     db.pushSubscriptions[existingIdx] = updated;
@@ -13503,9 +14822,11 @@ function upsertPushSubscription(payload) {
     keys: payload.keys,
     deviceType: payload.deviceType || "unknown",
     userAgent: payload.userAgent,
+    subscribedFrom: payload.subscribedFrom || "/",
     preferences: defaultPreferences,
     status: "active",
     createdAt: nowIso,
+    lastSeen: nowIso,
     updatedAt: nowIso,
     failureCount: 0
   };
@@ -13513,17 +14834,16 @@ function upsertPushSubscription(payload) {
   saveDb(db);
   return newRecord;
 }
-function deactivatePushSubscription(endpoint) {
+function deletePushSubscription(endpoint) {
   const db = getDb();
   if (!Array.isArray(db.pushSubscriptions)) return false;
-  const idx = db.pushSubscriptions.findIndex((s) => s && s.endpoint === endpoint);
-  if (idx !== -1) {
-    db.pushSubscriptions[idx].status = "inactive";
-    db.pushSubscriptions[idx].updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+  const before = db.pushSubscriptions.length;
+  db.pushSubscriptions = db.pushSubscriptions.filter((s) => s && s.endpoint !== endpoint);
+  const removed = db.pushSubscriptions.length !== before;
+  if (removed) {
     saveDb(db);
-    return true;
   }
-  return false;
+  return removed;
 }
 function getActivePushSubscriptions(category) {
   const db = getDb();
@@ -13540,19 +14860,19 @@ function getActivePushSubscriptions(category) {
   });
 }
 function markPushSubscriptionFailure(endpoint, isPermanentExpired) {
+  if (isPermanentExpired) {
+    deletePushSubscription(endpoint);
+    return;
+  }
   const db = getDb();
   if (!Array.isArray(db.pushSubscriptions)) return;
   const idx = db.pushSubscriptions.findIndex((s) => s && s.endpoint === endpoint);
   if (idx !== -1) {
-    if (isPermanentExpired) {
-      db.pushSubscriptions[idx].status = "expired";
-    } else {
-      db.pushSubscriptions[idx].failureCount = (db.pushSubscriptions[idx].failureCount || 0) + 1;
-      if (db.pushSubscriptions[idx].failureCount >= 3) {
-        db.pushSubscriptions[idx].status = "expired";
-      }
-    }
+    db.pushSubscriptions[idx].failureCount = (db.pushSubscriptions[idx].failureCount || 0) + 1;
     db.pushSubscriptions[idx].updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+    if (db.pushSubscriptions[idx].failureCount >= 5) {
+      db.pushSubscriptions.splice(idx, 1);
+    }
     saveDb(db);
   }
 }
@@ -13561,7 +14881,9 @@ function recordPushDeliverySuccess(endpoint) {
   if (!Array.isArray(db.pushSubscriptions)) return;
   const idx = db.pushSubscriptions.findIndex((s) => s && s.endpoint === endpoint);
   if (idx !== -1) {
-    db.pushSubscriptions[idx].lastDeliveryAt = (/* @__PURE__ */ new Date()).toISOString();
+    const nowIso = (/* @__PURE__ */ new Date()).toISOString();
+    db.pushSubscriptions[idx].lastDeliveryAt = nowIso;
+    db.pushSubscriptions[idx].lastSeen = nowIso;
     db.pushSubscriptions[idx].failureCount = 0;
     saveDb(db);
   }
@@ -13587,16 +14909,207 @@ function getPushNotificationHistory() {
 }
 function getPushServerSettings() {
   const db = getDb();
-  return db.pushSettings || { autoPublishPush: false, welcomePushEnabled: true };
+  return db.pushSettings || { autoPublishPush: true, welcomePushEnabled: true };
 }
 function updatePushServerSettings(settings) {
   const db = getDb();
   db.pushSettings = {
-    ...db.pushSettings || { autoPublishPush: false, welcomePushEnabled: true },
+    ...db.pushSettings || { autoPublishPush: true, welcomePushEnabled: true },
     ...settings
   };
   saveDb(db);
   return db.pushSettings;
+}
+var DEFAULT_MONITOR_SOURCES = [
+  {
+    id: "jkssb",
+    name: "JKSSB Official Portal",
+    url: "https://jkssb.nic.in/",
+    category: "jkssb",
+    consecutiveFailures: 0,
+    lastStatus: "pending"
+  },
+  {
+    id: "ku-exams",
+    name: "Kashmir University Examinations",
+    url: "https://www.kashmiruniversity.net/",
+    category: "exam_forms",
+    consecutiveFailures: 0,
+    lastStatus: "pending"
+  },
+  {
+    id: "ku-admissions",
+    name: "Kashmir University Admissions",
+    url: "https://egov.uok.edu.in/",
+    category: "admissions",
+    consecutiveFailures: 0,
+    lastStatus: "pending"
+  },
+  {
+    id: "cusrinagar",
+    name: "Cluster University Srinagar",
+    url: "https://www.cusrinagar.edu.in/",
+    category: "cluster_univ",
+    consecutiveFailures: 0,
+    lastStatus: "pending"
+  },
+  {
+    id: "ssc",
+    name: "Staff Selection Commission (SSC)",
+    url: "https://ssc.gov.in/",
+    category: "ssc_jobs",
+    consecutiveFailures: 0,
+    lastStatus: "pending"
+  },
+  {
+    id: "rrb",
+    name: "Railway Recruitment Board (RRB)",
+    url: "https://www.rrbapply.gov.in/",
+    category: "rrb_jobs",
+    consecutiveFailures: 0,
+    lastStatus: "pending"
+  },
+  {
+    id: "army",
+    name: "Join Indian Army",
+    url: "https://joinindianarmy.nic.in/",
+    category: "army_jobs",
+    consecutiveFailures: 0,
+    lastStatus: "pending"
+  }
+];
+var DEFAULT_WHATSAPP_ALERT_SETTINGS = {
+  enabled: true,
+  dailySummary: true,
+  urgentAlerts: true,
+  failureAlerts: true,
+  quietHoursEnabled: true,
+  quietStartIst: "22:00",
+  quietEndIst: "06:30"
+};
+var DEFAULT_WHATSAPP_ALERT_STATE = {
+  queuedDuringQuietHours: null,
+  lastUrgentAlertByKey: {},
+  dailySentCounts: {},
+  limitReachedSentDate: "",
+  lastFailureWarning: null,
+  lastScheduledSlotKey: ""
+};
+function getMonitorSources() {
+  const db = getDb();
+  if (!Array.isArray(db.monitorSources) || db.monitorSources.length === 0) {
+    db.monitorSources = DEFAULT_MONITOR_SOURCES.map((s) => ({ ...s }));
+    saveDb(db);
+  }
+  return db.monitorSources;
+}
+function saveMonitorSources(sources) {
+  const db = getDb();
+  db.monitorSources = sources;
+  saveDb(db);
+}
+function getReviewQueue() {
+  const db = getDb();
+  return Array.isArray(db.reviewQueue) ? db.reviewQueue : [];
+}
+function upsertReviewQueueItem(item) {
+  const db = getDb();
+  if (!Array.isArray(db.reviewQueue)) db.reviewQueue = [];
+  const idx = db.reviewQueue.findIndex((r) => r && r.id === item.id);
+  if (idx !== -1) {
+    db.reviewQueue[idx] = { ...db.reviewQueue[idx], ...item };
+  } else {
+    db.reviewQueue.unshift(item);
+  }
+  if (db.reviewQueue.length > 200) {
+    db.reviewQueue = db.reviewQueue.slice(0, 200);
+  }
+  saveDb(db);
+  return item;
+}
+function updateReviewQueueItemStatus(id, status, reviewedBy = "Staff Admin", updates) {
+  const db = getDb();
+  if (!Array.isArray(db.reviewQueue)) return null;
+  const idx = db.reviewQueue.findIndex((r) => r && r.id === id);
+  if (idx === -1) return null;
+  const nextReviewStatus = status === "approved" ? "verified" : "rejected";
+  db.reviewQueue[idx] = {
+    ...db.reviewQueue[idx],
+    ...updates || {},
+    status,
+    reviewStatus: nextReviewStatus,
+    reviewedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    reviewedBy
+  };
+  saveDb(db);
+  return db.reviewQueue[idx];
+}
+function addMonitorRunRecord(run) {
+  const db = getDb();
+  if (!Array.isArray(db.monitorRuns)) db.monitorRuns = [];
+  db.monitorRuns.unshift(run);
+  if (db.monitorRuns.length > 50) {
+    db.monitorRuns = db.monitorRuns.slice(0, 50);
+  }
+  saveDb(db);
+}
+function getMonitorRuns() {
+  const db = getDb();
+  return Array.isArray(db.monitorRuns) ? db.monitorRuns : [];
+}
+function getWhatsAppAlertSettings() {
+  const db = getDb();
+  return {
+    ...DEFAULT_WHATSAPP_ALERT_SETTINGS,
+    ...db.whatsappAlertSettings || {}
+  };
+}
+function updateWhatsAppAlertSettings(partial) {
+  const db = getDb();
+  db.whatsappAlertSettings = {
+    ...DEFAULT_WHATSAPP_ALERT_SETTINGS,
+    ...db.whatsappAlertSettings || {},
+    ...partial
+  };
+  saveDb(db);
+  return db.whatsappAlertSettings;
+}
+function getWhatsAppAlertState() {
+  const db = getDb();
+  return {
+    ...DEFAULT_WHATSAPP_ALERT_STATE,
+    ...db.whatsappAlertState || {},
+    lastUrgentAlertByKey: {
+      ...db.whatsappAlertState?.lastUrgentAlertByKey || {}
+    },
+    dailySentCounts: {
+      ...db.whatsappAlertState?.dailySentCounts || {}
+    }
+  };
+}
+function saveWhatsAppAlertState(state) {
+  const db = getDb();
+  db.whatsappAlertState = state;
+  saveDb(db);
+}
+function addWhatsAppAlertLog(entry) {
+  const db = getDb();
+  if (!Array.isArray(db.whatsappAlertLogs)) db.whatsappAlertLogs = [];
+  const full = {
+    ...entry,
+    id: `waalert_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+  };
+  db.whatsappAlertLogs.unshift(full);
+  if (db.whatsappAlertLogs.length > 100) {
+    db.whatsappAlertLogs = db.whatsappAlertLogs.slice(0, 100);
+  }
+  saveDb(db);
+  return full;
+}
+function getWhatsAppAlertLogs(limit = 20) {
+  const db = getDb();
+  const logs = Array.isArray(db.whatsappAlertLogs) ? db.whatsappAlertLogs : [];
+  return logs.slice(0, limit);
 }
 
 // src/utils/whatsappFormatter.ts
@@ -14650,6 +16163,7 @@ async function persistCustomerApplication(input) {
 async function syncPushSubscriptionToSupabase(record) {
   const supabase = getServerSupabaseClient();
   if (!supabase) return { success: false, error: "Supabase client not initialized" };
+  const nowIso = (/* @__PURE__ */ new Date()).toISOString();
   try {
     const { error } = await supabase.from("push_subscriptions").upsert({
       id: record.id,
@@ -14658,20 +16172,63 @@ async function syncPushSubscriptionToSupabase(record) {
       auth: record.keys?.auth,
       device_type: record.deviceType || "unknown",
       user_agent: record.userAgent,
+      subscribed_from: record.subscribedFrom || "/",
       preferences: record.preferences,
       status: record.status || "active",
-      created_at: record.createdAt,
-      updated_at: record.updatedAt,
-      last_delivery_at: record.lastDeliveryAt
+      created_at: record.createdAt || nowIso,
+      last_seen: record.lastSeen || nowIso,
+      updated_at: record.updatedAt || nowIso,
+      last_delivery_at: record.lastDeliveryAt || null
     }, { onConflict: "endpoint" });
     if (error) {
-      console.warn("[SupabaseServer] push_subscriptions table sync notice:", error.message);
+      console.warn("[SupabaseServer] push_subscriptions upsert notice:", error.message);
       return { success: false, error: error.message };
     }
     return { success: true };
   } catch (err) {
     console.warn("[SupabaseServer] push_subscriptions sync exception:", err?.message);
     return { success: false, error: err?.message };
+  }
+}
+async function deletePushSubscriptionFromSupabase(endpoint) {
+  const supabase = getServerSupabaseClient();
+  if (!supabase || !endpoint) return { success: false, error: "Supabase client or endpoint missing" };
+  try {
+    const { error } = await supabase.from("push_subscriptions").delete().eq("endpoint", endpoint);
+    if (error) {
+      console.warn("[SupabaseServer] push_subscriptions delete notice:", error.message);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err?.message };
+  }
+}
+async function getPushSubscriptionsFromSupabase() {
+  const supabase = getServerSupabaseClient();
+  if (!supabase) return [];
+  try {
+    const { data, error } = await supabase.from("push_subscriptions").select("id, endpoint, p256dh, auth, device_type, user_agent, subscribed_from, preferences, status, created_at, last_seen, updated_at, last_delivery_at").order("last_seen", { ascending: false }).limit(5e3);
+    if (error || !Array.isArray(data)) {
+      return [];
+    }
+    return data.filter((r) => r && r.endpoint && r.p256dh && r.auth && (!r.status || r.status === "active")).map((r) => ({
+      id: r.id,
+      endpoint: r.endpoint,
+      keys: { p256dh: r.p256dh, auth: r.auth },
+      deviceType: r.device_type || "unknown",
+      userAgent: r.user_agent || "",
+      subscribedFrom: r.subscribed_from || "/",
+      preferences: r.preferences || { jobs: true, schemes: true, exams: true, updates: true },
+      status: "active",
+      createdAt: r.created_at || (/* @__PURE__ */ new Date()).toISOString(),
+      lastSeen: r.last_seen || r.updated_at || (/* @__PURE__ */ new Date()).toISOString(),
+      updatedAt: r.updated_at || (/* @__PURE__ */ new Date()).toISOString(),
+      lastDeliveryAt: r.last_delivery_at || void 0,
+      failureCount: 0
+    }));
+  } catch {
+    return [];
   }
 }
 async function syncPushNotificationToSupabase(record) {
@@ -14687,7 +16244,8 @@ async function syncPushNotificationToSupabase(record) {
       post_id: record.postId,
       stats: record.stats,
       sent_at: record.sentAt,
-      sent_by: record.sentBy || "Admin"
+      sent_by: record.sentBy || "Admin",
+      is_test: Boolean(record.isTest)
     });
     if (error) {
       console.warn("[SupabaseServer] push_notifications_log table sync notice:", error.message);
@@ -14696,6 +16254,28 @@ async function syncPushNotificationToSupabase(record) {
     return { success: true };
   } catch (err) {
     return { success: false, error: err?.message };
+  }
+}
+async function getPushNotificationsFromSupabase(limit = 20) {
+  const supabase = getServerSupabaseClient();
+  if (!supabase) return [];
+  try {
+    const { data, error } = await supabase.from("push_notifications_log").select("id, title, body, category, url, post_id, stats, sent_at, sent_by, is_test").order("sent_at", { ascending: false }).limit(limit);
+    if (error || !Array.isArray(data)) return [];
+    return data.map((row) => ({
+      id: row.id,
+      title: row.title,
+      body: row.body,
+      category: row.category || "all",
+      url: row.url || "/",
+      postId: row.post_id || void 0,
+      stats: row.stats || { totalTargeted: 0, accepted: 0, failed: 0, expiredCleaned: 0 },
+      sentAt: row.sent_at,
+      sentBy: row.sent_by || "Admin",
+      isTest: Boolean(row.is_test)
+    }));
+  } catch {
+    return [];
   }
 }
 async function updateSupabasePaymentRecord(identifier, paymentData) {
@@ -15021,71 +16601,99 @@ async function verifyPaymentWithPayU(txnid) {
 }
 
 // src/lib/pushServer.ts
-import fs4 from "fs";
-import path4 from "path";
 import webpush from "web-push";
-var VAPID_FILE = path4.join(process.cwd(), "data", "vapid.json");
-var TMP_VAPID_FILE = "/tmp/vapid.json";
-var STABLE_VAPID_PUBLIC_KEY = "BIWxr5Hs7YgdviLAArRERb4tMUKSu-6PvSJbIB6_JLtIuemW4knw4LTtRdj8G-MdKa7EpepFB_vOjKLBkTB0pGg";
-var STABLE_VAPID_PRIVATE_KEY = "OGGSMWlqvau-Tghbf6ajVEzBl_ohTQpI6SsV0kNqTjg";
-var STABLE_VAPID_SUBJECT = "mailto:support@cscdost.com";
-var activeVapidConfig = null;
+var DEFAULT_PUBLIC_KEY = "BJZxu9aQ0e54Br6OUHQMQbw7Oc1p1FStaxyzuBGISVvfBDp8N4lFPn8tVEZPZeM75TJjbLJHmdsTIkLi7noWlnk";
+var DEFAULT_SUBJECT = "mailto:support@cscdost.com";
+var vapidConfigured = false;
+function getVapidPublicKey() {
+  return (process.env.VAPID_PUBLIC_KEY || process.env.VITE_VAPID_PUBLIC_KEY || DEFAULT_PUBLIC_KEY).trim();
+}
+function isPushConfigured() {
+  const publicKey = getVapidPublicKey();
+  const privateKey = (process.env.VAPID_PRIVATE_KEY || "").trim();
+  return Boolean(publicKey && privateKey);
+}
 function initializeVapid() {
-  if (activeVapidConfig) return activeVapidConfig;
-  let publicKey = (process.env.VAPID_PUBLIC_KEY || "").trim();
-  let privateKey = (process.env.VAPID_PRIVATE_KEY || "").trim();
-  const subject = (process.env.VAPID_SUBJECT || STABLE_VAPID_SUBJECT).trim();
+  if (vapidConfigured) return true;
+  const publicKey = getVapidPublicKey();
+  const privateKey = (process.env.VAPID_PRIVATE_KEY || "").trim();
+  const subject = (process.env.VAPID_SUBJECT || DEFAULT_SUBJECT).trim();
   if (!publicKey || !privateKey) {
-    const candidatePaths = [VAPID_FILE, TMP_VAPID_FILE];
-    for (const filePath of candidatePaths) {
-      try {
-        if (fs4.existsSync(filePath)) {
-          const fileContent = fs4.readFileSync(filePath, "utf-8");
-          const parsed = JSON.parse(fileContent);
-          if (parsed.publicKey && parsed.privateKey) {
-            publicKey = parsed.publicKey;
-            privateKey = parsed.privateKey;
-            break;
-          }
-        }
-      } catch (e) {
-      }
-    }
-  }
-  if (!publicKey || !privateKey) {
-    publicKey = STABLE_VAPID_PUBLIC_KEY;
-    privateKey = STABLE_VAPID_PRIVATE_KEY;
-    try {
-      const targetDir = fs4.existsSync(path4.dirname(VAPID_FILE)) ? VAPID_FILE : TMP_VAPID_FILE;
-      fs4.writeFileSync(targetDir, JSON.stringify({ publicKey, privateKey, subject, createdAt: (/* @__PURE__ */ new Date()).toISOString() }, null, 2));
-    } catch {
-    }
+    console.warn("[WebPush] VAPID_PRIVATE_KEY environment secret is not set; push delivery is disabled.");
+    return false;
   }
   try {
     webpush.setVapidDetails(subject, publicKey, privateKey);
-    console.log(`\u2705 [WebPush] VAPID configured successfully. Subject: ${subject}`);
-  } catch (setErr) {
-    console.error("[WebPush] Error setting VAPID details:", setErr);
+    vapidConfigured = true;
+    return true;
+  } catch (err) {
+    console.error("[WebPush] Error configuring VAPID details:", err?.message || "Invalid VAPID configuration");
+    return false;
   }
-  activeVapidConfig = { publicKey, privateKey, subject };
-  return activeVapidConfig;
 }
-function getVapidPublicKey() {
-  const config = initializeVapid();
-  return config.publicKey;
+function formatPostPushPayload(post) {
+  const cleanTitle = String(post.title || "CSC DOST Update").replace(/\s+/g, " ").trim().slice(0, 60);
+  const rawSummary = String(post.shortInfo || post.shortDescription || post.summary || "").replace(/\s+/g, " ").trim();
+  const cleanBody = (rawSummary || "Tap to view complete notification details on CSC DOST.").slice(0, 100);
+  const slug = String(post.id || "").trim();
+  return {
+    title: cleanTitle,
+    body: cleanBody,
+    icon: "/icon-192.png",
+    badge: "/favicon-32x32.png",
+    url: slug ? `https://www.cscdost.com/post/${encodeURIComponent(slug)}` : "https://www.cscdost.com/",
+    tag: slug || `csc-${Date.now()}`,
+    postId: slug || void 0,
+    category: post.category || "all"
+  };
+}
+async function getMergedActiveSubscribers(category) {
+  const localSubs = getActivePushSubscriptions(category);
+  const supaSubs = await getPushSubscriptionsFromSupabase();
+  const merged = /* @__PURE__ */ new Map();
+  for (const sub of localSubs) {
+    if (sub && sub.endpoint) merged.set(sub.endpoint, sub);
+  }
+  for (const sub of supaSubs) {
+    if (!sub || !sub.endpoint) continue;
+    if (category && category !== "all") {
+      const prefs = sub.preferences || { jobs: true, schemes: true, exams: true, updates: true };
+      if (category === "jobs" && prefs.jobs === false) continue;
+      if (category === "schemes" && prefs.schemes === false) continue;
+      if (category === "exams" && prefs.exams === false) continue;
+      if (category === "updates" && prefs.updates === false) continue;
+    }
+    if (!merged.has(sub.endpoint)) {
+      merged.set(sub.endpoint, sub);
+    }
+  }
+  return Array.from(merged.values());
+}
+async function removeExpiredSubscription(endpoint) {
+  deletePushSubscription(endpoint);
+  await deletePushSubscriptionFromSupabase(endpoint).catch(() => false);
 }
 async function sendSingleNotification(subscription, payload) {
-  initializeVapid();
+  if (!initializeVapid()) {
+    return {
+      success: false,
+      statusCode: 503,
+      error: "Push server secret (VAPID_PRIVATE_KEY) is not configured."
+    };
+  }
   const formattedPayload = JSON.stringify({
-    title: payload.title || "CSC DOST | Notification \u{1F514}",
-    body: payload.body || "New update available on CSC DOST portal.",
-    icon: payload.icon || "/csc-dost-header-logo.png",
+    title: payload.title || "CSC DOST Update",
+    body: payload.body || "New update available on CSC DOST.",
+    icon: payload.icon || "/icon-192.png",
     badge: payload.badge || "/favicon-32x32.png",
     image: payload.image || void 0,
-    url: payload.url || "/",
-    tag: payload.tag || `csc-${Date.now()}`,
+    url: payload.url || "https://www.cscdost.com/",
+    tag: payload.tag || payload.postId || `csc-${Date.now()}`,
     postId: payload.postId,
-    category: payload.category || "all"
+    category: payload.category || "all",
+    data: {
+      url: payload.url || "https://www.cscdost.com/"
+    }
   });
   const pushSubscription = {
     endpoint: subscription.endpoint,
@@ -15097,7 +16705,6 @@ async function sendSingleNotification(subscription, payload) {
   try {
     const result = await webpush.sendNotification(pushSubscription, formattedPayload, {
       TTL: 60 * 60 * 24,
-      // 24 hours
       urgency: "high"
     });
     recordPushDeliverySuccess(subscription.endpoint);
@@ -15105,10 +16712,10 @@ async function sendSingleNotification(subscription, payload) {
   } catch (err) {
     const statusCode = err?.statusCode;
     if (statusCode === 404 || statusCode === 410) {
-      console.log(`[WebPush] Subscription expired (${statusCode}) for endpoint: ${subscription.endpoint.slice(0, 45)}...`);
-      markPushSubscriptionFailure(subscription.endpoint, true);
+      console.log(`[WebPush] Removed expired subscription (${statusCode}): ${subscription.endpoint.slice(0, 48)}...`);
+      await removeExpiredSubscription(subscription.endpoint);
     } else {
-      console.warn(`[WebPush] Delivery warning (${statusCode || "network"}):`, err?.message || err);
+      console.warn(`[WebPush] Delivery failure (${statusCode || "network"}): ${err?.message || "Push request failed"}`);
       markPushSubscriptionFailure(subscription.endpoint, false);
     }
     return {
@@ -15119,30 +16726,37 @@ async function sendSingleNotification(subscription, payload) {
   }
 }
 async function broadcastPushNotification(params) {
-  initializeVapid();
-  const category = params.category || "all";
-  if (params.isTest && params.testEndpoint) {
-    const sub = {
-      endpoint: params.testEndpoint,
-      keys: { p256dh: "", auth: "" }
+  if (!initializeVapid()) {
+    return {
+      success: false,
+      notificationId: "",
+      stats: { totalTargeted: 0, accepted: 0, failed: 0, expiredCleaned: 0 },
+      error: "Push server secret (VAPID_PRIVATE_KEY) is not configured."
     };
-    const all = getActivePushSubscriptions("all");
+  }
+  const category = params.category || "all";
+  const targetIcon = params.icon || "/icon-192.png";
+  const targetTag = params.tag || params.postId || `csc-${Date.now()}`;
+  const targetUrl = params.url || (params.postId ? `https://www.cscdost.com/post/${encodeURIComponent(params.postId)}` : "https://www.cscdost.com/");
+  if (params.isTest && params.testEndpoint) {
+    const all = await getMergedActiveSubscribers("all");
     const match = all.find((s) => s.endpoint === params.testEndpoint);
     if (!match) {
       return {
         success: false,
         notificationId: "",
         stats: { totalTargeted: 1, accepted: 0, failed: 1, expiredCleaned: 0 },
-        error: "Target test subscription not found or inactive."
+        error: "Target test subscription not found or no longer active."
       };
     }
     const res = await sendSingleNotification(match, {
       title: params.title,
       body: params.body,
-      url: params.url,
+      url: targetUrl,
+      tag: targetTag,
       postId: params.postId,
       category,
-      icon: params.icon,
+      icon: targetIcon,
       image: params.image
     });
     const stats2 = {
@@ -15155,9 +16769,10 @@ async function broadcastPushNotification(params) {
       title: params.title,
       body: params.body,
       category,
-      url: params.url || "/",
+      url: targetUrl,
+      tag: targetTag,
       postId: params.postId,
-      icon: params.icon,
+      icon: targetIcon,
       image: params.image,
       sentBy: params.sentBy || "Admin Test",
       stats: stats2,
@@ -15172,37 +16787,42 @@ async function broadcastPushNotification(params) {
       error: res.error
     };
   }
-  const targetSubscribers = getActivePushSubscriptions(category);
+  const targetSubscribers = await getMergedActiveSubscribers(category);
   let acceptedCount = 0;
   let failedCount = 0;
   let expiredCleanedCount = 0;
-  const BATCH_SIZE = 20;
+  const BATCH_SIZE = 200;
   for (let i = 0; i < targetSubscribers.length; i += BATCH_SIZE) {
     const batch = targetSubscribers.slice(i, i + BATCH_SIZE);
-    const results = await Promise.all(
+    const settled = await Promise.allSettled(
       batch.map(
         (sub) => sendSingleNotification(sub, {
           title: params.title,
           body: params.body,
-          url: params.url,
+          url: targetUrl,
+          tag: targetTag,
           postId: params.postId,
           category,
-          icon: params.icon,
+          icon: targetIcon,
           image: params.image
         })
       )
     );
-    for (const res of results) {
-      if (res.success) {
+    for (const outcome of settled) {
+      if (outcome.status === "fulfilled" && outcome.value.success) {
         acceptedCount++;
       } else {
         failedCount++;
-        if (res.statusCode === 410 || res.statusCode === 404) {
+        const statusCode = outcome.status === "fulfilled" ? outcome.value.statusCode : void 0;
+        if (statusCode === 410 || statusCode === 404) {
           expiredCleanedCount++;
         }
       }
     }
   }
+  console.log(
+    `[WebPush] Broadcast finished (${category}): targeted=${targetSubscribers.length}, accepted=${acceptedCount}, failed=${failedCount}, deleted=${expiredCleanedCount}`
+  );
   const stats = {
     totalTargeted: targetSubscribers.length,
     accepted: acceptedCount,
@@ -15213,9 +16833,10 @@ async function broadcastPushNotification(params) {
     title: params.title,
     body: params.body,
     category,
-    url: params.url || "/",
+    url: targetUrl,
+    tag: targetTag,
     postId: params.postId,
-    icon: params.icon,
+    icon: targetIcon,
     image: params.image,
     sentBy: params.sentBy || "Admin Broadcast",
     stats,
@@ -15230,11 +16851,911 @@ async function broadcastPushNotification(params) {
   };
 }
 
+// src/server/whatsappAlerts.ts
+var STAFF_REVIEW_URL = "https://www.cscdost.com/staff";
+var DAILY_ALERT_LIMIT = 20;
+var URGENT_COOLDOWN_MS = 60 * 60 * 1e3;
+function maskPhoneNumberForLogs(phone) {
+  const clean = String(phone || "").replace(/[^\d+]/g, "");
+  if (!clean) return "***";
+  if (clean.length <= 4) return "****";
+  const last4 = clean.slice(-4);
+  const prefix = clean.startsWith("+") ? clean.slice(0, 3) : "";
+  const maskedCount = Math.max(4, clean.length - prefix.length - 4);
+  return `${prefix}${"*".repeat(maskedCount)}${last4}`;
+}
+function sanitizeAlertLogText(raw) {
+  let out = String(raw || "");
+  out = out.replace(/([?&]apikey=)[^&\s]+/gi, "$1[REDACTED]");
+  out = out.replace(/(Bearer|Basic)\s+[A-Za-z0-9._+/=-]+/gi, "$1 [REDACTED]");
+  out = out.replace(/\b(EAA[A-Za-z0-9]{12,}|AC[a-f0-9]{20,})\b/g, "[REDACTED_TOKEN]");
+  out = out.replace(/(\+?\d[\d\s-]{6,}\d)/g, (m) => maskPhoneNumberForLogs(m));
+  return out.trim().slice(0, 300);
+}
+function formatConcisePlainMessage(text) {
+  const clean = String(text || "").replace(/\r\n/g, "\n").replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+  if (clean.length <= 395) return clean;
+  return `${clean.slice(0, 392).trimEnd()}...`;
+}
+function getConfiguredWhatsAppProvider() {
+  const raw = (process.env.WHATSAPP_PROVIDER || "cloud_api").trim().toLowerCase();
+  if (raw === "twilio") return "twilio";
+  if (raw === "callmebot") return "callmebot";
+  return "cloud_api";
+}
+function normalizeInternationalPhone(raw) {
+  const cleaned = String(raw || "").trim().replace(/^whatsapp:/i, "").replace(/[\s()-]/g, "");
+  if (!cleaned) return "";
+  if (cleaned.startsWith("+")) return `+${cleaned.slice(1).replace(/\D/g, "")}`;
+  const digits = cleaned.replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.length === 10) return `+91${digits}`;
+  return `+${digits}`;
+}
+function getOwnerPhoneNumbers() {
+  const listRaw = (process.env.OWNER_PHONES || "").trim();
+  const singleRaw = (process.env.OWNER_PHONE || "").trim();
+  const combined = [listRaw, singleRaw].filter(Boolean).join(",");
+  if (!combined) return [];
+  const unique = /* @__PURE__ */ new Set();
+  for (const part of combined.split(",")) {
+    const norm = normalizeInternationalPhone(part);
+    if (norm && norm.replace(/\D/g, "").length >= 8) {
+      unique.add(norm);
+    }
+  }
+  return Array.from(unique);
+}
+function getProviderSecretsStatus(provider = getConfiguredWhatsAppProvider()) {
+  const owners = getOwnerPhoneNumbers();
+  const missingVars = [];
+  if (provider === "cloud_api") {
+    if (!(process.env.WA_PHONE_NUMBER_ID || "").trim()) missingVars.push("WA_PHONE_NUMBER_ID");
+    if (!(process.env.WA_ACCESS_TOKEN || "").trim()) missingVars.push("WA_ACCESS_TOKEN");
+    if (owners.length === 0) missingVars.push("OWNER_PHONES");
+  } else if (provider === "twilio") {
+    if (!(process.env.TWILIO_ACCOUNT_SID || "").trim()) missingVars.push("TWILIO_ACCOUNT_SID");
+    if (!(process.env.TWILIO_AUTH_TOKEN || "").trim()) missingVars.push("TWILIO_AUTH_TOKEN");
+    if (!(process.env.TWILIO_WHATSAPP_FROM || "").trim()) missingVars.push("TWILIO_WHATSAPP_FROM");
+    if (owners.length === 0) missingVars.push("OWNER_PHONES");
+  } else {
+    if (!(process.env.CALLMEBOT_API_KEY || "").trim()) missingVars.push("CALLMEBOT_API_KEY");
+    if (owners.length === 0 && !(process.env.OWNER_PHONE || "").trim()) missingVars.push("OWNER_PHONE");
+  }
+  return {
+    provider,
+    configured: missingVars.length === 0,
+    ownerPhonesCount: owners.length,
+    ownerPhonesMasked: owners.map(maskPhoneNumberForLogs),
+    missingVars
+  };
+}
+function getIstTimeParts(date = /* @__PURE__ */ new Date()) {
+  const istMs = date.getTime() + 330 * 60 * 1e3;
+  const istDate = new Date(istMs);
+  const year = istDate.getUTCFullYear();
+  const month = String(istDate.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(istDate.getUTCDate()).padStart(2, "0");
+  const hour = istDate.getUTCHours();
+  const minute = istDate.getUTCMinutes();
+  const dateKey = `${year}-${month}-${day}`;
+  const hhmm = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  const slotKey = `${dateKey}-${String(hour).padStart(2, "0")}`;
+  return {
+    dateKey,
+    hour,
+    minute,
+    totalMinutes: hour * 60 + minute,
+    hhmm,
+    slotKey
+  };
+}
+function parseHhmmToMinutes(hhmm, fallbackMinutes) {
+  const m = String(hhmm || "").trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return fallbackMinutes;
+  const h = Math.min(23, Math.max(0, parseInt(m[1], 10)));
+  const min = Math.min(59, Math.max(0, parseInt(m[2], 10)));
+  return h * 60 + min;
+}
+function isWithinQuietHours(settings, now = /* @__PURE__ */ new Date()) {
+  if (!settings.quietHoursEnabled) return false;
+  const { totalMinutes } = getIstTimeParts(now);
+  const startMin = parseHhmmToMinutes(settings.quietStartIst, 22 * 60);
+  const endMin = parseHhmmToMinutes(settings.quietEndIst, 6 * 60 + 30);
+  if (startMin === endMin) return false;
+  if (startMin > endMin) {
+    return totalMinutes >= startMin || totalMinutes < endMin;
+  }
+  return totalMinutes >= startMin && totalMinutes < endMin;
+}
+async function sendOnceViaProvider(provider, to, message, options) {
+  const doFetch = options?.fetchImpl || globalThis.fetch;
+  const normalizedTo = normalizeInternationalPhone(to);
+  if (!normalizedTo) {
+    return { ok: false, error: "Recipient owner phone number is missing or invalid." };
+  }
+  const plainBody = formatConcisePlainMessage(message);
+  if (provider === "cloud_api") {
+    const phoneId = (process.env.WA_PHONE_NUMBER_ID || "").trim();
+    const accessToken = (process.env.WA_ACCESS_TOKEN || "").trim();
+    if (!phoneId || !accessToken) {
+      return { ok: false, error: "Missing server secret WA_PHONE_NUMBER_ID or WA_ACCESS_TOKEN." };
+    }
+    const recipientDigits = normalizedTo.replace(/^\+/, "");
+    const tpl = options?.templateVars;
+    const payload = tpl ? {
+      messaging_product: "whatsapp",
+      to: recipientDigits,
+      type: "template",
+      template: {
+        name: "cscdost_review_alert",
+        language: { code: "en" },
+        components: [
+          {
+            type: "body",
+            parameters: [
+              { type: "text", text: String(tpl.newDrafts) },
+              { type: "text", text: String(tpl.updates) },
+              { type: "text", text: String(tpl.carefulReview) },
+              { type: "text", text: String(tpl.reviewLink || STAFF_REVIEW_URL) }
+            ]
+          }
+        ]
+      }
+    } : {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: recipientDigits,
+      type: "text",
+      text: {
+        preview_url: false,
+        body: plainBody
+      }
+    };
+    const res2 = await doFetch(`https://graph.facebook.com/v20.0/${encodeURIComponent(phoneId)}/messages`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await res2.json().catch(() => ({}));
+    if (!res2.ok) {
+      return {
+        ok: false,
+        error: sanitizeAlertLogText(data?.error?.message || `Meta Cloud API HTTP ${res2.status}`)
+      };
+    }
+    const msgId = data?.messages?.[0]?.id || "accepted";
+    return { ok: true, responseSummary: `cloud_api messageId=${msgId}` };
+  }
+  if (provider === "twilio") {
+    const sid = (process.env.TWILIO_ACCOUNT_SID || "").trim();
+    const authToken = (process.env.TWILIO_AUTH_TOKEN || "").trim();
+    const fromRaw = (process.env.TWILIO_WHATSAPP_FROM || "").trim();
+    if (!sid || !authToken || !fromRaw) {
+      return { ok: false, error: "Missing server secret TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, or TWILIO_WHATSAPP_FROM." };
+    }
+    const fromFormatted = fromRaw.startsWith("whatsapp:") ? fromRaw : `whatsapp:${normalizeInternationalPhone(fromRaw)}`;
+    const toFormatted = `whatsapp:${normalizedTo}`;
+    const form = new URLSearchParams();
+    form.set("From", fromFormatted);
+    form.set("To", toFormatted);
+    form.set("Body", plainBody);
+    const basicAuth = Buffer.from(`${sid}:${authToken}`).toString("base64");
+    const res2 = await doFetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(sid)}/Messages.json`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${basicAuth}`,
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: form.toString()
+      }
+    );
+    const data = await res2.json().catch(() => ({}));
+    if (!res2.ok) {
+      return {
+        ok: false,
+        error: sanitizeAlertLogText(data?.message || `Twilio HTTP ${res2.status}`)
+      };
+    }
+    return { ok: true, responseSummary: `twilio sid=${data?.sid || "queued"} status=${data?.status || "accepted"}` };
+  }
+  const apiKey = (process.env.CALLMEBOT_API_KEY || "").trim();
+  const targetPhone = normalizedTo || normalizeInternationalPhone(process.env.OWNER_PHONE || "");
+  if (!apiKey || !targetPhone) {
+    return { ok: false, error: "Missing server secret CALLMEBOT_API_KEY or OWNER_PHONE." };
+  }
+  const callmebotPhone = targetPhone.replace(/\s+/g, "");
+  const url = `https://api.callmebot.com/whatsapp.php?phone=${encodeURIComponent(callmebotPhone)}&text=${encodeURIComponent(plainBody)}&apikey=${encodeURIComponent(apiKey)}`;
+  const res = await doFetch(url, { method: "GET" });
+  const bodyText = await res.text().catch(() => "");
+  if (!res.ok || /error|invalid|denied/i.test(bodyText)) {
+    return {
+      ok: false,
+      error: sanitizeAlertLogText(bodyText || `CallMeBot HTTP ${res.status}`)
+    };
+  }
+  return { ok: true, responseSummary: "callmebot queued" };
+}
+async function sendWhatsApp(to, message, options) {
+  const provider = options?.providerOverride || getConfiguredWhatsAppProvider();
+  const retryDelays = options?.retryDelaysMs || [1e3, 3e3, 7e3];
+  const maxRetries = Math.min(3, retryDelays.length);
+  let lastError = "Unknown provider failure";
+  let attempts = 0;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    attempts = attempt + 1;
+    try {
+      const outcome = await sendOnceViaProvider(provider, to, message, options);
+      if (outcome.ok) {
+        return {
+          success: true,
+          provider,
+          attempts,
+          responseSummary: outcome.responseSummary
+        };
+      }
+      lastError = outcome.error || "Delivery rejected by provider";
+    } catch (err) {
+      lastError = sanitizeAlertLogText(err?.message || "Network exception during WhatsApp request");
+    }
+    if (attempt < maxRetries) {
+      const delayMs = retryDelays[attempt] ?? 1e3 * (attempt + 1);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  return {
+    success: false,
+    provider,
+    attempts,
+    error: sanitizeAlertLogText(lastError)
+  };
+}
+function buildDailySummaryMessage(counts) {
+  return formatConcisePlainMessage(
+    `New drafts: ${counts.newDrafts} | Update proposals: ${counts.updateProposals} | Need careful review: ${counts.carefulReview} | Sources failing: ${counts.sourcesFailing}
+Review now: ${STAFF_REVIEW_URL}`
+  );
+}
+async function dispatchOwnerWhatsAppAlert(params) {
+  const now = params.now || /* @__PURE__ */ new Date();
+  const settings = getWhatsAppAlertSettings();
+  const state = getWhatsAppAlertState();
+  const provider = getConfiguredWhatsAppProvider();
+  const owners = getOwnerPhoneNumbers();
+  const maskedRecipients = owners.map(maskPhoneNumberForLogs);
+  const { dateKey } = getIstTimeParts(now);
+  if (!params.bypassEnabledToggle) {
+    if (!settings.enabled) {
+      return { sent: false, suppressedReason: "disabled", provider, attempts: 0 };
+    }
+    if (params.type === "summary" && !settings.dailySummary) {
+      return { sent: false, suppressedReason: "summary_disabled", provider, attempts: 0 };
+    }
+    if (params.type === "urgent" && !settings.urgentAlerts) {
+      return { sent: false, suppressedReason: "urgent_disabled", provider, attempts: 0 };
+    }
+    if (params.type === "failure" && !settings.failureAlerts) {
+      return { sent: false, suppressedReason: "failure_disabled", provider, attempts: 0 };
+    }
+  }
+  if (params.type === "summary" && isWithinQuietHours(settings, now)) {
+    const prev = state.queuedDuringQuietHours || {
+      newDrafts: 0,
+      updateProposals: 0,
+      carefulReview: 0,
+      sourcesFailing: 0,
+      queuedAt: now.toISOString()
+    };
+    const c = params.summaryCounts || { newDrafts: 0, updateProposals: 0, carefulReview: 0, sourcesFailing: 0 };
+    state.queuedDuringQuietHours = {
+      newDrafts: prev.newDrafts + c.newDrafts,
+      updateProposals: prev.updateProposals + c.updateProposals,
+      carefulReview: Math.max(prev.carefulReview, c.carefulReview),
+      sourcesFailing: Math.max(prev.sourcesFailing, c.sourcesFailing),
+      queuedAt: prev.queuedAt
+    };
+    saveWhatsAppAlertState(state);
+    addWhatsAppAlertLog({
+      timestamp: now.toISOString(),
+      type: "summary",
+      provider,
+      recipientsMasked: maskedRecipients,
+      status: "queued_quiet_hours",
+      attempts: 0,
+      messagePreview: formatConcisePlainMessage(params.message)
+    });
+    return { sent: false, queued: true, suppressedReason: "quiet_hours", provider, attempts: 0 };
+  }
+  if ((params.type === "urgent" || params.type === "failure") && params.cooldownKey) {
+    const lastIso = state.lastUrgentAlertByKey[params.cooldownKey];
+    if (lastIso) {
+      const elapsed = now.getTime() - new Date(lastIso).getTime();
+      if (elapsed >= 0 && elapsed < URGENT_COOLDOWN_MS) {
+        return { sent: false, suppressedReason: "urgent_cooldown_1h", provider, attempts: 0 };
+      }
+    }
+  }
+  const dailySent = state.dailySentCounts[dateKey] || 0;
+  if (params.type !== "test" && dailySent >= DAILY_ALERT_LIMIT - 1) {
+    if (state.limitReachedSentDate === dateKey || dailySent >= DAILY_ALERT_LIMIT) {
+      addWhatsAppAlertLog({
+        timestamp: now.toISOString(),
+        type: params.type,
+        provider,
+        recipientsMasked: maskedRecipients,
+        status: "suppressed_rate_limit",
+        attempts: 0,
+        messagePreview: formatConcisePlainMessage(params.message)
+      });
+      return { sent: false, suppressedReason: "daily_rate_limit", provider, attempts: 0 };
+    }
+    const limitMessage = "Alert limit reached, check the console";
+    let limitSentOk = false;
+    let limitAttempts = 0;
+    let limitError = "";
+    for (const phone of owners) {
+      const r = await sendWhatsApp(phone, limitMessage, {
+        retryDelaysMs: params.retryDelaysMs,
+        fetchImpl: params.fetchImpl
+      });
+      limitAttempts = Math.max(limitAttempts, r.attempts);
+      if (r.success) limitSentOk = true;
+      else if (r.error) limitError = r.error;
+    }
+    state.dailySentCounts[dateKey] = DAILY_ALERT_LIMIT;
+    state.limitReachedSentDate = dateKey;
+    saveWhatsAppAlertState(state);
+    addWhatsAppAlertLog({
+      timestamp: now.toISOString(),
+      type: "rate_limit",
+      provider,
+      recipientsMasked: maskedRecipients,
+      status: limitSentOk ? "sent" : "failed",
+      attempts: limitAttempts,
+      messagePreview: limitMessage,
+      error: limitSentOk ? void 0 : limitError || "Failed to send limit notice"
+    });
+    return { sent: false, suppressedReason: "daily_rate_limit_final_sent", provider, attempts: limitAttempts };
+  }
+  if (owners.length === 0) {
+    const errMsg = "No owner phone numbers configured in OWNER_PHONES (or OWNER_PHONE) server secret.";
+    state.lastFailureWarning = {
+      message: errMsg,
+      at: now.toISOString(),
+      provider
+    };
+    saveWhatsAppAlertState(state);
+    addWhatsAppAlertLog({
+      timestamp: now.toISOString(),
+      type: params.type,
+      provider,
+      recipientsMasked: [],
+      status: "failed",
+      attempts: 0,
+      messagePreview: formatConcisePlainMessage(params.message),
+      error: errMsg
+    });
+    return { sent: false, provider, attempts: 0, error: errMsg };
+  }
+  const cleanMsg = formatConcisePlainMessage(params.message);
+  let anySuccess = false;
+  let maxAttempts = 0;
+  const responseSummaries = [];
+  const errors = [];
+  for (const phone of owners) {
+    const res = await sendWhatsApp(phone, cleanMsg, {
+      templateVars: params.templateVars,
+      retryDelaysMs: params.retryDelaysMs,
+      fetchImpl: params.fetchImpl
+    });
+    maxAttempts = Math.max(maxAttempts, res.attempts);
+    if (res.success) {
+      anySuccess = true;
+      if (res.responseSummary) responseSummaries.push(res.responseSummary);
+    } else if (res.error) {
+      errors.push(res.error);
+    }
+  }
+  if (anySuccess) {
+    state.dailySentCounts[dateKey] = dailySent + 1;
+    if ((params.type === "urgent" || params.type === "failure") && params.cooldownKey) {
+      state.lastUrgentAlertByKey[params.cooldownKey] = now.toISOString();
+    }
+    state.lastFailureWarning = null;
+    saveWhatsAppAlertState(state);
+    console.log(
+      `[WhatsAppAlerts] Sent ${params.type} alert via ${provider} to ${maskedRecipients.join(", ")} (attempts=${maxAttempts})`
+    );
+  } else {
+    const errText = sanitizeAlertLogText(errors.join("; ") || "WhatsApp delivery failed after retries");
+    state.lastFailureWarning = {
+      message: `WhatsApp alert failed (${provider}): ${errText}`,
+      at: now.toISOString(),
+      provider
+    };
+    saveWhatsAppAlertState(state);
+    console.warn(
+      `[WhatsAppAlerts] Delivery failed for ${params.type} via ${provider} after ${maxAttempts} attempt(s): ${errText}`
+    );
+  }
+  addWhatsAppAlertLog({
+    timestamp: now.toISOString(),
+    type: params.type,
+    provider,
+    recipientsMasked: maskedRecipients,
+    status: anySuccess ? "sent" : "failed",
+    attempts: maxAttempts,
+    messagePreview: cleanMsg,
+    responseSummary: anySuccess ? responseSummaries.join("; ") : void 0,
+    error: anySuccess ? void 0 : sanitizeAlertLogText(errors.join("; ") || "Delivery failed")
+  });
+  return {
+    sent: anySuccess,
+    provider,
+    attempts: maxAttempts,
+    responseSummary: responseSummaries.join("; ") || void 0,
+    error: anySuccess ? void 0 : sanitizeAlertLogText(errors.join("; "))
+  };
+}
+async function flushQuietHoursSummaryIfReady(now = /* @__PURE__ */ new Date(), options) {
+  const settings = getWhatsAppAlertSettings();
+  if (!settings.enabled || !settings.dailySummary) return false;
+  if (isWithinQuietHours(settings, now)) return false;
+  const state = getWhatsAppAlertState();
+  const queued = state.queuedDuringQuietHours;
+  if (!queued) return false;
+  const totalPending = queued.newDrafts + queued.updateProposals + queued.carefulReview + queued.sourcesFailing;
+  state.queuedDuringQuietHours = null;
+  saveWhatsAppAlertState(state);
+  if (totalPending <= 0) return false;
+  const msg = buildDailySummaryMessage(queued);
+  const res = await dispatchOwnerWhatsAppAlert({
+    type: "summary",
+    message: msg,
+    summaryCounts: queued,
+    templateVars: {
+      newDrafts: queued.newDrafts,
+      updates: queued.updateProposals,
+      carefulReview: queued.carefulReview,
+      sourcesFailing: queued.sourcesFailing,
+      reviewLink: STAFF_REVIEW_URL
+    },
+    now,
+    retryDelaysMs: options?.retryDelaysMs,
+    fetchImpl: options?.fetchImpl
+  });
+  return res.sent;
+}
+async function sendTestWhatsAppAlert(options) {
+  return dispatchOwnerWhatsAppAlert({
+    type: "test",
+    message: "CSC DOST alert test",
+    bypassEnabledToggle: true,
+    retryDelaysMs: options?.retryDelaysMs,
+    fetchImpl: options?.fetchImpl
+  });
+}
+
+// src/server/noticeMonitor.ts
+import crypto2 from "crypto";
+function findDuplicatePostMatches(candidateTitle, candidateSlug, candidateUrl) {
+  const normTitle = String(candidateTitle || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const titleWords = normTitle.split(/\s+/).filter((w) => w.length >= 4);
+  const normUrl = String(candidateUrl || "").trim().toLowerCase().replace(/\/+$/, "");
+  const merged = [...getCustomSarkariPosts(), ...SARKARI_DATA];
+  const seen = /* @__PURE__ */ new Set();
+  const matches = [];
+  for (const post of merged) {
+    if (!post?.id || seen.has(post.id)) continue;
+    seen.add(post.id);
+    if (candidateSlug && post.id === candidateSlug) {
+      matches.push(`${post.id} (Exact slug match)`);
+      continue;
+    }
+    const postTitleNorm = String(post.title || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    if (normTitle && postTitleNorm && (postTitleNorm === normTitle || normTitle.length >= 25 && postTitleNorm.includes(normTitle))) {
+      matches.push(`${post.id} (${post.title.slice(0, 60)})`);
+      continue;
+    }
+    if (normUrl && normUrl.length > 22) {
+      const postUrl = String(post.officialNotificationUrl || post.officialLink || "").trim().toLowerCase().replace(/\/+$/, "");
+      const isSpecificPath = (() => {
+        try {
+          const u = new URL(normUrl);
+          return u.pathname.length > 4 || u.search.length > 2;
+        } catch {
+          return false;
+        }
+      })();
+      if (isSpecificPath && postUrl === normUrl) {
+        matches.push(`${post.id} (Same official notice URL)`);
+        continue;
+      }
+    }
+    if (titleWords.length >= 4) {
+      const overlap = titleWords.filter((w) => postTitleNorm.includes(w)).length;
+      if (overlap >= Math.max(4, Math.ceil(titleWords.length * 0.8))) {
+        matches.push(`${post.id} (${post.title.slice(0, 55)})`);
+      }
+    }
+    if (matches.length >= 5) break;
+  }
+  return matches;
+}
+var isMonitorRunning = false;
+var schedulerStarted = false;
+async function probeOfficialSource(source, fetchImpl = globalThis.fetch) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 7e3);
+  try {
+    const res = await fetchImpl(source.url, {
+      method: "GET",
+      headers: {
+        "User-Agent": "CSCDOST-NoticeMonitor/1.0 (+https://www.cscdost.com)"
+      },
+      signal: controller.signal
+    });
+    if (!res.ok) {
+      return { ok: false, error: `HTTP ${res.status}` };
+    }
+    const html = await res.text();
+    const stripped = html.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 5e4);
+    const contentHash = crypto2.createHash("sha256").update(stripped).digest("hex").slice(0, 16);
+    return { ok: true, contentHash, excerpt: stripped.slice(0, 1500) };
+  } catch (err) {
+    return { ok: false, error: sanitizeAlertLogText(err?.message || "Request timeout or network failure") };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+async function runOfficialNoticeMonitor(options) {
+  const now = options.now || /* @__PURE__ */ new Date();
+  const startedAt = now.toISOString();
+  const runId = `run_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  const sim = options.simulatedInput;
+  const retryDelaysMs = sim?.retryDelaysMs;
+  const fetchImpl = sim?.fetchImpl;
+  let newDraftsCount = 0;
+  let updateProposalsCount = 0;
+  let carefulReviewCount = 0;
+  let sourcesFailingCount = 0;
+  let urgentAlertsSent = 0;
+  let summaryAlertSent = false;
+  let summaryAlertQueued = false;
+  let whatsappError;
+  isMonitorRunning = true;
+  try {
+    if (sim?.forceCrash) {
+      throw new Error("Simulated Official Notice Monitor crash");
+    }
+    const sources = getMonitorSources();
+    const existingQueue = getReviewQueue();
+    const pendingLowConfItems = [];
+    const pendingPublishedChangeItems = [];
+    const tripledFailingSources = [];
+    if (sim) {
+      const failSet = new Set(sim.failingSourceIds || []);
+      for (const src of sources) {
+        src.lastCheckedAt = now.toISOString();
+        if (failSet.has(src.id)) {
+          src.consecutiveFailures = (src.consecutiveFailures || 0) + 1;
+          src.lastStatus = "failing";
+          src.lastError = "Simulated source fetch failure";
+          sourcesFailingCount++;
+          if (src.consecutiveFailures >= 3) {
+            tripledFailingSources.push(src);
+          }
+        } else {
+          src.consecutiveFailures = 0;
+          src.lastStatus = "ok";
+          src.lastError = void 0;
+        }
+      }
+      saveMonitorSources(sources);
+      for (const draft of sim.newDrafts || []) {
+        const confidence = typeof draft.confidence === "number" ? draft.confidence : 96;
+        const duplicateMatches = findDuplicatePostMatches(
+          draft.title,
+          draft.id,
+          draft.officialNotificationUrl || draft.sourceUrl
+        );
+        const flags = Array.isArray(draft.validationFlags) ? [...draft.validationFlags] : [];
+        if (duplicateMatches.length > 0 && !flags.some((f) => f.toLowerCase().includes("duplicate"))) {
+          flags.push(`Possible duplicate of existing post (${duplicateMatches[0]})`);
+        }
+        const draftItem = {
+          id: draft.id || `draft_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+          kind: "new_draft",
+          title: draft.title,
+          category: draft.category || "jkssb",
+          sourceId: draft.sourceId || "jkssb",
+          sourceUrl: draft.sourceUrl || "https://jkssb.nic.in/",
+          officialNotificationUrl: draft.officialNotificationUrl || draft.sourceUrl || "https://jkssb.nic.in/",
+          confidence,
+          validationFlags: flags,
+          shortInfo: draft.shortInfo || `${draft.title} detected by Official Notice Monitor.`,
+          lastDate: draft.lastDate || "Verify Official PDF",
+          sourceExcerpt: draft.sourceExcerpt,
+          duplicateMatches,
+          reviewStatus: "unreviewed",
+          status: "pending",
+          detectedAt: now.toISOString()
+        };
+        upsertReviewQueueItem(draftItem);
+        newDraftsCount++;
+        if (confidence < 90 || flags.length > 0) {
+          carefulReviewCount++;
+        }
+        if (confidence < 90 && flags.length > 0) {
+          pendingLowConfItems.push(draftItem);
+        }
+      }
+      for (const prop of sim.updateProposals || []) {
+        const confidence = typeof prop.confidence === "number" ? prop.confidence : 95;
+        const flags = Array.isArray(prop.validationFlags) ? [...prop.validationFlags] : [];
+        const propItem = {
+          id: prop.id || `upd_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+          kind: "update_proposal",
+          postId: prop.postId,
+          title: prop.title,
+          category: prop.category || "jkssb",
+          sourceId: prop.sourceId || "jkssb",
+          sourceUrl: prop.sourceUrl || "https://jkssb.nic.in/",
+          officialNotificationUrl: prop.officialNotificationUrl || prop.sourceUrl || "https://jkssb.nic.in/",
+          confidence,
+          validationFlags: flags,
+          proposedChanges: prop.proposedChanges,
+          shortInfo: prop.shortInfo || `Detected change on official source for published post ${prop.postId}.`,
+          lastDate: prop.lastDate,
+          sourceExcerpt: prop.sourceExcerpt,
+          reviewStatus: "unreviewed",
+          status: "pending",
+          detectedAt: now.toISOString()
+        };
+        upsertReviewQueueItem(propItem);
+        updateProposalsCount++;
+        if (confidence < 90 || flags.length > 0) {
+          carefulReviewCount++;
+        }
+        if (prop.publishedPostChanged !== false) {
+          pendingPublishedChangeItems.push(propItem);
+        }
+      }
+    } else {
+      for (const src of sources) {
+        const probe = await probeOfficialSource(src);
+        src.lastCheckedAt = now.toISOString();
+        if (!probe.ok) {
+          src.consecutiveFailures = (src.consecutiveFailures || 0) + 1;
+          src.lastStatus = "failing";
+          src.lastError = probe.error;
+          sourcesFailingCount++;
+          if (src.consecutiveFailures >= 3) {
+            tripledFailingSources.push(src);
+          }
+        } else {
+          src.consecutiveFailures = 0;
+          src.lastStatus = "ok";
+          src.lastError = void 0;
+          if (src.lastContentHash && probe.contentHash && src.lastContentHash !== probe.contentHash) {
+            const changeId = `srcchange_${src.id}_${new Date(now).toISOString().slice(0, 10)}`;
+            const alreadyQueued = existingQueue.some((q) => q.id === changeId && q.status === "pending");
+            if (!alreadyQueued) {
+              const duplicateMatches = findDuplicatePostMatches(src.name, changeId, src.url);
+              const flags = ["Portal content changed \u2014 manual review & original rewrite required before drafting"];
+              if (duplicateMatches.length > 0) {
+                flags.push(`Possible overlap with existing notice (${duplicateMatches[0]})`);
+              }
+              const item = {
+                id: changeId,
+                kind: "new_draft",
+                title: `Portal Update Detected on ${src.name}`,
+                category: src.category,
+                sourceId: src.id,
+                sourceUrl: src.url,
+                officialNotificationUrl: src.url,
+                confidence: 85,
+                validationFlags: flags,
+                shortInfo: `${src.name} (${src.url}) content hash changed since previous monitor check.`,
+                sourceExcerpt: probe.excerpt,
+                duplicateMatches,
+                reviewStatus: "unreviewed",
+                status: "pending",
+                detectedAt: now.toISOString()
+              };
+              upsertReviewQueueItem(item);
+              newDraftsCount++;
+              carefulReviewCount++;
+            }
+          }
+          if (probe.contentHash) {
+            src.lastContentHash = probe.contentHash;
+          }
+        }
+      }
+      saveMonitorSources(sources);
+    }
+    try {
+      for (const failSrc of tripledFailingSources) {
+        const msg = `CSC DOST Failure Alert: ${failSrc.name} failed ${failSrc.consecutiveFailures} times in a row. Check source status.
+Review now: ${STAFF_REVIEW_URL}`;
+        const r = await dispatchOwnerWhatsAppAlert({
+          type: "failure",
+          message: msg,
+          cooldownKey: `source:${failSrc.id}`,
+          now,
+          retryDelaysMs,
+          fetchImpl
+        });
+        if (r.sent) urgentAlertsSent++;
+        else if (r.error) whatsappError = r.error;
+      }
+      for (const lowDraft of pendingLowConfItems) {
+        const msg = `CSC DOST Urgent Review: Draft "${lowDraft.title.slice(0, 65)}" flagged (${lowDraft.confidence}% confidence).
+Review now: ${STAFF_REVIEW_URL}`;
+        const r = await dispatchOwnerWhatsAppAlert({
+          type: "urgent",
+          message: msg,
+          cooldownKey: `low_conf:${lowDraft.id}`,
+          now,
+          retryDelaysMs,
+          fetchImpl
+        });
+        if (r.sent) urgentAlertsSent++;
+        else if (r.error) whatsappError = r.error;
+      }
+      for (const pubChange of pendingPublishedChangeItems) {
+        const msg = `CSC DOST Urgent Update: Published post "${pubChange.title.slice(0, 60)}" official page changed.
+Review now: ${STAFF_REVIEW_URL}`;
+        const r = await dispatchOwnerWhatsAppAlert({
+          type: "urgent",
+          message: msg,
+          cooldownKey: `published_changed:${pubChange.postId || pubChange.id}`,
+          now,
+          retryDelaysMs,
+          fetchImpl
+        });
+        if (r.sent) urgentAlertsSent++;
+        else if (r.error) whatsappError = r.error;
+      }
+      const totalToReview = newDraftsCount + updateProposalsCount + carefulReviewCount + sourcesFailingCount;
+      if (totalToReview > 0) {
+        const summaryMsg = buildDailySummaryMessage({
+          newDrafts: newDraftsCount,
+          updateProposals: updateProposalsCount,
+          carefulReview: carefulReviewCount,
+          sourcesFailing: sourcesFailingCount
+        });
+        const sumRes = await dispatchOwnerWhatsAppAlert({
+          type: "summary",
+          message: summaryMsg,
+          summaryCounts: {
+            newDrafts: newDraftsCount,
+            updateProposals: updateProposalsCount,
+            carefulReview: carefulReviewCount,
+            sourcesFailing: sourcesFailingCount
+          },
+          templateVars: {
+            newDrafts: newDraftsCount,
+            updates: updateProposalsCount,
+            carefulReview: carefulReviewCount,
+            sourcesFailing: sourcesFailingCount,
+            reviewLink: STAFF_REVIEW_URL
+          },
+          now,
+          retryDelaysMs,
+          fetchImpl
+        });
+        summaryAlertSent = sumRes.sent;
+        summaryAlertQueued = Boolean(sumRes.queued);
+        if (sumRes.error) whatsappError = sumRes.error;
+      }
+    } catch (waErr) {
+      whatsappError = sanitizeAlertLogText(waErr?.message || "WhatsApp dispatch exception");
+      console.warn("[NoticeMonitor] Non-fatal WhatsApp alert error:", whatsappError);
+    }
+    const completedRun = {
+      id: runId,
+      startedAt,
+      completedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      trigger: options.trigger,
+      status: "ok",
+      newDrafts: newDraftsCount,
+      updateProposals: updateProposalsCount,
+      carefulReview: carefulReviewCount,
+      sourcesFailing: sourcesFailingCount
+    };
+    addMonitorRunRecord(completedRun);
+    return {
+      run: completedRun,
+      summaryAlertSent,
+      summaryAlertQueued,
+      urgentAlertsSent,
+      whatsappError
+    };
+  } catch (err) {
+    const errMsg = sanitizeAlertLogText(err?.message || "Monitor execution failed");
+    try {
+      const r = await dispatchOwnerWhatsAppAlert({
+        type: "failure",
+        message: `CSC DOST Monitor Crash Alert: Scheduled check failed (${errMsg.slice(0, 90)}).
+Review now: ${STAFF_REVIEW_URL}`,
+        cooldownKey: "monitor_crash",
+        now,
+        retryDelaysMs,
+        fetchImpl
+      });
+      if (r.sent) urgentAlertsSent++;
+      else if (r.error) whatsappError = r.error;
+    } catch (waErr) {
+      whatsappError = sanitizeAlertLogText(waErr?.message || "WhatsApp crash alert failed");
+    }
+    const crashedRun = {
+      id: runId,
+      startedAt,
+      completedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      trigger: options.trigger,
+      status: "crashed",
+      newDrafts: newDraftsCount,
+      updateProposals: updateProposalsCount,
+      carefulReview: carefulReviewCount,
+      sourcesFailing: sourcesFailingCount,
+      error: errMsg
+    };
+    addMonitorRunRecord(crashedRun);
+    return {
+      run: crashedRun,
+      summaryAlertSent: false,
+      summaryAlertQueued: false,
+      urgentAlertsSent,
+      whatsappError
+    };
+  } finally {
+    isMonitorRunning = false;
+  }
+}
+function startNoticeMonitorScheduler() {
+  if (schedulerStarted) return;
+  schedulerStarted = true;
+  const tick = async () => {
+    if (isMonitorRunning) return;
+    try {
+      const now = /* @__PURE__ */ new Date();
+      const istMs = now.getTime() + 330 * 60 * 1e3;
+      const ist = new Date(istMs);
+      const dateKey = ist.toISOString().slice(0, 10);
+      const hour = ist.getUTCHours();
+      const minute = ist.getUTCMinutes();
+      await flushQuietHoursSummaryIfReady(now).catch(() => false);
+      const isMorningSlot = hour === 7 && minute < 5;
+      const isEveningSlot = hour === 18 && minute < 5;
+      if (isMorningSlot || isEveningSlot) {
+        const slotKey = `${dateKey}-${String(hour).padStart(2, "0")}`;
+        const state = getWhatsAppAlertState();
+        if (state.lastScheduledSlotKey !== slotKey) {
+          state.lastScheduledSlotKey = slotKey;
+          saveWhatsAppAlertState(state);
+          await runOfficialNoticeMonitor({ trigger: "scheduled_ist", now });
+        }
+      }
+    } catch (e) {
+      console.warn("[NoticeMonitor] Scheduler tick notice:", sanitizeAlertLogText(e?.message || "error"));
+    }
+  };
+  const timer = setInterval(tick, 6e4);
+  if (typeof timer.unref === "function") {
+    timer.unref();
+  }
+}
+
 // server.ts
-import dotenv from "dotenv";
-dotenv.config();
 var app = express();
-var PORT = 3e3;
+var PORT = Number(process.env.PORT) || 3e3;
 app.get(["/api/health", "/health", "/_health"], (req, res) => {
   res.status(200).json({ status: "ok", time: (/* @__PURE__ */ new Date()).toISOString() });
 });
@@ -15278,6 +17799,9 @@ app.use((req, res, next) => {
     const rawOriginal = req.originalUrl || req.url || "";
     const queryIndex = rawOriginal.indexOf("?");
     const queryString = queryIndex >= 0 ? rawOriginal.slice(queryIndex) : "";
+    if (cleanReqPath === "/index.html") {
+      return res.redirect(301, `/${queryString}`);
+    }
     if (cleanReqPath === "/about") {
       return res.redirect(301, `/about-us${queryString}`);
     }
@@ -15287,6 +17811,19 @@ app.use((req, res, next) => {
     if (cleanReqPath === "/scheme/army-agniveer-rally-guide-2026") {
       return res.redirect(301, `/post/army-agniveer-rally-guide-2026${queryString}`);
     }
+    const approvedDuplicateRedirects = {
+      "/post/army-tes-57-course-2026": "/post/indian-army-tes-57-course-closing-today",
+      "/post/ssc-cgl-2026-tier-1-answer-key": "/post/ssc-cgl-tier-1-tentative-answer-key-objection-notice-2026",
+      "/post/ssc-stenographer-grade-cd-exam-2026": "/post/ssc-stenographer-grade-c-d-exam-2026",
+      "/post/ssc-steno-2026": "/post/ssc-stenographer-grade-c-d-exam-2026",
+      "/post/ssc-jht-examination-2026": "/post/ssc-junior-hindi-translator-jht-exam-2026",
+      "/post/army-tes-54-course-2026": "/post/army-tes-54-course-jan-2027",
+      "/post/cus-bed-supplementary-4th-sem-exam-dyd-2026": "/post/cus-bed-4th-sem-supplementary-exam-2026"
+    };
+    const approvedRedirectTarget = approvedDuplicateRedirects[cleanReqPath];
+    if (approvedRedirectTarget) {
+      return res.redirect(301, `${approvedRedirectTarget}${queryString}`);
+    }
     if (!req.path.startsWith("/api/") && req.path.length > 1 && req.path.endsWith("/")) {
       const normalizedPath = req.path.replace(/\/+$/, "") || "/";
       return res.redirect(301, `${normalizedPath}${queryString}`);
@@ -15294,10 +17831,42 @@ app.use((req, res, next) => {
   }
   next();
 });
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  const forwardedProto = (req.get("x-forwarded-proto") || "").split(",")[0].trim();
+  if (req.secure || forwardedProto === "https") {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+  }
+  next();
+});
 app.use((req, _res, next) => {
-  const forwardedPath = req.headers["x-matched-path"] || req.headers["x-forwarded-uri"] || req.headers["x-vercel-matched-path"] || req.headers["x-original-url"];
-  if (forwardedPath && typeof forwardedPath === "string" && forwardedPath.startsWith("/api") && (req.url === "/api" || req.url === "/")) {
-    req.url = forwardedPath;
+  const rawUrl = typeof req.url === "string" && req.url.length > 0 ? req.url : "/";
+  const qIndex = rawUrl.indexOf("?");
+  const pathPart = qIndex >= 0 ? rawUrl.slice(0, qIndex) : rawUrl;
+  const queryPart = qIndex >= 0 ? rawUrl.slice(qIndex) : "";
+  const isBareApiEntry = pathPart === "/api" || pathPart === "/api/" || pathPart === "/api/index" || pathPart === "/api/index.ts";
+  if (isBareApiEntry) {
+    const candidateHeaders = [
+      req.headers["x-vercel-original-path"],
+      req.headers["x-original-url"],
+      req.headers["x-forwarded-uri"],
+      req.headers["x-rewrite-url"],
+      req.headers["x-matched-path"],
+      req.headers["x-vercel-matched-path"]
+    ];
+    const forwardedPath = candidateHeaders.find((val) => {
+      if (typeof val !== "string" || !val.startsWith("/")) return false;
+      const cleanVal = val.split("?")[0];
+      return cleanVal !== "/api" && cleanVal !== "/api/" && cleanVal !== "/api/index" && cleanVal !== "/api/index.ts";
+    });
+    if (forwardedPath) {
+      req.url = forwardedPath.includes("?") || !queryPart ? forwardedPath : `${forwardedPath}${queryPart}`;
+    } else {
+      req.url = `/${queryPart}`;
+    }
   }
   next();
 });
@@ -15446,9 +18015,9 @@ app.all("/api/payu/mock-gateway", (req, res) => {
   const mihpayid = `PAYU_MOCK_${Date.now()}`;
   const bankRefNum = `AXIS_${Date.now().toString().slice(-6)}`;
   const successSeq = `${effectiveSalt}|success|||||||||||${email}|${firstname}|${productinfo}|${amount}|${txnid}|${key}`;
-  const successHash = crypto2.createHash("sha512").update(successSeq).digest("hex").toLowerCase();
+  const successHash = crypto3.createHash("sha512").update(successSeq).digest("hex").toLowerCase();
   const failSeq = `${effectiveSalt}|failure|||||||||||${email}|${firstname}|${productinfo}|${amount}|${txnid}|${key}`;
-  const failHash = crypto2.createHash("sha512").update(failSeq).digest("hex").toLowerCase();
+  const failHash = crypto3.createHash("sha512").update(failSeq).digest("hex").toLowerCase();
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15600,7 +18169,7 @@ app.post("/api/payu/initiate", async (req, res) => {
         error: `Application ${resolvedAppId} has already been paid and verified.`
       });
     }
-    const txnid = `PAYU_${Date.now()}_${crypto2.randomBytes(3).toString("hex").toUpperCase()}`;
+    const txnid = `PAYU_${Date.now()}_${crypto3.randomBytes(3).toString("hex").toUpperCase()}`;
     const configured = isPayUConfigured();
     const merchantKey = configured ? getPayUMerchantKey() : process.env.PAYU_MERCHANT_KEY || "TEST_KEY";
     const merchantSalt = configured ? getPayUMerchantSalt() : "test_mock_salt_12345";
@@ -16065,7 +18634,7 @@ app.post("/api/razorpay/verify-payment", (req, res) => {
       });
     }
     const body = razorpay_order_id + "|" + razorpay_payment_id;
-    const expectedSignature = crypto2.createHmac("sha256", keySecret).update(body).digest("hex");
+    const expectedSignature = crypto3.createHmac("sha256", keySecret).update(body).digest("hex");
     const isAuthentic = expectedSignature === razorpay_signature;
     if (isAuthentic) {
       console.log(`\u2705 Razorpay Payment Verified [Payment ID: ${razorpay_payment_id}] for Order ${razorpay_order_id}`);
@@ -17503,10 +20072,10 @@ app.post("/api/whatsapp/webhook", (req, res) => {
       }
       const signature = signatureHeader.substring(7);
       const rawBody = req.rawBody || Buffer.from(JSON.stringify(req.body));
-      const expectedSignature = crypto2.createHmac("sha256", appSecret).update(rawBody).digest("hex");
+      const expectedSignature = crypto3.createHmac("sha256", appSecret).update(rawBody).digest("hex");
       const sigBuf = Buffer.from(signature, "hex");
       const expectedBuf = Buffer.from(expectedSignature, "hex");
-      if (sigBuf.length !== expectedBuf.length || !crypto2.timingSafeEqual(sigBuf, expectedBuf)) {
+      if (sigBuf.length !== expectedBuf.length || !crypto3.timingSafeEqual(sigBuf, expectedBuf)) {
         console.warn("\u{1F6A8} [WhatsApp Webhook] Invalid X-Hub-Signature-256. Webhook rejected.");
         return res.status(401).send("Signature verification failed");
       }
@@ -17875,25 +20444,66 @@ app.post("/api/whatsapp/broadcast", authenticateAdmin, async (req, res) => {
   }
   return res.redirect(307, "/api/whatsapp/send");
 });
+app.get("/sw.js", (_req, res) => {
+  const swPath = path4.join(process.cwd(), "public", "sw.js");
+  res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+  res.setHeader("Service-Worker-Allowed", "/");
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  return res.sendFile(swPath);
+});
+var PUSH_RATE_LIMIT_MAX = 10;
+var PUSH_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1e3;
+var pushSendTimestamps = [];
+function checkAndRecordPushRateLimit() {
+  const now = Date.now();
+  while (pushSendTimestamps.length > 0 && now - pushSendTimestamps[0] >= PUSH_RATE_LIMIT_WINDOW_MS) {
+    pushSendTimestamps.shift();
+  }
+  if (pushSendTimestamps.length >= PUSH_RATE_LIMIT_MAX) {
+    const oldest = pushSendTimestamps[0];
+    const retryAfterSeconds = Math.max(1, Math.ceil((PUSH_RATE_LIMIT_WINDOW_MS - (now - oldest)) / 1e3));
+    return { allowed: false, remaining: 0, retryAfterSeconds };
+  }
+  pushSendTimestamps.push(now);
+  return {
+    allowed: true,
+    remaining: Math.max(0, PUSH_RATE_LIMIT_MAX - pushSendTimestamps.length),
+    retryAfterSeconds: 0
+  };
+}
+function pushSendRateLimiter(_req, res, next) {
+  const rate = checkAndRecordPushRateLimit();
+  if (!rate.allowed) {
+    res.setHeader("Retry-After", String(rate.retryAfterSeconds));
+    return res.status(429).json({
+      success: false,
+      error: `Rate limit exceeded: maximum ${PUSH_RATE_LIMIT_MAX} push dispatches per hour. Try again in ${Math.ceil(rate.retryAfterSeconds / 60)} minute(s).`
+    });
+  }
+  next();
+}
 app.get(["/api/push/vapid-public-key", "/push/vapid-public-key"], (_req, res) => {
   try {
     const publicKey = getVapidPublicKey();
-    res.json({ success: true, publicKey });
+    res.json({ success: true, publicKey, configured: isPushConfigured() });
   } catch (err) {
     res.status(500).json({ success: false, error: err?.message || "Failed to retrieve VAPID key" });
   }
 });
-app.get(["/api/push/status", "/push/status"], (_req, res) => {
+app.get(["/api/push/status", "/push/status"], async (_req, res) => {
   try {
-    const all = getActivePushSubscriptions("all");
-    const jobs = getActivePushSubscriptions("jobs");
-    const schemes = getActivePushSubscriptions("schemes");
-    const exams = getActivePushSubscriptions("exams");
-    const updates = getActivePushSubscriptions("updates");
+    const [all, jobs, schemes, exams, updates] = await Promise.all([
+      getMergedActiveSubscribers("all"),
+      getMergedActiveSubscribers("jobs"),
+      getMergedActiveSubscribers("schemes"),
+      getMergedActiveSubscribers("exams"),
+      getMergedActiveSubscribers("updates")
+    ]);
     const settings = getPushServerSettings();
     const history = getPushNotificationHistory();
     res.json({
       success: true,
+      configured: isPushConfigured(),
       activeSubscribers: all.length,
       categories: {
         all: all.length,
@@ -17911,32 +20521,36 @@ app.get(["/api/push/status", "/push/status"], (_req, res) => {
 });
 app.post(["/api/push/subscribe", "/push/subscribe"], async (req, res) => {
   try {
-    const { subscription, preferences, deviceType, userAgent } = req.body || {};
+    const { subscription, preferences, deviceType, userAgent, subscribedFrom } = req.body || {};
     if (!subscription || !subscription.endpoint || !subscription.keys || !subscription.keys.p256dh || !subscription.keys.auth) {
       return res.status(400).json({
         success: false,
         error: "Invalid push subscription payload: endpoint and encryption keys (p256dh, auth) are required."
       });
     }
+    const cleanSubscribedFrom = typeof subscribedFrom === "string" && subscribedFrom.trim() ? subscribedFrom.trim().slice(0, 250) : "/";
     const savedRecord = upsertPushSubscription({
-      endpoint: subscription.endpoint,
+      endpoint: String(subscription.endpoint).trim(),
       keys: {
-        p256dh: subscription.keys.p256dh,
-        auth: subscription.keys.auth
+        p256dh: String(subscription.keys.p256dh).trim(),
+        auth: String(subscription.keys.auth).trim()
       },
       deviceType: deviceType || "unknown",
       userAgent: userAgent || req.headers["user-agent"] || "",
+      subscribedFrom: cleanSubscribedFrom,
       preferences: preferences || { jobs: true, schemes: true, exams: true, updates: true }
     });
-    syncPushSubscriptionToSupabase(savedRecord).catch((err) => {
+    await syncPushSubscriptionToSupabase(savedRecord).catch((err) => {
       console.warn("[Push] Background Supabase sync notice:", err);
     });
     const settings = getPushServerSettings();
     if (settings.welcomePushEnabled && req.body.sendWelcome) {
       sendSingleNotification(savedRecord, {
-        title: "CSC DOST | Alerts Active! \u{1F514}",
-        body: "You are now connected to receive instant job openings, scheme alerts & KU updates.",
-        url: "/",
+        title: "CSC DOST Alerts Enabled",
+        body: "You are subscribed to J&K jobs, exams, and CSC scheme alerts.",
+        icon: "/icon-192.png",
+        url: "https://www.cscdost.com/",
+        tag: "csc-welcome",
         category: "updates"
       }).catch(() => {
       });
@@ -17944,7 +20558,7 @@ app.post(["/api/push/subscribe", "/push/subscribe"], async (req, res) => {
     return res.status(200).json({
       success: true,
       subscriptionId: savedRecord.id,
-      message: "Push subscription successfully registered and verified."
+      message: "Push subscription successfully saved."
     });
   } catch (err) {
     console.error("[Push] Subscribe error:", err);
@@ -17954,31 +20568,40 @@ app.post(["/api/push/subscribe", "/push/subscribe"], async (req, res) => {
     });
   }
 });
-app.post(["/api/push/unsubscribe", "/push/unsubscribe"], (req, res) => {
+app.post(["/api/push/unsubscribe", "/push/unsubscribe"], async (req, res) => {
   try {
     const { endpoint } = req.body || {};
     if (!endpoint) {
       return res.status(400).json({ success: false, error: "Endpoint is required to unsubscribe." });
     }
-    const removed = deactivatePushSubscription(endpoint);
-    res.json({ success: true, removed, message: "Subscription successfully deactivated." });
+    const cleanEndpoint = String(endpoint).trim();
+    const removedLocal = deletePushSubscription(cleanEndpoint);
+    const supaRes = await deletePushSubscriptionFromSupabase(cleanEndpoint);
+    res.json({
+      success: true,
+      removed: removedLocal || supaRes.success,
+      message: "Subscription deleted."
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err?.message });
   }
 });
-app.post(["/api/push/test", "/push/test"], authenticateAdmin, async (req, res) => {
+app.post(["/api/push/test", "/push/test"], authenticateAdmin, pushSendRateLimiter, async (req, res) => {
   try {
-    const { endpoint, title, body, url, postId } = req.body || {};
+    const { endpoint, title, body, url, postId, tag, icon, image } = req.body || {};
     if (!endpoint) {
       return res.status(400).json({ success: false, error: "Target subscriber endpoint is required for test send." });
     }
     const result = await broadcastPushNotification({
-      title: title || "CSC DOST | Test Notification \u{1F514}",
-      body: body || "This is a test notification from CSC DOST Admin Console.",
-      url: url || "/",
+      title: String(title || "CSC DOST | Test Notification").trim().slice(0, 60),
+      body: String(body || "This is a test push alert from CSC DOST Admin Console.").trim().slice(0, 100),
+      url: url || (postId ? `https://www.cscdost.com/post/${encodeURIComponent(postId)}` : "https://www.cscdost.com/"),
+      tag: tag || postId || "csc-test-push",
       postId,
+      icon: icon || "/icon-192.png",
+      image,
       isTest: true,
-      testEndpoint: endpoint,
+      testEndpoint: String(endpoint).trim(),
       sentBy: req.body.adminUser || "Admin Console"
     });
     if (result.success) {
@@ -17999,22 +20622,31 @@ app.post(["/api/push/test", "/push/test"], authenticateAdmin, async (req, res) =
     return res.status(500).json({ success: false, error: err?.message });
   }
 });
-app.post(["/api/push/send", "/push/send"], authenticateAdmin, async (req, res) => {
+app.post(["/api/push/send", "/push/send"], authenticateAdmin, pushSendRateLimiter, async (req, res) => {
   try {
-    const { title, body, category, url, postId, image, icon, adminUser } = req.body || {};
+    const { title, body, category, url, postId, tag, image, icon, adminUser } = req.body || {};
     if (!title || !body) {
       return res.status(400).json({ success: false, error: "Title and body are required to broadcast a push notification." });
     }
+    const resolvedUrl = url || (postId ? `https://www.cscdost.com/post/${encodeURIComponent(String(postId).trim())}` : "https://www.cscdost.com/");
     const result = await broadcastPushNotification({
       title: String(title).trim(),
       body: String(body).trim(),
       category: category || "all",
-      url: url || (postId ? `/#post/${postId}` : "/"),
+      url: resolvedUrl,
+      tag: tag || (postId ? String(postId).trim() : void 0),
       postId,
       image,
-      icon,
+      icon: icon || "/icon-192.png",
       sentBy: adminUser || "Admin Broadcast"
     });
+    if (!result.success) {
+      return res.status(500).json({
+        success: false,
+        error: result.error || "Failed to send broadcast push notification.",
+        stats: result.stats
+      });
+    }
     return res.json({
       success: true,
       notificationId: result.notificationId,
@@ -18026,9 +20658,17 @@ app.post(["/api/push/send", "/push/send"], authenticateAdmin, async (req, res) =
     return res.status(500).json({ success: false, error: err?.message || "Failed to send broadcast push notification." });
   }
 });
-app.get(["/api/push/history", "/push/history"], (_req, res) => {
+app.get(["/api/push/history", "/push/history"], async (_req, res) => {
   try {
-    const history = getPushNotificationHistory();
+    const localHistory = getPushNotificationHistory();
+    const supaHistory = await getPushNotificationsFromSupabase(20);
+    const mergedMap = /* @__PURE__ */ new Map();
+    for (const item of [...supaHistory, ...localHistory]) {
+      if (item && item.id && !mergedMap.has(item.id)) {
+        mergedMap.set(item.id, item);
+      }
+    }
+    const history = Array.from(mergedMap.values()).sort((a, b) => new Date(b.sentAt || 0).getTime() - new Date(a.sentAt || 0).getTime()).slice(0, 20);
     res.json({ success: true, history });
   } catch (err) {
     res.status(500).json({ success: false, error: err?.message });
@@ -18040,6 +20680,221 @@ app.post(["/api/push/settings", "/push/settings"], authenticateAdmin, (req, res)
     res.json({ success: true, settings: updated });
   } catch (err) {
     res.status(500).json({ success: false, error: err?.message });
+  }
+});
+app.get("/api/staff/alerts/status", authenticateAdmin, (_req, res) => {
+  try {
+    const settings = getWhatsAppAlertSettings();
+    const state = getWhatsAppAlertState();
+    const { dateKey } = getIstTimeParts(/* @__PURE__ */ new Date());
+    const providerStatus = getProviderSecretsStatus();
+    const dailySentCount = state.dailySentCounts[dateKey] || 0;
+    const quietHoursActive = isWithinQuietHours(settings, /* @__PURE__ */ new Date());
+    res.json({
+      success: true,
+      providerStatus,
+      settings,
+      dailySentCount,
+      dailyLimit: DAILY_ALERT_LIMIT,
+      quietHoursActive,
+      queuedDuringQuietHours: state.queuedDuringQuietHours || null,
+      lastFailureWarning: state.lastFailureWarning || null,
+      logs: getWhatsAppAlertLogs(20)
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err?.message || "Failed to read alert status" });
+  }
+});
+app.post("/api/staff/alerts/settings", authenticateAdmin, (req, res) => {
+  try {
+    const body = req.body || {};
+    const hhmmRegex = /^\d{2}:\d{2}$/;
+    const patch = {};
+    if (typeof body.enabled === "boolean") patch.enabled = body.enabled;
+    if (typeof body.dailySummary === "boolean") patch.dailySummary = body.dailySummary;
+    if (typeof body.urgentAlerts === "boolean") patch.urgentAlerts = body.urgentAlerts;
+    if (typeof body.failureAlerts === "boolean") patch.failureAlerts = body.failureAlerts;
+    if (typeof body.quietHoursEnabled === "boolean") patch.quietHoursEnabled = body.quietHoursEnabled;
+    if (typeof body.quietStartIst === "string") {
+      if (!hhmmRegex.test(body.quietStartIst.trim())) {
+        return res.status(400).json({ success: false, error: "Invalid quietStartIst format (expected HH:MM)" });
+      }
+      patch.quietStartIst = body.quietStartIst.trim();
+    }
+    if (typeof body.quietEndIst === "string") {
+      if (!hhmmRegex.test(body.quietEndIst.trim())) {
+        return res.status(400).json({ success: false, error: "Invalid quietEndIst format (expected HH:MM)" });
+      }
+      patch.quietEndIst = body.quietEndIst.trim();
+    }
+    const updated = updateWhatsAppAlertSettings(patch);
+    res.json({ success: true, settings: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err?.message || "Failed to save alert settings" });
+  }
+});
+app.post("/api/staff/alerts/test", authenticateAdmin, async (_req, res) => {
+  try {
+    const result = await sendTestWhatsAppAlert();
+    if (result.sent) {
+      return res.json({
+        success: true,
+        provider: result.provider,
+        attempts: result.attempts,
+        responseSummary: result.responseSummary || "delivered"
+      });
+    }
+    return res.status(400).json({
+      success: false,
+      provider: result.provider,
+      attempts: result.attempts,
+      error: result.error || "WhatsApp test alert could not be delivered."
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      error: err?.message || "Failed to execute WhatsApp test alert."
+    });
+  }
+});
+app.post("/api/staff/alerts/dismiss-warning", authenticateAdmin, (_req, res) => {
+  try {
+    const state = getWhatsAppAlertState();
+    state.lastFailureWarning = null;
+    saveWhatsAppAlertState(state);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err?.message || "Failed to dismiss warning" });
+  }
+});
+app.get("/api/staff/monitor/status", authenticateAdmin, (_req, res) => {
+  try {
+    res.json({
+      success: true,
+      sources: getMonitorSources(),
+      queue: getReviewQueue(),
+      runs: getMonitorRuns()
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err?.message || "Failed to read monitor status" });
+  }
+});
+app.post("/api/staff/monitor/run", authenticateAdmin, async (_req, res) => {
+  try {
+    const summary = await runOfficialNoticeMonitor({ trigger: "manual" });
+    res.json({ success: true, summary });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err?.message || "Monitor execution failed" });
+  }
+});
+app.post("/api/staff/monitor/review/:id", authenticateAdmin, (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      action,
+      title,
+      shortInfo,
+      originalAnalysis,
+      eligibility,
+      lastDate,
+      officialNotificationUrl,
+      reviewerNotes,
+      confirmNotDuplicate
+    } = req.body || {};
+    if (action !== "approve_draft" && action !== "dismiss") {
+      return res.status(400).json({ success: false, error: "Invalid review action." });
+    }
+    const adminUser = req.adminUser;
+    const reviewer = adminUser?.email || adminUser?.username || "Staff Admin";
+    if (action === "dismiss") {
+      const dismissed = updateReviewQueueItemStatus(id, "dismissed", reviewer, {
+        reviewerNotes: typeof reviewerNotes === "string" ? reviewerNotes.trim() : void 0
+      });
+      if (!dismissed) {
+        return res.status(404).json({ success: false, error: "Review queue item not found." });
+      }
+      return res.json({ success: true, item: dismissed });
+    }
+    const existingItem = getReviewQueue().find((r) => r && r.id === id);
+    if (!existingItem) {
+      return res.status(404).json({ success: false, error: "Review queue item not found." });
+    }
+    if (Array.isArray(existingItem.duplicateMatches) && existingItem.duplicateMatches.length > 0 && confirmNotDuplicate !== true) {
+      return res.status(400).json({
+        success: false,
+        error: `Potential duplicate detected (${existingItem.duplicateMatches[0]}). Confirm this notice is distinct before approving.`,
+        duplicateMatches: existingItem.duplicateMatches
+      });
+    }
+    const mergedTitle = typeof title === "string" && title.trim() ? title.trim() : existingItem.title;
+    const mergedShortInfo = typeof shortInfo === "string" && shortInfo.trim() ? shortInfo.trim() : existingItem.shortInfo;
+    const mergedAnalysis = typeof originalAnalysis === "string" ? originalAnalysis.trim() : existingItem.originalAnalysis || "";
+    const mergedEligibility = typeof eligibility === "string" && eligibility.trim() ? eligibility.trim() : existingItem.eligibility || "";
+    const mergedLastDate = typeof lastDate === "string" && lastDate.trim() ? lastDate.trim() : existingItem.lastDate || "Check Official Notice";
+    const mergedOfficialUrl = typeof officialNotificationUrl === "string" && officialNotificationUrl.trim() ? officialNotificationUrl.trim() : existingItem.officialNotificationUrl || existingItem.sourceUrl;
+    const todayStr = (/* @__PURE__ */ new Date()).toLocaleDateString("en-GB");
+    const qualityCheck = validatePostPublishQuality(
+      {
+        id: existingItem.id,
+        title: mergedTitle,
+        shortInfo: mergedShortInfo,
+        originalAnalysis: mergedAnalysis,
+        eligibility: mergedEligibility,
+        lastDate: mergedLastDate,
+        postDate: todayStr,
+        officialNotificationUrl: mergedOfficialUrl,
+        officialLink: mergedOfficialUrl,
+        sourceExcerpt: existingItem.sourceExcerpt
+      },
+      {
+        minWordCount: 400,
+        enforceWordCount: true,
+        maxConsecutiveCopiedSentences: 2,
+        requireUpdatedDate: true
+      }
+    );
+    if (!qualityCheck.valid) {
+      return res.status(400).json({
+        success: false,
+        error: qualityCheck.errors[0] || "Draft did not pass editorial quality and anti-copy checks.",
+        validationErrors: qualityCheck.errors,
+        qualityReport: qualityCheck
+      });
+    }
+    const updated = updateReviewQueueItemStatus(id, "approved", reviewer, {
+      title: mergedTitle,
+      shortInfo: mergedShortInfo,
+      originalAnalysis: mergedAnalysis,
+      eligibility: mergedEligibility,
+      lastDate: mergedLastDate,
+      officialNotificationUrl: mergedOfficialUrl,
+      reviewerNotes: typeof reviewerNotes === "string" ? reviewerNotes.trim() : void 0
+    });
+    if (!updated) {
+      return res.status(404).json({ success: false, error: "Review queue item not found." });
+    }
+    if (updated.kind === "new_draft") {
+      const slug = String(updated.id || `monitor-${Date.now()}`).toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-|-$/g, "");
+      upsertCustomSarkariPost({
+        id: slug,
+        title: updated.title,
+        category: updated.category || "jkssb",
+        postDate: todayStr,
+        lastDate: updated.lastDate || "Check Official Notice",
+        shortInfo: updated.shortInfo,
+        summary: mergedAnalysis ? `${updated.shortInfo}
+
+${mergedAnalysis}` : updated.shortInfo,
+        eligibility: mergedEligibility,
+        officialLink: updated.officialNotificationUrl || updated.sourceUrl,
+        officialNotificationUrl: updated.officialNotificationUrl || updated.sourceUrl,
+        publicationStatus: "draft",
+        suppressPush: true
+      });
+    }
+    return res.json({ success: true, item: updated, qualityReport: qualityCheck });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err?.message || "Review update failed" });
   }
 });
 app.get(["/api/notifications/center", "/notifications/center"], (_req, res) => {
@@ -18057,6 +20912,7 @@ app.get(["/api/notifications/center", "/notifications/center"], (_req, res) => {
     }));
     const topSarkari = getAllMergedSarkariPosts().filter((item) => {
       if (!isPublishedSarkariItem(item)) return false;
+      if (item.duplicateOfId || KNOWN_DUPLICATE_MAP[item.id]) return false;
       const st = computeSarkariStatus(item);
       return st.verificationStatus !== "needs_verification" && !item.isCancelled;
     }).slice(0, 10).map((item) => ({
@@ -18455,8 +21311,8 @@ app.get(
       const isWebp = req.path.endsWith(".webp") || req.query.format === "webp";
       const format = isSvg ? "svg" : isWebp ? "webp" : "png";
       if (!isSvg) {
-        const localFilePath = path5.join(process.cwd(), "public", "thumbnails", `${rawId}.${format}`);
-        if (req.query.force !== "1" && fs5.existsSync(localFilePath)) {
+        const localFilePath = path4.join(process.cwd(), "public", "thumbnails", `${rawId}.${format}`);
+        if (req.query.force !== "1" && fs4.existsSync(localFilePath)) {
           res.setHeader("Content-Type", format === "webp" ? "image/webp" : "image/png");
           res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=604800");
           return res.sendFile(localFilePath);
@@ -18610,14 +21466,14 @@ app.post("/api/thumbnails/save", async (req, res) => {
       }
       finalBuffer = await renderMasterThumbnailBuffer(finalSpec, format);
     }
-    const publicThumbDir = path5.join(process.cwd(), "public", "thumbnails");
-    if (!fs5.existsSync(publicThumbDir)) {
-      fs5.mkdirSync(publicThumbDir, { recursive: true });
+    const publicThumbDir = path4.join(process.cwd(), "public", "thumbnails");
+    if (!fs4.existsSync(publicThumbDir)) {
+      fs4.mkdirSync(publicThumbDir, { recursive: true });
     }
     const ext = format === "webp" ? "webp" : "png";
     const fileName = `${postId}.${ext}`;
-    const localDiskPath = path5.join(publicThumbDir, fileName);
-    fs5.writeFileSync(localDiskPath, finalBuffer);
+    const localDiskPath = path4.join(publicThumbDir, fileName);
+    fs4.writeFileSync(localDiskPath, finalBuffer);
     const localUrl = `/thumbnails/${fileName}?t=${Date.now()}`;
     const contentType = format === "webp" ? "image/webp" : "image/png";
     const supaUpload = await uploadDocumentBufferToSupabase(
@@ -18686,6 +21542,56 @@ app.post("/api/posts", async (req, res) => {
     const publicationStatus = rawPubStatus === "draft" || rawPubStatus === "archived" ? rawPubStatus : "published";
     const category = body.category || (String(body.institution || "").toUpperCase() === "IGNOU" ? "ignou" : "jkssb");
     const resolvedNoticeType = body.noticeType || void 0;
+    const shortInfoText = String(
+      body.shortDescription || body.shortInfo || `${body.title} official notification, eligibility, important dates, and official portal details via CSC DOST.`
+    ).trim();
+    const originalAnalysisText = typeof body.originalAnalysis === "string" ? body.originalAnalysis.trim() : "";
+    const resolvedPostDate = String(body.postDate || body.documentDate || todayStr).trim();
+    const resolvedLastDate = String(body.lastDate || "Check Official Circular").trim();
+    const resolvedEligibility = String(
+      body.eligibility || "Refer to official notification for qualification details"
+    ).trim();
+    if (publicationStatus === "published") {
+      const qualityResult = validatePostPublishQuality(
+        {
+          id: slug,
+          title: String(body.title).trim(),
+          shortInfo: shortInfoText,
+          summary: typeof body.summary === "string" ? body.summary : shortInfoText,
+          originalAnalysis: originalAnalysisText,
+          eligibility: body.eligibility ? String(body.eligibility).trim() : "",
+          lastDate: resolvedLastDate,
+          postDate: resolvedPostDate,
+          officialNotificationUrl: validatedOfficialUrl,
+          officialLink: String(body.officialLink || validatedOfficialUrl).trim(),
+          howToApply: body.howToApply,
+          selectionProcess: body.selectionProcess,
+          documentsRequired: body.documentsRequired,
+          notes: body.notes,
+          sourceExcerpt: typeof body.sourceExcerpt === "string" ? body.sourceExcerpt : void 0
+        },
+        {
+          minWordCount: 400,
+          enforceWordCount: true,
+          maxConsecutiveCopiedSentences: 2,
+          requireUpdatedDate: true
+        }
+      );
+      if (!qualityResult.valid) {
+        return res.status(400).json({
+          error: qualityResult.errors[0] || "Post failed AdSense editorial quality verification.",
+          validationErrors: qualityResult.errors,
+          qualityReport: qualityResult
+        });
+      }
+    }
+    const existingCustom = getCustomSarkariPosts().find((p) => p && p.id === slug);
+    const existingStatic = SARKARI_DATA.find((p) => p && p.id === slug);
+    const existingPost = existingCustom || existingStatic;
+    const wasAlreadyPublished = Boolean(
+      existingPost && (existingPost.publicationStatus === "published" || Boolean(existingPost.pushNotifiedAt) || !existingPost.publicationStatus && isPublishedSarkariItem(existingPost))
+    );
+    const isFirstPublish = publicationStatus === "published" && !wasAlreadyPublished;
     const newPost = {
       id: slug,
       title: String(body.title).trim(),
@@ -18699,15 +21605,22 @@ app.post("/api/posts", async (req, res) => {
       documentDate: body.documentDate ? String(body.documentDate).trim() : void 0,
       isTentative: Boolean(body.isTentative),
       publicationStatus,
+      pushNotifiedAt: existingPost?.pushNotifiedAt || (isFirstPublish ? (/* @__PURE__ */ new Date()).toISOString() : void 0),
       status: body.applicationStatus || body.status || "Open",
-      postDate: body.postDate || body.documentDate || todayStr,
-      startDate: body.startDate || body.postDate || body.documentDate || todayStr,
-      lastDate: body.lastDate || "Check Official Circular",
+      postDate: resolvedPostDate,
+      startDate: body.startDate || resolvedPostDate,
+      lastDate: resolvedLastDate,
       advertisementNo: body.advertisementNo || "",
-      shortInfo: body.shortDescription || body.shortInfo || `${body.title} official notification, eligibility, important dates, and official portal details via CSC DOST.`,
+      shortInfo: shortInfoText,
+      summary: originalAnalysisText ? `${shortInfoText}
+
+${originalAnalysisText}` : typeof body.summary === "string" && body.summary.trim() ? body.summary.trim() : void 0,
       ageLimit: body.ageLimit || (category === "ignou" ? "As per IGNOU programme norms" : "As per official notification norms"),
-      eligibility: body.eligibility || "Refer to official notification for qualification details",
+      eligibility: resolvedEligibility,
       totalPosts: body.totalPosts || (category === "ignou" ? "IGNOU Circular" : "Various Posts"),
+      howToApply: body.howToApply || void 0,
+      selectionProcess: body.selectionProcess || void 0,
+      documentsRequired: body.documentsRequired || void 0,
       officialLink: String(body.officialLink || validatedOfficialUrl).trim(),
       officialNotificationUrl: String(body.officialNotificationUrl || validatedOfficialUrl).trim(),
       officialApplicationUrl: body.officialApplicationUrl ? String(body.officialApplicationUrl).trim() : void 0,
@@ -18734,24 +21647,36 @@ app.post("/api/posts", async (req, res) => {
       });
     }
     syncCustomPostsAndThumbnailsInMemory();
+    let autoPushResult = null;
     const pushSettings = getPushServerSettings();
-    if (publicationStatus === "published" && pushSettings.autoPublishPush && !body.suppressPush) {
+    if (isFirstPublish && pushSettings.autoPublishPush !== false && !body.suppressPush) {
       const pushCategory = isEducationSarkariItem(newPost) ? "exams" : "jobs";
-      broadcastPushNotification({
-        title: `CSC DOST | ${newPost.postType === "Job" ? "New Job Alert" : "New Update"} \u{1F514}`,
-        body: `${newPost.title} \u2014 ${newPost.totalPosts || ""} (${newPost.lastDate ? `Last Date: ${newPost.lastDate}` : ""}). Tap to view full details.`,
-        category: pushCategory,
-        url: `/#post/${slug}`,
-        postId: slug,
-        image: newPost.thumbnailUrl,
-        sentBy: "Auto-Publish on Post Save"
-      }).catch((err) => {
-        console.warn("[Push] Auto-publish background notification notice:", err?.message);
+      const formattedPayload = formatPostPushPayload({
+        id: slug,
+        title: newPost.title,
+        shortInfo: newPost.shortInfo,
+        category: pushCategory
       });
+      try {
+        autoPushResult = await broadcastPushNotification({
+          title: formattedPayload.title,
+          body: formattedPayload.body,
+          category: pushCategory,
+          url: formattedPayload.url,
+          tag: formattedPayload.tag,
+          postId: slug,
+          icon: formattedPayload.icon,
+          sentBy: "Auto-Publish (First Publish)"
+        });
+      } catch (pushErr) {
+        console.warn("[Push] Auto-publish notification warning:", pushErr?.message);
+      }
     }
     res.json({
       success: true,
-      post: newPost
+      post: newPost,
+      pushTriggered: Boolean(autoPushResult?.success),
+      pushStats: autoPushResult?.stats || null
     });
   } catch (err) {
     console.error("[Posts] Create/Update post error:", err);
@@ -18826,7 +21751,7 @@ app.get(["/api/og-image/:id.png", "/api/og-image/:id.webp", "/api/og-image/:id.s
       res.setHeader("Cache-Control", "public, max-age=3600");
       return res.status(200).send(fallbackBuffer);
     } catch {
-      const fallbackPath = path5.join(process.cwd(), "public", "og-banner.png");
+      const fallbackPath = path4.join(process.cwd(), "public", "og-banner.png");
       res.setHeader("Content-Type", "image/png");
       res.setHeader("Cache-Control", "public, max-age=3600");
       return res.status(200).sendFile(fallbackPath);
@@ -18834,8 +21759,8 @@ app.get(["/api/og-image/:id.png", "/api/og-image/:id.webp", "/api/og-image/:id.s
   }
 });
 app.get(["/og-banner.png", "/og-image.png"], async (req, res) => {
-  const bannerPath = path5.join(process.cwd(), "public", "og-banner.png");
-  if (fs5.existsSync(bannerPath)) {
+  const bannerPath = path4.join(process.cwd(), "public", "og-banner.png");
+  if (fs4.existsSync(bannerPath)) {
     res.setHeader("Content-Type", "image/png");
     res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=604800");
     return res.sendFile(bannerPath);
@@ -18846,8 +21771,8 @@ app.get(["/og-banner.png", "/og-image.png"], async (req, res) => {
   return res.send(png);
 });
 app.get(["/og-banner.svg", "/og-image.svg"], (req, res) => {
-  const bannerPath = path5.join(process.cwd(), "public", "og-banner.svg");
-  if (fs5.existsSync(bannerPath)) {
+  const bannerPath = path4.join(process.cwd(), "public", "og-banner.svg");
+  if (fs4.existsSync(bannerPath)) {
     res.setHeader("Content-Type", "image/svg+xml");
     res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=604800");
     return res.sendFile(bannerPath);
@@ -18890,7 +21815,7 @@ function renderDynamicMetaHtml(rawHtml, req) {
   let breadcrumbItems = [];
   let substantiveBodyHtml = "";
   let matchedJobPost = null;
-  const legalMatch = urlPath.match(/^\/(privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|contact-us|refund-policy|refund)$/i);
+  const legalMatch = urlPath.match(/^\/(privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|contact-us|editorial-policy|editorial|refund-policy|refund)$/i);
   const adminMatch = urlPath.match(/^\/(admin|staff)$/i);
   const targetPostId = (matchPost ? matchPost[1] : postParam)?.replace(/\.html?$/i, "");
   const targetServiceId = (matchService ? matchService[1] : serviceParam)?.replace(/\.html?$/i, "");
@@ -18903,6 +21828,7 @@ function renderDynamicMetaHtml(rawHtml, req) {
     else if (rawKey === "disclaimer") legalKey = "disclaimer";
     else if (rawKey === "about-us" || rawKey === "about") legalKey = "about";
     else if (rawKey === "contact-us" || rawKey === "contact") legalKey = "contact";
+    else if (rawKey === "editorial-policy" || rawKey === "editorial") legalKey = "editorial";
     else if (rawKey === "refund-policy" || rawKey === "refund") legalKey = "refund";
     const meta = LEGAL_SEO_MAP[legalKey];
     title = meta.title;
@@ -18982,7 +21908,7 @@ function renderDynamicMetaHtml(rawHtml, req) {
       substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
     }
   } else if (targetSchemeId) {
-    const guide = GUIDE_ARTICLES.find((g) => g.id === targetSchemeId || g.id === decodeURIComponent(targetSchemeId));
+    const guide = PUBLISHED_GUIDE_ARTICLES.find((g) => g.id === targetSchemeId || g.id === decodeURIComponent(targetSchemeId));
     if (guide) {
       const meta = getSchemeSeoMeta(guide);
       title = meta.title;
@@ -19122,8 +22048,8 @@ function renderDynamicMetaHtml(rawHtml, req) {
   html = html.replace(/\s*<meta\s+name=["']keywords["'][^>]*\/?>/gi, "");
   if (urlPath !== "/") {
     html = html.replace(
-      /<noscript>\s*<div\b[\s\S]*?Welcome to CSC DOST[\s\S]*?<\/div>\s*<\/noscript>/i,
-      () => '<noscript><p style="padding:12px;font-family:sans-serif;">JavaScript is disabled. Core notice details are shown below; enable JavaScript for interactive forms and tools.</p></noscript>'
+      /<noscript>[\s\S]*?<\/noscript>/i,
+      () => '<noscript><nav aria-label="CSC DOST Sections" style="padding:10px 16px;font-family:sans-serif;font-size:13px;"><a href="/">Home</a> | <a href="/jobs">Jobs</a> | <a href="/education">Admissions</a> | <a href="/schemes">Schemes</a> | <a href="/tools">Tools</a> | <a href="/calculators">Calculators</a> | <a href="/disclaimer">Disclaimer</a></nav></noscript>'
     );
   }
   html = html.replace(/<title>[\s\S]*?<\/title>/i, () => `<title>${safeTitle}</title>`);
@@ -19187,48 +22113,6 @@ ${JSON.stringify(articleLd, null, 2)}
   </head>`;
     html = html.replace(/<\/head>/i, () => articleScript);
   }
-  if (matchedJobPost) {
-    const postStatus = computeSarkariStatus(matchedJobPost);
-    const effectiveType = resolveEffectiveTemplateType(matchedJobPost, postStatus);
-    const emitJobSchema = (effectiveType === "application" || effectiveType === "upcoming") && (postStatus.applicationStatus === "open" || postStatus.applicationStatus === "upcoming") && isRecruitmentSarkariItem(matchedJobPost) && matchedJobPost.noticeType !== "correction" && matchedJobPost.stage !== "correction" && !postStatus.isClosed && !postStatus.isCancelled;
-    if (emitJobSchema) {
-      const orgName = matchedJobPost.org || resolvePostOrg(matchedJobPost);
-      const validIso = toIsoDate(matchedJobPost.applyEnd || matchedJobPost.lastDate);
-      const jobLd = {
-        "@context": "https://schema.org",
-        "@type": "JobPosting",
-        "title": matchedJobPost.title,
-        "description": matchedJobPost.summary || matchedJobPost.shortInfo || description,
-        "datePosted": toIsoDate(matchedJobPost.postDate) || toIsoDate2(matchedJobPost.postDate),
-        "employmentType": "FULL_TIME",
-        "hiringOrganization": {
-          "@type": "Organization",
-          "name": orgName,
-          "sameAs": matchedJobPost.officialLink || canonicalUrl
-        },
-        "jobLocation": {
-          "@type": "Place",
-          "address": {
-            "@type": "PostalAddress",
-            "addressRegion": "Jammu and Kashmir",
-            "addressCountry": "IN"
-          }
-        },
-        "directApply": false,
-        "url": canonicalUrl
-      };
-      if (validIso) {
-        jobLd.validThrough = `${validIso}T23:59:59+05:30`;
-      }
-      const jobScript = `
-    <!-- Dynamic JobPosting Structured Data -->
-    <script type="application/ld+json">
-${JSON.stringify(jobLd, null, 2)}
-    </script>
-  </head>`;
-      html = html.replace(/<\/head>/i, () => jobScript);
-    }
-  }
   if (breadcrumbItems.length > 0) {
     const breadcrumbLd = {
       "@context": "https://schema.org",
@@ -19273,6 +22157,7 @@ app.get("/sitemap.xml", (req, res) => {
       { loc: "/calculators", changefreq: "monthly", priority: "0.9" },
       { loc: "/about-us", changefreq: "monthly", priority: "0.7" },
       { loc: "/contact-us", changefreq: "monthly", priority: "0.7" },
+      { loc: "/editorial-policy", changefreq: "monthly", priority: "0.6" },
       { loc: "/privacy-policy", changefreq: "monthly", priority: "0.5" },
       { loc: "/terms-of-service", changefreq: "monthly", priority: "0.5" },
       { loc: "/disclaimer", changefreq: "monthly", priority: "0.5" },
@@ -19324,7 +22209,7 @@ app.get("/sitemap.xml", (req, res) => {
       xml += "    <priority>0.8</priority>\n";
       xml += "  </url>\n";
     }
-    for (const g of GUIDE_ARTICLES) {
+    for (const g of PUBLISHED_GUIDE_ARTICLES) {
       xml += "  <url>\n";
       xml += `    <loc>${BASE_URL}/scheme/${encodeURIComponent(g.id)}</loc>
 `;
@@ -19350,32 +22235,32 @@ app.get("/sitemap.xml", (req, res) => {
     return res.send(xml);
   } catch (err) {
     console.error("Error generating dynamic sitemap, serving static file:", err);
-    const sitemapPath = path5.join(process.cwd(), "public", "sitemap.xml");
+    const sitemapPath = path4.join(process.cwd(), "public", "sitemap.xml");
     res.setHeader("Content-Type", "application/xml; charset=utf-8");
     res.sendFile(sitemapPath);
   }
 });
 app.get("/robots.txt", (req, res) => {
-  const robotsPath = path5.join(process.cwd(), "public", "robots.txt");
+  const robotsPath = path4.join(process.cwd(), "public", "robots.txt");
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
   res.sendFile(robotsPath);
 });
-app.use(express.static(path5.join(process.cwd(), "public")));
+app.use(express.static(path4.join(process.cwd(), "public"), { index: false }));
 if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
-  const distPath = path5.join(process.cwd(), "dist");
-  const indexHtmlPath = path5.join(distPath, "index.html");
-  const rootHtmlPath = path5.join(process.cwd(), "index.html");
-  if (fs5.existsSync(distPath)) {
-    app.use(express.static(distPath));
+  const distPath = path4.join(process.cwd(), "dist");
+  const indexHtmlPath = path4.join(distPath, "index.html");
+  const rootHtmlPath = path4.join(process.cwd(), "index.html");
+  if (fs4.existsSync(distPath)) {
+    app.use(express.static(distPath, { index: false }));
   }
   app.get("*", (req, res, next) => {
     if (req.path.startsWith("/api/")) {
       return next();
     }
     try {
-      const targetHtmlPath = fs5.existsSync(indexHtmlPath) ? indexHtmlPath : fs5.existsSync(rootHtmlPath) ? rootHtmlPath : null;
+      const targetHtmlPath = fs4.existsSync(indexHtmlPath) ? indexHtmlPath : fs4.existsSync(rootHtmlPath) ? rootHtmlPath : null;
       if (targetHtmlPath) {
-        const indexHtml = fs5.readFileSync(targetHtmlPath, "utf-8");
+        const indexHtml = fs4.readFileSync(targetHtmlPath, "utf-8");
         const { html: dynamicHtml, isNotFound } = renderDynamicMetaHtml(indexHtml, req);
         res.setHeader("Content-Type", "text/html; charset=utf-8");
         if (isNotFound) {
@@ -19406,7 +22291,7 @@ async function startServer() {
       }
       const url = req.originalUrl || req.url;
       try {
-        const indexHtml = fs5.readFileSync(path5.join(process.cwd(), "index.html"), "utf-8");
+        const indexHtml = fs4.readFileSync(path4.join(process.cwd(), "index.html"), "utf-8");
         const transformedHtml = await vite.transformIndexHtml(url, indexHtml);
         const { html: finalHtml, isNotFound } = renderDynamicMetaHtml(transformedHtml, req);
         res.setHeader("Content-Type", "text/html; charset=utf-8");
@@ -19423,6 +22308,7 @@ async function startServer() {
     });
   }
   if (!process.env.VERCEL) {
+    startNoticeMonitorScheduler();
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`\u{1F680} CSC DOST Server successfully started on http://0.0.0.0:${PORT}`);
     });

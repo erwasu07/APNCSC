@@ -180,7 +180,7 @@ import {
 } from './src/server/noticeMonitor';
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 // Health check endpoints for deployment probes & container health checks
 app.get(['/api/health', '/health', '/_health'], (req: Request, res: Response) => {
@@ -238,6 +238,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     const queryIndex = rawOriginal.indexOf('?');
     const queryString = queryIndex >= 0 ? rawOriginal.slice(queryIndex) : '';
 
+    if (cleanReqPath === '/index.html') {
+      return res.redirect(301, `/${queryString}`);
+    }
     if (cleanReqPath === '/about') {
       return res.redirect(301, `/about-us${queryString}`);
     }
@@ -290,15 +293,43 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // Path normalization middleware to handle Vercel rewrites & reverse proxy headers
 app.use((req: Request, _res: Response, next: NextFunction) => {
-  const forwardedPath = (
-    req.headers['x-matched-path'] ||
-    req.headers['x-forwarded-uri'] ||
-    req.headers['x-vercel-matched-path'] ||
-    req.headers['x-original-url']
-  ) as string | undefined;
+  const rawUrl = typeof req.url === 'string' && req.url.length > 0 ? req.url : '/';
+  const qIndex = rawUrl.indexOf('?');
+  const pathPart = qIndex >= 0 ? rawUrl.slice(0, qIndex) : rawUrl;
+  const queryPart = qIndex >= 0 ? rawUrl.slice(qIndex) : '';
 
-  if (forwardedPath && typeof forwardedPath === 'string' && forwardedPath.startsWith('/api') && (req.url === '/api' || req.url === '/')) {
-    req.url = forwardedPath;
+  const isBareApiEntry =
+    pathPart === '/api' ||
+    pathPart === '/api/' ||
+    pathPart === '/api/index' ||
+    pathPart === '/api/index.ts';
+
+  if (isBareApiEntry) {
+    const candidateHeaders = [
+      req.headers['x-vercel-original-path'],
+      req.headers['x-original-url'],
+      req.headers['x-forwarded-uri'],
+      req.headers['x-rewrite-url'],
+      req.headers['x-matched-path'],
+      req.headers['x-vercel-matched-path'],
+    ];
+
+    const forwardedPath = candidateHeaders.find((val): val is string => {
+      if (typeof val !== 'string' || !val.startsWith('/')) return false;
+      const cleanVal = val.split('?')[0];
+      return (
+        cleanVal !== '/api' &&
+        cleanVal !== '/api/' &&
+        cleanVal !== '/api/index' &&
+        cleanVal !== '/api/index.ts'
+      );
+    });
+
+    if (forwardedPath) {
+      req.url = forwardedPath.includes('?') || !queryPart ? forwardedPath : `${forwardedPath}${queryPart}`;
+    } else {
+      req.url = `/${queryPart}`;
+    }
   }
   next();
 });
@@ -5514,8 +5545,8 @@ app.get('/robots.txt', (req: Request, res: Response) => {
   res.sendFile(robotsPath);
 });
 
-// Explicitly serve static public assets like favicons
-app.use(express.static(path.join(process.cwd(), 'public')));
+// Explicitly serve static public assets like favicons (never auto-serve index.html for /)
+app.use(express.static(path.join(process.cwd(), 'public'), { index: false }));
 
 // Production & Vercel SSR catch-all route (Registered immediately so Vercel Serverless Function executes it)
 if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
@@ -5524,7 +5555,7 @@ if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
   const rootHtmlPath = path.join(process.cwd(), 'index.html');
 
   if (fs.existsSync(distPath)) {
-    app.use(express.static(distPath));
+    app.use(express.static(distPath, { index: false }));
   }
 
   app.get('*', (req: Request, res: Response, next: NextFunction) => {
