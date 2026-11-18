@@ -336,6 +336,73 @@ export default function ToolsHub({
             </section>
           </div>
 
+          {/* 5. STEP-BY-STEP INSTRUCTIONS, PORTAL STANDARDS & FAQs (400+ word CSR/SSR parity) */}
+          <Card className="p-5 space-y-4 text-start">
+            <div className="space-y-2">
+              <h2 className="text-lg font-extrabold text-[var(--text-primary)] m-0">
+                Step-by-Step Guide &amp; Official Portal Upload Tips
+              </h2>
+              <ol className="ps-5 space-y-1.5 text-sm text-[var(--text-secondary)] leading-relaxed m-0">
+                <li>
+                  Select or drag your photograph, scanned signature, or PDF certificate directly from your Android phone, iPhone, or desktop computer.
+                </li>
+                <li>
+                  Choose the pixel dimensions, DPI ratio, or target KB ceiling specified inside your JKSSB, SSC, RRB, Kashmir University, Cluster University, or IGNOU application notice.
+                </li>
+                <li>
+                  Inspect the processed preview inside your browser to confirm facial clarity, uncropped signature strokes, or readable certificate text before downloading.
+                </li>
+                <li>
+                  Save the file locally and verify its exact dimensions and file size with our{' '}
+                  <a
+                    href="/calculators"
+                    onClick={(e) => {
+                      if (!e.metaKey && !e.ctrlKey && e.button === 0) {
+                        e.preventDefault();
+                        navigateRoute('/calculators');
+                      }
+                    }}
+                    className="font-bold text-[#1F9D6B] hover:underline no-underline"
+                  >
+                    Photo &amp; Signature Spec Inspector
+                  </a>{' '}
+                  prior to uploading on the official portal.
+                </li>
+              </ol>
+            </div>
+
+            <div className="rounded-xl bg-[var(--bg-surface)] border border-[var(--border-default)] p-4 space-y-1.5">
+              <h3 className="text-sm font-bold text-[var(--text-primary)] m-0">
+                Avoiding Common Portal Rejection Errors
+              </h3>
+              <p className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed m-0">
+                Indian recruitment and admission forms frequently reject modern smartphone photos that exceed strict 20 KB–50 KB limits or contain incompatible metadata. Keep a plain white or light background, use black or blue ink on unruled white paper for signatures, and inspect compressed PDFs before submission so registration numbers and seals stay crisp. CSC DOST operates this utility free of charge as a browser-local citizen tool.
+              </p>
+            </div>
+          </Card>
+
+          <FaqAccordion
+            title={`Frequently Asked Questions: ${displayName}`}
+            injectSchema={false}
+            items={[
+              {
+                question: `Are my photos or documents uploaded to CSC DOST servers when using ${displayName}?`,
+                answer:
+                  'No. All image resizing, compression, cropping, and PDF conversion run inside your browser memory using HTML5 Canvas and client-side JavaScript. Your personal IDs and photos remain strictly on your own device.',
+              },
+              {
+                question: `Does ${displayName} work reliably on mobile phones and slow connections?`,
+                answer:
+                  'Yes. Once the tool page loads, processing takes place locally on your smartphone or computer without sending large image files over mobile data.',
+              },
+              {
+                question: 'Should I double-check the official circular rules before submitting my form?',
+                answer:
+                  'Yes. Recruitment boards and universities occasionally revise permitted KB caps, JPEG extensions, or pixel dimensions between cycles. Always confirm exact specifications on the official portal.',
+              },
+            ] satisfies FaqItem[]}
+          />
+
           {/* Related Tools */}
           {relatedTools.length > 0 && (
             <section aria-label={t.toolsRelatedTitle} className="space-y-3 text-start">

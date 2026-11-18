@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ShieldCheck,
   FileText,
@@ -13,6 +13,8 @@ import {
   ExternalLink,
   RotateCcw,
   Award,
+  BookOpen,
+  Send,
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Breadcrumbs } from './ui/Breadcrumbs';
@@ -24,7 +26,8 @@ export type LegalPageType =
   | 'privacy'
   | 'terms'
   | 'disclaimer'
-  | 'refund';
+  | 'refund'
+  | 'editorial';
 
 interface LegalPageViewProps {
   pageType: LegalPageType;
@@ -66,6 +69,11 @@ export const LEGAL_PAGE_CONFIG: Record<
     metaTitle: 'Refund & Cancellation Policy | CSC DOST',
     path: '/refund-policy',
   },
+  editorial: {
+    title: 'Editorial & Corrections Policy',
+    metaTitle: 'Editorial & Corrections Policy | CSC DOST',
+    path: '/editorial-policy',
+  },
 };
 
 export default function LegalPageView({
@@ -87,6 +95,7 @@ export default function LegalPageView({
   const navItems: { type: LegalPageType; label: string; icon: React.ReactNode }[] = [
     { type: 'about', label: 'About Us', icon: <Info className="w-4 h-4 shrink-0" /> },
     { type: 'contact', label: 'Contact Helpdesk', icon: <Phone className="w-4 h-4 shrink-0" /> },
+    { type: 'editorial', label: 'Editorial Policy', icon: <BookOpen className="w-4 h-4 shrink-0" /> },
     { type: 'privacy', label: 'Privacy Policy', icon: <ShieldCheck className="w-4 h-4 shrink-0" /> },
     { type: 'terms', label: 'Terms of Service', icon: <FileText className="w-4 h-4 shrink-0" /> },
     { type: 'disclaimer', label: 'Disclaimer', icon: <AlertTriangle className="w-4 h-4 shrink-0" /> },
@@ -180,6 +189,7 @@ export default function LegalPageView({
       <Card className="p-4 sm:p-5 shadow-xs">
         {safePageType === 'about' && <AboutContent />}
         {safePageType === 'contact' && <ContactContent />}
+        {safePageType === 'editorial' && <EditorialContent onNavigate={onNavigate} />}
         {safePageType === 'privacy' && <PrivacyContent />}
         {safePageType === 'terms' && <TermsContent />}
         {safePageType === 'disclaimer' && <DisclaimerContent />}
@@ -443,7 +453,9 @@ function ContactContent() {
       </div>
 
       <section className="space-y-4 text-[var(--text-secondary)] leading-relaxed text-base">
-        <h2 className="text-xl font-bold text-[var(--text-primary)]">
+        <ContactInquiryForm />
+
+        <h2 className="text-xl font-bold text-[var(--text-primary)] pt-2">
           Application Assistance &amp; Tracking Inquiries
         </h2>
         <p>
@@ -497,6 +509,177 @@ function ContactContent() {
         </ul>
       </section>
     </article>
+  );
+}
+
+function ContactInquiryForm() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [topic, setTopic] = useState('Notice Correction / Error Report');
+  const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submittedRef, setSubmittedRef] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setSubmittedRef(null);
+
+    if (!name.trim() || !phone.trim() || !message.trim()) {
+      setErrorMsg('Please fill your Name, Mobile/WhatsApp Number, and Message.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
+          service: topic,
+          message: message.trim(),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Could not submit inquiry right now.');
+      }
+      setSubmittedRef(data.request?.id || 'LOGGED');
+      setName('');
+      setEmail('');
+      setPhone('');
+      setMessage('');
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Unable to reach helpdesk server. Please call +91 70068 33767.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="bg-[var(--bg-subtle)] border border-[var(--border-default)] rounded-xl p-5 space-y-4">
+      <div>
+        <h2 className="text-lg font-bold text-[var(--text-primary)] m-0">
+          Send a Message or Report a Correction
+        </h2>
+        <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1 m-0">
+          Spot an outdated date, broken official link, or have a general portal question? Write directly to our helpdesk below. Do not enter OTPs, Aadhaar passwords, or bank PINs.
+        </p>
+      </div>
+
+      {submittedRef && (
+        <div
+          role="status"
+          className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm flex items-start gap-2.5"
+        >
+          <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" aria-hidden="true" />
+          <div>
+            <strong>Inquiry received!</strong> Reference: <span className="font-mono">{submittedRef}</span>. Our team reviews helpdesk messages within 24–48 business hours.
+          </div>
+        </div>
+      )}
+
+      {errorMsg && (
+        <div role="alert" className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-900 text-xs sm:text-sm font-medium">
+          {errorMsg}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label htmlFor="contact-name" className="block text-xs font-bold text-[var(--text-primary)] mb-1">
+            Full Name *
+          </label>
+          <input
+            id="contact-name"
+            type="text"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Your full name"
+            className="w-full min-h-[42px] px-3 py-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-default)] text-sm text-[var(--text-primary)]"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="contact-phone" className="block text-xs font-bold text-[var(--text-primary)] mb-1">
+            Mobile / WhatsApp Number *
+          </label>
+          <input
+            id="contact-phone"
+            type="tel"
+            required
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="+91 XXXXX XXXXX"
+            className="w-full min-h-[42px] px-3 py-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-default)] text-sm text-[var(--text-primary)]"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="contact-email" className="block text-xs font-bold text-[var(--text-primary)] mb-1">
+            Email Address (Optional)
+          </label>
+          <input
+            id="contact-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="name@example.com"
+            className="w-full min-h-[42px] px-3 py-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-default)] text-sm text-[var(--text-primary)]"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="contact-topic" className="block text-xs font-bold text-[var(--text-primary)] mb-1">
+            Topic *
+          </label>
+          <select
+            id="contact-topic"
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            className="w-full min-h-[42px] px-3 py-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-default)] text-sm text-[var(--text-primary)]"
+          >
+            <option value="Notice Correction / Error Report">Notice Correction / Error Report</option>
+            <option value="Assisted Application Tracking">Assisted Application Tracking</option>
+            <option value="Document Tool or Calculator Feedback">Document Tool or Calculator Feedback</option>
+            <option value="Privacy / Grievance Inquiry">Privacy / Grievance Inquiry</option>
+            <option value="General Citizen Inquiry">General Citizen Inquiry</option>
+          </select>
+        </div>
+
+        <div className="sm:col-span-2">
+          <label htmlFor="contact-message" className="block text-xs font-bold text-[var(--text-primary)] mb-1">
+            Message / Page URL *
+          </label>
+          <textarea
+            id="contact-message"
+            required
+            rows={3}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Describe your question or include the notice title/URL that needs correction..."
+            className="w-full px-3 py-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-default)] text-sm text-[var(--text-primary)]"
+          />
+        </div>
+
+        <div className="sm:col-span-2">
+          <button
+            type="submit"
+            disabled={submitting}
+            className="min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#101A36] hover:bg-[#1E2B4F] text-white text-sm font-bold cursor-pointer disabled:opacity-60 transition-colors"
+          >
+            <Send className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span>{submitting ? 'Submitting...' : 'Submit Helpdesk Message'}</span>
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
 
@@ -1112,3 +1295,101 @@ function RefundContent() {
     </article>
   );
 }
+
+function EditorialContent({ onNavigate }: { onNavigate: (type: LegalPageType) => void }) {
+  return (
+    <article className="space-y-6">
+      <header className="border-b border-[var(--border-default)] pb-6">
+        <div className="flex items-center gap-2 text-[var(--status-exam-text)] font-semibold text-xs tracking-wider uppercase mb-2">
+          <BookOpen className="w-4 h-4 shrink-0" aria-hidden="true" />
+          <span>Editorial Standards &amp; Corrections</span>
+        </div>
+        <h1 className="text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight m-0">
+          Editorial &amp; Corrections Policy
+        </h1>
+        <p className="text-[var(--text-muted)] text-sm mt-2 m-0">
+          Published: November 2026 • Last Reviewed by Wasim Ahmad Khanday (CSC VLE ID: 212515670018)
+        </p>
+      </header>
+
+      <section className="space-y-6 text-[var(--text-secondary)] leading-relaxed text-base">
+        <p>
+          <strong className="text-[var(--text-primary)]">CSC DOST (cscdost.com)</strong> publishes
+          original citizen-oriented summaries, document preparation checklists, deadline trackers,
+          and educational guides covering Jammu &amp; Kashmir and all-India public notices. Every
+          published notice follows strict editorial verification rules so applicants can make
+          informed decisions without confusion.
+        </p>
+
+        <h2 className="text-xl font-bold text-[var(--text-primary)] mt-6 mb-3">
+          1. Primary Official Source Verification Only
+        </h2>
+        <ul className="list-disc ps-5 space-y-2">
+          <li>
+            We source facts exclusively from official government, statutory board, university, and
+            public-sector portals (<code className="font-mono text-xs bg-[var(--bg-subtle)] px-1.5 py-0.5 rounded">.gov.in</code>,{' '}
+            <code className="font-mono text-xs bg-[var(--bg-subtle)] px-1.5 py-0.5 rounded">.nic.in</code>,{' '}
+            <code className="font-mono text-xs bg-[var(--bg-subtle)] px-1.5 py-0.5 rounded">kashmiruniversity.net</code>,{' '}
+            <code className="font-mono text-xs bg-[var(--bg-subtle)] px-1.5 py-0.5 rounded">cusrinagar.edu.in</code>,{' '}
+            <code className="font-mono text-xs bg-[var(--bg-subtle)] px-1.5 py-0.5 rounded">ignou.ac.in</code>) and their official PDF circulars.
+          </li>
+          <li>
+            We never copy articles from other private job blogs, WhatsApp forwards, or unverified
+            social media posts. Every post includes a direct clickable reference to the original
+            official portal or notification PDF.
+          </li>
+        </ul>
+
+        <h2 className="text-xl font-bold text-[var(--text-primary)] mt-6 mb-3">
+          2. Human Review &amp; Original Practical Guidance
+        </h2>
+        <p>
+          Automated portal monitors are used strictly to alert our editorial desk when an official
+          page changes. No monitored notice is ever auto-published. Before any entry goes live, a
+          human editor verifies notice numbers, dates, fees, and eligibility lines, writes clear
+          guidance (who should apply, common errors to avoid, and step-by-step preparation notes),
+          and records &ldquo;Not stated in notice&rdquo; wherever official documents omit a field.
+        </p>
+
+        <h2 className="text-xl font-bold text-[var(--text-primary)] mt-6 mb-3">
+          3. Clear Timestamps, Corrigenda &amp; Stale Notice Labels
+        </h2>
+        <ul className="list-disc ps-5 space-y-2">
+          <li>
+            Every article displays its publication date and <strong className="text-[var(--text-primary)]">Last Verified / Updated</strong> date.
+          </li>
+          <li>
+            When an issuing board releases a corrigendum, date extension, postpone notice, or edit
+            option circular, we update the affected notice promptly and link related stage pages
+            (Application → Edit Window → Admit Card → Answer Key → Document Verification).
+          </li>
+          <li>
+            Closed and older notices remain clearly labeled as Closed or Archived so citizens do not
+            mistake expired openings for active forms.
+          </li>
+        </ul>
+
+        <h2 className="text-xl font-bold text-[var(--text-primary)] mt-6 mb-3">
+          4. Reporting an Error or Requesting a Correction
+        </h2>
+        <p>
+          If you spot an incorrect date, broken official link, fee discrepancy, or outdated rule on
+          any page, please report it right away through our{' '}
+          <a
+            href="/contact-us"
+            onClick={(e) => {
+              e.preventDefault();
+              onNavigate('contact');
+            }}
+            className="text-[#1F9D6B] font-semibold hover:underline"
+          >
+            Contact Us &amp; Correction Desk
+          </a>{' '}
+          or call <strong className="text-[var(--text-primary)]">+91 70068 33767</strong>. Verified
+          corrections are updated promptly and noted with an updated verification timestamp.
+        </p>
+      </section>
+    </article>
+  );
+}
+

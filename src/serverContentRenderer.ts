@@ -15,7 +15,7 @@ import {
   parseSarkariDateSortValue,
 } from './data/sarkariData';
 import { ServiceItem } from './servicesData';
-import { GUIDE_ARTICLES, GuideArticle } from './data/guidesData';
+import { PUBLISHED_GUIDE_ARTICLES as GUIDE_ARTICLES, GuideArticle } from './data/guidesData';
 import { TOOLS_LIST, ToolItem } from './components/tools/toolsData';
 import { computeSarkariStatus, getActiveClosingDeadlines } from './utils/sarkariStatus';
 import { getDeduplicatedSarkariPosts, resolvePostOrg } from './data/sarkariMigration';
@@ -401,18 +401,25 @@ export function renderPostSubstantiveHtml(
     <script type="application/ld+json">${faqSchemaJson}</script>
 
     <!-- Footer Disclaimers -->
-    <footer style="margin-top:30px; font-size:12px; color:#475569; text-align:center; line-height:1.6;">
-      <p>Published by CSC DOST | Operator: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) | Sangran Qazigund, Anantnag, J&amp;K 192221 · +91 70068 33767</p>
-      <p>
-        <a href="/about-us" style="color:#101A36; font-weight:600; text-decoration:none;">About</a> •
-        <a href="/contact-us" style="color:#101A36; font-weight:600; text-decoration:none;">Contact</a> •
-        <a href="/privacy-policy" style="color:#101A36; font-weight:600; text-decoration:none;">Privacy Policy</a> •
-        <a href="/terms-of-service" style="color:#101A36; font-weight:600; text-decoration:none;">Terms of Service</a> •
-        <a href="/disclaimer" style="color:#101A36; font-weight:600; text-decoration:none;">Disclaimer</a>
-      </p>
-    </footer>
+    ${renderSsrPolicyFooterHtml()}
   </main>
   `;
+}
+
+function renderSsrPolicyFooterHtml(): string {
+  return `
+    <footer style="margin-top:30px; font-size:12px; color:#475569; text-align:center; line-height:1.7; border-top:1px solid #E2E8F0; padding-top:16px;">
+      <p style="margin:0 0 6px 0;">Published by CSC DOST | Operator: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) | Sangran Qazigund, Anantnag, J&amp;K 192221 · +91 70068 33767</p>
+      <p style="margin:0;">
+        <a href="/about-us" style="color:#101A36; font-weight:600; text-decoration:none;">About</a> •
+        <a href="/contact-us" style="color:#101A36; font-weight:600; text-decoration:none;">Contact</a> •
+        <a href="/editorial-policy" style="color:#101A36; font-weight:600; text-decoration:none;">Editorial Policy</a> •
+        <a href="/privacy-policy" style="color:#101A36; font-weight:600; text-decoration:none;">Privacy Policy</a> •
+        <a href="/terms-of-service" style="color:#101A36; font-weight:600; text-decoration:none;">Terms of Service</a> •
+        <a href="/disclaimer" style="color:#101A36; font-weight:600; text-decoration:none;">Disclaimer</a> •
+        <a href="/refund-policy" style="color:#101A36; font-weight:600; text-decoration:none;">Refund Policy</a>
+      </p>
+    </footer>`;
 }
 
 export function renderServiceSubstantiveHtml(service: ServiceItem): string {
@@ -591,6 +598,7 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
   const navTabs = [
     { key: 'about', href: '/about-us', label: 'About Us' },
     { key: 'contact', href: '/contact-us', label: 'Contact Helpdesk' },
+    { key: 'editorial', href: '/editorial-policy', label: 'Editorial Policy' },
     { key: 'privacy', href: '/privacy-policy', label: 'Privacy Policy' },
     { key: 'terms', href: '/terms-of-service', label: 'Terms of Service' },
     { key: 'disclaimer', href: '/disclaimer', label: 'Disclaimer' },
@@ -607,6 +615,8 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
     ? 'about'
     : norm.includes('contact')
     ? 'contact'
+    : norm.includes('editorial')
+    ? 'editorial'
     : 'refund';
 
   const legalHeaderShell = `
@@ -628,6 +638,58 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
         .join('')}
     </nav>
   </div>`;
+
+  if (norm.includes('editorial')) {
+    return `${legalHeaderShell}
+    <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.7;">
+      <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
+        <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
+        <span style="margin:0 6px;">/</span>
+        <span style="color:#0f172a; font-weight:600;">Editorial Policy</span>
+      </nav>
+
+      <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:28px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <header style="border-bottom:1px solid #e2e8f0; padding-bottom:18px; margin-bottom:20px;">
+          <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
+            Verification &amp; Publishing Standards
+          </span>
+          <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Editorial Policy &amp; Fact-Checking Standards</h1>
+          <p style="font-size:13px; color:#64748b; margin:0;">Editor-in-Chief: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) • Last Reviewed: November 2026</p>
+        </header>
+
+        <section style="font-size:15px; color:#334155; line-height:1.75;">
+          <p>
+            <strong>CSC DOST</strong> (<code>https://www.cscdost.com</code>) publishes structured recruitment guides, university examination summaries, and citizen e-governance instructions for Jammu &amp; Kashmir and all-India applicants. Every article published on this website follows strict editorial verification rules designed to prevent misinformation and low-value thin content.
+          </p>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">1. Official Primary Sources Only</h2>
+          <p>
+            Our editorial desk checks and cites only primary official portals and official PDFs (<code>.gov.in</code>, <code>.nic.in</code>, JKSSB, SSC, RRB, Join Indian Army, University of Kashmir, Cluster University Srinagar, and IGNOU). We never copy or republish rumours from unverified blogs, social media forwards, or third-party aggregator websites.
+          </p>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">2. Human Verification &amp; Plain-Language Value</h2>
+          <ul style="padding-left:20px; margin:0 0 16px 0;">
+            <li>Every recruitment notice, date sheet, or scheme guide must be reviewed by a human editor (<strong>Wasim Ahmad Khanday</strong>) before publication.</li>
+            <li>Automated portal monitoring creates internal review drafts only and is strictly prohibited from auto-publishing live articles without human review and original rewriting.</li>
+            <li>Each published post includes verified eligibility rules, important schedule milestones, document checklists, step-by-step application guidance, and a direct link to the primary official circular.</li>
+            <li>Where an official notice does not specify a value (such as vacancy breakup, fee exemption, or cut-off time), CSC DOST explicitly instructs readers to check the official notification instead of guessing figures.</li>
+          </ul>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">3. Timestamps, Closing Deadlines &amp; Corrections</h2>
+          <p>
+            All articles carry clear <strong>Published</strong> and <strong>Last Updated</strong> dates. Expired recruitment circulars are visibly marked as <strong>Closed</strong> after the deadline passes and moved out of active job feeds into our <a href="/archive" style="color:#2563eb; font-weight:600;">Notice Archive</a> after 12 months. Whenever an issuing authority releases a corrigendum or last-date extension, we update the bulletin and note the revision date.
+          </p>
+
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">4. Report an Error or Request a Correction</h2>
+          <p>
+            Readers who spot a typographical error, broken official PDF link, or updated date circular can report it directly to our editorial desk via email at <a href="mailto:support@cscdost.com" style="color:#2563eb;">support@cscdost.com</a>, phone at <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a>, or through our <a href="/contact-us" style="color:#2563eb; font-weight:600;">Contact Helpdesk</a>. Verified corrections are applied within 24 hours.
+          </p>
+        </section>
+      </article>
+      ${renderSsrPolicyFooterHtml()}
+    </main>
+    `;
+  }
 
   if (norm.includes('privacy')) {
     return `${legalHeaderShell}
@@ -707,9 +769,7 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
         </section>
       </article>
 
-      <footer style="margin-top:30px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
-        <p>CSC DOST (cscdost.com) | Authorized CSC VLE ID: 212515670018 | Sangran Qazigund, Anantnag, J&amp;K</p>
-      </footer>
+      ${renderSsrPolicyFooterHtml()}
     </main>
     `;
   }
@@ -772,9 +832,7 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
         </section>
       </article>
 
-      <footer style="margin-top:30px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
-        <p>CSC DOST (cscdost.com) | Authorized CSC VLE ID: 212515670018 | Sangran Qazigund, Anantnag, J&amp;K</p>
-      </footer>
+      ${renderSsrPolicyFooterHtml()}
     </main>
     `;
   }
@@ -857,9 +915,7 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
         </section>
       </article>
 
-      <footer style="margin-top:30px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
-        <p>CSC DOST (cscdost.com) | Authorized CSC VLE ID: 212515670018 | Sangran Qazigund, Anantnag, J&amp;K</p>
-      </footer>
+      ${renderSsrPolicyFooterHtml()}
     </main>
     `;
   }
@@ -909,12 +965,14 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
             <li><strong>Browser-Based Document Tools:</strong> Free client-side image resizers, photo signature joiners, and document optimizers designed to meet exact government pixel and kilobyte specifications without sending files to private external servers.</li>
             <li><strong>Assisted Application Desk:</strong> Optional citizen facilitation where applicants who cannot complete complex online forms can book physical or virtual assistance from our certified VLE center.</li>
           </ul>
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">Editorial Independence &amp; Official Source Standards</h2>
+          <p>
+            Every notification published on CSC DOST is verified directly against primary government portals (<code>.gov.in</code>, <code>.nic.in</code>) and official university circulars before publication. Read our <a href="/editorial-policy" style="color:#2563eb; font-weight:600;">Editorial Policy</a> or <a href="/disclaimer" style="color:#2563eb; font-weight:600;">Government Non-Affiliation Disclaimer</a> to learn how we review updates and report corrections.
+          </p>
         </section>
       </article>
 
-      <footer style="margin-top:30px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
-        <p>CSC DOST (cscdost.com) | Authorized CSC VLE ID: 212515670018 | Sangran Qazigund, Anantnag, J&amp;K</p>
-      </footer>
+      ${renderSsrPolicyFooterHtml()}
     </main>
     `;
   }
@@ -974,12 +1032,13 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
             <li>Your Application Tracking Token (if checking progress or payment status for an existing request).</li>
             <li>Clear scans of academic, identity, or domicile certificates where eligibility verification or document resizing is needed.</li>
           </ul>
+          <p style="margin:12px 0 0 0;">
+            You can also submit an online contact inquiry directly once the interactive helpdesk loads, or visit <a href="/editorial-policy" style="color:#2563eb; font-weight:600;">Editorial Policy</a> to report a correction on any published circular summary.
+          </p>
         </section>
       </article>
 
-      <footer style="margin-top:30px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
-        <p>CSC DOST (cscdost.com) | Authorized CSC VLE ID: 212515670018 | Sangran Qazigund, Anantnag, J&amp;K</p>
-      </footer>
+      ${renderSsrPolicyFooterHtml()}
     </main>
     `;
   }
@@ -1037,9 +1096,7 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
       </section>
     </article>
 
-    <footer style="margin-top:30px; font-size:12px; color:#64748b; text-align:center; line-height:1.6;">
-      <p>CSC DOST (cscdost.com) | Authorized CSC VLE ID: 212515670018 | Sangran Qazigund, Anantnag, J&amp;K</p>
-    </footer>
+    ${renderSsrPolicyFooterHtml()}
   </main>
   `;
 }
@@ -1066,6 +1123,9 @@ function renderPrimaryCategoryNavHtml(activeCategory?: string): string {
           )
           .join('')}
       </nav>
+    </div>
+    <div style="background:#0B132B; border-top:1px solid rgba(255,255,255,0.12); padding:6px 16px; text-align:center; font-size:11.5px; color:#E2E8F0;">
+      Independent citizen portal — not an official government website. <a href="/disclaimer" style="color:#93C5FD; font-weight:700; text-decoration:underline;">Read Disclaimer →</a>
     </div>
   </header>`;
 }
@@ -1146,17 +1206,20 @@ export function renderHomepageSubstantiveHtml(
 
   return `
   <div style="min-height:100vh; background:#F4F6FB; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:14px; color:#101A36; line-height:1.5;">
-  <header style="background:#ffffff; border-bottom:1px solid #E3E8F2; padding:12px 24px;">
-    <div style="max-width:1180px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:16px;">
+  <header style="background:#ffffff; border-bottom:1px solid #E3E8F2;">
+    <div style="max-width:1180px; margin:0 auto; padding:12px 24px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px;">
       <a href="/" style="display:inline-flex; align-items:center; gap:8px; font-size:17px; font-weight:800; color:#101A36; text-decoration:none;">CSC DOST</a>
       <nav aria-label="Primary sections" style="display:flex; flex-wrap:wrap; gap:14px; font-size:13px; font-weight:700;">
         <a href="/jobs" style="color:#2455E6; text-decoration:none;">Jobs</a>
-        <a href="/jobs?tab=exams" style="color:#2455E6; text-decoration:none;">Admit Card</a>
-        <a href="/jobs?tab=results" style="color:#2455E6; text-decoration:none;">Results</a>
         <a href="/education" style="color:#2455E6; text-decoration:none;">Admissions</a>
+        <a href="/schemes" style="color:#2455E6; text-decoration:none;">Schemes</a>
         <a href="/services" style="color:#2455E6; text-decoration:none;">Services</a>
         <a href="/tools" style="color:#2455E6; text-decoration:none;">Tools</a>
+        <a href="/calculators" style="color:#2455E6; text-decoration:none;">Calculators</a>
       </nav>
+    </div>
+    <div style="background:#FFFBEB; border-top:1px solid #FDE68A; padding:6px 16px; text-align:center; font-size:11.5px; color:#78350F; font-weight:600;">
+      Independent citizen portal — not an official government website. <a href="/disclaimer" style="color:#B45309; font-weight:700; text-decoration:underline;">Read Disclaimer →</a>
     </div>
   </header>
   <div style="max-width:1180px; margin:0 auto;">
@@ -1333,6 +1396,7 @@ export function renderHomepageSubstantiveHtml(
         <p style="margin:0 0 6px 0; display:flex; flex-wrap:wrap; gap:10px;">
           <a href="/about-us" style="color:#ffffff; text-decoration:none;">About Us</a>
           <a href="/contact-us" style="color:#ffffff; text-decoration:none;">Contact Us</a>
+          <a href="/editorial-policy" style="color:#ffffff; text-decoration:none;">Editorial Policy</a>
           <a href="/privacy-policy" style="color:#ffffff; text-decoration:none;">Privacy Policy</a>
           <a href="/terms-of-service" style="color:#ffffff; text-decoration:none;">Terms of Service</a>
           <a href="/disclaimer" style="color:#ffffff; text-decoration:none;">Disclaimer</a>
@@ -1647,6 +1711,21 @@ export function renderToolDetailSubstantiveHtml(tool: ToolItem): string {
         }
       </section>
 
+      <section style="background:#ffffff; border:1px solid #E2E8F0; border-radius:10px; padding:16px; margin-bottom:20px;">
+        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">Official Portal Upload Standards &amp; Practical Guidance</h2>
+        <p style="font-size:14px; color:#334155; margin:0 0 8px 0;">
+          Most Indian recruitment and university portals (such as JKSSB OTR, SSC OTR, RRB apply, University of Kashmir examination portals, and IGNOU Samarth) enforce strict automated validation checks on file extension, pixel width/height ratio, and file size in kilobytes (KB). Files that look crisp on a phone screen are frequently rejected when camera defaults save multi-megabyte JPEG or HEIC photos.
+        </p>
+        <ul style="padding-left:20px; font-size:14px; color:#334155; line-height:1.75; margin:0 0 8px 0;">
+          <li><strong>Photographs:</strong> Use a plain light/white background with clear front-facing lighting and no heavy filters. Standard form uploads usually accept JPG/JPEG files between 20 KB and 50 KB.</li>
+          <li><strong>Signatures:</strong> Sign cleanly in black or blue ink on unruled white paper, crop tight around the stroke edges before resizing, and avoid blurry shadows or flash glare.</li>
+          <li><strong>Supporting PDFs:</strong> When compressing or combining Domicile certificates, Matriculation diplomas, or category certificates, inspect the preview to confirm serial numbers and authority seals remain clearly legible.</li>
+        </ul>
+        <p style="font-size:14px; color:#475569; margin:0;">
+          Use our <a href="/calculators" style="color:#1F9D6B; font-weight:700; text-decoration:none;">Photo &amp; Signature Spec Inspector</a> to verify your final file measurements before logging in to submit your application form.
+        </p>
+      </section>
+
       <section style="margin-bottom:20px;">
         <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 10px 0;">Frequently Asked Questions</h2>
         <div style="display:flex; flex-direction:column; gap:10px;">
@@ -1670,6 +1749,7 @@ export function renderToolDetailSubstantiveHtml(tool: ToolItem): string {
         <a href="/calculators" style="background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:10px; text-decoration:none;">Citizen Calculators</a>
       </div>
     </article>
+    ${renderSsrPolicyFooterHtml()}
   </main>
   `;
 }
@@ -2136,7 +2216,13 @@ export function renderCategorySubstantiveHtml(
       </section>
 
       <section style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:20px; margin-bottom:20px;">
-        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 10px 0;">How to Use Citizen Calculators</h2>
+        <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 10px 0;">How Calculations Work, Official Verification &amp; Limitations</h2>
+        <p style="font-size:14px; color:#334155; margin:0 0 10px 0; line-height:1.65;">
+          Government recruitment rules determine age eligibility on a specific crucial cutoff date (commonly 01 January of the recruitment year for JKSSB posts, or 01 August / 01 July for SSC and RRB cycles). Our Age Calculator computes calendar years, months, and remaining days strictly between your Matriculation certificate Date of Birth and the chosen reference date, accounting for leap years.
+        </p>
+        <p style="font-size:14px; color:#334155; margin:0 0 10px 0; line-height:1.65;">
+          Category age limits (such as General/OM 40 years or SC/ST/RBA 43 years under standard J&amp;K civil services rules, versus 18–25/27/30 brackets for SSC and Defence entries) vary sharply by post and advertisement. Likewise, indicative CSC facilitation and statutory fee totals shown in the Fee Estimator represent common desk ranges and can vary with departmental revisions or GST updates. Always confirm exact age cutoffs, relaxation clauses, and payable fees in the official notification PDF before paying or submitting your form.
+        </p>
         <ol style="padding-left:20px; font-size:14px; color:#334155; line-height:1.75; margin:0;">
           <li><strong>Age Eligibility Calculator:</strong> Enter your Date of Birth from your Matriculation certificate and select the exact cutoff date printed in the JKSSB, SSC, RRB, or Army advertisement.</li>
           <li><strong>Photo &amp; Signature Spec Inspector:</strong> Select your prepared JPG/PNG image to inspect its exact dimensions in pixels and file size in kilobytes before uploading to an exam portal.</li>
@@ -2161,6 +2247,7 @@ export function renderCategorySubstantiveHtml(
           </details>
         </div>
       </section>
+      ${renderSsrPolicyFooterHtml()}
     </main>
     `;
   }

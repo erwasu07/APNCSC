@@ -298,44 +298,10 @@ export default function SarkariDedicatedPageView({
       itemListElement: breadcrumbListItems,
     });
 
-    const emitJobSchema =
-      (effectiveType === 'application' || effectiveType === 'upcoming') &&
-      (statusInfo.isOpen || statusInfo.isUpcoming) &&
-      isRecruitmentSarkariItem(item) &&
-      item.noticeType !== 'correction' &&
-      item.stage !== 'correction' &&
-      !statusInfo.isClosed &&
-      !statusInfo.isCancelled;
-
+    // Only emit Article, BreadcrumbList, FAQPage, Organization and WebSite schemas;
+    // remove any leftover JobPosting script from previous views to stay compliant.
     const existingJobEl = document.getElementById(jobScriptId);
-    if (emitJobSchema) {
-      upsertSchema(jobScriptId, {
-        '@context': 'https://schema.org',
-        '@type': 'JobPosting',
-        title: item.title,
-        description: item.summary || item.shortInfo || item.title,
-        datePosted: toIsoDate(item.postDate) || '2026-11-01',
-        ...(toIsoDate(item.applyEnd || item.lastDate)
-          ? { validThrough: toIsoDate(item.applyEnd || item.lastDate) }
-          : {}),
-        employmentType: 'FULL_TIME',
-        hiringOrganization: {
-          '@type': 'Organization',
-          name: orgName,
-          sameAs: portalUrl,
-        },
-        jobLocation: {
-          '@type': 'Place',
-          address: {
-            '@type': 'PostalAddress',
-            addressRegion: 'Jammu and Kashmir',
-            addressCountry: 'IN',
-          },
-        },
-        directApply: false,
-        url: `${SITE_ORIGIN}/post/${item.id}`,
-      });
-    } else if (existingJobEl) {
+    if (existingJobEl) {
       existingJobEl.remove();
     }
 

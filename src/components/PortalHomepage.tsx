@@ -11,7 +11,7 @@ import { computeSarkariStatus, getActiveClosingDeadlines } from '../utils/sarkar
 import { useSyncedSarkariPosts, sortByNewestPostDate } from '../utils/postDataSync';
 import { isOlderThan12Months } from '../utils/postLifecycle';
 import { SERVICES_LIST, ServiceItem } from '../servicesData';
-import { GUIDE_ARTICLES } from '../data/guidesData';
+import { PUBLISHED_GUIDE_ARTICLES as GUIDE_ARTICLES } from '../data/guidesData';
 import { TOOLS_LIST } from './tools/toolsData';
 import { usePublicAlertsConfig } from './ui/AlertsBox';
 import { AdSlot } from './ui/AdSlot';

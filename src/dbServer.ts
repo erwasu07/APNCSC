@@ -1099,7 +1099,13 @@ export interface ReviewQueueItem {
   validationFlags: string[];
   proposedChanges?: Record<string, { before: string; after: string }>;
   shortInfo: string;
+  originalAnalysis?: string;
+  eligibility?: string;
   lastDate?: string;
+  sourceExcerpt?: string;
+  duplicateMatches?: string[];
+  reviewStatus?: 'unreviewed' | 'verified' | 'rejected';
+  reviewerNotes?: string;
   status: 'pending' | 'approved' | 'dismissed';
   detectedAt: string;
   reviewedAt?: string;
@@ -1281,15 +1287,19 @@ export function upsertReviewQueueItem(item: ReviewQueueItem): ReviewQueueItem {
 export function updateReviewQueueItemStatus(
   id: string,
   status: 'approved' | 'dismissed',
-  reviewedBy = 'Staff Admin'
+  reviewedBy = 'Staff Admin',
+  updates?: Partial<Pick<ReviewQueueItem, 'title' | 'shortInfo' | 'originalAnalysis' | 'eligibility' | 'lastDate' | 'officialNotificationUrl' | 'reviewerNotes'>>
 ): ReviewQueueItem | null {
   const db = getDb();
   if (!Array.isArray(db.reviewQueue)) return null;
   const idx = db.reviewQueue.findIndex(r => r && r.id === id);
   if (idx === -1) return null;
+  const nextReviewStatus: 'verified' | 'rejected' = status === 'approved' ? 'verified' : 'rejected';
   db.reviewQueue[idx] = {
     ...db.reviewQueue[idx],
+    ...(updates || {}),
     status,
+    reviewStatus: nextReviewStatus,
     reviewedAt: new Date().toISOString(),
     reviewedBy
   };

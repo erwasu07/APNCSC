@@ -13,7 +13,7 @@ import {
   parseDateToKolkataMs,
 } from '../../utils/sarkariStatus';
 import { isOlderThan12Months } from '../../utils/postLifecycle';
-import { GUIDE_ARTICLES, type GuideArticle } from '../../data/guidesData';
+import { PUBLISHED_GUIDE_ARTICLES as GUIDE_ARTICLES, type GuideArticle } from '../../data/guidesData';
 import { SERVICES_LIST, CATEGORY_LABELS, type ServiceItem } from '../../servicesData';
 import { TOOLS_LIST, TOOLS_CATEGORIES, type ToolItem } from '../tools/toolsData';
 import { PORTAL_PRESETS, SERVICE_FEE_CATALOGUE } from '../CitizenToolsDesk';

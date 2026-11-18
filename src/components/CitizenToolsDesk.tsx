@@ -1025,7 +1025,7 @@ export default function CitizenToolsDesk({
             </Card>
           )}
 
-          {/* 3. How It Is Calculated Section */}
+          {/* 3. How It Is Calculated & Official Verification Section */}
           <Card className="p-4 sm:p-6 space-y-3 text-start">
             <div className="flex items-center gap-2">
               <Info className="w-5 h-5 text-[#2563EB] shrink-0" aria-hidden="true" />
@@ -1033,6 +1033,9 @@ export default function CitizenToolsDesk({
                 {t.calculatorsHowCalculatedTitle}: {howItIsCalculatedText.title}
               </h2>
             </div>
+            <p className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed m-0">
+              Official recruitment rules calculate age eligibility against a fixed crucial date printed inside the advertisement (commonly 01 January for JKSSB posts, or 01 July / 01 August for SSC and RRB cycles). Photo and signature uploads are checked locally in your browser without server transfers, and statutory CSC fee estimates serve as a planning reference prior to visiting our desk.
+            </p>
             <ul className="space-y-2 text-sm text-[var(--text-secondary)] list-none m-0 p-0 leading-relaxed">
               {howItIsCalculatedText.steps.map((step) => (
                 <li
@@ -1043,6 +1046,9 @@ export default function CitizenToolsDesk({
                 </li>
               ))}
             </ul>
+            <p className="text-xs text-[var(--text-muted)] m-0 leading-relaxed">
+              Limitations: Category age relaxations (Open Merit, SC, ST, RBA, EWS, PwD, Ex-Servicemen), upper/lower birth-date brackets ("not born before / not born after"), and departmental treasury fees vary by circular. Always verify against the issuing authority&apos;s official PDF before paying fees or submitting your application.
+            </p>
           </Card>
 
           {/* 4. FAQ + Support Sections (Standalone /calculators route) */}

@@ -39,6 +39,7 @@ export default function Footer({ cafeName = 'CSC DOST' }: FooterProps) {
   const links = [
     { href: '/about-us', label: t.footerAbout },
     { href: '/contact-us', label: t.footerContact },
+    { href: '/editorial-policy', label: 'Editorial Policy' },
     { href: '/privacy-policy', label: t.footerPrivacy },
     { href: '/terms-of-service', label: t.footerTerms },
     { href: '/disclaimer', label: t.footerDisclaimer },

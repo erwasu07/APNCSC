@@ -31,12 +31,34 @@ function getStaffAuthHeaders(includeJson = false): Record<string, string> {
   return headers;
 }
 
+import {
+  validatePostPublishQuality,
+  countWords,
+} from '../utils/contentQualityValidator';
+
+function buildDraftEditState(item: any) {
+  return {
+    title: item.title || '',
+    shortInfo: item.shortInfo || '',
+    originalAnalysis: item.originalAnalysis || '',
+    eligibility: item.eligibility || '',
+    lastDate: item.lastDate || '',
+    officialNotificationUrl: item.officialNotificationUrl || item.sourceUrl || '',
+    reviewerNotes: item.reviewerNotes || '',
+    confirmNotDuplicate: false,
+  };
+}
+
 export default function AdminReviewQueue() {
   const [sources, setSources] = useState<any[]>([]);
   const [queue, setQueue] = useState<any[]>([]);
   const [runs, setRuns] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [runningMonitor, setRunningMonitor] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draftForm, setDraftForm] = useState<ReturnType<typeof buildDraftEditState> | null>(null);
+  const [submittingId, setSubmittingId] = useState<string | null>(null);
+  const [reviewError, setReviewError] = useState<string | null>(null);
   const [banner, setBanner] = useState<{ type: 'success' | 'warning' | 'error'; text: string } | null>(null);
 
   const loadMonitorStatus = async () => {
@@ -95,17 +117,45 @@ export default function AdminReviewQueue() {
     }
   };
 
-  const handleDecision = async (id: string, action: 'approve_draft' | 'dismiss') => {
+  const openReviewEditor = (item: any) => {
+    setEditingId(item.id);
+    setDraftForm(buildDraftEditState(item));
+    setReviewError(null);
+  };
+
+  const handleDecision = async (id: string, action: 'approve_draft' | 'dismiss', payload?: any) => {
+    setSubmittingId(id);
+    setReviewError(null);
     try {
       const res = await fetch(`/api/staff/monitor/review/${encodeURIComponent(id)}`, {
         method: 'POST',
         headers: getStaffAuthHeaders(true),
-        body: JSON.stringify({ action })
+        body: JSON.stringify({ action, ...(payload || {}) })
       });
-      if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        setEditingId(null);
+        setDraftForm(null);
+        setBanner({
+          type: 'success',
+          text:
+            action === 'approve_draft'
+              ? 'Item verified and saved strictly as an unpublished Draft (never auto-published).'
+              : 'Review item dismissed.'
+        });
         loadMonitorStatus();
+      } else {
+        const msg =
+          Array.isArray(data.validationErrors) && data.validationErrors.length > 0
+            ? data.validationErrors.join(' ')
+            : data.error || 'Could not process review decision.';
+        setReviewError(msg);
       }
-    } catch {}
+    } catch (e: any) {
+      setReviewError(e?.message || 'Network error submitting review.');
+    } finally {
+      setSubmittingId(null);
+    }
   };
 
   const pendingItems = queue.filter((q) => q.status === 'pending');
@@ -138,7 +188,7 @@ export default function AdminReviewQueue() {
           <div>
             <h2 className="text-base font-bold text-[#102A43]">Official Notice Monitor &amp; Review Queue</h2>
             <p className="text-xs text-[#64748B] mt-0.5">
-              Scheduled checks run daily at 7:00 AM and 6:00 PM IST. Flagged drafts and portal updates wait here for staff verification before going live.
+              Scheduled checks run daily at 7:00 AM and 6:00 PM IST. Every detected change stays UNREVIEWED and requires a verified 400+ word original rewrite before drafting.
             </p>
           </div>
         </div>
@@ -172,7 +222,7 @@ export default function AdminReviewQueue() {
           <h3 className="text-xs font-bold uppercase tracking-wider text-[#102A43]">
             Pending Review Queue ({pendingItems.length})
           </h3>
-          <span className="text-[11px] text-[#64748B]">Drafts &amp; update proposals</span>
+          <span className="text-[11px] text-[#64748B]">Strict Human Editorial Gate (No Auto-Publish)</span>
         </div>
 
         {pendingItems.length === 0 ? (
@@ -181,78 +231,243 @@ export default function AdminReviewQueue() {
           </div>
         ) : (
           <div className="space-y-3">
-            {pendingItems.map((item) => (
-              <div
-                key={item.id}
-                className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-3"
-              >
-                <div className="space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                        item.kind === 'update_proposal'
-                          ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                          : 'bg-blue-50 text-blue-700 border border-blue-200'
-                      }`}
-                    >
-                      {item.kind === 'update_proposal' ? 'Update Proposal' : 'New Draft'}
-                    </span>
-                    <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                        item.confidence < 90
-                          ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                          : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      }`}
-                    >
-                      Confidence: {item.confidence}%
-                    </span>
-                    <span className="text-[11px] font-mono text-slate-500">{item.category}</span>
-                  </div>
-                  <h4 className="text-sm font-bold text-[#102A43]">{item.title}</h4>
-                  <p className="text-xs text-[#475569]">{item.shortInfo}</p>
-                  {Array.isArray(item.validationFlags) && item.validationFlags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {item.validationFlags.map((flag: string, i: number) => (
-                        <span
-                          key={i}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-100 text-amber-900 text-[10.5px] font-semibold"
-                        >
-                          <AlertTriangle className="w-3 h-3" />
-                          {flag}
+            {pendingItems.map((item) => {
+              const isEditing = editingId === item.id && draftForm;
+              const liveQuality =
+                isEditing && draftForm
+                  ? validatePostPublishQuality(
+                      {
+                        id: item.id,
+                        title: draftForm.title,
+                        shortInfo: draftForm.shortInfo,
+                        originalAnalysis: draftForm.originalAnalysis,
+                        eligibility: draftForm.eligibility,
+                        lastDate: draftForm.lastDate,
+                        postDate: new Date().toLocaleDateString('en-GB'),
+                        officialNotificationUrl: draftForm.officialNotificationUrl,
+                        officialLink: draftForm.officialNotificationUrl,
+                        sourceExcerpt: item.sourceExcerpt,
+                      },
+                      { minWordCount: 400, enforceWordCount: true, maxConsecutiveCopiedSentences: 2 }
+                    )
+                  : null;
+              const duplicateList: string[] = Array.isArray(item.duplicateMatches) ? item.duplicateMatches : [];
+
+              return (
+                <div
+                  key={item.id}
+                  className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3"
+                >
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-100 text-amber-900 border border-amber-300">
+                          {item.reviewStatus === 'verified' ? 'Verified' : 'UNREVIEWED'}
                         </span>
-                      ))}
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                            item.kind === 'update_proposal'
+                              ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                              : 'bg-blue-50 text-blue-700 border border-blue-200'
+                          }`}
+                        >
+                          {item.kind === 'update_proposal' ? 'Update Proposal' : 'New Draft'}
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            item.confidence < 90
+                              ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          }`}
+                        >
+                          Confidence: {item.confidence}%
+                        </span>
+                        <span className="text-[11px] font-mono text-slate-500">{item.category}</span>
+                      </div>
+                      <h4 className="text-sm font-bold text-[#102A43]">{item.title}</h4>
+                      <p className="text-xs text-[#475569]">{item.shortInfo}</p>
+
+                      {duplicateList.length > 0 && (
+                        <div className="p-2 rounded-lg bg-rose-50 border border-rose-200 text-[11px] text-rose-900 font-semibold">
+                          Duplicate Warning: Possible match with existing post(s): {duplicateList.join('; ')}
+                        </div>
+                      )}
+
+                      {Array.isArray(item.validationFlags) && item.validationFlags.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {item.validationFlags.map((flag: string, i: number) => (
+                            <span
+                              key={i}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-100 text-amber-900 text-[10.5px] font-semibold"
+                            >
+                              <AlertTriangle className="w-3 h-3" />
+                              {flag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <a
+                        href={item.officialNotificationUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-1"
+                      >
+                        <span>Source</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => (isEditing ? setEditingId(null) : openReviewEditor(item))}
+                        className="px-3 py-1.5 rounded-lg bg-[#175CEE] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1 cursor-pointer"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span>{isEditing ? 'Close Editor' : 'Review & Rewrite'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={submittingId === item.id}
+                        onClick={() => handleDecision(item.id, 'dismiss')}
+                        className="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold cursor-pointer"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+
+                  {isEditing && draftForm && liveQuality && (
+                    <div className="mt-3 pt-3 border-t border-slate-200 bg-white rounded-xl p-4 space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-xs font-bold text-[#102A43]">
+                          Human Editorial Rewrite (Saves as Unpublished Draft)
+                        </span>
+                        <div className="flex items-center gap-3 text-[11px] font-bold">
+                          <span className={liveQuality.wordCount >= 400 ? 'text-emerald-600' : 'text-amber-700'}>
+                            Words: {liveQuality.wordCount} / 400
+                          </span>
+                          <span className={liveQuality.copiedCheck.hasExcessiveCopy ? 'text-rose-600' : 'text-emerald-600'}>
+                            {liveQuality.copiedCheck.hasExcessiveCopy
+                              ? `Copied run: ${liveQuality.copiedCheck.runLength} sentences (>2 blocked)`
+                              : 'Original phrasing OK'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {item.sourceExcerpt && (
+                        <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-600">
+                          <strong className="block text-slate-700 mb-0.5">Captured Official Portal Excerpt (do not copy &gt;2 consecutive sentences verbatim):</strong>
+                          <span className="line-clamp-3">{item.sourceExcerpt}</span>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-600 block mb-1">Rewritten Title *</label>
+                          <input
+                            type="text"
+                            value={draftForm.title}
+                            onChange={(e) => setDraftForm({ ...draftForm, title: e.target.value })}
+                            className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-600 block mb-1">Official Source URL *</label>
+                          <input
+                            type="url"
+                            value={draftForm.officialNotificationUrl}
+                            onChange={(e) => setDraftForm({ ...draftForm, officialNotificationUrl: e.target.value })}
+                            className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-600 block mb-1">Eligibility / Target Group *</label>
+                          <input
+                            type="text"
+                            value={draftForm.eligibility}
+                            onChange={(e) => setDraftForm({ ...draftForm, eligibility: e.target.value })}
+                            placeholder="Exact qualification or learner stream from circular"
+                            className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-600 block mb-1">Closing / Reference Date *</label>
+                          <input
+                            type="text"
+                            value={draftForm.lastDate}
+                            onChange={(e) => setDraftForm({ ...draftForm, lastDate: e.target.value })}
+                            placeholder="DD/MM/YYYY or As per official notice"
+                            className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                          Original Plain-Language Summary * ({countWords(draftForm.shortInfo)} words)
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={draftForm.shortInfo}
+                          onChange={(e) => setDraftForm({ ...draftForm, shortInfo: e.target.value })}
+                          className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                          Original Citizen Guidance, Checklist &amp; Verification Analysis * ({countWords(draftForm.originalAnalysis)} words)
+                        </label>
+                        <textarea
+                          rows={4}
+                          value={draftForm.originalAnalysis}
+                          onChange={(e) => setDraftForm({ ...draftForm, originalAnalysis: e.target.value })}
+                          placeholder="Write original guidance explaining dates, eligibility steps, required documents, and how applicants should verify the PDF before applying (total 400+ words across all fields)..."
+                          className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs"
+                        />
+                      </div>
+
+                      {duplicateList.length > 0 && (
+                        <label className="flex items-center gap-2 p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-900 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={draftForm.confirmNotDuplicate}
+                            onChange={(e) => setDraftForm({ ...draftForm, confirmNotDuplicate: e.target.checked })}
+                          />
+                          <span>I checked the existing posts above and confirm this notice is distinct (not a duplicate).</span>
+                        </label>
+                      )}
+
+                      {reviewError && (
+                        <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-800">
+                          {reviewError}
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setEditingId(null)}
+                          className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          disabled={submittingId === item.id}
+                          onClick={() => handleDecision(item.id, 'approve_draft', draftForm)}
+                          className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                        >
+                          {submittingId === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                          <span>Approve as Unpublished Draft</span>
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <a
-                    href={item.officialNotificationUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-1"
-                  >
-                    <span>Source</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => handleDecision(item.id, 'approve_draft')}
-                    className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1 cursor-pointer"
-                  >
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Approve</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDecision(item.id, 'dismiss')}
-                    className="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold cursor-pointer"
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

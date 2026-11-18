@@ -19,7 +19,8 @@ import { isOlderThan12Months, isStaleOver90Days } from './src/utils/postLifecycl
 import { resolveEffectiveTemplateType, toIsoDate as toIsoPostDate } from './src/components/post/postHelpers';
 import { KNOWN_DUPLICATE_MAP, resolvePostOrg } from './src/data/sarkariMigration';
 import { SERVICES_LIST } from './src/servicesData';
-import { GUIDE_ARTICLES } from './src/data/guidesData';
+import { PUBLISHED_GUIDE_ARTICLES as GUIDE_ARTICLES } from './src/data/guidesData';
+import { validatePostPublishQuality } from './src/utils/contentQualityValidator';
 import { 
   generateOgPng, 
   generateOgSvg, 
@@ -271,6 +272,19 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     }
   }
 
+  next();
+});
+
+// Response security headers middleware
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  const forwardedProto = (req.get('x-forwarded-proto') || '').split(',')[0].trim();
+  if (req.secure || forwardedProto === 'https') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
   next();
 });
 
@@ -3765,21 +3779,103 @@ app.post('/api/staff/monitor/run', authenticateAdmin, async (_req: Request, res:
 app.post('/api/staff/monitor/review/:id', authenticateAdmin, (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { action } = req.body || {};
+    const {
+      action,
+      title,
+      shortInfo,
+      originalAnalysis,
+      eligibility,
+      lastDate,
+      officialNotificationUrl,
+      reviewerNotes,
+      confirmNotDuplicate
+    } = req.body || {};
     if (action !== 'approve_draft' && action !== 'dismiss') {
       return res.status(400).json({ success: false, error: 'Invalid review action.' });
     }
 
     const adminUser = (req as any).adminUser;
     const reviewer = adminUser?.email || adminUser?.username || 'Staff Admin';
-    const nextStatus = action === 'approve_draft' ? 'approved' : 'dismissed';
-    const updated = updateReviewQueueItemStatus(id, nextStatus, reviewer);
+
+    if (action === 'dismiss') {
+      const dismissed = updateReviewQueueItemStatus(id, 'dismissed', reviewer, {
+        reviewerNotes: typeof reviewerNotes === 'string' ? reviewerNotes.trim() : undefined
+      });
+      if (!dismissed) {
+        return res.status(404).json({ success: false, error: 'Review queue item not found.' });
+      }
+      return res.json({ success: true, item: dismissed });
+    }
+
+    const existingItem = getReviewQueue().find(r => r && r.id === id);
+    if (!existingItem) {
+      return res.status(404).json({ success: false, error: 'Review queue item not found.' });
+    }
+
+    if (Array.isArray(existingItem.duplicateMatches) && existingItem.duplicateMatches.length > 0 && confirmNotDuplicate !== true) {
+      return res.status(400).json({
+        success: false,
+        error: `Potential duplicate detected (${existingItem.duplicateMatches[0]}). Confirm this notice is distinct before approving.`,
+        duplicateMatches: existingItem.duplicateMatches
+      });
+    }
+
+    const mergedTitle = typeof title === 'string' && title.trim() ? title.trim() : existingItem.title;
+    const mergedShortInfo = typeof shortInfo === 'string' && shortInfo.trim() ? shortInfo.trim() : existingItem.shortInfo;
+    const mergedAnalysis = typeof originalAnalysis === 'string' ? originalAnalysis.trim() : (existingItem.originalAnalysis || '');
+    const mergedEligibility = typeof eligibility === 'string' && eligibility.trim() ? eligibility.trim() : (existingItem.eligibility || '');
+    const mergedLastDate = typeof lastDate === 'string' && lastDate.trim() ? lastDate.trim() : (existingItem.lastDate || 'Check Official Notice');
+    const mergedOfficialUrl =
+      typeof officialNotificationUrl === 'string' && officialNotificationUrl.trim()
+        ? officialNotificationUrl.trim()
+        : (existingItem.officialNotificationUrl || existingItem.sourceUrl);
+    const todayStr = new Date().toLocaleDateString('en-GB');
+
+    const qualityCheck = validatePostPublishQuality(
+      {
+        id: existingItem.id,
+        title: mergedTitle,
+        shortInfo: mergedShortInfo,
+        originalAnalysis: mergedAnalysis,
+        eligibility: mergedEligibility,
+        lastDate: mergedLastDate,
+        postDate: todayStr,
+        officialNotificationUrl: mergedOfficialUrl,
+        officialLink: mergedOfficialUrl,
+        sourceExcerpt: existingItem.sourceExcerpt
+      },
+      {
+        minWordCount: 400,
+        enforceWordCount: true,
+        maxConsecutiveCopiedSentences: 2,
+        requireUpdatedDate: true
+      }
+    );
+
+    if (!qualityCheck.valid) {
+      return res.status(400).json({
+        success: false,
+        error: qualityCheck.errors[0] || 'Draft did not pass editorial quality and anti-copy checks.',
+        validationErrors: qualityCheck.errors,
+        qualityReport: qualityCheck
+      });
+    }
+
+    const updated = updateReviewQueueItemStatus(id, 'approved', reviewer, {
+      title: mergedTitle,
+      shortInfo: mergedShortInfo,
+      originalAnalysis: mergedAnalysis,
+      eligibility: mergedEligibility,
+      lastDate: mergedLastDate,
+      officialNotificationUrl: mergedOfficialUrl,
+      reviewerNotes: typeof reviewerNotes === 'string' ? reviewerNotes.trim() : undefined
+    });
     if (!updated) {
       return res.status(404).json({ success: false, error: 'Review queue item not found.' });
     }
 
-    // Store approved new drafts strictly as unpublished drafts (never modifies live posts)
-    if (action === 'approve_draft' && updated.kind === 'new_draft') {
+    // Store approved new drafts strictly as unpublished drafts (never auto-publishes live posts)
+    if (updated.kind === 'new_draft') {
       const slug = String(updated.id || `monitor-${Date.now()}`)
         .toLowerCase()
         .replace(/[^a-z0-9-]+/g, '-')
@@ -3788,16 +3884,19 @@ app.post('/api/staff/monitor/review/:id', authenticateAdmin, (req: Request, res:
         id: slug,
         title: updated.title,
         category: updated.category || 'jkssb',
-        postDate: new Date().toLocaleDateString('en-GB'),
-        lastDate: updated.lastDate || 'Verify Official Notice',
+        postDate: todayStr,
+        lastDate: updated.lastDate || 'Check Official Notice',
         shortInfo: updated.shortInfo,
+        summary: mergedAnalysis ? `${updated.shortInfo}\n\n${mergedAnalysis}` : updated.shortInfo,
+        eligibility: mergedEligibility,
         officialLink: updated.officialNotificationUrl || updated.sourceUrl,
+        officialNotificationUrl: updated.officialNotificationUrl || updated.sourceUrl,
         publicationStatus: 'draft',
         suppressPush: true
       });
     }
 
-    return res.json({ success: true, item: updated });
+    return res.json({ success: true, item: updated, qualityReport: qualityCheck });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err?.message || 'Review update failed' });
   }
@@ -4602,6 +4701,54 @@ app.post('/api/posts', async (req: Request, res: Response) => {
     const category = body.category || (String(body.institution || '').toUpperCase() === 'IGNOU' ? 'ignou' : 'jkssb');
     const resolvedNoticeType = body.noticeType || undefined;
 
+    const shortInfoText = String(
+      body.shortDescription ||
+        body.shortInfo ||
+        `${body.title} official notification, eligibility, important dates, and official portal details via CSC DOST.`
+    ).trim();
+    const originalAnalysisText = typeof body.originalAnalysis === 'string' ? body.originalAnalysis.trim() : '';
+    const resolvedPostDate = String(body.postDate || body.documentDate || todayStr).trim();
+    const resolvedLastDate = String(body.lastDate || 'Check Official Circular').trim();
+    const resolvedEligibility = String(
+      body.eligibility || 'Refer to official notification for qualification details'
+    ).trim();
+
+    if (publicationStatus === 'published') {
+      const qualityResult = validatePostPublishQuality(
+        {
+          id: slug,
+          title: String(body.title).trim(),
+          shortInfo: shortInfoText,
+          summary: typeof body.summary === 'string' ? body.summary : shortInfoText,
+          originalAnalysis: originalAnalysisText,
+          eligibility: body.eligibility ? String(body.eligibility).trim() : '',
+          lastDate: resolvedLastDate,
+          postDate: resolvedPostDate,
+          officialNotificationUrl: validatedOfficialUrl,
+          officialLink: String(body.officialLink || validatedOfficialUrl).trim(),
+          howToApply: body.howToApply,
+          selectionProcess: body.selectionProcess,
+          documentsRequired: body.documentsRequired,
+          notes: body.notes,
+          sourceExcerpt: typeof body.sourceExcerpt === 'string' ? body.sourceExcerpt : undefined,
+        },
+        {
+          minWordCount: 400,
+          enforceWordCount: true,
+          maxConsecutiveCopiedSentences: 2,
+          requireUpdatedDate: true,
+        }
+      );
+
+      if (!qualityResult.valid) {
+        return res.status(400).json({
+          error: qualityResult.errors[0] || 'Post failed AdSense editorial quality verification.',
+          validationErrors: qualityResult.errors,
+          qualityReport: qualityResult,
+        });
+      }
+    }
+
     // Inspect existing post state BEFORE upserting to only trigger Web Push on FIRST transition to 'published'
     const existingCustom = getCustomSarkariPosts().find((p: any) => p && p.id === slug);
     const existingStatic = SARKARI_DATA.find((p: any) => p && p.id === slug);
@@ -4639,17 +4786,18 @@ app.post('/api/posts', async (req: Request, res: Response) => {
         existingPost?.pushNotifiedAt ||
         (isFirstPublish ? new Date().toISOString() : undefined),
       status: body.applicationStatus || body.status || 'Open',
-      postDate: body.postDate || body.documentDate || todayStr,
-      startDate: body.startDate || body.postDate || body.documentDate || todayStr,
-      lastDate: body.lastDate || 'Check Official Circular',
+      postDate: resolvedPostDate,
+      startDate: body.startDate || resolvedPostDate,
+      lastDate: resolvedLastDate,
       advertisementNo: body.advertisementNo || '',
-      shortInfo:
-        body.shortDescription ||
-        body.shortInfo ||
-        `${body.title} official notification, eligibility, important dates, and official portal details via CSC DOST.`,
+      shortInfo: shortInfoText,
+      summary: originalAnalysisText ? `${shortInfoText}\n\n${originalAnalysisText}` : (typeof body.summary === 'string' && body.summary.trim() ? body.summary.trim() : undefined),
       ageLimit: body.ageLimit || (category === 'ignou' ? 'As per IGNOU programme norms' : 'As per official notification norms'),
-      eligibility: body.eligibility || 'Refer to official notification for qualification details',
+      eligibility: resolvedEligibility,
       totalPosts: body.totalPosts || (category === 'ignou' ? 'IGNOU Circular' : 'Various Posts'),
+      howToApply: body.howToApply || undefined,
+      selectionProcess: body.selectionProcess || undefined,
+      documentsRequired: body.documentsRequired || undefined,
       officialLink: String(body.officialLink || validatedOfficialUrl).trim(),
       officialNotificationUrl: String(body.officialNotificationUrl || validatedOfficialUrl).trim(),
       officialApplicationUrl: body.officialApplicationUrl ? String(body.officialApplicationUrl).trim() : undefined,
@@ -4875,7 +5023,7 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
   let substantiveBodyHtml = '';
   let matchedJobPost: SarkariItem | null = null;
 
-  const legalMatch = urlPath.match(/^\/(privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|contact-us|refund-policy|refund)$/i);
+  const legalMatch = urlPath.match(/^\/(privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|contact-us|editorial-policy|editorial|refund-policy|refund)$/i);
   const adminMatch = urlPath.match(/^\/(admin|staff)$/i);
   const targetPostId = (matchPost ? matchPost[1] : postParam)?.replace(/\.html?$/i, '');
   const targetServiceId = (matchService ? matchService[1] : serviceParam)?.replace(/\.html?$/i, '');
@@ -4889,6 +5037,7 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
     else if (rawKey === 'disclaimer') legalKey = 'disclaimer';
     else if (rawKey === 'about-us' || rawKey === 'about') legalKey = 'about';
     else if (rawKey === 'contact-us' || rawKey === 'contact') legalKey = 'contact';
+    else if (rawKey === 'editorial-policy' || rawKey === 'editorial') legalKey = 'editorial';
     else if (rawKey === 'refund-policy' || rawKey === 'refund') legalKey = 'refund';
 
     const meta = LEGAL_SEO_MAP[legalKey];
@@ -5122,11 +5271,11 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
   // Strip any legacy identical <meta name="keywords"> tag
   html = html.replace(/\s*<meta\s+name=["']keywords["'][^>]*\/?>/gi, '');
 
-  // Keep the "Welcome to CSC DOST... Please enable JavaScript..." intro noscript block strictly on homepage ("/")
+  // Strip index.html root noscript block on non-root pages so navigation remains clean without extra wrapper duplication
   if (urlPath !== '/') {
     html = html.replace(
-      /<noscript>\s*<div\b[\s\S]*?Welcome to CSC DOST[\s\S]*?<\/div>\s*<\/noscript>/i,
-      () => '<noscript><p style="padding:12px;font-family:sans-serif;">JavaScript is disabled. Core notice details are shown below; enable JavaScript for interactive forms and tools.</p></noscript>'
+      /<noscript>[\s\S]*?<\/noscript>/i,
+      () => '<noscript><nav aria-label="CSC DOST Sections" style="padding:10px 16px;font-family:sans-serif;font-size:13px;"><a href="/">Home</a> | <a href="/jobs">Jobs</a> | <a href="/education">Admissions</a> | <a href="/schemes">Schemes</a> | <a href="/tools">Tools</a> | <a href="/calculators">Calculators</a> | <a href="/disclaimer">Disclaimer</a></nav></noscript>'
     );
   }
 
@@ -5222,58 +5371,6 @@ ${JSON.stringify(articleLd, null, 2)}
     html = html.replace(/<\/head>/i, () => articleScript);
   }
 
-  // Inject Schema.org JobPosting JSON-LD strictly for active open/upcoming recruitment forms (never results, answer keys, DV, admit cards, exams, or closed/cancelled notices)
-  if (matchedJobPost) {
-    const postStatus = computeSarkariStatus(matchedJobPost);
-    const effectiveType = resolveEffectiveTemplateType(matchedJobPost, postStatus);
-    const emitJobSchema =
-      (effectiveType === 'application' || effectiveType === 'upcoming') &&
-      (postStatus.applicationStatus === 'open' || postStatus.applicationStatus === 'upcoming') &&
-      isRecruitmentSarkariItem(matchedJobPost) &&
-      matchedJobPost.noticeType !== 'correction' &&
-      matchedJobPost.stage !== 'correction' &&
-      !postStatus.isClosed &&
-      !postStatus.isCancelled;
-
-    if (emitJobSchema) {
-      const orgName = matchedJobPost.org || resolvePostOrg(matchedJobPost);
-      const validIso = toIsoPostDate(matchedJobPost.applyEnd || matchedJobPost.lastDate);
-      const jobLd: Record<string, unknown> = {
-        "@context": "https://schema.org",
-        "@type": "JobPosting",
-        "title": matchedJobPost.title,
-        "description": matchedJobPost.summary || matchedJobPost.shortInfo || description,
-        "datePosted": toIsoPostDate(matchedJobPost.postDate) || toIsoDate(matchedJobPost.postDate),
-        "employmentType": "FULL_TIME",
-        "hiringOrganization": {
-          "@type": "Organization",
-          "name": orgName,
-          "sameAs": matchedJobPost.officialLink || canonicalUrl
-        },
-        "jobLocation": {
-          "@type": "Place",
-          "address": {
-            "@type": "PostalAddress",
-            "addressRegion": "Jammu and Kashmir",
-            "addressCountry": "IN"
-          }
-        },
-        "directApply": false,
-        "url": canonicalUrl
-      };
-      if (validIso) {
-        jobLd.validThrough = `${validIso}T23:59:59+05:30`;
-      }
-      const jobScript = `
-    <!-- Dynamic JobPosting Structured Data -->
-    <script type="application/ld+json">
-${JSON.stringify(jobLd, null, 2)}
-    </script>
-  </head>`;
-      html = html.replace(/<\/head>/i, () => jobScript);
-    }
-  }
-
   // Inject BreadcrumbList JSON-LD if breadcrumbs exist
   if (breadcrumbItems.length > 0) {
     const breadcrumbLd = {
@@ -5327,6 +5424,7 @@ app.get('/sitemap.xml', (req: Request, res: Response) => {
       { loc: '/calculators', changefreq: 'monthly', priority: '0.9' },
       { loc: '/about-us', changefreq: 'monthly', priority: '0.7' },
       { loc: '/contact-us', changefreq: 'monthly', priority: '0.7' },
+      { loc: '/editorial-policy', changefreq: 'monthly', priority: '0.6' },
       { loc: '/privacy-policy', changefreq: 'monthly', priority: '0.5' },
       { loc: '/terms-of-service', changefreq: 'monthly', priority: '0.5' },
       { loc: '/disclaimer', changefreq: 'monthly', priority: '0.5' },

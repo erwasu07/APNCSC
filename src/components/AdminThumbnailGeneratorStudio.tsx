@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { SARKARI_DATA, SARKARI_CATEGORIES, SarkariItem, NoticeType } from '../data/sarkariData';
 import { notifySarkariPostsUpdated } from '../utils/postDataSync';
+import { validatePostPublishQuality } from '../utils/contentQualityValidator';
 import {
   Sparkles,
   RefreshCw,
@@ -154,6 +155,7 @@ export default function AdminThumbnailGeneratorStudio({
   const [learnerGroup, setLearnerGroup] = useState<string>('');
   const [department, setDepartment] = useState<string>('J&K Services Selection Board (JKSSB)');
   const [shortDescription, setShortDescription] = useState<string>('');
+  const [originalAnalysis, setOriginalAnalysis] = useState<string>('');
   const [postDate, setPostDate] = useState<string>(() => new Date().toLocaleDateString('en-GB'));
   const [documentDate, setDocumentDate] = useState<string>('');
   const [lastDate, setLastDate] = useState<string>('');
@@ -247,6 +249,24 @@ export default function AdminThumbnailGeneratorStudio({
     customImageDataUrl
   ]);
 
+  // Live AdSense Editorial Quality Gate evaluation
+  const qualityGate = useMemo(() => {
+    return validatePostPublishQuality(
+      {
+        id: postId,
+        title,
+        shortInfo: shortDescription,
+        originalAnalysis,
+        eligibility,
+        lastDate,
+        postDate: postDate || documentDate,
+        officialNotificationUrl,
+        officialLink,
+      },
+      { minWordCount: 400, enforceWordCount: true, requireUpdatedDate: true }
+    );
+  }, [postId, title, shortDescription, originalAnalysis, eligibility, lastDate, postDate, documentDate, officialNotificationUrl, officialLink]);
+
   // Realtime Rendered Vector SVG String
   const previewSvg = useMemo(() => {
     return renderStandaloneMasterThumbnailSvg(activeSpec);
@@ -305,6 +325,9 @@ export default function AdminThumbnailGeneratorStudio({
     setLearnerGroup(post.learnerGroup || '');
     setDepartment(post.department || '');
     setShortDescription(post.shortInfo || '');
+    setOriginalAnalysis(
+      post.summary && post.summary !== post.shortInfo ? post.summary : ''
+    );
     setPostDate(post.postDate || '');
     setDocumentDate(post.documentDate || '');
     setLastDate(post.lastDate || '');
@@ -495,6 +518,7 @@ export default function AdminThumbnailGeneratorStudio({
           isTentative,
           publicationStatus: targetStatus,
           shortDescription: shortDescription.trim(),
+          originalAnalysis: originalAnalysis.trim() || undefined,
           eligibility: eligibility.trim() || undefined,
           officialLink: (officialLink || chosenUrl).trim(),
           officialNotificationUrl: chosenUrl,
@@ -505,7 +529,10 @@ export default function AdminThumbnailGeneratorStudio({
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to save post');
+        const extraErrors = Array.isArray(data.validationErrors) && data.validationErrors.length > 1
+          ? ` (${data.validationErrors.slice(0, 2).join(' | ')})`
+          : '';
+        throw new Error((data.error || 'Failed to save post') + extraErrors);
       }
 
       setPostId(data.post.id);
@@ -850,6 +877,8 @@ export default function AdminThumbnailGeneratorStudio({
                     setLearnerGroup('ODL / Online');
                     setDepartment('Indira Gandhi National Open University (IGNOU)');
                     setShortDescription('');
+                    setOriginalAnalysis('');
+                    setEligibility('');
                     setOfficialLink('');
                     setOfficialNotificationUrl('');
                     setIsTentative(false);
@@ -932,6 +961,47 @@ export default function AdminThumbnailGeneratorStudio({
                 placeholder="Accurate summary of notification scope, learner groups, dates, and instructions..."
                 className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-900 dark:text-white resize-none"
               />
+            </div>
+
+            {/* Original Guidance & Quality Gate */}
+            <div>
+              <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
+                Original Citizen Guidance / Analysis (required for 400+ word Publish Gate)
+              </label>
+              <textarea
+                value={originalAnalysis}
+                onChange={e => setOriginalAnalysis(e.target.value)}
+                rows={4}
+                placeholder="Write plain-language guidance: who should apply, document checklist, selection workflow, fee notes, and verification advice (never paste raw circular text)..."
+                className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-900 dark:text-white"
+              />
+              <div className="mt-2 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 space-y-1">
+                <div className="flex items-center justify-between text-[11px] font-bold">
+                  <span className="text-slate-700 dark:text-slate-300">AdSense Publish Quality Gate</span>
+                  <span className={qualityGate.wordCount >= 400 ? 'text-emerald-600' : 'text-amber-600'}>
+                    {qualityGate.wordCount} / 400 words
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2 text-[10px] font-semibold">
+                  <span className={!qualityGate.missingFields.includes('officialSourceUrl') ? 'text-emerald-700' : 'text-rose-600'}>
+                    {!qualityGate.missingFields.includes('officialSourceUrl') ? '✓ Official URL' : '✕ Official URL'}
+                  </span>
+                  <span className={!qualityGate.missingFields.includes('lastUpdated') ? 'text-emerald-700' : 'text-rose-600'}>
+                    {!qualityGate.missingFields.includes('lastUpdated') ? '✓ Date' : '✕ Date'}
+                  </span>
+                  <span className={!qualityGate.missingFields.includes('eligibility') ? 'text-emerald-700' : 'text-rose-600'}>
+                    {!qualityGate.missingFields.includes('eligibility') ? '✓ Eligibility' : '✕ Eligibility'}
+                  </span>
+                  <span className={!qualityGate.missingFields.includes('lastDate') ? 'text-emerald-700' : 'text-rose-600'}>
+                    {!qualityGate.missingFields.includes('lastDate') ? '✓ Closing Date' : '✕ Closing Date'}
+                  </span>
+                </div>
+                {!qualityGate.valid && (
+                  <div className="text-[10.5px] text-amber-700 dark:text-amber-400">
+                    Draft saves anytime; live Publish requires {qualityGate.minWordCount}+ original words and all required fields.
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Institution, Notice Type, Learner Group */}

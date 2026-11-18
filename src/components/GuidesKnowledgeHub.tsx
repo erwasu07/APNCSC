@@ -8,7 +8,7 @@ import {
   ShieldCheck,
   X,
 } from 'lucide-react';
-import { GUIDE_ARTICLES, GuideArticle } from '../data/guidesData';
+import { PUBLISHED_GUIDE_ARTICLES as GUIDE_ARTICLES, GuideArticle } from '../data/guidesData';
 import { useLanguage } from '../contexts/LanguageContext';
 import SchemeDetailView from './schemes/SchemeDetailView';
 import {

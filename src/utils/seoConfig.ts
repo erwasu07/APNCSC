@@ -442,6 +442,18 @@ export const LEGAL_SEO_MAP: Record<string, RouteSeoMeta> = {
       { name: 'Refund Policy', url: `${SITE_ORIGIN}/refund-policy` },
     ],
   },
+  editorial: {
+    title: 'Editorial & Corrections Policy | CSC DOST',
+    description:
+      'Read how CSC DOST verifies notices from official .gov.in and university portals, timestamps updates, and handles corrections.',
+    canonicalUrl: `${SITE_ORIGIN}/editorial-policy`,
+    robots: 'index, follow',
+    ogType: 'website',
+    breadcrumbs: [
+      { name: 'Home', url: `${SITE_ORIGIN}/` },
+      { name: 'Editorial Policy', url: `${SITE_ORIGIN}/editorial-policy` },
+    ],
+  },
 };
 
 export const PRIVATE_NOINDEX_META: Record<'apply' | 'track' | 'admin' | 'staff' | 'notfound', RouteSeoMeta> = {

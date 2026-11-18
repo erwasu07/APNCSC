@@ -124,6 +124,8 @@ export default function SarkariNotificationBanner({
               key={currentSrc}
               src={currentSrc}
               alt={`${item.title} — CSC DOST Official Notification Banner`}
+              width={1200}
+              height={630}
               loading="eager"
               onLoad={() => setIsLoaded(true)}
               onError={handleImageError}

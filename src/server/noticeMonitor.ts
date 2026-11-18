@@ -1,8 +1,10 @@
 import crypto from 'crypto';
+import { SARKARI_DATA, SarkariItem } from '../data/sarkariData';
 import {
   getMonitorSources,
   saveMonitorSources,
   getReviewQueue,
+  getCustomSarkariPosts,
   upsertReviewQueueItem,
   addMonitorRunRecord,
   getWhatsAppAlertState,
@@ -19,6 +21,66 @@ import {
   sanitizeAlertLogText
 } from './whatsappAlerts';
 
+function findDuplicatePostMatches(
+  candidateTitle: string,
+  candidateSlug?: string,
+  candidateUrl?: string
+): string[] {
+  const normTitle = String(candidateTitle || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+  const titleWords = normTitle.split(/\s+/).filter(w => w.length >= 4);
+  const normUrl = String(candidateUrl || '').trim().toLowerCase().replace(/\/+$/, '');
+  const merged: SarkariItem[] = [...(getCustomSarkariPosts() as SarkariItem[]), ...SARKARI_DATA];
+  const seen = new Set<string>();
+  const matches: string[] = [];
+
+  for (const post of merged) {
+    if (!post?.id || seen.has(post.id)) continue;
+    seen.add(post.id);
+
+    if (candidateSlug && post.id === candidateSlug) {
+      matches.push(`${post.id} (Exact slug match)`);
+      continue;
+    }
+
+    const postTitleNorm = String(post.title || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+    if (normTitle && postTitleNorm && (postTitleNorm === normTitle || (normTitle.length >= 25 && postTitleNorm.includes(normTitle)))) {
+      matches.push(`${post.id} (${post.title.slice(0, 60)})`);
+      continue;
+    }
+
+    if (normUrl && normUrl.length > 22) {
+      const postUrl = String(post.officialNotificationUrl || post.officialLink || '').trim().toLowerCase().replace(/\/+$/, '');
+      const isSpecificPath = (() => {
+        try {
+          const u = new URL(normUrl);
+          return u.pathname.length > 4 || u.search.length > 2;
+        } catch {
+          return false;
+        }
+      })();
+      if (isSpecificPath && postUrl === normUrl) {
+        matches.push(`${post.id} (Same official notice URL)`);
+        continue;
+      }
+    }
+
+    if (titleWords.length >= 4) {
+      const overlap = titleWords.filter(w => postTitleNorm.includes(w)).length;
+      if (overlap >= Math.max(4, Math.ceil(titleWords.length * 0.8))) {
+        matches.push(`${post.id} (${post.title.slice(0, 55)})`);
+      }
+    }
+    if (matches.length >= 5) break;
+  }
+  return matches;
+}
+
 export interface SimulatedMonitorInput {
   newDrafts?: Array<{
     id?: string;
@@ -31,6 +93,7 @@ export interface SimulatedMonitorInput {
     validationFlags?: string[];
     shortInfo?: string;
     lastDate?: string;
+    sourceExcerpt?: string;
   }>;
   updateProposals?: Array<{
     id?: string;
@@ -46,6 +109,7 @@ export interface SimulatedMonitorInput {
     shortInfo?: string;
     lastDate?: string;
     publishedPostChanged?: boolean;
+    sourceExcerpt?: string;
   }>;
   failingSourceIds?: string[];
   forceCrash?: boolean;
@@ -76,7 +140,7 @@ let schedulerStarted = false;
 async function probeOfficialSource(
   source: MonitorSourceRecord,
   fetchImpl: typeof fetch = globalThis.fetch
-): Promise<{ ok: boolean; contentHash?: string; error?: string }> {
+): Promise<{ ok: boolean; contentHash?: string; excerpt?: string; error?: string }> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 7000);
   try {
@@ -99,7 +163,7 @@ async function probeOfficialSource(
       .trim()
       .slice(0, 50000);
     const contentHash = crypto.createHash('sha256').update(stripped).digest('hex').slice(0, 16);
-    return { ok: true, contentHash };
+    return { ok: true, contentHash, excerpt: stripped.slice(0, 1500) };
   } catch (err: any) {
     return { ok: false, error: sanitizeAlertLogText(err?.message || 'Request timeout or network failure') };
   } finally {
@@ -163,7 +227,15 @@ export async function runOfficialNoticeMonitor(options: RunMonitorOptions): Prom
 
       for (const draft of sim.newDrafts || []) {
         const confidence = typeof draft.confidence === 'number' ? draft.confidence : 96;
-        const flags = Array.isArray(draft.validationFlags) ? draft.validationFlags : [];
+        const duplicateMatches = findDuplicatePostMatches(
+          draft.title,
+          draft.id,
+          draft.officialNotificationUrl || draft.sourceUrl
+        );
+        const flags = Array.isArray(draft.validationFlags) ? [...draft.validationFlags] : [];
+        if (duplicateMatches.length > 0 && !flags.some(f => f.toLowerCase().includes('duplicate'))) {
+          flags.push(`Possible duplicate of existing post (${duplicateMatches[0]})`);
+        }
         const draftItem: ReviewQueueItem = {
           id: draft.id || `draft_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
           kind: 'new_draft',
@@ -176,6 +248,9 @@ export async function runOfficialNoticeMonitor(options: RunMonitorOptions): Prom
           validationFlags: flags,
           shortInfo: draft.shortInfo || `${draft.title} detected by Official Notice Monitor.`,
           lastDate: draft.lastDate || 'Verify Official PDF',
+          sourceExcerpt: draft.sourceExcerpt,
+          duplicateMatches,
+          reviewStatus: 'unreviewed',
           status: 'pending',
           detectedAt: now.toISOString()
         };
@@ -191,7 +266,7 @@ export async function runOfficialNoticeMonitor(options: RunMonitorOptions): Prom
 
       for (const prop of sim.updateProposals || []) {
         const confidence = typeof prop.confidence === 'number' ? prop.confidence : 95;
-        const flags = Array.isArray(prop.validationFlags) ? prop.validationFlags : [];
+        const flags = Array.isArray(prop.validationFlags) ? [...prop.validationFlags] : [];
         const propItem: ReviewQueueItem = {
           id: prop.id || `upd_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
           kind: 'update_proposal',
@@ -206,6 +281,8 @@ export async function runOfficialNoticeMonitor(options: RunMonitorOptions): Prom
           proposedChanges: prop.proposedChanges,
           shortInfo: prop.shortInfo || `Detected change on official source for published post ${prop.postId}.`,
           lastDate: prop.lastDate,
+          sourceExcerpt: prop.sourceExcerpt,
+          reviewStatus: 'unreviewed',
           status: 'pending',
           detectedAt: now.toISOString()
         };
@@ -240,6 +317,11 @@ export async function runOfficialNoticeMonitor(options: RunMonitorOptions): Prom
             const changeId = `srcchange_${src.id}_${new Date(now).toISOString().slice(0, 10)}`;
             const alreadyQueued = existingQueue.some(q => q.id === changeId && q.status === 'pending');
             if (!alreadyQueued) {
+              const duplicateMatches = findDuplicatePostMatches(src.name, changeId, src.url);
+              const flags = ['Portal content changed — manual review & original rewrite required before drafting'];
+              if (duplicateMatches.length > 0) {
+                flags.push(`Possible overlap with existing notice (${duplicateMatches[0]})`);
+              }
               const item: ReviewQueueItem = {
                 id: changeId,
                 kind: 'new_draft',
@@ -249,8 +331,11 @@ export async function runOfficialNoticeMonitor(options: RunMonitorOptions): Prom
                 sourceUrl: src.url,
                 officialNotificationUrl: src.url,
                 confidence: 85,
-                validationFlags: ['Portal content changed — manual review recommended'],
+                validationFlags: flags,
                 shortInfo: `${src.name} (${src.url}) content hash changed since previous monitor check.`,
+                sourceExcerpt: probe.excerpt,
+                duplicateMatches,
+                reviewStatus: 'unreviewed',
                 status: 'pending',
                 detectedAt: now.toISOString()
               };

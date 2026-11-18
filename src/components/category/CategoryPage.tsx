@@ -49,6 +49,7 @@ const CATEGORY_NAV_PILLS: { slug: CategorySlug; label: string; href: string }[] 
 const LEGAL_FOOTER_LINKS = [
   { label: 'About', href: '/about-us' },
   { label: 'Contact', href: '/contact-us' },
+  { label: 'Editorial Policy', href: '/editorial-policy' },
   { label: 'Privacy', href: '/privacy-policy' },
   { label: 'Terms', href: '/terms-of-service' },
   { label: 'Disclaimer', href: '/disclaimer' },

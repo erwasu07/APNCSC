@@ -38,7 +38,7 @@ const ArchivePageView = lazy(() => import('./components/ArchivePageView'));
 const DevThumbnailsPreview = lazy(() => import('./components/DevThumbnailsPreview'));
 import CookieNotice from './components/CookieNotice';
 import { TOOLS_LIST } from './components/tools/toolsData';
-import { GUIDE_ARTICLES } from './data/guidesData';
+import { PUBLISHED_GUIDE_ARTICLES as GUIDE_ARTICLES } from './data/guidesData';
 import { KNOWN_DUPLICATE_MAP } from './data/sarkariMigration';
 import { isStaleOver90Days } from './utils/postLifecycle';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -299,14 +299,15 @@ export default function App() {
         return;
       }
 
-      // 1. Check legal / informational routes (/privacy-policy, /privacy, /terms-of-service, /terms, etc.)
-      const legalMatch = cleanPath.match(/^\/(privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|about|contact-us|contact|refund-policy|refund)$/i);
+      // 1. Check legal / informational routes (/privacy-policy, /privacy, /terms-of-service, /terms, /editorial-policy, etc.)
+      const legalMatch = cleanPath.match(/^\/(privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|about|contact-us|contact|refund-policy|refund|editorial-policy|editorial)$/i);
       if (legalMatch) {
         let mappedType: LegalPageType = 'privacy';
         const rawKey = legalMatch[1].toLowerCase();
         if (rawKey === 'privacy-policy' || rawKey === 'privacy') mappedType = 'privacy';
         else if (rawKey === 'terms-of-service' || rawKey === 'terms') mappedType = 'terms';
         else if (rawKey === 'disclaimer') mappedType = 'disclaimer';
+        else if (rawKey === 'editorial-policy' || rawKey === 'editorial') mappedType = 'editorial';
         else if (rawKey === 'about-us' || rawKey === 'about') {
           mappedType = 'about';
           if (rawKey === 'about') {
