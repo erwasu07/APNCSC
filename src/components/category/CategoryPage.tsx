@@ -33,6 +33,7 @@ import { useSyncedSarkariPosts } from '../../utils/postDataSync';
 import { CORE_CATEGORIES, SITE_ORIGIN, getCategorySeoMeta, IGNOU_EDUCATION_SEO } from '../../utils/seoConfig';
 import type { SarkariItem } from '../../data/sarkariData';
 import type { ServiceItem } from '../../servicesData';
+import { PUBLISHED_GUIDE_ARTICLES as STATIC_GUIDES, type GuideArticle } from '../../data/guidesData';
 import { AdSlot } from '../ui';
 
 const PAGE_BATCH_SIZE = 20;
@@ -170,6 +171,23 @@ export default function CategoryPage({
   });
 
   const [visibleLimit, setVisibleLimit] = useState<number>(PAGE_BATCH_SIZE);
+  const [publishedGuides, setPublishedGuides] = useState<GuideArticle[]>(STATIC_GUIDES);
+
+  useEffect(() => {
+    if (category !== 'schemes') return;
+    let cancelled = false;
+    fetch('/api/guides')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.success && Array.isArray(data.guides)) {
+          setPublishedGuides(data.guides);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [category]);
 
   // Sync filters cleanly when navigating between category routes or subroutes
   useEffect(() => {
@@ -226,8 +244,8 @@ export default function CategoryPage({
   }, []);
 
   const dataset = useMemo(
-    () => buildCategoryDataset(category, syncedPosts, educationSubRoute),
-    [category, syncedPosts, educationSubRoute]
+    () => buildCategoryDataset(category, syncedPosts, educationSubRoute, publishedGuides),
+    [category, syncedPosts, educationSubRoute, publishedGuides]
   );
 
   // Inject structured CollectionPage + BreadcrumbList JSON-LD for active category

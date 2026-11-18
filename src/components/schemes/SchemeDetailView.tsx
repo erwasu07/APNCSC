@@ -76,17 +76,27 @@ export default function SchemeDetailView({
       document.head.appendChild(scriptEl);
     }
 
+    const authors: Array<Record<string, string>> = [];
+    if (article.reviewedBy) {
+      authors.push({
+        '@type': 'Person',
+        name: article.reviewedBy,
+      });
+    }
+    authors.push({
+      '@type': 'Organization',
+      name: 'CSC DOST',
+      url: 'https://www.cscdost.com',
+    });
+
     scriptEl.textContent = JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'Article',
       headline: article.title,
       description: article.summary,
       articleSection: isCentralScheme ? 'Government Schemes' : article.category,
-      author: {
-        '@type': 'Organization',
-        name: 'CSC DOST',
-        url: 'https://www.cscdost.com',
-      },
+      dateModified: article.reviewedAt || article.lastUpdated,
+      author: authors,
       publisher: {
         '@type': 'Organization',
         name: 'CSC DOST',
@@ -280,9 +290,9 @@ export default function SchemeDetailView({
             </p>
 
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-[var(--text-muted)] pt-1">
-              <span>Last Updated: {article.lastUpdated}</span>
+              <span>Last updated: {article.lastUpdated}</span>
               <span aria-hidden="true">·</span>
-              <span>{article.author}</span>
+              <span>Reviewed by: {article.reviewedBy || article.author}</span>
               <span aria-hidden="true">·</span>
               <span>{t.independentChip}</span>
             </div>

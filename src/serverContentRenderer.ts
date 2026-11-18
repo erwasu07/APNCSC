@@ -409,7 +409,7 @@ export function renderPostSubstantiveHtml(
 function renderSsrPolicyFooterHtml(): string {
   return `
     <footer style="margin-top:30px; font-size:12px; color:#475569; text-align:center; line-height:1.7; border-top:1px solid #E2E8F0; padding-top:16px;">
-      <p style="margin:0 0 6px 0;">Published by CSC DOST | Operator: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) | Sangran Qazigund, Anantnag, J&amp;K 192221 · +91 70068 33767</p>
+      <p style="margin:0 0 6px 0;">Published by CSC DOST | Operator: Wasim Ahmad Khanday (CSC VLE ID: 212515670018) | Sangran Qazigund, Anantnag, J&amp;K 192221 · +91 70068 33767 · <a href="mailto:urnxtfd@gmail.com" style="color:#101A36; font-weight:600; text-decoration:underline;">urnxtfd@gmail.com</a></p>
       <p style="margin:0;">
         <a href="/about-us" style="color:#101A36; font-weight:600; text-decoration:none;">About</a> •
         <a href="/contact-us" style="color:#101A36; font-weight:600; text-decoration:none;">Contact</a> •
@@ -682,7 +682,7 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">4. Report an Error or Request a Correction</h2>
           <p>
-            Readers who spot a typographical error, broken official PDF link, or updated date circular can report it directly to our editorial desk via email at <a href="mailto:support@cscdost.com" style="color:#2563eb;">support@cscdost.com</a>, phone at <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a>, or through our <a href="/contact-us" style="color:#2563eb; font-weight:600;">Contact Helpdesk</a>. Verified corrections are applied within 24 hours.
+            Readers who spot a typographical error, broken official PDF link, or updated date circular can report it directly to our editorial desk via email at <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a>, phone at <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a>, or through our <a href="/contact-us" style="color:#2563eb; font-weight:600;">Contact Helpdesk</a>. Verified corrections are applied within 24 hours.
           </p>
         </section>
       </article>
@@ -756,14 +756,15 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">7. Data Retention and Erasure</h2>
           <p>
-            Application records and uploaded documents are retained securely for a period of up to 180 days after application processing to permit verification and candidate support, after which they are systematically purged from our encrypted storage. Citizens may request immediate deletion of their personal records by emailing <strong>support@cscdost.com</strong> with their tracking token.
+            Application records and uploaded documents are retained securely for a period of up to 180 days after application processing to permit verification and candidate support, after which they are systematically purged from our encrypted storage. Citizens may request immediate deletion of their personal records by emailing <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a> with their tracking token.
           </p>
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">8. Grievance Redressal Officer</h2>
           <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
             <p style="margin:0 0 6px 0;"><strong>Data Grievance Officer:</strong> Wasim Ahmad Khanday</p>
             <p style="margin:0 0 6px 0;"><strong>Designation:</strong> Lead VLE &amp; Operator, CSC DOST (VLE ID: 212515670018)</p>
-            <p style="margin:0 0 6px 0;"><strong>Email:</strong> <a href="mailto:support@cscdost.com" style="color:#2563eb;">support@cscdost.com</a> / <a href="mailto:wasimkhanday@gmail.com" style="color:#2563eb;">wasimkhanday@gmail.com</a></p>
+            <p style="margin:0 0 6px 0;"><strong>Email:</strong> <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a></p>
+            <p style="margin:0 0 6px 0;"><strong>Helpline:</strong> <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a></p>
             <p style="margin:0;"><strong>Physical Office:</strong> Sangran Qazigund, District Anantnag, Jammu &amp; Kashmir 192221</p>
           </div>
         </section>
@@ -827,7 +828,7 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">5. Contact &amp; Questions</h2>
           <p>
-            If you have questions regarding this disclaimer, please contact us at <a href="mailto:support@cscdost.com" style="color:#2563eb;">support@cscdost.com</a> or phone: <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a>. Physical Office: Sangran Qazigund, District Anantnag, Jammu &amp; Kashmir 192221.
+            If you have questions regarding this disclaimer or need to report an official circular update, please contact us at <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a> or phone: <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a>. Physical Office: Sangran Qazigund, District Anantnag, Jammu &amp; Kashmir 192221.
           </p>
         </section>
       </article>
@@ -908,9 +909,9 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
             </li>
           </ul>
 
-          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">5. Governing Law and Jurisdiction</h2>
+          <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">5. Governing Law, Support &amp; Jurisdiction</h2>
           <p>
-            These terms and any disputes arising out of the use of CSC DOST shall be governed by and construed in accordance with the laws of India, subject to the exclusive jurisdiction of the competent courts in District Anantnag, Jammu &amp; Kashmir.
+            These terms and any disputes arising out of the use of CSC DOST shall be governed by and construed in accordance with the laws of India, subject to the exclusive jurisdiction of the competent courts in District Anantnag, Jammu &amp; Kashmir. Questions regarding these Terms of Service may be sent to <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a> or <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a>.
           </p>
         </section>
       </article>
@@ -954,7 +955,7 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
               <li><strong>MSME Udyam Registration:</strong> UDYAM-JK-01-0041957</li>
               <li><strong>Physical Facilitation Center:</strong> Sangran Qazigund, District Anantnag, Jammu &amp; Kashmir (PIN: 192221)</li>
               <li><strong>Helpline Contact:</strong> +91 70068 33767 / +91 96821 32895</li>
-              <li><strong>Support Email:</strong> support@cscdost.com</li>
+              <li><strong>Support Email:</strong> <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a></li>
             </ul>
           </div>
 
@@ -1011,8 +1012,8 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
             <p style="font-size:14px; color:#334155; line-height:1.8; margin:0;">
               <strong>Helpline / Phone:</strong> <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a><br/>
               <strong>Alternate Contact:</strong> +91 96821 32895<br/>
-              <strong>Support Email:</strong> <a href="mailto:support@cscdost.com" style="color:#2563eb;">support@cscdost.com</a><br/>
-              <strong>Grievance Officer:</strong> Wasim Ahmad Khanday (<a href="mailto:wasimkhanday@gmail.com" style="color:#2563eb;">wasimkhanday@gmail.com</a>)<br/>
+              <strong>Support Email:</strong> <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a><br/>
+              <strong>Grievance Officer:</strong> Wasim Ahmad Khanday (<a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a>)<br/>
               <strong>Tracking Desk:</strong> <a href="/track" style="color:#2563eb;">cscdost.com/track</a>
             </p>
           </div>
@@ -1043,55 +1044,94 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
     `;
   }
 
-  // Refund policy fallback
+  // Refund & Service Pricing Policy
   return `${legalHeaderShell}
   <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:24px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif; color:#0f172a; line-height:1.7;">
     <nav aria-label="Breadcrumb" style="font-size:13px; color:#64748b; margin-bottom:16px;">
       <a href="/" style="color:#2563eb; text-decoration:none;">Home</a>
       <span style="margin:0 6px;">/</span>
-      <span style="color:#0f172a; font-weight:600;">Refund Policy</span>
+      <span style="color:#0f172a; font-weight:600;">Refund &amp; Service Pricing Policy</span>
     </nav>
 
     <article style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:28px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
       <header style="border-bottom:1px solid #e2e8f0; padding-bottom:18px; margin-bottom:20px;">
         <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
-          Payment Policies
+          Payment &amp; Pricing Transparency
         </span>
-        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Refund &amp; Cancellation Policy</h1>
-        <p style="font-size:13px; color:#64748b; margin:0;">Effective Date: February 2026 • Last Reviewed: October 2026</p>
+        <h1 style="font-size:28px; font-weight:800; color:#0f172a; margin:0 0 8px 0;">Refund, Cancellation &amp; Service Pricing Policy</h1>
+        <p style="font-size:13px; color:#64748b; margin:0;">Effective Date: February 2026 • Last Reviewed: November 2026</p>
       </header>
 
       <section style="font-size:15px; color:#334155; line-height:1.7;">
         <p>
-          At <strong>CSC DOST</strong>, we maintain a transparent and fair refund policy for all assisted application processing and digital appointment services.
+          At <strong>CSC DOST</strong> (operated by Authorized CSC VLE <strong>Wasim Ahmad Khanday</strong>, VLE ID: <code>212515670018</code>, Sangran Qazigund, Anantnag, J&amp;K), citizens may read all job bulletins, scheme guides, and browser-local document tools free of cost. Charges apply only when you voluntarily request assisted form filing or physical printing at our desk.
         </p>
 
-        <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">1. Assisted Application Cancellation &amp; Refunds</h2>
+        <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">1. Indicative Service Pricing Tiers &amp; Delivery Timeframes</h2>
+        <p style="font-size:14px; color:#475569; margin:0 0 12px 0;">
+          All listed totals distinguish statutory government/university fees from CSC facilitation charges. Exact statutory amounts depend on official department tariffs at submission time.
+        </p>
+        <div style="overflow-x:auto; margin-bottom:18px;">
+          <table style="width:100%; border-collapse:collapse; font-size:14px; border:1px solid #e2e8f0;">
+            <thead>
+              <tr style="background:#f1f5f9; text-align:left;">
+                <th style="padding:10px 12px; border-bottom:1px solid #e2e8f0;">Service Category</th>
+                <th style="padding:10px 12px; border-bottom:1px solid #e2e8f0;">Published Rate / CSC Charge</th>
+                <th style="padding:10px 12px; border-bottom:1px solid #e2e8f0;">Estimated Turnaround</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid #e2e8f0;">
+                <td style="padding:10px 12px;"><strong>CSC Welfare &amp; Identity Assistance</strong> (PM-KISAN e-KYC, Ayushman, Voter ID, e-Shram, Aadhaar Update Guidance)</td>
+                <td style="padding:10px 12px;">Govt fee as applicable (₹0–₹15) + <strong>₹70 CSC facilitation charge</strong></td>
+                <td style="padding:10px 12px;">Same day – 7 days (subject to UIDAI/dept verification)</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e2e8f0;">
+                <td style="padding:10px 12px;"><strong>PAN Card &amp; Instant e-PAN</strong> (New / Correction)</td>
+                <td style="padding:10px 12px;">₹107 statutory NSDL/UTIITSL fee + <strong>₹70 CSC charge</strong></td>
+                <td style="padding:10px 12px;">e-PAN in ~2 hrs; physical card 3–7 days</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e2e8f0;">
+                <td style="padding:10px 12px;"><strong>J&amp;K State Certificates</strong> (Domicile, RBA, OBC, SC, ST, EWS, Birth/Death, Marriage)</td>
+                <td style="padding:10px 12px;">₹20–₹50 govt fee + <strong>₹70 CSC charge</strong></td>
+                <td style="padding:10px 12px;">5 – 30 days depending on Tehsildar/Registrar schedule</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e2e8f0;">
+                <td style="padding:10px 12px;"><strong>J&amp;K Revenue Extracts</strong> (Fard, Jamabandi, Girdawari, Mutation, Legal Heir, Income)</td>
+                <td style="padding:10px 12px;">₹100 govt fee + <strong>₹70 CSC charge</strong></td>
+                <td style="padding:10px 12px;">2 – 30 days depending on Patwari/Tehsildar workflow</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e2e8f0;">
+                <td style="padding:10px 12px;"><strong>Admissions, Scholarships &amp; Exam Forms</strong> (JKSSB, SSC, RRB, KU, CUS, IGNOU, NSP)</td>
+                <td style="padding:10px 12px;"><strong>₹50 – ₹100 CSC filing</strong> + official exam/university fee</td>
+                <td style="padding:10px 12px;">Same day (typically 20 mins – 2 hrs)</td>
+              </tr>
+              <tr>
+                <td style="padding:10px 12px;"><strong>Business &amp; Compliance</strong> (MSME UDYAM, GST Reg/Return, Class-3 DSC)</td>
+                <td style="padding:10px 12px;">UDYAM ₹70; GST ₹300–₹500; DSC ₹500–₹1,500</td>
+                <td style="padding:10px 12px;">Same day – 7 days</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">2. What Assisted Service Includes</h2>
         <ul style="padding-left:20px; margin:0 0 16px 0; line-height:1.8;">
-          <li>
-            <strong>Prior to Submission:</strong> If an applicant requests cancellation <em>before</em> our VLE team has processed or submitted the form to the government portal, a full 100% refund of both the government fee and convenience charges will be initiated.
-          </li>
-          <li>
-            <strong>After Final Submission:</strong> Once an application has been successfully submitted to the official government portal and an official registration number or challan has been generated, statutory government fees cannot be refunded, as government treasuries do not permit clawbacks.
-          </li>
-          <li>
-            <strong>Rejected or Incomplete Forms due to Portal Outages:</strong> If a submission fails due to an official government server closure or outage prior to the deadline, any unspent fees will be returned within 5-7 working days.
-          </li>
+          <li>Pre-filing checklist review against the primary official notification or department portal.</li>
+          <li>Document scanning, photo/signature resizing to portal pixel and KB limits, and form data entry.</li>
+          <li>OTP/biometric coordination where permitted and delivery of the official acknowledgement receipt plus a CSC tracking token via <a href="/track" style="color:#2563eb; font-weight:600;">cscdost.com/track</a>.</li>
         </ul>
 
-        <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">2. Mode and Timeline of Refund</h2>
-        <p>
-          Approved refunds are processed through our Razorpay payment gateway back to the original source account (UPI, debit card, or net banking) within <strong>5 to 7 business days</strong>.
-        </p>
+        <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">3. Cancellation &amp; Refund Rules</h2>
+        <ul style="padding-left:20px; margin:0 0 16px 0; line-height:1.8;">
+          <li><strong>Prior to Submission:</strong> Full 100% refund of both the statutory fee and CSC facilitation charge if cancelled before portal filing begins.</li>
+          <li><strong>After Final Submission:</strong> Statutory government or examination fees already remitted to the government treasury or university portal cannot be clawed back or refunded.</li>
+          <li><strong>Portal Failure Before Cutoff:</strong> If submission cannot be completed due to an official government portal outage before the deadline, unspent fees are refunded in full.</li>
+        </ul>
 
-        <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">3. Dispute and Refund Requests</h2>
+        <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">4. Refund Timeline, Failed UPI Debits &amp; Contact</h2>
         <p>
-          To request a refund or raise a billing grievance, please email <strong>support@cscdost.com</strong> with your Application Tracking Token (e.g. <code>CSC-XXXXXXXX</code>) and payment transaction reference ID.
-        </p>
-
-        <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">4. Failed UPI / Card Transactions &amp; Reconciliation</h2>
-        <p>
-          If an amount is debited from your bank account during Razorpay checkout due to network interruption while your CSC DOST application screen shows pending, do not initiate a second payment immediately. Wait up to 24 hours for automated gateway reconciliation or share your Razorpay Payment ID, UTR number, and registered mobile number with our desk at <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a> or <a href="mailto:support@cscdost.com" style="color:#2563eb;">support@cscdost.com</a>. Duplicate or uncaptured gateway debits are settled automatically by banking rails within 5 to 7 working days.
+          Approved refunds are credited via Razorpay to your original UPI, debit card, or bank account within <strong>5 to 7 business days</strong>. If money is debited during a network drop while your CSC DOST token still shows pending, do not pay twice—wait up to 24 hours for automated settlement or write to <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a> or call <a href="tel:+917006833767" style="color:#2563eb;">+91 70068 33767</a> with your Application Tracking Token and payment UTR/Razorpay ID.
         </p>
       </section>
     </article>
@@ -1133,7 +1173,8 @@ function renderPrimaryCategoryNavHtml(activeCategory?: string): string {
 export function renderHomepageSubstantiveHtml(
   posts: SarkariItem[],
   services: ServiceItem[],
-  alertsConfig?: { whatsappUrl: string; whatsappType: 'channel' | 'group'; telegramUrl?: string }
+  alertsConfig?: { whatsappUrl: string; whatsappType: 'channel' | 'group'; telegramUrl?: string },
+  publishedGuides: GuideArticle[] = GUIDE_ARTICLES
 ): string {
   const dedupedPosts = getDeduplicatedSarkariPosts(posts);
   const verifiedVisiblePosts = dedupedPosts
@@ -1162,7 +1203,7 @@ export function renderHomepageSubstantiveHtml(
   const educationPosts = verifiedVisiblePosts
     .filter((p) => isEducationSarkariItem(p))
     .slice(0, 6);
-  const popularSchemes = GUIDE_ARTICLES.filter(
+  const popularSchemes = publishedGuides.filter(
     (g) => g.category === 'Central Scheme' || g.category === 'State Services' || g.category === 'Identity & Tax'
   ).slice(0, 4);
 
@@ -1370,7 +1411,7 @@ export function renderHomepageSubstantiveHtml(
           CSC DOST is operated by <strong>Wasim Ahmad Khanday</strong>, Authorized Common Services Center Village Level Entrepreneur (<strong>CSC VLE ID: 212515670018</strong> · MSME: UDYAM-JK-01-0041957).
         </p>
         <p style="font-size:13px; color:#475569; margin:0;">
-          Center Address: Sangran Qazigund, District Anantnag, Jammu &amp; Kashmir 192221 · Helpline Phone: <a href="tel:+917006833767" style="color:#2455E6; font-weight:600; text-decoration:none;">+91 70068 33767</a> · Email: <a href="mailto:support@cscdost.com" style="color:#2455E6; font-weight:600; text-decoration:none;">support@cscdost.com</a>.
+          Center Address: Sangran Qazigund, District Anantnag, Jammu &amp; Kashmir 192221 · Helpline Phone: <a href="tel:+917006833767" style="color:#2455E6; font-weight:600; text-decoration:none;">+91 70068 33767</a> · Email: <a href="mailto:urnxtfd@gmail.com" style="color:#2455E6; font-weight:600; text-decoration:none;">urnxtfd@gmail.com</a>.
         </p>
       </section>
 
@@ -1393,7 +1434,7 @@ export function renderHomepageSubstantiveHtml(
 
       <footer style="background:#101A36; color:#E2E8F0; border-radius:14px; padding:14px; font-size:12px; line-height:1.6;">
         <p style="margin:0 0 6px 0; font-weight:700;">
-          CSC DOST © ${new Date().getFullYear()} · Wasim Ahmad Khanday · VLE ID: 212515670018 · Sangran Qazigund, Anantnag, J&amp;K 192221 · +91 70068 33767
+          CSC DOST © ${new Date().getFullYear()} · Wasim Ahmad Khanday · VLE ID: 212515670018 · Sangran Qazigund, Anantnag, J&amp;K 192221 · +91 70068 33767 · <a href="mailto:urnxtfd@gmail.com" style="color:#93C5FD; text-decoration:underline;">urnxtfd@gmail.com</a>
         </p>
         <p style="margin:0 0 6px 0; display:flex; flex-wrap:wrap; gap:10px;">
           <a href="/about-us" style="color:#ffffff; text-decoration:none;">About Us</a>
@@ -1543,7 +1584,7 @@ export function renderSchemeSubstantiveHtml(guide: GuideArticle): string {
         </h1>
         <p style="font-size:16px; color:#475569; margin:0 0 10px 0;">${safeSummary}</p>
         <div style="font-size:13px; color:#64748B;">
-          <strong>Official Portal:</strong> ${safePortal} · <strong>Last Updated:</strong> ${escapeHtml(guide.lastUpdated)}
+          <strong>Official Portal:</strong> ${safePortal} · <strong>Last updated:</strong> ${escapeHtml(guide.lastUpdated)}${guide.reviewedBy ? ` · <strong>Reviewed by:</strong> ${escapeHtml(guide.reviewedBy)}` : ''}
         </div>
       </header>
 
@@ -1759,7 +1800,8 @@ export function renderToolDetailSubstantiveHtml(tool: ToolItem): string {
 export function renderCategorySubstantiveHtml(
   categoryType: 'jobs' | 'education' | 'ignou' | 'deadlines' | 'schemes' | 'services' | 'tools' | 'calculators' | 'apply' | 'track' | 'admin',
   posts: SarkariItem[],
-  services: ServiceItem[]
+  services: ServiceItem[],
+  publishedGuides: GuideArticle[] = GUIDE_ARTICLES
 ): string {
   const dedupedPosts = getDeduplicatedSarkariPosts(posts);
   const verifiedPosts = dedupedPosts
@@ -2045,7 +2087,7 @@ export function renderCategorySubstantiveHtml(
       </header>
 
       <section style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px; margin-bottom:28px;">
-        ${GUIDE_ARTICLES.map(g => `
+        ${publishedGuides.map(g => `
           <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:18px;">
             <div style="font-size:11px; font-weight:700; color:#1F9D6B; text-transform:uppercase; margin-bottom:6px;">${escapeHtml(g.category)} · ${escapeHtml(g.readTime)}</div>
             <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 8px 0;">

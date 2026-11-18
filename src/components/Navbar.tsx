@@ -282,8 +282,8 @@ export default function Navbar({
         </div>
       )}
       {/* Persistent Non-Government Disclosure Strip on Every Page */}
-      <div className="border-t border-[#E3E8F2] dark:border-[#283757] bg-[#F8FAFC] dark:bg-[#0D1426] px-3 sm:px-4 lg:px-6 py-1">
-        <div className="max-w-[1180px] mx-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 text-[11px] text-[#475569] dark:text-slate-300 leading-tight">
+      <div className="min-h-[28px] flex items-center border-t border-[#E3E8F2] dark:border-[#283757] bg-[#F8FAFC] dark:bg-[#0D1426] px-3 sm:px-4 lg:px-6 py-1">
+        <div className="w-full max-w-[1180px] mx-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 text-[11px] text-[#475569] dark:text-slate-300 leading-tight">
           <span>
             Independent citizen portal &mdash; <strong className="text-[#101A36] dark:text-white">not</strong> an official government website.
           </span>

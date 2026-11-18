@@ -8,6 +8,10 @@ export interface GuideArticle {
   lastUpdated: string;
   status?: 'published' | 'draft';
   verifyNotes?: string[];
+  reviewedBy?: string;
+  reviewedAt?: string;
+  verifierName?: string;
+  verifiedDate?: string;
   summary: string;
   officialPortal: string;
   officialUrl: string;
@@ -881,6 +885,655 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
         question: 'What if my name on Aadhaar does not match my JKBOSE marksheet?',
         answer:
           'ABC/APAAR generation relies on Aadhaar demographic data. If spelling differs significantly from academic records, update Aadhaar demographic details at an authorized centre before university verification.',
+      },
+    ],
+  },
+  {
+    id: 'jk-pm-surya-ghar-muft-bijli-guide-draft',
+    title: 'PM Surya Ghar Muft Bijli Yojana in J&K: Subsidy Slabs, Net Metering & Portal Guide',
+    hindiTitle: 'पीएम सूर्य घर मुफ्त बिजली योजना जम्मू-कश्मीर: सब्सिडी और आवेदन गाइड',
+    urduTitle: 'پی ایم سوریہ گھر مفت بجلی یوجنا جموں و کشمیر: سبسڈی اور درخواست گائیڈ',
+    category: 'Central Scheme',
+    readTime: '6 min read',
+    lastUpdated: 'November 18, 2026',
+    status: 'draft',
+    verifyNotes: [
+      'Verify latest JPDCL / KPDCL empanelled vendor rules and net metering fee schedule for Jammu & Kashmir consumers.',
+      'Confirm central CFA subsidy slabs (1 kW, 2 kW, 3 kW+) and any additional UT/state top-up on pmsuryaghar.gov.in.',
+    ],
+    author: 'CSC DOST Editorial & Citizen Advisory Desk',
+    officialPortal: 'pmsuryaghar.gov.in',
+    officialUrl: 'https://pmsuryaghar.gov.in',
+    responsibleDepartment: 'Ministry of New & Renewable Energy (MNRE) / KPDCL & JPDCL',
+    intendedBeneficiaries: 'Residential electricity consumers with domestic meter connection and suitable roof space',
+    benefitSummary: 'Central Financial Assistance up to [VERIFY ₹78,000 for 3 kW+] rooftop solar & up to 300 units/month free power benefit',
+    applicableRegion: 'All India (including Jammu & Kashmir KPDCL / JPDCL divisions)',
+    summary:
+      'Step-by-step guide for Jammu and Kashmir residential electricity consumers applying for rooftop solar installation under PM Surya Ghar: Muft Bijli Yojana, covering registration, KPDCL/JPDCL technical feasibility, vendor selection, net-metering inspection, and DBT subsidy disbursement.',
+    tableOfContents: [
+      'Overview & Electricity Discom Integration in J&K',
+      'CFA Subsidy Structure & Capacity Sizing',
+      'Mandatory Consumer Eligibility & Roof Readiness',
+      'Documents Required for Online Application',
+      'Step-by-Step Application on pmsuryaghar.gov.in',
+      'Post-Installation Net Metering & DBT Release',
+    ],
+    sections: [
+      {
+        heading: '1. Overview & Electricity Discom Integration in J&K',
+        content:
+          'PM Surya Ghar: Muft Bijli Yojana assists residential households with domestic grid connections in installing grid-connected rooftop solar plants. In Jammu and Kashmir, consumer consumer-number verification and technical feasibility approvals route through Kashmir Power Distribution Corporation Limited (KPDCL) and Jammu Power Distribution Corporation Limited (JPDCL). Applicants should never pay cash advances to unregistered middlemen before receiving online technical feasibility approval on the national portal.',
+        bulletPoints: [
+          'Only residential domestic metered connections are eligible; purely commercial or industrial meters follow separate policies.',
+          'All installations claiming central subsidy must be executed by a vendor registered and listed on the official national portal under the relevant Discom.',
+          'Net metering replaces or reconfigures the existing service meter with a bidirectional smart or net meter approved by the Discom.',
+        ],
+      },
+      {
+        heading: '2. CFA Subsidy Structure & Capacity Sizing',
+        content:
+          'Under central guidelines, Central Financial Assistance depends on sanctioned plant capacity and average monthly household consumption [VERIFY current MNRE 2026 CFA slab rates and any J&K UT special-category additional subsidy percentage on pmsuryaghar.gov.in]. Households should match system kW sizing carefully against their sanctioned load rather than over-sizing beyond sanctioned Discom limits, because sanctioned load upgrades must be cleared by the local Electric Sub-Division before commissioning.',
+        tips: 'Check your last 6 months of KPDCL/JPDCL electricity bills before selecting 1 kW, 2 kW, or 3 kW capacity. Snow-load mounting tilt angles matter in Kashmir valley districts.',
+      },
+      {
+        heading: '3. Net Metering Inspection & DBT Subsidy Release',
+        content:
+          'Once panels and inverter are installed using DCR-compliant solar modules, the vendor submits work completion details with serial numbers and geo-tagged photographs. Discom engineers inspect earthing, AC/DC protection boxes, and install the net meter. After commissioning certificate issuance, the applicant enters bank account details and cancelled cheque on the portal for Direct Benefit Transfer [VERIFY typical 30-day DBT disbursement timeline in KPDCL/JPDCL divisions].',
+      },
+    ],
+    eligibility: [
+      'Applicant must be an Indian citizen residing in a house with a valid domestic electricity connection [VERIFY tenant NOC / joint family meter transfer rules]',
+      'Roof ownership or valid property title suitable for shadow-free solar mounting',
+      'No prior central rooftop solar subsidy availed for the same consumer account number [VERIFY current DBT deduplication norm]',
+    ],
+    documentsRequired: [
+      'Latest KPDCL / JPDCL domestic electricity bill showing Consumer ID and Sanctioned Load',
+      'Aadhaar Card linked with active mobile number for OTP login',
+      'Cancelled cheque or Bank Passbook front page (matching applicant name for DBT)',
+      'Property ownership proof / Jamabandi / Municipal Tax receipt [VERIFY accepted J&K ownership proof list]',
+    ],
+    stepByStep: [
+      'Visit pmsuryaghar.gov.in and select Apply for Rooftop Solar -> Register using State (Jammu & Kashmir), Electricity Distribution Company (KPDCL or JPDCL), and Consumer Account Number.',
+      'Log in with registered mobile number and fill out the rooftop capacity request form.',
+      'Wait for online Technical Feasibility Approval from your respective Discom sub-division.',
+      'Select a registered solar vendor shown inside your portal dashboard and sign the standard agreement.',
+      'Complete installation using domestic content requirement (DCR) panels and submit commissioning inspection request.',
+      'After net meter installation and commissioning certificate upload, submit bank details on the portal to claim DBT subsidy.',
+    ],
+    faqs: [
+      {
+        question: 'Can households in snow-bound districts of Anantnag, Kulgam, or Baramulla apply?',
+        answer:
+          'Yes, domestic consumers across KPDCL and JPDCL divisions are eligible, provided the vendor uses sturdy elevated mounting structures designed for local wind and snow loads [VERIFY local empanelled vendor availability in rural feeders].',
+      },
+      {
+        question: 'How much subsidy is credited to the bank account?',
+        answer:
+          'Central Financial Assistance is credited directly to the beneficiary bank account based on installed capacity slabs [VERIFY exact current slab figures on pmsuryaghar.gov.in before submission].',
+      },
+    ],
+  },
+  {
+    id: 'jk-ladli-beti-smas-guide-draft',
+    title: 'J&K Ladli Beti & State Marriage Assistance Scheme (SMAS): Eligibility & Jansugam Guide',
+    hindiTitle: 'जम्मू-कश्मीर लाडली बेटी और विवाह सहायता योजना (SMAS): पात्रता और जनसुगम गाइड',
+    urduTitle: 'جموں و کشمیر لاڈلی بیٹی اور اسٹیٹ میرج اسسٹنس اسکیم: اہلیت اور درخواست گائیڈ',
+    category: 'State Services',
+    readTime: '6 min read',
+    lastUpdated: 'November 18, 2026',
+    status: 'draft',
+    verifyNotes: [
+      'Verify latest annual family income limit for Ladli Beti and AAY/PHH ration card requirement for SMAS.',
+      'Confirm current J&K Bank recurring deposit monthly contribution (Rs 1,000/month) and SMAS financial assistance amount on jksocialwelfare.nic.in.',
+    ],
+    author: 'CSC DOST Editorial & Welfare Desk',
+    officialPortal: 'jansugam.jk.gov.in / jksocialwelfare.nic.in',
+    officialUrl: 'https://jansugam.jk.gov.in',
+    responsibleDepartment: 'Department of Social Welfare, Government of Jammu & Kashmir',
+    intendedBeneficiaries: 'Eligible families of newborn girl children (Ladli Beti) & economically weaker brides (SMAS) in J&K',
+    benefitSummary: 'Ladli Beti recurring deposit & SMAS marriage assistance [VERIFY exact 2026 ₹1,000/month & ₹50,000/gold norm on official portal]',
+    applicableRegion: 'Jammu & Kashmir UT (verified districts & BPL/AAY/PHH beneficiaries)',
+    summary:
+      'Citizens guide to two flagship Jammu & Kashmir Social Welfare schemes available via Jansugam: Ladli Beti Scheme for newborn girl children and the State Marriage Assistance Scheme (SMAS) for economically weaker prospective brides.',
+    tableOfContents: [
+      'Difference Between Ladli Beti and SMAS',
+      'Verified Eligibility Rules & Income Thresholds',
+      'Mandatory Certificates Required via Tehsil & Health Dept',
+      'Online Application Workflow on Jansugam Portal',
+      'Verification by CDPO / District Social Welfare Officer',
+    ],
+    sections: [
+      {
+        heading: '1. Difference Between Ladli Beti and State Marriage Assistance Scheme',
+        content:
+          'Although both programmes are administered by the J&K Social Welfare Department through the Jansugam e-services portal, they serve different life stages. Ladli Beti opens a zero-fee recurring deposit account at birth in the girl child name with monthly UT contributions maturing at age 21, while SMAS provides one-time marriage assistance to eligible unmarried daughters aged 18 or above from priority households prior to marriage.',
+        bulletPoints: [
+          'Ladli Beti applications must generally be submitted within a fixed window from the child birth date [VERIFY 6-month / 1-year window from birth certificate issue].',
+          'SMAS applications must be submitted at least one month prior to the scheduled date of marriage [VERIFY exact advance filing days in latest SO notification].',
+        ],
+      },
+      {
+        heading: '2. Verified Eligibility Rules & Income Thresholds',
+        content:
+          'Applicants must belong to Jammu and Kashmir UT with valid Domicile status and verified family income or priority ration category. For Ladli Beti, total annual family income from all sources must remain below [VERIFY Rs 75,000 / Rs 1,00,000 annual income cap as per latest Social Welfare order]. For SMAS, families holding AAY or PHH ration cards verified through Food, Civil Supplies & Consumer Affairs records receive primary priority alongside age and unmarried status confirmation.',
+        tips: 'Ensure the mother or girl child Aadhaar-seeded J&K Bank account and Tehsildar Income Certificate have matching spellings before uploading scans on Jansugam.',
+      },
+      {
+        heading: '3. Field Verification by CDPO & Sanction',
+        content:
+          'Once submitted online with application reference number, records pass digitally to the jurisdictional Child Development Project Officer (CDPO) or Tehsil Social Welfare Officer for field verification through Anganwadi Workers. Keep photocopies of hospital birth record, ration card, and Aadhaar ready for physical verification if requested.',
+      },
+    ],
+    eligibility: [
+      'Girl child born in J&K UT within eligible birth-date filing window (Ladli Beti) [VERIFY applicable district list & filing window]',
+      'Unmarried girl aged 18 years or above belonging to AAY/PHH family (SMAS) [VERIFY current age & minimum educational qualification norm]',
+      'Annual household income below UT prescribed threshold verified by Tehsildar [VERIFY exact ₹ threshold]',
+    ],
+    documentsRequired: [
+      'J&K Domicile Certificate of parents / applicant',
+      'Hospital Birth Certificate (Ladli Beti) or School/Date-of-Birth Proof & Nikahnama/Marriage Card (SMAS)',
+      'Valid Tehsildar Income Certificate or AAY/PHH Ration Card copy',
+      'Aadhaar Card of parents and girl child / prospective bride',
+      'Active J&K Bank Passbook copy',
+    ],
+    stepByStep: [
+      'Register or log in on jansugam.jk.gov.in via MeriPehchaan (JanParichay) credentials.',
+      'Select Department of Social Welfare -> choose Ladli Beti Scheme or State Marriage Assistance Scheme (SMAS).',
+      'Enter family ration card, Aadhaar, domicile, and bank details carefully.',
+      'Upload clear PDF/JPG scans of required certificates and submit for e-verification.',
+      'Note the Jansugam Application Reference Number and track verification status with local CDPO / TSWO office.',
+    ],
+    faqs: [
+      {
+        question: 'Can a family apply for SMAS after the marriage ceremony has already taken place?',
+        answer:
+          'Under standard Social Welfare rules, SMAS applications must be submitted in advance before the marriage date so field verification can be completed [VERIFY exact advance window on jksocialwelfare.nic.in].',
+      },
+      {
+        question: 'Can an amount from Ladli Beti be withdrawn before age 21?',
+        answer:
+          'Normally the recurring deposit matures when the beneficiary attains 21 years of age and remains unmarried, subject to official J&K Bank & Social Welfare terms [VERIFY premature closure exceptions].',
+      },
+    ],
+  },
+  {
+    id: 'pan-aadhaar-linking-correction-guide-draft',
+    title: 'PAN-Aadhaar Linking, e-PAN Download & Demographic Correction: Complete Citizen Guide',
+    hindiTitle: 'पैन-आधार लिंकिंग, ई-पैन डाउनलोड और सुधार: संपूर्ण नागरिक गाइड',
+    urduTitle: 'پین-آدھار لنکنگ، ای-پین ڈاؤن لوڈ اور تصحیح: مکمل شہری گائیڈ',
+    category: 'Identity & Tax',
+    readTime: '6 min read',
+    lastUpdated: 'November 18, 2026',
+    status: 'draft',
+    verifyNotes: [
+      'Confirm current Income Tax e-Filing Section 234H late linking fee (Rs 1,000) and any exempted categories for 2026.',
+      'Verify current Protean (NSDL) and UTIITSL physical/e-PAN correction fees.',
+    ],
+    author: 'CSC DOST Identity & Compliance Desk',
+    officialPortal: 'incometax.gov.in / onlineservices.nsdl.com',
+    officialUrl: 'https://www.incometax.gov.in/iec/foportal/',
+    responsibleDepartment: 'Income Tax Department (CBDT) / Protean (NSDL) & UTIITSL',
+    intendedBeneficiaries: 'PAN holders checking Link Aadhaar status, fixing name/DOB mismatches, or downloading e-PAN',
+    benefitSummary: 'Prevents inoperative PAN status, avoids higher TDS deduction, and keeps banking & scholarship KYC active',
+    applicableRegion: 'All India',
+    summary:
+      'How to verify whether your PAN is already linked with Aadhaar on the Income Tax e-Filing portal, fix name or date-of-birth mismatches that block linking, pay applicable late fees safely, and request PAN demographic correction.',
+    tableOfContents: [
+      'Why Operative PAN-Aadhaar Linking Matters',
+      'How to Check Link Aadhaar Status Before Paying',
+      'Fixing Name, Gender & Date of Birth Mismatches',
+      'Fee Structure & Authorized Portals',
+      'Step-by-Step Linking & Correction Workflow',
+    ],
+    sections: [
+      {
+        heading: '1. Why Operative PAN-Aadhaar Linking Matters',
+        content:
+          'Under Income Tax rules, an individual whose PAN becomes inoperative due to non-linking with Aadhaar faces disruptions in Income Tax Return refunds, higher TDS/TCS deductions, bank KYC updates, Demat operations, and scholarship bank mandates. Before starting any correction or payment, always check your live linking status directly on the official Income Tax portal without sharing OTPs with third-party agents.',
+        bulletPoints: [
+          'If PAN status shows Already Linked, no duplicate fee payment is required.',
+          'Exempted categories (such as certain NRI statuses or notified age groups) should verify official CBDT exemption circulars before initiating payment [VERIFY current 2026 CBDT exemption list].',
+        ],
+      },
+      {
+        heading: '2. Fixing Name, Gender & Date of Birth Mismatches',
+        content:
+          'UIDAI demographic verification will reject PAN-Aadhaar linking automatically if full name spelling, date of birth, or gender differs between your PAN database record and your Aadhaar record. Decide carefully which document matches your Class 10 Matriculation certificate: update PAN via Protean/UTIITSL if Aadhaar matches school records, or update Aadhaar at an authorized Seva Kendra if PAN holds the accurate spelling.',
+        tips: 'Never pay the Rs 1,000 challan twice if UIDAI demographic match fails—fix the mismatch on PAN or Aadhaar first, then re-submit Link Aadhaar once the challan reflects under the same PAN.',
+      },
+      {
+        heading: '3. Authorized Correction Portals & e-PAN Retrieval',
+        content:
+          'Citizens requiring PAN reprint or demographic correction can use Protean eGov (tin-nsdl) or UTIITSL portals depending on which agency originally issued the PAN, or submit an assisted request through an authorized CSC centre [VERIFY latest Protean & UTIITSL official fee schedule including physical dispatch vs e-PAN only].',
+      },
+    ],
+    eligibility: [
+      'All non-exempt Indian PAN holders allotted PAN prior to notified cutoff dates [VERIFY latest CBDT cutoff date]',
+      'Aadhaar number active and linked with mobile number for OTP confirmation',
+      'Exact match in Name, Date of Birth, and Gender between PAN and Aadhaar',
+    ],
+    documentsRequired: [
+      'PAN Card Number / Existing PAN copy',
+      'Aadhaar Card with active mobile number for OTP',
+      'Matriculation / Birth Certificate (if correcting Date of Birth on PAN)',
+      'Gazette Notification or Supporting ID proof (for major name changes)',
+    ],
+    stepByStep: [
+      'Open incometax.gov.in -> Quick Links -> Link Aadhaar Status and enter your 10-digit PAN and 12-digit Aadhaar.',
+      'If status confirms not linked, verify exact Name and DOB matching on both documents first.',
+      'Click Link Aadhaar -> validate PAN/Aadhaar -> complete e-Pay Tax challan under Minor Head 500 (Other Receipts) [VERIFY Rs 1,000 fee applicability].',
+      'Wait for challan verification (up to 4-5 working days in some banks), then revisit Link Aadhaar to submit the final OTP request.',
+      'Re-check Link Aadhaar Status after 48 hours to confirm active operative linking.',
+    ],
+    faqs: [
+      {
+        question: 'My challan payment succeeded, but PAN-Aadhaar still says Not Linked. What should I do?',
+        answer:
+          'Paying the fee challan is only Step 1. You must return to the Link Aadhaar screen on incometax.gov.in once payment reflects and complete the Aadhaar OTP submission step [VERIFY bank settlement delay window].',
+      },
+      {
+        question: 'Which agency should I choose for PAN correction—Protean (NSDL) or UTIITSL?',
+        answer:
+          'Check the back of your physical PAN card or original acknowledgment slip to see whether NSDL or UTIITSL issued it; either authorized portal can process Changes/Correction in existing PAN data.',
+      },
+    ],
+  },
+  {
+    id: 'jk-passport-seva-police-verification-guide-draft',
+    title: 'Passport Seva in J&K (PSK Srinagar & Jammu): Fresh, Renewal & Police Verification Guide',
+    hindiTitle: 'जम्मू-कश्मीर पासपोर्ट सेवा: नया पासपोर्ट, नवीनीकरण और पुलिस सत्यापन गाइड',
+    urduTitle: 'جموں و کشمیر پاسپورٹ سیوا: نیا پاسپورٹ، تجدید اور پولیس تصدیق گائیڈ',
+    category: 'State Services',
+    readTime: '6 min read',
+    lastUpdated: 'November 18, 2026',
+    status: 'draft',
+    verifyNotes: [
+      'Confirm current normal vs Tatkaal passport fees (Rs 1,500 normal / Rs 3,500 Tatkaal for 36-page adult passport) on passportindia.gov.in.',
+      'Verify latest J&K Police CID / mPassport Police App verification norms and RPO Srinagar / RPO Jammu POPSK list.',
+    ],
+    author: 'CSC DOST Travel & Identity Advisory Desk',
+    officialPortal: 'passportindia.gov.in',
+    officialUrl: 'https://www.passportindia.gov.in',
+    responsibleDepartment: 'Ministry of External Affairs (RPO Srinagar & RPO Jammu)',
+    intendedBeneficiaries: 'Citizens applying for Fresh, Re-issue/Renewal, Minor, or Lost/Damaged Indian Passports in J&K',
+    benefitSummary: 'Transparent walkthrough covering Document Advisor, PSK slot booking, biometrics, and J&K Police CID clearance',
+    applicableRegion: 'Jammu & Kashmir (RPO Srinagar & RPO Jammu jurisdictions)',
+    summary:
+      'Complete guide to applying for a fresh or renewed Indian passport through Passport Seva Kendra (PSK) Srinagar, PSK Jammu, or district Post Office Passport Seva Kendras (POPSK), plus preparing documents for J&K Police and CID verification.',
+    tableOfContents: [
+      'RPO Srinagar vs RPO Jammu Jurisdiction & POPSK Centres',
+      'Fresh vs Re-issue & ECNR vs ECR Categories',
+      'Checklist of Identity, Address & DOB Proofs',
+      'PSK Biometric Appointment & Counter Stages (A, B, C)',
+      'J&K Police & CID Verification Tips to Avoid Delays',
+    ],
+    sections: [
+      {
+        heading: '1. RPO Srinagar vs RPO Jammu Jurisdiction & POPSK Centres',
+        content:
+          'Applicants residing in Kashmir division districts (Anantnag, Kulgam, Pulwama, Shopian, Srinagar, Budgam, Baramulla, Bandipora, Kupwara, Ganderbal) fall under Regional Passport Office (RPO) Srinagar, while Jammu division districts report to RPO Jammu. Alongside main PSKs, several district Post Office Passport Seva Kendras (POPSKs) handle normal category bookings [VERIFY active POPSK list in Anantnag, Baramulla, Leh, Udhampur on passportindia.gov.in].',
+        bulletPoints: [
+          'Always verify on the official Document Advisor tool before booking an appointment whether you need Fresh or Re-issue (validity expiry, damaged pages, exhaustion of pages, or personal detail change).',
+          'Do not pay unauthorised third-party websites claiming instant Tatkaal approval; all fees are paid strictly on passportindia.gov.in.',
+        ],
+      },
+      {
+        heading: '2. ECNR Status & Document Consistency',
+        content:
+          'Applicants who have passed Class 10 (Matriculation) or above automatically qualify for Emigration Check Not Required (ECNR) status upon carrying original Class 10 marksheet and certificate to the PSK counter. Ensure your Aadhaar, Voter ID/bank passbook, and school marksheet display identical name spelling, father name, and date of birth; minor spelling mismatches are the top cause of counter hold.',
+        tips: 'If you have lived at multiple addresses within the last 12 months, mention all addresses accurately in the form so post-PSK police verification does not trigger an adverse report.',
+      },
+      {
+        heading: '3. J&K Police & CID Verification Preparation',
+        content:
+          'After successful document scan and biometrics at PSK Counters A, B, and C, your file is forwarded digitally to the local Police Station and Special Branch / CID verification unit [VERIFY current mPassport Police App timeline & required witness proofs in J&K districts]. Keep original documents, two passport photos, and copy of parent/witness ID handy when contacted by the beat officer.',
+      },
+    ],
+    eligibility: [
+      'Indian citizen residing in Jammu & Kashmir with verifiable current and permanent residential address',
+      'Class 10 pass certificate for Non-ECR endorsement (or other eligible ECNR proof per MEA rules)',
+      'Parent/guardian consent Annexures D/C for minor applicants under 18 years [VERIFY latest MEA minor annexure rules]',
+    ],
+    documentsRequired: [
+      'Original Aadhaar Card + Address Proof (Bank Passbook with photo / Electricity or Water bill / Election Card)',
+      'Class 10 Matriculation Certificate / Birth Certificate for Date of Birth & ECNR verification',
+      'Old Passport in original (for Re-issue / Renewal applications)',
+      'Printed Application Receipt (ARN) & SMS appointment confirmation (originals required at PSK)',
+    ],
+    stepByStep: [
+      'Register on passportindia.gov.in selecting the correct RPO (Srinagar or Jammu).',
+      'Fill out the Fresh or Re-issue Passport application carefully matching exact spellings on school and Aadhaar records.',
+      'Pay the prescribed passport fee online [VERIFY current ₹1,500 normal / ₹3,500 Tatkaal fee] and book a PSK or POPSK slot.',
+      'Visit the selected PSK/POPSK 15 minutes early with all ORIGINAL documents (photocopies alone are rejected).',
+      'Complete Counter A (document scanning & biometrics), Counter B (verification), and Counter C (granting officer).',
+      'Cooperate promptly with local Police Station and CID verification once SMS notification arrives.',
+    ],
+    faqs: [
+      {
+        question: 'Is Tatkaal passport available for every applicant?',
+        answer:
+          'Tatkaal slots carry higher fees and stricter verification norms, and certain categories such as major name change or lost passport may face restrictions [VERIFY Tatkaal eligibility matrix on passportindia.gov.in].',
+      },
+      {
+        question: 'Do I need to carry self-attested photocopies along with original documents to PSK?',
+        answer:
+          'Original documents are mandatory for digital scanning at PSK Counter A. Carrying one clean self-attested set as backup is helpful, though PSK staff scan directly from originals.',
+      },
+    ],
+  },
+  {
+    id: 'udyam-msme-jk-self-employment-guide-draft',
+    title: 'Udyam MSME Registration & J&K Self-Employment Loan Linkage (PMEGP / Mumkin / Tejaswini)',
+    hindiTitle: 'उद्यम एमएसएमई पंजीकरण और जम्मू-कश्मीर स्वरोजगार योजना गाइड',
+    urduTitle: 'اُدیم ایم ایس ایم ای رجسٹریشن اور جموں و کشمیر خود روزگار اسکیماں گائیڈ',
+    category: 'Central Scheme',
+    readTime: '6 min read',
+    lastUpdated: 'November 18, 2026',
+    status: 'draft',
+    verifyNotes: [
+      'Verify latest Micro/Small/Medium investment & turnover limits on udyamregistration.gov.in.',
+      'Confirm active status & age/education limits of J&K Mission Youth (Mumkin / Tejaswini / Spurring Entrepreneurship) and KVIC PMEGP for 2026.',
+    ],
+    author: 'CSC DOST Enterprise & Youth Support Desk',
+    officialPortal: 'udyamregistration.gov.in / missionyouth.jk.gov.in',
+    officialUrl: 'https://udyamregistration.gov.in',
+    responsibleDepartment: 'Ministry of MSME / KVIC & J&K Mission Youth / JKEDI',
+    intendedBeneficiaries: 'Small traders, artisans, CSC VLEs, tailoring/manufacturing units, and unemployed youth entrepreneurs',
+    benefitSummary: 'Free lifetime Udyam Certificate + eligibility gateway for PMEGP [VERIFY 15-35% margin money subsidy] & J&K Mission Youth credit schemes',
+    applicableRegion: 'All India & Jammu & Kashmir UT',
+    summary:
+      'Complete walkthrough for obtaining a free government Udyam MSME Registration Certificate using Aadhaar and PAN, and using it as an enterprise foundation for bank Mudra loans, KVIC PMEGP, and J&K Mission Youth self-employment programmes.',
+    tableOfContents: [
+      'Why Udyam Registration Is Free & Essential',
+      'NIC Business Activity Codes & Investment Classification',
+      'Linking Udyam with PMEGP & J&K Youth Schemes',
+      'Documents & Bank Details Needed',
+      'Step-by-Step Registration on udyamregistration.gov.in',
+    ],
+    sections: [
+      {
+        heading: '1. Why Udyam Registration Is Free & Essential',
+        content:
+          'Udyam Registration is the official Government of India enterprise certificate issued by the Ministry of MSME, completely free of government charge on udyamregistration.gov.in. Beware of lookalike private portals charging hefty fees for free Udyam certificates. A valid Udyam number helps shops, handloom artisans, dairy units, food processors, and service enterprises open current bank accounts, apply for collateral-free credit guarantee schemes, and qualify for priority sector lending.',
+        bulletPoints: [
+          'Micro, Small, and Medium classification automatically syncs with Income Tax PAN and GSTIN turnover data [VERIFY current ₹ turnover/investment limits].',
+          'Existing Udyog Aadhaar holders had to migrate onto Udyam to remain valid for government tenders and subsidies.',
+        ],
+      },
+      {
+        heading: '2. Linking Udyam with PMEGP & J&K Youth Self-Employment Schemes',
+        content:
+          'Young entrepreneurs across Anantnag, Srinagar, Baramulla, and Jammu looking for subsidized loans via KVIC/DIC PMEGP, PM Vishwakarma, or J&K Mission Youth initiatives (such as Mumkin commercial vehicle support or Tejaswini women entrepreneurship) frequently need clean KYC, Aadhaar-linked bank accounts, project reports (DPR), and Udyam registration [VERIFY exact active J&K Mission Youth & JKREGP guidelines for 2026 before applying].',
+        tips: 'Pick accurate 5-digit NIC 2008 activity codes (manufacturing vs wholesale/retail/service) during Udyam form entry—banks cross-check your NIC code against your loan project report.',
+      },
+    ],
+    eligibility: [
+      'Proprietor, Partnership, SHG, Cooperative, or Enterprise owner with valid Aadhaar & PAN',
+      'Aadhaar linked to active mobile number for OTP verification',
+      'For J&K Mission Youth / PMEGP linkage: domicile, age (18+ years), and non-defaulter CIBIL status [VERIFY scheme-specific age/qualification criteria]',
+    ],
+    documentsRequired: [
+      'Proprietor Aadhaar Card & Mobile Number',
+      'PAN Card of Enterprise / Proprietor',
+      'Active Savings or Current Bank Account Number & IFSC',
+      'Business Address, Date of Commencement, and NIC Activity Details',
+      'GSTIN (if registered and mandatory under GST turnover rules)',
+    ],
+    stepByStep: [
+      'Visit udyamregistration.gov.in and choose For New Entrepreneurs who are not Registered yet as MSME.',
+      'Validate Aadhaar number via OTP, then validate PAN and ITR/GST status.',
+      'Enter enterprise name, unit location (District, Block, Pincode), and select exact 5-digit NIC Codes.',
+      'Enter employee headcount, investment in plant/machinery, and bank account number + IFSC.',
+      'Submit final OTP verification and download the printable Udyam Certificate with QR code instantly.',
+    ],
+    faqs: [
+      {
+        question: 'Is there any government registration fee for Udyam MSME Certificate?',
+        answer:
+          'No. Official registration on udyamregistration.gov.in is 100% free of government fee. Only optional CSC facilitation charges apply if you seek assisted data entry and printing.',
+      },
+      {
+        question: 'Can a small shop or CSC service point register under Udyam?',
+        answer:
+          'Yes, retail trades and service enterprises with valid Aadhaar, PAN, and active bank accounts can register under the appropriate service/trade NIC activity codes [VERIFY latest retail MSME priority sector lending rules].',
+      },
+    ],
+  },
+  {
+    id: 'eshram-card-unorganised-workers-guide-draft',
+    title: 'e-Shram Card Registration & Profile Update: Benefits for Unorganised Workers',
+    hindiTitle: 'ई-श्रम कार्ड पंजीकरण और प्रोफाइल अपडेट: असंगठित श्रमिकों के लिए लाभ',
+    urduTitle: 'ای-شرم کارڈ رجسٹریشن اور پروفائل اپڈیٹ: غیر منظم مزدوروں کے لیے فوائد',
+    category: 'Central Scheme',
+    readTime: '5 min read',
+    lastUpdated: 'November 18, 2026',
+    status: 'draft',
+    verifyNotes: [
+      'Confirm active PMSBY ₹2 lakh accidental insurance coverage terms and whether e-Shram pension/rations convergence rules updated in 2026.',
+      'Verify exact NCO occupation codes and ESIC/EPFO exclusion logic.',
+    ],
+    author: 'CSC DOST Citizen Welfare Desk',
+    officialPortal: 'eshram.gov.in',
+    officialUrl: 'https://eshram.gov.in',
+    responsibleDepartment: 'Ministry of Labour & Employment, Government of India',
+    intendedBeneficiaries: 'Construction workers, agricultural labourers, drivers, street vendors, domestic workers, weavers & artisans',
+    benefitSummary: '12-digit Universal Account Number (UAN) linking central/state social security & [VERIFY accidental insurance / ration convergence rules]',
+    applicableRegion: 'All India',
+    summary:
+      'Step-by-step guide for unorganised sector workers on registering for an e-Shram Universal Account Number (UAN), selecting the right NCO occupation code, and updating Aadhaar-linked bank or address details.',
+    tableOfContents: [
+      'Who Counts as an Unorganised Worker under e-Shram',
+      'Key Benefits & PMSBY Convergence Notes',
+      'Mandatory Eligibility & Exclusions (EPFO / ESIC)',
+      'Documents Required & Occupation Coding',
+      'Self-Registration & Profile Update Steps',
+    ],
+    sections: [
+      {
+        heading: '1. Who Counts as an Unorganised Worker under e-Shram',
+        content:
+          'The National Database of Unorganised Workers (e-Shram) covers home-based workers, self-employed workers, and wage workers across construction, agriculture, carpet weaving, apple orchard labour, transport driving, tailoring, carpentry, and domestic help. Registered citizens receive a lifetime 12-digit Universal Account Number (UAN) card recognized across India for state and central welfare delivery.',
+        bulletPoints: [
+          'Migrant workers moving outside Jammu & Kashmir for seasonal work benefit from a unified national worker database.',
+          'Always verify bank account seeding with Aadhaar so future welfare transfers do not bounce.',
+        ],
+      },
+      {
+        heading: '2. Important Exclusions & Accidental Cover Notes',
+        content:
+          'Workers actively covered under Employees Provident Fund Organisation (EPFO), Employees State Insurance Corporation (ESIC), or paying Income Tax are NOT eligible for e-Shram registration [VERIFY current 2026 e-Shram age limit 16–59 years and active PMSBY ₹2 lakh accidental insurance subsidy terms on eshram.gov.in]. Students who are not engaged in any wage or self-employed activity should also verify eligibility carefully rather than registering needlessly.',
+        tips: 'Update your e-Shram profile immediately if you change your bank account, mobile number, or skill trade—or if you become an income taxpayer or join organized EPFO payroll.',
+      },
+    ],
+    eligibility: [
+      'Citizen engaged in unorganised work (wage worker, migrant labourer, small farmer, artisan, driver)',
+      'Age strictly between [VERIFY 16 and 59 years] on date of registration',
+      'Must NOT be a member of EPFO / ESIC or an Income Tax assessee',
+    ],
+    documentsRequired: [
+      'Aadhaar Card (with Aadhaar-linked mobile number or biometric verification via CSC)',
+      'Active Bank Account Number & IFSC Code seeded with Aadhaar',
+      'Nominee full name, relationship, and date of birth',
+      'Occupation details matching NCO Code list',
+    ],
+    stepByStep: [
+      'Visit eshram.gov.in and select Register on e-Shram (or Update Profile if already registered).',
+      'Verify your Aadhaar-linked mobile number via OTP and enter captcha.',
+      'Review pre-filled Aadhaar demographic details and fill in residential address, education, income bracket, and nominee.',
+      'Select your primary and secondary NCO occupation code from the official occupation PDF list.',
+      'Confirm Aadhaar-seeded bank account details and download your e-Shram UAN Card.',
+    ],
+    faqs: [
+      {
+        question: 'Can college students apply for an e-Shram card to receive monthly allowances?',
+        answer:
+          'e-Shram is strictly designed for unorganised sector workers aged 16–59, not non-working students. Incorrect registration can interfere with scholarship eligibility or create compliance mismatches.',
+      },
+      {
+        question: 'How do I update my bank account or occupation on e-Shram?',
+        answer:
+          'Log in on eshram.gov.in -> Already Registered? Update using UAN/Aadhaar OTP -> edit Bank Account or Occupation Skills and re-download the updated UAN card.',
+      },
+    ],
+  },
+  {
+    id: 'kashmir-univ-cus-exam-migration-bonafide-guide-draft',
+    title: 'University of Kashmir & Cluster University Srinagar: Migration, Degree & Re-Evaluation Guide',
+    hindiTitle: 'कश्मीर विश्वविद्यालय और क्लस्टर यूनिवर्सिटी श्रीनगर: माइग्रेशन, डिग्री और री-इवैल्यूएशन गाइड',
+    urduTitle: 'کشمیر یونیورسٹی اور کلسٹر یونیورسٹی سری نگر: مائیگریشن، ڈگری اور ری ایویلوایشن گائیڈ',
+    category: 'Education',
+    readTime: '6 min read',
+    lastUpdated: 'November 18, 2026',
+    status: 'draft',
+    verifyNotes: [
+      'Verify latest University of Kashmir & CUS Srinagar online fee structures for Migration Certificate, Provisional/Original Degree, and Re-evaluation per paper.',
+      'Confirm ABC/APAAR ID mandatory requirement on egov.uok.edu.in and cusrinagar.edu.in student portals.',
+    ],
+    author: 'CSC DOST Higher Education Support Desk',
+    officialPortal: 'egov.uok.edu.in / cusrinagar.edu.in',
+    officialUrl: 'https://www.kashmiruniversity.net',
+    responsibleDepartment: 'University of Kashmir & Cluster University Srinagar (Examination & Registration Wings)',
+    intendedBeneficiaries: 'UG, PG, B.Ed, Integrated & DDOE students needing academic certificates or answer-script re-evaluation',
+    benefitSummary: 'Clear step-by-step workflow for Migration, Provisional/Degree Certificate, Transcript & Re-evaluation applications',
+    applicableRegion: 'Jammu & Kashmir (affiliated colleges & campus students)',
+    summary:
+      'Practical student guide to applying online for Migration Certificates, Provisional or Original Degree Certificates, Academic Transcripts, and Re-evaluation/Xerox copies of answer scripts at University of Kashmir and Cluster University Srinagar.',
+    tableOfContents: [
+      'Preparing Registration No., Roll No. & ABC/APAAR ID',
+      'Applying for Migration & Provisional/Original Degree',
+      'Re-Evaluation & Answer Script Xerox Windows',
+      'Documents & College Counter Endorsements',
+      'Step-by-Step Portal Submission & Receipt Tracking',
+    ],
+    sections: [
+      {
+        heading: '1. Preparing Registration No., Roll No. & ABC/APAAR ID',
+        content:
+          'Before starting any student service request on University of Kashmir (egov.uok.edu.in / kashmiruniversity.net) or Cluster University Srinagar (cusrinagar.edu.in), gather your University Registration Number, College Class Roll Number, Final Semester Marks Card, and 12-digit APAAR/ABC ID. Incorrect registration numbers or unpaid fee challans are the most common reason certificates remain stuck in processing.',
+        bulletPoints: [
+          'Keep active email ID and student mobile number updated for SMS certificate dispatch alerts.',
+          'Download and print the online payment confirmation receipt with Transaction ID immediately after paying fees.',
+        ],
+      },
+      {
+        heading: '2. Migration, Provisional & Original Degree Certificates',
+        content:
+          'Students moving to IGNOU, central universities, or outside-state institutions require an official Migration Certificate after clearing or cancelling their earlier enrolment. Both University of Kashmir and Cluster University run online student service forms where candidates upload marks cards, college NOC/clearance where specified, and pay the prescribed statutory fee [VERIFY current ₹ Migration and Degree certificate fee slabs on official student service portals].',
+        tips: 'Read the specific college clearance instructions printed on your online receipt—some certificates require physical submission of the printed form at your parent college or Hazratbal/Gogji Bagh counter.',
+      },
+      {
+        heading: '3. Re-Evaluation & Answer Script Xerox Windows',
+        content:
+          'Whenever UG/PG or B.Ed results are declared, the Controller of Examinations publishes a strict notification window (typically 10 to 15 days) for applying online for Re-evaluation or obtaining photocopies of answer scripts [VERIFY exact window days & per-paper re-evaluation fee in latest KU/CUS circular]. Submit before the closing timestamp as late offline applications are not entertained.',
+      },
+    ],
+    eligibility: [
+      'Bonafide enrolled or pass-out students of University of Kashmir or Cluster University Srinagar',
+      'Valid University Registration Number and declared semester results (for Degree/Migration/Re-evaluation)',
+      'Clearance of college dues / library NOC if requested by department guidelines',
+    ],
+    documentsRequired: [
+      'University Registration Number & Enrolment Details',
+      'Consolidated / All-Semester Marks Cards PDF',
+      '12-digit DigiLocker ABC / APAAR ID (where required)',
+      'College No-Objection / Clearance Slip (if applying for mid-course Migration)',
+      'Debit Card / UPI / NetBanking for statutory university fee payment',
+    ],
+    stepByStep: [
+      'Visit official portal (kashmiruniversity.net -> Student Services / eGov, or cusrinagar.edu.in -> Student Login).',
+      'Select the exact service: Migration Certificate, Provisional/Degree Certificate, Bona Fide, or Re-Evaluation.',
+      'Enter University Registration Number and verify auto-fetched student profile details carefully.',
+      'Upload scanned marks cards/documents in prescribed KB file size and preview all details.',
+      'Pay the official fee online, download the stamped Form + Fee Receipt PDF, and complete physical counter submission if printed on the slip.',
+    ],
+    faqs: [
+      {
+        question: 'Can I apply for University of Kashmir Migration Certificate online without visiting Srinagar campus?',
+        answer:
+          'University of Kashmir has digitized several certificate workflows on its eGov portal, though original document verification or postal dispatch rules vary by certificate type [VERIFY current online-only vs counter pickup notice on egov.uok.edu.in].',
+      },
+      {
+        question: 'What is the fee for applying for a Xerox copy or Re-evaluation of an exam paper?',
+        answer:
+          'Fee per paper is notified separately in each examination re-evaluation circular [VERIFY exact per-paper ₹ rate in the active notification before paying].',
+      },
+    ],
+  },
+  {
+    id: 'jk-driving-licence-sarathi-parivahan-guide-draft',
+    title: 'J&K Driving Licence & Sarathi Parivahan Guide: Learner Licence, Track Test & Renewal',
+    hindiTitle: 'जम्मू-कश्मीर ड्राइविंग लाइसेंस (सारथी परिवहन): लर्नर, टेस्ट और नवीनीकरण गाइड',
+    urduTitle: 'جموں و کشمیر ڈرائیونگ لائسنس (سارتھی پری واہن): لرنر، ٹیسٹ اور تجدید گائیڈ',
+    category: 'State Services',
+    readTime: '6 min read',
+    lastUpdated: 'November 18, 2026',
+    status: 'draft',
+    verifyNotes: [
+      'Verify latest J&K RTO / ARTO contactless Aadhaar-eKYC Learner Licence fee, DL Smart Card fee, and Form 1A age threshold (40+ years).',
+      'Confirm active driving track test slot booking instructions for Anantnag, Srinagar, Pulwama, and Jammu RTOs.',
+    ],
+    author: 'CSC DOST Transport & Citizen Facilitation Desk',
+    officialPortal: 'sarathi.parivahan.gov.in',
+    officialUrl: 'https://sarathi.parivahan.gov.in',
+    responsibleDepartment: 'Ministry of Road Transport & Highways (MoRTH) / J&K Transport Department (RTO & ARTOs)',
+    intendedBeneficiaries: 'New drivers, two-wheeler/LMV learners, and existing licence holders seeking renewal or duplicate DL in J&K',
+    benefitSummary: 'Contactless Aadhaar Learner Test, Permanent DL track booking, and smart-card renewal steps',
+    applicableRegion: 'Jammu & Kashmir UT (all RTO & ARTO jurisdictions)',
+    summary:
+      'Complete guide to applying for a Learner Licence (LL) via contactless Aadhaar e-KYC on Sarathi Parivahan, upgrading to a Permanent Driving Licence after 30 days, passing the ARTO driving track test, and renewing expired licences.',
+    tableOfContents: [
+      'Contactless Learner Licence via Aadhaar e-KYC',
+      'Mandatory Age, Medical Form 1/1A & Vehicle Classes (MCWG / LMV)',
+      'Permanent DL Application & ARTO Track Slot Booking',
+      'Renewal, Address Change & Duplicate DL Services',
+      'Step-by-Step Parivahan Portal Walkthrough',
+    ],
+    sections: [
+      {
+        heading: '1. Contactless Learner Licence via Aadhaar e-KYC',
+        content:
+          'Under MoRTH contactless services integrated with Jammu & Kashmir RTOs/ARTOs (such as ARTO Anantnag, RTO Kashmir Srinagar, ARTO Kulgam, RTO Jammu), applicants using Aadhaar OTP authentication can apply for a Learner Licence (LL) and take the road-signs online stall test directly from home or an authorized facilitation desk after watching the mandatory road-safety tutorial.',
+        bulletPoints: [
+          'Minimum age is 18 years for standard MCWG (geared two-wheeler) and LMV (car/jeep) [VERIFY 16-year gearless 50cc parental consent rule if needed].',
+          'A Learner Licence remains valid for 6 months; you can apply for Permanent Driving Licence only after completing at least 30 days from LL issue date.',
+        ],
+      },
+      {
+        heading: '2. Medical Form 1, Form 1A & ARTO Track Test Preparation',
+        content:
+          'Applicants under 40 years applying for non-transport categories submit self-declaration Form 1 online, whereas applicants aged 40 years or above (or applying for transport/commercial badges) must upload Medical Certificate Form 1A signed by an authorized MBBS doctor on the Parivahan Medical dashboard [VERIFY current J&K RTO Form 1A age threshold and prescribed LL/DL fee table]. On your Permanent DL appointment day, bring your own road-worthy vehicle with valid RC, Insurance, and PUC to the ARTO testing track.',
+        tips: 'Practice reverse-S / 8-figure track manoeuvres cleanly and carry printed Application Form, Fee Receipt, LL copy, and original Aadhaar on test day.',
+      },
+    ],
+    eligibility: [
+      'Age 18 years or above for MCWG and LMV non-transport licences',
+      'Valid residential proof under concerned J&K RTO / ARTO jurisdiction (Aadhaar preferred for contactless mode)',
+      'Mandatory 30-day holding period with active Learner Licence before Permanent DL track test',
+    ],
+    documentsRequired: [
+      'Aadhaar Card with active mobile number for OTP e-KYC',
+      'Age Proof (Class 10 Certificate / Birth Certificate / Passport / PAN)',
+      'Passport-size Photograph & Scanned Signature (white background)',
+      'Form 1 Self-Declaration / Form 1A Medical Certificate (if aged 40+ or transport category)',
+      'Original Valid Vehicle RC, Insurance & PUC on Permanent DL track test date',
+    ],
+    stepByStep: [
+      'Visit parivahan.gov.in -> Sarathi (Driving Licence Related Services) -> select State: Jammu and Kashmir.',
+      'Click Apply for Learner Licence -> choose Submit via Aadhaar Authentication (or non-Aadhaar RTO visit).',
+      'Verify Aadhaar OTP, select vehicle classes (MCWG / LMV), fill personal details, and upload photograph/signature/Form 1A if applicable.',
+      'Pay prescribed Learner Licence + LL Test fee online, watch the mandatory road safety video, and pass the online road-signs quiz.',
+      'After 30 days (and within 180 days), log back in -> Apply for Driving Licence -> book your ARTO Driving Test slot and appear with originals.',
+    ],
+    faqs: [
+      {
+        question: 'Can I take the Learner Licence online test from home or a CSC centre?',
+        answer:
+          'Yes, if you apply via Aadhaar e-KYC mode on sarathi.parivahan.gov.in, the online road-signs tutorial and proctored test can be taken without visiting the ARTO office [VERIFY camera/device requirements before starting].',
+      },
+      {
+        question: 'What happens if my Learner Licence expires before I pass the track test?',
+        answer:
+          'An expired Learner Licence cannot be extended into a Permanent DL; you must apply for a fresh/expired LL re-issue on Sarathi and clear the LL step again [VERIFY exact fee for expired LL].',
       },
     ],
   },

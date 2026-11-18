@@ -8,7 +8,7 @@ import {
   ShieldCheck,
   X,
 } from 'lucide-react';
-import { PUBLISHED_GUIDE_ARTICLES as GUIDE_ARTICLES, GuideArticle } from '../data/guidesData';
+import { PUBLISHED_GUIDE_ARTICLES as STATIC_GUIDE_ARTICLES, GuideArticle } from '../data/guidesData';
 import { useLanguage } from '../contexts/LanguageContext';
 import SchemeDetailView from './schemes/SchemeDetailView';
 import {
@@ -22,7 +22,7 @@ import {
 } from './ui';
 
 export type { GuideArticle };
-export { GUIDE_ARTICLES };
+export { STATIC_GUIDE_ARTICLES as GUIDE_ARTICLES };
 
 interface GuidesKnowledgeHubProps {
   onSelectService?: (serviceName: string) => void;
@@ -48,24 +48,40 @@ export default function GuidesKnowledgeHub({
   onNavigateRoute,
 }: GuidesKnowledgeHubProps) {
   const { language, t } = useLanguage();
+  const [guidesList, setGuidesList] = useState<GuideArticle[]>(STATIC_GUIDE_ARTICLES);
   const [selectedArticle, setSelectedArticle] = useState<GuideArticle | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   useEffect(() => {
+    let cancelled = false;
+    fetch('/api/guides')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.success && Array.isArray(data.guides)) {
+          setGuidesList(data.guides);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (initialArticleId) {
-      const found = GUIDE_ARTICLES.find((a) => a.id === initialArticleId);
+      const found = guidesList.find((a) => a.id === initialArticleId);
       setSelectedArticle(found || null);
     } else {
       setSelectedArticle(null);
     }
-  }, [initialArticleId]);
+  }, [initialArticleId, guidesList]);
 
   useEffect(() => {
     const handleOpenGuideEvent = (e: Event) => {
       const custom = e as CustomEvent<{ guideId?: string; category?: string }>;
       if (custom.detail?.guideId) {
-        const found = GUIDE_ARTICLES.find((a) => a.id === custom.detail.guideId);
+        const found = guidesList.find((a) => a.id === custom.detail.guideId);
         if (found) {
           setSelectedArticle(found);
         }
@@ -78,12 +94,12 @@ export default function GuidesKnowledgeHub({
     return () => {
       window.removeEventListener('open-guide-article', handleOpenGuideEvent);
     };
-  }, []);
+  }, [guidesList]);
 
   const searchMatchingArticles = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return GUIDE_ARTICLES;
-    return GUIDE_ARTICLES.filter(
+    if (!q) return guidesList;
+    return guidesList.filter(
       (article) =>
         article.title.toLowerCase().includes(q) ||
         article.hindiTitle.toLowerCase().includes(q) ||
@@ -93,14 +109,14 @@ export default function GuidesKnowledgeHub({
         (article.responsibleDepartment &&
           article.responsibleDepartment.toLowerCase().includes(q))
     );
-  }, [searchQuery]);
+  }, [searchQuery, guidesList]);
 
   const availableCategories = useMemo(() => {
     const present = ORDERED_CATEGORIES.filter((cat) =>
-      GUIDE_ARTICLES.some((a) => a.category === cat)
+      guidesList.some((a) => a.category === cat)
     );
     return ['All', ...present];
-  }, []);
+  }, [guidesList]);
 
   const filteredArticles = useMemo(() => {
     return searchMatchingArticles.filter(
@@ -110,14 +126,14 @@ export default function GuidesKnowledgeHub({
 
   const relatedGuides = useMemo(() => {
     if (!selectedArticle) return [];
-    const sameCategory = GUIDE_ARTICLES.filter(
+    const sameCategory = guidesList.filter(
       (g) => g.id !== selectedArticle.id && g.category === selectedArticle.category
     );
-    const others = GUIDE_ARTICLES.filter(
+    const others = guidesList.filter(
       (g) => g.id !== selectedArticle.id && g.category !== selectedArticle.category
     );
     return [...sameCategory, ...others].slice(0, 3);
-  }, [selectedArticle]);
+  }, [selectedArticle, guidesList]);
 
   const handleCloseArticle = () => {
     setSelectedArticle(null);
@@ -134,7 +150,7 @@ export default function GuidesKnowledgeHub({
   };
 
   const handleOpenArticleById = (articleId: string) => {
-    const found = GUIDE_ARTICLES.find((a) => a.id === articleId);
+    const found = guidesList.find((a) => a.id === articleId);
     if (!found) return;
 
     if (onOpenArticle) {

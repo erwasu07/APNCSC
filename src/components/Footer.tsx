@@ -106,6 +106,13 @@ export default function Footer({ cafeName = 'CSC DOST' }: FooterProps) {
                 className="text-white font-semibold underline decoration-white/30 hover:text-[#F59E0B]"
               >
                 +91 70068 33767
+              </a>{' '}
+              ·{' '}
+              <a
+                href="mailto:urnxtfd@gmail.com"
+                className="text-white font-semibold underline decoration-white/30 hover:text-[#F59E0B] break-all"
+              >
+                urnxtfd@gmail.com
               </a>
             </div>
           </div>

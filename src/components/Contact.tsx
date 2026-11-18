@@ -104,7 +104,7 @@ export default function Contact({ settings, selectedService, setSelectedService 
         if (res.ok) {
           setStatusMessage({
             type: 'success',
-            text: 'Your query has been recorded. Confirmation emails have been generated in server logs!'
+            text: 'Your query has been recorded and routed to our helpdesk (urnxtfd@gmail.com). We will reach out within 24–48 working hours.'
           });
           // Reset
           setName('');

@@ -75,13 +75,16 @@ import {
   Sparkles,
   FileImage,
   File,
-  Activity
+  Activity,
+  BookOpen
 } from 'lucide-react';
 import WhatsAppBroadcaster from './WhatsAppBroadcaster';
 import AdminThumbnailGeneratorStudio from './AdminThumbnailGeneratorStudio';
 import AdminPushPublisher from './AdminPushPublisher';
 import AdminReviewQueue from './AdminReviewQueue';
 import AdminWhatsAppAlerts from './AdminWhatsAppAlerts';
+import AdminContentHealthTab from './AdminContentHealthTab';
+import AdminGuideVerificationTab from './AdminGuideVerificationTab';
 
 interface AdminDashboardProps {
   cafeName: string;
@@ -102,6 +105,8 @@ type NavSectionId =
   | 'whatsapp_sync'
   | 'push_publisher'
   | 'review_queue'
+  | 'content_health'
+  | 'guide_verification'
   | 'alerts'
   | 'reports';
 
@@ -2370,6 +2375,16 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
       subtitle: 'Twice-daily (7:00 AM & 6:00 PM IST) official portal checks, flagged drafts, and update proposals.',
       breadcrumb: 'Operations / Review Queue'
     },
+    content_health: {
+      title: 'Content Health & Thin-Page Hygiene',
+      subtitle: 'Inspect Class A/B/C/D audit metrics, enrich thin posts, mark noindex, or merge duplicates with 301 redirects.',
+      breadcrumb: 'Operations / Content Health'
+    },
+    guide_verification: {
+      title: 'Guide Verification & Publishing Queue',
+      subtitle: 'Review [VERIFY] markers on draft guides, confirm details on official portals, and publish live.',
+      breadcrumb: 'Operations / Guide Verification'
+    },
     alerts: {
       title: 'Owner WhatsApp Alerts',
       subtitle: 'Manage owner-only WhatsApp monitor summaries, urgent alerts, quiet hours, and delivery logs.',
@@ -2496,6 +2511,8 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     { id: 'whatsapp_sync', label: 'WhatsApp Publisher', icon: Radio },
     { id: 'push_publisher', label: 'Web Push Publisher', icon: Bell },
     { id: 'review_queue', label: 'Review Queue', icon: Activity },
+    { id: 'content_health', label: 'Content Health', icon: FileCheck },
+    { id: 'guide_verification', label: 'Guide Verification', icon: BookOpen },
     { id: 'alerts', label: 'Alerts', icon: MessageSquare },
     { id: 'reports', label: 'Reports & Export', icon: FileSpreadsheet }
   ];
@@ -4458,6 +4475,24 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
           {activeNav === 'review_queue' && (
             <section aria-label="Official Notice Monitor and Review Queue" className="space-y-4">
               <AdminReviewQueue />
+            </section>
+          )}
+
+          {/* ================================================================ */}
+          {/* 8C2. CONTENT HEALTH & THIN-PAGE HYGIENE                          */}
+          {/* ================================================================ */}
+          {activeNav === 'content_health' && (
+            <section aria-label="Content Health and Thin-Page Hygiene" className="space-y-4">
+              <AdminContentHealthTab adminToken={getSafeSession('csc_admin_token')} />
+            </section>
+          )}
+
+          {/* ================================================================ */}
+          {/* 8C3. GUIDE VERIFICATION & PUBLISHING                             */}
+          {/* ================================================================ */}
+          {activeNav === 'guide_verification' && (
+            <section aria-label="Guide Verification and Publishing" className="space-y-4">
+              <AdminGuideVerificationTab adminToken={getSafeSession('csc_admin_token')} />
             </section>
           )}
 

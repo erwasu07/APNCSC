@@ -186,6 +186,9 @@ export interface SarkariItem {
   duplicateOfId?: string;
   duplicateNote?: string;
   migrationReviewReasons?: string[];
+  robotsNoindex?: boolean;
+  howToApply?: string[];
+  sourceExcerpt?: string;
 }
 
 export const SARKARI_CATEGORIES = {

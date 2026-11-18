@@ -256,6 +256,15 @@ function AboutContent() {
               <li>
                 <strong className="text-[var(--text-primary)]">Contact:</strong> +91 70068 33767
               </li>
+              <li>
+                <strong className="text-[var(--text-primary)]">Official Email:</strong>{' '}
+                <a
+                  href="mailto:urnxtfd@gmail.com"
+                  className="text-[#1F9D6B] font-semibold hover:underline"
+                >
+                  urnxtfd@gmail.com
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -423,10 +432,10 @@ function ContactContent() {
               <span>
                 <strong className="text-[var(--text-primary)]">Support Email:</strong>{' '}
                 <a
-                  href="mailto:support@cscdost.com"
+                  href="mailto:urnxtfd@gmail.com"
                   className="text-[#1F9D6B] font-semibold hover:underline"
                 >
-                  support@cscdost.com
+                  urnxtfd@gmail.com
                 </a>
               </span>
             </p>
@@ -436,10 +445,10 @@ function ContactContent() {
                 <strong className="text-[var(--text-primary)]">Grievance Officer:</strong> Wasim Ahmad
                 Khanday (
                 <a
-                  href="mailto:wasimkhanday@gmail.com"
+                  href="mailto:urnxtfd@gmail.com"
                   className="text-[#1F9D6B] font-semibold hover:underline"
                 >
-                  wasimkhanday@gmail.com
+                  urnxtfd@gmail.com
                 </a>
                 )
               </span>
@@ -502,8 +511,13 @@ function ContactContent() {
             <strong className="text-[var(--text-primary)]">Grievance Resolution Matrix:</strong>{' '}
             Billing discrepancies, duplicate fee debits, and document correction requests logged
             via{' '}
-            <strong className="text-[var(--text-primary)]">support@cscdost.com</strong> are
-            acknowledged within 24 hours and resolved by Grievance Officer Wasim Ahmad Khanday
+            <a
+              href="mailto:urnxtfd@gmail.com"
+              className="text-[#1F9D6B] font-semibold hover:underline"
+            >
+              urnxtfd@gmail.com
+            </a>{' '}
+            are acknowledged within 24 hours and resolved by Grievance Officer Wasim Ahmad Khanday
             within 3 to 5 business days.
           </li>
         </ul>
@@ -568,7 +582,11 @@ function ContactInquiryForm() {
           Send a Message or Report a Correction
         </h2>
         <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1 m-0">
-          Spot an outdated date, broken official link, or have a general portal question? Write directly to our helpdesk below. Do not enter OTPs, Aadhaar passwords, or bank PINs.
+          Spot an outdated date, broken official link, or have a general portal question? Messages submitted here are routed to our helpdesk at{' '}
+          <a href="mailto:urnxtfd@gmail.com" className="text-[#1F9D6B] font-semibold hover:underline">
+            urnxtfd@gmail.com
+          </a>
+          . Do not enter OTPs, Aadhaar passwords, or bank PINs.
         </p>
       </div>
 
@@ -579,7 +597,8 @@ function ContactInquiryForm() {
         >
           <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" aria-hidden="true" />
           <div>
-            <strong>Inquiry received!</strong> Reference: <span className="font-mono">{submittedRef}</span>. Our team reviews helpdesk messages within 24–48 business hours.
+            <strong>Inquiry received!</strong> Reference: <span className="font-mono">{submittedRef}</span>. Your message has been logged for{' '}
+            <span className="font-semibold">urnxtfd@gmail.com</span> and our team responds within 24–48 business hours.
           </div>
         </div>
       )}
@@ -871,8 +890,10 @@ function PrivacyContent() {
           days after application processing to permit verification and candidate support, after which
           they are systematically purged from our encrypted storage. Citizens may request immediate
           deletion of their personal records by emailing{' '}
-          <strong className="text-[var(--text-primary)]">support@cscdost.com</strong> with their
-          tracking token.
+          <a href="mailto:urnxtfd@gmail.com" className="text-[#1F9D6B] underline font-semibold">
+            urnxtfd@gmail.com
+          </a>{' '}
+          with their tracking token.
         </p>
 
         <h2 className="text-xl font-bold text-[var(--text-primary)] mt-8 mb-4">
@@ -891,8 +912,13 @@ function PrivacyContent() {
             Operator, CSC DOST
           </p>
           <p className="m-0">
-            <strong className="text-[var(--text-primary)]">Email:</strong> support@cscdost.com /
-            wasimkhanday@gmail.com
+            <strong className="text-[var(--text-primary)]">Email:</strong>{' '}
+            <a href="mailto:urnxtfd@gmail.com" className="text-[#1F9D6B] underline font-semibold">
+              urnxtfd@gmail.com
+            </a>
+          </p>
+          <p className="m-0">
+            <strong className="text-[var(--text-primary)]">Helpline:</strong> +91 70068 33767
           </p>
           <p className="m-0">
             <strong className="text-[var(--text-primary)]">Address:</strong> Sangran Qazigund,
@@ -1008,12 +1034,17 @@ function TermsContent() {
         </ul>
 
         <h2 className="text-xl font-bold text-[var(--text-primary)] mt-8 mb-4">
-          5. Governing Law and Jurisdiction
+          5. Governing Law, Support &amp; Jurisdiction
         </h2>
         <p>
           These terms and any disputes arising out of the use of CSC DOST shall be governed by and
           construed in accordance with the laws of India, subject to the exclusive jurisdiction of
-          the competent courts in District Anantnag, Jammu &amp; Kashmir.
+          the competent courts in District Anantnag, Jammu &amp; Kashmir. Questions regarding these
+          Terms of Service may be sent to{' '}
+          <a href="mailto:urnxtfd@gmail.com" className="text-[#1F9D6B] font-semibold hover:underline">
+            urnxtfd@gmail.com
+          </a>{' '}
+          or +91 70068 33767.
         </p>
       </section>
     </article>
@@ -1191,6 +1222,21 @@ function DisclaimerContent() {
             directly on the government payment portal prior to transaction confirmation.
           </li>
         </ul>
+
+        <h2 className="text-xl font-bold text-[var(--text-primary)] mt-8 mb-4">
+          5. Notice Correction &amp; Contact Information
+        </h2>
+        <p>
+          If you spot an error, broken link, or outdated circular summary, please write to{' '}
+          <a href="mailto:urnxtfd@gmail.com" className="text-[#1F9D6B] font-semibold hover:underline">
+            urnxtfd@gmail.com
+          </a>{' '}
+          or call{' '}
+          <a href="tel:+917006833767" className="text-[#1F9D6B] font-semibold hover:underline">
+            +91 70068 33767
+          </a>
+          .
+        </p>
       </section>
     </article>
   );
@@ -1202,50 +1248,137 @@ function RefundContent() {
       <header className="border-b border-[var(--border-default)] pb-6">
         <div className="flex items-center gap-2 text-[var(--status-exam-text)] font-semibold text-xs tracking-wider uppercase mb-2">
           <RotateCcw className="w-4 h-4 shrink-0" aria-hidden="true" />
-          <span>Payment Policies</span>
+          <span>Service Pricing, Turnaround &amp; Payment Policies</span>
         </div>
         <h1 className="text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight m-0">
-          Refund &amp; Cancellation Policy
+          Refund, Cancellation &amp; Service Pricing Policy
         </h1>
         <p className="text-[var(--text-muted)] text-sm mt-2 m-0">
-          Effective Date: February 2026 • Last Reviewed: October 2026
+          Effective Date: February 2026 • Last Reviewed: November 2026
         </p>
       </header>
 
       <section className="space-y-6 text-[var(--text-secondary)] leading-relaxed text-base">
         <p>
-          At <strong className="text-[var(--text-primary)]">CSC DOST</strong>, we maintain a
-          transparent and fair refund policy for all assisted application processing and digital
-          appointment services.
+          At <strong className="text-[var(--text-primary)]">CSC DOST</strong> (operated by
+          Authorized CSC VLE Wasim Ahmad Khanday, VLE ID 212515670018), citizens can browse free
+          educational guides and use browser-based document tools without any fee, or optionally
+          request paid assisted form submission. Below is our transparent service fee schedule,
+          inclusions, delivery timelines, and refund terms.
         </p>
 
+        <h2 className="text-xl font-bold text-[var(--text-primary)] mt-6 mb-3">
+          1. Assisted Service Pricing Tiers &amp; Estimated Delivery Timeframes
+        </h2>
+        <p className="text-sm">
+          Charges consist of applicable government/authority statutory fees plus our CSC facilitation
+          charge for scanning, resizing, verification, and portal filing. Exact government fees for
+          exam portals or variable-slab services are always confirmed before submission.
+        </p>
+        <div className="overflow-x-auto border border-[var(--border-default)] rounded-xl">
+          <table className="w-full text-left border-collapse text-xs sm:text-sm">
+            <thead>
+              <tr className="bg-[var(--bg-subtle)] text-[var(--text-primary)] border-b border-[var(--border-default)]">
+                <th className="p-3 font-bold">Service Category</th>
+                <th className="p-3 font-bold">Fee Structure (From Portal Catalogue)</th>
+                <th className="p-3 font-bold">Estimated Delivery Time</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[var(--border-default)]">
+              <tr>
+                <td className="p-3 font-semibold text-[var(--text-primary)]">PAN Card (New / Correction / Instant NSDL e-PAN)</td>
+                <td className="p-3">₹107 (Govt Fee) + ₹70 (CSC Charge)</td>
+                <td className="p-3">2 Hours (e-PAN) · 3–7 Days (Standard)</td>
+              </tr>
+              <tr>
+                <td className="p-3 font-semibold text-[var(--text-primary)]">Aadhaar Address Update &amp; ASK Appointment Guidance</td>
+                <td className="p-3">UIDAI fee as applicable + ₹70 (CSC Charge)</td>
+                <td className="p-3">Typically 3–7 Days (Subject to UIDAI review)</td>
+              </tr>
+              <tr>
+                <td className="p-3 font-semibold text-[var(--text-primary)]">J&amp;K State Certificates (Domicile, RBA, OBC/SC/ST, EWS, Marriage, Birth/Death)</td>
+                <td className="p-3">₹20–₹50 (Govt Fee) + ₹70 (CSC Charge)</td>
+                <td className="p-3">5 Days (Marriage) · 15–45 Days (Tehsildar approval)</td>
+              </tr>
+              <tr>
+                <td className="p-3 font-semibold text-[var(--text-primary)]">J&amp;K Revenue Extracts (Fard, Jamabandi, Girdawari, Income, Legal Heir)</td>
+                <td className="p-3">₹100 (Govt Fee) + ₹70 (CSC Charge)</td>
+                <td className="p-3">2–7 Days (Extracts) · 5–30 Days (Certificates)</td>
+              </tr>
+              <tr>
+                <td className="p-3 font-semibold text-[var(--text-primary)]">Central Welfare (Ayushman PM-JAY, e-Shram, Voter ID, PM-KISAN e-KYC)</td>
+                <td className="p-3">Free Govt Scheme (or ₹15 e-KYC) + ₹70 (CSC Facilitation)</td>
+                <td className="p-3">Same Day to 3 Days (Voter ID: 15–30 Days)</td>
+              </tr>
+              <tr>
+                <td className="p-3 font-semibold text-[var(--text-primary)]">Exam Forms, Admissions &amp; Scholarships</td>
+                <td className="p-3">₹50–₹100 (CSC Filing) + Applicable Exam/Univ Fee</td>
+                <td className="p-3">20 Minutes to Same Day (Prior to deadline)</td>
+              </tr>
+              <tr>
+                <td className="p-3 font-semibold text-[var(--text-primary)]">Business Registrations (UDYAM MSME, GST, Class 3 DSC)</td>
+                <td className="p-3">₹70 (UDYAM) · ₹300–₹500 (GST) · ₹500–₹1,500 (DSC)</td>
+                <td className="p-3">Same Day (UDYAM) · 24h–5 Days (DSC/GST)</td>
+              </tr>
+              <tr>
+                <td className="p-3 font-semibold text-[var(--text-primary)]">Printing, Scanning &amp; Passport Photographs</td>
+                <td className="p-3">B&amp;W ₹2/pg · Color ₹10/pg · Lamination ₹20 · Photos ₹50–₹80</td>
+                <td className="p-3">Instant / 5–30 Minutes</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
         <h2 className="text-xl font-bold text-[var(--text-primary)] mt-8 mb-4">
-          1. Assisted Application Cancellation &amp; Refunds
+          2. What Our Assisted Service Includes
+        </h2>
+        <ul className="list-disc ps-5 space-y-2">
+          <li>
+            Document readability check, pixel/KB resizing (photographs, signatures, certificates), and
+            category checklist review before opening the official portal.
+          </li>
+          <li>
+            Data entry, form drafting, and pre-submission confirmation so applicants review spellings
+            and dates prior to final lock.
+          </li>
+          <li>
+            Issuance of a CSC DOST Application Tracking Token (<code className="bg-[var(--bg-subtle)] px-1.5 py-0.5 rounded font-mono text-sm text-[var(--text-primary)]">CSC-XXXXXXXX</code>) and delivery of the official department acknowledgement PDF / challan upon submission.
+          </li>
+          <li>
+            <strong className="text-[var(--text-primary)]">Important Note:</strong> CSC DOST provides
+            facilitation only and does not influence or guarantee approval by government departments,
+            universities, or recruitment boards.
+          </li>
+        </ul>
+
+        <h2 className="text-xl font-bold text-[var(--text-primary)] mt-8 mb-4">
+          3. Assisted Application Cancellation &amp; Refunds
         </h2>
         <ul className="list-disc ps-5 space-y-2">
           <li>
             <strong className="text-[var(--text-primary)]">Prior to Submission:</strong> If an
             applicant requests cancellation <em>before</em> our VLE team has processed or submitted
             the form to the government portal, a full 100% refund of both the government fee and
-            convenience charges will be initiated.
+            CSC facilitation charges will be initiated.
           </li>
           <li>
             <strong className="text-[var(--text-primary)]">After Final Submission:</strong> Once an
             application has been successfully submitted to the official government portal and an
-            official registration number or challan has been generated, statutory government fees
-            cannot be refunded, as government treasuries do not permit clawbacks.
+            official registration number or challan has been generated, statutory government fees and
+            completed facilitation charges cannot be refunded.
           </li>
           <li>
             <strong className="text-[var(--text-primary)]">
-              Rejected or Incomplete Forms due to Portal Outages:
+              Failed Submissions due to Official Portal Outages or Non-Delivery:
             </strong>{' '}
-            If a submission fails due to an official government server closure or outage prior to
-            the deadline, any unspent fees will be returned within 5-7 working days.
+            If a submission cannot be completed before the deadline due to an external portal outage
+            or inability to deliver the requested service, unspent fees are refunded within 5 to 7
+            working days.
           </li>
         </ul>
 
         <h2 className="text-xl font-bold text-[var(--text-primary)] mt-8 mb-4">
-          2. Mode and Timeline of Refund
+          4. Mode and Timeline of Refund
         </h2>
         <p>
           Approved refunds are processed through our Razorpay payment gateway back to the original
@@ -1254,41 +1387,32 @@ function RefundContent() {
         </p>
 
         <h2 className="text-xl font-bold text-[var(--text-primary)] mt-8 mb-4">
-          3. Dispute and Refund Requests
+          5. Dispute, Billing Grievances &amp; Failed UPI Reconciliation
         </h2>
         <p>
-          To request a refund or raise a billing grievance, please email{' '}
-          <strong className="text-[var(--text-primary)]">support@cscdost.com</strong> with your
-          Application Tracking Token (e.g.{' '}
+          To request a cancellation, refund, or billing reconciliation, please email{' '}
+          <a href="mailto:urnxtfd@gmail.com" className="text-[#1F9D6B] font-semibold hover:underline">
+            urnxtfd@gmail.com
+          </a>{' '}
+          with your Application Tracking Token (e.g.{' '}
           <code className="bg-[var(--bg-subtle)] px-1.5 py-0.5 rounded font-mono text-sm text-[var(--text-primary)]">
             CSC-XXXXXXXX
           </code>
-          ) and payment transaction reference ID.
-        </p>
-
-        <h2 className="text-xl font-bold text-[var(--text-primary)] mt-8 mb-4">
-          4. Failed UPI / Card Transactions &amp; Reconciliation
-        </h2>
-        <p>
-          If an amount is debited from your bank account via UPI, debit card, or net banking during
-          checkout but your application status does not update to Paid immediately, please avoid
-          making a duplicate payment right away. Payment gateway settlement logs are reconciled
-          daily, and failed or dropped transactions are automatically refunded by your issuing bank
-          within 5 to 7 working days.
+          ) and Razorpay Payment ID or 12-digit UPI RRN, or call{' '}
+          <a href="tel:+917006833767" className="text-[#1F9D6B] font-semibold hover:underline">
+            +91 70068 33767
+          </a>
+          .
         </p>
         <ul className="list-disc ps-5 space-y-2">
           <li>
-            Keep your Razorpay Payment ID, UPI RRN (12-digit Retrieval Reference Number), and debit
-            SMS timestamp ready when contacting our helpdesk at +91 70068 33767.
+            If your bank account is debited during checkout while status shows pending, wait up to 24
+            hours for gateway reconciliation before retrying; duplicate uncaptured debits settle
+            automatically within 5 to 7 working days.
           </li>
           <li>
-            Where duplicate payments occur for the same CSC tracking token before application filing,
-            the surplus amount is refunded 100% back to the original funding source upon gateway
-            verification.
-          </li>
-          <li>
-            Free document tools and informational job guides on cscdost.com never require payment or
-            registration fees.
+            Free document tools, calculators, recruitment bulletins, and scheme guides on
+            cscdost.com never require payment or registration fees.
           </li>
         </ul>
       </section>
@@ -1384,8 +1508,12 @@ function EditorialContent({ onNavigate }: { onNavigate: (type: LegalPageType) =>
             className="text-[#1F9D6B] font-semibold hover:underline"
           >
             Contact Us &amp; Correction Desk
-          </a>{' '}
-          or call <strong className="text-[var(--text-primary)]">+91 70068 33767</strong>. Verified
+          </a>
+          , email{' '}
+          <a href="mailto:urnxtfd@gmail.com" className="text-[#1F9D6B] font-semibold hover:underline">
+            urnxtfd@gmail.com
+          </a>
+          , or call <strong className="text-[var(--text-primary)]">+91 70068 33767</strong>. Verified
           corrections are updated promptly and noted with an updated verification timestamp.
         </p>
       </section>

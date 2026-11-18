@@ -9,6 +9,7 @@ Disallow: /apply
 Disallow: /track
 Disallow: /dev/
 Disallow: /api/
+# Note: /jobs#staff opens the client-side staff console via URL fragment (no separate public crawlable page).
 
 # Sitemap
 Sitemap: https://www.cscdost.com/sitemap.xml

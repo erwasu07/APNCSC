@@ -38,7 +38,7 @@ const ArchivePageView = lazy(() => import('./components/ArchivePageView'));
 const DevThumbnailsPreview = lazy(() => import('./components/DevThumbnailsPreview'));
 import CookieNotice from './components/CookieNotice';
 import { TOOLS_LIST } from './components/tools/toolsData';
-import { PUBLISHED_GUIDE_ARTICLES as GUIDE_ARTICLES } from './data/guidesData';
+import { PUBLISHED_GUIDE_ARTICLES as STATIC_PUBLISHED_GUIDES, GuideArticle } from './data/guidesData';
 import { KNOWN_DUPLICATE_MAP } from './data/sarkariMigration';
 import { isStaleOver90Days } from './utils/postLifecycle';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -118,7 +118,7 @@ const FALLBACK_SETTINGS: WebsiteSettings = {
   cafeName: "CSC DOST",
   phone: "+91 70068 33767, +91 96821 32895",
   whatsapp: "+91 70068 33767",
-  email: "www.khanday09@gmail.com",
+  email: "urnxtfd@gmail.com",
   address: "Sangran Qazigund, Sangran Qazigund, Anantnag, Jammu and Kashmir 192221",
   officeHours: "Mon - Sat: 08:30 AM - 08:00 PM, Sun: 10:00 AM - 04:00 PM",
   googleMapsEmbed: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3501.996452296068!2d77.21833441508272!3d28.630041982417724!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cfd3637e19e75%3A0x6b7a544f84c4f9a7!2sConnaught%20Place%2C%20New%20Delhi%2C%20Delhi%20110001!5e0!3m2!1sen!2sin!4v1680000000000!5m2!1sen!2sin",
@@ -150,6 +150,7 @@ export default function App() {
   const [isArchiveView, setIsArchiveView] = useState<boolean>(false);
   const [isStaffRoute, setIsStaffRoute] = useState<boolean>(false);
   const [isDevThumbnailsView, setIsDevThumbnailsView] = useState<boolean>(false);
+  const [publishedGuides, setPublishedGuides] = useState<GuideArticle[]>(STATIC_PUBLISHED_GUIDES);
 
   const [activeLegalPage, setActiveLegalPage] = useState<LegalPageType | null>(null);
 
@@ -224,6 +225,14 @@ export default function App() {
   useEffect(() => {
     fetchPublicData();
     fetch('/api/tracker/view', { method: 'POST' }).catch(() => {});
+    fetch('/api/guides')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.success && Array.isArray(data.guides)) {
+          setPublishedGuides(data.guides);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Track route changes and keep post resolution synced with published posts
@@ -570,7 +579,7 @@ export default function App() {
         }
       }
       if (candidateSchemeId) {
-        const matchScheme = GUIDE_ARTICLES.find((g) => g.id === candidateSchemeId);
+        const matchScheme = publishedGuides.find((g) => g.id === candidateSchemeId);
         if (matchScheme) {
           setActiveSchemeId(matchScheme.id);
           setCategoryView('schemes');
@@ -661,7 +670,7 @@ export default function App() {
       window.removeEventListener('hashchange', parseRoute);
       window.removeEventListener('popstate', parseRoute);
     };
-  }, [syncedPosts]);
+  }, [syncedPosts, publishedGuides]);
 
   const navigateToPath = (path: string) => {
     try {
@@ -862,6 +871,7 @@ export default function App() {
       const isNoindexPost =
         isStaleOver90Days(activeJobPost) ||
         Boolean(activeJobPost.duplicateOfId) ||
+        Boolean(activeJobPost.robotsNoindex) ||
         Boolean(KNOWN_DUPLICATE_MAP[activeJobPost.id]);
       applyClientSeo({
         title: formatPostSeoTitle(activeJobPost),
@@ -885,6 +895,10 @@ export default function App() {
       });
       return;
     }
+    const queryParams = new URLSearchParams(routeSearch || '');
+    const hasFilterQuery = ['tab', 'org', 'filter', 'q', 'page', 'sort', 'calc', 'preset', 'service'].some(
+      (key) => Boolean(queryParams.get(key))
+    );
     if (isToolsView) {
       if (activeToolId) {
         const matchedTool = TOOLS_LIST.find((t) => t.id === activeToolId);
@@ -893,17 +907,21 @@ export default function App() {
             title: formatSeoTitle(`${matchedTool.name} - Tools`),
             description: formatSeoDescription(matchedTool.shortDescription),
             canonicalUrl: `${SITE_ORIGIN}/tools/${matchedTool.id}`,
-            robots: 'index, follow',
+            robots: hasFilterQuery ? 'noindex, follow' : 'index, follow',
             ogType: 'website',
           });
           return;
         }
       }
-      applyClientSeo(getCategorySeoMeta('tools'));
+      const toolsMeta = getCategorySeoMeta('tools');
+      applyClientSeo({
+        ...toolsMeta,
+        robots: hasFilterQuery ? 'noindex, follow' : toolsMeta.robots,
+      });
       return;
     }
     if (activeSchemeId) {
-      const matchedScheme = GUIDE_ARTICLES.find((g) => g.id === activeSchemeId);
+      const matchedScheme = publishedGuides.find((g) => g.id === activeSchemeId);
       if (matchedScheme) {
         applyClientSeo(getSchemeSeoMeta(matchedScheme));
         return;
@@ -911,11 +929,21 @@ export default function App() {
     }
     if (categoryView) {
       if (categoryView === 'deadlines') {
-        applyClientSeo(DEADLINES_SEO);
+        applyClientSeo({
+          ...DEADLINES_SEO,
+          robots: hasFilterQuery ? 'noindex, follow' : DEADLINES_SEO.robots,
+        });
       } else if (categoryView === 'education' && educationSubRoute === 'ignou') {
-        applyClientSeo(IGNOU_EDUCATION_SEO);
+        applyClientSeo({
+          ...IGNOU_EDUCATION_SEO,
+          robots: hasFilterQuery ? 'noindex, follow' : IGNOU_EDUCATION_SEO.robots,
+        });
       } else {
-        applyClientSeo(getCategorySeoMeta(categoryView));
+        const catMeta = getCategorySeoMeta(categoryView);
+        applyClientSeo({
+          ...catMeta,
+          robots: hasFilterQuery ? 'noindex, follow' : catMeta.robots,
+        });
       }
       return;
     }
@@ -933,8 +961,10 @@ export default function App() {
     isToolsView,
     activeToolId,
     activeSchemeId,
+    publishedGuides,
     categoryView,
     educationSubRoute,
+    routeSearch,
     isNotFoundView,
   ]);
 

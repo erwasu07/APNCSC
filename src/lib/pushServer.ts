@@ -15,7 +15,7 @@ import {
 
 const DEFAULT_PUBLIC_KEY =
   'BJZxu9aQ0e54Br6OUHQMQbw7Oc1p1FStaxyzuBGISVvfBDp8N4lFPn8tVEZPZeM75TJjbLJHmdsTIkLi7noWlnk';
-const DEFAULT_SUBJECT = 'mailto:support@cscdost.com';
+const DEFAULT_SUBJECT = 'mailto:urnxtfd@gmail.com';
 
 let vapidConfigured = false;
 

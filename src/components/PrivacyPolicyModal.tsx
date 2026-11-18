@@ -131,7 +131,7 @@ Updates will be posted with an updated Effective Date.
 
 9. CONTACT US
 Website: https://www.cscdost.com/
-Email: cscdost.support@gmail.com
+Email: urnxtfd@gmail.com
 Phone: 7006833767`;
 
   const termsText = `CSC Dost - Terms of Use
@@ -178,7 +178,7 @@ Governed by the laws of India. Subject to the exclusive jurisdiction of the cour
 
 11. CONTACT INFORMATION
 Website: https://www.cscdost.com/
-Email / Support: cscdost.support@gmail.com
+Email / Support: urnxtfd@gmail.com
 Phone: 7006833767`;
 
   const hyperlinkText = `CSC Dost - Hyperlink Policy
@@ -211,7 +211,7 @@ We reserve the right to amend this Hyperlink Policy at any time without prior no
 
 5. CONTACT US
 Website: https://www.cscdost.com/
-Email / Support: cscdost.support@gmail.com
+Email / Support: urnxtfd@gmail.com
 Phone: 7006833767`;
 
   const copyrightText = `CSC Dost - Copyright Policy
@@ -255,7 +255,7 @@ We reserve the right to modify this Copyright Policy at any time. Changes will t
 
 8. CONTACT INFORMATION
 Website: https://www.cscdost.com/
-Email / Support: cscdost.support@gmail.com
+Email / Support: urnxtfd@gmail.com
 Phone: 7006833767`;
 
   const disclaimerText = `CSC Dost - Disclaimer
@@ -291,7 +291,7 @@ The fees collected by CSC Dost include government department fees (where applica
 7. CONTACT US
 If you require any more information or have any questions about our site's disclaimer, please feel free to contact us:
 Website: https://www.cscdost.com/
-Email / Support: cscdost.support@gmail.com
+Email / Support: urnxtfd@gmail.com
 Phone: 7006833767`;
 
   const helpText = `CSC Dost - Help & Support
@@ -328,7 +328,7 @@ Payments & Refunds:
 
 4. STILL NEED HELP? CONTACT US
 Website: https://www.cscdost.com/
-Email Support: cscdost.support@gmail.com
+Email Support: urnxtfd@gmail.com
 Phone / WhatsApp: 7006833767
 Working Hours: Monday to Saturday, 09:00 AM – 08:30 PM`;
 
@@ -354,7 +354,7 @@ The approved refund amount will be credited back to your original method of paym
 4. HOW TO REQUEST A REFUND FOR NON-DELIVERY
 If you have been charged but have not received your goods or services within the promised timeframe, please reach out to our support team so we can investigate and process your refund.
 Please contact us with your Order ID/Transaction ID at:
-Email: cscdost.support@gmail.com
+Email: urnxtfd@gmail.com
 Phone: +91 70068 33767
 Office Address: Sangran Qazigund, Anantnag, Jammu and Kashmir 192221
 
@@ -1010,8 +1010,8 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                     <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
                       <Mail className="w-3.5 h-3.5 text-emerald-400" /> Email / Support
                     </span>
-                    <a href="mailto:cscdost.support@gmail.com" className="font-bold text-emerald-300 hover:underline block truncate">
-                      cscdost.support@gmail.com
+                    <a href="mailto:urnxtfd@gmail.com" className="font-bold text-emerald-300 hover:underline block truncate">
+                      urnxtfd@gmail.com
                     </a>
                   </div>
 
@@ -1305,8 +1305,8 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                     <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
                       <Mail className="w-3.5 h-3.5 text-emerald-400" /> Email / Support
                     </span>
-                    <a href="mailto:cscdost.support@gmail.com" className="font-bold text-emerald-300 hover:underline block truncate">
-                      cscdost.support@gmail.com
+                    <a href="mailto:urnxtfd@gmail.com" className="font-bold text-emerald-300 hover:underline block truncate">
+                      urnxtfd@gmail.com
                     </a>
                   </div>
 
@@ -1549,8 +1549,8 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                     <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
                       <Mail className="w-3.5 h-3.5 text-emerald-400" /> Email / Support
                     </span>
-                    <a href="mailto:cscdost.support@gmail.com" className="font-bold text-emerald-300 hover:underline block truncate">
-                      cscdost.support@gmail.com
+                    <a href="mailto:urnxtfd@gmail.com" className="font-bold text-emerald-300 hover:underline block truncate">
+                      urnxtfd@gmail.com
                     </a>
                   </div>
 
@@ -1811,8 +1811,8 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                     <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
                       <Mail className="w-3.5 h-3.5 text-emerald-400" /> Email / Support
                     </span>
-                    <a href="mailto:cscdost.support@gmail.com" className="font-bold text-emerald-300 hover:underline block truncate">
-                      cscdost.support@gmail.com
+                    <a href="mailto:urnxtfd@gmail.com" className="font-bold text-emerald-300 hover:underline block truncate">
+                      urnxtfd@gmail.com
                     </a>
                   </div>
 
@@ -2027,8 +2027,8 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                     <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
                       <Mail className="w-3.5 h-3.5 text-emerald-400" /> Email / Support
                     </span>
-                    <a href="mailto:cscdost.support@gmail.com" className="font-bold text-emerald-300 hover:underline block truncate">
-                      cscdost.support@gmail.com
+                    <a href="mailto:urnxtfd@gmail.com" className="font-bold text-emerald-300 hover:underline block truncate">
+                      urnxtfd@gmail.com
                     </a>
                   </div>
 
@@ -2379,8 +2379,8 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                     <span className="text-teal-400 text-[10px] uppercase font-extrabold flex items-center gap-1">
                       <Mail className="w-3.5 h-3.5" /> Email Support
                     </span>
-                    <a href="mailto:cscdost.support@gmail.com" className="font-bold text-white hover:text-teal-300 hover:underline block truncate">
-                      cscdost.support@gmail.com
+                    <a href="mailto:urnxtfd@gmail.com" className="font-bold text-white hover:text-teal-300 hover:underline block truncate">
+                      urnxtfd@gmail.com
                     </a>
                   </div>
 
@@ -2564,8 +2564,8 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                     <span className="text-indigo-400 text-[10px] uppercase font-extrabold flex items-center gap-1">
                       <Mail className="w-3.5 h-3.5" /> Support Email
                     </span>
-                    <a href="mailto:cscdost.support@gmail.com" className="font-bold text-white hover:text-indigo-300 hover:underline block truncate">
-                      cscdost.support@gmail.com
+                    <a href="mailto:urnxtfd@gmail.com" className="font-bold text-white hover:text-indigo-300 hover:underline block truncate">
+                      urnxtfd@gmail.com
                     </a>
                   </div>
 

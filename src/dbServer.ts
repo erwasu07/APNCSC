@@ -25,6 +25,10 @@ interface DatabaseSchema {
   whatsappAlertSettings?: WhatsAppAlertSettings;
   whatsappAlertState?: WhatsAppAlertState;
   whatsappAlertLogs?: WhatsAppAlertLogRecord[];
+  guideStates?: Record<string, GuideVerificationState>;
+  guideVerificationLogs?: GuideVerificationLog[];
+  postHealthOverrides?: Record<string, PostHealthOverride>;
+  contentHealthLogs?: ContentHealthLog[];
 }
 
 const DEFAULT_DB: DatabaseSchema = {
@@ -32,7 +36,7 @@ const DEFAULT_DB: DatabaseSchema = {
     cafeName: "CSC DOST",
     phone: "+91 70068 33767, +91 96821 32895",
     whatsapp: "+91 70068 33767",
-    email: "www.khanday09@gmail.com",
+    email: "urnxtfd@gmail.com",
     address: "Sangran Qazigund, Sangran Qazigund, Anantnag, Jammu and Kashmir 192221",
     officeHours: "Mon - Sat: 08:30 AM - 08:00 PM, Sun: 10:00 AM - 04:00 PM",
     googleMapsEmbed: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3501.996452296068!2d77.21833441508272!3d28.630041982417724!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cfd3637e19e75%3A0x6b7a544f84c4f9a7!2sConnaught%20Place%2C%20New%20Delhi%2C%20Delhi%20110001!5e0!3m2!1sen!2sin!4v1680000000000!5m2!1sen!2sin",
@@ -81,7 +85,11 @@ const DEFAULT_DB: DatabaseSchema = {
     lastFailureWarning: null,
     lastScheduledSlotKey: ''
   },
-  whatsappAlertLogs: []
+  whatsappAlertLogs: [],
+  guideStates: {},
+  guideVerificationLogs: [],
+  postHealthOverrides: {},
+  contentHealthLogs: []
 };
 
 let memoryDb: DatabaseSchema | null = null;
@@ -129,6 +137,22 @@ export function getDb(): DatabaseSchema {
       if (!parsed.whatsappAlertSettings) parsed.whatsappAlertSettings = { ...DEFAULT_WHATSAPP_ALERT_SETTINGS };
       if (!parsed.whatsappAlertState) parsed.whatsappAlertState = { ...DEFAULT_WHATSAPP_ALERT_STATE };
       if (!Array.isArray(parsed.whatsappAlertLogs)) parsed.whatsappAlertLogs = [];
+      if (!parsed.guideStates || typeof parsed.guideStates !== 'object') parsed.guideStates = {};
+      if (!Array.isArray(parsed.guideVerificationLogs)) parsed.guideVerificationLogs = [];
+      if (!parsed.postHealthOverrides || typeof parsed.postHealthOverrides !== 'object') parsed.postHealthOverrides = {};
+      if (!Array.isArray(parsed.contentHealthLogs)) parsed.contentHealthLogs = [];
+
+      // Normalize legacy placeholder settings email on disk to urnxtfd@gmail.com
+      const curEmail = String(parsed.settings?.email || '').trim().toLowerCase();
+      if (
+        !curEmail ||
+        curEmail === 'www.khanday09@gmail.com' ||
+        curEmail === 'support@cscdost.com' ||
+        curEmail === 'wasimkhanday@gmail.com' ||
+        curEmail === 'cscdost.support@gmail.com'
+      ) {
+        parsed.settings = { ...(parsed.settings || DEFAULT_DB.settings), email: 'urnxtfd@gmail.com' };
+      }
 
       // Permanently filter any appointments matching deletedAppointmentIds
       if (Array.isArray(parsed.deletedAppointmentIds) && parsed.deletedAppointmentIds.length > 0) {
@@ -1383,6 +1407,196 @@ export function getWhatsAppAlertLogs(limit = 20): WhatsAppAlertLogRecord[] {
   const logs = Array.isArray(db.whatsappAlertLogs) ? db.whatsappAlertLogs : [];
   return logs.slice(0, limit);
 }
+
+// ============================================================
+// GUIDE VERIFICATION & PUBLISHING PERSISTENCE
+// ============================================================
+
+export interface GuideVerificationState {
+  id: string;
+  status: 'draft' | 'published';
+  officialUrl?: string;
+  officialPortal?: string;
+  verifiedMarkers?: string[];
+  verifierName?: string;
+  verifiedDate?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  lastUpdated?: string;
+  notes?: string;
+  updatedAt: string;
+  overrides?: {
+    title?: string;
+    summary?: string;
+    officialPortal?: string;
+    officialUrl?: string;
+    benefitSummary?: string;
+    responsibleDepartment?: string;
+    intendedBeneficiaries?: string;
+    applicableRegion?: string;
+    sections?: { heading: string; content: string; bulletPoints?: string[]; tips?: string }[];
+    eligibility?: string[];
+    documentsRequired?: string[];
+    stepByStep?: string[];
+    faqs?: { question: string; answer: string }[];
+  };
+}
+
+export interface GuideVerificationLog {
+  id: string;
+  guideId: string;
+  action: 'save_draft' | 'verify_publish' | 'revert_draft';
+  actor: string;
+  timestamp: string;
+  officialUrl?: string;
+  notes?: string;
+}
+
+export function getGuideStates(): Record<string, GuideVerificationState> {
+  const db = getDb();
+  return db.guideStates && typeof db.guideStates === 'object' ? db.guideStates : {};
+}
+
+export function upsertGuideState(state: GuideVerificationState): GuideVerificationState {
+  const db = getDb();
+  if (!db.guideStates || typeof db.guideStates !== 'object') db.guideStates = {};
+  db.guideStates[state.id] = state;
+  saveDb(db);
+  return state;
+}
+
+export function addGuideVerificationLog(entry: Omit<GuideVerificationLog, 'id'>): GuideVerificationLog {
+  const db = getDb();
+  if (!Array.isArray(db.guideVerificationLogs)) db.guideVerificationLogs = [];
+  const full: GuideVerificationLog = {
+    ...entry,
+    id: `glog_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+  };
+  db.guideVerificationLogs.unshift(full);
+  if (db.guideVerificationLogs.length > 150) {
+    db.guideVerificationLogs = db.guideVerificationLogs.slice(0, 150);
+  }
+  saveDb(db);
+  return full;
+}
+
+export function getGuideVerificationLogs(limit = 50): GuideVerificationLog[] {
+  const db = getDb();
+  return (Array.isArray(db.guideVerificationLogs) ? db.guideVerificationLogs : []).slice(0, limit);
+}
+
+// ============================================================
+// CONTENT HEALTH OVERRIDES & LOGS (STAFF WORKFLOW)
+// ============================================================
+
+export interface PostHealthOverride {
+  id: string;
+  publicationStatus?: 'published' | 'draft' | 'archived';
+  robotsNoindex?: boolean;
+  duplicateOfId?: string;
+  title?: string;
+  shortInfo?: string;
+  summary?: string;
+  eligibility?: string;
+  qualification?: string;
+  lastDate?: string;
+  officialNotificationUrl?: string;
+  officialLink?: string;
+  howToApply?: string[];
+  selectionProcess?: string[];
+  documentsRequired?: string[];
+  faq?: { q: string; a: string }[];
+  notes?: string;
+  auditClass?: 'A' | 'B' | 'C' | 'D';
+  updatedAt: string;
+  updatedBy?: string;
+}
+
+export interface ContentHealthLog {
+  id: string;
+  postId: string;
+  action: 'enrich_save' | 'set_draft' | 'set_published' | 'mark_noindex' | 'clear_noindex' | 'merge_301' | 'bulk_noindex_class_c';
+  actor: string;
+  timestamp: string;
+  details: string;
+}
+
+export function getPostHealthOverrides(): Record<string, PostHealthOverride> {
+  const db = getDb();
+  return db.postHealthOverrides && typeof db.postHealthOverrides === 'object' ? db.postHealthOverrides : {};
+}
+
+export function upsertPostHealthOverride(override: PostHealthOverride): PostHealthOverride {
+  const db = getDb();
+  if (!db.postHealthOverrides || typeof db.postHealthOverrides !== 'object') db.postHealthOverrides = {};
+  const prev = db.postHealthOverrides[override.id] || { id: override.id, updatedAt: override.updatedAt };
+  const merged: PostHealthOverride = {
+    ...prev,
+    ...override,
+    updatedAt: override.updatedAt || new Date().toISOString()
+  };
+  db.postHealthOverrides[override.id] = merged;
+  saveDb(db);
+  return merged;
+}
+
+export function bulkNoindexPostIds(postIds: string[], actor = 'Staff Admin'): { updatedCount: number; updatedIds: string[] } {
+  const db = getDb();
+  if (!db.postHealthOverrides || typeof db.postHealthOverrides !== 'object') db.postHealthOverrides = {};
+  const now = new Date().toISOString();
+  const updatedIds: string[] = [];
+  for (const rawId of postIds) {
+    const id = String(rawId || '').trim();
+    if (!id) continue;
+    const prev = db.postHealthOverrides[id] || { id, updatedAt: now };
+    db.postHealthOverrides[id] = {
+      ...prev,
+      id,
+      robotsNoindex: true,
+      auditClass: prev.auditClass || 'C',
+      updatedAt: now,
+      updatedBy: actor
+    };
+    updatedIds.push(id);
+  }
+  if (updatedIds.length > 0) {
+    if (!Array.isArray(db.contentHealthLogs)) db.contentHealthLogs = [];
+    db.contentHealthLogs.unshift({
+      id: `chlog_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      postId: updatedIds.length === 1 ? updatedIds[0] : `BULK(${updatedIds.length})`,
+      action: 'bulk_noindex_class_c',
+      actor,
+      timestamp: now,
+      details: `Marked ${updatedIds.length} Class C post(s) noindex, follow: ${updatedIds.slice(0, 12).join(', ')}${updatedIds.length > 12 ? '...' : ''}`
+    });
+    if (db.contentHealthLogs.length > 200) {
+      db.contentHealthLogs = db.contentHealthLogs.slice(0, 200);
+    }
+  }
+  saveDb(db);
+  return { updatedCount: updatedIds.length, updatedIds };
+}
+
+export function addContentHealthLog(entry: Omit<ContentHealthLog, 'id'>): ContentHealthLog {
+  const db = getDb();
+  if (!Array.isArray(db.contentHealthLogs)) db.contentHealthLogs = [];
+  const full: ContentHealthLog = {
+    ...entry,
+    id: `chlog_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+  };
+  db.contentHealthLogs.unshift(full);
+  if (db.contentHealthLogs.length > 200) {
+    db.contentHealthLogs = db.contentHealthLogs.slice(0, 200);
+  }
+  saveDb(db);
+  return full;
+}
+
+export function getContentHealthLogs(limit = 100): ContentHealthLog[] {
+  const db = getDb();
+  return (Array.isArray(db.contentHealthLogs) ? db.contentHealthLogs : []).slice(0, limit);
+}
+
 
 
 

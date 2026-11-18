@@ -268,10 +268,10 @@ export default function NodeInformation() {
                 <div className="flex items-center justify-between">
                   <span className="text-[#64748B]">Email:</span>
                   <a
-                    href="mailto:www.khanday09@gmail.com"
+                    href="mailto:urnxtfd@gmail.com"
                     className="font-semibold text-[#102A43] hover:text-[#2563EB] truncate max-w-[180px]"
                   >
-                    www.khanday09@gmail.com
+                    urnxtfd@gmail.com
                   </a>
                 </div>
               </div>
@@ -286,7 +286,7 @@ export default function NodeInformation() {
                 <span>Call Centre</span>
               </a>
               <a
-                href="mailto:www.khanday09@gmail.com"
+                href="mailto:urnxtfd@gmail.com"
                 className="min-h-[40px] py-2 px-3 bg-white hover:bg-blue-50 text-[#102A43] border border-[#E2E8F0] rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors"
               >
                 <Mail className="w-3.5 h-3.5 text-[#2563EB]" aria-hidden="true" />

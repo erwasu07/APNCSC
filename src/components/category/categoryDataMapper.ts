@@ -384,11 +384,11 @@ function mapDeadlinePosts(
   };
 }
 
-function mapSchemesDataset(): MappedCategoryDataset {
+function mapSchemesDataset(guides: GuideArticle[] = GUIDE_ARTICLES): MappedCategoryDataset {
   const now = getNowInAsiaKolkata();
   let updatedThisMonth = 0;
 
-  const items: NormalizedCategoryItem[] = GUIDE_ARTICLES.map((g, idx) => {
+  const items: NormalizedCategoryItem[] = guides.map((g, idx) => {
     const parsed = parseMonthYearFromEnglishDate(g.lastUpdated);
     if (parsed && parsed.month === now.month && parsed.year === now.year) {
       updatedThisMonth += 1;
@@ -407,7 +407,7 @@ function mapSchemesDataset(): MappedCategoryDataset {
       daysRemaining: null,
       daysToStart: null,
       hasPastDeadlineDate: false,
-      featuredScore: GUIDE_ARTICLES.length - idx,
+      featuredScore: guides.length - idx,
       sortTargetMs: 0,
       postTimestampMs: parsed ? Date.UTC(parsed.year, parsed.month - 1, 1) : 0,
       searchHaystack: [
@@ -448,11 +448,11 @@ function mapSchemesDataset(): MappedCategoryDataset {
       featuredTitle: 'Popular',
       searchPlaceholder: 'Search PM-KISAN, Ayushman, PAN, Aadhaar or JKSSB guide...',
     },
-    updatedLabel: formatUpdatedBulletinDate(GUIDE_ARTICLES.map((g) => g.lastUpdated)),
+    updatedLabel: formatUpdatedBulletinDate(guides.map((g) => g.lastUpdated)),
     stats: [
-      { label: 'Active schemes', value: GUIDE_ARTICLES.length },
+      { label: 'Active schemes', value: guides.length },
       { label: 'Updated this month', value: updatedThisMonth },
-      { label: 'Schemes listed', value: GUIDE_ARTICLES.length },
+      { label: 'Schemes listed', value: guides.length },
     ],
     liveStripItem: null,
     featuredItems: items.slice(0, 6),
@@ -763,7 +763,8 @@ function mapCalculatorsDataset(): MappedCategoryDataset {
 export function buildCategoryDataset(
   category: CategorySlug,
   posts: SarkariItem[],
-  educationSubRoute = false
+  educationSubRoute = false,
+  guides: GuideArticle[] = GUIDE_ARTICLES
 ): MappedCategoryDataset {
   switch (category) {
     case 'jobs':
@@ -771,7 +772,7 @@ export function buildCategoryDataset(
     case 'education':
       return mapDeadlinePosts('education', posts, educationSubRoute);
     case 'schemes':
-      return mapSchemesDataset();
+      return mapSchemesDataset(guides);
     case 'services':
       return mapServicesDataset();
     case 'tools':

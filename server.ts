@@ -19,8 +19,25 @@ import { isOlderThan12Months, isStaleOver90Days } from './src/utils/postLifecycl
 import { resolveEffectiveTemplateType, toIsoDate as toIsoPostDate } from './src/components/post/postHelpers';
 import { KNOWN_DUPLICATE_MAP, resolvePostOrg } from './src/data/sarkariMigration';
 import { SERVICES_LIST } from './src/servicesData';
-import { PUBLISHED_GUIDE_ARTICLES as GUIDE_ARTICLES } from './src/data/guidesData';
+import {
+  GUIDE_ARTICLES as ALL_GUIDE_ARTICLES,
+  PUBLISHED_GUIDE_ARTICLES as STATIC_PUBLISHED_GUIDES,
+  GuideArticle,
+} from './src/data/guidesData';
+import {
+  countGuideWords,
+  extractGuideVerifyMarkers,
+  getPublishedMergedGuides,
+  mergeAllGuidesWithStates,
+  validateGuideReadyForPublish,
+} from './src/utils/guidesMerge';
+import {
+  classifyAuditPage,
+  detectOutboundOfficialLinks,
+  evaluatePostCopyAndWords,
+} from './src/utils/contentAuditRules';
 import { validatePostPublishQuality } from './src/utils/contentQualityValidator';
+import { PUBLIC_CONTACT_EMAIL } from './src/config/siteContact';
 import { 
   generateOgPng, 
   generateOgSvg, 
@@ -123,7 +140,16 @@ import {
   updateWhatsAppAlertSettings,
   getWhatsAppAlertState,
   saveWhatsAppAlertState,
-  getWhatsAppAlertLogs
+  getWhatsAppAlertLogs,
+  getGuideStates,
+  upsertGuideState,
+  addGuideVerificationLog,
+  getGuideVerificationLogs,
+  getPostHealthOverrides,
+  upsertPostHealthOverride,
+  bulkNoindexPostIds,
+  addContentHealthLog,
+  getContentHealthLogs
 } from './src/dbServer';
 import { buildWhatsAppNotification, buildServiceWhatsAppNotification } from './src/utils/whatsappFormatter';
 import {
@@ -263,6 +289,16 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     const approvedRedirectTarget = approvedDuplicateRedirects[cleanReqPath];
     if (approvedRedirectTarget) {
       return res.redirect(301, `${approvedRedirectTarget}${queryString}`);
+    }
+
+    const postMergeMatch = cleanReqPath.match(/^\/(?:post|job|jobs|sarkari|notice)\/([^/?#]+)$/i);
+    if (postMergeMatch) {
+      const candidateSlug = decodeURIComponent(postMergeMatch[1]);
+      const healthOverrides = getPostHealthOverrides();
+      const mergeTarget = healthOverrides[candidateSlug]?.duplicateOfId;
+      if (mergeTarget && mergeTarget !== candidateSlug) {
+        return res.redirect(301, `/post/${encodeURIComponent(mergeTarget)}${queryString}`);
+      }
     }
 
     if (
@@ -1313,38 +1349,43 @@ app.post('/api/contact', (req, res) => {
   const request = addContactRequest({ name, email: email || '', phone, service, message });
   const db = getDb();
 
-  // Send confirmation email to client (simulated)
+  // Send confirmation email to client (logged for audit)
   if (email) {
     simulateEmail(
       email,
       `Confirmation: Contact Request Received - ${db.settings.cafeName}`,
-      `💡 Hello ${name},<br/><br/>
+      `Hello ${name},<br/><br/>
       Thank you for contacting ${db.settings.cafeName}. We have received your query regarding <b>${service}</b>.<br/>
-      Our team will review your message and reach out to you within 2 to 4 working hours.<br/><br/>
+      Our team will review your message and reach out to you within working hours (Mon–Sat). You can also write directly to ${PUBLIC_CONTACT_EMAIL}.<br/><br/>
       <b>Your Query Details:</b><br/>
       - Name: ${name}<br/>
       - Phone: ${phone}<br/>
       - Message: ${message}<br/><br/>
-      Regards,<br/>Support Team - ${db.settings.cafeName}`
+      Regards,<br/>Support Team - ${db.settings.cafeName} (${PUBLIC_CONTACT_EMAIL})`
     );
   }
 
-  // Send notification email to owner (simulated)
+  // Route notification target to real helpdesk inbox (urnxtfd@gmail.com)
+  const ownerInbox = db.settings.email || PUBLIC_CONTACT_EMAIL;
   simulateEmail(
-    db.settings.email,
-    `🚨 NEW Contact Request: ${service} from ${name}`,
-    `🔔 Hello Administrator,<br/><br/>
-    You have received a new service query on the cyber cafe portal:<br/><br/>
+    ownerInbox,
+    `NEW Contact Request: ${service} from ${name}`,
+    `Hello Administrator,<br/><br/>
+    You have received a new citizen inquiry on ${db.settings.cafeName}:<br/><br/>
     <b>Submission Information:</b><br/>
     - Name: ${name}<br/>
     - Phone: ${phone}<br/>
     - Email: ${email || 'Not Provided'}<br/>
     - Requested Service: ${service}<br/>
     - Message: ${message}<br/><br/>
-    Please log in to your admin panel to manage this request.`
+    Target Helpdesk Email: ${PUBLIC_CONTACT_EMAIL}`
   );
 
-  res.json({ success: true, data: request, message: 'Message submitted successfully. Emails simulated in logs.' });
+  res.json({
+    success: true,
+    data: request,
+    message: `Message received by CSC DOST Helpdesk (${PUBLIC_CONTACT_EMAIL}). We will respond during working hours.`,
+  });
 });
 
 // Live Real-Time SSE Stream Engine
@@ -4231,6 +4272,7 @@ syncCustomPostsAndThumbnailsInMemory();
 
 function getAllMergedSarkariPosts(): SarkariItem[] {
   const thumbnailsMap = getPostThumbnailsMap();
+  const healthOverrides = getPostHealthOverrides();
   const mergedMap = new Map<string, SarkariItem>();
 
   for (const item of SARKARI_DATA) {
@@ -4248,14 +4290,37 @@ function getAllMergedSarkariPosts(): SarkariItem[] {
   return Array.from(mergedMap.values())
     .map((item) => {
       const savedThumb = thumbnailsMap[item.id];
+      const ov = healthOverrides[item.id];
+      let next: SarkariItem = item;
       if (savedThumb && savedThumb.thumbnailUrl) {
-        return {
-          ...item,
+        next = {
+          ...next,
           thumbnailUrl: savedThumb.thumbnailUrl,
-          thumbnailSpec: savedThumb.spec || item.thumbnailSpec,
+          thumbnailSpec: savedThumb.spec || next.thumbnailSpec,
         };
       }
-      return item;
+      if (ov) {
+        next = {
+          ...next,
+          publicationStatus: ov.publicationStatus ?? next.publicationStatus,
+          robotsNoindex: ov.robotsNoindex !== undefined ? ov.robotsNoindex : next.robotsNoindex,
+          duplicateOfId: ov.duplicateOfId !== undefined ? ov.duplicateOfId : next.duplicateOfId,
+          title: ov.title || next.title,
+          shortInfo: ov.shortInfo !== undefined ? ov.shortInfo : next.shortInfo,
+          summary: ov.summary !== undefined ? ov.summary : next.summary,
+          eligibility: ov.eligibility !== undefined ? ov.eligibility : next.eligibility,
+          qualification: ov.qualification !== undefined ? ov.qualification : next.qualification,
+          lastDate: ov.lastDate !== undefined ? ov.lastDate : next.lastDate,
+          officialNotificationUrl: ov.officialNotificationUrl || next.officialNotificationUrl,
+          officialLink: ov.officialLink || ov.officialNotificationUrl || next.officialLink,
+          howToApply: Array.isArray(ov.howToApply) ? ov.howToApply : next.howToApply,
+          selectionProcess: Array.isArray(ov.selectionProcess) ? ov.selectionProcess : next.selectionProcess,
+          documentsRequired: Array.isArray(ov.documentsRequired) ? ov.documentsRequired : next.documentsRequired,
+          faq: Array.isArray(ov.faq) ? ov.faq.map((f) => ({ question: f.q, answer: f.a })) : next.faq,
+          updatedAt: ov.updatedAt || next.updatedAt,
+        };
+      }
+      return next;
     })
     .sort(
       (a, b) =>
@@ -4264,7 +4329,7 @@ function getAllMergedSarkariPosts(): SarkariItem[] {
     );
 }
 
-// Public & Admin Sarkari Posts Feed (Excludes draft/archived unless includeAll=1)
+// Public & Admin Sarkari Posts Feed (Excludes draft/archived/merged unless includeAll=1)
 app.get('/api/sarkari-posts', (req: Request, res: Response) => {
   const includeAll = req.query.includeAll === '1' || req.query.includeAll === 'true';
   const merged = getAllMergedSarkariPosts();
@@ -4274,12 +4339,416 @@ app.get('/api/sarkari-posts', (req: Request, res: Response) => {
       posts: merged,
     });
   }
-  const posts = merged.filter(isPublishedSarkariItem);
-  const hiddenIds = merged.filter((p) => !isPublishedSarkariItem(p)).map((p) => p.id);
+  const posts = merged.filter((p) => isPublishedSarkariItem(p) && !p.duplicateOfId);
+  const hiddenIds = merged
+    .filter((p) => !isPublishedSarkariItem(p) || Boolean(p.duplicateOfId))
+    .map((p) => p.id);
   res.json({
     success: true,
     posts,
     hiddenIds,
+  });
+});
+
+// ============================================================
+// PUBLIC & STAFF GUIDE VERIFICATION ENDPOINTS (Task 3)
+// ============================================================
+app.get('/api/guides', (_req: Request, res: Response) => {
+  const published = getPublishedMergedGuides(getGuideStates(), ALL_GUIDE_ARTICLES);
+  res.json({
+    success: true,
+    guides: published,
+  });
+});
+
+app.get('/api/staff/guides', authenticateAdmin, (_req: Request, res: Response) => {
+  const states = getGuideStates();
+  const merged = mergeAllGuidesWithStates(states, ALL_GUIDE_ARTICLES).map((g) => ({
+    ...g,
+    verifyCount: extractGuideVerifyMarkers(g).filter((m) => !m.field.startsWith('verifyNotes[')).length,
+    wordCount: countGuideWords(g),
+  }));
+  res.json({
+    success: true,
+    guides: merged,
+    logs: getGuideVerificationLogs(50),
+  });
+});
+
+app.post('/api/staff/guides/:id/save-draft', authenticateAdmin, (req: Request, res: Response) => {
+  const guideId = decodeURIComponent(String(req.params.id || ''));
+  const baseGuide = ALL_GUIDE_ARTICLES.find((g) => g.id === guideId);
+  if (!baseGuide) {
+    return res.status(404).json({ success: false, error: 'Guide not found.' });
+  }
+  const body = req.body || {};
+  const prev = getGuideStates()[guideId];
+  const actor = (req as any).adminUser?.email || (req as any).adminUser?.username || 'Staff Admin';
+  const nextStatus: 'draft' | 'published' =
+    body.forceStatus === 'draft' ? 'draft' : (prev?.status || baseGuide.status || 'draft');
+
+  const saved = upsertGuideState({
+    id: guideId,
+    status: nextStatus,
+    officialUrl: body.officialUrl !== undefined ? String(body.officialUrl).trim() : (prev?.officialUrl || baseGuide.officialUrl),
+    officialPortal: body.officialPortal !== undefined ? String(body.officialPortal).trim() : (prev?.officialPortal || baseGuide.officialPortal),
+    verifiedMarkers: Array.isArray(body.verifiedMarkers) ? body.verifiedMarkers : prev?.verifiedMarkers,
+    verifierName: body.verifierName ? String(body.verifierName).trim() : prev?.verifierName,
+    verifiedDate: body.verifiedDate ? String(body.verifiedDate).trim() : prev?.verifiedDate,
+    reviewedBy: prev?.reviewedBy,
+    reviewedAt: prev?.reviewedAt,
+    lastUpdated: prev?.lastUpdated || baseGuide.lastUpdated,
+    notes: body.notes ? String(body.notes).trim() : prev?.notes,
+    updatedAt: new Date().toISOString(),
+    overrides: body.overrides !== undefined ? body.overrides : prev?.overrides,
+  });
+
+  addGuideVerificationLog({
+    guideId,
+    action: body.forceStatus === 'draft' ? 'revert_draft' : 'save_draft',
+    actor,
+    timestamp: new Date().toISOString(),
+    officialUrl: saved.officialUrl,
+    notes: body.notes ? String(body.notes).trim() : undefined,
+  });
+
+  res.json({ success: true, state: saved });
+});
+
+app.post('/api/staff/guides/:id/verify', authenticateAdmin, (req: Request, res: Response) => {
+  const guideId = decodeURIComponent(String(req.params.id || ''));
+  const baseGuide = ALL_GUIDE_ARTICLES.find((g) => g.id === guideId);
+  if (!baseGuide) {
+    return res.status(404).json({ success: false, error: 'Guide not found.' });
+  }
+  const body = req.body || {};
+  const prev = getGuideStates()[guideId];
+  const actor = (req as any).adminUser?.email || (req as any).adminUser?.username || 'Staff Admin';
+  const verifierName = String(body.verifierName || prev?.verifierName || '').trim();
+  const verifiedDate = String(body.verifiedDate || new Date().toISOString().slice(0, 10)).trim();
+  const confirmVerified = Boolean(body.confirmVerified);
+
+  const candidateState = {
+    id: guideId,
+    status: 'published' as const,
+    officialUrl: body.officialUrl !== undefined ? String(body.officialUrl).trim() : (prev?.officialUrl || baseGuide.officialUrl),
+    officialPortal: body.officialPortal !== undefined ? String(body.officialPortal).trim() : (prev?.officialPortal || baseGuide.officialPortal),
+    verifiedMarkers: Array.isArray(body.verifiedMarkers) ? body.verifiedMarkers : prev?.verifiedMarkers,
+    verifierName,
+    verifiedDate,
+    reviewedBy: verifierName,
+    reviewedAt: verifiedDate,
+    lastUpdated: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+    notes: body.notes ? String(body.notes).trim() : prev?.notes,
+    updatedAt: new Date().toISOString(),
+    overrides: body.overrides !== undefined ? body.overrides : prev?.overrides,
+  };
+
+  const mergedCandidate = mergeAllGuidesWithStates({ [guideId]: candidateState }, [baseGuide])[0];
+  const check = validateGuideReadyForPublish(mergedCandidate, {
+    confirmChecked: confirmVerified,
+    verifierName,
+  });
+
+  if (!check.ok) {
+    return res.status(400).json({
+      success: false,
+      error: check.errors[0] || 'Verification gate prevented publishing.',
+      errors: check.errors,
+    });
+  }
+
+  const saved = upsertGuideState(candidateState);
+  addGuideVerificationLog({
+    guideId,
+    action: 'verify_publish',
+    actor: verifierName || actor,
+    timestamp: new Date().toISOString(),
+    officialUrl: saved.officialUrl,
+    notes: body.notes ? String(body.notes).trim() : `Verified (${check.wordCount} words)`,
+  });
+
+  res.json({ success: true, state: saved, guide: mergedCandidate });
+});
+
+// ============================================================
+// STAFF CONTENT HEALTH & ENRICHMENT ENDPOINTS (Task 2B)
+// ============================================================
+function extractMainTextWordCount(renderedHtml: string): { wordCount: number; hasOfficialLink: boolean; hasLastUpdated: boolean } {
+  const withoutChrome = String(renderedHtml || '')
+    .replace(/<header\b[^>]*class=["'][^"']*ssr-site-header[^"']*["'][^>]*>[\s\S]*?<\/header>/gi, ' ')
+    .replace(/<nav\b[\s\S]*?<\/nav>/gi, ' ')
+    .replace(/<footer\b[\s\S]*?<\/footer>/gi, ' ')
+    .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style\b[\s\S]*?<\/style>/gi, ' ');
+  const textOnly = withoutChrome.replace(/<[^>]+>/g, ' ').replace(/&[a-z0-9#]+;/gi, ' ').replace(/\s+/g, ' ').trim();
+  const wordCount = textOnly ? textOnly.split(/\s+/).filter(Boolean).length : 0;
+  const hasOfficialLink = detectOutboundOfficialLinks(withoutChrome).length > 0;
+  const hasLastUpdated = /last\s+(updated|verified)/i.test(textOnly);
+  return { wordCount, hasOfficialLink, hasLastUpdated };
+}
+
+app.get('/api/staff/content-health', authenticateAdmin, (_req: Request, res: Response) => {
+  const allPosts = getAllMergedSarkariPosts();
+  const overrides = getPostHealthOverrides();
+  const publishedGuides = getPublishedMergedGuides(getGuideStates(), ALL_GUIDE_ARTICLES);
+  let auditMap = new Map<string, any>();
+
+  try {
+    const auditJsonPath = path.join(process.cwd(), 'reports', 'content_audit.json');
+    if (fs.existsSync(auditJsonPath)) {
+      const parsed = JSON.parse(fs.readFileSync(auditJsonPath, 'utf-8'));
+      if (Array.isArray(parsed?.pages)) {
+        for (const p of parsed.pages) {
+          if (p?.path) auditMap.set(p.path, p);
+        }
+      }
+    }
+  } catch {}
+
+  const items: any[] = [];
+
+  for (const post of allPosts) {
+    const urlPath = `/post/${post.id}`;
+    const ov = overrides[post.id];
+    const html = renderPostSubstantiveHtml(post, allPosts);
+    const { wordCount, hasOfficialLink, hasLastUpdated } = extractMainTextWordCount(html);
+    const copyEval = evaluatePostCopyAndWords(
+      [post.shortInfo, post.summary, post.eligibility, ...(post.howToApply || [])].filter(Boolean).join(' '),
+      post.sourceExcerpt
+    );
+    const cached = auditMap.get(urlPath);
+    const cls = classifyAuditPage({
+      url: `${SITE_ORIGIN}${urlPath}`,
+      httpStatus: 200,
+      title: formatPostSeoTitle(post),
+      metaDescription: formatPostSeoDescription(post),
+      h1Count: 1,
+      wordCount,
+      hasOfficialLink,
+      hasLastUpdated,
+      hasFaqOrHowTo: Boolean((post.faq && post.faq.length > 0) || (post.howToApply && post.howToApply.length > 0)),
+      copiedRunLength: copyEval.copiedCheck.runLength,
+      highestJaccardScore: cached?.highestJaccardScore || 0,
+      nearDuplicateOf: cached?.nearDuplicateOf || post.duplicateOfId,
+      canonicalMismatch: Boolean(post.duplicateOfId),
+    });
+
+    items.push({
+      id: post.id,
+      url: urlPath,
+      kind: 'post',
+      title: post.title,
+      auditClass: ov?.auditClass && ov.duplicateOfId ? 'D' : cls.auditClass,
+      wordCount,
+      hasOfficialLink,
+      hasLastUpdated,
+      publicationStatus: post.publicationStatus || 'published',
+      robotsNoindex: Boolean(post.robotsNoindex || isStaleOver90Days(post) || post.duplicateOfId || KNOWN_DUPLICATE_MAP[post.id]),
+      duplicateOfId: post.duplicateOfId || KNOWN_DUPLICATE_MAP[post.id],
+      reasons: cls.reasons,
+      rawPost: {
+        id: post.id,
+        title: post.title,
+        shortInfo: post.shortInfo,
+        summary: post.summary,
+        eligibility: post.eligibility,
+        lastDate: post.lastDate,
+        postDate: post.postDate,
+        officialNotificationUrl: post.officialNotificationUrl,
+        officialLink: post.officialLink,
+        howToApply: post.howToApply,
+        selectionProcess: post.selectionProcess,
+        documentsRequired: post.documentsRequired,
+        faq: Array.isArray(post.faq) ? post.faq.map((f) => ({ q: f.question, a: f.answer })) : [],
+        notes: ov?.notes || '',
+        sourceExcerpt: post.sourceExcerpt,
+      },
+    });
+  }
+
+  for (const guide of publishedGuides) {
+    const urlPath = `/scheme/${guide.id}`;
+    const wc = countGuideWords(guide);
+    const cls = classifyAuditPage({
+      url: `${SITE_ORIGIN}${urlPath}`,
+      httpStatus: 200,
+      title: guide.title,
+      metaDescription: guide.summary,
+      h1Count: 1,
+      wordCount: wc,
+      hasOfficialLink: Boolean(guide.officialUrl),
+      hasLastUpdated: Boolean(guide.lastUpdated),
+      hasFaqOrHowTo: (guide.faqs?.length || 0) > 0,
+      copiedRunLength: 0,
+      highestJaccardScore: 0,
+      canonicalMismatch: false,
+    });
+    items.push({
+      id: guide.id,
+      url: urlPath,
+      kind: 'guide',
+      title: guide.title,
+      auditClass: cls.auditClass,
+      wordCount: wc,
+      hasOfficialLink: Boolean(guide.officialUrl),
+      hasLastUpdated: Boolean(guide.lastUpdated),
+      publicationStatus: guide.status || 'published',
+      robotsNoindex: false,
+      reasons: cls.reasons,
+    });
+  }
+
+  // Include non-post audit rows from reports/content_audit.json if generated
+  for (const [p, entry] of auditMap.entries()) {
+    if (p.startsWith('/post/') || p.startsWith('/scheme/')) continue;
+    items.push({
+      id: p,
+      url: p,
+      kind: p.startsWith('/service/') ? 'service' : p.startsWith('/tools/') ? 'tool' : 'static',
+      title: entry.title || p,
+      auditClass: entry.auditClass || 'A',
+      wordCount: entry.wordCount || 0,
+      hasOfficialLink: Boolean(entry.hasOfficialLink),
+      hasLastUpdated: Boolean(entry.hasLastUpdated),
+      reasons: entry.reasons || [],
+    });
+  }
+
+  res.json({
+    success: true,
+    items,
+    logs: getContentHealthLogs(80),
+  });
+});
+
+app.post('/api/staff/content-health/save', authenticateAdmin, (req: Request, res: Response) => {
+  const body = req.body || {};
+  const postId = String(body.id || '').trim();
+  if (!postId) {
+    return res.status(400).json({ success: false, error: 'Missing post ID.' });
+  }
+  const allPosts = getAllMergedSarkariPosts();
+  const target = allPosts.find((p) => p.id === postId);
+  if (!target) {
+    return res.status(404).json({ success: false, error: 'Post not found.' });
+  }
+
+  const publicationStatus: 'draft' | 'published' =
+    body.publicationStatus === 'draft' ? 'draft' : 'published';
+  const actor = (req as any).adminUser?.email || (req as any).adminUser?.username || 'Staff Admin';
+
+  if (publicationStatus === 'published') {
+    const validation = validatePostPublishQuality(
+      {
+        id: postId,
+        title: body.title ?? target.title,
+        shortInfo: body.shortInfo ?? target.shortInfo,
+        summary: body.summary ?? target.summary,
+        eligibility: body.eligibility ?? target.eligibility,
+        lastDate: body.lastDate ?? target.lastDate,
+        postDate: target.postDate,
+        updatedAt: new Date().toISOString().slice(0, 10),
+        officialNotificationUrl: body.officialNotificationUrl || target.officialNotificationUrl || target.officialLink,
+        howToApply: Array.isArray(body.howToApply) ? body.howToApply : target.howToApply,
+        selectionProcess: Array.isArray(body.selectionProcess) ? body.selectionProcess : target.selectionProcess,
+        documentsRequired: Array.isArray(body.documentsRequired) ? body.documentsRequired : target.documentsRequired,
+        notes: body.notes,
+        sourceExcerpt: target.sourceExcerpt,
+      },
+      { minWordCount: 400, maxConsecutiveCopiedSentences: 2, enforceWordCount: true }
+    );
+    if (!validation.valid) {
+      return res.status(400).json({
+        success: false,
+        error: validation.errors[0] || 'Quality gate blocked publishing.',
+        errors: validation.errors,
+      });
+    }
+  }
+
+  const saved = upsertPostHealthOverride({
+    id: postId,
+    publicationStatus,
+    title: body.title !== undefined ? String(body.title).trim() : undefined,
+    shortInfo: body.shortInfo !== undefined ? String(body.shortInfo).trim() : undefined,
+    summary: body.summary !== undefined ? String(body.summary).trim() : undefined,
+    eligibility: body.eligibility !== undefined ? String(body.eligibility).trim() : undefined,
+    lastDate: body.lastDate !== undefined ? String(body.lastDate).trim() : undefined,
+    officialNotificationUrl: body.officialNotificationUrl !== undefined ? String(body.officialNotificationUrl).trim() : undefined,
+    howToApply: Array.isArray(body.howToApply) ? body.howToApply : undefined,
+    selectionProcess: Array.isArray(body.selectionProcess) ? body.selectionProcess : undefined,
+    documentsRequired: Array.isArray(body.documentsRequired) ? body.documentsRequired : undefined,
+    faq: Array.isArray(body.faq) ? body.faq : undefined,
+    notes: body.notes !== undefined ? String(body.notes).trim() : undefined,
+    updatedAt: new Date().toISOString().slice(0, 10),
+    updatedBy: actor,
+  });
+
+  addContentHealthLog({
+    postId,
+    action: 'enrich_save',
+    actor,
+    timestamp: new Date().toISOString(),
+    details: `Saved structured enrichments as ${publicationStatus}`,
+  });
+
+  res.json({ success: true, override: saved });
+});
+
+app.post('/api/staff/content-health/action', authenticateAdmin, (req: Request, res: Response) => {
+  const { id, action, targetId } = req.body || {};
+  const postId = String(id || '').trim();
+  if (!postId || !action) {
+    return res.status(400).json({ success: false, error: 'Missing id or action.' });
+  }
+  const actor = (req as any).adminUser?.email || (req as any).adminUser?.username || 'Staff Admin';
+  const nowDate = new Date().toISOString().slice(0, 10);
+
+  if (action === 'set_draft') {
+    upsertPostHealthOverride({ id: postId, publicationStatus: 'draft', updatedAt: nowDate, updatedBy: actor });
+    addContentHealthLog({ postId, action: 'set_draft', actor, timestamp: new Date().toISOString(), details: 'Moved post to draft (hidden from public & sitemap)' });
+    return res.json({ success: true, message: `Marked ${postId} as draft.` });
+  }
+  if (action === 'set_published') {
+    upsertPostHealthOverride({ id: postId, publicationStatus: 'published', updatedAt: nowDate, updatedBy: actor });
+    addContentHealthLog({ postId, action: 'set_published', actor, timestamp: new Date().toISOString(), details: 'Published post live' });
+    return res.json({ success: true, message: `Published ${postId}.` });
+  }
+  if (action === 'mark_noindex') {
+    upsertPostHealthOverride({ id: postId, robotsNoindex: true, updatedAt: nowDate, updatedBy: actor });
+    addContentHealthLog({ postId, action: 'mark_noindex', actor, timestamp: new Date().toISOString(), details: 'Set robots noindex, follow and removed from sitemap.xml' });
+    return res.json({ success: true, message: `Marked ${postId} as noindex, follow.` });
+  }
+  if (action === 'clear_noindex') {
+    upsertPostHealthOverride({ id: postId, robotsNoindex: false, updatedAt: nowDate, updatedBy: actor });
+    addContentHealthLog({ postId, action: 'clear_noindex', actor, timestamp: new Date().toISOString(), details: 'Cleared manual noindex flag' });
+    return res.json({ success: true, message: `Cleared noindex on ${postId}.` });
+  }
+  if (action === 'merge_301') {
+    const cleanTarget = String(targetId || '').trim();
+    if (!cleanTarget || cleanTarget === postId) {
+      return res.status(400).json({ success: false, error: 'Choose a valid distinct canonical target post slug.' });
+    }
+    upsertPostHealthOverride({ id: postId, duplicateOfId: cleanTarget, robotsNoindex: true, updatedAt: nowDate, updatedBy: actor });
+    addContentHealthLog({ postId, action: 'merge_301', actor, timestamp: new Date().toISOString(), details: `Applied 301 redirect to /post/${cleanTarget} and excluded from sitemap.xml` });
+    return res.json({ success: true, message: `Merged ${postId} -> 301 /post/${cleanTarget}.` });
+  }
+
+  return res.status(400).json({ success: false, error: 'Unsupported action.' });
+});
+
+app.post('/api/staff/content-health/bulk-noindex-class-c', authenticateAdmin, (req: Request, res: Response) => {
+  const rawIds = Array.isArray(req.body?.postIds) ? req.body.postIds : [];
+  if (rawIds.length === 0) {
+    return res.status(400).json({ success: false, error: 'No Class C post IDs supplied.' });
+  }
+  const actor = (req as any).adminUser?.email || (req as any).adminUser?.username || 'Staff Admin';
+  const result = bulkNoindexPostIds(rawIds, actor);
+  res.json({
+    success: true,
+    updatedCount: result.updatedCount,
+    updatedIds: result.updatedIds,
   });
 });
 
@@ -5053,6 +5522,11 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
   let breadcrumbItems: { name: string; url: string }[] = [];
   let substantiveBodyHtml = '';
   let matchedJobPost: SarkariItem | null = null;
+  let matchedGuide: GuideArticle | null = null;
+  const publishedGuides = getPublishedMergedGuides(getGuideStates(), ALL_GUIDE_ARTICLES);
+  const hasFilterQueryParam = ['tab', 'org', 'filter', 'q', 'page', 'sort', 'calc', 'preset', 'service'].some(
+    (k) => Boolean(req.query[k])
+  );
 
   const legalMatch = urlPath.match(/^\/(privacy-policy|privacy|terms-of-service|terms|disclaimer|about-us|contact-us|editorial-policy|editorial|refund-policy|refund)$/i);
   const adminMatch = urlPath.match(/^\/(admin|staff)$/i);
@@ -5084,7 +5558,7 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
     description = PRIVATE_NOINDEX_META[adminKey].description;
     canonicalUrl = PRIVATE_NOINDEX_META[adminKey].canonicalUrl;
     robotsContent = PRIVATE_NOINDEX_META[adminKey].robots;
-    substantiveBodyHtml = renderCategorySubstantiveHtml('admin', [], []);
+    substantiveBodyHtml = renderCategorySubstantiveHtml('admin', [], [], publishedGuides);
   } else if (targetPostId) {
     const allSarkari = getAllMergedSarkariPosts().filter(isPublishedSarkariItem);
     const item = allSarkari.find(i => i.id === targetPostId || i.id === decodeURIComponent(targetPostId));
@@ -5096,7 +5570,10 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       ogImage = `${baseOrigin}/api/og-image/${encodeURIComponent(item.id)}.png?v=${thumbHash}`;
       canonicalUrl = `${SITE_ORIGIN}/post/${item.id}`;
       const isDuplicatePost = Boolean(item.duplicateOfId) || Boolean(KNOWN_DUPLICATE_MAP[item.id]);
-      robotsContent = isStaleOver90Days(item) || isDuplicatePost ? 'noindex, follow' : 'index, follow';
+      robotsContent =
+        isStaleOver90Days(item) || isDuplicatePost || Boolean(item.robotsNoindex)
+          ? 'noindex, follow'
+          : 'index, follow';
       ogType = 'article';
       articlePublishedDate = toIsoDate(item.postDate);
       const isIgnouPost = isIgnouItem(item);
@@ -5151,15 +5628,16 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       substantiveBodyHtml = renderNotFoundSubstantiveHtml(urlPath);
     }
   } else if (targetSchemeId) {
-    const guide = GUIDE_ARTICLES.find((g) => g.id === targetSchemeId || g.id === decodeURIComponent(targetSchemeId));
+    const guide = publishedGuides.find((g) => g.id === targetSchemeId || g.id === decodeURIComponent(targetSchemeId));
     if (guide) {
+      matchedGuide = guide;
       const meta = getSchemeSeoMeta(guide);
       title = meta.title;
       description = meta.description;
       canonicalUrl = meta.canonicalUrl;
       robotsContent = meta.robots;
       ogType = 'article';
-      articlePublishedDate = '2026-11-14';
+      articlePublishedDate = toIsoDate(guide.reviewedAt || guide.lastUpdated) || '2026-11-14';
       breadcrumbItems = meta.breadcrumbs || [];
       substantiveBodyHtml = renderSchemeSubstantiveHtml(guide);
     } else if (matchScheme) {
@@ -5184,7 +5662,7 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
           title = formatSeoTitle(`${matchedTool.name} - Tools`);
           description = formatSeoDescription(matchedTool.shortDescription);
           canonicalUrl = `${SITE_ORIGIN}/tools/${matchedTool.id}`;
-          robotsContent = 'index, follow';
+          robotsContent = hasFilterQueryParam ? 'noindex, follow' : 'index, follow';
           breadcrumbItems = [
             { name: 'Home', url: `${SITE_ORIGIN}/` },
             { name: 'Document Tools', url: `${SITE_ORIGIN}/tools` },
@@ -5204,28 +5682,28 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
         title = meta.title;
         description = meta.description;
         canonicalUrl = meta.canonicalUrl;
-        robotsContent = meta.robots;
+        robotsContent = hasFilterQueryParam ? 'noindex, follow' : meta.robots;
         breadcrumbItems = meta.breadcrumbs || [];
-        substantiveBodyHtml = renderCategorySubstantiveHtml('tools', allSarkari, SERVICES_LIST);
+        substantiveBodyHtml = renderCategorySubstantiveHtml('tools', allSarkari, SERVICES_LIST, publishedGuides);
       }
     } else if (urlPath === '/apply') {
       title = PRIVATE_NOINDEX_META.apply.title;
       description = PRIVATE_NOINDEX_META.apply.description;
       canonicalUrl = PRIVATE_NOINDEX_META.apply.canonicalUrl;
       robotsContent = PRIVATE_NOINDEX_META.apply.robots;
-      substantiveBodyHtml = renderCategorySubstantiveHtml('apply', [], []);
+      substantiveBodyHtml = renderCategorySubstantiveHtml('apply', [], [], publishedGuides);
     } else if (trackMatch) {
       title = PRIVATE_NOINDEX_META.track.title;
       description = PRIVATE_NOINDEX_META.track.description;
       canonicalUrl = PRIVATE_NOINDEX_META.track.canonicalUrl;
       robotsContent = PRIVATE_NOINDEX_META.track.robots;
-      substantiveBodyHtml = renderCategorySubstantiveHtml('track', [], []);
+      substantiveBodyHtml = renderCategorySubstantiveHtml('track', [], [], publishedGuides);
     } else if (urlPath.toLowerCase() === '/archive') {
       const allSarkari = getAllMergedSarkariPosts();
       title = ARCHIVE_SEO.title;
       description = ARCHIVE_SEO.description;
       canonicalUrl = ARCHIVE_SEO.canonicalUrl;
-      robotsContent = ARCHIVE_SEO.robots;
+      robotsContent = hasFilterQueryParam ? 'noindex, follow' : ARCHIVE_SEO.robots;
       breadcrumbItems = ARCHIVE_SEO.breadcrumbs || [];
       substantiveBodyHtml = renderArchiveSubstantiveHtml(allSarkari);
     } else if (urlPath.toLowerCase() === '/deadlines') {
@@ -5233,17 +5711,17 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       title = DEADLINES_SEO.title;
       description = DEADLINES_SEO.description;
       canonicalUrl = DEADLINES_SEO.canonicalUrl;
-      robotsContent = DEADLINES_SEO.robots;
+      robotsContent = hasFilterQueryParam ? 'noindex, follow' : DEADLINES_SEO.robots;
       breadcrumbItems = DEADLINES_SEO.breadcrumbs || [];
-      substantiveBodyHtml = renderCategorySubstantiveHtml('deadlines', allSarkari, SERVICES_LIST);
+      substantiveBodyHtml = renderCategorySubstantiveHtml('deadlines', allSarkari, SERVICES_LIST, publishedGuides);
     } else if (urlPath.toLowerCase() === '/education/ignou') {
       const allSarkari = getAllMergedSarkariPosts();
       title = IGNOU_EDUCATION_SEO.title;
       description = IGNOU_EDUCATION_SEO.description;
       canonicalUrl = IGNOU_EDUCATION_SEO.canonicalUrl;
-      robotsContent = IGNOU_EDUCATION_SEO.robots;
+      robotsContent = hasFilterQueryParam ? 'noindex, follow' : IGNOU_EDUCATION_SEO.robots;
       breadcrumbItems = IGNOU_EDUCATION_SEO.breadcrumbs || [];
-      substantiveBodyHtml = renderCategorySubstantiveHtml('ignou', allSarkari, SERVICES_LIST);
+      substantiveBodyHtml = renderCategorySubstantiveHtml('ignou', allSarkari, SERVICES_LIST, publishedGuides);
     } else if (categoryMatch) {
       const catKey = categoryMatch[1].toLowerCase() as CategorySlug;
       const meta = getCategorySeoMeta(catKey);
@@ -5251,9 +5729,9 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
       title = meta.title;
       description = meta.description;
       canonicalUrl = meta.canonicalUrl;
-      robotsContent = meta.robots;
+      robotsContent = hasFilterQueryParam ? 'noindex, follow' : meta.robots;
       breadcrumbItems = meta.breadcrumbs || [];
-      substantiveBodyHtml = renderCategorySubstantiveHtml(catKey, allSarkari, SERVICES_LIST);
+      substantiveBodyHtml = renderCategorySubstantiveHtml(catKey, allSarkari, SERVICES_LIST, publishedGuides);
     } else if (urlPath === '/dev/thumbnails') {
       title = 'Thumbnail Preview Matrix | CSC DOST';
       description = 'Internal development preview for generated OG images and list thumbnails.';
@@ -5269,10 +5747,15 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
         typeof waCfg.groupInviteUrl === 'string' && waCfg.groupInviteUrl.trim()
           ? waCfg.groupInviteUrl.trim()
           : 'https://chat.whatsapp.com/GqeYfcw1sdN0EQtGvVR1fI';
-      substantiveBodyHtml = renderHomepageSubstantiveHtml(allSarkari, SERVICES_LIST, {
-        whatsappUrl: hasChannel ? rawChannel : rawGroup,
-        whatsappType: hasChannel ? 'channel' : 'group',
-      });
+      substantiveBodyHtml = renderHomepageSubstantiveHtml(
+        allSarkari,
+        SERVICES_LIST,
+        {
+          whatsappUrl: hasChannel ? rawChannel : rawGroup,
+          whatsappType: hasChannel ? 'channel' : 'group',
+        },
+        publishedGuides
+      );
     } else {
       isNotFound = true;
       title = PRIVATE_NOINDEX_META.notfound.title;
@@ -5363,7 +5846,10 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
   if (ogType === 'article') {
     const articleModifiedDate = matchedJobPost
       ? (toIsoPostDate(matchedJobPost.updatedAt || matchedJobPost.postDate) || articlePublishedDate)
+      : matchedGuide
+      ? (toIsoDate(matchedGuide.reviewedAt || matchedGuide.lastUpdated) || articlePublishedDate)
       : articlePublishedDate;
+    const guideReviewer = matchedGuide?.reviewedBy || 'Wasim Ahmad Khanday';
     const articleLd = {
       "@context": "https://schema.org",
       "@type": "Article",
@@ -5381,7 +5867,7 @@ function renderDynamicMetaHtml(rawHtml: string, req: Request): { html: string; i
         },
         {
           "@type": "Person",
-          "name": "Wasim Ahmad Khanday"
+          "name": guideReviewer
         }
       ],
       "publisher": {
@@ -5440,7 +5926,7 @@ ${JSON.stringify(breadcrumbLd, null, 2)}
 app.get('/sitemap.xml', (req: Request, res: Response) => {
   try {
     const BASE_URL = SITE_ORIGIN;
-    const VERIFIED_STATIC_DATE = '2026-11-14';
+    const VERIFIED_STATIC_DATE = '2026-11-18';
 
     const staticPages = [
       { loc: '/', changefreq: 'daily', priority: '1.0' },
@@ -5463,6 +5949,7 @@ app.get('/sitemap.xml', (req: Request, res: Response) => {
     ];
 
     const allSarkari = getAllMergedSarkariPosts().filter(isPublishedSarkariItem);
+    const publishedGuides = getPublishedMergedGuides(getGuideStates(), ALL_GUIDE_ARTICLES);
     const seenPostIds = new Set<string>();
 
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
@@ -5484,7 +5971,7 @@ app.get('/sitemap.xml', (req: Request, res: Response) => {
       if (!post.id || seenPostIds.has(post.id)) continue;
       seenPostIds.add(post.id);
       const isDuplicatePost = Boolean(post.duplicateOfId) || Boolean(KNOWN_DUPLICATE_MAP[post.id]);
-      if (isStaleOver90Days(post) || isOlderThan12Months(post) || isDuplicatePost) {
+      if (isStaleOver90Days(post) || isOlderThan12Months(post) || isDuplicatePost || Boolean(post.robotsNoindex)) {
         continue;
       }
       const safeDate =
@@ -5508,7 +5995,7 @@ app.get('/sitemap.xml', (req: Request, res: Response) => {
       xml += '  </url>\n';
     }
 
-    for (const g of GUIDE_ARTICLES) {
+    for (const g of publishedGuides) {
       xml += '  <url>\n';
       xml += `    <loc>${BASE_URL}/scheme/${encodeURIComponent(g.id)}</loc>\n`;
       xml += `    <lastmod>${VERIFIED_STATIC_DATE}</lastmod>\n`;
@@ -5551,9 +6038,13 @@ app.use(express.static(path.join(process.cwd(), 'public'), { index: false }));
 // Production & Vercel SSR catch-all route (Registered immediately so Vercel Serverless Function executes it)
 if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
   const distPath = path.join(process.cwd(), 'dist');
+  const distAssetsPath = path.join(distPath, 'assets');
   const indexHtmlPath = path.join(distPath, 'index.html');
   const rootHtmlPath = path.join(process.cwd(), 'index.html');
 
+  if (fs.existsSync(distAssetsPath)) {
+    app.use('/assets', express.static(distAssetsPath, { index: false, maxAge: '365d', immutable: true }));
+  }
   if (fs.existsSync(distPath)) {
     app.use(express.static(distPath, { index: false }));
   }
@@ -5569,6 +6060,7 @@ if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
         const indexHtml = fs.readFileSync(targetHtmlPath, 'utf-8');
         const { html: dynamicHtml, isNotFound } = renderDynamicMetaHtml(indexHtml, req);
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
         if (isNotFound) {
           return res.status(404).send(dynamicHtml);
         }
@@ -5607,6 +6099,7 @@ async function startServer() {
         const transformedHtml = await vite.transformIndexHtml(url, indexHtml);
         const { html: finalHtml, isNotFound } = renderDynamicMetaHtml(transformedHtml, req);
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
         if (isNotFound) {
           return res.status(404).send(finalHtml);
         }

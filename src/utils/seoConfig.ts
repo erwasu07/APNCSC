@@ -421,7 +421,7 @@ export const LEGAL_SEO_MAP: Record<string, RouteSeoMeta> = {
   contact: {
     title: 'Contact Us & Citizen Helpdesk | CSC DOST',
     description:
-      'Contact CSC DOST helpdesk in Sangran Qazigund, Anantnag, J&K by phone (+91-7006833767) or email (support@cscdost.com).',
+      'Contact CSC DOST helpdesk in Sangran Qazigund, Anantnag, J&K by phone (+91-7006833767) or email (urnxtfd@gmail.com).',
     canonicalUrl: `${SITE_ORIGIN}/contact-us`,
     robots: 'index, follow',
     ogType: 'website',

@@ -624,6 +624,8 @@ export default function AdminPushPublisher() {
                 <img
                   src="/csc-dost-header-logo.png"
                   alt="App Icon"
+                  width={16}
+                  height={16}
                   className="w-4 h-4 rounded-full object-contain bg-white"
                 />
                 <span className="font-semibold text-white">CSC DOST</span>
@@ -650,6 +652,9 @@ export default function AdminPushPublisher() {
                 <img
                   src={thumbnailUrl}
                   alt="Notification Banner"
+                  width={600}
+                  height={315}
+                  loading="lazy"
                   className="w-full h-full object-contain block"
                 />
               </div>
