@@ -93,9 +93,10 @@ Welcome to CSC Dost. We are committed to protecting your privacy and ensuring th
 
 1. INFORMATION WE COLLECT
 - Personal Identification Information: Name, phone number, email address, postal address, and date of birth.
-- Service & Document Details: Identity details (Aadhaar, PAN, photographs, certificates) required for government applications.
-- Payment Information: Secure transaction details processed via authorized gateways.
-- Technical Data: IP address, browser type, cookies, and device analytics.
+- Service & Document Details: Identity details (Aadhaar, PAN, photographs, certificates) submitted through the Apply Desk are transmitted to our backend and cloud storage (such as Supabase) strictly to process your requested application.
+- Payment Information: Online payments (when enabled) are processed via authorized third-party gateways configured on the platform (such as PayU or Razorpay). We do not store card numbers, CVVs, or UPI PINs.
+- Browser-Local Document Tools: Photo/signature resizers and PDF tools process files locally in your browser using HTML5 Canvas and client-side JavaScript libraries (pdf-lib / pdfjs-dist) without uploading your files to CSC DOST servers (PDF Compressor and PDF to Image load the pdf.js worker script from cdnjs.cloudflare.com).
+- Technical Data: Standard technical request logs (IP address, browser type, timestamps) and browser cookies.
 
 2. HOW WE USE YOUR INFORMATION
 - Service Delivery: Processing online forms, printing, and citizen queries.
@@ -105,11 +106,12 @@ Welcome to CSC Dost. We are committed to protecting your privacy and ensuring th
 
 3. SHARING AND DISCLOSURE OF INFORMATION
 - Service Fulfillment: Sharing with government portals/boards for processing applications.
-- Service Providers: Trusted partners (payment gateways, hosting, SMS providers) under confidentiality.
+- Service Providers: Trusted partners (payment gateways, cloud hosting/storage, notification providers) under confidentiality.
 - Legal Requirements: Compliance with statutory orders and protecting rights.
 
-4. DATA SECURITY
-Technical, physical, and administrative safeguards to protect your personal data and sensitive documents.
+4. DATA SECURITY & RETENTION
+- Technical, physical, and administrative safeguards are used to protect your personal data and documents.
+- Records are retained as needed for form processing and support; deletion is handled manually upon request by emailing urnxtfd@gmail.com with your tracking token.
 
 5. GOOGLE ADSENSE & THIRD-PARTY ADVERTISING COOKIES
 - We use Google AdSense to display relevant advertisements on https://www.cscdost.com/.
@@ -118,18 +120,18 @@ Technical, physical, and administrative safeguards to protect your personal data
 - Users may opt out of personalized advertising by visiting Google Ads Settings (https://adssettings.google.com/) or the Network Advertising Initiative Opt-Out Page (https://optout.networkadvertising.org).
 
 6. COOKIES & BROWSER STORAGE
-- We use essential local storage for theme/language preferences and cookie consent acknowledgment, as well as third-party Google AdSense advertising cookies. You can manage or block cookies in your browser settings at any time.
+- We use essential local storage for theme/language preferences and informational cookie notice dismissal, as well as third-party Google AdSense advertising cookies. You can manage or block cookies in your browser settings at any time.
 
 7. THIRD-PARTY LINKS
 External links to government/payment portals are subject to their own privacy policies.
 
-7. CHILDREN'S PRIVACY
+8. CHILDREN'S PRIVACY
 Intended for general audience. No intentional collection from minors under 18 without guardian consent.
 
-8. CHANGES TO THIS PRIVACY POLICY
+9. CHANGES TO THIS PRIVACY POLICY
 Updates will be posted with an updated Effective Date.
 
-9. CONTACT US
+10. CONTACT US
 Website: https://www.cscdost.com/
 Email: urnxtfd@gmail.com
 Phone: 7006833767`;
@@ -750,7 +752,7 @@ We will review your claim, verify the delivery status, and initiate the 7-day re
                       <span>Payment Information</span>
                     </div>
                     <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                      Transaction details, payment confirmations, and billing information processed through secure payment gateways (we do <strong>not</strong> store your complete banking credentials or sensitive card PINs/CVVs on our servers).
+                      Transaction details and payment confirmations processed through authorized third-party payment gateways configured on the platform (such as PayU or Razorpay). We do <strong>not</strong> store your complete banking credentials or sensitive card PINs/CVVs on our servers.
                     </p>
                   </div>
 

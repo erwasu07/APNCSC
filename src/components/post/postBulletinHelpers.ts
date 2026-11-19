@@ -234,21 +234,19 @@ function compactFeeValue(item: SarkariItem): string {
   const sc = item.fee?.scSt || item.fees?.scSt || '';
   const combined = `${gen} ${sc}`.trim();
 
-  if (
-    combined &&
-    (/₹\s*0\b|no\s*(application\s*)?fee|exempt|free/i.test(gen) &&
-      (!sc || /₹\s*0\b|no\s*(application\s*)?fee|exempt|free/i.test(sc)))
-  ) {
+  if (isZeroOrExemptFee(item)) {
     return '₹0';
   }
 
-  const gAmount = gen.match(/₹\s*[\d,]+(?:\s*\+\s*GST)?/i)?.[0]?.replace(/\s+/g, '');
-  const sAmount = sc.match(/₹\s*[\d,]+(?:\s*\+\s*GST)?/i)?.[0]?.replace(/\s+/g, '');
+  const gAmount = gen.match(/(?:₹|rs\.?)\s*[\d,]+/i)?.[0]?.replace(/^rs\.?\s*/i, '₹').replace(/\s+/g, '');
+  const sAmount = sc.match(/(?:₹|rs\.?)\s*[\d,]+/i)?.[0]?.replace(/^rs\.?\s*/i, '₹').replace(/\s+/g, '');
+  const hasPlusGst = /\+\s*gst|excluding\s+gst|extra\s+gst/i.test(combined);
+  const gstSuffix = hasPlusGst ? ' + GST' : '';
 
   if (gAmount && sAmount && gAmount !== sAmount) {
-    return `${gAmount} / ${sAmount}`;
+    return `${gAmount} / ${sAmount}${gstSuffix}`;
   }
-  if (gAmount) return gAmount;
+  if (gAmount) return `${gAmount}${gstSuffix}`;
   if (hasRealDataValue(item.feePerSubject)) return String(item.feePerSubject).trim();
   if (!hasExplicitFee(item)) {
     const rawGen = String(item.fee?.genObc || item.fees?.genObc || '').trim();
@@ -505,8 +503,12 @@ export function buildFeeNoticeBox(item: SarkariItem, effectiveType: PostStructur
   }
 
   const parts: string[] = [];
-  if (hasRealDataValue(gen) && !isGenericNoticePlaceholder(gen)) parts.push(`General / OBC / OM: ${gen}`);
-  if (hasRealDataValue(sc) && !isGenericNoticePlaceholder(sc) && sc !== gen) parts.push(`SC / ST / Reserved / PwD: ${sc}`);
+  if (hasRealDataValue(gen) && !isGenericNoticePlaceholder(gen)) {
+    parts.push(/\bfor\b/i.test(gen) ? gen : `General / OBC / OM: ${gen}`);
+  }
+  if (hasRealDataValue(sc) && !isGenericNoticePlaceholder(sc) && sc !== gen) {
+    parts.push(/\bfor\b/i.test(sc) ? sc : `SC / ST / Reserved / PwD: ${sc}`);
+  }
   if (hasRealDataValue(note)) parts.push(note);
 
   if (parts.length === 0) return null;

@@ -65,7 +65,7 @@ export default function LiveTickerBar({ posts, onOpenPost }: LiveTickerBarProps)
         <span className="bg-[#F59E0B] text-[#101A36] text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-[5px] shrink-0 leading-none">
           LIVE
         </span>
-        <div className="flex-1 overflow-hidden whitespace-nowrap relative">
+        <div className="flex-1 min-w-0 overflow-hidden whitespace-nowrap relative">
           <div className="animate-marquee">
             {renderTrack('main')}
             {renderTrack('dup', true)}

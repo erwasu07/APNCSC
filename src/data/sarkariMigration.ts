@@ -125,7 +125,16 @@ export function resolvePostOrg(item: SarkariItem): string {
     return 'University of Kashmir';
   }
   if (item.category === 'nta') return 'NTA';
-  if (item.category === 'banking_jobs') return 'IBPS / Banking';
+  if (item.category === 'banking_jobs') {
+    const bankText = `${item.title || ''} ${item.department || ''}`.toUpperCase();
+    if (bankText.includes('J&K BANK') || bankText.includes('JAMMU & KASHMIR BANK') || bankText.includes('JAMMU AND KASHMIR BANK')) {
+      return 'J&K Bank';
+    }
+    if (bankText.includes('STATE BANK OF INDIA') || /\bSBI\b/.test(bankText)) return 'SBI';
+    if (bankText.includes('RESERVE BANK OF INDIA') || /\bRBI\b/.test(bankText)) return 'RBI';
+    if (/\bIBPS\b/.test(bankText)) return 'IBPS';
+    return 'IBPS / Banking';
+  }
 
   const t = item.title.toUpperCase();
   if (t.includes('JKSSB')) return 'JKSSB';

@@ -252,12 +252,8 @@ export function buildPostEnrichmentData(
     item.category === 'cluster_univ' ||
     item.category === 'nta';
 
-  // 1. Quick summary (3-5 concise factual lines from existing fields)
+  // 1. Quick summary (concise factual highlights without duplicating the lead summary above)
   const quickSummary: string[] = [];
-  const leadText = (item.summary || item.shortInfo || '').trim();
-  if (leadText) {
-    quickSummary.push(leadText);
-  }
   quickSummary.push(
     `Issued by ${orgName}${
       hasRealDataValue(item.advertisementNo) && !isGenericNoticePlaceholder(item.advertisementNo)
@@ -290,13 +286,14 @@ export function buildPostEnrichmentData(
       }`
     );
     if (hasFee) {
-      quickSummary.push(
-        zeroFee
-          ? 'Application fee: Exempted / No fee required as stated in the official notice.'
-          : `Fee noted in notice: ${genFee || 'As per notice'}${
-              scFee && scFee !== genFee ? ` (Reserved/SC/ST: ${scFee})` : ''
-            }.`
-      );
+      const feeSummaryLine = zeroFee
+        ? 'Application fee: Exempted / No fee required as stated in the official notice.'
+        : scFee && scFee !== genFee
+        ? /\bfor\b/i.test(scFee)
+          ? `Fee noted in notice: ${genFee || 'As per notice'}; ${scFee}.`
+          : `Fee noted in notice: ${genFee || 'As per notice'} (Reserved / SC / ST: ${scFee}).`
+        : `Fee noted in notice: ${genFee || 'As per notice'}.`;
+      quickSummary.push(feeSummaryLine);
     } else if (hasRealDataValue(item.paymentInstructions)) {
       quickSummary.push(String(item.paymentInstructions).trim());
     }
@@ -306,36 +303,36 @@ export function buildPostEnrichmentData(
   const whoShouldApply: string[] = [];
   if (effectiveType === 'result' || effectiveType === 'admit_card' || effectiveType === 'dv' || effectiveType === 'exam' || effectiveType === 'answer_key') {
     whoShouldApply.push(
-      `Candidates registered under ${orgName} for ${item.title} (${hasRealDataValue(item.learnerGroup) ? item.learnerGroup : qualStr}).`
+      `Candidates registered under this ${orgName} cycle (${hasRealDataValue(item.learnerGroup) ? item.learnerGroup : qualStr}).`
     );
     whoShouldApply.push(
       effectiveType === 'answer_key'
         ? `Appeared examinees reviewing ${orgName} responses${statusInfo.isClosingSoon && endLong ? ` before ${endLong}` : ''}.`
         : effectiveType === 'dv'
-        ? `Shortlisted applicants carrying originals required by ${orgName}.`
-        : `Holders of valid ${orgName} roll/registration numbers for ${item.title}.`
+        ? `Shortlisted applicants carrying original certificates required by ${orgName}.`
+        : `Holders of valid ${orgName} roll or registration numbers covered under this notice.`
     );
     if (item.jkDomicile) {
-      whoShouldApply.push(`Eligible J&K domicile residents covered in ${item.title}.`);
+      whoShouldApply.push('Eligible Jammu & Kashmir domicile candidates covered under this notice.');
     }
   } else {
     whoShouldApply.push(
-      `Applicants fulfilling ${qualStr} as notified by ${orgName} in ${item.title}.`
+      `Applicants fulfilling ${qualStr} as notified by ${orgName}.`
     );
     if (hasRealDataValue(item.ageLimit) && !isGenericNoticePlaceholder(item.ageLimit)) {
       whoShouldApply.push(
-        `Candidates within ${orgName} age bounds (${item.ageLimit}) for ${item.title}.`
+        `Candidates within the prescribed age limit (${item.ageLimit}).`
       );
     }
     if (item.jkDomicile) {
-      whoShouldApply.push(`Holders of valid Jammu & Kashmir Domicile Certificates for ${item.title}.`);
+      whoShouldApply.push('Holders of a valid Jammu & Kashmir Domicile Certificate.');
     }
     whoShouldApply.push(
       statusInfo.isClosed
-        ? `Window closed (${endLong || statusInfo.dateValue}); kept for reference.`
+        ? `Window closed (${endLong || statusInfo.dateValue}); retained for reference.`
         : appMode === 'offline'
         ? `Candidates able to prepare self-attested testimonials and deliver the offline application on or before ${endLong || 'the deadline'}.`
-        : `Candidates with active contact details ready before ${endLong || 'the deadline'} on ${sourceDomain}.`
+        : `Candidates with active mobile/email credentials ready before ${endLong || 'the deadline'} on ${sourceDomain}.`
     );
   }
 
@@ -344,13 +341,13 @@ export function buildPostEnrichmentData(
   if (statusInfo.isClosed || statusInfo.isCancelled) {
     whoShouldNotApply.push(
       statusInfo.isCancelled
-        ? `All applicants — ${orgName} cancelled ${item.title}.`
-        : `New applicants — ${item.title} closed on ${endLong || statusInfo.dateValue}.`
+        ? `All applicants — ${orgName} cancelled or withdrew this notice.`
+        : `New applicants — the submission window closed on ${endLong || statusInfo.dateValue}.`
     );
   }
   if (effectiveType === 'result' || effectiveType === 'admit_card' || effectiveType === 'dv' || effectiveType === 'answer_key' || effectiveType === 'exam') {
     whoShouldNotApply.push(
-      `Unregistered applicants — ${item.title} covers existing ${orgName} candidates only.`
+      `Unregistered applicants — this update applies to existing ${orgName} candidates only.`
     );
   } else {
     whoShouldNotApply.push(
@@ -370,11 +367,11 @@ export function buildPostEnrichmentData(
 
   // 4. Common mistakes to avoid
   const commonMistakes: string[] = [
-    `Skipping the original ${item.title} notice on ${sourceDomain}.`,
+    `Skipping the original ${orgName} notification PDF on ${sourceDomain} before acting.`,
   ];
   if (appMode === 'offline' && (effectiveType === 'application' || effectiveType === 'admission' || effectiveType === 'upcoming')) {
     commonMistakes.push(
-      `Sending an incomplete or unsigned application form, or omitting self-attested copies of required enclosures.`
+      'Sending an incomplete or unsigned application form, or omitting self-attested copies of required enclosures.'
     );
     if (item.envelopeSuperscription) {
       commonMistakes.push(
@@ -388,14 +385,14 @@ export function buildPostEnrichmentData(
     commonMistakes.push(
       effectiveType === 'application' || effectiveType === 'admission' || effectiveType === 'upcoming'
         ? `Uploading unclear or non-compliant document files on ${sourceDomain} without checking the official notice specifications.`
-        : `Mismatched roll number or DOB entry when checking ${item.title} on ${sourceDomain}.`
+        : `Entering a mismatched roll number or date of birth when checking this ${orgName} update on ${sourceDomain}.`
     );
     commonMistakes.push(
       `Spelling or date-of-birth mismatches compared with Class 10th / academic records during ${orgName} verification.`
     );
     if (hasFee && !zeroFee) {
       commonMistakes.push(
-        `Double-paying ${item.title} fees before checking portal or bank reconciliation status.`
+        `Double-paying the ${orgName} application fee before checking portal or bank reconciliation status.`
       );
     } else {
       commonMistakes.push(
@@ -405,25 +402,25 @@ export function buildPostEnrichmentData(
   }
   if (item.jkDomicile) {
     commonMistakes.push(
-      `Claiming J&K domicile or reserved categories without valid certificates dated within the official cutoff.`
+      'Claiming J&K domicile or reserved categories without valid certificates dated within the official cutoff.'
     );
   }
 
-  // 5. What to do next (dated action steps)
+  // 5. What to do next (rendered inside <ol>; no hardcoded numeric prefixes)
   const whatToDoNext: string[] = [
-    `1. Confirm ${item.title} (${postLong}) directly on ${sourceDomain}.`,
+    `Confirm the official ${orgName} notice${postLong ? ` (published ${postLong})` : ''} directly on ${sourceDomain}.`,
     statusInfo.isClosed
-      ? `2. Follow post-closing ${orgName} updates (${endLong || 'closed'}) on ${sourceDomain}.`
+      ? `Follow post-closing ${orgName} updates (${endLong || 'closed'}) on ${sourceDomain}.`
       : statusInfo.isUpcoming
-      ? `2. Prepare certificates for ${item.title} ahead of ${startLong || 'opening'}.`
+      ? `Prepare required certificates and scanned files ahead of ${startLong || 'opening'}.`
       : effectiveType === 'result' || effectiveType === 'admit_card' || effectiveType === 'answer_key'
-      ? `2. Sign in on ${sourceDomain} with registration ID${endLong ? ` before ${endLong}` : ''} for ${item.title}.`
+      ? `Sign in on ${sourceDomain} with your registration ID${endLong ? ` before ${endLong}` : ''} to check or download the official document.`
       : appMode === 'offline'
-      ? `2. Download the prescribed offline application format from ${sourceDomain}, attach required self-attested enclosures, and send to the notified ${orgName} address on or before ${endLong || 'closing'}.`
-      : `2. Submit ${item.title} on ${sourceDomain} before ${endLong || 'closing'}${startLong ? ` (opened ${startLong})` : ''}.`,
+      ? `Download the prescribed offline application format from ${sourceDomain}, attach required self-attested enclosures, and send to the notified ${orgName} address on or before ${endLong || 'closing'}.`
+      : `Complete and submit your application on ${sourceDomain} before ${endLong || 'closing'}${startLong ? ` (window opened ${startLong})` : ''}.`,
     appMode === 'offline'
-      ? `3. Keep a photocopy of your signed application form, enclosures, and postal/submission receipt for reference.`
-      : `3. Save the official ${orgName} PDF or confirmation receipt for ${item.title}.`,
+      ? 'Keep a photocopy of your signed application form, enclosures, and postal/submission receipt for reference.'
+      : `Save the official ${orgName} PDF and final confirmation receipt for future reference.`,
   ];
 
   return {

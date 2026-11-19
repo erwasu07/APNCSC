@@ -1312,6 +1312,11 @@ export default function App() {
           />
         )}
 
+        {/* Inline Non-Obstructive Cookie Notice (normal document flow, never overlaps content or controls) */}
+        {!isAdminView && (
+          <CookieNotice onOpenPrivacy={() => navigateToPath('/privacy-policy')} />
+        )}
+
         {/* Main Container */}
         <main
           className={
@@ -1817,10 +1822,6 @@ export default function App() {
           onNavigate={handleBottomNavNavigate}
           unreadAlertsCount={unreadNotificationCount}
         />
-      )}
-
-      {!isAdminView && (
-        <CookieNotice onOpenPrivacy={() => navigateToPath('/privacy-policy')} />
       )}
 
       </div>

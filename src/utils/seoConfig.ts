@@ -170,6 +170,11 @@ const POST_EXACT_SEO_MAP: Record<string, { title: string; description: string }>
     description:
       'IGNOU Public Information Unit offline recruitment for 3 contractual Consultants (last date 11/12/2026). Check postal address, checklist & official Job-AD.pdf.',
   },
+  'jk-bank-banking-associates-recruitment-2026': {
+    title: 'J&K Bank Banking Associates 2026 (1,033 Posts) | CSC DOST',
+    description:
+      'J&K Bank Banking Associates 2026 (JKB/HR/Rectt/2026-493) for 1,033 posts (J&K UT domiciles). Apply 07/11/2026–26/11/2026; fee ₹800/₹600 + GST.',
+  },
 };
 
 /**

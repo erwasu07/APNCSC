@@ -33,6 +33,7 @@ import {
   resolveEffectiveTemplateType,
   resolvePostPdfUrl,
   resolvePostPortalUrl,
+  stripLeadingStepNumber,
 } from './components/post/postHelpers';
 import {
   buildHomepageFeedData,
@@ -161,25 +162,25 @@ export function renderPostSubstantiveHtml(
 
     <!-- Government Transparency Notice -->
     <aside style="background:#fffbeb; border-left:4px solid #f59e0b; padding:10px 14px; border-radius:0 8px 8px 0; margin-bottom:18px; font-size:13px; color:#92400e;">
-      <strong>Independent Summary (${safeOrg}):</strong> Verify "${safeTitle}" directly on <a href="${safeOfficialLink}" target="_blank" rel="noopener noreferrer" style="color:#92400e; font-weight:700;">${escapeHtml(enrichment.sourceDomain)}</a>.
+      <strong>Independent Summary (${safeOrg}):</strong> Verify official dates, fees, and eligibility directly on <a href="${safeOfficialLink}" target="_blank" rel="noopener noreferrer" style="color:#92400e; font-weight:700;">${escapeHtml(enrichment.sourceDomain)}</a>.
     </aside>
     ${isStale90 ? `
     <aside role="status" style="background:#fef2f2; border:1px solid #fecaca; border-left:4px solid #dc2626; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:14px; color:#7f1d1d;">
-      <strong>Closed (${escapeHtml(safeLastDate)}):</strong> "${safeTitle}" passed closing${daysClosed !== null && daysClosed > 0 ? ` ${daysClosed} days ago` : ''}; verify any new ${safeOrg} cycle on ${escapeHtml(enrichment.sourceDomain)}.
+      <strong>Closed (${escapeHtml(safeLastDate)}):</strong> This ${safeOrg} notice passed closing${daysClosed !== null && daysClosed > 0 ? ` ${daysClosed} days ago` : ''}; verify any new cycle on ${escapeHtml(enrichment.sourceDomain)}.
     </aside>
     ` : ''}
     ${!computed.canApplyOnline ? `
     <aside style="background:${computed.verificationStatus === 'needs_verification' ? '#fffbeb' : computed.isCancelled ? '#fff1f2' : '#f8fafc'}; border:1px solid ${computed.verificationStatus === 'needs_verification' ? '#fde68a' : computed.isCancelled ? '#fecdd3' : '#cbd5e1'}; border-left:4px solid ${computed.verificationStatus === 'needs_verification' ? '#d97706' : computed.isCancelled ? '#e11d48' : '#475569'}; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:13px; color:#0f172a;">
       <strong>${escapeHtml(computed.badgeLabel)} (${safeOrg}):</strong> ${
         computed.verificationStatus === 'needs_verification'
-          ? `Confirm "${safeTitle}" status directly on ${escapeHtml(enrichment.sourceDomain)}.`
+          ? `Confirm the current status of this notice directly on ${escapeHtml(enrichment.sourceDomain)}.`
           : computed.isCancelled
-          ? `${safeOrg} cancelled or withdrew "${safeTitle}".`
+          ? `${safeOrg} cancelled or withdrew this notice.`
           : computed.isClosed
-          ? escapeHtml(computed.closingTimeNote || `"${safeTitle}" closed on ${safeLastDate}.`)
+          ? escapeHtml(computed.closingTimeNote || `Application window closed on ${safeLastDate}.`)
           : computed.isUpcoming
-          ? `${safeOrg} scheduled opening for "${safeTitle}": ${safeStartDate}.`
-          : `Check ${escapeHtml(enrichment.sourceDomain)} for "${safeTitle}" updates.`
+          ? `${safeOrg} scheduled opening date: ${safeStartDate}.`
+          : `Check ${escapeHtml(enrichment.sourceDomain)} for official ${safeOrg} updates.`
       }
     </aside>
     ` : ''}
@@ -250,8 +251,14 @@ export function renderPostSubstantiveHtml(
             ? `<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
           <h3 style="font-size:15px; font-weight:700; color:#101A36; margin:0 0 10px 0;">Application Fee</h3>
           <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#334155; line-height:1.8;">
-            <li><strong>General / OBC / EWS:</strong> ${isZeroFee ? '₹0/- (Exempted)' : safeGenObc}</li>
-            <li><strong>SC / ST / PwD / Female:</strong> ${isZeroFee ? '₹0/- (Exempted)' : safeScSt}</li>
+            <li><strong>${/\bfor\b/i.test(item.fees?.genObc || item.fee?.genObc || '') ? 'Standard Fee:' : 'General / OBC / EWS:'}</strong> ${isZeroFee ? '₹0/- (Exempted)' : safeGenObc}</li>
+            ${
+              safeScSt && safeScSt !== safeGenObc
+                ? `<li><strong>${/\bfor\b/i.test(item.fees?.scSt || item.fee?.scSt || '') ? 'Concessional Fee:' : 'SC / ST / PwD / Female:'}</strong> ${isZeroFee ? '₹0/- (Exempted)' : safeScSt}</li>`
+                : isZeroFee
+                ? `<li><strong>SC / ST / PwD / Female:</strong> ₹0/- (Exempted)</li>`
+                : ''
+            }
             <li><strong>Payment Note:</strong> ${paymentInstructionText}</li>
           </ul>
         </div>`
@@ -365,7 +372,7 @@ export function renderPostSubstantiveHtml(
       <section style="margin-bottom:24px;">
         <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">What to do next</h2>
         <ol style="padding-left:20px; font-size:14px; color:#334155; line-height:1.75; margin:0;">
-          ${enrichment.whatToDoNext.map(point => `<li>${escapeHtml(point)}</li>`).join('')}
+          ${enrichment.whatToDoNext.map(point => `<li>${escapeHtml(stripLeadingStepNumber(point))}</li>`).join('')}
         </ol>
       </section>
 
@@ -413,7 +420,7 @@ export function renderPostSubstantiveHtml(
       <section style="background:#f1f5f9; border-radius:10px; padding:18px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
         <div>
           <div style="font-weight:700; font-size:15px; color:#101A36;">Official ${safeOrg} Source Links</div>
-          <div style="font-size:13px; color:#475569;">Confirm "${safeTitle}" on ${escapeHtml(enrichment.sourceDomain)}.</div>
+          <div style="font-size:13px; color:#475569;">Confirm official notice details directly on ${escapeHtml(enrichment.sourceDomain)}.</div>
         </div>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
           <a href="${safeOfficialLink}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
@@ -925,10 +932,10 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">2. Information We Collect</h2>
           <ul style="padding-left:20px; margin:0 0 16px 0; line-height:1.8;">
-            <li><strong>Informational Visitors:</strong> We collect standard, anonymous server log files (IP addresses, browser type, referring pages, date/time stamps) strictly for aggregate security analytics and system health monitoring.</li>
-            <li><strong>Assisted Form Applicants:</strong> When you voluntarily submit an application assistance request, we collect only necessary personal data: Full Name, Father's Name, Date of Birth, Gender, Mobile Number, Email Address, and uploaded proof documents (e.g. Matriculation diploma, Domicile certificate, Photograph, Signature).</li>
+            <li><strong>Informational Visitors:</strong> Standard technical request logs (such as IP address, browser type, referring URL, and timestamps) may be recorded by our hosting and server infrastructure for security monitoring, abuse prevention, and operational troubleshooting.</li>
+            <li><strong>Assisted Form Applicants:</strong> When you voluntarily submit an application assistance request through our Apply Desk, we collect only the details needed for facilitation: Full Name, Father's Name, Date of Birth, Gender, Mobile Number, Email Address, selected service details, and uploaded proof documents (e.g., Matriculation certificate, Domicile certificate, Photograph, Signature). These submissions are transmitted to our backend and cloud storage (such as Supabase) so our VLE operator can process your request and issue a tracking token.</li>
             <li><strong>Web Push Subscribers:</strong> If you click &ldquo;Enable Notifications&rdquo; and grant browser notification permission, we store your browser push subscription endpoint URL, cryptographic encryption keys (<code>p256dh</code> and <code>auth</code>), browser user-agent, the page you subscribed from, and timestamps strictly to deliver requested recruitment, exam date-sheet, admission, and CSC welfare scheme alerts. No personal identity is linked to push subscriptions. You can <strong>unsubscribe at any time</strong> by clicking &ldquo;Unsubscribe&rdquo; in Notification Preferences or blocking Notifications in your browser site settings; unsubscribed or expired (HTTP 404/410) rows are permanently deleted from our database.</li>
-            <li><strong>Payment Information:</strong> Online fee transactions are processed directly by <strong>Razorpay (PCI-DSS Level 1 compliant gateway)</strong>. CSC DOST does <strong>not</strong> collect, store, or view your debit/credit card numbers, CVVs, net-banking passwords, or UPI PINs.</li>
+            <li><strong>Payment Information:</strong> When online payment is enabled for assisted services, transactions are processed through authorized third-party payment gateways configured on our platform (such as <strong>PayU</strong> or <strong>Razorpay</strong>). CSC DOST does <strong>not</strong> collect, store, or view your debit/credit card numbers, CVVs, net-banking passwords, or UPI PINs.</li>
           </ul>
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">3. Purpose and Legal Basis for Processing</h2>
@@ -942,7 +949,7 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">4. Client-Side Document Tools Data Isolation</h2>
           <p>
-            Our browser-based document resizing, signature joining, and PDF generation tools operate <strong>entirely inside your local web browser</strong> via HTML5 Canvas and WebAssembly. Your photos, signatures, and certificates are never uploaded to our servers when utilizing these offline utilities.
+            Our browser-based photo resizing, signature cropping, image compression, and PDF utilities process your files <strong>locally inside your web browser</strong> using HTML5 Canvas and client-side JavaScript libraries (such as <code>pdf-lib</code> and <code>pdfjs-dist</code>). Files opened in these tools are not uploaded to CSC DOST servers. Note that our PDF Compressor and PDF to Image tools load the open-source <code>pdf.js</code> worker script from a third-party CDN (<code>cdnjs.cloudflare.com</code>) while keeping your document content inside your browser.
           </p>
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">5. Third-Party Advertising &amp; Google AdSense</h2>
@@ -955,12 +962,12 @@ export function renderLegalPageSubstantiveHtml(pageType: string): string {
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">6. Cookies and Browser Storage Controls</h2>
           <p>
-            CSC DOST uses minimal browser storage (<code>localStorage</code>) to remember your language preference, theme selection, and cookie banner acknowledgement (<code>csc_cookie_consent</code>). Third-party advertising partners such as Google AdSense may place or read cookies and web beacons to measure ad delivery and show relevant ads. You can manage personalized ad preferences via <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" style="color:#2563eb;">Google Ads Settings</a> or <a href="https://optout.networkadvertising.org" target="_blank" rel="noopener noreferrer" style="color:#2563eb;">Network Advertising Initiative Opt-Out Page</a>, or disable cookies at any time in your web browser settings.
+            CSC DOST uses minimal browser storage (<code>localStorage</code>) to remember your language preference, theme selection, and dismissal of our informational cookie notice (<code>csc_cookie_consent</code>). Third-party advertising partners such as Google AdSense may place or read cookies and web beacons to measure ad delivery and show relevant ads. You can manage personalized ad preferences via <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" style="color:#2563eb;">Google Ads Settings</a> or <a href="https://optout.networkadvertising.org" target="_blank" rel="noopener noreferrer" style="color:#2563eb;">Network Advertising Initiative Opt-Out Page</a>, or disable cookies at any time in your web browser settings.
           </p>
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">7. Data Retention and Erasure</h2>
           <p>
-            Application records and uploaded documents are retained securely for a period of up to 180 days after application processing to permit verification and candidate support, after which they are systematically purged from our encrypted storage. Citizens may request immediate deletion of their personal records by emailing <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a> with their tracking token.
+            Application records and uploaded proof documents submitted through the Apply Desk are stored in our application database and cloud storage (such as Supabase) for as long as needed to complete form facilitation, provide status tracking, resolve applicant queries, or meet statutory record-keeping requirements. Our system does not currently run an automated expiry purge; instead, records are reviewed and deleted manually by the VLE operator. Citizens may request deletion of their application record and uploaded files at any time by emailing <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a> with their tracking token and registered mobile number.
           </p>
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">8. Grievance Redressal Officer</h2>

@@ -24,6 +24,7 @@ import {
   resolvePostPdfUrl,
   resolvePostPortalUrl,
   splitSummaryParagraphs,
+  stripLeadingStepNumber,
   toIsoDate,
 } from './post/postHelpers';
 import {
@@ -853,7 +854,7 @@ export default function SarkariDedicatedPageView({
                   <h3 className="pb-subh3">Selection stages</h3>
                   <ol className="pb-ol">
                     {item.selectionProcess.map((stage, idx) => (
-                      <li key={`${stage}-${idx}`}>{stage}</li>
+                      <li key={`${stage}-${idx}`}>{stripLeadingStepNumber(stage)}</li>
                     ))}
                   </ol>
                 </>
@@ -948,7 +949,7 @@ export default function SarkariDedicatedPageView({
             </h2>
             <ol className="pb-ol">
               {enrichment.whatToDoNext.map((step, idx) => (
-                <li key={`wtdn-${idx}`}>{step}</li>
+                <li key={`wtdn-${idx}`}>{stripLeadingStepNumber(step)}</li>
               ))}
             </ol>
           </section>

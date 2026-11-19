@@ -92,6 +92,9 @@ function mapInitialTabToOrg(
 function getOrgGroupKey(item: SarkariItem, section: 'jobs' | 'education'): string {
   const org = item.org || resolvePostOrg(item);
   if (section === 'jobs') {
+    if (org === 'J&K Bank' || org === 'SBI' || org === 'RBI' || org === 'IBPS') {
+      return 'IBPS / Banking';
+    }
     if ((JOBS_PRIMARY_ORGS as readonly string[]).includes(org)) return org;
     return '__other__';
   }
@@ -831,7 +834,7 @@ export default function SarkariListPage({
                     key={`rail-${item.id}`}
                     href={`/post/${item.id}`}
                     onClick={(e) => handlePostClick(e, item)}
-                    className="snap-start shrink-0 w-[256px] sm:w-[290px] min-h-[44px] bg-[var(--bg-card)] border border-[var(--border-default)] hover:border-[var(--status-closing-border)] rounded-xl p-3 flex flex-col justify-between gap-2 no-underline transition-colors text-start"
+                    className="snap-start shrink-0 w-[248px] max-w-[calc(100vw-48px)] sm:w-[290px] min-h-[44px] bg-[var(--bg-card)] border border-[var(--border-default)] hover:border-[var(--status-closing-border)] rounded-xl p-3 flex flex-col justify-between gap-2 no-underline transition-colors text-start"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--text-secondary)] truncate">

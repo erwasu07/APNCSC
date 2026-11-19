@@ -1234,6 +1234,23 @@
   }
 }
 
+@media (max-width: 420px) {
+  .post-bulletin .pb-table th,
+  .post-bulletin .pb-table td {
+    padding: 9px 10px;
+    font-size: 13.5px;
+    overflow-wrap: anywhere;
+  }
+
+  .post-bulletin .pb-title-meta,
+  .post-bulletin .pb-lh-brand,
+  .post-bulletin .pb-fact-value,
+  .post-bulletin .pb-h2 {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
 @media (max-width: 400px) {
   .post-bulletin .pb-btn-row {
     grid-template-columns: 1fr;

@@ -110,10 +110,20 @@ export function resolveApplicationModeLabel(item: SarkariItem): string {
   return 'Online';
 }
 
+export function stripLeadingStepNumber(text: string): string {
+  return String(text || '')
+    .replace(/^\s*(?:step\s*\d+\s*[:.)-]\s*|\d+\s*[.)]\s+)/i, '')
+    .trim();
+}
+
 export function isZeroOrExemptFee(item: SarkariItem): boolean {
   const gen = String(item.fee?.genObc || item.fees?.genObc || '').trim();
   const sc = String(item.fee?.scSt || item.fees?.scSt || '').trim();
   if (!gen && !sc) return false;
+  const positiveAmountRegex = /(?:₹|rs\.?)\s*[1-9]\d*/i;
+  if (positiveAmountRegex.test(gen) || positiveAmountRegex.test(sc)) {
+    return false;
+  }
   const zeroRegex = /₹\s*0\b|rs\.?\s*0\b|\bnil\b|no\s*(application\s*)?fee|exempt|free\b/i;
   return Boolean(gen && zeroRegex.test(gen) && (!sc || zeroRegex.test(sc)));
 }
@@ -574,13 +584,13 @@ export function getProcessSectionConfig(
       // Prefer verified notice-specific howToApply steps whenever provided
       if (Array.isArray(item.howToApply) && item.howToApply.length > 0) {
         const cleanedSteps = item.howToApply
-          .map((raw) => String(raw || '').trim())
+          .map((raw) => stripLeadingStepNumber(String(raw || '').trim()))
           .filter(Boolean)
           .map((raw, idx) => {
             const colonIdx = raw.indexOf(':');
             if (colonIdx > 3 && colonIdx < 48 && !/^https?:/i.test(raw.slice(0, colonIdx + 1))) {
               return {
-                title: raw.slice(0, colonIdx).trim(),
+                title: stripLeadingStepNumber(raw.slice(0, colonIdx).trim()),
                 description: raw.slice(colonIdx + 1).trim(),
               };
             }
@@ -592,13 +602,13 @@ export function getProcessSectionConfig(
         if (cleanedSteps.length > 0) {
           return {
             id: 'how-to-apply',
-            title: `How to Apply (${modeLabel}) — ${item.title}`,
+            title: `How to Apply (${modeLabel})`,
             subtitle:
               mode === 'offline'
                 ? `Verified offline application instructions from the official ${orgName} notice.`
                 : mode === 'hybrid'
                 ? `Verified online and offline submission steps from the official ${orgName} notice.`
-                : `Verified application steps for ${orgName}.`,
+                : `Verified online application steps from the official ${orgName} notice.`,
             steps: cleanedSteps,
           };
         }
@@ -630,7 +640,7 @@ export function getProcessSectionConfig(
         });
         return {
           id: 'how-to-apply',
-          title: `How to Apply (${modeLabel}) — ${item.title}`,
+          title: `How to Apply (${modeLabel})`,
           subtitle: `Offline application process as stated in the official ${orgName} notice.`,
           steps: offlineSteps,
         };
@@ -639,12 +649,12 @@ export function getProcessSectionConfig(
       if (isEdu) {
         return {
           id: 'submission-procedure',
-          title: `Submission Procedure — ${item.title}`,
+          title: 'Submission Procedure',
           subtitle: `${modeLabel} submission guide for ${orgName}.`,
           steps: [
             {
               title: `Open ${orgName} Portal`,
-              description: `Visit ${portalUrl} and open "${item.title}".`,
+              description: `Visit ${portalUrl} and open the relevant ${orgName} notice.`,
             },
             {
               title: 'Student Sign-In',
@@ -671,7 +681,7 @@ export function getProcessSectionConfig(
       const usesOtr = /\b(SSC|JKSSB|UPSC|RRB)\b/i.test(`${orgName} ${item.category || ''}`);
       return {
         id: 'how-to-apply',
-        title: `How to Apply (${modeLabel}) — ${item.title}`,
+        title: `How to Apply (${modeLabel})`,
         subtitle:
           mode === 'hybrid'
             ? `Online registration and physical/offline stage overview for ${orgName}.`
@@ -679,7 +689,7 @@ export function getProcessSectionConfig(
         steps: [
           {
             title: `Open Official ${orgName} Portal`,
-            description: `Go to ${portalUrl} and read "${item.title}" carefully.`,
+            description: `Go to ${portalUrl} and read the official ${orgName} notification carefully.`,
           },
           {
             title: usesOtr ? 'Candidate Registration / OTR' : 'Candidate Registration',
@@ -722,8 +732,8 @@ export function buildPostFaqs(
   const zeroFee = isZeroOrExemptFee(item);
 
   faqs.push({
-    question: `Where is the official source for ${item.title}?`,
-    answer: `Official dates and rules for ${item.title} are published by ${orgName} at ${portalUrl}.`,
+    question: `Where is the official source for this ${orgName} notice?`,
+    answer: `Official dates, eligibility criteria, and rules are published by ${orgName} at ${portalUrl}.`,
   });
 
   if (
@@ -734,41 +744,41 @@ export function buildPostFaqs(
     !zeroFee
   ) {
     faqs.push({
-      question: `What if ${orgName} fee payment shows pending for ${item.title}?`,
+      question: `What if ${orgName} fee payment shows pending after deduction?`,
       answer:
-        `Wait 24–48 hours for bank reconciliation before retrying on ${portalUrl}.`,
+        `Wait 24–48 hours for bank reconciliation and check your application status before retrying on ${portalUrl}.`,
     });
   }
 
   if (isAssignmentNotice(item)) {
     faqs.push({
-      question: `Must offline Study Centre learners re-upload ${item.title}?`,
+      question: `Must offline Study Centre learners re-upload this assignment?`,
       answer:
         `No. Learners who already submitted offline at their ${orgName} centre need not re-upload.`,
     });
   } else if (type === 'dv') {
     faqs.push({
-      question: `Is a fresh form needed for ${item.title}?`,
+      question: `Is a fresh application form needed for this ${orgName} DV notice?`,
       answer:
-        `No. Only candidates shortlisted by ${orgName} attend with original certificates.`,
+        `No. Only candidates shortlisted by ${orgName} attend document verification with original certificates.`,
     });
   } else if (type === 'answer_key') {
     faqs.push({
-      question: `Who can access ${item.title}?`,
+      question: `Who can access this ${orgName} answer key?`,
       answer:
         statusInfo.computedStatus === 'closing_soon'
-          ? `Only candidates who appeared in this ${orgName} exam can check keys or object until ${statusInfo.dateValue}.`
+          ? `Only candidates who appeared in this ${orgName} exam can check keys or raise objections until ${statusInfo.dateValue}.`
           : `Candidates who appeared in this ${orgName} exam can verify their responses.`,
     });
   } else if (type === 'result') {
     faqs.push({
-      question: `Does ${item.title} open new registration?`,
+      question: `Does this ${orgName} result notice open new registration?`,
       answer:
-        `No. ${item.title} covers result/merit updates from ${orgName}. Follow next-stage DV or counselling instructions.`,
+        `No. This notice covers result/merit updates from ${orgName}. Follow the next-stage DV or counselling instructions issued by the authority.`,
     });
   } else if (type === 'admit_card' || type === 'exam') {
     faqs.push({
-      question: `Who can download or appear under ${item.title}?`,
+      question: `Who can download the hall ticket or appear under this ${orgName} notice?`,
       answer:
         `Registered candidates of this ${orgName} examination cycle (${statusInfo.dateValue}).`,
     });

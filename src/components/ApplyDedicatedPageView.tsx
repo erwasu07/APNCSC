@@ -127,8 +127,15 @@ export default function ApplyDedicatedPageView({
 
   const parseFeeString = (feeStr: string | undefined) => {
     if (!feeStr) return 0;
-    const clean = feeStr.replace(/[^0-9]/g, '');
-    return parseInt(clean, 10) || 0;
+    const currencyMatch = feeStr.match(/(?:₹|rs\.?)\s*([\d,]+)/i);
+    if (currencyMatch) {
+      return parseInt(currencyMatch[1].replace(/,/g, ''), 10) || 0;
+    }
+    const numberMatch = feeStr.match(/\b(\d[\d,]*)\b/);
+    if (numberMatch) {
+      return parseInt(numberMatch[1].replace(/,/g, ''), 10) || 0;
+    }
+    return 0;
   };
 
   const handleServiceChange = (serviceVal: string) => {
@@ -182,7 +189,7 @@ export default function ApplyDedicatedPageView({
   useEffect(() => {
     if (initialService) {
       const cleanName = initialService
-        .replace(/^(Assistance Request:|Filing Application:)\s*/i, '')
+        .replace(/^(Assistance Request:|Filing Application:|Admission \/ Exam Form Assistance:)\s*/i, '')
         .trim();
       const sarkariMatch = SARKARI_DATA.find(
         (item) => item.title.toLowerCase() === cleanName.toLowerCase()

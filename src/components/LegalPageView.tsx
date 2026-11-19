@@ -704,17 +704,19 @@ function PrivacyContent() {
         </h2>
         <ul className="list-disc ps-5 space-y-2">
           <li>
-            <strong className="text-[var(--text-primary)]">Informational Visitors:</strong> We
-            collect standard, anonymous server log files (IP addresses, browser type, referring
-            pages, date/time stamps) strictly for aggregate security analytics and system health
-            monitoring.
+            <strong className="text-[var(--text-primary)]">Informational Visitors:</strong> Standard
+            technical request logs (such as IP address, browser type, referring URL, and timestamps)
+            may be recorded by our hosting and server infrastructure for security monitoring, abuse
+            prevention, and operational troubleshooting.
           </li>
           <li>
             <strong className="text-[var(--text-primary)]">Assisted Form Applicants:</strong> When
-            you voluntarily submit an application assistance request, we collect only necessary
-            personal data: Full Name, Father's Name, Date of Birth, Gender, Mobile Number, Email
-            Address, and uploaded proof documents (e.g. Matriculation diploma, Domicile certificate,
-            Photograph, Signature).
+            you voluntarily submit an application assistance request through our Apply Desk, we
+            collect only the details needed for facilitation: Full Name, Father&apos;s Name, Date of
+            Birth, Gender, Mobile Number, Email Address, selected service details, and uploaded
+            proof documents (e.g., Matriculation certificate, Domicile certificate, Photograph,
+            Signature). These submissions are transmitted to our backend and cloud storage (such as
+            Supabase) so our VLE operator can process your request and issue a tracking token.
           </li>
           <li>
             <strong className="text-[var(--text-primary)]">Web Push Subscribers:</strong> If you
@@ -730,13 +732,13 @@ function PrivacyContent() {
             permanently deleted from our database.
           </li>
           <li>
-            <strong className="text-[var(--text-primary)]">Payment Information:</strong> Online fee
-            transactions are processed directly by{' '}
-            <strong className="text-[var(--text-primary)]">
-              Razorpay (PCI-DSS Level 1 compliant gateway)
-            </strong>
-            . CSC DOST does <strong className="text-[var(--text-primary)]">not</strong> collect,
-            store, or view your debit/credit card numbers, CVVs, net-banking passwords, or UPI PINs.
+            <strong className="text-[var(--text-primary)]">Payment Information:</strong> When online
+            payment is enabled for assisted services, transactions are processed through authorized
+            third-party payment gateways configured on our platform (such as{' '}
+            <strong className="text-[var(--text-primary)]">PayU</strong> or{' '}
+            <strong className="text-[var(--text-primary)]">Razorpay</strong>). CSC DOST does{' '}
+            <strong className="text-[var(--text-primary)]">not</strong> collect, store, or view
+            your debit/credit card numbers, CVVs, net-banking passwords, or UPI PINs.
           </li>
         </ul>
 
@@ -766,12 +768,16 @@ function PrivacyContent() {
           4. Client-Side Document Tools Data Isolation
         </h2>
         <p>
-          Our browser-based document resizing, signature joining, and PDF generation tools operate{' '}
+          Our browser-based photo resizing, signature cropping, image compression, and PDF utilities
+          process your files{' '}
           <strong className="text-[var(--text-primary)]">
-            entirely inside your local web browser
+            locally inside your web browser
           </strong>{' '}
-          via HTML5 Canvas and WebAssembly. Your photos, signatures, and certificates are never
-          uploaded to our servers when utilizing these offline utilities.
+          using HTML5 Canvas and client-side JavaScript libraries (such as <code>pdf-lib</code> and{' '}
+          <code>pdfjs-dist</code>). Files opened in these tools are not uploaded to CSC DOST
+          servers. Note that our PDF Compressor and PDF to Image tools load the open-source{' '}
+          <code>pdf.js</code> worker script from a third-party CDN (<code>cdnjs.cloudflare.com</code>)
+          while keeping your document content inside your browser.
         </p>
 
         <h2 className="text-xl font-bold text-[var(--text-primary)] mt-8 mb-4">
@@ -820,7 +826,7 @@ function PrivacyContent() {
           <li>
             <strong className="text-[var(--text-primary)]">Essential Functional Storage:</strong>{' '}
             Remembers your chosen interface theme (light or dark), regional language selection
-            (English, Hindi, or Urdu), and your dismissal of the cookie consent notice using local
+            (English, Hindi, or Urdu), and dismissal of our informational cookie notice using local
             browser storage.
           </li>
           <li>
@@ -833,7 +839,7 @@ function PrivacyContent() {
             You can clear, block, or restrict cookies at any time through your web browser&apos;s
             privacy preferences (Chrome, Safari, Firefox, Edge). Disabling non-essential advertising
             cookies will not prevent you from reading job notices, scheme guides, or using our
-            offline document resizers.
+            browser-based document tools.
           </li>
         </ul>
 
@@ -841,14 +847,17 @@ function PrivacyContent() {
           7. Data Retention and Erasure
         </h2>
         <p>
-          Application records and uploaded documents are retained securely for a period of up to 180
-          days after application processing to permit verification and candidate support, after which
-          they are systematically purged from our encrypted storage. Citizens may request immediate
-          deletion of their personal records by emailing{' '}
+          Application records and uploaded proof documents submitted through the Apply Desk are
+          stored in our application database and cloud storage (such as Supabase) for as long as
+          needed to complete form facilitation, provide status tracking, resolve applicant queries,
+          or meet statutory record-keeping requirements. Our system does not currently run an
+          automated expiry purge; instead, records are reviewed and deleted manually by the VLE
+          operator. Citizens may request deletion of their application record and uploaded files at
+          any time by emailing{' '}
           <a href="mailto:urnxtfd@gmail.com" className="text-[#1F9D6B] underline font-semibold">
             urnxtfd@gmail.com
           </a>{' '}
-          with their tracking token.
+          with their tracking token and registered mobile number.
         </p>
 
         <h2 className="text-xl font-bold text-[var(--text-primary)] mt-8 mb-4">

@@ -47,12 +47,12 @@ export default function CookieNotice({ onOpenPrivacy }: CookieNoticeProps) {
     <aside
       role="region"
       aria-label="Cookie notice"
-      className="fixed bottom-[calc(78px+env(safe-area-inset-bottom))] lg:bottom-4 inset-x-3 lg:inset-x-auto lg:end-4 lg:max-w-md z-[60] bg-white dark:bg-[#111827] text-[#101A36] dark:text-slate-100 border border-[#CBD5E1] dark:border-slate-700 rounded-xl shadow-lg p-3 text-xs leading-relaxed"
+      className="w-full bg-[#F8FAFC] dark:bg-[#0F172A] text-[#101A36] dark:text-slate-100 border-b border-[#CBD5E1] dark:border-slate-700"
     >
-      <div className="flex items-start gap-2.5">
-        <p className="m-0 flex-1 text-[#334155] dark:text-slate-300">
-          CSC DOST uses essential cookies and Google AdSense cookies to improve navigation and keep
-          our guides free.{' '}
+      <div className="max-w-[1180px] mx-auto px-3 sm:px-4 lg:px-6 py-2 flex flex-wrap items-center justify-between gap-2 text-xs leading-snug">
+        <p className="m-0 min-w-0 flex-1 text-[#334155] dark:text-slate-300">
+          CSC DOST uses essential browser storage and third-party Google AdSense cookies. Manage
+          cookie preferences in your browser settings or read our{' '}
           <a
             href="/privacy-policy"
             onClick={(e) => {
@@ -61,28 +61,29 @@ export default function CookieNotice({ onOpenPrivacy }: CookieNoticeProps) {
                 onOpenPrivacy();
               }
             }}
-            className="text-[#1F9D6B] dark:text-emerald-400 font-semibold underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6] rounded"
+            className="text-[#1F9D6B] dark:text-emerald-400 font-semibold underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6] rounded"
           >
-            Cookie &amp; Privacy Policy
+            Privacy &amp; Cookie Policy
           </a>
+          .
         </p>
-        <button
-          type="button"
-          onClick={() => handleDismiss('dismissed')}
-          aria-label="Close cookie notice"
-          className="min-w-[32px] min-h-[32px] inline-flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6]"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-      <div className="mt-2 flex items-center justify-end gap-2">
-        <button
-          type="button"
-          onClick={() => handleDismiss('accepted')}
-          className="min-h-[36px] px-3.5 py-1.5 rounded-lg bg-[#101A36] hover:bg-[#1E2B4F] dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold text-xs cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6]"
-        >
-          Got it
-        </button>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={() => handleDismiss('accepted')}
+            className="min-h-[34px] px-3 py-1 rounded-md bg-[#101A36] hover:bg-[#1E2B4F] dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold text-xs cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6]"
+          >
+            Got it
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDismiss('dismissed')}
+            aria-label="Dismiss cookie notice"
+            className="min-w-[34px] min-h-[34px] inline-flex items-center justify-center rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6]"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </aside>
   );
