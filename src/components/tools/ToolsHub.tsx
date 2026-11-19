@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import {
   Search,
   ArrowRight,
@@ -35,18 +35,18 @@ import {
   HelpApplyingCard,
   type FaqItem,
 } from '../ui';
-import ImageCompressorTool from './ImageCompressorTool';
-import ImageToPdfTool from './ImageToPdfTool';
-import PdfMergeTool from './PdfMergeTool';
-import PdfSplitTool from './PdfSplitTool';
-import PdfCompressorTool from './PdfCompressorTool';
-import BackgroundRemoverTool from './BackgroundRemoverTool';
-import PassportPhotoTool from './PassportPhotoTool';
-import ImageSignatureResizerTool from './ImageSignatureResizerTool';
-import PdfToImageTool from './PdfToImageTool';
-import ImageConverterTool from './ImageConverterTool';
-import PdfWatermarkRotateTool from './PdfWatermarkRotateTool';
-import PdfMetadataCleanerTool from './PdfMetadataCleanerTool';
+const ImageCompressorTool = lazy(() => import('./ImageCompressorTool'));
+const ImageToPdfTool = lazy(() => import('./ImageToPdfTool'));
+const PdfMergeTool = lazy(() => import('./PdfMergeTool'));
+const PdfSplitTool = lazy(() => import('./PdfSplitTool'));
+const PdfCompressorTool = lazy(() => import('./PdfCompressorTool'));
+const BackgroundRemoverTool = lazy(() => import('./BackgroundRemoverTool'));
+const PassportPhotoTool = lazy(() => import('./PassportPhotoTool'));
+const ImageSignatureResizerTool = lazy(() => import('./ImageSignatureResizerTool'));
+const PdfToImageTool = lazy(() => import('./PdfToImageTool'));
+const ImageConverterTool = lazy(() => import('./ImageConverterTool'));
+const PdfWatermarkRotateTool = lazy(() => import('./PdfWatermarkRotateTool'));
+const PdfMetadataCleanerTool = lazy(() => import('./PdfMetadataCleanerTool'));
 
 interface ToolsHubProps {
   initialToolId?: string;
@@ -253,24 +253,33 @@ export default function ToolsHub({
             aria-label={`${displayName} workspace`}
             className="bg-white text-[#101A36] border border-[var(--border-default)] rounded-2xl p-4 sm:p-6 shadow-2xs overflow-x-hidden"
           >
-            {activeToolId === 'image-compressor' && <ImageCompressorTool />}
-            {activeToolId === 'image-resizer' && <ImageSignatureResizerTool initialMode="image" />}
-            {(activeToolId === 'signature-resizer' ||
-              activeToolId === 'image-signature-resizer') && (
-              <ImageSignatureResizerTool initialMode="signature" />
-            )}
-            {activeToolId === 'image-to-pdf' && <ImageToPdfTool />}
-            {activeToolId === 'pdf-to-image' && <PdfToImageTool />}
-            {activeToolId === 'pdf-merge' && <PdfMergeTool />}
-            {activeToolId === 'pdf-split' && <PdfSplitTool />}
-            {activeToolId === 'pdf-compressor' && <PdfCompressorTool />}
-            {activeToolId === 'background-remover' && <BackgroundRemoverTool />}
-            {activeToolId === 'passport-photo-maker' && <PassportPhotoTool />}
-            {activeToolId === 'jpg-to-png' && <ImageConverterTool initialFormat="image/png" />}
-            {activeToolId === 'png-to-jpg' && <ImageConverterTool initialFormat="image/jpeg" />}
-            {activeToolId === 'image-converter' && <ImageConverterTool />}
-            {activeToolId === 'pdf-watermark-rotate' && <PdfWatermarkRotateTool />}
-            {activeToolId === 'pdf-metadata-cleaner' && <PdfMetadataCleanerTool />}
+            <Suspense
+              fallback={
+                <div className="min-h-[260px] flex flex-col items-center justify-center gap-3 text-slate-600 text-sm py-10">
+                  <div className="w-6 h-6 border-2 border-[#2455E6] border-t-transparent rounded-full animate-spin" />
+                  <span className="font-semibold">Loading {displayName}…</span>
+                </div>
+              }
+            >
+              {activeToolId === 'image-compressor' && <ImageCompressorTool />}
+              {activeToolId === 'image-resizer' && <ImageSignatureResizerTool initialMode="image" />}
+              {(activeToolId === 'signature-resizer' ||
+                activeToolId === 'image-signature-resizer') && (
+                <ImageSignatureResizerTool initialMode="signature" />
+              )}
+              {activeToolId === 'image-to-pdf' && <ImageToPdfTool />}
+              {activeToolId === 'pdf-to-image' && <PdfToImageTool />}
+              {activeToolId === 'pdf-merge' && <PdfMergeTool />}
+              {activeToolId === 'pdf-split' && <PdfSplitTool />}
+              {activeToolId === 'pdf-compressor' && <PdfCompressorTool />}
+              {activeToolId === 'background-remover' && <BackgroundRemoverTool />}
+              {activeToolId === 'passport-photo-maker' && <PassportPhotoTool />}
+              {activeToolId === 'jpg-to-png' && <ImageConverterTool initialFormat="image/png" />}
+              {activeToolId === 'png-to-jpg' && <ImageConverterTool initialFormat="image/jpeg" />}
+              {activeToolId === 'image-converter' && <ImageConverterTool />}
+              {activeToolId === 'pdf-watermark-rotate' && <PdfWatermarkRotateTool />}
+              {activeToolId === 'pdf-metadata-cleaner' && <PdfMetadataCleanerTool />}
+            </Suspense>
           </section>
 
           <AdSlot />

@@ -189,6 +189,9 @@ export interface SarkariItem {
   robotsNoindex?: boolean;
   howToApply?: string[];
   sourceExcerpt?: string;
+  applicationMode?: 'online' | 'offline' | 'hybrid';
+  postalAddress?: string;
+  envelopeSuperscription?: string;
 }
 
 export const SARKARI_CATEGORIES = {
@@ -603,14 +606,15 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   },
   {
     id: 'ignou-piu-consultants-recruitment-2026',
-    title: 'IGNOU PIU Contractual Consultants Hiring 2026',
+    title: 'IGNOU PIU Contractual Consultants Recruitment 2026 (Offline)',
     category: 'jobs',
     section: 'jobs',
     org: 'IGNOU',
-    department: 'Administration Division, Public Information Unit (PIU), IGNOU, New Delhi',
+    department: 'Public Information Unit (PIU), Administration Division, IGNOU, New Delhi',
     postType: 'Job',
     noticeType: 'recruitment',
     stage: 'recruitment',
+    applicationMode: 'offline',
     publicationStatus: 'published',
     isNew: true,
     postDate: '16/11/2026',
@@ -618,68 +622,95 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     lastDate: '11/12/2026',
     advertisementNo: 'Not stated in the notice',
     recruitmentYear: '2026',
-    shortInfo: 'IGNOU invited offline applications (last date 11/12/2026) for 03 full-time contractual Consultants in Public Information Unit (PIU), New Delhi.',
-    ageLimit: 'Maximum engagement 2 years or up to attaining age of 70 years, whichever is earlier (age as on 11/12/2026)',
-    eligibility: 'PG Diploma in Photography / Advertising & PR / Journalism OR relevant Master’s Degree (Mass Communication, Journalism, Convergent Journalism, Corporate Communication, MBA Marketing, etc.) from a recognised University/Institution plus required experience.',
-    totalPosts: '03 Posts (Photography & Digital Content: 01 | Social Media & Communication: 01 | Journalism: 01)',
+    shortInfo: 'Indira Gandhi National Open University (IGNOU) has invited offline applications (by post / physical submission) on or before 11/12/2026 for 03 full-time contractual Consultants in the Public Information Unit (PIU), New Delhi. Remuneration is Rs. 40,000–60,000/- per month as decided by the Selection Committee.',
+    summary: 'Indira Gandhi National Open University (IGNOU), Maidan Garhi, New Delhi, has invited offline applications for engaging 03 full-time Consultants purely on a contractual basis in the Public Information Unit (PIU): Consultant – Photography & Digital Content Creation (01), Consultant – Social Media & Communication (01), and Consultant – Journalism (01). Initial engagement is for 6 months, extendable on performance up to a maximum period of 2 years or attaining the age of 70 years, whichever is earlier. Completed applications in the prescribed format (Pages 4–6 of Job-AD.pdf) with self-attested testimonials must reach the Deputy Registrar, Recruitment Cell, Administration Division, Block-7, Room No. 13, IGNOU, Maidan Garhi, New Delhi – 110068 on or before 11 December 2026.',
+    ageLimit: 'Engagement for up to 2 years or until attaining age of 70 years, whichever is earlier (age to be calculated as on 11/12/2026).',
+    eligibility: 'Photography & Digital Content Creation: PG Diploma in Photography or Master’s Degree in Mass Communication / Journalism or related field from a recognised University/Institution with DSLR/mirrorless, certified drone, lighting, photo/video editing, AI tools, and Reels/Shorts experience; Social Media & Communication: PG Diploma in Advertising & Public Relations or Master’s Degree in Mass Communication / Convergent Journalism / New Media / Corporate Communication / Media Business Studies / Brand Management / MBA / Marketing or related field with social media management, analytics, SEO, Meta Ads Manager, LinkedIn Campaign Manager, and AI content skills; Journalism: PG Diploma in Journalism or Master’s Degree in Mass Communication / Journalism or related field with English/Hindi communication, copyediting, Canva, and AI-assisted content skills.',
+    totalPosts: '03 Posts (Photography & Digital Content Creation: 01 | Social Media & Communication: 01 | Journalism: 01)',
     officialLink: 'https://www.ignou.ac.in/viewFile/AD/notification/Job-AD.pdf',
+    officialUrl: 'https://www.ignou.ac.in/viewFile/AD/notification/Job-AD.pdf',
     officialNotificationUrl: 'https://www.ignou.ac.in/viewFile/AD/notification/Job-AD.pdf',
-    officialApplicationUrl: 'https://www.ignou.ac.in/announcements/0?nav=1',
+    officialApplicationUrl: 'https://www.ignou.ac.in/viewFile/AD/notification/Job-AD.pdf',
+    postalAddress: 'Deputy Registrar, Recruitment Cell, Administration Division, Block-7, Room No. 13, IGNOU, Maidan Garhi, New Delhi – 110068',
+    envelopeSuperscription: 'APPLICATION FOR THE ENGAGEMENT OF CONSULTANT (FULL-TIME) FOR PUBLIC INFORMATION (PIU), IGNOU',
     fees: {
       genObc: 'Not stated in the notice',
       scSt: 'Not stated in the notice'
     },
+    paymentInstructions: 'No application fee is mentioned in the official IGNOU notification (Job-AD.pdf).',
     departmentBreakdown: [
       {
         department: 'Public Information Unit (PIU), IGNOU New Delhi',
-        postName: 'Consultant - Photography & Digital Content Creation',
+        postName: 'Consultant – Photography & Digital Content Creation',
         posts: 1,
-        qualification: 'PG Diploma in Photography or Master’s Degree in Mass Communication/Journalism or related field + DSLR/mirrorless/drone/editing & Reels/Shorts experience',
-        fee: '₹40,000–60,000/month'
+        qualification: 'PG Diploma in Photography or Master’s Degree in Mass Communication / Journalism or related field from a recognised University/Institution + DSLR/mirrorless/certified drone/lighting, photo & video editing with AI tools, and Instagram Reels / YouTube Shorts / Facebook / LinkedIn formats.',
+        fee: 'Rs. 40,000–60,000/- (decided by Selection Committee)'
       },
       {
         department: 'Public Information Unit (PIU), IGNOU New Delhi',
-        postName: 'Consultant - Social Media & Communication',
+        postName: 'Consultant – Social Media & Communication',
         posts: 1,
-        qualification: 'PG Diploma in Advertising & PR or Master’s Degree in Mass Comm/Convergent Journalism/New Media/Marketing or related field + SEO/Meta Ads/LinkedIn skills',
-        fee: '₹40,000–60,000/month'
+        qualification: 'PG Diploma in Advertising & PR or Master’s Degree in Mass Communication, Convergent Journalism, New Media Communications, Corporate Communication, Media Business Studies, Brand Management, Business Administration, Marketing or related field + social media management, analytics, SEO, Meta Ads & LinkedIn Campaign Manager, English & working Hindi preferred.',
+        fee: 'Rs. 40,000–60,000/- (decided by Selection Committee)'
       },
       {
         department: 'Public Information Unit (PIU), IGNOU New Delhi',
-        postName: 'Consultant - Journalism',
+        postName: 'Consultant – Journalism',
         posts: 1,
-        qualification: 'PG Diploma in Journalism or Master’s Degree in Mass Communication/Journalism or related field + English/Hindi communication, copyediting, Canva & AI tools',
-        fee: '₹40,000–60,000/month'
+        qualification: 'PG Diploma in Journalism or Master’s Degree in Mass Communication / Journalism or related field + strong English communication (working Hindi preferred), social media tools & Canva, copyediting university news reports, basic graphic design, and AI-assisted content creation.',
+        fee: 'Rs. 40,000–60,000/- (decided by Selection Committee)'
       }
     ],
     documentsRequired: [
-      'Filled Application Form (Pages 4–5 of Job-AD.pdf) with recent passport-size photograph',
-      'Self-attested copies of educational qualifications, Last Pay Certificate & Experience Certificates',
-      'Signed Declaration of Vigilance/Criminal Proceedings (Page 6 of Job-AD.pdf)'
+      'Duly filled and signed Application Form (Pages 4–5 of Job-AD.pdf downloaded from www.ignou.ac.in) with a recent passport-size photograph affixed',
+      'Self-attested copies of all educational qualification certificates and marksheets',
+      'Self-attested copies of Last Pay Certificate and Experience Certificates supporting claimed experience',
+      'Signed Declaration of Vigilance / Criminal Proceedings (Page 6 of Job-AD.pdf)',
+      'Completed List of Enclosures (Page 5 of the Application Form)'
+    ],
+    howToApply: [
+      'Download the official notification and Application Format (Pages 4–6 of Job-AD.pdf) from www.ignou.ac.in.',
+      'Fill in the Application Form completely, calculate your age as on 11/12/2026, affix a recent passport-size photograph, and sign both the application form and the Vigilance/Criminal Proceedings Declaration (Page 6).',
+      'Attach self-attested copies of educational qualification marksheets/certificates, Last Pay Certificate, and Experience Certificates, and list them in the Enclosures section.',
+      'Place the completed form and enclosures in an envelope superscribed in CAPITAL LETTERS on top: "APPLICATION FOR THE ENGAGEMENT OF CONSULTANT (FULL-TIME) FOR PUBLIC INFORMATION (PIU), IGNOU".',
+      'Send the envelope by post or submit it physically to: Deputy Registrar, Recruitment Cell, Administration Division, Block-7, Room No. 13, IGNOU, Maidan Garhi, New Delhi – 110068 so that it reaches on or before 11 December 2026.'
     ],
     selectionProcess: [
-      'Offline application submission by 11/12/2026 to Deputy Registrar, Recruitment Cell, Admin Division, Block-7, Room No. 13, IGNOU, Maidan Garhi, New Delhi – 110068.',
-      'Interview / Selection Committee review (No TA/DA paid for interview; remuneration ₹40,000–60,000/- decided by Selection Committee).'
+      'Offline application scrutiny by IGNOU Recruitment Cell (applications received after 11/12/2026 will not be entertained).',
+      'Interview / evaluation by the Selection Committee (No TA/DA is paid for appearing in the interview; monthly remuneration of Rs. 40,000–60,000/- is decided by the Selection Committee).',
+      'Purely contractual full-time engagement initially for 6 months, extendable on performance up to a maximum of 2 years or up to attaining the age of 70 years, whichever is earlier (no claim for regular appointment).'
     ],
     faq: [
       {
-        question: 'What is the last date and address to apply for IGNOU PIU Consultants 2026?',
-        answer: 'Duly completed offline applications with self-attested testimonials must reach the Deputy Registrar, Recruitment Cell, Administration Division, Block-7, Room No. 13, IGNOU, Maidan Garhi, New Delhi – 110068 on or before 11 December 2026.'
+        question: 'How do I apply for IGNOU PIU Contractual Consultants 2026 — is it online or offline?',
+        answer: 'Applications are strictly offline. Download the prescribed Application Format (Pages 4–6 of Job-AD.pdf) from www.ignou.ac.in, attach self-attested documents and the signed Vigilance declaration, and send it to the Deputy Registrar, Recruitment Cell, Administration Division, Block-7, Room No. 13, IGNOU, Maidan Garhi, New Delhi – 110068 on or before 11 December 2026.'
+      },
+      {
+        question: 'What must be written on the envelope for IGNOU PIU Consultant applications?',
+        answer: 'The top of the envelope must be superscribed in CAPITAL LETTERS with: "APPLICATION FOR THE ENGAGEMENT OF CONSULTANT (FULL-TIME) FOR PUBLIC INFORMATION (PIU), IGNOU".'
+      },
+      {
+        question: 'Is there any application fee mentioned in the IGNOU PIU Consultants notification?',
+        answer: 'No application fee is stated in the official IGNOU notification (Job-AD.pdf). Applications must be submitted offline by post or physical submission only, and no online fee payment is required.'
+      },
+      {
+        question: 'What is the remuneration, tenure, and TA/DA policy for IGNOU PIU Consultants?',
+        answer: 'Remuneration is Rs. 40,000–60,000/- per month as decided by the Selection Committee. Engagement is full-time and purely contractual, initially for 6 months and extendable up to 2 years or attaining age 70 years, whichever is earlier. No TA/DA is paid for appearing in the interview.'
       }
     ],
     verificationStatus: 'verified',
     verification: {
       status: 'verified',
       verificationStatus: 'verified',
-      verifiedAt: '16/11/2026',
-      lastVerified: '16/11/2026',
+      verifiedAt: '19/11/2026',
+      lastVerified: '19/11/2026',
       officialNotificationUrl: 'https://www.ignou.ac.in/viewFile/AD/notification/Job-AD.pdf',
-      officialApplicationUrl: 'https://www.ignou.ac.in/announcements/0?nav=1',
+      officialApplicationUrl: 'https://www.ignou.ac.in/viewFile/AD/notification/Job-AD.pdf',
       recruitmentYear: '2026',
       verifiedOpeningDate: '16/11/2026',
       verifiedClosingDate: '11/12/2026',
       sourceHistory: [
-        'Official IGNOU Administration Division PDF Job-AD.pdf verified on 16/11/2026 (last date 11/12/2026).'
+        'Official 6-page IGNOU Administration Division PDF (Job-AD.pdf) directly verified on 19/11/2026 (strictly offline by post; last date 11/12/2026; 3 PIU Consultant posts; no application fee stated).'
       ]
     }
   },

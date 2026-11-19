@@ -15,9 +15,11 @@ import {
   getCategoryBreadcrumb,
   getDocumentsForPost,
   getProcessSectionConfig,
+  hasExplicitFee,
   hasRealDataValue,
   isGenericNoticePlaceholder,
   isNonApplicationTemplateType,
+  resolveApplicationMode,
   resolveEffectiveTemplateType,
   resolvePostPdfUrl,
   resolvePostPortalUrl,
@@ -93,6 +95,9 @@ export default function SarkariDedicatedPageView({
     [item, statusInfo]
   );
   const nonAppTemplate = isNonApplicationTemplateType(effectiveType);
+  const appMode = useMemo(() => resolveApplicationMode(item), [item]);
+  const isOfflineMode = appMode === 'offline';
+  const explicitFee = useMemo(() => hasExplicitFee(item), [item]);
 
   const orgName = useMemo(() => item.org || resolvePostOrg(item), [item]);
   const shortOrg = useMemo(() => getShortOrgName(orgName), [orgName]);
@@ -620,6 +625,23 @@ export default function SarkariDedicatedPageView({
                 </div>
               )}
 
+              {(item.postalAddress || item.envelopeSuperscription) && (
+                <div className="pb-notice pb-notice--info">
+                  <strong>Offline submission details.</strong>{' '}
+                  {item.postalAddress && (
+                    <span>
+                      Send completed application to: <strong>{item.postalAddress}</strong>.{' '}
+                    </span>
+                  )}
+                  {item.envelopeSuperscription && (
+                    <span>
+                      Superscribe envelope in capital letters:{' '}
+                      <strong>&ldquo;{item.envelopeSuperscription}&rdquo;</strong>.
+                    </span>
+                  )}
+                </div>
+              )}
+
               {feeNotice && (
                 <div className={`pb-notice pb-notice--${feeNotice.variant}`}>
                   <strong>{feeNotice.strongPrefix}</strong> {feeNotice.body}
@@ -630,7 +652,7 @@ export default function SarkariDedicatedPageView({
                 <div className="pb-notice pb-notice--warn">
                   <strong>Window closed.</strong>{' '}
                   {statusInfo.closingTimeNote ||
-                    `The online submission deadline (${
+                    `The ${isOfflineMode ? 'offline ' : ''}submission deadline (${
                       item.applyEnd || item.lastDate || statusInfo.dateValue
                     }) has passed.`}
                 </div>
@@ -640,7 +662,7 @@ export default function SarkariDedicatedPageView({
                 <div className="pb-notice pb-notice--info">
                   <strong>Upcoming window.</strong>{' '}
                   {statusInfo.closingTimeNote ||
-                    `Online registration opens on ${formatLongDate(
+                    `${isOfflineMode ? 'Applications open' : 'Online registration opens'} on ${formatLongDate(
                       item.applyStart || item.startDate || statusInfo.dateValue
                     )}.`}
                 </div>
@@ -977,7 +999,8 @@ export default function SarkariDedicatedPageView({
                 <strong>Last verified:</strong> {enrichment.verifiedDateText}
               </div>
               <div>
-                Always cross-check live dates, category relaxations, and PDF corrigenda directly on the official source before payment or submission.
+                Always cross-check live dates, eligibility criteria, and official PDF corrigenda directly on the official source before{' '}
+                {explicitFee && !isOfflineMode ? 'payment or submission' : 'submission'}.
               </div>
             </div>
           </section>
@@ -1021,10 +1044,14 @@ export default function SarkariDedicatedPageView({
             <h2 className="pb-verify-title">
               {nonAppTemplate
                 ? 'Verify on the official portal'
+                : isOfflineMode
+                ? 'Download official notice & application format'
                 : 'Verify and apply on the official portal'}
             </h2>
             <p className="pb-verify-sub">
-              Confirm every detail on the issuing authority’s website before submitting.
+              {isOfflineMode
+                ? 'Download the official PDF directly from the issuing authority and submit the completed offline form to the notified address before the closing date.'
+                : 'Confirm every detail on the issuing authority’s website before submitting.'}
             </p>
             <div className="pb-btn-row">
               <a
@@ -1033,14 +1060,14 @@ export default function SarkariDedicatedPageView({
                 rel="noopener noreferrer"
                 className="pb-btn pb-btn--primary"
               >
-                Official {shortOrg} portal
+                {isOfflineMode ? `Official ${shortOrg} PDF / Form` : `Official ${shortOrg} portal`}
               </a>
               <a
                 href="https://www.cscdost.com/apply"
                 onClick={handleAssistedApply}
                 className="pb-btn pb-btn--outline"
               >
-                Assisted desk
+                {isOfflineMode ? 'CSC Form Assistance' : 'Assisted desk'}
               </a>
             </div>
             <div className="pb-verify-extra">
@@ -1126,13 +1153,24 @@ export default function SarkariDedicatedPageView({
             <span className="pb-bb-date">{seal.bottomDateText}</span>
           </div>
         )}
-        <a
-          href="https://www.cscdost.com/apply"
-          onClick={handleAssistedApply}
-          className="pb-btn pb-btn--primary pb-bb-apply"
-        >
-          Apply Now
-        </a>
+        {isOfflineMode ? (
+          <a
+            href={portalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="pb-btn pb-btn--primary pb-bb-apply"
+          >
+            Download Form PDF
+          </a>
+        ) : (
+          <a
+            href="https://www.cscdost.com/apply"
+            onClick={handleAssistedApply}
+            className="pb-btn pb-btn--primary pb-bb-apply"
+          >
+            Apply Now
+          </a>
+        )}
       </div>
     </article>
   );

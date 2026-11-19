@@ -33,7 +33,7 @@ export default function MobileBottomNav({
     >
       {navItems.map((item) => {
         const isActive = activeTab === item.id;
-        const commonClasses = `min-h-[44px] flex flex-col items-center justify-center rounded-[10px] px-1 py-1 transition-colors cursor-pointer no-underline relative ${
+        const commonClasses = `min-h-[44px] flex flex-col items-center justify-center rounded-[10px] px-1 py-1 transition-colors cursor-pointer no-underline relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6] focus-visible:ring-inset ${
           isActive
             ? 'text-[#2455E6] dark:text-[#60A5FA] bg-[#EEF2FF]/70 dark:bg-[#1E2C4A]'
             : 'text-[#5B6478] dark:text-[#94A3B8] hover:text-[#101A36] dark:hover:text-white'

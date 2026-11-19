@@ -66,9 +66,64 @@ export function hasRealDataValue(val?: string | number | null): boolean {
 export function isGenericNoticePlaceholder(val?: string | number | null): boolean {
   if (!hasRealDataValue(val)) return true;
   const trimmed = String(val).trim();
-  return /^(as per (official )?(notice|notification|rules)|refer (to )?(official )?(notice|notification)|check (official )?notice)$/i.test(
+  return /^(as per (official )?(notice|notification|rules)|refer (to )?(official )?(notice|notification)|check (official )?notice|not\s+stated\s+in\s+(the\s+)?(official\s+)?notice|not\s+mentioned(\s+in\s+(the\s+)?notice)?|not\s+applicable)$/i.test(
     trimmed
   );
+}
+
+export type ResolvedApplicationMode = 'online' | 'offline' | 'hybrid';
+
+export function resolveApplicationMode(item: SarkariItem): ResolvedApplicationMode {
+  if (item.applicationMode === 'online' || item.applicationMode === 'offline' || item.applicationMode === 'hybrid') {
+    return item.applicationMode;
+  }
+  if (isAssignmentNotice(item)) {
+    return 'hybrid';
+  }
+  const combined = `${item.title || ''} ${item.shortInfo || ''} ${item.summary || ''} ${(item.howToApply || []).join(' ')}`.toLowerCase();
+  const hasOfflineSignals =
+    Boolean(item.postalAddress) ||
+    /\b(offline\s+application|offline\s+mode|offline\s+submission|by\s+post|speed\s+post|physical\s+submission|study\s+centre\s+only|in\s+hard\s+copy|hard\s+copy\s+only)\b/i.test(combined);
+  const hasOnlineSignals =
+    /\b(apply\s+online|online\s+application|online\s+registration|online\s+portal|online\s+cee|online\s+form|otr)\b/i.test(combined);
+  const hasRallySignal = /\b(rally\s+ground|aro\s+rally|recruitment\s+rally)\b/i.test(combined);
+
+  if (hasRallySignal && hasOnlineSignals) return 'hybrid';
+  if (hasOfflineSignals && hasOnlineSignals) return 'hybrid';
+  if (hasOfflineSignals) return 'offline';
+  return 'online';
+}
+
+export function resolveApplicationModeLabel(item: SarkariItem): string {
+  const mode = resolveApplicationMode(item);
+  if (isAssignmentNotice(item)) return 'Online / Centre';
+  if (mode === 'offline') {
+    return item.postalAddress || /\bby\s+post|postal|envelope\b/i.test(`${item.shortInfo || ''} ${item.summary || ''}`)
+      ? 'Offline (By Post)'
+      : 'Offline';
+  }
+  if (mode === 'hybrid') {
+    const combined = `${item.title || ''} ${item.shortInfo || ''} ${item.summary || ''}`;
+    if (/\brally\b/i.test(combined)) return 'Online + Rally';
+    return 'Online + Offline';
+  }
+  return 'Online';
+}
+
+export function isZeroOrExemptFee(item: SarkariItem): boolean {
+  const gen = String(item.fee?.genObc || item.fees?.genObc || '').trim();
+  const sc = String(item.fee?.scSt || item.fees?.scSt || '').trim();
+  if (!gen && !sc) return false;
+  const zeroRegex = /₹\s*0\b|rs\.?\s*0\b|\bnil\b|no\s*(application\s*)?fee|exempt|free\b/i;
+  return Boolean(gen && zeroRegex.test(gen) && (!sc || zeroRegex.test(sc)));
+}
+
+export function hasExplicitFee(item: SarkariItem): boolean {
+  const gen = String(item.fee?.genObc || item.fees?.genObc || '').trim();
+  const sc = String(item.fee?.scSt || item.fees?.scSt || '').trim();
+  const genValid = hasRealDataValue(gen) && !isGenericNoticePlaceholder(gen);
+  const scValid = hasRealDataValue(sc) && !isGenericNoticePlaceholder(sc);
+  return genValid || scValid;
 }
 
 export function resolvePostPortalUrl(item: SarkariItem): string {
@@ -243,12 +298,17 @@ export function getDocumentsForPost(
   }
 
   if (type === 'application' && !isEducationNotice(item)) {
+    const mode = resolveApplicationMode(item);
+    if (mode === 'offline') {
+      // Never invent document checklists for offline notices when not explicitly verified
+      return [];
+    }
     return [
       'Aadhaar or valid Photo ID',
       'Class 10th certificate for DOB',
       'Qualifying academic marksheets',
       'Domicile / Category / Experience certificate (if applicable)',
-      'Scanned photo & signature matching portal limits',
+      'Passport photo & signature as per official portal rules',
     ];
   }
 
@@ -470,34 +530,117 @@ export function getProcessSectionConfig(
           {
             title: `Review ${orgName} Eligibility`,
             description:
-              `Check qualification cut-off dates and category norms in ${item.title}.`,
+              `Check qualification cut-off dates and eligibility criteria in ${item.title}.`,
           },
           {
-            title: isEdu
-              ? 'Keep Enrolment Records Ready'
-              : 'Prepare OTR & Scans',
-            description: isEdu
-              ? 'Keep enrollment number, marksheets, and valid ID ready.'
-              : 'Keep scanned photo, signature, 10th certificate, and domicile ready.',
+            title:
+              resolveApplicationMode(item) === 'offline'
+                ? 'Prepare Application & Enclosures'
+                : isEdu
+                ? 'Keep Enrolment Records Ready'
+                : 'Keep Qualifying Certificates Ready',
+            description:
+              resolveApplicationMode(item) === 'offline'
+                ? 'Keep self-attested copies of required certificates and passport photographs ready per the official notice.'
+                : isEdu
+                ? 'Keep enrollment number, marksheets, and valid ID ready.'
+                : 'Keep qualifying marksheets, Class 10th certificate, photo ID, and category/domicile certificates ready if applicable.',
           },
           {
-            title: `Apply on ${orgName} Activation`,
-            description: `Submit via ${portalUrl} once registration activates.`,
+            title:
+              resolveApplicationMode(item) === 'offline'
+                ? `Submit Offline as Per ${orgName} Notice`
+                : `Apply on ${orgName} Activation`,
+            description:
+              resolveApplicationMode(item) === 'offline'
+                ? `Download the prescribed format from ${portalUrl} and submit as instructed once applications open.`
+                : `Submit via ${portalUrl} once registration activates.`,
           },
         ],
       };
 
     case 'admission':
     case 'application':
-    default:
+    default: {
       if (!statusInfo.canApplyOnline) {
         return null;
       }
+
+      const mode = resolveApplicationMode(item);
+      const modeLabel = resolveApplicationModeLabel(item);
+      const explicitFee = hasExplicitFee(item);
+      const zeroFee = isZeroOrExemptFee(item);
+
+      // Prefer verified notice-specific howToApply steps whenever provided
+      if (Array.isArray(item.howToApply) && item.howToApply.length > 0) {
+        const cleanedSteps = item.howToApply
+          .map((raw) => String(raw || '').trim())
+          .filter(Boolean)
+          .map((raw, idx) => {
+            const colonIdx = raw.indexOf(':');
+            if (colonIdx > 3 && colonIdx < 48 && !/^https?:/i.test(raw.slice(0, colonIdx + 1))) {
+              return {
+                title: raw.slice(0, colonIdx).trim(),
+                description: raw.slice(colonIdx + 1).trim(),
+              };
+            }
+            return {
+              title: `Step ${idx + 1}`,
+              description: raw,
+            };
+          });
+        if (cleanedSteps.length > 0) {
+          return {
+            id: 'how-to-apply',
+            title: `How to Apply (${modeLabel}) — ${item.title}`,
+            subtitle:
+              mode === 'offline'
+                ? `Verified offline application instructions from the official ${orgName} notice.`
+                : mode === 'hybrid'
+                ? `Verified online and offline submission steps from the official ${orgName} notice.`
+                : `Verified application steps for ${orgName}.`,
+            steps: cleanedSteps,
+          };
+        }
+      }
+
+      if (mode === 'offline') {
+        const offlineSteps: ProcessStep[] = [
+          {
+            title: `Download Official ${orgName} Notice & Format`,
+            description: `Open ${portalUrl} to download the official notification and prescribed application form.`,
+          },
+          {
+            title: 'Complete Application Form & Self-Attested Enclosures',
+            description:
+              'Fill every required detail accurately, affix a recent passport-size photograph if required, sign the declaration, and attach self-attested copies of all documents listed in the official notice.',
+          },
+        ];
+        if (item.envelopeSuperscription) {
+          offlineSteps.push({
+            title: 'Superscribe the Envelope',
+            description: `Write "${item.envelopeSuperscription}" clearly on top of the envelope as directed in the official notice.`,
+          });
+        }
+        offlineSteps.push({
+          title: `Send Offline Application Before ${statusInfo.dateValue}`,
+          description: item.postalAddress
+            ? `Dispatch by post or submit physically to: ${item.postalAddress} so it reaches on or before ${statusInfo.dateValue}.`
+            : `Send or submit the completed offline application to the official address specified in the ${orgName} notice on or before ${statusInfo.dateValue}.`,
+        });
+        return {
+          id: 'how-to-apply',
+          title: `How to Apply (${modeLabel}) — ${item.title}`,
+          subtitle: `Offline application process as stated in the official ${orgName} notice.`,
+          steps: offlineSteps,
+        };
+      }
+
       if (isEdu) {
         return {
           id: 'submission-procedure',
           title: `Submission Procedure — ${item.title}`,
-          subtitle: `Online submission guide for ${orgName}.`,
+          subtitle: `${modeLabel} submission guide for ${orgName}.`,
           steps: [
             {
               title: `Open ${orgName} Portal`,
@@ -515,44 +658,53 @@ export function getProcessSectionConfig(
             },
             {
               title:
-                item.fee?.genObc && /₹0|free|exempt|no application fee/i.test(item.fee.genObc)
+                !explicitFee || zeroFee
                   ? 'Submit & Save Slip'
                   : 'Pay Fee & Save Receipt',
               description:
-                `Review preview before locking and save your ${orgName} receipt.`,
+                `Review preview before locking and save your ${orgName} confirmation slip.`,
             },
           ],
         };
       }
+
+      const usesOtr = /\b(SSC|JKSSB|UPSC|RRB)\b/i.test(`${orgName} ${item.category || ''}`);
       return {
         id: 'how-to-apply',
-        title: `How to Apply — ${item.title}`,
-        subtitle: `Application overview for ${orgName}.`,
+        title: `How to Apply (${modeLabel}) — ${item.title}`,
+        subtitle:
+          mode === 'hybrid'
+            ? `Online registration and physical/offline stage overview for ${orgName}.`
+            : `Online application overview for ${orgName}.`,
         steps: [
           {
-            title: `Open ${orgName} Portal`,
-            description: `Go to ${portalUrl} and select "${item.title}".`,
+            title: `Open Official ${orgName} Portal`,
+            description: `Go to ${portalUrl} and read "${item.title}" carefully.`,
           },
           {
-            title: 'Candidate Registration / OTR',
-            description:
-              `Sign in with your ${orgName} OTR/Candidate ID or register.`,
+            title: usesOtr ? 'Candidate Registration / OTR' : 'Candidate Registration',
+            description: usesOtr
+              ? `Sign in with your ${orgName} OTR/Candidate ID or complete one-time registration.`
+              : `Register or sign in on the official ${orgName} portal as instructed in the notification.`,
           },
           {
-            title: 'Enter Data & Upload Scans',
+            title: 'Enter Details & Upload Prescribed Files',
             description:
-              'Match entries to Class 10th records and upload compliant scans.',
+              'Enter personal and educational details matching official certificates and upload only the files specified in the notice.',
           },
           {
             title:
-              item.fee?.genObc && /₹0|free|exempt|no application fee/i.test(item.fee.genObc)
-                ? 'Submit & Print Form'
-                : 'Remit Fee & Save Receipt',
+              !explicitFee || zeroFee
+                ? 'Submit & Save Confirmation'
+                : 'Pay Prescribed Fee & Save Receipt',
             description:
-              `Verify preview prior to submission and retain the ${orgName} confirmation PDF.`,
+              mode === 'hybrid'
+                ? `Review preview prior to submission, retain the ${orgName} confirmation printout, and follow any offline/physical stage instructions in the notice.`
+                : `Verify preview prior to submission and retain the ${orgName} confirmation PDF.`,
           },
         ],
       };
+    }
   }
 }
 
@@ -565,6 +717,9 @@ export function buildPostFaqs(
 ): PostFaqItem[] {
   const customFaqs = item.faq ? [...item.faq] : [];
   const faqs: PostFaqItem[] = [...customFaqs];
+  const mode = resolveApplicationMode(item);
+  const explicitFee = hasExplicitFee(item);
+  const zeroFee = isZeroOrExemptFee(item);
 
   faqs.push({
     question: `Where is the official source for ${item.title}?`,
@@ -572,9 +727,11 @@ export function buildPostFaqs(
   });
 
   if (
+    mode !== 'offline' &&
     !isAssignmentNotice(item) &&
     (type === 'application' || type === 'admission' || type === 'upcoming') &&
-    !(item.fee?.genObc && /₹0|free|exempt|no application fee/i.test(item.fee.genObc))
+    explicitFee &&
+    !zeroFee
   ) {
     faqs.push({
       question: `What if ${orgName} fee payment shows pending for ${item.title}?`,

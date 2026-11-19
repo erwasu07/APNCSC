@@ -165,6 +165,11 @@ const POST_EXACT_SEO_MAP: Record<string, { title: string; description: string }>
     description:
       'SSC SI Delhi Police & CAPFs Exam 2025 PET/PST result (10,676 qualified), Corrigendum dated 16/11/2026, and Paper-II exam date 28/11/2026 on CSC DOST.',
   },
+  'ignou-piu-consultants-recruitment-2026': {
+    title: 'IGNOU PIU Consultants 2026 (Offline, 3 Posts) | CSC DOST',
+    description:
+      'IGNOU Public Information Unit offline recruitment for 3 contractual Consultants (last date 11/12/2026). Check postal address, checklist & official Job-AD.pdf.',
+  },
 };
 
 /**

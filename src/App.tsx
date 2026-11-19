@@ -28,7 +28,8 @@ const NodeInformation = lazy(() => import('./components/NodeInformation'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const Footer = lazy(() => import('./components/Footer'));
 const PrivacyPolicyModal = lazy(() => import('./components/PrivacyPolicyModal'));
-import LegalPageView, { LEGAL_PAGE_CONFIG, type LegalPageType } from './components/LegalPageView';
+const LegalPageView = lazy(() => import('./components/LegalPageView'));
+import { LEGAL_PAGE_CONFIG, type LegalPageType } from './config/legalPages';
 const ToolsHub = lazy(() => import('./components/tools/ToolsHub'));
 const CitizenToolsDesk = lazy(() => import('./components/CitizenToolsDesk'));
 const NotificationCenterModal = lazy(() => import('./components/NotificationCenterModal'));
@@ -39,7 +40,7 @@ const ArchivePageView = lazy(() => import('./components/ArchivePageView'));
 const DevThumbnailsPreview = lazy(() => import('./components/DevThumbnailsPreview'));
 import CookieNotice from './components/CookieNotice';
 import { TOOLS_LIST } from './components/tools/toolsData';
-import { PUBLISHED_GUIDE_ARTICLES as STATIC_PUBLISHED_GUIDES, GuideArticle } from './data/guidesData';
+import type { GuideArticle } from './data/guidesData';
 import { KNOWN_DUPLICATE_MAP } from './data/sarkariMigration';
 import { isStaleOver90Days } from './utils/postLifecycle';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -156,7 +157,8 @@ export default function App() {
   const [isArchiveView, setIsArchiveView] = useState<boolean>(false);
   const [isStaffRoute, setIsStaffRoute] = useState<boolean>(false);
   const [isDevThumbnailsView, setIsDevThumbnailsView] = useState<boolean>(false);
-  const [publishedGuides, setPublishedGuides] = useState<GuideArticle[]>(STATIC_PUBLISHED_GUIDES);
+  const [publishedGuides, setPublishedGuides] = useState<GuideArticle[]>([]);
+  const [guidesLoaded, setGuidesLoaded] = useState<boolean>(false);
   const [mergedServices, setMergedServices] = useState<ServiceItem[]>(SERVICES_LIST);
   const [serviceRedirectMap, setServiceRedirectMap] = useState<Record<string, string>>({});
   const [clusterOverrides, setClusterOverrides] = useState<Record<string, ServiceClusterHubOverride>>({});
@@ -241,9 +243,20 @@ export default function App() {
       .then((data) => {
         if (data?.success && Array.isArray(data.guides)) {
           setPublishedGuides(data.guides);
+          setGuidesLoaded(true);
+          return;
         }
+        return import('./data/guidesData').then((m) => {
+          setPublishedGuides(m.PUBLISHED_GUIDE_ARTICLES);
+          setGuidesLoaded(true);
+        });
       })
-      .catch(() => {});
+      .catch(() => {
+        import('./data/guidesData')
+          .then((m) => setPublishedGuides(m.PUBLISHED_GUIDE_ARTICLES))
+          .catch(() => {})
+          .finally(() => setGuidesLoaded(true));
+      });
     fetch('/api/services')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -693,6 +706,12 @@ export default function App() {
           } catch {}
           return;
         } else if (pathSchemeMatch) {
+          if (!guidesLoaded) {
+            setActiveSchemeId(candidateSchemeId);
+            setCategoryView('schemes');
+            setIsNotFoundView(false);
+            return;
+          }
           setActiveSchemeId(null);
           setCategoryView(null);
           setIsNotFoundView(true);
@@ -768,7 +787,7 @@ export default function App() {
       window.removeEventListener('hashchange', parseRoute);
       window.removeEventListener('popstate', parseRoute);
     };
-  }, [syncedPosts, publishedGuides, mergedServices, serviceRedirectMap]);
+  }, [syncedPosts, publishedGuides, guidesLoaded, mergedServices, serviceRedirectMap]);
 
   const navigateToPath = (path: string) => {
     try {
@@ -1322,19 +1341,21 @@ export default function App() {
             />
           </Suspense>
         ) : activeLegalPage ? (
-          <LegalPageView
-            pageType={activeLegalPage}
-            onNavigate={(type) => {
-              const cfg = LEGAL_PAGE_CONFIG[type];
-              try {
-                if (cfg?.path) {
-                  window.history.pushState(null, '', cfg.path);
-                }
-              } catch {}
-              setActiveLegalPage(type);
-            }}
-            onBackToHome={handleGoHome}
-          />
+          <Suspense fallback={<PageRouteSkeleton message="Loading Policy Document..." />}>
+            <LegalPageView
+              pageType={activeLegalPage}
+              onNavigate={(type) => {
+                const cfg = LEGAL_PAGE_CONFIG[type];
+                try {
+                  if (cfg?.path) {
+                    window.history.pushState(null, '', cfg.path);
+                  }
+                } catch {}
+                setActiveLegalPage(type);
+              }}
+              onBackToHome={handleGoHome}
+            />
+          </Suspense>
         ) : isAdminView ? (
           <Suspense fallback={<PageRouteSkeleton message="Loading CSC Staff Management Console..." />}>
             <AdminDashboard
@@ -1608,6 +1629,7 @@ export default function App() {
                 onOpenTrack={() => handleOpenTrackPage()}
                 onOpenLegal={openLegalModal}
                 onNavigateRoute={(route) => navigateToPath(route)}
+                publishedGuides={publishedGuides}
               />
             </Suspense>
           </div>

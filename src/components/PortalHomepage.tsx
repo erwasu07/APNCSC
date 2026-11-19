@@ -1,17 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ChevronDown } from 'lucide-react';
-import {
-  SarkariItem,
-  isPublishedSarkariItem,
-  isEducationSarkariItem,
-  isRecruitmentSarkariItem,
-} from '../data/sarkariData';
-import { getDeduplicatedSarkariPosts, resolvePostOrg } from '../data/sarkariMigration';
+import type { SarkariItem } from '../data/sarkariData';
+import { resolvePostOrg } from '../data/sarkariMigration';
 import { computeSarkariStatus, getActiveClosingDeadlines } from '../utils/sarkariStatus';
-import { useSyncedSarkariPosts, sortByNewestPostDate } from '../utils/postDataSync';
-import { isOlderThan12Months } from '../utils/postLifecycle';
+import { useSyncedSarkariPosts } from '../utils/postDataSync';
+import { buildHomepageFeedData, type HomepageUpdatesTabId } from '../utils/homepageFeed';
 import { SERVICES_LIST, ServiceItem } from '../servicesData';
-import { PUBLISHED_GUIDE_ARTICLES as GUIDE_ARTICLES } from '../data/guidesData';
+import type { GuideArticle } from '../data/guidesData';
 import { TOOLS_LIST } from './tools/toolsData';
 import { usePublicAlertsConfig } from './ui/AlertsBox';
 import { AdSlot } from './ui/AdSlot';
@@ -24,9 +19,10 @@ export interface PortalHomepageProps {
   onOpenTrack?: () => void;
   onOpenLegal?: (tab: 'privacy' | 'terms' | 'disclaimer') => void;
   onNavigateRoute?: (route: string) => void;
+  publishedGuides?: GuideArticle[];
 }
 
-type UpdatesTabId = 'jobs' | 'admit_card' | 'results' | 'answer_key' | 'admission';
+type UpdatesTabId = HomepageUpdatesTabId;
 
 const UPDATES_TABS: { id: UpdatesTabId; label: string; viewAllLabel: string; href: string }[] = [
   { id: 'jobs', label: 'Jobs', viewAllLabel: 'View all jobs', href: '/jobs' },
@@ -46,7 +42,7 @@ const CATEGORY_GRID_ITEMS = [
   { id: 'admission', emoji: '🎓', label: 'Admission', href: '/education' },
   { id: 'schemes', emoji: '🏛️', label: 'Schemes', href: '/schemes' },
   { id: 'tools', emoji: '🧮', label: 'Tools', href: '/tools' },
-  { id: 'news', emoji: '📰', label: 'News', href: '/deadlines' },
+  { id: 'deadlines', emoji: '⏰', label: 'Deadlines', href: '/deadlines' },
 ] as const;
 
 const SERVICE_CARD_META: Record<string, { emoji: string; shortTitle: string; shortDesc: string }> = {
@@ -81,21 +77,6 @@ const HOMEPAGE_FAQS = [
   },
 ];
 
-function isJkPriorityItem(item: SarkariItem): boolean {
-  if (item.jkDomicile) return true;
-  if (
-    item.category === 'jkssb' ||
-    item.category === 'banking_jobs' ||
-    item.category === 'cluster_univ' ||
-    item.category === 'admissions' ||
-    item.category === 'exam_forms'
-  ) {
-    return true;
-  }
-  const haystack = `${item.title} ${item.org || ''} ${item.department || ''} ${item.institution || ''}`.toLowerCase();
-  return /jkssb|j&k|jammu|kashmir|srinagar|cluster\s*univ|skuast|jkpsc|jk\s*bank|bopee/.test(haystack);
-}
-
 function matchesSearchTerm(text: string, query: string): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
@@ -128,6 +109,7 @@ export default function PortalHomepage({
   onOpenService,
   onOpenGuide,
   onNavigateRoute,
+  publishedGuides = [],
 }: PortalHomepageProps) {
   const allPosts = useSyncedSarkariPosts();
   const alertsConfig = usePublicAlertsConfig();
@@ -136,6 +118,7 @@ export default function PortalHomepage({
   const [activeFilterQuery, setActiveFilterQuery] = useState('');
   const [activeTab, setActiveTab] = useState<UpdatesTabId>('jobs');
   const [openFaqIdx, setOpenFaqIdx] = useState<number | null>(0);
+  const tabButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const navigate = (path: string) => {
     if (onNavigateRoute) {
@@ -150,69 +133,9 @@ export default function PortalHomepage({
     }
   };
 
-  // Verified, deduplicated posts (< 12 months old for active homepage feeds)
-  const verifiedPosts = useMemo(() => {
-    return getDeduplicatedSarkariPosts(allPosts).filter((item) => {
-      if (!isPublishedSarkariItem(item) || item.isCancelled) return false;
-      if (isOlderThan12Months(item)) return false;
-      const st = computeSarkariStatus(item);
-      return st.verificationStatus !== 'needs_verification';
-    });
-  }, [allPosts]);
-
-  // Bucketed lists sorted J&K-first, then urgency/open status, then newest postDate
-  const bucketedLists = useMemo(() => {
-    const compareJkFirst = (a: SarkariItem, b: SarkariItem, prioritizeOpen: boolean) => {
-      const jkA = isJkPriorityItem(a) ? 1 : 0;
-      const jkB = isJkPriorityItem(b) ? 1 : 0;
-      if (jkA !== jkB) return jkB - jkA;
-
-      const stA = computeSarkariStatus(a);
-      const stB = computeSarkariStatus(b);
-
-      if (prioritizeOpen && stA.canApplyOnline !== stB.canApplyOnline) {
-        return stA.canApplyOnline ? -1 : 1;
-      }
-      if (stA.isUrgentUnder7Days !== stB.isUrgentUnder7Days) {
-        return stA.isUrgentUnder7Days ? -1 : 1;
-      }
-      return sortByNewestPostDate(a, b);
-    };
-
-    const jobs: SarkariItem[] = [];
-    const admit_card: SarkariItem[] = [];
-    const results: SarkariItem[] = [];
-    const answer_key: SarkariItem[] = [];
-    const admission: SarkariItem[] = [];
-
-    for (const item of verifiedPosts) {
-      const st = computeSarkariStatus(item);
-      if (st.stage === 'answer_key' || st.stage === 'objection_window') {
-        answer_key.push(item);
-      } else if (st.stage === 'result' || st.stage === 'grade_card') {
-        results.push(item);
-      } else if (
-        st.stage === 'admit_card' ||
-        st.stage === 'examination' ||
-        st.stage === 'document_verification' ||
-        st.stage === 'date_sheet'
-      ) {
-        admit_card.push(item);
-      } else if (isEducationSarkariItem(item)) {
-        admission.push(item);
-      } else if (isRecruitmentSarkariItem(item)) {
-        jobs.push(item);
-      }
-    }
-
-    return {
-      jobs: jobs.sort((a, b) => compareJkFirst(a, b, true)),
-      admit_card: admit_card.sort((a, b) => compareJkFirst(a, b, false)),
-      results: results.sort((a, b) => compareJkFirst(a, b, false)),
-      answer_key: answer_key.sort((a, b) => compareJkFirst(a, b, false)),
-      admission: admission.sort((a, b) => compareJkFirst(a, b, true)),
-    };
-  }, [verifiedPosts]);
+  // Shared SSR + CSR homepage feed selector so initial HTML and browser lists match 1:1
+  const homepageFeed = useMemo(() => buildHomepageFeedData(allPosts), [allPosts]);
+  const bucketedLists = homepageFeed.buckets;
 
   // Execute cross-list search ("Go" or quick chip) and jump to the first matching tab
   const applySearchAndJump = (rawQuery: string) => {
@@ -256,10 +179,8 @@ export default function PortalHomepage({
     return () => window.removeEventListener('csc-header-search', handleHeaderSearch);
   });
 
-  // Closing soon notices (within 7 days, computed dynamically)
-  const closingSoonChips = useMemo(() => {
-    return getActiveClosingDeadlines(allPosts, { maxDays: 7 }).slice(0, 4);
-  }, [allPosts]);
+  // Closing soon notices (within 7 days, shared with SSR)
+  const closingSoonChips = homepageFeed.closingSoonDeadlines;
 
   // Sidebar Closing soon list (within 7 days, fallback to upcoming deadlines)
   const closingSoonSidebarList = useMemo(() => {
@@ -282,7 +203,7 @@ export default function PortalHomepage({
     const services = SERVICES_LIST.filter((s) =>
       matchesSearchTerm(`${s.name} ${s.description}`, activeFilterQuery)
     ).slice(0, 3);
-    const schemes = GUIDE_ARTICLES.filter((g) =>
+    const schemes = publishedGuides.filter((g) =>
       matchesSearchTerm(`${g.title} ${g.summary}`, activeFilterQuery)
     ).slice(0, 3);
     const tools = TOOLS_LIST.filter((t) =>
@@ -290,7 +211,7 @@ export default function PortalHomepage({
     ).slice(0, 2);
     if (services.length === 0 && schemes.length === 0 && tools.length === 0) return null;
     return { services, schemes, tools };
-  }, [activeFilterQuery]);
+  }, [activeFilterQuery, publishedGuides]);
 
   // Featured horizontal CSC services row
   const swipeServices = useMemo(() => {
@@ -312,7 +233,7 @@ export default function PortalHomepage({
 
   const getRowBadge = (item: SarkariItem) => {
     const st = computeSarkariStatus(item);
-    if (st.daysRemaining === 0 && (st.isOpen || st.isClosingSoon)) {
+    if (st.closesToday && (st.isOpen || st.isClosingSoon)) {
       return {
         label: 'TODAY',
         cls: 'bg-[#E5484D]/12 text-[#C81E24] dark:bg-[#E5484D]/25 dark:text-[#FCA5A5]',
@@ -503,7 +424,7 @@ export default function PortalHomepage({
                   e.preventDefault();
                   navigate(cat.href);
                 }}
-                className="bg-white dark:bg-[#16213A] border border-[#E3E8F2] dark:border-[#283757] hover:border-[#2455E6] rounded-[12px] py-2.5 px-1 min-h-[68px] lg:min-h-[78px] flex flex-col items-center justify-center gap-1 shadow-[0_2px_8px_rgba(16,26,54,0.04)] no-underline transition-colors"
+                className="bg-white dark:bg-[#16213A] border border-[#E3E8F2] dark:border-[#283757] hover:border-[#2455E6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6] rounded-[12px] py-2.5 px-1 min-h-[68px] lg:min-h-[78px] flex flex-col items-center justify-center gap-1 shadow-[0_2px_8px_rgba(16,26,54,0.04)] no-underline transition-colors"
               >
                 <span className="text-[20px] lg:text-[22px] leading-none" aria-hidden="true">
                   {cat.emoji}
@@ -525,7 +446,7 @@ export default function PortalHomepage({
             className="w-full rounded-[12px] border border-[#E5484D]/35 bg-[#E5484D]/[0.08] dark:bg-[#E5484D]/15 px-3 lg:px-4 py-2 lg:py-2.5 flex items-center gap-2 overflow-x-auto no-scrollbar"
           >
             <span className="text-[12px] lg:text-[13px] font-extrabold text-[#C81E24] dark:text-[#FCA5A5] shrink-0 whitespace-nowrap">
-              ⏰ Today:
+              ⏰ Closing soon:
             </span>
             {closingSoonChips.map((d) => (
               <a
@@ -535,11 +456,11 @@ export default function PortalHomepage({
                   e.preventDefault();
                   onOpenJob(d.item);
                 }}
-                className="min-h-[36px] px-2.5 py-1 bg-white dark:bg-[#16213A] border border-[#E5484D]/30 hover:border-[#E5484D] rounded-[8px] inline-flex items-center gap-1.5 text-[11.5px] lg:text-[12px] font-semibold text-[#101A36] dark:text-white whitespace-nowrap shrink-0 no-underline transition-colors"
+                className="min-h-[36px] px-2.5 py-1 bg-white dark:bg-[#16213A] border border-[#E5484D]/30 hover:border-[#E5484D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6] rounded-[8px] inline-flex items-center gap-1.5 text-[11.5px] lg:text-[12px] font-semibold text-[#101A36] dark:text-white whitespace-nowrap shrink-0 no-underline transition-colors"
               >
                 <span>{formatShortChipTitle(d.item)}</span>
                 <span className="text-[10px] font-extrabold text-[#C81E24] dark:text-[#FCA5A5] tabular-nums">
-                  {d.daysRemaining === 0 ? 'Today' : `${d.daysRemaining}d`}
+                  {d.closesToday ? 'Today' : `${Math.max(1, d.daysRemaining)}d`}
                 </span>
               </a>
             ))}
@@ -602,16 +523,36 @@ export default function PortalHomepage({
                 aria-label="Latest update categories"
                 className="flex items-center gap-1.5 lg:gap-2 overflow-x-auto no-scrollbar pb-2.5"
               >
-                {UPDATES_TABS.map((tab) => {
+                {UPDATES_TABS.map((tab, tabIdx) => {
                   const isActive = activeTab === tab.id;
                   return (
                     <button
                       key={tab.id}
+                      ref={(el) => {
+                        tabButtonRefs.current[tab.id] = el;
+                      }}
+                      id={`updates-tab-${tab.id}`}
                       role="tab"
                       type="button"
+                      tabIndex={isActive ? 0 : -1}
                       aria-selected={isActive}
+                      aria-controls="latest-updates-tabpanel"
                       onClick={() => setActiveTab(tab.id)}
-                      className={`min-h-[40px] px-3.5 lg:px-4 rounded-full text-[12px] lg:text-[12.5px] font-bold whitespace-nowrap shrink-0 border transition-colors cursor-pointer ${
+                      onKeyDown={(e) => {
+                        let nextIdx = -1;
+                        if (e.key === 'ArrowRight') nextIdx = (tabIdx + 1) % UPDATES_TABS.length;
+                        else if (e.key === 'ArrowLeft')
+                          nextIdx = (tabIdx - 1 + UPDATES_TABS.length) % UPDATES_TABS.length;
+                        else if (e.key === 'Home') nextIdx = 0;
+                        else if (e.key === 'End') nextIdx = UPDATES_TABS.length - 1;
+                        if (nextIdx >= 0) {
+                          e.preventDefault();
+                          const nextTab = UPDATES_TABS[nextIdx];
+                          setActiveTab(nextTab.id);
+                          tabButtonRefs.current[nextTab.id]?.focus();
+                        }
+                      }}
+                      className={`min-h-[40px] px-3.5 lg:px-4 rounded-full text-[12px] lg:text-[12.5px] font-bold whitespace-nowrap shrink-0 border transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6] focus-visible:ring-offset-1 ${
                         isActive
                           ? 'bg-[#2455E6] text-white border-[#2455E6]'
                           : 'bg-white dark:bg-[#16213A] text-[#5B6478] dark:text-[#CBD5E1] border-[#E3E8F2] dark:border-[#283757] hover:border-[#2455E6]/50'
@@ -624,7 +565,12 @@ export default function PortalHomepage({
               </div>
 
               {/* Single Active List Card */}
-              <div className="bg-white dark:bg-[#16213A] border border-[#E3E8F2] dark:border-[#283757] rounded-[14px] shadow-[0_2px_10px_rgba(16,26,54,0.05)] overflow-hidden divide-y divide-[#E3E8F2] dark:divide-[#283757]">
+              <div
+                id="latest-updates-tabpanel"
+                role="tabpanel"
+                aria-labelledby={`updates-tab-${activeTab}`}
+                className="bg-white dark:bg-[#16213A] border border-[#E3E8F2] dark:border-[#283757] rounded-[14px] shadow-[0_2px_10px_rgba(16,26,54,0.05)] overflow-hidden divide-y divide-[#E3E8F2] dark:divide-[#283757]"
+              >
                 {visibleTabPosts.length > 0 ? (
                   visibleTabPosts.map((item, idx) => {
                     const badge = getRowBadge(item);
@@ -916,7 +862,7 @@ export default function PortalHomepage({
                         </div>
                       </div>
                       <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-[6px] bg-[#E5484D]/12 text-[#C81E24] dark:bg-[#E5484D]/25 dark:text-[#FCA5A5] shrink-0 tabular-nums mt-0.5">
-                        {d.daysRemaining === 0 ? 'Today' : `${d.daysRemaining}d left`}
+                        {d.closesToday ? 'Today' : `${Math.max(1, d.daysRemaining)}d left`}
                       </span>
                     </a>
                   ))}

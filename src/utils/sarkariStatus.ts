@@ -27,6 +27,7 @@ export interface ComputedSarkariStatus {
   closingTimeNote?: string;
   timeRemainingText?: string;
   daysRemaining: number | null;
+  closesToday?: boolean;
   officialNotificationUrl?: string;
   officialApplicationUrl?: string;
 }
@@ -162,6 +163,28 @@ export function parseDateToKolkataMs(
 
   const timestampMs = Date.UTC(d.year, d.month - 1, d.day, hours, minutes, seconds, ms);
   return { timestampMs, isTimeExplicit };
+}
+
+/**
+ * Returns true strictly when dateStr falls on the exact current calendar day in Asia/Kolkata.
+ */
+export function isClosingTodayInKolkata(dateStr?: string, customNow?: Date): boolean {
+  const parsed = extractDatePattern(dateStr);
+  if (!parsed) return false;
+  const now = getNowInAsiaKolkata(customNow);
+  return parsed.year === now.year && parsed.month === now.month && parsed.day === now.day;
+}
+
+/**
+ * Computes whole calendar days between today in Asia/Kolkata and the target date (0 = today, 1 = tomorrow, etc.).
+ */
+export function getCalendarDaysUntilInKolkata(dateStr?: string, customNow?: Date): number | null {
+  const parsed = extractDatePattern(dateStr);
+  if (!parsed) return null;
+  const now = getNowInAsiaKolkata(customNow);
+  const todayMidnight = Date.UTC(now.year, now.month - 1, now.day);
+  const targetMidnight = Date.UTC(parsed.year, parsed.month - 1, parsed.day);
+  return Math.round((targetMidnight - todayMidnight) / (1000 * 60 * 60 * 24));
 }
 
 function isOlderThanDays(dateStr: string | undefined, nowMs: number, days: number): boolean {
@@ -461,9 +484,13 @@ function rawComputeSarkariStatus(
       cleanEnd !== cleanPost
     );
     const isOld = !isChallengeActive && isOlderThanDays(item.postDate, nowMs, 35);
+    const closesToday = isChallengeActive && isClosingTodayInKolkata(item.lastDate, customNow);
+    const calDays = isChallengeActive ? getCalendarDaysUntilInKolkata(item.lastDate, customNow) : null;
     const daysRem =
       isChallengeActive && endParsed
-        ? Math.max(0, Math.floor((endParsed.timestampMs - nowMs) / (1000 * 60 * 60 * 24)))
+        ? calDays !== null
+          ? Math.max(0, calDays)
+          : Math.max(0, Math.floor((endParsed.timestampMs - nowMs) / (1000 * 60 * 60 * 24)))
         : null;
 
     return {
@@ -482,11 +509,12 @@ function rawComputeSarkariStatus(
       isArchiveBucket: isOld,
       dateLabel: isChallengeActive ? 'Objections till' : 'Key out',
       dateValue: isChallengeActive ? cleanEnd : cleanPost || cleanEnd || 'As per official notice',
-      dateHint: isChallengeActive && daysRem !== null ? (daysRem === 0 ? 'Closes today' : `${daysRem}d left`) : undefined,
+      dateHint: isChallengeActive && daysRem !== null ? (closesToday ? 'Closes today' : `${Math.max(1, daysRem)}d left`) : undefined,
       closingTimeNote: isChallengeActive
         ? `Answer key / objection representation window is open until ${cleanEnd}.`
         : 'Answer key / objection notice published on the official portal.',
       daysRemaining: daysRem,
+      closesToday,
       officialNotificationUrl,
       officialApplicationUrl,
     };
@@ -572,8 +600,12 @@ function rawComputeSarkariStatus(
       };
     }
 
+    const closesToday = isClosingTodayInKolkata(item.lastDate, customNow);
+    const calDays = getCalendarDaysUntilInKolkata(item.lastDate, customNow);
     const daysRem = endParsed
-      ? Math.max(0, Math.floor((endParsed.timestampMs - nowMs) / (1000 * 60 * 60 * 24)))
+      ? calDays !== null
+        ? Math.max(0, calDays)
+        : Math.max(0, Math.floor((endParsed.timestampMs - nowMs) / (1000 * 60 * 60 * 24)))
       : null;
 
     return {
@@ -581,16 +613,17 @@ function rawComputeSarkariStatus(
       computedStatus: 'closing_soon',
       stage: 'correction',
       verificationStatus,
-      badgeLabel: daysRem !== null ? `Edit Window (${daysRem}d left)` : 'Correction Window',
+      badgeLabel: daysRem !== null ? (closesToday ? 'Edit Closes Today' : `Edit Window (${Math.max(1, daysRem)}d left)`) : 'Correction Window',
       badgeTone: 'amber',
       canApplyOnline: false,
       isClosingSoon: true,
       isArchiveBucket: false,
       dateLabel: 'Edit till',
       dateValue: cleanEnd || 'As per notice',
-      dateHint: daysRem !== null ? (daysRem === 0 ? 'Closes today' : `${daysRem}d left`) : undefined,
+      dateHint: daysRem !== null ? (closesToday ? 'Closes today' : `${Math.max(1, daysRem)}d left`) : undefined,
       closingTimeNote: 'Only registered candidates may modify or submit corrections during this window.',
       daysRemaining: daysRem,
+      closesToday,
       officialNotificationUrl,
       officialApplicationUrl,
     };
@@ -672,7 +705,12 @@ function rawComputeSarkariStatus(
 
   // Currently Open
   const diffMs = endParsed.timestampMs - nowMs;
-  const daysRemaining = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+  const closesToday = isClosingTodayInKolkata(item.applyEnd || item.lastDate, customNow);
+  const calDays = getCalendarDaysUntilInKolkata(item.applyEnd || item.lastDate, customNow);
+  const daysRemaining =
+    calDays !== null
+      ? Math.max(0, calDays)
+      : Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
   const hoursRemaining = Math.max(0, Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
 
   const isUrgentUnder7Days = daysRemaining < 7;
@@ -692,9 +730,9 @@ function rawComputeSarkariStatus(
     stage,
     verificationStatus,
     badgeLabel: isUrgentUnder7Days
-      ? daysRemaining === 0
+      ? closesToday
         ? 'Closes Today'
-        : `${daysRemaining}d left`
+        : `${Math.max(1, daysRemaining)}d left`
       : isClosingSoon
       ? 'Closing Soon (7d)'
       : 'Open',
@@ -704,10 +742,11 @@ function rawComputeSarkariStatus(
     isArchiveBucket: false,
     dateLabel: 'Apply by',
     dateValue: cleanEnd,
-    dateHint: daysRemaining === 0 ? 'Closes today' : `${daysRemaining}d left`,
+    dateHint: closesToday ? 'Closes today' : `${Math.max(1, daysRemaining)}d left`,
     closingTimeNote,
     timeRemainingText,
     daysRemaining,
+    closesToday,
     officialNotificationUrl,
     officialApplicationUrl,
   };
@@ -860,6 +899,7 @@ export interface ActiveClosingDeadlineItem {
   closingTimestampMs: number;
   daysRemaining: number;
   hoursRemaining: number;
+  closesToday: boolean;
   isUrgent: boolean;
 }
 
@@ -957,7 +997,12 @@ export function getActiveClosingDeadlines(
     const section = inferDeadlineSection(item);
     if (sectionFilter !== 'all' && section !== sectionFilter) continue;
 
-    const daysRemaining = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+    const closesToday = isClosingTodayInKolkata(closingRaw, options?.customNow);
+    const calDays = getCalendarDaysUntilInKolkata(closingRaw, options?.customNow);
+    const daysRemaining =
+      calDays !== null
+        ? Math.max(0, calDays)
+        : Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
     const hoursRemaining = Math.max(
       0,
       Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
@@ -973,6 +1018,7 @@ export function getActiveClosingDeadlines(
       closingTimestampMs: endParsed.timestampMs,
       daysRemaining,
       hoursRemaining,
+      closesToday,
       isUrgent: daysRemaining < 7,
     });
   }

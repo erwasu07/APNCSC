@@ -21,6 +21,17 @@ export default function CookieNotice({ onOpenPrivacy }: CookieNoticeProps) {
     }
   }, []);
 
+  useEffect(() => {
+    if (!visible) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        handleDismiss('dismissed');
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [visible]);
+
   const handleDismiss = (choice: 'accepted' | 'dismissed') => {
     try {
       localStorage.setItem(COOKIE_STORAGE_KEY, `${choice}:${new Date().toISOString().slice(0, 10)}`);
@@ -36,7 +47,7 @@ export default function CookieNotice({ onOpenPrivacy }: CookieNoticeProps) {
     <aside
       role="region"
       aria-label="Cookie notice"
-      className="fixed bottom-[68px] lg:bottom-4 inset-x-3 lg:inset-x-auto lg:end-4 lg:max-w-md z-[60] bg-white dark:bg-[#111827] text-[#101A36] dark:text-slate-100 border border-[#CBD5E1] dark:border-slate-700 rounded-xl shadow-lg p-3.5 text-xs leading-relaxed"
+      className="fixed bottom-[calc(78px+env(safe-area-inset-bottom))] lg:bottom-4 inset-x-3 lg:inset-x-auto lg:end-4 lg:max-w-md z-[60] bg-white dark:bg-[#111827] text-[#101A36] dark:text-slate-100 border border-[#CBD5E1] dark:border-slate-700 rounded-xl shadow-lg p-3 text-xs leading-relaxed"
     >
       <div className="flex items-start gap-2.5">
         <p className="m-0 flex-1 text-[#334155] dark:text-slate-300">
@@ -50,7 +61,7 @@ export default function CookieNotice({ onOpenPrivacy }: CookieNoticeProps) {
                 onOpenPrivacy();
               }
             }}
-            className="text-[#1F9D6B] dark:text-emerald-400 font-semibold underline"
+            className="text-[#1F9D6B] dark:text-emerald-400 font-semibold underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6] rounded"
           >
             Cookie &amp; Privacy Policy
           </a>
@@ -59,16 +70,16 @@ export default function CookieNotice({ onOpenPrivacy }: CookieNoticeProps) {
           type="button"
           onClick={() => handleDismiss('dismissed')}
           aria-label="Close cookie notice"
-          className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer shrink-0"
+          className="min-w-[32px] min-h-[32px] inline-flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6]"
         >
           <X className="w-4 h-4" />
         </button>
       </div>
-      <div className="mt-2.5 flex items-center justify-end gap-2">
+      <div className="mt-2 flex items-center justify-end gap-2">
         <button
           type="button"
           onClick={() => handleDismiss('accepted')}
-          className="px-3.5 py-1.5 rounded-lg bg-[#101A36] hover:bg-[#1E2B4F] dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold text-xs cursor-pointer transition-colors"
+          className="min-h-[36px] px-3.5 py-1.5 rounded-lg bg-[#101A36] hover:bg-[#1E2B4F] dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold text-xs cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6]"
         >
           Got it
         </button>

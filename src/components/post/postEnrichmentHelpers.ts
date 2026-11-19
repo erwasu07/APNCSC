@@ -2,7 +2,14 @@ import { isPublishedSarkariItem, type PostStructuredType, type SarkariItem } fro
 import { KNOWN_DUPLICATE_MAP } from '../../data/sarkariMigration';
 import type { ComputedSarkariStatus } from '../../utils/sarkariStatus';
 import { formatLongDate } from './postBulletinHelpers';
-import { hasRealDataValue, isGenericNoticePlaceholder } from './postHelpers';
+import {
+  hasExplicitFee,
+  hasRealDataValue,
+  isGenericNoticePlaceholder,
+  isZeroOrExemptFee,
+  resolveApplicationMode,
+  resolveApplicationModeLabel,
+} from './postHelpers';
 
 export const EDITORIAL_AUTHOR_TEXT =
   'Written and reviewed by CSC DOST editorial desk, Authorized CSC VLE Wasim Ahmad Khanday';
@@ -232,7 +239,10 @@ export function buildPostEnrichmentData(
 
   const genFee = item.fee?.genObc || item.fees?.genObc;
   const scFee = item.fee?.scSt || item.fees?.scSt;
-  const hasFee = hasRealDataValue(genFee) || hasRealDataValue(scFee);
+  const hasFee = hasExplicitFee(item);
+  const zeroFee = isZeroOrExemptFee(item);
+  const appMode = resolveApplicationMode(item);
+  const appModeLabel = resolveApplicationModeLabel(item);
 
   const isEdu =
     item.section === 'education' ||
@@ -250,7 +260,9 @@ export function buildPostEnrichmentData(
   }
   quickSummary.push(
     `Issued by ${orgName}${
-      hasRealDataValue(item.advertisementNo) ? ` (${item.advertisementNo})` : ''
+      hasRealDataValue(item.advertisementNo) && !isGenericNoticePlaceholder(item.advertisementNo)
+        ? ` (${item.advertisementNo})`
+        : ''
     }${postLong ? ` and published on ${postLong}` : ''}.`
   );
   if (effectiveType === 'result' || effectiveType === 'answer_key') {
@@ -267,20 +279,26 @@ export function buildPostEnrichmentData(
     );
   } else {
     quickSummary.push(
-      `${hasVacancies ? `Reported count / scope: ${vacanciesStr}. ` : ''}${
+      `${hasVacancies ? `Reported count / scope: ${vacanciesStr}. ` : ''}Application mode: ${appModeLabel}. ${
         endLong
           ? statusInfo.isClosed
             ? `Submission deadline closed on ${endLong}.`
+            : appMode === 'offline'
+            ? `Offline applications must reach the notified address on or before ${endLong}.`
             : `Application / form window ${startLong ? `from ${startLong} ` : ''}closes on ${endLong}.`
           : `Check ${sourceDomain} for exact schedule details.`
       }`
     );
     if (hasFee) {
       quickSummary.push(
-        `Fee noted in notice: ${genFee || 'As per notice'}${
-          scFee && scFee !== genFee ? ` (Reserved/SC/ST: ${scFee})` : ''
-        }.`
+        zeroFee
+          ? 'Application fee: Exempted / No fee required as stated in the official notice.'
+          : `Fee noted in notice: ${genFee || 'As per notice'}${
+              scFee && scFee !== genFee ? ` (Reserved/SC/ST: ${scFee})` : ''
+            }.`
       );
+    } else if (hasRealDataValue(item.paymentInstructions)) {
+      quickSummary.push(String(item.paymentInstructions).trim());
     }
   }
 
@@ -315,6 +333,8 @@ export function buildPostEnrichmentData(
     whoShouldApply.push(
       statusInfo.isClosed
         ? `Window closed (${endLong || statusInfo.dateValue}); kept for reference.`
+        : appMode === 'offline'
+        ? `Candidates able to prepare self-attested testimonials and deliver the offline application on or before ${endLong || 'the deadline'}.`
         : `Candidates with active contact details ready before ${endLong || 'the deadline'} on ${sourceDomain}.`
     );
   }
@@ -334,30 +354,58 @@ export function buildPostEnrichmentData(
     );
   } else {
     whoShouldNotApply.push(
-      `Awaited-result candidates beyond ${orgName} cutoff rules unless ${item.title} allows it.`
+      `Candidates who do not meet the prescribed educational qualification or experience criteria stated in the official ${orgName} notice.`
     );
     if (item.jkDomicile) {
       whoShouldNotApply.push(`Non-domicile applicants where ${orgName} mandates J&K domicile.`);
     }
     if (hasRealDataValue(item.ageLimit) && !isGenericNoticePlaceholder(item.ageLimit)) {
-      whoShouldNotApply.push(`Candidates outside ${item.ageLimit} without ${orgName} relaxation.`);
+      whoShouldNotApply.push(
+        hasRealDataValue(item.ageRelaxationDetails)
+          ? `Candidates outside ${item.ageLimit} unless eligible under notified relaxation (${item.ageRelaxationDetails}).`
+          : `Candidates outside the stated age / tenure criteria (${item.ageLimit}) in the official notice.`
+      );
     }
   }
 
   // 4. Common mistakes to avoid
   const commonMistakes: string[] = [
     `Skipping the original ${item.title} notice on ${sourceDomain}.`,
-    effectiveType === 'application' || effectiveType === 'admission' || effectiveType === 'upcoming'
-      ? `Uploading oversized/unclear scans to ${sourceDomain} instead of verifying KB/pixel specs.`
-      : `Mismatched roll number or DOB entry when checking ${item.title} on ${sourceDomain}.`,
-    `Spelling differences versus Class 10th records for ${orgName} verification.`,
-    hasFee
-      ? `Double-paying ${item.title} fees before bank settlement checks.`
-      : `Waiting until closing hours on ${sourceDomain} when traffic peaks.`,
   ];
-  if (item.jkDomicile || !isEdu) {
+  if (appMode === 'offline' && (effectiveType === 'application' || effectiveType === 'admission' || effectiveType === 'upcoming')) {
     commonMistakes.push(
-      `Claiming reserved categories without valid certificates dated by ${endLong || 'cutoff'}.`
+      `Sending an incomplete or unsigned application form, or omitting self-attested copies of required enclosures.`
+    );
+    if (item.envelopeSuperscription) {
+      commonMistakes.push(
+        `Forgetting to superscribe the envelope exactly as directed ("${item.envelopeSuperscription}").`
+      );
+    }
+    commonMistakes.push(
+      `Dispatching too close to ${endLong || 'the closing date'} without accounting for postal delivery time.`
+    );
+  } else {
+    commonMistakes.push(
+      effectiveType === 'application' || effectiveType === 'admission' || effectiveType === 'upcoming'
+        ? `Uploading unclear or non-compliant document files on ${sourceDomain} without checking the official notice specifications.`
+        : `Mismatched roll number or DOB entry when checking ${item.title} on ${sourceDomain}.`
+    );
+    commonMistakes.push(
+      `Spelling or date-of-birth mismatches compared with Class 10th / academic records during ${orgName} verification.`
+    );
+    if (hasFee && !zeroFee) {
+      commonMistakes.push(
+        `Double-paying ${item.title} fees before checking portal or bank reconciliation status.`
+      );
+    } else {
+      commonMistakes.push(
+        `Waiting until closing hours on ${sourceDomain} when portal traffic peaks.`
+      );
+    }
+  }
+  if (item.jkDomicile) {
+    commonMistakes.push(
+      `Claiming J&K domicile or reserved categories without valid certificates dated within the official cutoff.`
     );
   }
 
@@ -370,8 +418,12 @@ export function buildPostEnrichmentData(
       ? `2. Prepare certificates for ${item.title} ahead of ${startLong || 'opening'}.`
       : effectiveType === 'result' || effectiveType === 'admit_card' || effectiveType === 'answer_key'
       ? `2. Sign in on ${sourceDomain} with registration ID${endLong ? ` before ${endLong}` : ''} for ${item.title}.`
+      : appMode === 'offline'
+      ? `2. Download the prescribed offline application format from ${sourceDomain}, attach required self-attested enclosures, and send to the notified ${orgName} address on or before ${endLong || 'closing'}.`
       : `2. Submit ${item.title} on ${sourceDomain} before ${endLong || 'closing'}${startLong ? ` (opened ${startLong})` : ''}.`,
-    `3. Save the official ${orgName} PDF or confirmation receipt for ${item.title}.`,
+    appMode === 'offline'
+      ? `3. Keep a photocopy of your signed application form, enclosures, and postal/submission receipt for reference.`
+      : `3. Save the official ${orgName} PDF or confirmation receipt for ${item.title}.`,
   ];
 
   return {

@@ -181,7 +181,7 @@ export default function Navbar({
                 navigateToPath(item.href);
               }}
               aria-current={item.isActive ? 'page' : undefined}
-              className={`min-h-[40px] inline-flex items-center text-[13.5px] font-semibold whitespace-nowrap shrink-0 no-underline border-b-2 transition-colors ${
+              className={`min-h-[40px] inline-flex items-center px-1 rounded-md text-[13.5px] font-semibold whitespace-nowrap shrink-0 no-underline border-b-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6] ${
                 item.isActive
                   ? 'text-[#2455E6] dark:text-[#60A5FA] border-[#2455E6] dark:border-[#60A5FA]'
                   : 'text-[#101A36] dark:text-slate-200 border-transparent hover:text-[#2455E6] dark:hover:text-[#60A5FA]'
@@ -293,7 +293,7 @@ export default function Navbar({
               e.preventDefault();
               navigateToPath('/disclaimer');
             }}
-            className="font-semibold text-[#2455E6] dark:text-[#60A5FA] hover:underline whitespace-nowrap"
+            className="font-semibold text-[#2455E6] dark:text-[#60A5FA] hover:underline whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2455E6] rounded"
           >
             Read Disclaimer &rarr;
           </a>

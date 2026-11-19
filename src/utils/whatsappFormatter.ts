@@ -322,7 +322,21 @@ export function detectWhatsAppNotificationCategory(
     return 'result';
   }
 
-  // 4. Explicit IGNOU notifications (prefer result/grade card/answer key -> result, else admission/education)
+  // 4. Explicit Job Recruitment notices (must run BEFORE generic IGNOU / university title matching so IGNOU job recruitments stay 'job')
+  if (
+    item.section === 'jobs' ||
+    cat === 'army_jobs' ||
+    cat === 'jkssb' ||
+    cat === 'ssc_jobs' ||
+    cat === 'rrb_jobs' ||
+    cat === 'banking_jobs' ||
+    cat === 'jobs' ||
+    postType === 'job'
+  ) {
+    return 'job';
+  }
+
+  // 5. Explicit IGNOU education notifications (prefer result/grade card/answer key -> result, else admission/education)
   const instUpper = (item.institution || '').toUpperCase().trim();
   const noticeTypeLower = (item.noticeType || '').toLowerCase().trim();
   if (cat === 'ignou' || instUpper === 'IGNOU') {
@@ -337,7 +351,7 @@ export function detectWhatsAppNotificationCategory(
     return 'admission';
   }
 
-  // 5. Check Admissions (University admissions, IGNOU, CUET/NEET admission portals, counselling, degree/diploma admissions)
+  // 6. Check Admissions (University admissions, IGNOU, CUET/NEET admission portals, counselling, degree/diploma admissions)
   if (
     cat === 'admissions' ||
     postType === 'admission' ||
@@ -348,7 +362,7 @@ export function detectWhatsAppNotificationCategory(
     return 'admission';
   }
 
-  // 6. Check Cluster Univ / Exam Forms / NTA
+  // 7. Check Cluster Univ / Exam Forms / NTA
   if (cat === 'cluster_univ' || cat === 'exam_forms' || cat === 'nta') {
     if (/\b(result|scorecard|answer\s+key)\b/i.test(title)) {
       return 'result';
@@ -356,15 +370,9 @@ export function detectWhatsAppNotificationCategory(
     return 'admission';
   }
 
-  // 6. Check Jobs & Recruitment
+  // 8. Fallback job keywords
   if (
-    cat === 'army_jobs' ||
-    cat === 'jkssb' ||
-    cat === 'ssc_jobs' ||
-    cat === 'rrb_jobs' ||
-    cat === 'jobs' ||
-    postType === 'job' ||
-    /\b(recruitment|vacancies|vacancy|constable|sub[-\s]?inspector|junior\s+engineer|patwari|agniveer|tes[-\s]?\d+|ntpc|chsl|cgl|mts|clerk|stenographer|teacher|nurse)\b/i.test(
+    /\b(recruitment|vacancies|vacancy|constable|sub[-\s]?inspector|junior\s+engineer|patwari|agniveer|tes[-\s]?\d+|ntpc|chsl|cgl|mts|clerk|stenographer|teacher|nurse|consultant)\b/i.test(
       combined
     )
   ) {
@@ -732,6 +740,11 @@ export function buildWhatsAppNotification(
     if (organization) fields.push({ icon: '📌', label: 'Organization', value: organization });
     if (qualification) fields.push({ icon: '🎓', label: 'Qualification', value: qualification });
     if (vacancies) fields.push({ icon: '👥', label: 'Vacancies', value: vacancies });
+    if (item.applicationMode === 'offline') {
+      fields.push({ icon: '📮', label: 'Application Mode', value: item.postalAddress ? 'Offline (By Post)' : 'Offline' });
+    } else if (item.applicationMode === 'hybrid') {
+      fields.push({ icon: '📋', label: 'Application Mode', value: 'Online + Offline' });
+    }
     if (lastDate) fields.push({ icon: '📅', label: 'Last Date', value: lastDate });
   } else if (categoryType === 'admission') {
     heading = '🎓 *CSC DOST | ADMISSION UPDATE*';

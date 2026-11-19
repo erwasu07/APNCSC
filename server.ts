@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
+import zlib from 'zlib';
 import sharp from 'sharp';
 import {
   SarkariItem,
@@ -270,6 +271,69 @@ app.use(express.json({
   }
 }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Lightweight built-in Brotli / Gzip HTTP compression for compressible text/HTML/JS/CSS/JSON/XML/SVG responses
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (req.method === 'HEAD') return next();
+  const acceptEncoding = String(req.headers['accept-encoding'] || '');
+  const supportsBr = /\bbr\b/i.test(acceptEncoding);
+  const supportsGzip = /\bgzip\b/i.test(acceptEncoding);
+  if (!supportsBr && !supportsGzip) return next();
+
+  const origSend = res.send.bind(res);
+  (res as any).send = function compressedSend(body: any) {
+    try {
+      if (
+        res.headersSent ||
+        res.getHeader('Content-Encoding') ||
+        req.path === '/api/events'
+      ) {
+        return origSend(body);
+      }
+      const contentType = String(res.getHeader('Content-Type') || '');
+      const isCompressible =
+        !contentType ||
+        /^(text\/|application\/(json|javascript|xml|xhtml\+xml|ld\+json)|image\/svg\+xml)/i.test(contentType);
+      if (!isCompressible || body == null) {
+        return origSend(body);
+      }
+
+      const rawBuf = Buffer.isBuffer(body)
+        ? body
+        : typeof body === 'string'
+        ? Buffer.from(body, 'utf-8')
+        : typeof body === 'object'
+        ? Buffer.from(JSON.stringify(body), 'utf-8')
+        : null;
+
+      if (!rawBuf || rawBuf.length < 1024) {
+        return origSend(body);
+      }
+
+      if (!contentType && typeof body === 'object' && !Buffer.isBuffer(body)) {
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      }
+      res.vary('Accept-Encoding');
+
+      if (supportsBr) {
+        const compressed = zlib.brotliCompressSync(rawBuf, {
+          params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 4 },
+        });
+        res.setHeader('Content-Encoding', 'br');
+        res.setHeader('Content-Length', String(compressed.length));
+        return origSend(compressed);
+      }
+      const compressed = zlib.gzipSync(rawBuf, { level: 6 });
+      res.setHeader('Content-Encoding', 'gzip');
+      res.setHeader('Content-Length', String(compressed.length));
+      return origSend(compressed);
+    } catch {
+      return origSend(body);
+    }
+  };
+
+  next();
+});
 
 // Canonical domain, HTTPS, and trailing-slash redirection
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -6266,8 +6330,12 @@ app.post('/api/posts', async (req: Request, res: Response) => {
 
     const todayStr = new Date().toLocaleDateString('en-GB'); // DD/MM/YYYY
     const rawPubStatus = String(body.publicationStatus || 'published').toLowerCase().trim();
-    const publicationStatus: 'published' | 'draft' | 'archived' =
-      rawPubStatus === 'draft' || rawPubStatus === 'archived' ? rawPubStatus : 'published';
+    const requiresHumanReview = Boolean(body.autoCollected) && !Boolean(body.humanReviewed);
+    const publicationStatus: 'published' | 'draft' | 'archived' = requiresHumanReview
+      ? 'draft'
+      : rawPubStatus === 'draft' || rawPubStatus === 'archived'
+      ? rawPubStatus
+      : 'published';
 
     const category = body.category || (String(body.institution || '').toUpperCase() === 'IGNOU' ? 'ignou' : 'jkssb');
     const resolvedNoticeType = body.noticeType || undefined;
@@ -6363,19 +6431,32 @@ app.post('/api/posts', async (req: Request, res: Response) => {
       advertisementNo: body.advertisementNo || '',
       shortInfo: shortInfoText,
       summary: originalAnalysisText ? `${shortInfoText}\n\n${originalAnalysisText}` : (typeof body.summary === 'string' && body.summary.trim() ? body.summary.trim() : undefined),
-      ageLimit: body.ageLimit || (category === 'ignou' ? 'As per IGNOU programme norms' : 'As per official notification norms'),
+      ageLimit: typeof body.ageLimit === 'string' && body.ageLimit.trim() ? body.ageLimit.trim() : undefined,
       eligibility: resolvedEligibility,
       totalPosts: body.totalPosts || (category === 'ignou' ? 'IGNOU Circular' : 'Various Posts'),
+      applicationMode:
+        body.applicationMode === 'offline' || body.applicationMode === 'online' || body.applicationMode === 'hybrid'
+          ? body.applicationMode
+          : undefined,
+      postalAddress: typeof body.postalAddress === 'string' && body.postalAddress.trim() ? body.postalAddress.trim() : undefined,
+      envelopeSuperscription:
+        typeof body.envelopeSuperscription === 'string' && body.envelopeSuperscription.trim()
+          ? body.envelopeSuperscription.trim()
+          : undefined,
       howToApply: body.howToApply || undefined,
       selectionProcess: body.selectionProcess || undefined,
       documentsRequired: body.documentsRequired || undefined,
       officialLink: String(body.officialLink || validatedOfficialUrl).trim(),
       officialNotificationUrl: String(body.officialNotificationUrl || validatedOfficialUrl).trim(),
       officialApplicationUrl: body.officialApplicationUrl ? String(body.officialApplicationUrl).trim() : undefined,
-      fees: body.fees || {
-        genObc: body.genObcFee || 'As per official notice',
-        scSt: body.scStFee || 'As per official notice'
-      },
+      fees:
+        body.fees ||
+        (body.genObcFee || body.scStFee
+          ? {
+              genObc: String(body.genObcFee || '').trim(),
+              scSt: String(body.scStFee || '').trim(),
+            }
+          : undefined),
       isNew: publicationStatus === 'published',
       thumbnailUrl: body.thumbnailUrl || `/api/thumbnails/post/${slug}.png`,
       thumbnailSpec: body.thumbnailSpec || undefined,
@@ -7176,8 +7257,22 @@ app.get('/robots.txt', (req: Request, res: Response) => {
   res.sendFile(robotsPath);
 });
 
-// Explicitly serve static public assets like favicons (never auto-serve index.html for /)
-app.use(express.static(path.join(process.cwd(), 'public'), { index: false }));
+// Explicitly serve static public assets like favicons with sensible cache lifetimes (never auto-serve index.html for /)
+app.use(
+  express.static(path.join(process.cwd(), 'public'), {
+    index: false,
+    setHeaders: (res, filePath) => {
+      const lower = filePath.toLowerCase();
+      if (lower.endsWith('sw.js')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      } else if (lower.endsWith('.txt') || lower.endsWith('.xml') || lower.endsWith('.webmanifest') || lower.endsWith('.json')) {
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+      } else if (/\.(png|jpg|jpeg|webp|avif|svg|ico|woff2?|ttf)$/i.test(lower)) {
+        res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+      }
+    },
+  })
+);
 
 // Production & Vercel SSR catch-all route (Registered immediately so Vercel Serverless Function executes it)
 if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
@@ -7187,10 +7282,40 @@ if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
   const rootHtmlPath = path.join(process.cwd(), 'index.html');
 
   if (fs.existsSync(distAssetsPath)) {
+    app.get('/assets/:file', (req: Request, res: Response, next: NextFunction) => {
+      const fileName = path.basename(String(req.params.file || ''));
+      if (!/\.(js|mjs|css|svg|json|map)$/i.test(fileName)) return next();
+      const absFile = path.join(distAssetsPath, fileName);
+      if (!absFile.startsWith(distAssetsPath) || !fs.existsSync(absFile)) return next();
+      const ext = path.extname(fileName).toLowerCase();
+      const mime =
+        ext === '.css'
+          ? 'text/css; charset=utf-8'
+          : ext === '.svg'
+          ? 'image/svg+xml'
+          : ext === '.json' || ext === '.map'
+          ? 'application/json; charset=utf-8'
+          : 'application/javascript; charset=utf-8';
+      res.setHeader('Content-Type', mime);
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      return res.send(fs.readFileSync(absFile));
+    });
     app.use('/assets', express.static(distAssetsPath, { index: false, maxAge: '365d', immutable: true }));
   }
   if (fs.existsSync(distPath)) {
-    app.use(express.static(distPath, { index: false }));
+    app.use(
+      express.static(distPath, {
+        index: false,
+        setHeaders: (res, filePath) => {
+          const lower = filePath.toLowerCase();
+          if (lower.endsWith('sw.js')) {
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+          } else if (/\.(png|jpg|jpeg|webp|avif|svg|ico|woff2?|ttf)$/i.test(lower)) {
+            res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+          }
+        },
+      })
+    );
   }
 
   app.get('*', (req: Request, res: Response, next: NextFunction) => {

@@ -24,12 +24,20 @@ import {
   getChecklistTitleForType,
   getDocumentsForPost,
   getProcessSectionConfig,
+  hasExplicitFee,
   hasRealDataValue,
   isNonApplicationTemplateType,
+  isZeroOrExemptFee,
+  resolveApplicationMode,
+  resolveApplicationModeLabel,
   resolveEffectiveTemplateType,
   resolvePostPdfUrl,
   resolvePostPortalUrl,
 } from './components/post/postHelpers';
+import {
+  buildHomepageFeedData,
+  formatShortChipTitle,
+} from './utils/homepageFeed';
 import {
   getDaysSinceClosing,
   isOlderThan12Months,
@@ -88,19 +96,19 @@ export function renderPostSubstantiveHtml(
   const safeScSt = escapeHtml(item.fees?.scSt || item.fee?.scSt || 'As per official notice');
   const safeOfficialLink = escapeHtml(portalUrl);
 
-  const rawFeeStr = `${item.fees?.genObc || ''} ${item.fee?.genObc || ''}`.trim();
-  const isZeroFee =
-    rawFeeStr.length > 0 &&
-    (rawFeeStr.toLowerCase().includes('0') ||
-      rawFeeStr.toLowerCase().includes('nil') ||
-      rawFeeStr.toLowerCase().includes('exempt') ||
-      rawFeeStr.toLowerCase().includes('free'));
+  const appMode = resolveApplicationMode(item);
+  const appModeLabel = resolveApplicationModeLabel(item);
+  const isOfflineMode = appMode === 'offline';
+  const explicitFee = hasExplicitFee(item);
+  const isZeroFee = isZeroOrExemptFee(item);
 
   const paymentInstructionText = item.paymentInstructions
     ? escapeHtml(item.paymentInstructions)
     : isZeroFee
       ? '₹0/- (Exempted / Free for all candidates). No payment is required.'
-      : 'Pay online through the official authority portal as specified in the notification';
+      : isOfflineMode
+        ? 'No online payment is specified; check the official notification PDF for fee details.'
+        : 'Pay online through the official authority portal as specified in the notification';
 
   const isIgnouPost = isIgnouItem(item);
   const isEducationPost = isEducationSarkariItem(item) || item.section === 'education';
@@ -238,7 +246,7 @@ export function renderPostSubstantiveHtml(
         </div>
 
         ${
-          !nonAppTemplate && (hasRealDataValue(item.fees?.genObc || item.fee?.genObc) || hasRealDataValue(item.fees?.scSt || item.fee?.scSt))
+          !nonAppTemplate && explicitFee
             ? `<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
           <h3 style="font-size:15px; font-weight:700; color:#101A36; margin:0 0 10px 0;">Application Fee</h3>
           <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#334155; line-height:1.8;">
@@ -248,12 +256,16 @@ export function renderPostSubstantiveHtml(
           </ul>
         </div>`
             : `<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
-          <h3 style="font-size:15px; font-weight:700; color:#101A36; margin:0 0 10px 0;">Official Notice Details</h3>
+          <h3 style="font-size:15px; font-weight:700; color:#101A36; margin:0 0 10px 0;">Official Notice &amp; Submission Details</h3>
           <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#334155; line-height:1.8;">
             <li><strong>Issuing Body:</strong> ${safeOrg}</li>
+            ${!nonAppTemplate ? `<li><strong>Application Mode:</strong> ${escapeHtml(appModeLabel)}</li>` : ''}
+            ${hasRealDataValue(item.paymentInstructions) ? `<li><strong>Fee Note:</strong> ${escapeHtml(item.paymentInstructions)}</li>` : ''}
+            ${hasRealDataValue(item.postalAddress) ? `<li><strong>Postal Address:</strong> ${escapeHtml(item.postalAddress)}</li>` : ''}
+            ${hasRealDataValue(item.envelopeSuperscription) ? `<li><strong>Envelope Superscription:</strong> ${escapeHtml(item.envelopeSuperscription)}</li>` : ''}
             ${hasRealDataValue(item.venue) ? `<li><strong>Venue:</strong> ${escapeHtml(item.venue)}</li>` : ''}
             ${hasRealDataValue(item.reportingTime) ? `<li><strong>Reporting Time:</strong> ${escapeHtml(item.reportingTime)}</li>` : ''}
-            <li><strong>Portal Verification:</strong> <a href="${safeOfficialLink}" target="_blank" rel="noopener noreferrer" style="color:#1F9D6B; font-weight:600;">${safeOfficialLink}</a></li>
+            <li><strong>Official Source:</strong> <a href="${safeOfficialLink}" target="_blank" rel="noopener noreferrer" style="color:#1F9D6B; font-weight:600;">${escapeHtml(enrichment.sourceDomain)}</a></li>
           </ul>
         </div>`
         }
@@ -262,8 +274,17 @@ export function renderPostSubstantiveHtml(
       <!-- Key Facts & Qualification Table -->
       <section style="margin-bottom:24px;">
         <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 12px 0;">${nonAppTemplate ? 'Notice Summary &amp; Key Facts' : 'Eligibility Criteria &amp; Vacancy Details'}</h2>
+        <div style="width:100%; overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; font-size:14px; text-align:left; border:1px solid #e2e8f0;">
           <tbody>
+            ${
+              !nonAppTemplate
+                ? `<tr style="border-bottom:1px solid #e2e8f0;">
+              <th style="padding:10px 14px; background:#f1f5f9; width:32%; font-weight:600; color:#101A36;">Application Mode</th>
+              <td style="padding:10px 14px; color:#101A36; font-weight:600;">${escapeHtml(appModeLabel)}</td>
+            </tr>`
+                : ''
+            }
             ${
               !nonAppTemplate && hasRealDataValue(item.totalPosts)
                 ? `<tr style="border-bottom:1px solid #e2e8f0;">
@@ -275,7 +296,7 @@ export function renderPostSubstantiveHtml(
             ${
               !nonAppTemplate && !isEducationPost && hasRealDataValue(item.ageLimit)
                 ? `<tr style="border-bottom:1px solid #e2e8f0;">
-              <th style="padding:10px 14px; background:#f1f5f9; font-weight:600; color:#101A36;">Age Limit</th>
+              <th style="padding:10px 14px; background:#f1f5f9; font-weight:600; color:#101A36;">Age Limit / Tenure</th>
               <td style="padding:10px 14px; color:#334155;">
                 ${safeAgeLimit}
                 ${item.ageRelaxationDetails ? `<div style="margin-top:4px; font-size:13px; color:#475569;"><strong>Relaxation Details:</strong> ${escapeHtml(item.ageRelaxationDetails)}</div>` : ''}
@@ -297,6 +318,7 @@ export function renderPostSubstantiveHtml(
             }
           </tbody>
         </table>
+        </div>
       </section>
 
       ${docsChecklist.length > 0 ? `
@@ -395,7 +417,7 @@ export function renderPostSubstantiveHtml(
         </div>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
           <a href="${safeOfficialLink}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
-            ${isSscTimetablePost ? 'Official Portal (ssc.gov.in) ↗' : isIgnouPost ? 'Official IGNOU Circular / Portal ↗' : `${safeOrg} Official Portal ↗`}
+            ${isSscTimetablePost ? 'Official Portal (ssc.gov.in) ↗' : isOfflineMode ? `Official ${safeOrg} PDF &amp; Application Form ↗` : isIgnouPost ? 'Official IGNOU Circular / Portal ↗' : `${safeOrg} Official Portal ↗`}
           </a>
           ${
             pdfUrl
@@ -1371,33 +1393,10 @@ export function renderHomepageSubstantiveHtml(
   alertsConfig?: { whatsappUrl: string; whatsappType: 'channel' | 'group'; telegramUrl?: string },
   publishedGuides: GuideArticle[] = GUIDE_ARTICLES
 ): string {
-  const dedupedPosts = getDeduplicatedSarkariPosts(posts);
-  const verifiedVisiblePosts = dedupedPosts
-    .filter((p) => {
-      if (!isPublishedSarkariItem(p)) return false;
-      if (isOlderThan12Months(p)) return false;
-      const st = computeSarkariStatus(p);
-      return st.verificationStatus !== 'needs_verification' && !p.isCancelled;
-    })
-    .sort(
-      (a, b) =>
-        parseSarkariDateSortValue(b.postDate || b.documentDate) -
-        parseSarkariDateSortValue(a.postDate || a.documentDate)
-    );
-
-  const closingSoonDeadlines = getActiveClosingDeadlines(dedupedPosts, { maxDays: 7 }).slice(0, 4);
-
-  const recruitmentPool = verifiedVisiblePosts.filter((p) => isRecruitmentSarkariItem(p));
-  const latestTwelveJobs =
-    recruitmentPool.length >= 12
-      ? recruitmentPool.slice(0, 12)
-      : [
-          ...recruitmentPool,
-          ...verifiedVisiblePosts.filter((p) => !recruitmentPool.some((r) => r.id === p.id)),
-        ].slice(0, 12);
-  const educationPosts = verifiedVisiblePosts
-    .filter((p) => isEducationSarkariItem(p))
-    .slice(0, 6);
+  const homepageFeed = buildHomepageFeedData(posts);
+  const closingSoonDeadlines = homepageFeed.closingSoonDeadlines;
+  const latestJobsList = homepageFeed.buckets.jobs.slice(0, 10);
+  const educationPosts = homepageFeed.buckets.admission.slice(0, 6);
   const popularSchemes = publishedGuides.filter(
     (g) => g.category === 'Central Scheme' || g.category === 'State Services' || g.category === 'Identity & Tax'
   ).slice(0, 4);
@@ -1417,21 +1416,21 @@ export function renderHomepageSubstantiveHtml(
     { href: '/services', title: 'CSC E-Services' },
     { href: '/tools', title: 'Document Tools' },
     { href: '/calculators', title: 'Citizen Calculators' },
-    { href: '/deadlines', title: 'Closing Deadlines' },
+    { href: '/deadlines', title: 'Deadlines' },
     { href: '/archive', title: 'Notice Archive' },
   ];
 
   const closingSoonHtml =
     closingSoonDeadlines.length > 0
       ? `
-    <section aria-label="Closing Today &amp; Soon" style="background:#FEF2F2; border:1px solid #FECACA; border-radius:12px; padding:10px 12px; margin-bottom:14px;">
-      <div style="font-size:12px; font-weight:800; color:#E5484D; margin-bottom:6px;">Closing Soon:</div>
+    <section aria-label="Closing soon deadlines" style="background:#FEF2F2; border:1px solid #FECACA; border-radius:12px; padding:10px 12px; margin-bottom:14px;">
+      <div style="font-size:12px; font-weight:800; color:#C81E24; margin-bottom:6px;">Closing soon:</div>
       <div style="display:flex; flex-wrap:wrap; gap:6px;">
         ${closingSoonDeadlines
           .map(
             (d) => `
           <a href="/post/${escapeHtml(d.item.id)}" style="background:#ffffff; border:1px solid #FECACA; border-radius:8px; padding:4px 8px; font-size:11px; font-weight:700; color:#101A36; text-decoration:none;">
-            ${escapeHtml(d.institution)} · ${escapeHtml(d.daysRemaining === 0 ? 'Today' : `${d.daysRemaining}d left`)}
+            ${escapeHtml(formatShortChipTitle(d.item))} · ${escapeHtml(d.closesToday ? 'Today' : `${Math.max(1, d.daysRemaining)}d left`)}
           </a>`
           )
           .join('')}
@@ -1512,11 +1511,11 @@ export function renderHomepageSubstantiveHtml(
 
       <section aria-labelledby="ssr-recruitment-heading" style="background:#ffffff; border:1px solid #E3E8F2; border-radius:14px; padding:14px; margin-bottom:14px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <h2 id="ssr-recruitment-heading" style="font-size:16px; font-weight:800; margin:0;">Latest 12 Job &amp; Recruitment Updates</h2>
+          <h2 id="ssr-recruitment-heading" style="font-size:16px; font-weight:800; margin:0;">Latest Job &amp; Recruitment Updates</h2>
           <a href="/jobs" style="font-size:12px; font-weight:700; color:#2455E6; text-decoration:none;">All Jobs →</a>
         </div>
-        <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
-          ${latestTwelveJobs
+        <ul data-ssr-feed="jobs" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
+          ${latestJobsList
             .map((post) => {
               const org = post.org || resolvePostOrg(post);
               return `

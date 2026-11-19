@@ -449,7 +449,9 @@
   width: 100%;
   border: 1px solid var(--pb-line);
   border-radius: 3px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
   background-color: var(--pb-sheet);
 }
 
@@ -1229,6 +1231,26 @@
     font-weight: 600;
     color: var(--pb-mute);
     margin-bottom: 1px;
+  }
+}
+
+@media (max-width: 400px) {
+  .post-bulletin .pb-btn-row {
+    grid-template-columns: 1fr;
+  }
+
+  .post-bulletin .pb-fact-cell {
+    padding: 10px 12px;
+  }
+
+  .post-bulletin .pb-bottom-bar {
+    padding: 8px 12px max(8px, env(safe-area-inset-bottom));
+    gap: 8px;
+  }
+
+  .post-bulletin .pb-bb-apply {
+    padding: 8px 14px;
+    font-size: 13.5px;
   }
 }
 

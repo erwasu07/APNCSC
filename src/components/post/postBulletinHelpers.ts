@@ -5,11 +5,14 @@ import {
   type ComputedSarkariStatus,
 } from '../../utils/sarkariStatus';
 import {
+  hasExplicitFee,
   hasRealDataValue,
   isAssignmentNotice,
   isEducationNotice,
   isGenericNoticePlaceholder,
   isNonApplicationTemplateType,
+  isZeroOrExemptFee,
+  resolveApplicationModeLabel,
 } from './postHelpers';
 
 const FULL_MONTHS = [
@@ -247,6 +250,11 @@ function compactFeeValue(item: SarkariItem): string {
   }
   if (gAmount) return gAmount;
   if (hasRealDataValue(item.feePerSubject)) return String(item.feePerSubject).trim();
+  if (!hasExplicitFee(item)) {
+    const rawGen = String(item.fee?.genObc || item.fees?.genObc || '').trim();
+    if (/not\s+stated|not\s+mentioned/i.test(rawGen)) return 'Not stated';
+    return 'As per notice';
+  }
   if (hasRealDataValue(gen)) return gen.length > 28 ? `${gen.slice(0, 26).trim()}…` : gen;
   return 'As per notice';
 }
@@ -300,11 +308,7 @@ export function buildBulletinKeyFacts(
     ];
   }
 
-  const mode = isAssignmentNotice(item)
-    ? 'Online / Centre'
-    : /offline|rally ground|study centre only/i.test(item.shortInfo || '')
-    ? 'Online + Rally'
-    : 'Online';
+  const mode = resolveApplicationModeLabel(item);
 
   return [
     {
@@ -477,16 +481,22 @@ export function buildFeeNoticeBox(item: SarkariItem, effectiveType: PostStructur
   const sc = item.fee?.scSt || item.fees?.scSt || '';
   const note = item.fee?.note || item.paymentInstructions || item.feePerSubject || '';
 
-  if (!hasRealDataValue(gen) && !hasRealDataValue(sc) && !hasRealDataValue(note)) {
+  const explicitFee = hasExplicitFee(item);
+  const zeroFee = isZeroOrExemptFee(item);
+
+  if (!explicitFee && !hasRealDataValue(note)) {
     return null;
   }
 
-  const isZeroFee =
-    Boolean(gen) &&
-    /₹\s*0\b|no\s*(application\s*)?fee|exempt|free/i.test(gen) &&
-    (!sc || /₹\s*0\b|no\s*(application\s*)?fee|exempt|free/i.test(sc));
+  if (!explicitFee && hasRealDataValue(note)) {
+    return {
+      variant: 'info',
+      strongPrefix: 'Fee note.',
+      body: note,
+    };
+  }
 
-  if (isZeroFee) {
+  if (zeroFee) {
     return {
       variant: 'info',
       strongPrefix: 'No fee.',
@@ -495,9 +505,11 @@ export function buildFeeNoticeBox(item: SarkariItem, effectiveType: PostStructur
   }
 
   const parts: string[] = [];
-  if (hasRealDataValue(gen)) parts.push(`General / OBC / OM: ${gen}`);
-  if (hasRealDataValue(sc) && sc !== gen) parts.push(`SC / ST / Reserved / PwD: ${sc}`);
+  if (hasRealDataValue(gen) && !isGenericNoticePlaceholder(gen)) parts.push(`General / OBC / OM: ${gen}`);
+  if (hasRealDataValue(sc) && !isGenericNoticePlaceholder(sc) && sc !== gen) parts.push(`SC / ST / Reserved / PwD: ${sc}`);
   if (hasRealDataValue(note)) parts.push(note);
+
+  if (parts.length === 0) return null;
 
   return {
     variant: 'info',

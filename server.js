@@ -5,6 +5,7 @@ import path4 from "path";
 import fs4 from "fs";
 import Razorpay from "razorpay";
 import crypto3 from "crypto";
+import zlib from "zlib";
 import sharp3 from "sharp";
 
 // src/utils/sarkariStatus.ts
@@ -97,6 +98,20 @@ function parseDateToKolkataMs(dateStr, timeStr, endOfDayDefault = false) {
   const ms = explicitTime ? 0 : endOfDayDefault ? 999 : 0;
   const timestampMs = Date.UTC(d.year, d.month - 1, d.day, hours, minutes, seconds, ms);
   return { timestampMs, isTimeExplicit };
+}
+function isClosingTodayInKolkata(dateStr, customNow) {
+  const parsed = extractDatePattern(dateStr);
+  if (!parsed) return false;
+  const now = getNowInAsiaKolkata(customNow);
+  return parsed.year === now.year && parsed.month === now.month && parsed.day === now.day;
+}
+function getCalendarDaysUntilInKolkata(dateStr, customNow) {
+  const parsed = extractDatePattern(dateStr);
+  if (!parsed) return null;
+  const now = getNowInAsiaKolkata(customNow);
+  const todayMidnight = Date.UTC(now.year, now.month - 1, now.day);
+  const targetMidnight = Date.UTC(parsed.year, parsed.month - 1, parsed.day);
+  return Math.round((targetMidnight - todayMidnight) / (1e3 * 60 * 60 * 24));
 }
 function isOlderThanDays(dateStr, nowMs, days) {
   const parsed = parseDateToKolkataMs(dateStr, void 0, true);
@@ -323,7 +338,9 @@ function rawComputeSarkariStatus(item, customNow) {
       endParsed2 && nowMs <= endParsed2.timestampMs && (!startParsed2 || nowMs >= startParsed2.timestampMs) && cleanEnd !== cleanPost
     );
     const isOld = !isChallengeActive && isOlderThanDays(item.postDate, nowMs, 35);
-    const daysRem = isChallengeActive && endParsed2 ? Math.max(0, Math.floor((endParsed2.timestampMs - nowMs) / (1e3 * 60 * 60 * 24))) : null;
+    const closesToday2 = isChallengeActive && isClosingTodayInKolkata(item.lastDate, customNow);
+    const calDays2 = isChallengeActive ? getCalendarDaysUntilInKolkata(item.lastDate, customNow) : null;
+    const daysRem = isChallengeActive && endParsed2 ? calDays2 !== null ? Math.max(0, calDays2) : Math.max(0, Math.floor((endParsed2.timestampMs - nowMs) / (1e3 * 60 * 60 * 24))) : null;
     return {
       applicationStatus: "closed",
       computedStatus: isChallengeActive ? "closing_soon" : "result",
@@ -336,9 +353,10 @@ function rawComputeSarkariStatus(item, customNow) {
       isArchiveBucket: isOld,
       dateLabel: isChallengeActive ? "Objections till" : "Key out",
       dateValue: isChallengeActive ? cleanEnd : cleanPost || cleanEnd || "As per official notice",
-      dateHint: isChallengeActive && daysRem !== null ? daysRem === 0 ? "Closes today" : `${daysRem}d left` : void 0,
+      dateHint: isChallengeActive && daysRem !== null ? closesToday2 ? "Closes today" : `${Math.max(1, daysRem)}d left` : void 0,
       closingTimeNote: isChallengeActive ? `Answer key / objection representation window is open until ${cleanEnd}.` : "Answer key / objection notice published on the official portal.",
       daysRemaining: daysRem,
+      closesToday: closesToday2,
       officialNotificationUrl,
       officialApplicationUrl
     };
@@ -411,22 +429,25 @@ function rawComputeSarkariStatus(item, customNow) {
         officialApplicationUrl
       };
     }
-    const daysRem = endParsed2 ? Math.max(0, Math.floor((endParsed2.timestampMs - nowMs) / (1e3 * 60 * 60 * 24))) : null;
+    const closesToday2 = isClosingTodayInKolkata(item.lastDate, customNow);
+    const calDays2 = getCalendarDaysUntilInKolkata(item.lastDate, customNow);
+    const daysRem = endParsed2 ? calDays2 !== null ? Math.max(0, calDays2) : Math.max(0, Math.floor((endParsed2.timestampMs - nowMs) / (1e3 * 60 * 60 * 24))) : null;
     return {
       applicationStatus: "closed",
       computedStatus: "closing_soon",
       stage: "correction",
       verificationStatus,
-      badgeLabel: daysRem !== null ? `Edit Window (${daysRem}d left)` : "Correction Window",
+      badgeLabel: daysRem !== null ? closesToday2 ? "Edit Closes Today" : `Edit Window (${Math.max(1, daysRem)}d left)` : "Correction Window",
       badgeTone: "amber",
       canApplyOnline: false,
       isClosingSoon: true,
       isArchiveBucket: false,
       dateLabel: "Edit till",
       dateValue: cleanEnd || "As per notice",
-      dateHint: daysRem !== null ? daysRem === 0 ? "Closes today" : `${daysRem}d left` : void 0,
+      dateHint: daysRem !== null ? closesToday2 ? "Closes today" : `${Math.max(1, daysRem)}d left` : void 0,
       closingTimeNote: "Only registered candidates may modify or submit corrections during this window.",
       daysRemaining: daysRem,
+      closesToday: closesToday2,
       officialNotificationUrl,
       officialApplicationUrl
     };
@@ -497,7 +518,9 @@ function rawComputeSarkariStatus(item, customNow) {
     };
   }
   const diffMs = endParsed.timestampMs - nowMs;
-  const daysRemaining = Math.max(0, Math.floor(diffMs / (1e3 * 60 * 60 * 24)));
+  const closesToday = isClosingTodayInKolkata(item.applyEnd || item.lastDate, customNow);
+  const calDays = getCalendarDaysUntilInKolkata(item.applyEnd || item.lastDate, customNow);
+  const daysRemaining = calDays !== null ? Math.max(0, calDays) : Math.max(0, Math.floor(diffMs / (1e3 * 60 * 60 * 24)));
   const hoursRemaining = Math.max(0, Math.floor(diffMs % (1e3 * 60 * 60 * 24) / (1e3 * 60 * 60)));
   const isUrgentUnder7Days = daysRemaining < 7;
   const isClosingSoon = daysRemaining <= 7;
@@ -508,17 +531,18 @@ function rawComputeSarkariStatus(item, customNow) {
     computedStatus: isClosingSoon ? "closing_soon" : "open",
     stage,
     verificationStatus,
-    badgeLabel: isUrgentUnder7Days ? daysRemaining === 0 ? "Closes Today" : `${daysRemaining}d left` : isClosingSoon ? "Closing Soon (7d)" : "Open",
+    badgeLabel: isUrgentUnder7Days ? closesToday ? "Closes Today" : `${Math.max(1, daysRemaining)}d left` : isClosingSoon ? "Closing Soon (7d)" : "Open",
     badgeTone: isUrgentUnder7Days ? "rose" : isClosingSoon ? "amber" : "emerald",
     canApplyOnline: true,
     isClosingSoon,
     isArchiveBucket: false,
     dateLabel: "Apply by",
     dateValue: cleanEnd,
-    dateHint: daysRemaining === 0 ? "Closes today" : `${daysRemaining}d left`,
+    dateHint: closesToday ? "Closes today" : `${Math.max(1, daysRemaining)}d left`,
     closingTimeNote,
     timeRemainingText,
     daysRemaining,
+    closesToday,
     officialNotificationUrl,
     officialApplicationUrl
   };
@@ -610,7 +634,9 @@ function getActiveClosingDeadlines(items, options) {
     if (!includeAllActive && diffMs > maxDays * 24 * 60 * 60 * 1e3) continue;
     const section = inferDeadlineSection(item);
     if (sectionFilter !== "all" && section !== sectionFilter) continue;
-    const daysRemaining = Math.max(0, Math.floor(diffMs / (1e3 * 60 * 60 * 24)));
+    const closesToday = isClosingTodayInKolkata(closingRaw, options?.customNow);
+    const calDays = getCalendarDaysUntilInKolkata(closingRaw, options?.customNow);
+    const daysRemaining = calDays !== null ? Math.max(0, calDays) : Math.max(0, Math.floor(diffMs / (1e3 * 60 * 60 * 24)));
     const hoursRemaining = Math.max(
       0,
       Math.floor(diffMs % (1e3 * 60 * 60 * 24) / (1e3 * 60 * 60))
@@ -625,6 +651,7 @@ function getActiveClosingDeadlines(items, options) {
       closingTimestampMs: endParsed.timestampMs,
       daysRemaining,
       hoursRemaining,
+      closesToday,
       isUrgent: daysRemaining < 7
     });
   }
@@ -1319,14 +1346,15 @@ var RAW_SARKARI_DATA = [
   },
   {
     id: "ignou-piu-consultants-recruitment-2026",
-    title: "IGNOU PIU Contractual Consultants Hiring 2026",
+    title: "IGNOU PIU Contractual Consultants Recruitment 2026 (Offline)",
     category: "jobs",
     section: "jobs",
     org: "IGNOU",
-    department: "Administration Division, Public Information Unit (PIU), IGNOU, New Delhi",
+    department: "Public Information Unit (PIU), Administration Division, IGNOU, New Delhi",
     postType: "Job",
     noticeType: "recruitment",
     stage: "recruitment",
+    applicationMode: "offline",
     publicationStatus: "published",
     isNew: true,
     postDate: "16/11/2026",
@@ -1334,68 +1362,95 @@ var RAW_SARKARI_DATA = [
     lastDate: "11/12/2026",
     advertisementNo: "Not stated in the notice",
     recruitmentYear: "2026",
-    shortInfo: "IGNOU invited offline applications (last date 11/12/2026) for 03 full-time contractual Consultants in Public Information Unit (PIU), New Delhi.",
-    ageLimit: "Maximum engagement 2 years or up to attaining age of 70 years, whichever is earlier (age as on 11/12/2026)",
-    eligibility: "PG Diploma in Photography / Advertising & PR / Journalism OR relevant Master\u2019s Degree (Mass Communication, Journalism, Convergent Journalism, Corporate Communication, MBA Marketing, etc.) from a recognised University/Institution plus required experience.",
-    totalPosts: "03 Posts (Photography & Digital Content: 01 | Social Media & Communication: 01 | Journalism: 01)",
+    shortInfo: "Indira Gandhi National Open University (IGNOU) has invited offline applications (by post / physical submission) on or before 11/12/2026 for 03 full-time contractual Consultants in the Public Information Unit (PIU), New Delhi. Remuneration is Rs. 40,000\u201360,000/- per month as decided by the Selection Committee.",
+    summary: "Indira Gandhi National Open University (IGNOU), Maidan Garhi, New Delhi, has invited offline applications for engaging 03 full-time Consultants purely on a contractual basis in the Public Information Unit (PIU): Consultant \u2013 Photography & Digital Content Creation (01), Consultant \u2013 Social Media & Communication (01), and Consultant \u2013 Journalism (01). Initial engagement is for 6 months, extendable on performance up to a maximum period of 2 years or attaining the age of 70 years, whichever is earlier. Completed applications in the prescribed format (Pages 4\u20136 of Job-AD.pdf) with self-attested testimonials must reach the Deputy Registrar, Recruitment Cell, Administration Division, Block-7, Room No. 13, IGNOU, Maidan Garhi, New Delhi \u2013 110068 on or before 11 December 2026.",
+    ageLimit: "Engagement for up to 2 years or until attaining age of 70 years, whichever is earlier (age to be calculated as on 11/12/2026).",
+    eligibility: "Photography & Digital Content Creation: PG Diploma in Photography or Master\u2019s Degree in Mass Communication / Journalism or related field from a recognised University/Institution with DSLR/mirrorless, certified drone, lighting, photo/video editing, AI tools, and Reels/Shorts experience; Social Media & Communication: PG Diploma in Advertising & Public Relations or Master\u2019s Degree in Mass Communication / Convergent Journalism / New Media / Corporate Communication / Media Business Studies / Brand Management / MBA / Marketing or related field with social media management, analytics, SEO, Meta Ads Manager, LinkedIn Campaign Manager, and AI content skills; Journalism: PG Diploma in Journalism or Master\u2019s Degree in Mass Communication / Journalism or related field with English/Hindi communication, copyediting, Canva, and AI-assisted content skills.",
+    totalPosts: "03 Posts (Photography & Digital Content Creation: 01 | Social Media & Communication: 01 | Journalism: 01)",
     officialLink: "https://www.ignou.ac.in/viewFile/AD/notification/Job-AD.pdf",
+    officialUrl: "https://www.ignou.ac.in/viewFile/AD/notification/Job-AD.pdf",
     officialNotificationUrl: "https://www.ignou.ac.in/viewFile/AD/notification/Job-AD.pdf",
-    officialApplicationUrl: "https://www.ignou.ac.in/announcements/0?nav=1",
+    officialApplicationUrl: "https://www.ignou.ac.in/viewFile/AD/notification/Job-AD.pdf",
+    postalAddress: "Deputy Registrar, Recruitment Cell, Administration Division, Block-7, Room No. 13, IGNOU, Maidan Garhi, New Delhi \u2013 110068",
+    envelopeSuperscription: "APPLICATION FOR THE ENGAGEMENT OF CONSULTANT (FULL-TIME) FOR PUBLIC INFORMATION (PIU), IGNOU",
     fees: {
       genObc: "Not stated in the notice",
       scSt: "Not stated in the notice"
     },
+    paymentInstructions: "No application fee is mentioned in the official IGNOU notification (Job-AD.pdf).",
     departmentBreakdown: [
       {
         department: "Public Information Unit (PIU), IGNOU New Delhi",
-        postName: "Consultant - Photography & Digital Content Creation",
+        postName: "Consultant \u2013 Photography & Digital Content Creation",
         posts: 1,
-        qualification: "PG Diploma in Photography or Master\u2019s Degree in Mass Communication/Journalism or related field + DSLR/mirrorless/drone/editing & Reels/Shorts experience",
-        fee: "\u20B940,000\u201360,000/month"
+        qualification: "PG Diploma in Photography or Master\u2019s Degree in Mass Communication / Journalism or related field from a recognised University/Institution + DSLR/mirrorless/certified drone/lighting, photo & video editing with AI tools, and Instagram Reels / YouTube Shorts / Facebook / LinkedIn formats.",
+        fee: "Rs. 40,000\u201360,000/- (decided by Selection Committee)"
       },
       {
         department: "Public Information Unit (PIU), IGNOU New Delhi",
-        postName: "Consultant - Social Media & Communication",
+        postName: "Consultant \u2013 Social Media & Communication",
         posts: 1,
-        qualification: "PG Diploma in Advertising & PR or Master\u2019s Degree in Mass Comm/Convergent Journalism/New Media/Marketing or related field + SEO/Meta Ads/LinkedIn skills",
-        fee: "\u20B940,000\u201360,000/month"
+        qualification: "PG Diploma in Advertising & PR or Master\u2019s Degree in Mass Communication, Convergent Journalism, New Media Communications, Corporate Communication, Media Business Studies, Brand Management, Business Administration, Marketing or related field + social media management, analytics, SEO, Meta Ads & LinkedIn Campaign Manager, English & working Hindi preferred.",
+        fee: "Rs. 40,000\u201360,000/- (decided by Selection Committee)"
       },
       {
         department: "Public Information Unit (PIU), IGNOU New Delhi",
-        postName: "Consultant - Journalism",
+        postName: "Consultant \u2013 Journalism",
         posts: 1,
-        qualification: "PG Diploma in Journalism or Master\u2019s Degree in Mass Communication/Journalism or related field + English/Hindi communication, copyediting, Canva & AI tools",
-        fee: "\u20B940,000\u201360,000/month"
+        qualification: "PG Diploma in Journalism or Master\u2019s Degree in Mass Communication / Journalism or related field + strong English communication (working Hindi preferred), social media tools & Canva, copyediting university news reports, basic graphic design, and AI-assisted content creation.",
+        fee: "Rs. 40,000\u201360,000/- (decided by Selection Committee)"
       }
     ],
     documentsRequired: [
-      "Filled Application Form (Pages 4\u20135 of Job-AD.pdf) with recent passport-size photograph",
-      "Self-attested copies of educational qualifications, Last Pay Certificate & Experience Certificates",
-      "Signed Declaration of Vigilance/Criminal Proceedings (Page 6 of Job-AD.pdf)"
+      "Duly filled and signed Application Form (Pages 4\u20135 of Job-AD.pdf downloaded from www.ignou.ac.in) with a recent passport-size photograph affixed",
+      "Self-attested copies of all educational qualification certificates and marksheets",
+      "Self-attested copies of Last Pay Certificate and Experience Certificates supporting claimed experience",
+      "Signed Declaration of Vigilance / Criminal Proceedings (Page 6 of Job-AD.pdf)",
+      "Completed List of Enclosures (Page 5 of the Application Form)"
+    ],
+    howToApply: [
+      "Download the official notification and Application Format (Pages 4\u20136 of Job-AD.pdf) from www.ignou.ac.in.",
+      "Fill in the Application Form completely, calculate your age as on 11/12/2026, affix a recent passport-size photograph, and sign both the application form and the Vigilance/Criminal Proceedings Declaration (Page 6).",
+      "Attach self-attested copies of educational qualification marksheets/certificates, Last Pay Certificate, and Experience Certificates, and list them in the Enclosures section.",
+      'Place the completed form and enclosures in an envelope superscribed in CAPITAL LETTERS on top: "APPLICATION FOR THE ENGAGEMENT OF CONSULTANT (FULL-TIME) FOR PUBLIC INFORMATION (PIU), IGNOU".',
+      "Send the envelope by post or submit it physically to: Deputy Registrar, Recruitment Cell, Administration Division, Block-7, Room No. 13, IGNOU, Maidan Garhi, New Delhi \u2013 110068 so that it reaches on or before 11 December 2026."
     ],
     selectionProcess: [
-      "Offline application submission by 11/12/2026 to Deputy Registrar, Recruitment Cell, Admin Division, Block-7, Room No. 13, IGNOU, Maidan Garhi, New Delhi \u2013 110068.",
-      "Interview / Selection Committee review (No TA/DA paid for interview; remuneration \u20B940,000\u201360,000/- decided by Selection Committee)."
+      "Offline application scrutiny by IGNOU Recruitment Cell (applications received after 11/12/2026 will not be entertained).",
+      "Interview / evaluation by the Selection Committee (No TA/DA is paid for appearing in the interview; monthly remuneration of Rs. 40,000\u201360,000/- is decided by the Selection Committee).",
+      "Purely contractual full-time engagement initially for 6 months, extendable on performance up to a maximum of 2 years or up to attaining the age of 70 years, whichever is earlier (no claim for regular appointment)."
     ],
     faq: [
       {
-        question: "What is the last date and address to apply for IGNOU PIU Consultants 2026?",
-        answer: "Duly completed offline applications with self-attested testimonials must reach the Deputy Registrar, Recruitment Cell, Administration Division, Block-7, Room No. 13, IGNOU, Maidan Garhi, New Delhi \u2013 110068 on or before 11 December 2026."
+        question: "How do I apply for IGNOU PIU Contractual Consultants 2026 \u2014 is it online or offline?",
+        answer: "Applications are strictly offline. Download the prescribed Application Format (Pages 4\u20136 of Job-AD.pdf) from www.ignou.ac.in, attach self-attested documents and the signed Vigilance declaration, and send it to the Deputy Registrar, Recruitment Cell, Administration Division, Block-7, Room No. 13, IGNOU, Maidan Garhi, New Delhi \u2013 110068 on or before 11 December 2026."
+      },
+      {
+        question: "What must be written on the envelope for IGNOU PIU Consultant applications?",
+        answer: 'The top of the envelope must be superscribed in CAPITAL LETTERS with: "APPLICATION FOR THE ENGAGEMENT OF CONSULTANT (FULL-TIME) FOR PUBLIC INFORMATION (PIU), IGNOU".'
+      },
+      {
+        question: "Is there any application fee mentioned in the IGNOU PIU Consultants notification?",
+        answer: "No application fee is stated in the official IGNOU notification (Job-AD.pdf). Applications must be submitted offline by post or physical submission only, and no online fee payment is required."
+      },
+      {
+        question: "What is the remuneration, tenure, and TA/DA policy for IGNOU PIU Consultants?",
+        answer: "Remuneration is Rs. 40,000\u201360,000/- per month as decided by the Selection Committee. Engagement is full-time and purely contractual, initially for 6 months and extendable up to 2 years or attaining age 70 years, whichever is earlier. No TA/DA is paid for appearing in the interview."
       }
     ],
     verificationStatus: "verified",
     verification: {
       status: "verified",
       verificationStatus: "verified",
-      verifiedAt: "16/11/2026",
-      lastVerified: "16/11/2026",
+      verifiedAt: "19/11/2026",
+      lastVerified: "19/11/2026",
       officialNotificationUrl: "https://www.ignou.ac.in/viewFile/AD/notification/Job-AD.pdf",
-      officialApplicationUrl: "https://www.ignou.ac.in/announcements/0?nav=1",
+      officialApplicationUrl: "https://www.ignou.ac.in/viewFile/AD/notification/Job-AD.pdf",
       recruitmentYear: "2026",
       verifiedOpeningDate: "16/11/2026",
       verifiedClosingDate: "11/12/2026",
       sourceHistory: [
-        "Official IGNOU Administration Division PDF Job-AD.pdf verified on 16/11/2026 (last date 11/12/2026)."
+        "Official 6-page IGNOU Administration Division PDF (Job-AD.pdf) directly verified on 19/11/2026 (strictly offline by post; last date 11/12/2026; 3 PIU Consultant posts; no application fee stated)."
       ]
     }
   },
@@ -7473,9 +7528,52 @@ function hasRealDataValue(val) {
 function isGenericNoticePlaceholder(val) {
   if (!hasRealDataValue(val)) return true;
   const trimmed = String(val).trim();
-  return /^(as per (official )?(notice|notification|rules)|refer (to )?(official )?(notice|notification)|check (official )?notice)$/i.test(
+  return /^(as per (official )?(notice|notification|rules)|refer (to )?(official )?(notice|notification)|check (official )?notice|not\s+stated\s+in\s+(the\s+)?(official\s+)?notice|not\s+mentioned(\s+in\s+(the\s+)?notice)?|not\s+applicable)$/i.test(
     trimmed
   );
+}
+function resolveApplicationMode(item) {
+  if (item.applicationMode === "online" || item.applicationMode === "offline" || item.applicationMode === "hybrid") {
+    return item.applicationMode;
+  }
+  if (isAssignmentNotice(item)) {
+    return "hybrid";
+  }
+  const combined = `${item.title || ""} ${item.shortInfo || ""} ${item.summary || ""} ${(item.howToApply || []).join(" ")}`.toLowerCase();
+  const hasOfflineSignals = Boolean(item.postalAddress) || /\b(offline\s+application|offline\s+mode|offline\s+submission|by\s+post|speed\s+post|physical\s+submission|study\s+centre\s+only|in\s+hard\s+copy|hard\s+copy\s+only)\b/i.test(combined);
+  const hasOnlineSignals = /\b(apply\s+online|online\s+application|online\s+registration|online\s+portal|online\s+cee|online\s+form|otr)\b/i.test(combined);
+  const hasRallySignal = /\b(rally\s+ground|aro\s+rally|recruitment\s+rally)\b/i.test(combined);
+  if (hasRallySignal && hasOnlineSignals) return "hybrid";
+  if (hasOfflineSignals && hasOnlineSignals) return "hybrid";
+  if (hasOfflineSignals) return "offline";
+  return "online";
+}
+function resolveApplicationModeLabel(item) {
+  const mode = resolveApplicationMode(item);
+  if (isAssignmentNotice(item)) return "Online / Centre";
+  if (mode === "offline") {
+    return item.postalAddress || /\bby\s+post|postal|envelope\b/i.test(`${item.shortInfo || ""} ${item.summary || ""}`) ? "Offline (By Post)" : "Offline";
+  }
+  if (mode === "hybrid") {
+    const combined = `${item.title || ""} ${item.shortInfo || ""} ${item.summary || ""}`;
+    if (/\brally\b/i.test(combined)) return "Online + Rally";
+    return "Online + Offline";
+  }
+  return "Online";
+}
+function isZeroOrExemptFee(item) {
+  const gen = String(item.fee?.genObc || item.fees?.genObc || "").trim();
+  const sc = String(item.fee?.scSt || item.fees?.scSt || "").trim();
+  if (!gen && !sc) return false;
+  const zeroRegex = /₹\s*0\b|rs\.?\s*0\b|\bnil\b|no\s*(application\s*)?fee|exempt|free\b/i;
+  return Boolean(gen && zeroRegex.test(gen) && (!sc || zeroRegex.test(sc)));
+}
+function hasExplicitFee(item) {
+  const gen = String(item.fee?.genObc || item.fees?.genObc || "").trim();
+  const sc = String(item.fee?.scSt || item.fees?.scSt || "").trim();
+  const genValid = hasRealDataValue(gen) && !isGenericNoticePlaceholder(gen);
+  const scValid = hasRealDataValue(sc) && !isGenericNoticePlaceholder(sc);
+  return genValid || scValid;
 }
 function resolvePostPortalUrl(item) {
   const candidate = item.officialUrl || item.verification?.officialApplicationUrl || item.officialApplicationUrl || item.officialLink;
@@ -7571,12 +7669,16 @@ function getDocumentsForPost(item, type) {
     ];
   }
   if (type === "application" && !isEducationNotice(item)) {
+    const mode = resolveApplicationMode(item);
+    if (mode === "offline") {
+      return [];
+    }
     return [
       "Aadhaar or valid Photo ID",
       "Class 10th certificate for DOB",
       "Qualifying academic marksheets",
       "Domicile / Category / Experience certificate (if applicable)",
-      "Scanned photo & signature matching portal limits"
+      "Passport photo & signature as per official portal rules"
     ];
   }
   return [];
@@ -7739,29 +7841,84 @@ function getProcessSectionConfig(item, type, statusInfo, portalUrl) {
         steps: [
           {
             title: `Review ${orgName} Eligibility`,
-            description: `Check qualification cut-off dates and category norms in ${item.title}.`
+            description: `Check qualification cut-off dates and eligibility criteria in ${item.title}.`
           },
           {
-            title: isEdu ? "Keep Enrolment Records Ready" : "Prepare OTR & Scans",
-            description: isEdu ? "Keep enrollment number, marksheets, and valid ID ready." : "Keep scanned photo, signature, 10th certificate, and domicile ready."
+            title: resolveApplicationMode(item) === "offline" ? "Prepare Application & Enclosures" : isEdu ? "Keep Enrolment Records Ready" : "Keep Qualifying Certificates Ready",
+            description: resolveApplicationMode(item) === "offline" ? "Keep self-attested copies of required certificates and passport photographs ready per the official notice." : isEdu ? "Keep enrollment number, marksheets, and valid ID ready." : "Keep qualifying marksheets, Class 10th certificate, photo ID, and category/domicile certificates ready if applicable."
           },
           {
-            title: `Apply on ${orgName} Activation`,
-            description: `Submit via ${portalUrl} once registration activates.`
+            title: resolveApplicationMode(item) === "offline" ? `Submit Offline as Per ${orgName} Notice` : `Apply on ${orgName} Activation`,
+            description: resolveApplicationMode(item) === "offline" ? `Download the prescribed format from ${portalUrl} and submit as instructed once applications open.` : `Submit via ${portalUrl} once registration activates.`
           }
         ]
       };
     case "admission":
     case "application":
-    default:
+    default: {
       if (!statusInfo.canApplyOnline) {
         return null;
+      }
+      const mode = resolveApplicationMode(item);
+      const modeLabel = resolveApplicationModeLabel(item);
+      const explicitFee = hasExplicitFee(item);
+      const zeroFee = isZeroOrExemptFee(item);
+      if (Array.isArray(item.howToApply) && item.howToApply.length > 0) {
+        const cleanedSteps = item.howToApply.map((raw) => String(raw || "").trim()).filter(Boolean).map((raw, idx) => {
+          const colonIdx = raw.indexOf(":");
+          if (colonIdx > 3 && colonIdx < 48 && !/^https?:/i.test(raw.slice(0, colonIdx + 1))) {
+            return {
+              title: raw.slice(0, colonIdx).trim(),
+              description: raw.slice(colonIdx + 1).trim()
+            };
+          }
+          return {
+            title: `Step ${idx + 1}`,
+            description: raw
+          };
+        });
+        if (cleanedSteps.length > 0) {
+          return {
+            id: "how-to-apply",
+            title: `How to Apply (${modeLabel}) \u2014 ${item.title}`,
+            subtitle: mode === "offline" ? `Verified offline application instructions from the official ${orgName} notice.` : mode === "hybrid" ? `Verified online and offline submission steps from the official ${orgName} notice.` : `Verified application steps for ${orgName}.`,
+            steps: cleanedSteps
+          };
+        }
+      }
+      if (mode === "offline") {
+        const offlineSteps = [
+          {
+            title: `Download Official ${orgName} Notice & Format`,
+            description: `Open ${portalUrl} to download the official notification and prescribed application form.`
+          },
+          {
+            title: "Complete Application Form & Self-Attested Enclosures",
+            description: "Fill every required detail accurately, affix a recent passport-size photograph if required, sign the declaration, and attach self-attested copies of all documents listed in the official notice."
+          }
+        ];
+        if (item.envelopeSuperscription) {
+          offlineSteps.push({
+            title: "Superscribe the Envelope",
+            description: `Write "${item.envelopeSuperscription}" clearly on top of the envelope as directed in the official notice.`
+          });
+        }
+        offlineSteps.push({
+          title: `Send Offline Application Before ${statusInfo.dateValue}`,
+          description: item.postalAddress ? `Dispatch by post or submit physically to: ${item.postalAddress} so it reaches on or before ${statusInfo.dateValue}.` : `Send or submit the completed offline application to the official address specified in the ${orgName} notice on or before ${statusInfo.dateValue}.`
+        });
+        return {
+          id: "how-to-apply",
+          title: `How to Apply (${modeLabel}) \u2014 ${item.title}`,
+          subtitle: `Offline application process as stated in the official ${orgName} notice.`,
+          steps: offlineSteps
+        };
       }
       if (isEdu) {
         return {
           id: "submission-procedure",
           title: `Submission Procedure \u2014 ${item.title}`,
-          subtitle: `Online submission guide for ${orgName}.`,
+          subtitle: `${modeLabel} submission guide for ${orgName}.`,
           steps: [
             {
               title: `Open ${orgName} Portal`,
@@ -7776,45 +7933,50 @@ function getProcessSectionConfig(item, type, statusInfo, portalUrl) {
               description: "Confirm selected semester/courses against academic records."
             },
             {
-              title: item.fee?.genObc && /₹0|free|exempt|no application fee/i.test(item.fee.genObc) ? "Submit & Save Slip" : "Pay Fee & Save Receipt",
-              description: `Review preview before locking and save your ${orgName} receipt.`
+              title: !explicitFee || zeroFee ? "Submit & Save Slip" : "Pay Fee & Save Receipt",
+              description: `Review preview before locking and save your ${orgName} confirmation slip.`
             }
           ]
         };
       }
+      const usesOtr = /\b(SSC|JKSSB|UPSC|RRB)\b/i.test(`${orgName} ${item.category || ""}`);
       return {
         id: "how-to-apply",
-        title: `How to Apply \u2014 ${item.title}`,
-        subtitle: `Application overview for ${orgName}.`,
+        title: `How to Apply (${modeLabel}) \u2014 ${item.title}`,
+        subtitle: mode === "hybrid" ? `Online registration and physical/offline stage overview for ${orgName}.` : `Online application overview for ${orgName}.`,
         steps: [
           {
-            title: `Open ${orgName} Portal`,
-            description: `Go to ${portalUrl} and select "${item.title}".`
+            title: `Open Official ${orgName} Portal`,
+            description: `Go to ${portalUrl} and read "${item.title}" carefully.`
           },
           {
-            title: "Candidate Registration / OTR",
-            description: `Sign in with your ${orgName} OTR/Candidate ID or register.`
+            title: usesOtr ? "Candidate Registration / OTR" : "Candidate Registration",
+            description: usesOtr ? `Sign in with your ${orgName} OTR/Candidate ID or complete one-time registration.` : `Register or sign in on the official ${orgName} portal as instructed in the notification.`
           },
           {
-            title: "Enter Data & Upload Scans",
-            description: "Match entries to Class 10th records and upload compliant scans."
+            title: "Enter Details & Upload Prescribed Files",
+            description: "Enter personal and educational details matching official certificates and upload only the files specified in the notice."
           },
           {
-            title: item.fee?.genObc && /₹0|free|exempt|no application fee/i.test(item.fee.genObc) ? "Submit & Print Form" : "Remit Fee & Save Receipt",
-            description: `Verify preview prior to submission and retain the ${orgName} confirmation PDF.`
+            title: !explicitFee || zeroFee ? "Submit & Save Confirmation" : "Pay Prescribed Fee & Save Receipt",
+            description: mode === "hybrid" ? `Review preview prior to submission, retain the ${orgName} confirmation printout, and follow any offline/physical stage instructions in the notice.` : `Verify preview prior to submission and retain the ${orgName} confirmation PDF.`
           }
         ]
       };
+    }
   }
 }
 function buildPostFaqs(item, type, orgName, portalUrl, statusInfo) {
   const customFaqs = item.faq ? [...item.faq] : [];
   const faqs = [...customFaqs];
+  const mode = resolveApplicationMode(item);
+  const explicitFee = hasExplicitFee(item);
+  const zeroFee = isZeroOrExemptFee(item);
   faqs.push({
     question: `Where is the official source for ${item.title}?`,
     answer: `Official dates and rules for ${item.title} are published by ${orgName} at ${portalUrl}.`
   });
-  if (!isAssignmentNotice(item) && (type === "application" || type === "admission" || type === "upcoming") && !(item.fee?.genObc && /₹0|free|exempt|no application fee/i.test(item.fee.genObc))) {
+  if (mode !== "offline" && !isAssignmentNotice(item) && (type === "application" || type === "admission" || type === "upcoming") && explicitFee && !zeroFee) {
     faqs.push({
       question: `What if ${orgName} fee payment shows pending for ${item.title}?`,
       answer: `Wait 24\u201348 hours for bank reconciliation before retrying on ${portalUrl}.`
@@ -8592,8 +8754,8 @@ var SERVICE_MERGE_CLUSTERS = [
     clusterId: "jk-category-certificates",
     title: "J&K Caste, Category & Reservation Certificates",
     hubPath: "/services/cluster/jk-category-certificates",
-    summary: "Consolidated hub comparing SC, ST, OBC/OSC, RBA, ALC/IB, Pahari, EWS, and state reservation certificate services issued via J&K ServiceOnline / Tehsildar.",
-    issuingAuthority: "Competent Tehsildar / Revenue Authority via J&K e-UNNAT (ServiceOnline)",
+    summary: "Consolidated comparison of SC, ST, OBC/OSC, RBA, ALC/IB, Pahari, EWS, and state reservation certificates.",
+    issuingAuthority: "Competent Revenue Authority (Tehsildar) via J&K e-UNNAT",
     memberIds: [
       "jk-rba-cert",
       "jk-obc-cert",
@@ -8609,8 +8771,8 @@ var SERVICE_MERGE_CLUSTERS = [
     clusterId: "jk-civil-certificates",
     title: "J&K Domicile, Civil & Identity Certificates",
     hubPath: "/services/cluster/jk-civil-certificates",
-    summary: "Consolidated hub for Domicile, Birth, Death, Marriage, Character, Dependent, Unemployment, and Senior Citizen certificates in Jammu & Kashmir.",
-    issuingAuthority: "Competent Tehsildar / Registrar via J&K e-UNNAT Portal",
+    summary: "Consolidated overview of Domicile, Birth, Death, Marriage, Character, Dependent, Unemployment, and Senior Citizen certificates.",
+    issuingAuthority: "Competent Tehsildar / Civil Registrar via J&K e-UNNAT",
     memberIds: [
       "jk-domicile-cert",
       "jk-birth-cert",
@@ -8626,8 +8788,8 @@ var SERVICE_MERGE_CLUSTERS = [
     clusterId: "jk-revenue-land-records",
     title: "J&K Revenue & Land Records (rev-*)",
     hubPath: "/services/cluster/jk-revenue-land-records",
-    summary: "Unified comparison of J&K Revenue Department land extracts, mutations (Inteqal), Jamabandi, Girdawari, Fard, Legal Heir, and Income certificates.",
-    issuingAuthority: "Revenue Department, Govt. of Jammu & Kashmir (Tehsildar / Patwari Circle)",
+    summary: "Unified reference for J&K Revenue land extracts, mutations, Jamabandi, Girdawari, Fard, Legal Heir, and Income certificates.",
+    issuingAuthority: "Revenue Department, Govt. of Jammu & Kashmir",
     memberIds: [
       "rev-attestation-mutation",
       "rev-clu",
@@ -8654,8 +8816,8 @@ var SERVICE_MERGE_CLUSTERS = [
     clusterId: "instant-pvc-smart-cards",
     title: "Instant PVC & Smart Card Printing (ca-*-pvc)",
     hubPath: "/services/cluster/instant-pvc-smart-cards",
-    summary: "Combined desk overview for Ayushman, Driving Licence, Vehicle RC, Aadhaar, Voter EPIC, and Ration PVC smart card print requests.",
-    issuingAuthority: "Respective Central/State Portals + Local CSC DOST Print Desk",
+    summary: "Comparison hub for Ayushman, Driving Licence, Vehicle RC, Aadhaar, Voter EPIC, and Ration PVC smart card print requests.",
+    issuingAuthority: "Respective Official Portals & CSC DOST Print Desk",
     memberIds: [
       "ca-ayushman-pvc",
       "ca-dl-pvc",
@@ -8672,205 +8834,244 @@ function getServiceClusterById(clusterId) {
 function getClusterForServiceId(serviceId) {
   return SERVICE_MERGE_CLUSTERS.find((c) => c.memberIds.includes(serviceId));
 }
-function resolveServiceOfficialPortal(service) {
-  if (service.officialUrl && service.officialUrl.trim().length > 0) {
-    return { label: "Official Portal", url: service.officialUrl.trim() };
+function isValidHttpUrl(val) {
+  const s = String(val || "").trim();
+  if (!s || /\[VERIFY\]/i.test(s)) return false;
+  try {
+    const parsed = new URL(s);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
   }
-  if (service.category === "cards_adda") {
-    const sId2 = service.id.toLowerCase();
-    if (sId2.includes("ayushman")) return { label: "NHA PM-JAY Portal", url: "https://beneficiary.nha.gov.in" };
-    if (sId2.includes("dl") || sId2.includes("rc")) return { label: "Parivahan Sewa", url: "https://parivahan.gov.in" };
-    if (sId2.includes("aadhaar")) return { label: "UIDAI myAadhaar", url: "https://myaadhaar.uidai.gov.in" };
-    if (sId2.includes("voter")) return { label: "ECI Voters Portal", url: "https://voters.eci.gov.in" };
-    if (sId2.includes("pan")) return { label: "NSDL Protean", url: "https://www.onlineservices.nsdl.com/paam/endUserRegisterContact.html" };
-    if (sId2.includes("gst")) return { label: "GST Portal (GSTN)", url: "https://www.gst.gov.in" };
-    return { label: "", url: "" };
-  }
-  const sId = service.id.toLowerCase();
-  const sName = service.name.toLowerCase();
-  if (sId.includes("pan") || sName.includes("pan")) {
-    return { label: "NSDL Protean / Income Tax Portal", url: "https://www.onlineservices.nsdl.com/paam/endUserRegisterContact.html" };
-  }
-  if (sId.includes("aadhaar") || sName.includes("aadhaar")) {
-    return { label: "UIDAI myAadhaar Portal", url: "https://myaadhaar.uidai.gov.in" };
-  }
-  if (sId.includes("ayushman") || sName.includes("ayushman") || sName.includes("golden")) {
-    return { label: "NHA PM-JAY Beneficiary Portal", url: "https://beneficiary.nha.gov.in" };
-  }
-  if (sId.includes("voter") || sName.includes("voter")) {
-    return { label: "ECI Voters Portal", url: "https://voters.eci.gov.in" };
-  }
-  if (sId.includes("pmkisan") || sName.includes("kisan")) {
-    return { label: "PM-KISAN Official Portal", url: "https://pmkisan.gov.in" };
-  }
-  if (sId.includes("passport") || sName.includes("passport")) {
-    return { label: "Passport Seva (MEA)", url: "https://www.passportindia.gov.in" };
-  }
-  if (sId.includes("dl") || sName.includes("driving")) {
-    return { label: "Parivahan Sewa (MoRTH)", url: "https://parivahan.gov.in" };
-  }
-  if (sId.includes("eshram") || sName.includes("shram")) {
-    return { label: "e-Shram Official Portal", url: "https://eshram.gov.in" };
-  }
-  if (sId.includes("udyam")) {
-    return { label: "Udyam Registration (MSME)", url: "https://udyamregistration.gov.in" };
-  }
-  if (sId.includes("gst")) {
-    return { label: "GST Portal (GSTN)", url: "https://www.gst.gov.in" };
-  }
-  if (service.category === "jk_state" || service.category === "revenue") {
-    return { label: "J&K e-UNNAT / ServiceOnline Portal", url: "https://eunnat.jk.gov.in" };
-  }
-  return { label: "", url: "" };
-}
-function resolveStoredAuthority(service) {
-  if (service.issuingAuthority && service.issuingAuthority.trim() && !/\[VERIFY\]/i.test(service.issuingAuthority)) {
-    return { value: service.issuingAuthority.trim(), stored: true };
-  }
-  const sId = service.id.toLowerCase();
-  if (service.category === "revenue") {
-    return {
-      value: "J&K Revenue Dept. (Tehsildar / Patwari)",
-      stored: true
-    };
-  }
-  if (service.category === "jk_state") {
-    if (sId === "jk-marriage-cert") return { value: "Registrar of Marriages (J&K)", stored: true };
-    if (sId === "jk-building-licenses") return { value: "SMC / JMC Municipal Authority", stored: true };
-    if (sId === "jk-drone-permission") return { value: "District Magistrate (J&K)", stored: true };
-    if (sId === "jk-mgnrega-jobcard") return { value: "Rural Development Dept., J&K", stored: true };
-    if (sId === "jk-horticulture-passbook") return { value: "Dept. of Horticulture, J&K", stored: true };
-    return {
-      value: "Tehsildar / J&K e-UNNAT",
-      stored: true
-    };
-  }
-  if (sId === "csc-pan" || sId === "ca-epan-download" || sId === "ca-lost-pan-find" || sId === "ca-nsdl-instant-pan") {
-    return { value: "Income Tax Dept. (NSDL / UTIITSL)", stored: true };
-  }
-  if (sId === "csc-aadhaar" || sId === "ca-aadhaar-pvc") {
-    return { value: "UIDAI (Aadhaar Authority)", stored: true };
-  }
-  if (sId === "csc-voter" || sId === "ca-voter-pvc" || sId === "ca-voter-mobile-link") {
-    return { value: "Election Commission (ECI)", stored: true };
-  }
-  if (sId === "csc-ayushman" || sId === "ca-ayushman-pvc") {
-    return { value: "National Health Authority (PM-JAY)", stored: true };
-  }
-  if (sId === "csc-pmkisan") {
-    return { value: "Ministry of Agriculture (PM-KISAN)", stored: true };
-  }
-  if (sId === "csc-eshram") {
-    return { value: "Ministry of Labour (e-Shram)", stored: true };
-  }
-  if (sId === "csc-passport") {
-    return { value: "Passport Seva (MEA)", stored: true };
-  }
-  if (sId === "csc-dl" || sId === "ca-dl-pvc" || sId === "ca-vehicle-rc-pvc") {
-    return { value: "MoRTH / RTO (Parivahan)", stored: true };
-  }
-  if (sId === "biz-gst" || sId === "ca-gst-registration") {
-    return { value: "GST Network (GSTN)", stored: true };
-  }
-  if (sId === "biz-udyam") {
-    return { value: "Ministry of MSME", stored: true };
-  }
-  if (service.category === "digital") {
-    return { value: "CSC DOST Desk, Qazigund", stored: true };
-  }
-  return { value: "[VERIFY]", stored: false };
 }
 function hasExplicitContent(val) {
   const s = String(val || "").trim();
-  return Boolean(s && !/\[VERIFY\]/i.test(s) && !/^ask us$/i.test(s));
+  if (!s) return false;
+  if (/\[VERIFY\]/i.test(s)) return false;
+  if (/^ask us\b/i.test(s) || /\bask us\b/i.test(s)) return false;
+  if (/^refer official/i.test(s) || /^as per official/i.test(s)) return false;
+  return true;
+}
+function isNonPlaceholderFeeNote(val) {
+  const s = String(val || "").trim();
+  if (!s) return false;
+  if (/\[VERIFY\]/i.test(s)) return false;
+  if (/\bask us\b/i.test(s)) return false;
+  if (/depends on/i.test(s)) return false;
+  return true;
 }
 function hasExplicitList(arr) {
-  return Array.isArray(arr) && arr.filter((item) => Boolean(item && item.trim() && !/\[VERIFY\]/i.test(item))).length > 0;
+  if (!Array.isArray(arr) || arr.length === 0) return false;
+  const clean = arr.map((item) => String(item || "").trim()).filter(Boolean);
+  return clean.length > 0 && !clean.some((item) => /\[VERIFY\]/i.test(item) || /\bask us\b/i.test(item));
+}
+function resolveServiceOfficialPortal(service) {
+  if (isValidHttpUrl(service.officialUrl)) {
+    try {
+      const host = new URL(service.officialUrl.trim()).hostname.replace(/^www\./i, "");
+      return { label: `Official Portal (${host})`, url: service.officialUrl.trim() };
+    } catch {
+      return { label: "Official Portal", url: service.officialUrl.trim() };
+    }
+  }
+  return { label: "", url: "" };
 }
 function deriveStoredServiceFacts(service) {
-  const auth = resolveStoredAuthority(service);
+  const authorityFromStoredData = hasExplicitContent(service.issuingAuthority);
+  const issuingAuthority = authorityFromStoredData ? service.issuingAuthority.trim() : "";
+  const officialFeeFromStoredData = hasExplicitContent(service.officialFee);
+  const officialFee = officialFeeFromStoredData ? service.officialFee.trim() : "";
+  const cscChargeFromStoredData = hasExplicitContent(service.cscCharge);
+  const cscCharge = cscChargeFromStoredData ? service.cscCharge.trim() : "";
   const portal = resolveServiceOfficialPortal(service);
-  const eligibilityStored = hasExplicitContent(service.eligibility);
-  const eligibility = eligibilityStored ? service.eligibility.trim() : "[VERIFY]";
-  const reqList = Array.isArray(service.requirements) ? service.requirements.map((r) => r.trim()).filter(Boolean) : [];
-  const requirementsStored = reqList.length > 0 && !reqList.some((r) => /\[VERIFY\]/i.test(r));
-  const feeLines = Array.isArray(service.feeLines) ? service.feeLines.filter(Boolean) : [];
+  const officialUrlFromStoredData = isValidHttpUrl(service.officialUrl);
+  const eligibilityFromStoredData = hasExplicitContent(service.eligibility);
+  const eligibility = eligibilityFromStoredData ? service.eligibility.trim() : "";
+  const reqList = Array.isArray(service.requirements) ? service.requirements.map((r) => String(r || "").trim()).filter((r) => r && !/\[VERIFY\]/i.test(r) && !/\bask us\b/i.test(r)) : [];
+  const requirementsFromStoredData = hasExplicitList(service.requirements);
+  const storedFeeLines = Array.isArray(service.feeLines) ? service.feeLines.map((l) => String(l || "").trim()).filter((l) => isNonPlaceholderFeeNote(l)) : [];
+  let computedFeeLines = [];
+  if (officialFeeFromStoredData || cscChargeFromStoredData) {
+    if (officialFeeFromStoredData) computedFeeLines.push(`Official Government Fee: ${officialFee}`);
+    if (cscChargeFromStoredData) computedFeeLines.push(`CSC DOST Service Charge: ${cscCharge}`);
+  } else if (storedFeeLines.length > 0) {
+    computedFeeLines = storedFeeLines;
+  }
   const rawPrice = String(service.price || "").trim();
-  const feesStored = (feeLines.length > 0 || Boolean(rawPrice) && !/^ask us$/i.test(rawPrice)) && !/\[VERIFY\]/i.test(rawPrice);
-  const feesText = rawPrice ? feesStored ? rawPrice : `${rawPrice} [VERIFY]` : "[VERIFY]";
+  const hasDisplayFeeNote = computedFeeLines.length > 0 || isNonPlaceholderFeeNote(rawPrice);
+  let feesText = "";
+  if (officialFeeFromStoredData && cscChargeFromStoredData) {
+    feesText = `${officialFee} (Official Fee) + ${cscCharge} (CSC DOST Charge)`;
+  } else if (computedFeeLines.length > 0) {
+    feesText = computedFeeLines.join(" \xB7 ");
+  } else if (isNonPlaceholderFeeNote(rawPrice)) {
+    feesText = rawPrice;
+  }
   const rawTime = String(service.estimatedTime || "").trim();
-  const timeStored = hasExplicitContent(rawTime);
-  const estimatedTime = timeStored ? rawTime : "[VERIFY]";
-  const stepFlowStored = hasExplicitList(service.stepFlow);
-  const stepFlow = stepFlowStored ? service.stepFlow.filter(Boolean) : [];
-  const staffChecksStored = hasExplicitList(service.staffChecks);
-  const staffChecks = staffChecksStored ? service.staffChecks.filter(Boolean) : [];
-  const rejectionReasonsStored = hasExplicitList(service.rejectionReasons);
-  const rejectionReasons = rejectionReasonsStored ? service.rejectionReasons.filter(Boolean) : [];
+  const timeFromStoredData = hasExplicitContent(rawTime);
+  const estimatedTime = timeFromStoredData ? rawTime : "";
+  const stepFlowFromStoredData = hasExplicitList(service.stepFlow);
+  const stepFlow = stepFlowFromStoredData ? service.stepFlow.map((s) => s.trim()).filter(Boolean) : [];
+  const staffChecksFromStoredData = hasExplicitList(service.staffChecks);
+  const staffChecks = staffChecksFromStoredData ? service.staffChecks.map((s) => s.trim()).filter(Boolean) : [];
+  const rejectionReasonsFromStoredData = hasExplicitList(service.rejectionReasons);
+  const rejectionReasons = rejectionReasonsFromStoredData ? service.rejectionReasons.map((s) => s.trim()).filter(Boolean) : [];
+  const rawLastVerified = String(service.lastVerifiedDate || service.updatedAt || "").trim();
+  const lastVerifiedFromStoredData = hasExplicitContent(rawLastVerified);
+  const lastVerifiedDate = lastVerifiedFromStoredData ? rawLastVerified : "";
   const missingVerifyFields = [];
-  if (!auth.stored) missingVerifyFields.push("issuingAuthority");
-  if (!eligibilityStored) missingVerifyFields.push("eligibility");
-  if (!requirementsStored) missingVerifyFields.push("requirements");
-  if (!feesStored) missingVerifyFields.push("fees");
-  if (!timeStored) missingVerifyFields.push("estimatedTime");
-  if (!stepFlowStored) missingVerifyFields.push("stepFlow");
-  if (!staffChecksStored) missingVerifyFields.push("staffChecks");
-  if (!rejectionReasonsStored) missingVerifyFields.push("rejectionReasons");
+  if (!authorityFromStoredData) missingVerifyFields.push("issuingAuthority");
+  if (!officialFeeFromStoredData) missingVerifyFields.push("officialFee");
+  if (!cscChargeFromStoredData) missingVerifyFields.push("cscCharge");
+  if (!timeFromStoredData) missingVerifyFields.push("estimatedTime");
+  if (!eligibilityFromStoredData) missingVerifyFields.push("eligibility");
+  if (!requirementsFromStoredData) missingVerifyFields.push("requirements");
+  if (!stepFlowFromStoredData) missingVerifyFields.push("stepFlow");
+  if (!rejectionReasonsFromStoredData) missingVerifyFields.push("rejectionReasons");
+  if (!staffChecksFromStoredData) missingVerifyFields.push("staffChecks");
+  if (!officialUrlFromStoredData) missingVerifyFields.push("officialUrl");
+  if (!lastVerifiedFromStoredData) missingVerifyFields.push("lastVerifiedDate");
   return {
-    issuingAuthority: auth.value,
-    authorityFromStoredData: auth.stored,
+    issuingAuthority,
+    authorityFromStoredData,
+    officialFee,
+    officialFeeFromStoredData,
+    cscCharge,
+    cscChargeFromStoredData,
     eligibility,
-    eligibilityFromStoredData: eligibilityStored,
+    eligibilityFromStoredData,
     requirements: reqList,
-    requirementsFromStoredData: requirementsStored,
+    requirementsFromStoredData,
     feesText,
-    feeLines,
-    feesFromStoredData: feesStored,
+    feeLines: computedFeeLines,
+    feesFromStoredData: hasDisplayFeeNote,
     estimatedTime,
-    timeFromStoredData: timeStored,
+    timeFromStoredData,
     stepFlow,
-    stepFlowFromStoredData: stepFlowStored,
+    stepFlowFromStoredData,
     staffChecks,
-    staffChecksFromStoredData: staffChecksStored,
+    staffChecksFromStoredData,
     rejectionReasons,
-    rejectionReasonsFromStoredData: rejectionReasonsStored,
+    rejectionReasonsFromStoredData,
     officialPortalUrl: portal.url,
     officialPortalLabel: portal.label,
+    officialUrlFromStoredData,
+    lastVerifiedDate,
+    lastVerifiedFromStoredData,
     missingVerifyFields,
     hasVerifyPlaceholders: missingVerifyFields.length > 0
   };
 }
-function validateServiceReadyToPublish(service) {
+function validateServiceReadyToPublish(service, renderedWordCount) {
   const facts = deriveStoredServiceFacts(service);
   const errors = [];
   if (!facts.authorityFromStoredData) {
-    errors.push("Issuing Authority still contains [VERIFY] or is missing.");
+    errors.push("Issuing Authority is missing or marked [VERIFY].");
   }
-  if (!facts.eligibilityFromStoredData) {
-    errors.push("Who Is Eligible still contains [VERIFY] or is empty.");
+  if (!facts.officialFeeFromStoredData) {
+    errors.push("Official Fee is missing or marked [VERIFY] / Ask us.");
   }
-  if (!facts.requirementsFromStoredData) {
-    errors.push("Exact Documents Checklist is incomplete or contains [VERIFY].");
-  }
-  if (!facts.feesFromStoredData) {
-    errors.push("Fees field is missing or marked Ask us / [VERIFY].");
+  if (!facts.cscChargeFromStoredData) {
+    errors.push("CSC DOST Service Charge is missing or marked [VERIFY].");
   }
   if (!facts.timeFromStoredData) {
-    errors.push("Processing Time is missing or contains [VERIFY].");
+    errors.push("Real Processing Time is missing or marked [VERIFY].");
+  }
+  if (!facts.eligibilityFromStoredData) {
+    errors.push("Eligibility is missing or marked [VERIFY].");
+  }
+  if (!facts.requirementsFromStoredData) {
+    errors.push("Exact Documents List is incomplete or contains [VERIFY].");
   }
   if (!facts.stepFlowFromStoredData) {
-    errors.push("Step-by-Step Flow still contains [VERIFY] or has no steps.");
-  }
-  if (!facts.staffChecksFromStoredData) {
-    errors.push("CSC DOST Staff Pre-Submission Checks still contain [VERIFY] or are empty.");
+    errors.push("Step Flow is missing or contains [VERIFY].");
   }
   if (!facts.rejectionReasonsFromStoredData) {
-    errors.push("Common Rejection Reasons still contain [VERIFY] or are empty.");
+    errors.push("Common Rejection Reasons are missing or contain [VERIFY].");
+  }
+  if (!facts.staffChecksFromStoredData) {
+    errors.push("Staff Pre-Submission Checks are missing or contain [VERIFY].");
+  }
+  if (!facts.officialUrlFromStoredData) {
+    errors.push("Official Portal URL is missing or invalid (must start with https:// or http://).");
+  }
+  if (!facts.lastVerifiedFromStoredData) {
+    errors.push("Last Verified Date is missing.");
+  }
+  if (typeof renderedWordCount === "number" && renderedWordCount < 400) {
+    errors.push(`Original main content is ${renderedWordCount} words (requires 400+ words before indexing).`);
   }
   return {
     canPublish: errors.length === 0,
     missingFields: facts.missingVerifyFields,
     errors
+  };
+}
+function evaluateClusterHubReadiness(cluster, members, override, renderedWordCount) {
+  const missingData = [];
+  const hasWhatFor = hasExplicitContent(override?.whatDocumentIsFor);
+  if (!hasWhatFor) {
+    missingData.push('Hub section: "What the document/service is for" is missing.');
+  }
+  const hasHowDiff = hasExplicitContent(override?.howServicesDiffer);
+  if (!hasHowDiff) {
+    missingData.push('Hub section: "How the services differ from each other" is missing.');
+  }
+  const hasCommonMistakes = hasExplicitList(override?.commonMistakes);
+  if (!hasCommonMistakes) {
+    missingData.push('Hub section: "Common mistakes" list is missing.');
+  }
+  const validSources = Array.isArray(override?.officialSources) ? override.officialSources.filter((s) => hasExplicitContent(s?.label) && isValidHttpUrl(s?.url)) : [];
+  const hasOfficialSources = validSources.length > 0;
+  if (!hasOfficialSources) {
+    missingData.push('Hub section: "Official sources list" is missing or has no valid URL.');
+  }
+  let tableComplete = true;
+  let perServiceDiffsComplete = true;
+  for (const m of members) {
+    const f = deriveStoredServiceFacts(m);
+    if (!f.authorityFromStoredData) {
+      tableComplete = false;
+      missingData.push(`${m.name} (${m.id}): missing Issuing Authority`);
+    }
+    if (!f.eligibilityFromStoredData) {
+      tableComplete = false;
+      missingData.push(`${m.name} (${m.id}): missing Who It Is For (Eligibility)`);
+    }
+    if (!f.timeFromStoredData) {
+      tableComplete = false;
+      missingData.push(`${m.name} (${m.id}): missing Typical Processing Time`);
+    }
+    if (!f.feesFromStoredData) {
+      tableComplete = false;
+      missingData.push(`${m.name} (${m.id}): missing Official Fee / CSC Charge note`);
+    }
+    const diffNote = override?.perServiceDifferences?.[m.id];
+    if (!hasExplicitContent(diffNote)) {
+      perServiceDiffsComplete = false;
+      missingData.push(`${m.name} (${m.id}): missing specific per-service difference note`);
+    }
+  }
+  const minWordCount800 = typeof renderedWordCount === "number" ? renderedWordCount >= 800 : false;
+  if (typeof renderedWordCount === "number" && renderedWordCount < 800) {
+    missingData.push(
+      `Word count threshold: currently ${renderedWordCount} words (requires 800+ original words).`
+    );
+  } else if (renderedWordCount === void 0) {
+    missingData.push("Word count threshold: requires 800+ original words.");
+  }
+  return {
+    isIndexable: missingData.length === 0,
+    missingData,
+    sectionStatus: {
+      whatDocumentIsFor: hasWhatFor,
+      howServicesDiffer: hasHowDiff,
+      comparisonTableComplete: tableComplete,
+      perServiceDifferences: perServiceDiffsComplete,
+      commonMistakes: hasCommonMistakes,
+      officialSources: hasOfficialSources,
+      minWordCount800
+    }
   };
 }
 
@@ -10329,7 +10530,7 @@ function checkConsecutiveCopiedSentences(candidateText, sourceText, maxConsecuti
     matchedSnippet
   };
 }
-function isValidHttpUrl(rawUrl) {
+function isValidHttpUrl2(rawUrl) {
   const trimmed = String(rawUrl || "").trim();
   if (!trimmed) return false;
   try {
@@ -10368,7 +10569,7 @@ function validatePostPublishQuality(input, options = {}) {
     errors.push("A descriptive Notification Title (at least 3 words) is required.");
   }
   const officialUrl = String(input.officialNotificationUrl || input.officialLink || "").trim();
-  if (!isValidHttpUrl(officialUrl)) {
+  if (!isValidHttpUrl2(officialUrl)) {
     missingFields.push("officialSourceUrl");
     errors.push("A valid Official Source / Notification URL (https:// or http://) is mandatory.");
   }
@@ -10542,7 +10743,7 @@ function validateGuideReadyForPublish(guide, options = {}) {
       `${remainingMarkers.length} unverified [VERIFY] placeholder(s) remain in guide content (${remainingMarkers.slice(0, 3).map((m) => m.field).join(", ")}). Replace or clear them before publishing.`
     );
   }
-  if (!isValidHttpUrl(guide.officialUrl)) {
+  if (!isValidHttpUrl2(guide.officialUrl)) {
     errors.push("A valid https:// or http:// Official URL is required.");
   }
   if (wordCount < 400) {
@@ -10567,8 +10768,11 @@ var DEFAULT_AUDIT_THRESHOLDS = {
   minClassAWords: 400,
   thinWordThreshold: 300,
   maxConsecutiveCopiedAllowed: 2,
-  nearDuplicateJaccardThreshold: 0.65
+  nearDuplicateJaccardThreshold: 0.5
 };
+function stripBoilerplateForAudit(htmlOrText) {
+  return String(htmlOrText || "").replace(/<header\b[^>]*class=["'][^"']*ssr-site-header[^"']*["'][^>]*>[\s\S]*?<\/header>/gi, " ").replace(/<nav\b[\s\S]*?<\/nav>/gi, " ").replace(/<footer\b[\s\S]*?<\/footer>/gi, " ").replace(/<aside\b[\s\S]*?<\/aside>/gi, " ").replace(/<details\b[\s\S]*?<\/details>/gi, " ").replace(/<script\b[\s\S]*?<\/script>/gi, " ").replace(/<style\b[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/CSC DOST[^.]*independent[^.]*\./gi, " ").replace(/Wasim Ahmad Khanday[^.]*\./gi, " ").replace(/Sangran Qazigund[^.]*\./gi, " ").replace(/\s+/g, " ").trim();
+}
 function normalizeTextForAudit(text) {
   return String(text || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 }
@@ -12621,6 +12825,89 @@ var TOOLS_LIST = [
   }
 ];
 
+// src/utils/homepageFeed.ts
+function isJkPriorityItem(item) {
+  if (item.jkDomicile) return true;
+  if (item.category === "jkssb" || item.category === "banking_jobs" || item.category === "cluster_univ" || item.category === "admissions" || item.category === "exam_forms") {
+    return true;
+  }
+  const haystack = `${item.title} ${item.org || resolvePostOrg(item)} ${item.department || ""} ${item.institution || ""}`.toLowerCase();
+  return /jkssb|j&k|jammu|kashmir|srinagar|cluster\s*univ|skuast|jkpsc|jk\s*bank|bopee|jkbose/.test(haystack);
+}
+function parseHomepagePostTimestamp(dateStr) {
+  if (!dateStr) return 0;
+  const m = String(dateStr).match(/(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
+  if (!m) return 0;
+  return Date.UTC(parseInt(m[3], 10), parseInt(m[2], 10) - 1, parseInt(m[1], 10));
+}
+function sortByNewestPostDate(a, b) {
+  return parseHomepagePostTimestamp(b.postDate || b.documentDate) - parseHomepagePostTimestamp(a.postDate || a.documentDate);
+}
+function formatShortChipTitle(item) {
+  const clean = item.title.replace(/\b202[4-9]\b/g, "").replace(/\b(Notification|Recruitment|Online Form|Application|Exam Form)\b/gi, "").replace(/\s+/g, " ").trim();
+  const words = clean.split(" ").filter(Boolean);
+  if (words.length <= 3) return clean || item.org || resolvePostOrg(item);
+  return words.slice(0, 3).join(" ");
+}
+function buildHomepageFeedData(allPosts, customNow) {
+  const deduped = getDeduplicatedSarkariPosts(allPosts);
+  const verifiedPosts = deduped.filter((item) => {
+    if (!isPublishedSarkariItem(item) || item.isCancelled) return false;
+    if (isOlderThan12Months(item)) return false;
+    const st = computeSarkariStatus(item, customNow);
+    return st.verificationStatus !== "needs_verification";
+  });
+  const compareJkFirst = (a, b, prioritizeOpen) => {
+    const jkA = isJkPriorityItem(a) ? 1 : 0;
+    const jkB = isJkPriorityItem(b) ? 1 : 0;
+    if (jkA !== jkB) return jkB - jkA;
+    const stA = computeSarkariStatus(a, customNow);
+    const stB = computeSarkariStatus(b, customNow);
+    if (prioritizeOpen && stA.canApplyOnline !== stB.canApplyOnline) {
+      return stA.canApplyOnline ? -1 : 1;
+    }
+    if (stA.isUrgentUnder7Days !== stB.isUrgentUnder7Days) {
+      return stA.isUrgentUnder7Days ? -1 : 1;
+    }
+    return sortByNewestPostDate(a, b);
+  };
+  const jobs = [];
+  const admit_card = [];
+  const results = [];
+  const answer_key = [];
+  const admission = [];
+  for (const item of verifiedPosts) {
+    const st = computeSarkariStatus(item, customNow);
+    if (st.stage === "answer_key" || st.stage === "objection_window") {
+      answer_key.push(item);
+    } else if (st.stage === "result" || st.stage === "grade_card") {
+      results.push(item);
+    } else if (st.stage === "admit_card" || st.stage === "examination" || st.stage === "document_verification" || st.stage === "date_sheet") {
+      admit_card.push(item);
+    } else if (isEducationSarkariItem(item)) {
+      admission.push(item);
+    } else if (isRecruitmentSarkariItem(item)) {
+      jobs.push(item);
+    }
+  }
+  const buckets = {
+    jobs: jobs.sort((a, b) => compareJkFirst(a, b, true)),
+    admit_card: admit_card.sort((a, b) => compareJkFirst(a, b, false)),
+    results: results.sort((a, b) => compareJkFirst(a, b, false)),
+    answer_key: answer_key.sort((a, b) => compareJkFirst(a, b, false)),
+    admission: admission.sort((a, b) => compareJkFirst(a, b, true))
+  };
+  const closingSoonDeadlines = getActiveClosingDeadlines(deduped, {
+    customNow,
+    maxDays: 7
+  }).slice(0, 4);
+  return {
+    verifiedPosts,
+    buckets,
+    closingSoonDeadlines
+  };
+}
+
 // src/components/post/postBulletinHelpers.ts
 var FULL_MONTHS = [
   "January",
@@ -12817,7 +13104,10 @@ function buildPostEnrichmentData(item, effectiveType, statusInfo, orgName, porta
   const qualStr = hasRealDataValue(item.eligibility || item.qualification) && !isGenericNoticePlaceholder(item.eligibility || item.qualification) ? String(item.eligibility || item.qualification).trim() : "the prescribed criteria in the official notification";
   const genFee = item.fee?.genObc || item.fees?.genObc;
   const scFee = item.fee?.scSt || item.fees?.scSt;
-  const hasFee = hasRealDataValue(genFee) || hasRealDataValue(scFee);
+  const hasFee = hasExplicitFee(item);
+  const zeroFee = isZeroOrExemptFee(item);
+  const appMode = resolveApplicationMode(item);
+  const appModeLabel = resolveApplicationModeLabel(item);
   const isEdu = item.section === "education" || item.category === "ignou" || item.category === "admissions" || item.category === "exam_forms" || item.category === "cluster_univ" || item.category === "nta";
   const quickSummary = [];
   const leadText = (item.summary || item.shortInfo || "").trim();
@@ -12825,7 +13115,7 @@ function buildPostEnrichmentData(item, effectiveType, statusInfo, orgName, porta
     quickSummary.push(leadText);
   }
   quickSummary.push(
-    `Issued by ${orgName}${hasRealDataValue(item.advertisementNo) ? ` (${item.advertisementNo})` : ""}${postLong ? ` and published on ${postLong}` : ""}.`
+    `Issued by ${orgName}${hasRealDataValue(item.advertisementNo) && !isGenericNoticePlaceholder(item.advertisementNo) ? ` (${item.advertisementNo})` : ""}${postLong ? ` and published on ${postLong}` : ""}.`
   );
   if (effectiveType === "result" || effectiveType === "answer_key") {
     quickSummary.push(
@@ -12837,12 +13127,14 @@ function buildPostEnrichmentData(item, effectiveType, statusInfo, orgName, porta
     );
   } else {
     quickSummary.push(
-      `${hasVacancies ? `Reported count / scope: ${vacanciesStr}. ` : ""}${endLong ? statusInfo.isClosed ? `Submission deadline closed on ${endLong}.` : `Application / form window ${startLong ? `from ${startLong} ` : ""}closes on ${endLong}.` : `Check ${sourceDomain} for exact schedule details.`}`
+      `${hasVacancies ? `Reported count / scope: ${vacanciesStr}. ` : ""}Application mode: ${appModeLabel}. ${endLong ? statusInfo.isClosed ? `Submission deadline closed on ${endLong}.` : appMode === "offline" ? `Offline applications must reach the notified address on or before ${endLong}.` : `Application / form window ${startLong ? `from ${startLong} ` : ""}closes on ${endLong}.` : `Check ${sourceDomain} for exact schedule details.`}`
     );
     if (hasFee) {
       quickSummary.push(
-        `Fee noted in notice: ${genFee || "As per notice"}${scFee && scFee !== genFee ? ` (Reserved/SC/ST: ${scFee})` : ""}.`
+        zeroFee ? "Application fee: Exempted / No fee required as stated in the official notice." : `Fee noted in notice: ${genFee || "As per notice"}${scFee && scFee !== genFee ? ` (Reserved/SC/ST: ${scFee})` : ""}.`
       );
+    } else if (hasRealDataValue(item.paymentInstructions)) {
+      quickSummary.push(String(item.paymentInstructions).trim());
     }
   }
   const whoShouldApply = [];
@@ -12869,7 +13161,7 @@ function buildPostEnrichmentData(item, effectiveType, statusInfo, orgName, porta
       whoShouldApply.push(`Holders of valid Jammu & Kashmir Domicile Certificates for ${item.title}.`);
     }
     whoShouldApply.push(
-      statusInfo.isClosed ? `Window closed (${endLong || statusInfo.dateValue}); kept for reference.` : `Candidates with active contact details ready before ${endLong || "the deadline"} on ${sourceDomain}.`
+      statusInfo.isClosed ? `Window closed (${endLong || statusInfo.dateValue}); kept for reference.` : appMode === "offline" ? `Candidates able to prepare self-attested testimonials and deliver the offline application on or before ${endLong || "the deadline"}.` : `Candidates with active contact details ready before ${endLong || "the deadline"} on ${sourceDomain}.`
     );
   }
   const whoShouldNotApply = [];
@@ -12884,30 +13176,58 @@ function buildPostEnrichmentData(item, effectiveType, statusInfo, orgName, porta
     );
   } else {
     whoShouldNotApply.push(
-      `Awaited-result candidates beyond ${orgName} cutoff rules unless ${item.title} allows it.`
+      `Candidates who do not meet the prescribed educational qualification or experience criteria stated in the official ${orgName} notice.`
     );
     if (item.jkDomicile) {
       whoShouldNotApply.push(`Non-domicile applicants where ${orgName} mandates J&K domicile.`);
     }
     if (hasRealDataValue(item.ageLimit) && !isGenericNoticePlaceholder(item.ageLimit)) {
-      whoShouldNotApply.push(`Candidates outside ${item.ageLimit} without ${orgName} relaxation.`);
+      whoShouldNotApply.push(
+        hasRealDataValue(item.ageRelaxationDetails) ? `Candidates outside ${item.ageLimit} unless eligible under notified relaxation (${item.ageRelaxationDetails}).` : `Candidates outside the stated age / tenure criteria (${item.ageLimit}) in the official notice.`
+      );
     }
   }
   const commonMistakes = [
-    `Skipping the original ${item.title} notice on ${sourceDomain}.`,
-    effectiveType === "application" || effectiveType === "admission" || effectiveType === "upcoming" ? `Uploading oversized/unclear scans to ${sourceDomain} instead of verifying KB/pixel specs.` : `Mismatched roll number or DOB entry when checking ${item.title} on ${sourceDomain}.`,
-    `Spelling differences versus Class 10th records for ${orgName} verification.`,
-    hasFee ? `Double-paying ${item.title} fees before bank settlement checks.` : `Waiting until closing hours on ${sourceDomain} when traffic peaks.`
+    `Skipping the original ${item.title} notice on ${sourceDomain}.`
   ];
-  if (item.jkDomicile || !isEdu) {
+  if (appMode === "offline" && (effectiveType === "application" || effectiveType === "admission" || effectiveType === "upcoming")) {
     commonMistakes.push(
-      `Claiming reserved categories without valid certificates dated by ${endLong || "cutoff"}.`
+      `Sending an incomplete or unsigned application form, or omitting self-attested copies of required enclosures.`
+    );
+    if (item.envelopeSuperscription) {
+      commonMistakes.push(
+        `Forgetting to superscribe the envelope exactly as directed ("${item.envelopeSuperscription}").`
+      );
+    }
+    commonMistakes.push(
+      `Dispatching too close to ${endLong || "the closing date"} without accounting for postal delivery time.`
+    );
+  } else {
+    commonMistakes.push(
+      effectiveType === "application" || effectiveType === "admission" || effectiveType === "upcoming" ? `Uploading unclear or non-compliant document files on ${sourceDomain} without checking the official notice specifications.` : `Mismatched roll number or DOB entry when checking ${item.title} on ${sourceDomain}.`
+    );
+    commonMistakes.push(
+      `Spelling or date-of-birth mismatches compared with Class 10th / academic records during ${orgName} verification.`
+    );
+    if (hasFee && !zeroFee) {
+      commonMistakes.push(
+        `Double-paying ${item.title} fees before checking portal or bank reconciliation status.`
+      );
+    } else {
+      commonMistakes.push(
+        `Waiting until closing hours on ${sourceDomain} when portal traffic peaks.`
+      );
+    }
+  }
+  if (item.jkDomicile) {
+    commonMistakes.push(
+      `Claiming J&K domicile or reserved categories without valid certificates dated within the official cutoff.`
     );
   }
   const whatToDoNext = [
     `1. Confirm ${item.title} (${postLong}) directly on ${sourceDomain}.`,
-    statusInfo.isClosed ? `2. Follow post-closing ${orgName} updates (${endLong || "closed"}) on ${sourceDomain}.` : statusInfo.isUpcoming ? `2. Prepare certificates for ${item.title} ahead of ${startLong || "opening"}.` : effectiveType === "result" || effectiveType === "admit_card" || effectiveType === "answer_key" ? `2. Sign in on ${sourceDomain} with registration ID${endLong ? ` before ${endLong}` : ""} for ${item.title}.` : `2. Submit ${item.title} on ${sourceDomain} before ${endLong || "closing"}${startLong ? ` (opened ${startLong})` : ""}.`,
-    `3. Save the official ${orgName} PDF or confirmation receipt for ${item.title}.`
+    statusInfo.isClosed ? `2. Follow post-closing ${orgName} updates (${endLong || "closed"}) on ${sourceDomain}.` : statusInfo.isUpcoming ? `2. Prepare certificates for ${item.title} ahead of ${startLong || "opening"}.` : effectiveType === "result" || effectiveType === "admit_card" || effectiveType === "answer_key" ? `2. Sign in on ${sourceDomain} with registration ID${endLong ? ` before ${endLong}` : ""} for ${item.title}.` : appMode === "offline" ? `2. Download the prescribed offline application format from ${sourceDomain}, attach required self-attested enclosures, and send to the notified ${orgName} address on or before ${endLong || "closing"}.` : `2. Submit ${item.title} on ${sourceDomain} before ${endLong || "closing"}${startLong ? ` (opened ${startLong})` : ""}.`,
+    appMode === "offline" ? `3. Keep a photocopy of your signed application form, enclosures, and postal/submission receipt for reference.` : `3. Save the official ${orgName} PDF or confirmation receipt for ${item.title}.`
   ];
   return {
     quickSummary,
@@ -12948,9 +13268,12 @@ function renderPostSubstantiveHtml(item, allPosts = SARKARI_DATA) {
   const safeGenObc = escapeHtml(item.fees?.genObc || item.fee?.genObc || "As per official notice");
   const safeScSt = escapeHtml(item.fees?.scSt || item.fee?.scSt || "As per official notice");
   const safeOfficialLink = escapeHtml(portalUrl);
-  const rawFeeStr = `${item.fees?.genObc || ""} ${item.fee?.genObc || ""}`.trim();
-  const isZeroFee = rawFeeStr.length > 0 && (rawFeeStr.toLowerCase().includes("0") || rawFeeStr.toLowerCase().includes("nil") || rawFeeStr.toLowerCase().includes("exempt") || rawFeeStr.toLowerCase().includes("free"));
-  const paymentInstructionText = item.paymentInstructions ? escapeHtml(item.paymentInstructions) : isZeroFee ? "\u20B90/- (Exempted / Free for all candidates). No payment is required." : "Pay online through the official authority portal as specified in the notification";
+  const appMode = resolveApplicationMode(item);
+  const appModeLabel = resolveApplicationModeLabel(item);
+  const isOfflineMode = appMode === "offline";
+  const explicitFee = hasExplicitFee(item);
+  const isZeroFee = isZeroOrExemptFee(item);
+  const paymentInstructionText = item.paymentInstructions ? escapeHtml(item.paymentInstructions) : isZeroFee ? "\u20B90/- (Exempted / Free for all candidates). No payment is required." : isOfflineMode ? "No online payment is specified; check the official notification PDF for fee details." : "Pay online through the official authority portal as specified in the notification";
   const isIgnouPost = isIgnouItem(item);
   const isEducationPost = isEducationSarkariItem(item) || item.section === "education";
   const isSscTimetablePost = item.id === "ssc-examination-schedule-cgept-dept-steno-cpo-nov-2026";
@@ -13058,7 +13381,7 @@ function renderPostSubstantiveHtml(item, allPosts = SARKARI_DATA) {
           </ul>
         </div>
 
-        ${!nonAppTemplate && (hasRealDataValue(item.fees?.genObc || item.fee?.genObc) || hasRealDataValue(item.fees?.scSt || item.fee?.scSt)) ? `<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
+        ${!nonAppTemplate && explicitFee ? `<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
           <h3 style="font-size:15px; font-weight:700; color:#101A36; margin:0 0 10px 0;">Application Fee</h3>
           <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#334155; line-height:1.8;">
             <li><strong>General / OBC / EWS:</strong> ${isZeroFee ? "\u20B90/- (Exempted)" : safeGenObc}</li>
@@ -13066,12 +13389,16 @@ function renderPostSubstantiveHtml(item, allPosts = SARKARI_DATA) {
             <li><strong>Payment Note:</strong> ${paymentInstructionText}</li>
           </ul>
         </div>` : `<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
-          <h3 style="font-size:15px; font-weight:700; color:#101A36; margin:0 0 10px 0;">Official Notice Details</h3>
+          <h3 style="font-size:15px; font-weight:700; color:#101A36; margin:0 0 10px 0;">Official Notice &amp; Submission Details</h3>
           <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#334155; line-height:1.8;">
             <li><strong>Issuing Body:</strong> ${safeOrg}</li>
+            ${!nonAppTemplate ? `<li><strong>Application Mode:</strong> ${escapeHtml(appModeLabel)}</li>` : ""}
+            ${hasRealDataValue(item.paymentInstructions) ? `<li><strong>Fee Note:</strong> ${escapeHtml(item.paymentInstructions)}</li>` : ""}
+            ${hasRealDataValue(item.postalAddress) ? `<li><strong>Postal Address:</strong> ${escapeHtml(item.postalAddress)}</li>` : ""}
+            ${hasRealDataValue(item.envelopeSuperscription) ? `<li><strong>Envelope Superscription:</strong> ${escapeHtml(item.envelopeSuperscription)}</li>` : ""}
             ${hasRealDataValue(item.venue) ? `<li><strong>Venue:</strong> ${escapeHtml(item.venue)}</li>` : ""}
             ${hasRealDataValue(item.reportingTime) ? `<li><strong>Reporting Time:</strong> ${escapeHtml(item.reportingTime)}</li>` : ""}
-            <li><strong>Portal Verification:</strong> <a href="${safeOfficialLink}" target="_blank" rel="noopener noreferrer" style="color:#1F9D6B; font-weight:600;">${safeOfficialLink}</a></li>
+            <li><strong>Official Source:</strong> <a href="${safeOfficialLink}" target="_blank" rel="noopener noreferrer" style="color:#1F9D6B; font-weight:600;">${escapeHtml(enrichment.sourceDomain)}</a></li>
           </ul>
         </div>`}
       </section>
@@ -13079,14 +13406,19 @@ function renderPostSubstantiveHtml(item, allPosts = SARKARI_DATA) {
       <!-- Key Facts & Qualification Table -->
       <section style="margin-bottom:24px;">
         <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 12px 0;">${nonAppTemplate ? "Notice Summary &amp; Key Facts" : "Eligibility Criteria &amp; Vacancy Details"}</h2>
+        <div style="width:100%; overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; font-size:14px; text-align:left; border:1px solid #e2e8f0;">
           <tbody>
+            ${!nonAppTemplate ? `<tr style="border-bottom:1px solid #e2e8f0;">
+              <th style="padding:10px 14px; background:#f1f5f9; width:32%; font-weight:600; color:#101A36;">Application Mode</th>
+              <td style="padding:10px 14px; color:#101A36; font-weight:600;">${escapeHtml(appModeLabel)}</td>
+            </tr>` : ""}
             ${!nonAppTemplate && hasRealDataValue(item.totalPosts) ? `<tr style="border-bottom:1px solid #e2e8f0;">
               <th style="padding:10px 14px; background:#f1f5f9; width:32%; font-weight:600; color:#101A36;">Total Vacancies / Intake</th>
               <td style="padding:10px 14px; color:#101A36; font-weight:600;">${safeTotalPosts}</td>
             </tr>` : ""}
             ${!nonAppTemplate && !isEducationPost && hasRealDataValue(item.ageLimit) ? `<tr style="border-bottom:1px solid #e2e8f0;">
-              <th style="padding:10px 14px; background:#f1f5f9; font-weight:600; color:#101A36;">Age Limit</th>
+              <th style="padding:10px 14px; background:#f1f5f9; font-weight:600; color:#101A36;">Age Limit / Tenure</th>
               <td style="padding:10px 14px; color:#334155;">
                 ${safeAgeLimit}
                 ${item.ageRelaxationDetails ? `<div style="margin-top:4px; font-size:13px; color:#475569;"><strong>Relaxation Details:</strong> ${escapeHtml(item.ageRelaxationDetails)}</div>` : ""}
@@ -13102,6 +13434,7 @@ function renderPostSubstantiveHtml(item, allPosts = SARKARI_DATA) {
             </tr>` : ""}
           </tbody>
         </table>
+        </div>
       </section>
 
       ${docsChecklist.length > 0 ? `
@@ -13194,7 +13527,7 @@ function renderPostSubstantiveHtml(item, allPosts = SARKARI_DATA) {
         </div>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
           <a href="${safeOfficialLink}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
-            ${isSscTimetablePost ? "Official Portal (ssc.gov.in) \u2197" : isIgnouPost ? "Official IGNOU Circular / Portal \u2197" : `${safeOrg} Official Portal \u2197`}
+            ${isSscTimetablePost ? "Official Portal (ssc.gov.in) \u2197" : isOfflineMode ? `Official ${safeOrg} PDF &amp; Application Form \u2197` : isIgnouPost ? "Official IGNOU Circular / Portal \u2197" : `${safeOrg} Official Portal \u2197`}
           </a>
           ${pdfUrl ? `<a href="${escapeHtml(pdfUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#ffffff; color:#101A36; border:1px solid #cbd5e1; font-weight:700; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
             Notification PDF \u2197
@@ -13240,10 +13573,7 @@ function renderServiceSubstantiveHtml(service) {
   const safeName = escapeHtml(service.name);
   const safeDescription = escapeHtml(service.description);
   const safeCategory = escapeHtml(service.category);
-  const safeAuthority = escapeHtml(facts.issuingAuthority);
-  const safeEligibility = escapeHtml(facts.eligibility);
-  const safeTime = escapeHtml(facts.estimatedTime);
-  const safeFeeHtml = facts.feeLines.length > 0 ? facts.feeLines.map((l) => `<div>${escapeHtml(l)}</div>`).join("") : escapeHtml(facts.feesText);
+  const safeFeeHtml = facts.feeLines.length > 0 ? facts.feeLines.map((l) => `<div>${escapeHtml(l)}</div>`).join("") : facts.feesText ? escapeHtml(facts.feesText) : "";
   const waEnquiryUrl = `https://wa.me/917006833767?text=${encodeURIComponent(
     `Hello CSC DOST, enquiry for ${service.name} (${service.id})`
   )}`;
@@ -13260,6 +13590,28 @@ function renderServiceSubstantiveHtml(service) {
     },
     url: `https://www.cscdost.com/service/${encodeURIComponent(service.id)}`
   }).replace(/</g, "\\u003c");
+  const summaryCards = [];
+  if (facts.authorityFromStoredData) {
+    summaryCards.push(`
+        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:14px;">
+          <h2 style="font-size:12px; font-weight:700; color:#475569; margin:0 0 4px 0;">Issuing Authority</h2>
+          <div style="font-size:14px; font-weight:700; color:#101A36;">${escapeHtml(facts.issuingAuthority)}</div>
+        </div>`);
+  }
+  if (facts.feesFromStoredData && safeFeeHtml) {
+    summaryCards.push(`
+        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:14px;">
+          <h2 style="font-size:12px; font-weight:700; color:#475569; margin:0 0 4px 0;">Fees &amp; Charges</h2>
+          <div style="font-size:14px; font-weight:700; color:#1F9D6B;">${safeFeeHtml}</div>
+        </div>`);
+  }
+  if (facts.timeFromStoredData) {
+    summaryCards.push(`
+        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:14px;">
+          <h2 style="font-size:12px; font-weight:700; color:#475569; margin:0 0 4px 0;">Processing Time</h2>
+          <div style="font-size:14px; font-weight:700; color:#101A36;">${escapeHtml(facts.estimatedTime)}</div>
+        </div>`);
+  }
   return `
   ${renderPrimaryCategoryNavHtml("services")}
   <main class="ssr-article-wrapper" style="max-width:960px; margin:0 auto; padding:12px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:15px; color:#101A36; line-height:1.55;">
@@ -13277,60 +13629,52 @@ function renderServiceSubstantiveHtml(service) {
 
     <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:22px;">
       <header style="border-bottom:1px solid #E2E8F0; padding-bottom:14px; margin-bottom:18px;">
-        <span style="display:inline-block; background:#ECFDF5; color:#1F9D6B; border:1px solid #A7F3D0; font-size:11px; font-weight:700; text-transform:uppercase; padding:3px 9px; border-radius:6px; margin-bottom:8px;">
-          ${safeCategory}${facts.hasVerifyPlaceholders ? " \xB7 [VERIFY]" : " \xB7 Verified"}
-        </span>
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:8px;">
+          <span style="display:inline-block; background:#ECFDF5; color:#1F9D6B; border:1px solid #A7F3D0; font-size:11px; font-weight:700; text-transform:uppercase; padding:3px 9px; border-radius:6px;">
+            ${safeCategory}${facts.hasVerifyPlaceholders ? "" : " \xB7 Verified"}
+          </span>
+          ${facts.lastVerifiedFromStoredData ? `<span style="font-size:12px; color:#64748B; font-weight:600;">Last verified: ${escapeHtml(facts.lastVerifiedDate)}</span>` : ""}
+        </div>
         <h1 style="font-size:26px; line-height:1.28; font-weight:800; color:#101A36; margin:0 0 8px 0;">${safeName}</h1>
         <p style="font-size:15px; color:#475569; margin:0;">${safeDescription}</p>
       </header>
 
-      <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-bottom:18px;">
-        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:14px;">
-          <h2 style="font-size:12px; font-weight:700; color:#475569; margin:0 0 4px 0;">${safeName} \u2014 Issuing Authority</h2>
-          <div style="font-size:14px; font-weight:700; color:${facts.authorityFromStoredData ? "#101A36" : "#B45309"};">${safeAuthority}</div>
-        </div>
-        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:14px;">
-          <h2 style="font-size:12px; font-weight:700; color:#475569; margin:0 0 4px 0;">${safeName} \u2014 Fees</h2>
-          <div style="font-size:14px; font-weight:700; color:${facts.feesFromStoredData ? "#1F9D6B" : "#B45309"};">${safeFeeHtml}</div>
-        </div>
-        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:14px;">
-          <h2 style="font-size:12px; font-weight:700; color:#475569; margin:0 0 4px 0;">${safeName} \u2014 Processing Time</h2>
-          <div style="font-size:14px; font-weight:700; color:${facts.timeFromStoredData ? "#101A36" : "#B45309"};">${safeTime}</div>
-        </div>
-      </section>
+      ${summaryCards.length > 0 ? `<section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-bottom:18px;">
+        ${summaryCards.join("")}
+      </section>` : ""}
 
-      <section style="margin-bottom:16px;">
-        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">${safeName} \u2014 Who Is Eligible</h2>
-        <p style="font-size:14px; color:${facts.eligibilityFromStoredData ? "#334155" : "#B45309"}; margin:0;">${safeEligibility}</p>
-      </section>
+      ${facts.eligibilityFromStoredData ? `<section style="margin-bottom:16px;">
+        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">Who Is Eligible \u2014 ${safeName}</h2>
+        <p style="font-size:14px; color:#334155; margin:0; white-space:pre-line;">${escapeHtml(facts.eligibility)}</p>
+      </section>` : ""}
 
-      <section style="margin-bottom:16px;">
-        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">${safeName} \u2014 Exact Documents List</h2>
-        ${facts.requirements.length > 0 ? `<ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
+      ${facts.requirements.length > 0 ? `<section style="margin-bottom:16px;">
+        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">Exact Documents List \u2014 ${safeName}</h2>
+        <ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
           ${facts.requirements.map((doc) => `<li>${escapeHtml(doc)}</li>`).join("")}
-        </ul>` : `<p style="font-size:14px; color:#B45309; margin:0;">${safeName} documents: [VERIFY]</p>`}
-      </section>
+        </ul>
+      </section>` : ""}
 
-      <section style="margin-bottom:16px;">
-        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">${safeName} \u2014 Step-by-Step Flow</h2>
-        ${facts.stepFlow.length > 0 ? `<ol style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
+      ${facts.stepFlow.length > 0 ? `<section style="margin-bottom:16px;">
+        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">Step-by-Step Flow \u2014 ${safeName}</h2>
+        <ol style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
           ${facts.stepFlow.map((s) => `<li>${escapeHtml(s)}</li>`).join("")}
-        </ol>` : `<p style="font-size:14px; color:#B45309; margin:0;">${safeName} steps: [VERIFY]</p>`}
-      </section>
+        </ol>
+      </section>` : ""}
 
-      <section style="margin-bottom:16px;">
-        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">${safeName} \u2014 Common Rejection Reasons</h2>
-        ${facts.rejectionReasons.length > 0 ? `<ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
+      ${facts.rejectionReasons.length > 0 ? `<section style="margin-bottom:16px;">
+        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">Common Rejection Reasons \u2014 ${safeName}</h2>
+        <ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
           ${facts.rejectionReasons.map((r) => `<li>${escapeHtml(r)}</li>`).join("")}
-        </ul>` : `<p style="font-size:14px; color:#B45309; margin:0;">${safeName} rejections: [VERIFY]</p>`}
-      </section>
+        </ul>
+      </section>` : ""}
 
-      <section style="margin-bottom:16px;">
-        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">${safeName} \u2014 Staff Pre-Submission Checks</h2>
-        ${facts.staffChecks.length > 0 ? `<ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
+      ${facts.staffChecks.length > 0 ? `<section style="margin-bottom:16px;">
+        <h2 style="font-size:17px; font-weight:700; color:#101A36; margin:0 0 6px 0;">CSC DOST Staff Pre-Submission Checks</h2>
+        <ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
           ${facts.staffChecks.map((c) => `<li>${escapeHtml(c)}</li>`).join("")}
-        </ul>` : `<p style="font-size:14px; color:#B45309; margin:0;">${safeName} checks: [VERIFY]</p>`}
-      </section>
+        </ul>
+      </section>` : ""}
 
       <details style="border:1px solid #E2E8F0; border-radius:8px; padding:10px 12px; margin-bottom:16px; background:#F8FAFC; font-size:13px;">
         <summary style="font-weight:700; color:#101A36; cursor:pointer;">Disclaimer &amp; FAQ</summary>
@@ -13341,7 +13685,7 @@ function renderServiceSubstantiveHtml(service) {
         <a href="${escapeHtml(waEnquiryUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:9px 16px; border-radius:10px; text-decoration:none;">WhatsApp</a>
         <a href="tel:+917006833767" style="display:inline-block; background:#101A36; color:#ffffff; font-weight:700; font-size:14px; padding:9px 16px; border-radius:10px; text-decoration:none;">+91 70068 33767</a>
         <a href="/apply?service=${encodeURIComponent(service.name)}" style="display:inline-block; background:#F8FAFC; color:#101A36; border:1px solid #CBD5E1; font-weight:700; font-size:14px; padding:9px 16px; border-radius:10px; text-decoration:none;">Request Filing</a>
-        ${facts.officialPortalUrl ? `<a href="${escapeHtml(facts.officialPortalUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#ffffff; color:#101A36; border:1px solid #CBD5E1; font-weight:600; font-size:14px; padding:9px 16px; border-radius:10px; text-decoration:none;">${escapeHtml(facts.officialPortalLabel || "Portal")} \u2197</a>` : ""}
+        ${facts.officialPortalUrl ? `<a href="${escapeHtml(facts.officialPortalUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#ffffff; color:#101A36; border:1px solid #CBD5E1; font-weight:600; font-size:14px; padding:9px 16px; border-radius:10px; text-decoration:none;">${escapeHtml(facts.officialPortalLabel || "Official Portal")} \u2197</a>` : ""}
       </div>
     </article>
     <script type="application/ld+json">${serviceSchemaJson}</script>
@@ -13349,8 +13693,12 @@ function renderServiceSubstantiveHtml(service) {
   </main>
   `;
 }
-function renderServiceClusterHubHtml(cluster, members) {
+function renderServiceClusterHubHtml(cluster, members, hubOverride) {
   const safeTitle = escapeHtml(cluster.title);
+  const hasWhatFor = hasExplicitContent(hubOverride?.whatDocumentIsFor);
+  const hasHowDiff = hasExplicitContent(hubOverride?.howServicesDiffer);
+  const commonMistakes = Array.isArray(hubOverride?.commonMistakes) && hasExplicitList(hubOverride.commonMistakes) ? hubOverride.commonMistakes.map((s) => s.trim()).filter(Boolean) : [];
+  const officialSources = Array.isArray(hubOverride?.officialSources) ? hubOverride.officialSources.filter((s) => hasExplicitContent(s?.label) && isValidHttpUrl(s?.url)) : [];
   return `
   ${renderPrimaryCategoryNavHtml("services")}
   <main class="ssr-article-wrapper" style="max-width:1040px; margin:0 auto; padding:12px 16px 32px 16px; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:15px; color:#101A36; line-height:1.6;">
@@ -13364,46 +13712,89 @@ function renderServiceClusterHubHtml(cluster, members) {
 
     <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; padding:24px;">
       <header style="border-bottom:1px solid #E2E8F0; padding-bottom:16px; margin-bottom:20px;">
-        <span style="display:inline-block; background:#EFF6FF; color:#1D4ED8; font-size:11px; font-weight:700; text-transform:uppercase; padding:4px 10px; border-radius:6px; margin-bottom:8px;">
-          Consolidated Service Hub \xB7 ${members.length} Services
-        </span>
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:8px;">
+          <span style="display:inline-block; background:#EFF6FF; color:#1D4ED8; font-size:11px; font-weight:700; text-transform:uppercase; padding:4px 10px; border-radius:6px;">
+            Consolidated Service Hub \xB7 ${members.length} Services
+          </span>
+          ${hasExplicitContent(hubOverride?.lastVerifiedDate) ? `<span style="font-size:12px; color:#64748B; font-weight:600;">Last verified: ${escapeHtml(hubOverride.lastVerifiedDate)}</span>` : ""}
+        </div>
         <h1 style="font-size:26px; font-weight:800; color:#101A36; margin:0 0 8px 0;">${safeTitle}</h1>
-        <p style="font-size:15px; color:#475569; margin:0 0 8px 0;">${escapeHtml(cluster.summary)}</p>
-        <p style="font-size:13px; color:#334155; margin:0;"><strong>Issuing Authority:</strong> ${escapeHtml(cluster.issuingAuthority)}</p>
+        <p style="font-size:15px; color:#475569; margin:0;">${escapeHtml(cluster.summary)}</p>
       </header>
 
-      <div style="overflow-x:auto; margin-bottom:20px;">
-        <table style="width:100%; border-collapse:collapse; font-size:13px; border:1px solid #E2E8F0;">
-          <thead>
-            <tr style="background:#F8FAFC; text-align:left;">
-              <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Service</th>
-              <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Documents</th>
-              <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Fee</th>
-              <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Time</th>
-              <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${members.map((m) => {
+      ${hasWhatFor ? `<section style="margin-bottom:20px;">
+        <h2 style="font-size:19px; font-weight:800; color:#101A36; margin:0 0 8px 0;">What These Documents &amp; Services Are For</h2>
+        <div style="font-size:15px; color:#334155; line-height:1.65; white-space:pre-line;">${escapeHtml(hubOverride.whatDocumentIsFor)}</div>
+      </section>` : ""}
+
+      ${hasHowDiff ? `<section style="margin-bottom:20px;">
+        <h2 style="font-size:19px; font-weight:800; color:#101A36; margin:0 0 8px 0;">How These Services Differ From Each Other</h2>
+        <div style="font-size:15px; color:#334155; line-height:1.65; white-space:pre-line;">${escapeHtml(hubOverride.howServicesDiffer)}</div>
+      </section>` : ""}
+
+      <section style="margin-bottom:22px;">
+        <h2 style="font-size:19px; font-weight:800; color:#101A36; margin:0 0 10px 0;">Comparison Table</h2>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:13px; border:1px solid #E2E8F0;">
+            <thead>
+              <tr style="background:#F8FAFC; text-align:left;">
+                <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Service</th>
+                <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Issuing Authority</th>
+                <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Who It Is For</th>
+                <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Typical Time</th>
+                <th style="padding:10px; border-bottom:1px solid #E2E8F0;">Fee Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${members.map((m) => {
     const f = deriveStoredServiceFacts(m);
-    const docsText = f.requirements.length > 0 ? f.requirements.join(", ") : "[VERIFY]";
     return `
-                <tr style="border-bottom:1px solid #E2E8F0;">
-                  <td style="padding:10px; vertical-align:top;">
-                    <div style="font-weight:700; color:#101A36;">${escapeHtml(m.name)}</div>
-                    <div style="color:#475569; margin-top:2px;">${escapeHtml(m.description)}</div>
-                  </td>
-                  <td style="padding:10px; vertical-align:top; color:#334155;">${escapeHtml(docsText)}</td>
-                  <td style="padding:10px; vertical-align:top; font-weight:700; color:#1F9D6B;">${escapeHtml(f.feesText)}</td>
-                  <td style="padding:10px; vertical-align:top; color:#334155;">${escapeHtml(f.estimatedTime)}</td>
-                  <td style="padding:10px; vertical-align:top;">
-                    <a href="/apply?service=${encodeURIComponent(m.name)}" style="display:inline-block; background:#101A36; color:#ffffff; padding:5px 10px; border-radius:6px; font-weight:700; text-decoration:none;">Apply</a>
-                  </td>
-                </tr>`;
+                  <tr style="border-bottom:1px solid #E2E8F0;">
+                    <td style="padding:10px; vertical-align:top; font-weight:700; color:#101A36;">${escapeHtml(m.name)}</td>
+                    <td style="padding:10px; vertical-align:top; color:#334155;">${f.authorityFromStoredData ? escapeHtml(f.issuingAuthority) : ""}</td>
+                    <td style="padding:10px; vertical-align:top; color:#334155;">${f.eligibilityFromStoredData ? escapeHtml(f.eligibility) : ""}</td>
+                    <td style="padding:10px; vertical-align:top; color:#334155;">${f.timeFromStoredData ? escapeHtml(f.estimatedTime) : ""}</td>
+                    <td style="padding:10px; vertical-align:top; font-weight:700; color:#1F9D6B;">${f.feesFromStoredData ? escapeHtml(f.feesText) : ""}</td>
+                  </tr>`;
   }).join("")}
-          </tbody>
-        </table>
-      </div>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section style="margin-bottom:22px;">
+        <h2 style="font-size:19px; font-weight:800; color:#101A36; margin:0 0 12px 0;">Service-by-Service Breakdown &amp; Specific Differences</h2>
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          ${members.map((m) => {
+    const f = deriveStoredServiceFacts(m);
+    const diffNote = hubOverride?.perServiceDifferences?.[m.id];
+    return `
+              <div style="border:1px solid #E2E8F0; border-radius:10px; padding:14px; background:#F8FAFC;">
+                <h3 style="font-size:16px; font-weight:700; color:#101A36; margin:0 0 6px 0;">${escapeHtml(m.name)}</h3>
+                <p style="font-size:14px; color:#334155; margin:0 0 6px 0;">${escapeHtml(m.description)}</p>
+                ${hasExplicitContent(diffNote) ? `<p style="font-size:14px; color:#1E293B; margin:0 0 6px 0;"><strong>Key Difference:</strong> ${escapeHtml(diffNote)}</p>` : ""}
+                ${f.eligibilityFromStoredData ? `<p style="font-size:13px; color:#334155; margin:0 0 6px 0;"><strong>Eligibility:</strong> ${escapeHtml(f.eligibility)}</p>` : ""}
+                ${f.requirements.length > 0 ? `<div style="font-size:13px; color:#334155;"><strong>Stored Documents Checklist:</strong> ${f.requirements.map((r) => escapeHtml(r)).join(", ")}</div>` : ""}
+              </div>`;
+  }).join("")}
+        </div>
+      </section>
+
+      ${commonMistakes.length > 0 ? `<section style="margin-bottom:20px;">
+        <h2 style="font-size:19px; font-weight:800; color:#101A36; margin:0 0 8px 0;">Common Mistakes &amp; Rejection Causes</h2>
+        <ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
+          ${commonMistakes.map((mistake) => `<li style="margin-bottom:4px;">${escapeHtml(mistake)}</li>`).join("")}
+        </ul>
+      </section>` : ""}
+
+      ${officialSources.length > 0 ? `<section style="margin-bottom:12px;">
+        <h2 style="font-size:19px; font-weight:800; color:#101A36; margin:0 0 8px 0;">Official Portals &amp; Sources</h2>
+        <ul style="padding-left:20px; font-size:14px; color:#334155; margin:0;">
+          ${officialSources.map(
+    (src) => `<li style="margin-bottom:4px;"><a href="${escapeHtml(src.url)}" target="_blank" rel="noopener noreferrer" style="color:#1D4ED8; font-weight:600;">${escapeHtml(src.label)} \u2197</a></li>`
+  ).join("")}
+        </ul>
+      </section>` : ""}
     </article>
     ${renderSsrPolicyFooterHtml()}
   </main>
@@ -13481,7 +13872,7 @@ function renderLegalPageSubstantiveHtml(pageType) {
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">5. Service-Page Verification &amp; Advertising Independence</h2>
           <p>
-            No scheme guide or CSC service fee sheet may be marked verified while any <code>[VERIFY]</code> gap remains open. Editorial selections, scheme summaries, and job rankings remain completely independent of third-party advertising networks and reflect only primary official notifications.
+            No scheme guide or CSC service fee sheet may be marked verified while any verification gap remains open. Editorial selections, scheme summaries, and job rankings remain completely independent of third-party advertising networks and reflect only primary official notifications.
           </p>
         </section>
       </article>
@@ -13970,22 +14361,10 @@ function renderPrimaryCategoryNavHtml(activeCategory) {
   </header>`;
 }
 function renderHomepageSubstantiveHtml(posts, services, alertsConfig, publishedGuides = PUBLISHED_GUIDE_ARTICLES) {
-  const dedupedPosts = getDeduplicatedSarkariPosts(posts);
-  const verifiedVisiblePosts = dedupedPosts.filter((p) => {
-    if (!isPublishedSarkariItem(p)) return false;
-    if (isOlderThan12Months(p)) return false;
-    const st = computeSarkariStatus(p);
-    return st.verificationStatus !== "needs_verification" && !p.isCancelled;
-  }).sort(
-    (a, b) => parseSarkariDateSortValue(b.postDate || b.documentDate) - parseSarkariDateSortValue(a.postDate || a.documentDate)
-  );
-  const closingSoonDeadlines = getActiveClosingDeadlines(dedupedPosts, { maxDays: 7 }).slice(0, 4);
-  const recruitmentPool = verifiedVisiblePosts.filter((p) => isRecruitmentSarkariItem(p));
-  const latestTwelveJobs = recruitmentPool.length >= 12 ? recruitmentPool.slice(0, 12) : [
-    ...recruitmentPool,
-    ...verifiedVisiblePosts.filter((p) => !recruitmentPool.some((r) => r.id === p.id))
-  ].slice(0, 12);
-  const educationPosts = verifiedVisiblePosts.filter((p) => isEducationSarkariItem(p)).slice(0, 6);
+  const homepageFeed = buildHomepageFeedData(posts);
+  const closingSoonDeadlines = homepageFeed.closingSoonDeadlines;
+  const latestJobsList = homepageFeed.buckets.jobs.slice(0, 10);
+  const educationPosts = homepageFeed.buckets.admission.slice(0, 6);
   const popularSchemes = publishedGuides.filter(
     (g) => g.category === "Central Scheme" || g.category === "State Services" || g.category === "Identity & Tax"
   ).slice(0, 4);
@@ -14003,17 +14382,17 @@ function renderHomepageSubstantiveHtml(posts, services, alertsConfig, publishedG
     { href: "/services", title: "CSC E-Services" },
     { href: "/tools", title: "Document Tools" },
     { href: "/calculators", title: "Citizen Calculators" },
-    { href: "/deadlines", title: "Closing Deadlines" },
+    { href: "/deadlines", title: "Deadlines" },
     { href: "/archive", title: "Notice Archive" }
   ];
   const closingSoonHtml = closingSoonDeadlines.length > 0 ? `
-    <section aria-label="Closing Today &amp; Soon" style="background:#FEF2F2; border:1px solid #FECACA; border-radius:12px; padding:10px 12px; margin-bottom:14px;">
-      <div style="font-size:12px; font-weight:800; color:#E5484D; margin-bottom:6px;">Closing Soon:</div>
+    <section aria-label="Closing soon deadlines" style="background:#FEF2F2; border:1px solid #FECACA; border-radius:12px; padding:10px 12px; margin-bottom:14px;">
+      <div style="font-size:12px; font-weight:800; color:#C81E24; margin-bottom:6px;">Closing soon:</div>
       <div style="display:flex; flex-wrap:wrap; gap:6px;">
         ${closingSoonDeadlines.map(
     (d) => `
           <a href="/post/${escapeHtml(d.item.id)}" style="background:#ffffff; border:1px solid #FECACA; border-radius:8px; padding:4px 8px; font-size:11px; font-weight:700; color:#101A36; text-decoration:none;">
-            ${escapeHtml(d.institution)} \xB7 ${escapeHtml(d.daysRemaining === 0 ? "Today" : `${d.daysRemaining}d left`)}
+            ${escapeHtml(formatShortChipTitle(d.item))} \xB7 ${escapeHtml(d.closesToday ? "Today" : `${Math.max(1, d.daysRemaining)}d left`)}
           </a>`
   ).join("")}
       </div>
@@ -14089,11 +14468,11 @@ function renderHomepageSubstantiveHtml(posts, services, alertsConfig, publishedG
 
       <section aria-labelledby="ssr-recruitment-heading" style="background:#ffffff; border:1px solid #E3E8F2; border-radius:14px; padding:14px; margin-bottom:14px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <h2 id="ssr-recruitment-heading" style="font-size:16px; font-weight:800; margin:0;">Latest 12 Job &amp; Recruitment Updates</h2>
+          <h2 id="ssr-recruitment-heading" style="font-size:16px; font-weight:800; margin:0;">Latest Job &amp; Recruitment Updates</h2>
           <a href="/jobs" style="font-size:12px; font-weight:700; color:#2455E6; text-decoration:none;">All Jobs \u2192</a>
         </div>
-        <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
-          ${latestTwelveJobs.map((post) => {
+        <ul data-ssr-feed="jobs" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
+          ${latestJobsList.map((post) => {
     const org = post.org || resolvePostOrg(post);
     return `
             <li style="border-bottom:1px solid #E3E8F2; padding-bottom:6px; display:flex; flex-wrap:wrap; justify-content:space-between; gap:6px;">
@@ -15230,7 +15609,7 @@ function renderCategorySubstantiveHtml(categoryType, posts, services, publishedG
             </h2>
             <p style="font-size:14px; color:#475569; line-height:1.4; margin:0 0 10px 0;">${escapeHtml(s.description)}</p>
             <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; border-top:1px solid #F1F5F9; padding-top:10px;">
-              <span style="font-weight:700; color:#101A36;">${escapeHtml(s.price?.trim() || "Ask us")}</span>
+              ${isNonPlaceholderFeeNote(s.price) ? `<span style="font-weight:700; color:#101A36;">${escapeHtml(s.price.trim())}</span>` : "<span></span>"}
               <a href="/service/${escapeHtml(s.id)}" style="color:#1F9D6B; font-weight:700; text-decoration:none;">View Service Details \u2192</a>
             </div>
           </article>
@@ -15262,9 +15641,9 @@ function renderCategorySubstantiveHtml(categoryType, posts, services, publishedG
 
       <section style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
         ${services.map((s) => {
-      const docs = Array.isArray(s.requirements) && s.requirements.length > 0 ? s.requirements.join(", ") : "Ask us";
-      const fee = s.price && s.price.trim() ? s.price.trim() : "Ask us";
-      const feeHtml = Array.isArray(s.feeLines) && s.feeLines.length > 0 ? s.feeLines.map((line) => `<div>${escapeHtml(line)}</div>`).join("") : escapeHtml(fee);
+      const facts = deriveStoredServiceFacts(s);
+      const docs = facts.requirements.length > 0 ? facts.requirements.join(", ") : "";
+      const feeHtml = facts.feeLines.length > 0 ? facts.feeLines.map((line) => `<div>${escapeHtml(line)}</div>`).join("") : facts.feesFromStoredData ? escapeHtml(facts.feesText) : "";
       const waHref = `https://wa.me/917006833767?text=${encodeURIComponent(`Hello Wasim Ahmad Khanday (CSC DOST), I would like to enquire about ${s.name}`)}`;
       return `
           <article style="background:#ffffff; border:1px solid #E2E8F0; border-radius:12px; padding:18px; display:flex; flex-direction:column; justify-content:space-between; gap:10px;">
@@ -15274,9 +15653,9 @@ function renderCategorySubstantiveHtml(categoryType, posts, services, publishedG
                 <a href="/service/${escapeHtml(s.id)}" style="color:#101A36; text-decoration:none;">${escapeHtml(s.name)}</a>
               </h2>
               <p style="font-size:14px; color:#475569; line-height:1.45; margin:0 0 8px 0;">${escapeHtml(s.description)}</p>
-              <div style="font-size:13px; color:#334155; margin-bottom:4px;"><strong>Documents needed:</strong> ${escapeHtml(docs)}</div>
-              ${s.estimatedTime && s.estimatedTime.trim() ? `<div style="font-size:13px; color:#334155; margin-bottom:4px;"><strong>Typical time:</strong> ${escapeHtml(s.estimatedTime.trim())}</div>` : ""}
-              <div style="font-size:13px; font-weight:700; color:#101A36;"><strong>Fee:</strong> ${feeHtml}</div>
+              ${docs ? `<div style="font-size:13px; color:#334155; margin-bottom:4px;"><strong>Documents needed:</strong> ${escapeHtml(docs)}</div>` : ""}
+              ${facts.timeFromStoredData ? `<div style="font-size:13px; color:#334155; margin-bottom:4px;"><strong>Typical time:</strong> ${escapeHtml(facts.estimatedTime)}</div>` : ""}
+              ${feeHtml ? `<div style="font-size:13px; font-weight:700; color:#101A36;"><strong>Fee:</strong> ${feeHtml}</div>` : ""}
             </div>
             <div style="border-top:1px solid #F1F5F9; padding-top:10px; display:flex; flex-wrap:wrap; gap:8px; font-size:13px;">
               <a href="${escapeHtml(waHref)}" target="_blank" rel="noopener noreferrer" style="background:#1F9D6B; color:#ffffff; padding:6px 10px; border-radius:8px; font-weight:700; text-decoration:none;">Enquire on WhatsApp</a>
@@ -15556,6 +15935,10 @@ var POST_EXACT_SEO_MAP = {
   "ssc-cpo-pet-pst-result-paper-2-exam-date-2026": {
     title: "SSC CPO SI 2025 PET/PST Result & Corrigendum | CSC DOST",
     description: "SSC SI Delhi Police & CAPFs Exam 2025 PET/PST result (10,676 qualified), Corrigendum dated 16/11/2026, and Paper-II exam date 28/11/2026 on CSC DOST."
+  },
+  "ignou-piu-consultants-recruitment-2026": {
+    title: "IGNOU PIU Consultants 2026 (Offline, 3 Posts) | CSC DOST",
+    description: "IGNOU Public Information Unit offline recruitment for 3 contractual Consultants (last date 11/12/2026). Check postal address, checklist & official Job-AD.pdf."
   }
 };
 function formatPostSeoTitle(item) {
@@ -15906,6 +16289,8 @@ var DEFAULT_DB = {
   guideVerificationLogs: [],
   postHealthOverrides: {},
   serviceHealthOverrides: {},
+  serviceClusterOverrides: {},
+  serviceStats: {},
   approvedServiceMerges: {},
   contentHealthLogs: []
 };
@@ -15955,6 +16340,8 @@ function getDb() {
       if (!Array.isArray(parsed.guideVerificationLogs)) parsed.guideVerificationLogs = [];
       if (!parsed.postHealthOverrides || typeof parsed.postHealthOverrides !== "object") parsed.postHealthOverrides = {};
       if (!parsed.serviceHealthOverrides || typeof parsed.serviceHealthOverrides !== "object") parsed.serviceHealthOverrides = {};
+      if (!parsed.serviceClusterOverrides || typeof parsed.serviceClusterOverrides !== "object") parsed.serviceClusterOverrides = {};
+      if (!parsed.serviceStats || typeof parsed.serviceStats !== "object") parsed.serviceStats = {};
       if (!parsed.approvedServiceMerges || typeof parsed.approvedServiceMerges !== "object") parsed.approvedServiceMerges = {};
       if (!Array.isArray(parsed.contentHealthLogs)) parsed.contentHealthLogs = [];
       const curEmail = String(parsed.settings?.email || "").trim().toLowerCase();
@@ -17058,6 +17445,48 @@ function bulkNoindexClassDItems(postIds, serviceIds, actor = "Staff Admin") {
   saveDb(db);
   return { updatedCount: totalCount, updatedPostIds, updatedServiceIds };
 }
+function getServiceClusterOverrides() {
+  const db = getDb();
+  return db.serviceClusterOverrides && typeof db.serviceClusterOverrides === "object" ? db.serviceClusterOverrides : {};
+}
+function upsertServiceClusterOverride(record) {
+  const db = getDb();
+  if (!db.serviceClusterOverrides || typeof db.serviceClusterOverrides !== "object") {
+    db.serviceClusterOverrides = {};
+  }
+  const prev = db.serviceClusterOverrides[record.clusterId] || { clusterId: record.clusterId };
+  const merged = {
+    ...prev,
+    ...record,
+    updatedAt: record.updatedAt || (/* @__PURE__ */ new Date()).toISOString().slice(0, 10)
+  };
+  db.serviceClusterOverrides[record.clusterId] = merged;
+  saveDb(db);
+  return merged;
+}
+function recordServiceDemandEvent(serviceId, eventType = "view") {
+  const db = getDb();
+  if (!db.serviceStats || typeof db.serviceStats !== "object") {
+    db.serviceStats = {};
+  }
+  const cleanId = String(serviceId || "").trim();
+  const prev = db.serviceStats[cleanId] || { views: 0, clicks: 0, enquiries: 0 };
+  const next = {
+    views: prev.views + (eventType === "view" ? 1 : 0),
+    clicks: prev.clicks + (eventType === "click" ? 1 : 0),
+    enquiries: prev.enquiries + (eventType === "enquiry" ? 1 : 0),
+    lastViewedAt: (/* @__PURE__ */ new Date()).toISOString()
+  };
+  if (cleanId) {
+    db.serviceStats[cleanId] = next;
+    saveDb(db);
+  }
+  return next;
+}
+function getServiceDemandStats() {
+  const db = getDb();
+  return db.serviceStats && typeof db.serviceStats === "object" ? db.serviceStats : {};
+}
 
 // src/utils/whatsappFormatter.ts
 var SEPARATOR_LINE = "\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501";
@@ -17202,6 +17631,9 @@ function detectWhatsAppNotificationCategory(item) {
     }
     return "result";
   }
+  if (item.section === "jobs" || cat === "army_jobs" || cat === "jkssb" || cat === "ssc_jobs" || cat === "rrb_jobs" || cat === "banking_jobs" || cat === "jobs" || postType === "job") {
+    return "job";
+  }
   const instUpper = (item.institution || "").toUpperCase().trim();
   const noticeTypeLower = (item.noticeType || "").toLowerCase().trim();
   if (cat === "ignou" || instUpper === "IGNOU") {
@@ -17221,7 +17653,7 @@ function detectWhatsAppNotificationCategory(item) {
     }
     return "admission";
   }
-  if (cat === "army_jobs" || cat === "jkssb" || cat === "ssc_jobs" || cat === "rrb_jobs" || cat === "jobs" || postType === "job" || /\b(recruitment|vacancies|vacancy|constable|sub[-\s]?inspector|junior\s+engineer|patwari|agniveer|tes[-\s]?\d+|ntpc|chsl|cgl|mts|clerk|stenographer|teacher|nurse)\b/i.test(
+  if (/\b(recruitment|vacancies|vacancy|constable|sub[-\s]?inspector|junior\s+engineer|patwari|agniveer|tes[-\s]?\d+|ntpc|chsl|cgl|mts|clerk|stenographer|teacher|nurse|consultant)\b/i.test(
     combined
   )) {
     return "job";
@@ -17467,6 +17899,11 @@ function buildWhatsAppNotification(item, overrides = {}) {
     if (organization) fields.push({ icon: "\u{1F4CC}", label: "Organization", value: organization });
     if (qualification) fields.push({ icon: "\u{1F393}", label: "Qualification", value: qualification });
     if (vacancies) fields.push({ icon: "\u{1F465}", label: "Vacancies", value: vacancies });
+    if (item.applicationMode === "offline") {
+      fields.push({ icon: "\u{1F4EE}", label: "Application Mode", value: item.postalAddress ? "Offline (By Post)" : "Offline" });
+    } else if (item.applicationMode === "hybrid") {
+      fields.push({ icon: "\u{1F4CB}", label: "Application Mode", value: "Online + Offline" });
+    }
     if (lastDate) fields.push({ icon: "\u{1F4C5}", label: "Last Date", value: lastDate });
   } else if (categoryType === "admission") {
     heading = "\u{1F393} *CSC DOST | ADMISSION UPDATE*";
@@ -19734,6 +20171,49 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use((req, res, next) => {
+  if (req.method === "HEAD") return next();
+  const acceptEncoding = String(req.headers["accept-encoding"] || "");
+  const supportsBr = /\bbr\b/i.test(acceptEncoding);
+  const supportsGzip = /\bgzip\b/i.test(acceptEncoding);
+  if (!supportsBr && !supportsGzip) return next();
+  const origSend = res.send.bind(res);
+  res.send = function compressedSend(body) {
+    try {
+      if (res.headersSent || res.getHeader("Content-Encoding") || req.path === "/api/events") {
+        return origSend(body);
+      }
+      const contentType = String(res.getHeader("Content-Type") || "");
+      const isCompressible = !contentType || /^(text\/|application\/(json|javascript|xml|xhtml\+xml|ld\+json)|image\/svg\+xml)/i.test(contentType);
+      if (!isCompressible || body == null) {
+        return origSend(body);
+      }
+      const rawBuf = Buffer.isBuffer(body) ? body : typeof body === "string" ? Buffer.from(body, "utf-8") : typeof body === "object" ? Buffer.from(JSON.stringify(body), "utf-8") : null;
+      if (!rawBuf || rawBuf.length < 1024) {
+        return origSend(body);
+      }
+      if (!contentType && typeof body === "object" && !Buffer.isBuffer(body)) {
+        res.setHeader("Content-Type", "application/json; charset=utf-8");
+      }
+      res.vary("Accept-Encoding");
+      if (supportsBr) {
+        const compressed2 = zlib.brotliCompressSync(rawBuf, {
+          params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 4 }
+        });
+        res.setHeader("Content-Encoding", "br");
+        res.setHeader("Content-Length", String(compressed2.length));
+        return origSend(compressed2);
+      }
+      const compressed = zlib.gzipSync(rawBuf, { level: 6 });
+      res.setHeader("Content-Encoding", "gzip");
+      res.setHeader("Content-Length", String(compressed.length));
+      return origSend(compressed);
+    } catch {
+      return origSend(body);
+    }
+  };
+  next();
+});
+app.use((req, res, next) => {
   const host = (req.get("x-forwarded-host") || req.get("host") || "").split(",")[0].trim();
   const forwardedProto = (req.get("x-forwarded-proto") || "").split(",")[0].trim();
   const isLocal = host.includes("localhost") || host.includes("127.0.0.1");
@@ -19923,6 +20403,16 @@ app.all("/api/tracker/view", (req, res) => {
   }
   const analytics = getAnalytics();
   res.json({ success: true, totalViews: analytics.views });
+});
+app.post("/api/tracker/service-view", (req, res) => {
+  const serviceId = String(req.body?.serviceId || "").trim();
+  const rawType = String(req.body?.type || "view").trim();
+  const eventType = rawType === "click" ? "click" : rawType === "enquiry" ? "enquiry" : "view";
+  if (!serviceId) {
+    return res.status(400).json({ success: false, error: "Missing serviceId." });
+  }
+  const stats = recordServiceDemandEvent(serviceId, eventType);
+  res.json({ success: true, stats });
 });
 app.get("/api/public-data", (req, res) => {
   const db = getDb();
@@ -23209,6 +23699,8 @@ function getAllMergedServices() {
         description: ov.description !== void 0 ? ov.description : next.description,
         issuingAuthority: ov.issuingAuthority !== void 0 ? ov.issuingAuthority : next.issuingAuthority,
         eligibility: ov.eligibility !== void 0 ? ov.eligibility : next.eligibility,
+        officialFee: ov.officialFee !== void 0 ? ov.officialFee : next.officialFee,
+        cscCharge: ov.cscCharge !== void 0 ? ov.cscCharge : next.cscCharge,
         requirements: Array.isArray(ov.requirements) ? ov.requirements : next.requirements,
         estimatedTime: ov.estimatedTime !== void 0 ? ov.estimatedTime : next.estimatedTime,
         price: ov.price !== void 0 ? ov.price : next.price,
@@ -23218,6 +23710,7 @@ function getAllMergedServices() {
         staffChecks: Array.isArray(ov.staffChecks) ? ov.staffChecks : next.staffChecks,
         rejectionReasons: Array.isArray(ov.rejectionReasons) ? ov.rejectionReasons : next.rejectionReasons,
         verifiedBy: ov.verifiedBy || next.verifiedBy,
+        lastVerifiedDate: ov.lastVerifiedDate !== void 0 ? ov.lastVerifiedDate : next.lastVerifiedDate,
         updatedAt: ov.updatedAt || next.updatedAt
       };
     }
@@ -23228,9 +23721,66 @@ function getAllMergedServices() {
     return next;
   });
 }
-app.get("/api/services", (_req, res) => {
+function getClusterHubEvaluations(mergedServices) {
+  const byId = new Map(mergedServices.map((s) => [s.id, s]));
+  const clusterOverrides = getServiceClusterOverrides();
+  const map = {};
+  for (const c of SERVICE_MERGE_CLUSTERS) {
+    const members = c.memberIds.map((id) => byId.get(id)).filter((s) => Boolean(s));
+    const override = clusterOverrides[c.clusterId] || { clusterId: c.clusterId };
+    const html = renderServiceClusterHubHtml(c, members, override);
+    const wordCount = extractMainTextWordCount(html).wordCount;
+    const readiness = evaluateClusterHubReadiness(c, members, override, wordCount);
+    map[c.clusterId] = { wordCount, override, readiness };
+  }
+  return { clusterOverrides, evaluations: map };
+}
+function isServiceReadyAndIndexable(service) {
+  const html = renderServiceSubstantiveHtml(service);
+  const wordCount = extractMainTextWordCount(html).wordCount;
+  const validation = validateServiceReadyToPublish(service, wordCount);
+  const isBlocked = service.publicationStatus === "draft" || service.publicationStatus === "archived" || Boolean(service.duplicateOfId) || Boolean(service.robotsNoindex);
+  return {
+    isIndexable: !isBlocked && validation.canPublish,
+    wordCount,
+    validation
+  };
+}
+function computeServiceDemandScores(services) {
+  const stats = getServiceDemandStats();
+  const db = getDb();
+  const scores = /* @__PURE__ */ new Map();
+  for (const s of services) {
+    const rec = stats[s.id];
+    const base = rec ? rec.views + rec.clicks * 2 + rec.enquiries * 5 : 0;
+    scores.set(s.id, base);
+  }
+  const apps = Array.isArray(db.appointments) ? db.appointments : [];
+  for (const appItem of apps) {
+    const svcId = String(appItem?.serviceId || "").trim();
+    const svcName = String(appItem?.service || appItem?.serviceName || "").toLowerCase();
+    for (const s of services) {
+      if (svcId && svcId === s.id || svcName && svcName.includes(s.name.toLowerCase())) {
+        scores.set(s.id, (scores.get(s.id) || 0) + 10);
+      }
+    }
+  }
+  const reqs = Array.isArray(db.contactRequests) ? db.contactRequests : [];
+  for (const r of reqs) {
+    const msg = `${r?.subject || ""} ${r?.message || ""}`.toLowerCase();
+    if (!msg.trim()) continue;
+    for (const s of services) {
+      if (msg.includes(s.id.toLowerCase()) || msg.includes(s.name.toLowerCase())) {
+        scores.set(s.id, (scores.get(s.id) || 0) + 5);
+      }
+    }
+  }
+  return scores;
+}
+app.get("/api/services", (req, res) => {
   const merged = getAllMergedServices();
   const approvedMerges = getApprovedServiceMerges();
+  const { clusterOverrides, evaluations } = getClusterHubEvaluations(merged);
   const redirectMap = {};
   for (const s of merged) {
     if (s.duplicateOfId) {
@@ -23240,14 +23790,61 @@ app.get("/api/services", (_req, res) => {
   const visible = merged.filter(
     (s) => s.publicationStatus !== "draft" && s.publicationStatus !== "archived" && !s.duplicateOfId
   );
+  const clusterReadiness = {};
+  for (const c of SERVICE_MERGE_CLUSTERS) {
+    clusterReadiness[c.clusterId] = Boolean(evaluations[c.clusterId]?.readiness.isIndexable);
+  }
+  const includeAll = req.query.includeAll === "1" || req.query.includeIncomplete === "1";
   res.json({
     success: true,
     services: visible,
     redirectMap,
+    clusterOverrides,
+    clusterReadiness,
     clusters: SERVICE_MERGE_CLUSTERS.map((c) => ({
       ...c,
-      approved: Boolean(approvedMerges[c.clusterId]?.approved)
-    }))
+      approved: Boolean(approvedMerges[c.clusterId]?.approved),
+      isIndexable: Boolean(evaluations[c.clusterId]?.readiness.isIndexable),
+      wordCount: evaluations[c.clusterId]?.wordCount || 0
+    })),
+    ...includeAll ? {
+      auditPublicUrls: {
+        serviceUrls: visible.map((s) => `/service/${s.id}`),
+        clusterUrls: SERVICE_MERGE_CLUSTERS.map((c) => c.hubPath)
+      }
+    } : {}
+  });
+});
+app.get("/api/audit/public-urls", (_req, res) => {
+  const merged = getAllMergedServices();
+  const { evaluations } = getClusterHubEvaluations(merged);
+  const visibleServices = merged.filter(
+    (s) => s.publicationStatus !== "draft" && s.publicationStatus !== "archived" && !s.duplicateOfId
+  );
+  const serviceEntries = visibleServices.map((s) => {
+    const check = isServiceReadyAndIndexable(s);
+    return {
+      path: `/service/${s.id}`,
+      id: s.id,
+      isIndexable: check.isIndexable,
+      wordCount: check.wordCount,
+      missingFields: check.validation.missingFields
+    };
+  });
+  const clusterEntries = SERVICE_MERGE_CLUSTERS.map((c) => {
+    const ev = evaluations[c.clusterId];
+    return {
+      path: c.hubPath,
+      clusterId: c.clusterId,
+      isIndexable: Boolean(ev?.readiness.isIndexable),
+      wordCount: ev?.wordCount || 0,
+      missingCount: ev?.readiness.missingData.length || 0
+    };
+  });
+  res.json({
+    success: true,
+    serviceEntries,
+    clusterEntries
   });
 });
 app.get("/api/guides", (_req, res) => {
@@ -23392,7 +23989,7 @@ app.get("/api/staff/content-health", authenticateAdmin, (_req, res) => {
     const metrics = extractMainTextWordCount(html);
     postMetricsMap.set(urlPath, metrics);
     if (!post.robotsNoindex && !isStaleOver90Days(post)) {
-      shingleCandidates.push({ path: urlPath, shingles: buildWordShingles(html.replace(/<[^>]+>/g, " "), 5) });
+      shingleCandidates.push({ path: urlPath, shingles: buildWordShingles(stripBoilerplateForAudit(html), 5) });
     }
   }
   const serviceMetricsMap = /* @__PURE__ */ new Map();
@@ -23401,8 +23998,8 @@ app.get("/api/staff/content-health", authenticateAdmin, (_req, res) => {
     const html = renderServiceSubstantiveHtml(svc);
     const metrics = extractMainTextWordCount(html);
     serviceMetricsMap.set(urlPath, metrics);
-    if (svc.publicationStatus !== "draft" && svc.publicationStatus !== "archived" && !svc.duplicateOfId && !svc.robotsNoindex) {
-      shingleCandidates.push({ path: urlPath, shingles: buildWordShingles(html.replace(/<[^>]+>/g, " "), 5) });
+    if (isServiceReadyAndIndexable(svc).isIndexable) {
+      shingleCandidates.push({ path: urlPath, shingles: buildWordShingles(stripBoilerplateForAudit(html), 5) });
     }
   }
   const toolMetricsMap = /* @__PURE__ */ new Map();
@@ -23411,7 +24008,7 @@ app.get("/api/staff/content-health", authenticateAdmin, (_req, res) => {
     const html = renderToolDetailSubstantiveHtml(tool);
     const metrics = extractMainTextWordCount(html);
     toolMetricsMap.set(urlPath, metrics);
-    shingleCandidates.push({ path: urlPath, shingles: buildWordShingles(html.replace(/<[^>]+>/g, " "), 5) });
+    shingleCandidates.push({ path: urlPath, shingles: buildWordShingles(stripBoilerplateForAudit(html), 5) });
   }
   const liveJaccardMap = /* @__PURE__ */ new Map();
   for (let i = 0; i < shingleCandidates.length; i++) {
@@ -23488,9 +24085,10 @@ app.get("/api/staff/content-health", authenticateAdmin, (_req, res) => {
     const urlPath = `/service/${svc.id}`;
     const facts = deriveStoredServiceFacts(svc);
     const metrics = serviceMetricsMap.get(urlPath) || { wordCount: 0, hasOfficialLink: false, hasLastUpdated: false };
+    const readyCheck = validateServiceReadyToPublish(svc, metrics.wordCount);
     const liveDup = liveJaccardMap.get(urlPath);
     const highestJaccard = liveDup?.score || 0;
-    const feeText = svc.price?.trim() ? ` Fee: ${svc.price.trim()}.` : " Fee: [VERIFY].";
+    const feeText = facts.feesFromStoredData ? ` Fee: ${facts.feesText}.` : "";
     const cls = classifyAuditPage({
       url: `${SITE_ORIGIN}${urlPath}`,
       httpStatus: 200,
@@ -23499,13 +24097,14 @@ app.get("/api/staff/content-health", authenticateAdmin, (_req, res) => {
       h1Count: 1,
       wordCount: metrics.wordCount,
       hasOfficialLink: Boolean(facts.officialPortalUrl),
-      hasLastUpdated: Boolean(svc.updatedAt),
+      hasLastUpdated: Boolean(facts.lastVerifiedDate),
       hasFaqOrHowTo: facts.stepFlow.length > 0,
       copiedRunLength: 0,
       highestJaccardScore: highestJaccard,
       nearDuplicateOf: liveDup?.peer || svc.duplicateOfId,
       canonicalMismatch: Boolean(svc.duplicateOfId)
     });
+    const effectiveNoindex = Boolean(svc.robotsNoindex || svc.duplicateOfId || !readyCheck.canPublish);
     items.push({
       id: svc.id,
       url: urlPath,
@@ -23514,9 +24113,9 @@ app.get("/api/staff/content-health", authenticateAdmin, (_req, res) => {
       auditClass: svc.duplicateOfId ? "D" : cls.auditClass,
       wordCount: metrics.wordCount,
       hasOfficialLink: Boolean(facts.officialPortalUrl),
-      hasLastUpdated: Boolean(svc.updatedAt),
+      hasLastUpdated: Boolean(facts.lastVerifiedDate),
       publicationStatus: svc.publicationStatus || "published",
-      robotsNoindex: Boolean(svc.robotsNoindex || svc.duplicateOfId),
+      robotsNoindex: effectiveNoindex,
       duplicateOfId: svc.duplicateOfId,
       hasVerifyPlaceholders: facts.hasVerifyPlaceholders,
       missingVerifyFields: facts.missingVerifyFields,
@@ -23527,16 +24126,19 @@ app.get("/api/staff/content-health", authenticateAdmin, (_req, res) => {
         name: svc.name,
         category: svc.category,
         description: svc.description,
-        issuingAuthority: svc.issuingAuthority || (facts.authorityFromStoredData ? facts.issuingAuthority : ""),
+        issuingAuthority: svc.issuingAuthority || "",
+        officialFee: svc.officialFee || "",
+        cscCharge: svc.cscCharge || "",
         eligibility: svc.eligibility || "",
-        requirements: svc.requirements || [],
-        estimatedTime: svc.estimatedTime || "",
+        requirements: facts.requirements,
+        estimatedTime: facts.estimatedTime,
         price: svc.price || "",
         feeLines: svc.feeLines || [],
-        officialUrl: svc.officialUrl || facts.officialPortalUrl || "",
-        stepFlow: svc.stepFlow || [],
-        staffChecks: svc.staffChecks || [],
-        rejectionReasons: svc.rejectionReasons || [],
+        officialUrl: svc.officialUrl || "",
+        stepFlow: facts.stepFlow,
+        staffChecks: facts.staffChecks,
+        rejectionReasons: facts.rejectionReasons,
+        lastVerifiedDate: svc.lastVerifiedDate || "",
         notes: svcOverrides[svc.id]?.verifiedBy || svc.verifiedBy || ""
       }
     });
@@ -23719,6 +24321,8 @@ app.post("/api/staff/content-health/service/save", authenticateAdmin, (req, res)
     name: body.name !== void 0 ? String(body.name).trim() || target.name : target.name,
     description: body.description !== void 0 ? String(body.description).trim() : target.description,
     issuingAuthority: body.issuingAuthority !== void 0 ? String(body.issuingAuthority).trim() : target.issuingAuthority,
+    officialFee: body.officialFee !== void 0 ? String(body.officialFee).trim() : target.officialFee,
+    cscCharge: body.cscCharge !== void 0 ? String(body.cscCharge).trim() : target.cscCharge,
     eligibility: body.eligibility !== void 0 ? String(body.eligibility).trim() : target.eligibility,
     requirements: Array.isArray(body.requirements) ? body.requirements.map((s) => String(s).trim()).filter(Boolean) : target.requirements,
     estimatedTime: body.estimatedTime !== void 0 ? String(body.estimatedTime).trim() : target.estimatedTime,
@@ -23728,26 +24332,30 @@ app.post("/api/staff/content-health/service/save", authenticateAdmin, (req, res)
     stepFlow: Array.isArray(body.stepFlow) ? body.stepFlow.map((s) => String(s).trim()).filter(Boolean) : target.stepFlow,
     staffChecks: Array.isArray(body.staffChecks) ? body.staffChecks.map((s) => String(s).trim()).filter(Boolean) : target.staffChecks,
     rejectionReasons: Array.isArray(body.rejectionReasons) ? body.rejectionReasons.map((s) => String(s).trim()).filter(Boolean) : target.rejectionReasons,
+    lastVerifiedDate: body.lastVerifiedDate !== void 0 ? String(body.lastVerifiedDate).trim() : target.lastVerifiedDate,
     verifiedBy: actor,
     updatedAt: nowDate
   };
-  if (publicationStatus === "published") {
-    const check = validateServiceReadyToPublish(candidateService);
-    if (!check.canPublish) {
-      return res.status(400).json({
-        success: false,
-        error: check.errors[0] || "Cannot publish service with [VERIFY] placeholders remaining.",
-        errors: check.errors,
-        missingFields: check.missingFields
-      });
-    }
+  const renderedWordCount = extractMainTextWordCount(renderServiceSubstantiveHtml(candidateService)).wordCount;
+  const check = validateServiceReadyToPublish(candidateService, renderedWordCount);
+  if (publicationStatus === "published" && !check.canPublish) {
+    return res.status(400).json({
+      success: false,
+      error: check.errors[0] || "Cannot publish service with missing verified fields or under 400 words.",
+      errors: check.errors,
+      missingFields: check.missingFields,
+      wordCount: renderedWordCount
+    });
   }
   const saved = upsertServiceHealthOverride({
     id: serviceId,
     publicationStatus,
+    robotsNoindex: !check.canPublish,
     name: candidateService.name,
     description: candidateService.description,
     issuingAuthority: candidateService.issuingAuthority,
+    officialFee: candidateService.officialFee,
+    cscCharge: candidateService.cscCharge,
     eligibility: candidateService.eligibility,
     requirements: candidateService.requirements,
     estimatedTime: candidateService.estimatedTime,
@@ -23758,17 +24366,419 @@ app.post("/api/staff/content-health/service/save", authenticateAdmin, (req, res)
     staffChecks: candidateService.staffChecks,
     rejectionReasons: candidateService.rejectionReasons,
     verifiedBy: actor,
+    lastVerifiedDate: candidateService.lastVerifiedDate,
     updatedAt: nowDate,
     updatedBy: actor
   });
   addContentHealthLog({
     postId: serviceId,
-    action: publicationStatus === "published" ? "service_publish" : "service_save",
+    action: publicationStatus === "published" && check.canPublish ? "service_publish" : "service_save",
     actor,
     timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-    details: publicationStatus === "published" ? "Verified all service fields and published /service/" + serviceId : "Saved service verification draft edits"
+    details: publicationStatus === "published" && check.canPublish ? `Verified all 11 fields (${renderedWordCount} words) and indexed /service/${serviceId}` : `Saved service draft edits (${renderedWordCount} words, ${check.missingFields.length} missing fields)`
   });
-  res.json({ success: true, override: saved });
+  res.json({ success: true, override: saved, wordCount: renderedWordCount, validation: check });
+});
+function sanitizeStaffCsvText(val) {
+  const s = String(val ?? "").trim();
+  if (!s) return "";
+  if (/\[VERIFY\]/i.test(s) || /\bask us\b/i.test(s)) return "";
+  return s;
+}
+function splitStaffListInput(val) {
+  if (Array.isArray(val)) {
+    return val.map((item) => sanitizeStaffCsvText(item)).filter(Boolean);
+  }
+  return String(val ?? "").split(/\r?\n|\s*\|\s*/).map((item) => sanitizeStaffCsvText(item)).filter(Boolean);
+}
+app.get("/api/staff/service-facts", authenticateAdmin, (_req, res) => {
+  const allServices = getAllMergedServices();
+  const demandScores = computeServiceDemandScores(allServices);
+  const demandStats = getServiceDemandStats();
+  const sorted = [...allServices].sort((a, b) => {
+    const scoreDiff = (demandScores.get(b.id) || 0) - (demandScores.get(a.id) || 0);
+    if (scoreDiff !== 0) return scoreDiff;
+    return a.name.localeCompare(b.name);
+  });
+  const enriched = sorted.map((svc, idx) => {
+    const facts = deriveStoredServiceFacts(svc);
+    const wordCount = extractMainTextWordCount(renderServiceSubstantiveHtml(svc)).wordCount;
+    const validation = validateServiceReadyToPublish(svc, wordCount);
+    const stat = demandStats[svc.id] || { views: 0, clicks: 0, enquiries: 0 };
+    return {
+      priorityRank: idx + 1,
+      demandScore: demandScores.get(svc.id) || 0,
+      demandBreakdown: stat,
+      id: svc.id,
+      name: svc.name,
+      category: svc.category,
+      description: svc.description,
+      legacyPriceNote: svc.price || "",
+      issuingAuthority: facts.authorityFromStoredData ? facts.issuingAuthority : "",
+      officialFee: facts.officialFeeFromStoredData ? facts.officialFee : "",
+      cscCharge: facts.cscChargeFromStoredData ? facts.cscCharge : "",
+      estimatedTime: facts.timeFromStoredData ? facts.estimatedTime : "",
+      eligibility: facts.eligibilityFromStoredData ? facts.eligibility : "",
+      requirements: facts.requirements,
+      stepFlow: facts.stepFlow,
+      rejectionReasons: facts.rejectionReasons,
+      staffChecks: facts.staffChecks,
+      officialUrl: facts.officialUrlFromStoredData ? facts.officialPortalUrl : "",
+      lastVerifiedDate: facts.lastVerifiedFromStoredData ? facts.lastVerifiedDate : "",
+      wordCount,
+      missingFields: validation.missingFields,
+      validationErrors: validation.errors,
+      isComplete: validation.canPublish,
+      isIndexable: validation.canPublish && !svc.robotsNoindex && !svc.duplicateOfId,
+      robotsNoindex: Boolean(svc.robotsNoindex || !validation.canPublish),
+      duplicateOfId: svc.duplicateOfId || "",
+      clusterId: getClusterForServiceId(svc.id)?.clusterId || ""
+    };
+  });
+  const { evaluations } = getClusterHubEvaluations(allServices);
+  const clusters = SERVICE_MERGE_CLUSTERS.map((c) => {
+    const ev = evaluations[c.clusterId];
+    const memberSet = new Set(c.memberIds);
+    const membersSummary = enriched.filter((s) => memberSet.has(s.id)).map((s) => ({
+      id: s.id,
+      name: s.name,
+      isComplete: s.isComplete,
+      missingFields: s.missingFields
+    }));
+    return {
+      clusterId: c.clusterId,
+      title: c.title,
+      hubPath: c.hubPath,
+      summary: c.summary,
+      wordCount: ev?.wordCount || 0,
+      isIndexable: Boolean(ev?.readiness.isIndexable),
+      missingData: ev?.readiness.missingData || [],
+      sectionStatus: ev?.readiness.sectionStatus,
+      override: ev?.override || { clusterId: c.clusterId },
+      members: membersSummary
+    };
+  });
+  res.json({
+    success: true,
+    totalServices: enriched.length,
+    completeCount: enriched.filter((s) => s.isComplete).length,
+    indexableCount: enriched.filter((s) => s.isIndexable).length,
+    services: enriched,
+    clusters,
+    logs: getContentHealthLogs(40)
+  });
+});
+app.post("/api/staff/service-facts/save", authenticateAdmin, (req, res) => {
+  const body = req.body || {};
+  const serviceId = String(body.id || "").trim();
+  if (!serviceId) {
+    return res.status(400).json({ success: false, error: "Missing service ID." });
+  }
+  const allServices = getAllMergedServices();
+  const target = allServices.find((s) => s.id === serviceId);
+  if (!target) {
+    return res.status(404).json({ success: false, error: "Service not found." });
+  }
+  const actor = req.adminUser?.email || req.adminUser?.username || "Staff Admin";
+  const nowDate = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+  const requireComplete = Boolean(body.requireComplete);
+  const nextOfficialFee = body.officialFee !== void 0 ? sanitizeStaffCsvText(body.officialFee) : target.officialFee || "";
+  const nextCscCharge = body.cscCharge !== void 0 ? sanitizeStaffCsvText(body.cscCharge) : target.cscCharge || "";
+  const computedFeeLines = [];
+  if (nextOfficialFee) computedFeeLines.push(`Official Fee: ${nextOfficialFee}`);
+  if (nextCscCharge) computedFeeLines.push(`CSC DOST Charge: ${nextCscCharge}`);
+  const candidateService = {
+    ...target,
+    name: body.name !== void 0 ? sanitizeStaffCsvText(body.name) || target.name : target.name,
+    description: body.description !== void 0 ? sanitizeStaffCsvText(body.description) || target.description : target.description,
+    issuingAuthority: body.issuingAuthority !== void 0 ? sanitizeStaffCsvText(body.issuingAuthority) : target.issuingAuthority,
+    officialFee: nextOfficialFee,
+    cscCharge: nextCscCharge,
+    feeLines: computedFeeLines.length > 0 ? computedFeeLines : target.feeLines,
+    estimatedTime: body.estimatedTime !== void 0 ? sanitizeStaffCsvText(body.estimatedTime) : target.estimatedTime,
+    eligibility: body.eligibility !== void 0 ? sanitizeStaffCsvText(body.eligibility) : target.eligibility,
+    requirements: body.requirements !== void 0 ? splitStaffListInput(body.requirements) : target.requirements,
+    stepFlow: body.stepFlow !== void 0 ? splitStaffListInput(body.stepFlow) : target.stepFlow,
+    rejectionReasons: body.rejectionReasons !== void 0 ? splitStaffListInput(body.rejectionReasons) : target.rejectionReasons,
+    staffChecks: body.staffChecks !== void 0 ? splitStaffListInput(body.staffChecks) : target.staffChecks,
+    officialUrl: body.officialUrl !== void 0 ? sanitizeStaffCsvText(body.officialUrl) : target.officialUrl,
+    lastVerifiedDate: body.lastVerifiedDate !== void 0 ? sanitizeStaffCsvText(body.lastVerifiedDate) : target.lastVerifiedDate,
+    verifiedBy: actor,
+    updatedAt: nowDate
+  };
+  const wordCount = extractMainTextWordCount(renderServiceSubstantiveHtml(candidateService)).wordCount;
+  const check = validateServiceReadyToPublish(candidateService, wordCount);
+  if (requireComplete && !check.canPublish) {
+    return res.status(400).json({
+      success: false,
+      error: check.errors[0] || "Complete all 11 fields and reach 400+ words before marking indexable.",
+      errors: check.errors,
+      missingFields: check.missingFields,
+      wordCount
+    });
+  }
+  const saved = upsertServiceHealthOverride({
+    id: serviceId,
+    publicationStatus: "published",
+    robotsNoindex: target.duplicateOfId ? true : !check.canPublish,
+    name: candidateService.name,
+    description: candidateService.description,
+    issuingAuthority: candidateService.issuingAuthority,
+    officialFee: candidateService.officialFee,
+    cscCharge: candidateService.cscCharge,
+    feeLines: candidateService.feeLines,
+    estimatedTime: candidateService.estimatedTime,
+    eligibility: candidateService.eligibility,
+    requirements: candidateService.requirements,
+    stepFlow: candidateService.stepFlow,
+    rejectionReasons: candidateService.rejectionReasons,
+    staffChecks: candidateService.staffChecks,
+    officialUrl: candidateService.officialUrl,
+    lastVerifiedDate: candidateService.lastVerifiedDate,
+    verifiedBy: actor,
+    updatedAt: nowDate,
+    updatedBy: actor
+  });
+  addContentHealthLog({
+    postId: serviceId,
+    action: check.canPublish ? "service_publish" : "service_save",
+    actor,
+    timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+    details: check.canPublish ? `Service Facts complete (${wordCount} words) \u2014 /service/${serviceId} now indexable` : `Saved Service Facts draft (${wordCount} words, ${check.missingFields.length} field(s) remaining)`
+  });
+  res.json({
+    success: true,
+    override: saved,
+    wordCount,
+    isComplete: check.canPublish,
+    missingFields: check.missingFields,
+    errors: check.errors
+  });
+});
+app.get("/api/staff/service-facts/export.csv", authenticateAdmin, (_req, res) => {
+  const allServices = getAllMergedServices();
+  const demandScores = computeServiceDemandScores(allServices);
+  const sorted = [...allServices].sort((a, b) => {
+    const scoreDiff = (demandScores.get(b.id) || 0) - (demandScores.get(a.id) || 0);
+    if (scoreDiff !== 0) return scoreDiff;
+    return a.name.localeCompare(b.name);
+  });
+  const csvCell = (value) => {
+    const str = String(value ?? "");
+    if (/[",\r\n]/.test(str)) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+  const headers = [
+    "id",
+    "name",
+    "category",
+    "priorityRank",
+    "demandScore",
+    "issuingAuthority",
+    "officialFee",
+    "cscCharge",
+    "estimatedTime",
+    "eligibility",
+    "requirements",
+    "stepFlow",
+    "rejectionReasons",
+    "staffChecks",
+    "officialUrl",
+    "lastVerifiedDate",
+    "wordCount",
+    "isComplete"
+  ];
+  const rows = [headers.join(",")];
+  sorted.forEach((svc, idx) => {
+    const facts = deriveStoredServiceFacts(svc);
+    const wordCount = extractMainTextWordCount(renderServiceSubstantiveHtml(svc)).wordCount;
+    const ready = validateServiceReadyToPublish(svc, wordCount).canPublish;
+    const row = [
+      svc.id,
+      svc.name,
+      svc.category,
+      idx + 1,
+      demandScores.get(svc.id) || 0,
+      facts.authorityFromStoredData ? facts.issuingAuthority : "",
+      facts.officialFeeFromStoredData ? facts.officialFee : "",
+      facts.cscChargeFromStoredData ? facts.cscCharge : "",
+      facts.timeFromStoredData ? facts.estimatedTime : "",
+      facts.eligibilityFromStoredData ? facts.eligibility : "",
+      facts.requirements.join(" | "),
+      facts.stepFlow.join(" | "),
+      facts.rejectionReasons.join(" | "),
+      facts.staffChecks.join(" | "),
+      facts.officialUrlFromStoredData ? facts.officialPortalUrl : "",
+      facts.lastVerifiedFromStoredData ? facts.lastVerifiedDate : "",
+      wordCount,
+      ready ? "YES" : "NO"
+    ];
+    rows.push(row.map(csvCell).join(","));
+  });
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", 'attachment; filename="cscdost_service_facts.csv"');
+  res.send(rows.join("\n"));
+});
+app.post("/api/staff/service-facts/import", authenticateAdmin, (req, res) => {
+  const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
+  if (rows.length === 0) {
+    return res.status(400).json({ success: false, error: "No CSV rows supplied." });
+  }
+  const allServices = getAllMergedServices();
+  const byId = new Map(allServices.map((s) => [s.id, s]));
+  const actor = req.adminUser?.email || req.adminUser?.username || "Staff Admin";
+  const nowDate = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+  let updatedCount = 0;
+  let skippedCount = 0;
+  const unknownIds = [];
+  for (const row of rows) {
+    const id = String(row?.id || "").trim();
+    if (!id) {
+      skippedCount++;
+      continue;
+    }
+    const existing = byId.get(id);
+    if (!existing) {
+      unknownIds.push(id);
+      continue;
+    }
+    const issuingAuthority = sanitizeStaffCsvText(row.issuingAuthority);
+    const officialFee = sanitizeStaffCsvText(row.officialFee);
+    const cscCharge = sanitizeStaffCsvText(row.cscCharge);
+    const estimatedTime = sanitizeStaffCsvText(row.estimatedTime);
+    const eligibility = sanitizeStaffCsvText(row.eligibility);
+    const requirements = splitStaffListInput(row.requirements);
+    const stepFlow = splitStaffListInput(row.stepFlow);
+    const rejectionReasons = splitStaffListInput(row.rejectionReasons);
+    const staffChecks = splitStaffListInput(row.staffChecks);
+    const officialUrl = sanitizeStaffCsvText(row.officialUrl);
+    const lastVerifiedDate = sanitizeStaffCsvText(row.lastVerifiedDate);
+    const hasAnyValue = Boolean(
+      issuingAuthority || officialFee || cscCharge || estimatedTime || eligibility || requirements.length || stepFlow.length || rejectionReasons.length || staffChecks.length || officialUrl || lastVerifiedDate
+    );
+    if (!hasAnyValue) {
+      skippedCount++;
+      continue;
+    }
+    const nextOfficialFee = officialFee || existing.officialFee || "";
+    const nextCscCharge = cscCharge || existing.cscCharge || "";
+    const nextFeeLines = [];
+    if (nextOfficialFee) nextFeeLines.push(`Official Fee: ${nextOfficialFee}`);
+    if (nextCscCharge) nextFeeLines.push(`CSC DOST Charge: ${nextCscCharge}`);
+    const candidate = {
+      ...existing,
+      issuingAuthority: issuingAuthority || existing.issuingAuthority,
+      officialFee: nextOfficialFee || void 0,
+      cscCharge: nextCscCharge || void 0,
+      feeLines: nextFeeLines.length > 0 ? nextFeeLines : existing.feeLines,
+      estimatedTime: estimatedTime || existing.estimatedTime,
+      eligibility: eligibility || existing.eligibility,
+      requirements: requirements.length > 0 ? requirements : existing.requirements,
+      stepFlow: stepFlow.length > 0 ? stepFlow : existing.stepFlow,
+      rejectionReasons: rejectionReasons.length > 0 ? rejectionReasons : existing.rejectionReasons,
+      staffChecks: staffChecks.length > 0 ? staffChecks : existing.staffChecks,
+      officialUrl: officialUrl || existing.officialUrl,
+      lastVerifiedDate: lastVerifiedDate || existing.lastVerifiedDate,
+      verifiedBy: actor,
+      updatedAt: nowDate
+    };
+    const wordCount = extractMainTextWordCount(renderServiceSubstantiveHtml(candidate)).wordCount;
+    const check = validateServiceReadyToPublish(candidate, wordCount);
+    upsertServiceHealthOverride({
+      id,
+      publicationStatus: "published",
+      robotsNoindex: existing.duplicateOfId ? true : !check.canPublish,
+      issuingAuthority: candidate.issuingAuthority,
+      officialFee: candidate.officialFee,
+      cscCharge: candidate.cscCharge,
+      feeLines: candidate.feeLines,
+      estimatedTime: candidate.estimatedTime,
+      eligibility: candidate.eligibility,
+      requirements: candidate.requirements,
+      stepFlow: candidate.stepFlow,
+      rejectionReasons: candidate.rejectionReasons,
+      staffChecks: candidate.staffChecks,
+      officialUrl: candidate.officialUrl,
+      lastVerifiedDate: candidate.lastVerifiedDate,
+      verifiedBy: actor,
+      updatedAt: nowDate,
+      updatedBy: actor
+    });
+    updatedCount++;
+  }
+  if (updatedCount > 0) {
+    addContentHealthLog({
+      postId: `CSV_IMPORT(${updatedCount})`,
+      action: "service_csv_import",
+      actor,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      details: `Imported verified service facts via CSV (${updatedCount} updated, ${skippedCount} skipped)`
+    });
+  }
+  res.json({
+    success: true,
+    updatedCount,
+    skippedCount,
+    unknownIds
+  });
+});
+app.post("/api/staff/service-facts/cluster/save", authenticateAdmin, (req, res) => {
+  const body = req.body || {};
+  const clusterId = String(body.clusterId || "").trim();
+  const cluster = getServiceClusterById(clusterId);
+  if (!cluster) {
+    return res.status(404).json({ success: false, error: "Cluster hub not found." });
+  }
+  const actor = req.adminUser?.email || req.adminUser?.username || "Staff Admin";
+  const nowDate = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+  const whatDocumentIsFor = sanitizeStaffCsvText(body.whatDocumentIsFor);
+  const howServicesDiffer = sanitizeStaffCsvText(body.howServicesDiffer);
+  const commonMistakes = splitStaffListInput(body.commonMistakes);
+  const rawSources = Array.isArray(body.officialSources) ? body.officialSources : [];
+  const officialSources = rawSources.map((s) => ({
+    label: sanitizeStaffCsvText(s?.label),
+    url: sanitizeStaffCsvText(s?.url)
+  })).filter((s) => s.label && s.url);
+  const perServiceDifferences = {};
+  if (body.perServiceDifferences && typeof body.perServiceDifferences === "object") {
+    for (const [k, v] of Object.entries(body.perServiceDifferences)) {
+      const cleaned = sanitizeStaffCsvText(v);
+      if (cleaned) perServiceDifferences[k] = cleaned;
+    }
+  }
+  const lastVerifiedDate = sanitizeStaffCsvText(body.lastVerifiedDate) || nowDate;
+  const saved = upsertServiceClusterOverride({
+    clusterId,
+    whatDocumentIsFor,
+    howServicesDiffer,
+    commonMistakes,
+    officialSources,
+    perServiceDifferences,
+    lastVerifiedDate,
+    updatedAt: nowDate,
+    updatedBy: actor
+  });
+  const mergedServices = getAllMergedServices();
+  const byId = new Map(mergedServices.map((s) => [s.id, s]));
+  const members = cluster.memberIds.map((id) => byId.get(id)).filter((s) => Boolean(s));
+  const html = renderServiceClusterHubHtml(cluster, members, saved);
+  const wordCount = extractMainTextWordCount(html).wordCount;
+  const readiness = evaluateClusterHubReadiness(cluster, members, saved, wordCount);
+  addContentHealthLog({
+    postId: clusterId,
+    action: "service_cluster_save",
+    actor,
+    timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+    details: `Saved cluster hub guide ${clusterId} (${wordCount} words, ${readiness.isIndexable ? "indexable" : `${readiness.missingData.length} missing item(s)`})`
+  });
+  res.json({
+    success: true,
+    override: saved,
+    wordCount,
+    readiness
+  });
 });
 app.post("/api/staff/content-health/merge-group", authenticateAdmin, (req, res) => {
   const clusterId = String(req.body?.clusterId || "").trim();
@@ -24265,7 +25275,8 @@ app.post("/api/posts", async (req, res) => {
     );
     const todayStr = (/* @__PURE__ */ new Date()).toLocaleDateString("en-GB");
     const rawPubStatus = String(body.publicationStatus || "published").toLowerCase().trim();
-    const publicationStatus = rawPubStatus === "draft" || rawPubStatus === "archived" ? rawPubStatus : "published";
+    const requiresHumanReview = Boolean(body.autoCollected) && !Boolean(body.humanReviewed);
+    const publicationStatus = requiresHumanReview ? "draft" : rawPubStatus === "draft" || rawPubStatus === "archived" ? rawPubStatus : "published";
     const category = body.category || (String(body.institution || "").toUpperCase() === "IGNOU" ? "ignou" : "jkssb");
     const resolvedNoticeType = body.noticeType || void 0;
     const shortInfoText = String(
@@ -24341,19 +25352,22 @@ app.post("/api/posts", async (req, res) => {
       summary: originalAnalysisText ? `${shortInfoText}
 
 ${originalAnalysisText}` : typeof body.summary === "string" && body.summary.trim() ? body.summary.trim() : void 0,
-      ageLimit: body.ageLimit || (category === "ignou" ? "As per IGNOU programme norms" : "As per official notification norms"),
+      ageLimit: typeof body.ageLimit === "string" && body.ageLimit.trim() ? body.ageLimit.trim() : void 0,
       eligibility: resolvedEligibility,
       totalPosts: body.totalPosts || (category === "ignou" ? "IGNOU Circular" : "Various Posts"),
+      applicationMode: body.applicationMode === "offline" || body.applicationMode === "online" || body.applicationMode === "hybrid" ? body.applicationMode : void 0,
+      postalAddress: typeof body.postalAddress === "string" && body.postalAddress.trim() ? body.postalAddress.trim() : void 0,
+      envelopeSuperscription: typeof body.envelopeSuperscription === "string" && body.envelopeSuperscription.trim() ? body.envelopeSuperscription.trim() : void 0,
       howToApply: body.howToApply || void 0,
       selectionProcess: body.selectionProcess || void 0,
       documentsRequired: body.documentsRequired || void 0,
       officialLink: String(body.officialLink || validatedOfficialUrl).trim(),
       officialNotificationUrl: String(body.officialNotificationUrl || validatedOfficialUrl).trim(),
       officialApplicationUrl: body.officialApplicationUrl ? String(body.officialApplicationUrl).trim() : void 0,
-      fees: body.fees || {
-        genObc: body.genObcFee || "As per official notice",
-        scSt: body.scStFee || "As per official notice"
-      },
+      fees: body.fees || (body.genObcFee || body.scStFee ? {
+        genObc: String(body.genObcFee || "").trim(),
+        scSt: String(body.scStFee || "").trim()
+      } : void 0),
       isNew: publicationStatus === "published",
       thumbnailUrl: body.thumbnailUrl || `/api/thumbnails/post/${slug}.png`,
       thumbnailSpec: body.thumbnailSpec || void 0,
@@ -24620,17 +25634,20 @@ function renderDynamicMetaHtml(rawHtml, req) {
       const mergedServices = getAllMergedServices();
       const byId = new Map(mergedServices.map((s) => [s.id, s]));
       const members = cluster.memberIds.map((id) => byId.get(id)).filter((s) => Boolean(s));
+      const hubOverride = getServiceClusterOverrides()[cluster.clusterId];
+      substantiveBodyHtml = renderServiceClusterHubHtml(cluster, members, hubOverride);
+      const hubWordCount = extractMainTextWordCount(substantiveBodyHtml).wordCount;
+      const hubReadiness = evaluateClusterHubReadiness(cluster, members, hubOverride, hubWordCount);
       title = formatSeoTitle(cluster.title);
       description = formatSeoDescription(cluster.summary);
       canonicalUrl = `${SITE_ORIGIN}${cluster.hubPath}`;
-      robotsContent = "index, follow";
+      robotsContent = hubReadiness.isIndexable ? "index, follow" : "noindex, follow";
       ogType = "website";
       breadcrumbItems = [
         { name: "Home", url: `${SITE_ORIGIN}/` },
         { name: "CSC E-Services", url: `${SITE_ORIGIN}/services` },
         { name: cluster.title, url: canonicalUrl }
       ];
-      substantiveBodyHtml = renderServiceClusterHubHtml(cluster, members);
     } else {
       isNotFound = true;
       title = PRIVATE_NOINDEX_META.notfound.title;
@@ -24645,20 +25662,23 @@ function renderDynamicMetaHtml(rawHtml, req) {
       (s) => (s.id === targetServiceId || s.id === decodeURIComponent(targetServiceId)) && s.publicationStatus !== "draft" && s.publicationStatus !== "archived"
     );
     if (service) {
+      const svcFacts = deriveStoredServiceFacts(service);
+      substantiveBodyHtml = renderServiceSubstantiveHtml(service);
+      const svcWordCount = extractMainTextWordCount(substantiveBodyHtml).wordCount;
+      const svcCheck = validateServiceReadyToPublish(service, svcWordCount);
       title = formatSeoTitle(service.name);
-      const feeText = service.price?.trim() ? ` Fee: ${service.price.trim()}.` : " Fee: [VERIFY].";
-      const timeText = service.estimatedTime?.trim() ? ` Typical time: ${service.estimatedTime.trim()}.` : "";
+      const feeText = svcFacts.feesFromStoredData ? ` Fee: ${svcFacts.feesText}.` : "";
+      const timeText = svcFacts.timeFromStoredData ? ` Typical time: ${svcFacts.estimatedTime}.` : "";
       description = formatSeoDescription(`${service.description}${timeText}${feeText}`);
       ogImage = `${baseOrigin}/api/og-image/${encodeURIComponent(service.id)}.png?v=srv_v3`;
       canonicalUrl = `${SITE_ORIGIN}/service/${service.id}`;
-      robotsContent = service.robotsNoindex || service.duplicateOfId ? "noindex, follow" : "index, follow";
+      robotsContent = service.robotsNoindex || service.duplicateOfId || !svcCheck.canPublish ? "noindex, follow" : "index, follow";
       ogType = "website";
       breadcrumbItems = [
         { name: "Home", url: `${SITE_ORIGIN}/` },
         { name: "CSC E-Services", url: `${SITE_ORIGIN}/services` },
         { name: service.name, url: canonicalUrl }
       ];
-      substantiveBodyHtml = renderServiceSubstantiveHtml(service);
     } else if (matchService) {
       isNotFound = true;
       title = PRIVATE_NOINDEX_META.notfound.title;
@@ -24983,26 +26003,28 @@ app.get("/sitemap.xml", (req, res) => {
       xml += "  </url>\n";
     }
     const mergedServices = getAllMergedServices();
-    const approvedMerges = getApprovedServiceMerges();
+    const { evaluations: clusterEvaluations } = getClusterHubEvaluations(mergedServices);
     for (const s of mergedServices) {
-      if (s.publicationStatus === "draft" || s.publicationStatus === "archived" || s.duplicateOfId || s.robotsNoindex) {
+      const readyCheck = isServiceReadyAndIndexable(s);
+      if (!readyCheck.isIndexable) {
         continue;
       }
       xml += "  <url>\n";
       xml += `    <loc>${BASE_URL}/service/${encodeURIComponent(s.id)}</loc>
 `;
-      xml += `    <lastmod>${s.updatedAt || VERIFIED_STATIC_DATE}</lastmod>
+      xml += `    <lastmod>${s.lastVerifiedDate || s.updatedAt || VERIFIED_STATIC_DATE}</lastmod>
 `;
       xml += "    <changefreq>monthly</changefreq>\n";
       xml += "    <priority>0.8</priority>\n";
       xml += "  </url>\n";
     }
     for (const c of SERVICE_MERGE_CLUSTERS) {
-      if (approvedMerges[c.clusterId]?.approved) {
+      const ev = clusterEvaluations[c.clusterId];
+      if (ev?.readiness.isIndexable) {
         xml += "  <url>\n";
         xml += `    <loc>${BASE_URL}${c.hubPath}</loc>
 `;
-        xml += `    <lastmod>${VERIFIED_STATIC_DATE}</lastmod>
+        xml += `    <lastmod>${ev.override.lastVerifiedDate || ev.override.updatedAt || VERIFIED_STATIC_DATE}</lastmod>
 `;
         xml += "    <changefreq>monthly</changefreq>\n";
         xml += "    <priority>0.8</priority>\n";
@@ -25045,17 +26067,54 @@ app.get("/robots.txt", (req, res) => {
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
   res.sendFile(robotsPath);
 });
-app.use(express.static(path4.join(process.cwd(), "public"), { index: false }));
+app.use(
+  express.static(path4.join(process.cwd(), "public"), {
+    index: false,
+    setHeaders: (res, filePath) => {
+      const lower = filePath.toLowerCase();
+      if (lower.endsWith("sw.js")) {
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      } else if (lower.endsWith(".txt") || lower.endsWith(".xml") || lower.endsWith(".webmanifest") || lower.endsWith(".json")) {
+        res.setHeader("Cache-Control", "public, max-age=3600");
+      } else if (/\.(png|jpg|jpeg|webp|avif|svg|ico|woff2?|ttf)$/i.test(lower)) {
+        res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+      }
+    }
+  })
+);
 if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
   const distPath = path4.join(process.cwd(), "dist");
   const distAssetsPath = path4.join(distPath, "assets");
   const indexHtmlPath = path4.join(distPath, "index.html");
   const rootHtmlPath = path4.join(process.cwd(), "index.html");
   if (fs4.existsSync(distAssetsPath)) {
+    app.get("/assets/:file", (req, res, next) => {
+      const fileName = path4.basename(String(req.params.file || ""));
+      if (!/\.(js|mjs|css|svg|json|map)$/i.test(fileName)) return next();
+      const absFile = path4.join(distAssetsPath, fileName);
+      if (!absFile.startsWith(distAssetsPath) || !fs4.existsSync(absFile)) return next();
+      const ext = path4.extname(fileName).toLowerCase();
+      const mime = ext === ".css" ? "text/css; charset=utf-8" : ext === ".svg" ? "image/svg+xml" : ext === ".json" || ext === ".map" ? "application/json; charset=utf-8" : "application/javascript; charset=utf-8";
+      res.setHeader("Content-Type", mime);
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      return res.send(fs4.readFileSync(absFile));
+    });
     app.use("/assets", express.static(distAssetsPath, { index: false, maxAge: "365d", immutable: true }));
   }
   if (fs4.existsSync(distPath)) {
-    app.use(express.static(distPath, { index: false }));
+    app.use(
+      express.static(distPath, {
+        index: false,
+        setHeaders: (res, filePath) => {
+          const lower = filePath.toLowerCase();
+          if (lower.endsWith("sw.js")) {
+            res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+          } else if (/\.(png|jpg|jpeg|webp|avif|svg|ico|woff2?|ttf)$/i.test(lower)) {
+            res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+          }
+        }
+      })
+    );
   }
   app.get("*", (req, res, next) => {
     if (req.path.startsWith("/api/")) {
