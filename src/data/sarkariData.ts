@@ -2317,7 +2317,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       { label: 'SC/ST/SEBC/PwBD/ESM candidates', amount: '₹600 excluding GST' },
       { label: 'All other candidates', amount: '₹800 excluding GST' }
     ],
-    whoShouldApplyLead: 'Applicants must be domiciled in the Union Territory of Jammu and Kashmir and hold a graduate degree in any discipline from a recognised university by 26 November 2026.',
+    whoShouldApplyLead: 'Applicants must be domiciled in the Union Territory of Jammu and Kashmir and hold a degree in any discipline from a recognised university by 26 November 2026.',
     paymentInstructions: 'Online payment through integrated payment gateway using Debit Cards (RuPay/Visa/MasterCard/Maestro), Credit Cards, Internet Banking, IMPS, Cash Cards / Mobile Wallets from 07/11/2026 to 26/11/2026.',
     departmentBreakdown: [
       {
