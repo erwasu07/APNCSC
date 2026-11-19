@@ -643,11 +643,42 @@ export default function SarkariDedicatedPageView({
                 </div>
               )}
 
-              {feeNotice && (
+              {feeNotice && feeNotice.rows && feeNotice.rows.length > 0 ? (
+                <>
+                  <h3 className="pb-subh3">Application fee</h3>
+                  <div className="pb-table-wrap">
+                    <table className="pb-table">
+                      <thead>
+                        <tr>
+                          <th scope="col" style={{ width: '58%' }}>
+                            Category
+                          </th>
+                          <th scope="col" style={{ width: '42%' }}>
+                            Application fee
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {feeNotice.rows.map((row) => (
+                          <tr key={row.label}>
+                            <td>{row.label}</td>
+                            <td>{row.amount}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {feeNotice.body && (
+                    <div className={`pb-notice pb-notice--${feeNotice.variant}`}>
+                      <strong>{feeNotice.strongPrefix}</strong> {feeNotice.body}
+                    </div>
+                  )}
+                </>
+              ) : feeNotice ? (
                 <div className={`pb-notice pb-notice--${feeNotice.variant}`}>
                   <strong>{feeNotice.strongPrefix}</strong> {feeNotice.body}
                 </div>
-              )}
+              ) : null}
 
               {!nonAppTemplate && statusInfo.isClosed && !statusInfo.isCancelled && (
                 <div className="pb-notice pb-notice--warn">

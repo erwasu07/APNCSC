@@ -116,19 +116,38 @@ export function stripLeadingStepNumber(text: string): string {
     .trim();
 }
 
+export function getCustomFeeCategories(item: SarkariItem): Array<{ label: string; amount: string }> {
+  const cats = item.feeCategories || item.fee?.categories;
+  if (!Array.isArray(cats) || cats.length === 0) return [];
+  return cats
+    .filter(
+      (c): c is { label: string; amount: string } =>
+        Boolean(c && typeof c.label === 'string' && c.label.trim() && typeof c.amount === 'string' && c.amount.trim())
+    )
+    .map((c) => ({ label: c.label.trim(), amount: c.amount.trim() }));
+}
+
 export function isZeroOrExemptFee(item: SarkariItem): boolean {
+  const customCats = getCustomFeeCategories(item);
+  const positiveAmountRegex = /(?:₹|rs\.?)\s*[1-9]\d*/i;
+  const zeroRegex = /₹\s*0\b|rs\.?\s*0\b|\bnil\b|no\s*(application\s*)?fee|exempt|free\b/i;
+
+  if (customCats.length > 0) {
+    if (customCats.some((c) => positiveAmountRegex.test(c.amount))) return false;
+    return customCats.every((c) => zeroRegex.test(c.amount));
+  }
+
   const gen = String(item.fee?.genObc || item.fees?.genObc || '').trim();
   const sc = String(item.fee?.scSt || item.fees?.scSt || '').trim();
   if (!gen && !sc) return false;
-  const positiveAmountRegex = /(?:₹|rs\.?)\s*[1-9]\d*/i;
   if (positiveAmountRegex.test(gen) || positiveAmountRegex.test(sc)) {
     return false;
   }
-  const zeroRegex = /₹\s*0\b|rs\.?\s*0\b|\bnil\b|no\s*(application\s*)?fee|exempt|free\b/i;
   return Boolean(gen && zeroRegex.test(gen) && (!sc || zeroRegex.test(sc)));
 }
 
 export function hasExplicitFee(item: SarkariItem): boolean {
+  if (getCustomFeeCategories(item).length > 0) return true;
   const gen = String(item.fee?.genObc || item.fees?.genObc || '').trim();
   const sc = String(item.fee?.scSt || item.fees?.scSt || '').trim();
   const genValid = hasRealDataValue(gen) && !isGenericNoticePlaceholder(gen);

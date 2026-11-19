@@ -22,6 +22,7 @@ import { getDeduplicatedSarkariPosts, resolvePostOrg } from './data/sarkariMigra
 import {
   buildPostFaqs,
   getChecklistTitleForType,
+  getCustomFeeCategories,
   getDocumentsForPost,
   getProcessSectionConfig,
   hasExplicitFee,
@@ -248,20 +249,32 @@ export function renderPostSubstantiveHtml(
 
         ${
           !nonAppTemplate && explicitFee
-            ? `<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
-          <h3 style="font-size:15px; font-weight:700; color:#101A36; margin:0 0 10px 0;">Application Fee</h3>
-          <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#334155; line-height:1.8;">
-            <li><strong>${/\bfor\b/i.test(item.fees?.genObc || item.fee?.genObc || '') ? 'Standard Fee:' : 'General / OBC / EWS:'}</strong> ${isZeroFee ? '₹0/- (Exempted)' : safeGenObc}</li>
+            ? (() => {
+                const customFeeRows = getCustomFeeCategories(item);
+                const feeListItems =
+                  customFeeRows.length > 0 && !isZeroFee
+                    ? customFeeRows
+                        .map(
+                          (row) =>
+                            `<li><strong>${escapeHtml(row.label)}:</strong> ${escapeHtml(row.amount)}</li>`
+                        )
+                        .join('\n            ')
+                    : `<li><strong>General / OBC / EWS:</strong> ${isZeroFee ? '₹0/- (Exempted)' : safeGenObc}</li>
             ${
               safeScSt && safeScSt !== safeGenObc
-                ? `<li><strong>${/\bfor\b/i.test(item.fees?.scSt || item.fee?.scSt || '') ? 'Concessional Fee:' : 'SC / ST / PwD / Female:'}</strong> ${isZeroFee ? '₹0/- (Exempted)' : safeScSt}</li>`
+                ? `<li><strong>SC / ST / PwD / Female:</strong> ${isZeroFee ? '₹0/- (Exempted)' : safeScSt}</li>`
                 : isZeroFee
                 ? `<li><strong>SC / ST / PwD / Female:</strong> ₹0/- (Exempted)</li>`
                 : ''
-            }
+            }`;
+                return `<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
+          <h3 style="font-size:15px; font-weight:700; color:#101A36; margin:0 0 10px 0;">Application Fee</h3>
+          <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#334155; line-height:1.8;">
+            ${feeListItems}
             <li><strong>Payment Note:</strong> ${paymentInstructionText}</li>
           </ul>
-        </div>`
+        </div>`;
+              })()
             : `<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
           <h3 style="font-size:15px; font-weight:700; color:#101A36; margin:0 0 10px 0;">Official Notice &amp; Submission Details</h3>
           <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#334155; line-height:1.8;">

@@ -173,7 +173,7 @@ const POST_EXACT_SEO_MAP: Record<string, { title: string; description: string }>
   'jk-bank-banking-associates-recruitment-2026': {
     title: 'J&K Bank Banking Associates 2026 (1,033 Posts) | CSC DOST',
     description:
-      'J&K Bank Banking Associates 2026 (JKB/HR/Rectt/2026-493) for 1,033 posts (J&K UT domiciles). Apply 07/11/2026–26/11/2026; fee ₹800/₹600 + GST.',
+      'J&K Bank Banking Associates 2026 (JKB/HR/Rectt/2026-493) for 1,033 posts (J&K UT domiciles). Apply 07/11/2026–26/11/2026; fee ₹600/₹800 excluding GST.',
   },
 };
 

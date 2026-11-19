@@ -1,10 +1,16 @@
-import type { DepartmentBreakdown, PostStructuredType, SarkariItem } from '../../data/sarkariData';
+import type {
+  DepartmentBreakdown,
+  PostFeeCategory,
+  PostStructuredType,
+  SarkariItem,
+} from '../../data/sarkariData';
 import {
   extractDatePattern,
   getNowInAsiaKolkata,
   type ComputedSarkariStatus,
 } from '../../utils/sarkariStatus';
 import {
+  getCustomFeeCategories,
   hasExplicitFee,
   hasRealDataValue,
   isAssignmentNotice,
@@ -230,13 +236,36 @@ function compactPostsValue(item: SarkariItem, isEdu: boolean): string {
 }
 
 function compactFeeValue(item: SarkariItem): string {
-  const gen = item.fee?.genObc || item.fees?.genObc || '';
-  const sc = item.fee?.scSt || item.fees?.scSt || '';
-  const combined = `${gen} ${sc}`.trim();
-
+  const customCats = getCustomFeeCategories(item);
   if (isZeroOrExemptFee(item)) {
     return '₹0';
   }
+
+  if (customCats.length > 0) {
+    const amounts = customCats
+      .map((c) =>
+        c.amount
+          .match(/(?:₹|rs\.?)\s*[\d,]+/i)?.[0]
+          ?.replace(/^rs\.?\s*/i, '₹')
+          .replace(/\s+/g, '')
+      )
+      .filter((v): v is string => Boolean(v));
+    const uniqueAmounts = Array.from(new Set(amounts));
+    const combinedCustom = customCats.map((c) => c.amount).join(' ');
+    const hasExclGst = /excluding\s+gst/i.test(combinedCustom);
+    const hasPlusGst = /\+\s*gst|extra\s+gst/i.test(combinedCustom);
+    const gstSuffix = hasExclGst ? ' (excl. GST)' : hasPlusGst ? ' + GST' : '';
+    if (uniqueAmounts.length >= 2) {
+      return `${uniqueAmounts[0]} / ${uniqueAmounts[1]}${gstSuffix}`;
+    }
+    if (uniqueAmounts.length === 1) {
+      return `${uniqueAmounts[0]}${gstSuffix}`;
+    }
+  }
+
+  const gen = item.fee?.genObc || item.fees?.genObc || '';
+  const sc = item.fee?.scSt || item.fees?.scSt || '';
+  const combined = `${gen} ${sc}`.trim();
 
   const gAmount = gen.match(/(?:₹|rs\.?)\s*[\d,]+/i)?.[0]?.replace(/^rs\.?\s*/i, '₹').replace(/\s+/g, '');
   const sAmount = sc.match(/(?:₹|rs\.?)\s*[\d,]+/i)?.[0]?.replace(/^rs\.?\s*/i, '₹').replace(/\s+/g, '');
@@ -470,11 +499,13 @@ export interface FeeNoticeBox {
   variant: 'info' | 'warn';
   strongPrefix: string;
   body: string;
+  rows?: PostFeeCategory[];
 }
 
 export function buildFeeNoticeBox(item: SarkariItem, effectiveType: PostStructuredType): FeeNoticeBox | null {
   if (isNonApplicationTemplateType(effectiveType)) return null;
 
+  const customCats = getCustomFeeCategories(item);
   const gen = item.fee?.genObc || item.fees?.genObc || '';
   const sc = item.fee?.scSt || item.fees?.scSt || '';
   const note = item.fee?.note || item.paymentInstructions || item.feePerSubject || '';
@@ -499,6 +530,15 @@ export function buildFeeNoticeBox(item: SarkariItem, effectiveType: PostStructur
       variant: 'info',
       strongPrefix: 'No fee.',
       body: 'Candidates of every category are exempt. No payment is required to apply.',
+    };
+  }
+
+  if (customCats.length > 0) {
+    return {
+      variant: 'info',
+      strongPrefix: 'Payment mode.',
+      body: hasRealDataValue(note) ? note : '',
+      rows: customCats,
     };
   }
 

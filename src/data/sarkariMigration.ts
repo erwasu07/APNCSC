@@ -349,10 +349,14 @@ export function normalizeSarkariItem(raw: SarkariItem, customNow?: Date): Sarkar
   // Strictly omit application `fee` from Result, DV, Admit Card, and Exam notices
   const normalizedFee: PostFeeInfo | undefined =
     type === 'application' || type === 'admission' || type === 'upcoming'
-      ? raw.fees
+      ? raw.fees || (raw.feeCategories && raw.feeCategories.length > 0)
         ? {
-            genObc: raw.fees.genObc,
-            scSt: raw.fees.scSt,
+            genObc: raw.fees?.genObc,
+            scSt: raw.fees?.scSt,
+            categories:
+              raw.feeCategories && raw.feeCategories.length > 0
+                ? raw.feeCategories
+                : undefined,
             note: raw.paymentInstructions || raw.feePerSubject,
           }
         : undefined

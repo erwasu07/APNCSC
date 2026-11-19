@@ -3,6 +3,7 @@ import { KNOWN_DUPLICATE_MAP } from '../../data/sarkariMigration';
 import type { ComputedSarkariStatus } from '../../utils/sarkariStatus';
 import { formatLongDate } from './postBulletinHelpers';
 import {
+  getCustomFeeCategories,
   hasExplicitFee,
   hasRealDataValue,
   isGenericNoticePlaceholder,
@@ -286,8 +287,11 @@ export function buildPostEnrichmentData(
       }`
     );
     if (hasFee) {
+      const customFeeCats = getCustomFeeCategories(item);
       const feeSummaryLine = zeroFee
         ? 'Application fee: Exempted / No fee required as stated in the official notice.'
+        : customFeeCats.length > 0
+        ? `Application fee: ${customFeeCats.map((c) => `${c.label} — ${c.amount}`).join('; ')}.`
         : scFee && scFee !== genFee
         ? /\bfor\b/i.test(scFee)
           ? `Fee noted in notice: ${genFee || 'As per notice'}; ${scFee}.`
@@ -316,9 +320,14 @@ export function buildPostEnrichmentData(
       whoShouldApply.push('Eligible Jammu & Kashmir domicile candidates covered under this notice.');
     }
   } else {
-    whoShouldApply.push(
-      `Applicants fulfilling ${qualStr} as notified by ${orgName}.`
-    );
+    if (item.whoShouldApplyLead && item.whoShouldApplyLead.trim()) {
+      whoShouldApply.push(item.whoShouldApplyLead.trim());
+    } else {
+      const cleanQual = qualStr.replace(/\.+$/, '');
+      whoShouldApply.push(
+        `Applicants fulfilling ${cleanQual} as notified by ${orgName}.`
+      );
+    }
     if (hasRealDataValue(item.ageLimit) && !isGenericNoticePlaceholder(item.ageLimit)) {
       whoShouldApply.push(
         `Candidates within the prescribed age limit (${item.ageLimit}).`
