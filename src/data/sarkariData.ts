@@ -248,9 +248,347 @@ export function parseSarkariDateSortValue(dateStr?: string): number {
 }
 
 const RAW_SARKARI_DATA: SarkariItem[] = [
+  // 📰 DAILY OFFICIAL UPDATE VERIFIED 21/11/2026 IST (Approved & Published)
+  {
+    id: 'jkssb-sub-inspector-home-admit-card-2026',
+    title: 'JKSSB Sub Inspector (Home Dept) Admit Card 2026',
+    category: 'jkssb',
+    org: 'JKSSB',
+    department: 'Home Department, Government of Jammu & Kashmir',
+    postType: 'Admit Card',
+    noticeType: 'admit_card',
+    stage: 'admit_card',
+    status: 'Open',
+    publicationStatus: 'published',
+    isNew: true,
+    postDate: '20/11/2026',
+    documentDate: '20/11/2026',
+    startDate: '26/11/2026',
+    lastDate: '29/11/2026',
+    eventDate: '29/11/2026',
+    eventLabel: 'OMR-Based Written Examination',
+    advertisementNo: 'No. JKSSB-COE0EXAM (UT)/6/2026-03 (7990247) | Notification No. 02 of 2024 (Item No. 07)',
+    recruitmentYear: '2024',
+    shortInfo: 'JKSSB scheduled the OMR-Based Written Examination for Sub Inspector (Home Department) under Notification No. 02 of 2024 (Item No. 07) on 29/11/2026; E-Admit Cards become available on www.jkssb.nic.in from 26/11/2026.',
+    ageLimit: 'Not stated in the notice',
+    eligibility: 'Candidates who applied for Sub-Inspector (Home Department) under JKSSB Notification No. 02 of 2024 (Item No. 07).',
+    totalPosts: 'Not stated in the notice',
+    officialLink: 'https://jkssb.nic.in/Pdf/AdmitCard_Notice_20112026.pdf',
+    officialNotificationUrl: 'https://jkssb.nic.in/Pdf/AdmitCard_Notice_20112026.pdf',
+    officialApplicationUrl: 'https://www.jkssb.nic.in',
+    fees: {
+      genObc: 'Not stated in the notice',
+      scSt: 'Not stated in the notice'
+    },
+    howToApply: [
+      'Visit www.jkssb.nic.in from 26/11/2026 onwards and open the E-Admit Card download link for Sub-Inspector (Home Dept.), Advt No. 02 of 2024 (Item No. 07).',
+      'Enter log-in credentials (Username and Password) and verify via the OTP received on your registered Email ID and Mobile Number.',
+      'Download and print the E-Admit Card. For download grievances, email ssbjk-grievance@jk.gov.in or visit the JKSSB office in person at least 2 days before 29/11/2026 with valid proof of online application and fee payment.'
+    ],
+    documentsRequired: [
+      'Printed E-Admit Card (must be handed back to Invigilation staff duly signed by both the candidate and the concerned Invigilator after examination completion)',
+      'Valid Photo Identity Proof for Biometric/Facial Authentication at the examination centre (report at least 2 hours before scheduled exam time)',
+      'Valid proof of submitted online form and fee payment (required only if reporting an admit card download grievance)'
+    ],
+    selectionProcess: [
+      'OMR-Based Written Examination for Sub-Inspector (Home Department) on 29/11/2026.',
+      'Mandatory Biometric/Facial Authentication at the examination centre; candidates are advised to report at least two (02) hours before the scheduled exam time.'
+    ],
+    faq: [
+      {
+        question: 'When can candidates download the JKSSB Sub Inspector (Home Dept) Admit Card 2026?',
+        answer: 'E-Admit Cards for Notification No. 02 of 2024 (Item No. 07) become available on www.jkssb.nic.in w.e.f. 26/11/2026 ahead of the OMR-Based Written Examination on 29/11/2026.'
+      },
+      {
+        question: 'What must candidates do with the Admit Card after completing the exam?',
+        answer: 'Per page 2 of Notice No. JKSSB-COE0EXAM (UT)/6/2026-03 (7990247), candidates must submit their Admit Cards back to the Invigilation staff duly signed by both the candidate and the concerned Invigilator after the examination.'
+      }
+    ],
+    updatedAt: '21/11/2026',
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '21/11/2026',
+      lastVerified: '21/11/2026',
+      officialNotificationUrl: 'https://jkssb.nic.in/Pdf/AdmitCard_Notice_20112026.pdf',
+      officialApplicationUrl: 'https://www.jkssb.nic.in',
+      advertisementNo: 'No. JKSSB-COE0EXAM (UT)/6/2026-03 (7990247) | Advt 02/2024 Item 07',
+      recruitmentYear: '2024',
+      verifiedOpeningDate: '26/11/2026',
+      verifiedClosingDate: '29/11/2026',
+      sourceHistory: [
+        'Official JKSSB 2-page PDF AdmitCard_Notice_20112026.pdf (dated 20/11/2026) verified directly on 21/11/2026.'
+      ]
+    }
+  },
+  {
+    id: 'jkssb-advt-04-of-2026-fresh-application-dates',
+    title: 'JKSSB Advt 04 of 2026 Fresh Online Form Dates',
+    category: 'jkssb',
+    org: 'JKSSB',
+    department: 'Agriculture Production, Home, GAD, Higher Education, Industries & Commerce, ARI & Trainings, Law Justice & Parliamentary Affairs (J&K)',
+    postType: 'Job',
+    noticeType: 'recruitment',
+    stage: 'recruitment',
+    status: 'Upcoming',
+    publicationStatus: 'published',
+    isNew: true,
+    postDate: '19/11/2026',
+    documentDate: '19/11/2026',
+    startDate: '16/12/2026',
+    lastDate: '14/01/2027',
+    closingTime: '23:59 IST',
+    feeDeadline: '14/01/2027 (23:59 IST)',
+    advertisementNo: 'No. JKSSB-PLAN/17/2025-06 (E-7817791) | Advertisement Notification No. 04 of 2026 (Dated: 25.05.2026)',
+    recruitmentYear: '2026',
+    shortInfo: 'JKSSB announced fresh online application and fee submission dates for Advertisement Notification No. 04 of 2026 (dated 25/05/2026): online forms open from 16/12/2026 (12:00 AM) to 14/01/2027 (11:59 PM).',
+    ageLimit: 'Not stated in the notice',
+    eligibility: 'Not stated in the notice (refer to original JKSSB Advertisement Notification No. 04 of 2026 dated 25/05/2026 for post-wise eligibility).',
+    totalPosts: 'Not stated in the notice',
+    officialLink: 'https://jkssb.nic.in/Pdf/Notice_04OF2026_19112026.pdf',
+    officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Notice_04OF2026_19112026.pdf',
+    officialApplicationUrl: 'https://www.jkssb.nic.in',
+    fees: {
+      genObc: 'Not stated in the notice',
+      scSt: 'Not stated in the notice'
+    },
+    howToApply: [
+      'Visit the official JKSSB online application portal at www.jkssb.nic.in between 16/12/2026 (12:00 AM) and 14/01/2027 (11:59 PM).',
+      'Submit the online application form and pay the applicable fee online before 14/01/2027 (11:59 PM) per Notice No. JKSSB-PLAN/17/2025-06 (E-7817791).'
+    ],
+    documentsRequired: [
+      'Not stated in the notice (refer to original Advertisement Notification No. 04 of 2026 dated 25/05/2026)'
+    ],
+    selectionProcess: [
+      'Not stated in the notice (issued in continuation of Office Notice No. JKSSB-PLAN/6/2026-06 (E-7906336) dated 19/06/2026).'
+    ],
+    faq: [
+      {
+        question: 'What are the fresh online application dates for JKSSB Advt No. 04 of 2026?',
+        answer: 'Online application forms and online fee submission for JKSSB Advertisement Notification No. 04 of 2026 run from 16/12/2026 (12:00 AM) to 14/01/2027 (11:59 PM).'
+      }
+    ],
+    updatedAt: '21/11/2026',
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '21/11/2026',
+      lastVerified: '21/11/2026',
+      officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Notice_04OF2026_19112026.pdf',
+      officialApplicationUrl: 'https://www.jkssb.nic.in',
+      advertisementNo: 'No. JKSSB-PLAN/17/2025-06 (E-7817791) | Advt 04/2026',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '16/12/2026',
+      verifiedClosingDate: '14/01/2027',
+      closingTime: '23:59 IST',
+      sourceHistory: [
+        'Official JKSSB 2-page PDF Notice_04OF2026_19112026.pdf (dated 19/11/2026) verified directly on 21/11/2026.'
+      ]
+    }
+  },
+  {
+    id: 'ibps-crp-po-mt-xvi-main-exam-result-2026',
+    title: 'IBPS CRP PO/MT-XVI Online Main Exam Result 2026',
+    category: 'banking_jobs',
+    org: 'IBPS',
+    department: 'Institute of Banking Personnel Selection (Participating Banks)',
+    postType: 'Result',
+    noticeType: 'result',
+    stage: 'result',
+    status: 'Result',
+    publicationStatus: 'published',
+    isNew: true,
+    postDate: '20/11/2026',
+    documentDate: '20/11/2026',
+    startDate: '20/11/2026',
+    lastDate: '27/11/2026',
+    advertisementNo: 'CRP PO/MT-XVI',
+    recruitmentYear: '2026',
+    shortInfo: 'IBPS activated the Result Status of the Online Main Examination for CRP PO/MT-XVI on 20/11/2026; candidates can log in with Registration/Roll No and Password/DOB until 27/11/2026.',
+    ageLimit: 'Not stated in the notice',
+    eligibility: 'Candidates who appeared in the Online Main Examination under IBPS Common Recruitment Process for Probationary Officers / Management Trainees (CRP PO/MT-XVI).',
+    totalPosts: 'Not stated in the notice',
+    officialLink: 'https://www.ibps.in/index.php/management-trainees-xvi/',
+    officialNotificationUrl: 'https://www.ibps.in/index.php/management-trainees-xvi/',
+    officialApplicationUrl: 'https://ibpsreg.ibps.in/crppoxvijun26/fresta_nov26/login.php?appid=faa539a0e8fbd226743a6f2df8768c59',
+    fees: {
+      genObc: 'Not stated in the notice',
+      scSt: 'Not stated in the notice'
+    },
+    howToApply: [
+      'Open the official IBPS CRP PO/MT-XVI Main Exam Result login portal at https://ibpsreg.ibps.in/crppoxvijun26/fresta_nov26/login.php?appid=faa539a0e8fbd226743a6f2df8768c59 (or navigate via www.ibps.in -> CRP PO/MTs-XVI).',
+      'Enter your Registration No / Roll No, Password / DOB (DD-MM-YY), and captcha code to check your Online Main Examination result status before 27/11/2026.'
+    ],
+    documentsRequired: [
+      'IBPS Registration No or Roll No',
+      'Password or Date of Birth in DD-MM-YY format'
+    ],
+    selectionProcess: [
+      'Result Status of Online Main Examination commenced on 20/11/2026 and closes on 27/11/2026 (related notice: job-ibps-po-2026).'
+    ],
+    faq: [
+      {
+        question: 'Until when is the IBPS CRP PO/MT-XVI Online Main Exam Result 2026 link active?',
+        answer: 'According to the official IBPS result portal, result viewing commenced on 20/11/2026 and closes on 27/11/2026.'
+      }
+    ],
+    updatedAt: '21/11/2026',
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '21/11/2026',
+      lastVerified: '21/11/2026',
+      officialNotificationUrl: 'https://www.ibps.in/index.php/management-trainees-xvi/',
+      officialApplicationUrl: 'https://ibpsreg.ibps.in/crppoxvijun26/fresta_nov26/login.php?appid=faa539a0e8fbd226743a6f2df8768c59',
+      advertisementNo: 'CRP PO/MT-XVI',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '20/11/2026',
+      verifiedClosingDate: '27/11/2026',
+      sourceHistory: [
+        'Official IBPS CRP Updates page & live result login portal verified HTTP 200 on 21/11/2026. Related notice: job-ibps-po-2026.'
+      ]
+    }
+  },
+  {
+    id: 'cus-ug-5th-sem-cbcs-backlog-datesheet-2026',
+    title: 'CUS UG 5th Sem (CBCS) Backlog Date Sheet 2026',
+    category: 'cluster_univ',
+    org: 'Cluster University of Srinagar',
+    department: 'Controller of Examinations, Cluster University Srinagar',
+    postType: 'Exam Form',
+    noticeType: 'date_sheet',
+    stage: 'date_sheet',
+    status: 'Open',
+    publicationStatus: 'published',
+    isNew: true,
+    postDate: '20/11/2026',
+    documentDate: '20/11/2026',
+    startDate: '28/11/2026',
+    lastDate: '17/12/2026',
+    eventDate: '28/11/2026 to 17/12/2026 (11:00 AM)',
+    eventLabel: 'UG 5th Sem (CBCS) Backlog Examinations',
+    advertisementNo: 'No : CUS/Exam/DS/UG/5th CBCS/26/1872-81',
+    recruitmentYear: '2026',
+    shortInfo: 'Cluster University Srinagar released the Date Sheet for Backlog Candidates of UG 5th Semester (CBCS), Batch 2017–2021 (Session-2026); exams run from 28/11/2026 to 17/12/2026 at 11:00 AM.',
+    ageLimit: 'Not stated in the notice',
+    eligibility: 'Backlog candidates of UG 5th Semester (CBCS), Batch 2017–2021 (Session-2026) across Arts/Social Science, Science, Commerce, Home Science, and Generic Electives.',
+    totalPosts: 'Not stated in the notice',
+    officialLink: 'https://www.cusrinagar.edu.in/FolderManager/Notification/288069882b0c4d2c8156327ff4c3181f.pdf',
+    officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/288069882b0c4d2c8156327ff4c3181f.pdf',
+    officialApplicationUrl: 'https://www.cusrinagar.edu.in',
+    fees: {
+      genObc: 'Not stated in the notice',
+      scSt: 'Not stated in the notice'
+    },
+    howToApply: [
+      'Download the official Date Sheet PDF from www.cusrinagar.edu.in and check your paper dates: 28/11/2026, 02/12/2026, 07/12/2026, 10/12/2026, 15/12/2026, and 17/12/2026 (Generic Electives) at 11:00 AM.',
+      'Download your Admit Card via Student Login on www.cusrinagar.edu.in once the separate Centre Notice is issued.'
+    ],
+    documentsRequired: [
+      'Downloaded CUS Admit Card via Student Login (after separate Centre Notice is published on www.cusrinagar.edu.in)',
+      'Valid Identity Card on every examination day'
+    ],
+    selectionProcess: [
+      'Written examinations at 11:00 AM on 28/11/2026, 02/12/2026, 07/12/2026, 10/12/2026, 15/12/2026, and 17/12/2026 (Generic Electives).'
+    ],
+    faq: [
+      {
+        question: 'When are the CUS UG 5th Semester (CBCS) Backlog exams scheduled?',
+        answer: 'Examinations begin on 28/11/2026 and conclude with Generic Electives on 17/12/2026, with examination timing fixed at 11:00 AM.'
+      }
+    ],
+    updatedAt: '21/11/2026',
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '21/11/2026',
+      lastVerified: '21/11/2026',
+      officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/288069882b0c4d2c8156327ff4c3181f.pdf',
+      officialApplicationUrl: 'https://www.cusrinagar.edu.in',
+      advertisementNo: 'No : CUS/Exam/DS/UG/5th CBCS/26/1872-81',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '28/11/2026',
+      verifiedClosingDate: '17/12/2026',
+      sourceHistory: [
+        'Official CUS 1-page PDF 288069882b0c4d2c8156327ff4c3181f.pdf (dated 20/11/2026) verified directly on 21/11/2026.'
+      ]
+    }
+  },
+  {
+    id: 'cus-ug-3rd-sem-cbcs-backlog-datesheet-2026',
+    title: 'CUS UG 3rd Sem (CBCS) Backlog Date Sheet 2026',
+    category: 'cluster_univ',
+    org: 'Cluster University of Srinagar',
+    department: 'Controller of Examinations, Cluster University Srinagar',
+    postType: 'Exam Form',
+    noticeType: 'date_sheet',
+    stage: 'date_sheet',
+    status: 'Open',
+    publicationStatus: 'published',
+    isNew: true,
+    postDate: '19/11/2026',
+    documentDate: '19/11/2026',
+    startDate: '26/11/2026',
+    lastDate: '16/12/2026',
+    eventDate: '26/11/2026 to 16/12/2026 (11:00 AM)',
+    eventLabel: 'UG 3rd Sem (CBCS) Backlog Examinations',
+    advertisementNo: 'No : CUS/Exam/DS/UG/3rd CBCS/26/1861-71',
+    recruitmentYear: '2026',
+    shortInfo: 'Cluster University Srinagar issued the revised Date Sheet for Backlog Candidates of UG 3rd Semester (CBCS), Batch 2017–2021 (Session-2026); exams run from 26/11/2026 to 16/12/2026 at 11:00 AM (History moved from 05/12 to 16/12/2026).',
+    ageLimit: 'Not stated in the notice',
+    eligibility: 'Backlog candidates of UG 3rd Semester (CBCS), Batch 2017–2021 (Session-2026) across Arts/Social Science, Science, Commerce, and Home Science streams.',
+    totalPosts: 'Not stated in the notice',
+    officialLink: 'https://www.cusrinagar.edu.in/FolderManager/Notification/fed67c211adf45ab9312915e7a41e83a.pdf',
+    officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/fed67c211adf45ab9312915e7a41e83a.pdf',
+    officialApplicationUrl: 'https://www.cusrinagar.edu.in',
+    fees: {
+      genObc: 'Not stated in the notice',
+      scSt: 'Not stated in the notice'
+    },
+    howToApply: [
+      'Check your paper dates in the revised official PDF: 26/11/2026, 01/12/2026, 05/12/2026, 09/12/2026, 14/12/2026, and 16/12/2026 (History moved to 16/12/2026) at 11:00 AM.',
+      'Download your Admit Card via Student Login on www.cusrinagar.edu.in once the detailed Centre Notice is published separately.'
+    ],
+    documentsRequired: [
+      'Downloaded CUS Admit Card via Student Login (after detailed Centre Notice release)',
+      'Valid Identity Card on every examination day'
+    ],
+    selectionProcess: [
+      'Written examinations at 11:00 AM on 26/11/2026, 01/12/2026, 05/12/2026, 09/12/2026, 14/12/2026, and 16/12/2026 (History: Modern India & Modern Kashmir shifted to 16/12/2026).'
+    ],
+    faq: [
+      {
+        question: 'What are the examination dates for CUS UG 3rd Semester (CBCS) Backlog Batch 2017–2021?',
+        answer: 'Papers are scheduled on 26/11/2026, 01/12/2026, 05/12/2026, 09/12/2026, 14/12/2026, and 16/12/2026 at 11:00 AM. In the revised PDF, History (Modern India & Modern Kashmir) moved from 05/12/2026 to 16/12/2026.'
+      }
+    ],
+    updatedAt: '21/11/2026',
+    verificationStatus: 'verified',
+    verification: {
+      status: 'verified',
+      verificationStatus: 'verified',
+      verifiedAt: '21/11/2026',
+      lastVerified: '21/11/2026',
+      officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/fed67c211adf45ab9312915e7a41e83a.pdf',
+      officialApplicationUrl: 'https://www.cusrinagar.edu.in',
+      advertisementNo: 'No : CUS/Exam/DS/UG/3rd CBCS/26/1861-71',
+      recruitmentYear: '2026',
+      verifiedOpeningDate: '26/11/2026',
+      verifiedClosingDate: '16/12/2026',
+      sourceHistory: [
+        'Official CUS PDF 0f83fc0ffd3f46b3b42a39adad819bff.pdf verified on 19/11/2026.',
+        'Updated to revised CUS PDF fed67c211adf45ab9312915e7a41e83a.pdf on 21/11/2026 (History moved from 05/12/2026 to 16/12/2026).'
+      ]
+    }
+  },
   // 📰 DAILY OFFICIAL UPDATE VERIFIED 16/11/2026 IST (Approved & Published)
   {
     id: 'jkssb-accounts-assistant-finance-answer-key-2026',
+    status: 'Closed',
     title: 'JKSSB Accounts Assistant Answer Key Notice 2026',
     category: 'jkssb',
     org: 'JKSSB',
@@ -259,7 +597,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     noticeType: 'answer_key',
     stage: 'objection_window',
     publicationStatus: 'published',
-    isNew: true,
+    isNew: false,
     postDate: '15/11/2026',
     documentDate: '15/11/2026',
     startDate: '16/11/2026',
@@ -902,7 +1240,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     lastDate: '19/11/2026',
     advertisementNo: 'CPC / RC Srinagar Placement Announcement (Rescheduled from 12 Nov 2026)',
     session: 'November 2026',
-    status: 'Informational',
+    status: 'Closed',
     shortInfo: 'Campus Placement Cell, IGNOU in collaboration with Regional Centre Srinagar and Axis Bank Sales Academy has rescheduled its Face-to-Face Campus Placement Drive (originally 12 Nov 2026) to Thursday, 19 November 2026 from 10:00 AM onwards at Bibi Halima College of Nursing & Medical Technology, Rainawari, Srinagar for IGNOU students and alumni.',
     ageLimit: 'As per Axis Bank Sales Academy recruitment norms',
     eligibility: 'IGNOU enrolled students and alumni (Graduates / Postgraduates; freshers and experienced candidates eligible for Officer Sales OS1 across Srinagar, Budgam, Kupwara, Sopore, Kargil, Leh & Jammu).',
@@ -926,7 +1264,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Verified directly on ignou.ac.in/announcements/0?nav=1 on 14/11/2026 (Rescheduled date 19 Nov 2026, venue Bibi Halima College, Rainawari, Srinagar).'
       ]
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ignou-oams-assignment-submission-dec-2026-tee',
@@ -945,7 +1283,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     closingTime: '23:59 IST',
     advertisementNo: 'F.No. IG/SED/2026/ (Dated 28 Oct 2026)',
     session: 'December 2026 TEE',
-    status: 'Open',
+    status: 'Closed',
     shortInfo: 'IGNOU Student Evaluation Division (SED) has launched the Online Assignment Management System (OAMS) on the IGNOU Samarth Portal for eligible ODL and Online programme learners appearing in December 2026 TEE. The last date for online assignment submission is 20th November 2026; learners who already submitted assignments at their Study Centre or Regional Centre do not need to re-upload.',
     eligibility: 'Eligible learners enrolled in IGNOU Open and Distance Learning (ODL) and Online Programmes for December 2026 Term-End Examination.',
     totalPosts: 'ODL & Online Assignments (OAMS)',
@@ -972,7 +1310,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Verified official circular OAMS-Notification.pdf (Document date 28/10/2026, portal upload 02/11/2026, last date 20/11/2026).'
       ]
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ignou-evidya-bharti-dec-2026-exam-form',
@@ -1335,7 +1673,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     recruitmentYear: '2026',
     department: 'J&K Services Selection Board (JKSSB)',
     postType: 'Job',
-    status: 'Informational',
+    status: 'Closed',
     shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) has notified the Document Verification (DV) schedule for candidates shortlisted for the post of Junior Assistant (Advt No. 08 of 2025). Verification will be conducted from 18th November to 20th November 2026 at designated JKSSB centres with original certificates.',
     ageLimit: 'As per Advt No. 08 of 2025 eligibility norms',
     eligibility: 'Candidates shortlisted for Junior Assistant Document Verification under Advt No. 08 of 2025.',
@@ -1363,7 +1701,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Verified direct official PDF DV_Notice_JrAssistant_12112026.pdf dated 12/11/2026 from jkssb.nic.in (HTTP 200).'
       ]
     },
-    isNew: true
+    isNew: false
   },
 
   // 🏛️ JKSSB STATISTICAL ASSISTANT FINAL & FOREMAN PROVISIONAL SELECTION LISTS (Dated: 12.11.2026)
@@ -1380,7 +1718,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     recruitmentYear: '2026',
     department: 'J&K Services Selection Board (JKSSB)',
     postType: 'Result',
-    status: 'Result',
+    status: 'Closed',
     shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) has published the Final Selection List for Statistical Assistant and Provisional Selection List for Foreman on 12th November 2026. Selected candidates can verify their merit rank and category allocation in the official selection list PDFs.',
     ageLimit: 'As per respective recruitment advertisements',
     eligibility: 'Candidates who appeared in JKSSB selection stages for Statistical Assistant and Foreman.',
@@ -1408,7 +1746,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Verified direct official PDFs Final_Selection_List_Statistical_Asstt_12112026.pdf and Provisional_selection_List_Foreman_12112026.pdf (HTTP 200) on 14/11/2026.'
       ]
     },
-    isNew: true
+    isNew: false
   },
 
   // 🏛️ JKSSB EDIT OPTION NOTICE FOR ADVT 06, 07 & 08 OF 2026 (Dated: 11.11.2026)
@@ -1427,7 +1765,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     recruitmentYear: '2026',
     department: 'J&K Services Selection Board (JKSSB)',
     postType: 'Job',
-    status: 'Informational',
+    status: 'Closed',
     shortInfo: 'JKSSB has activated a 5-day online Edit Option window from 16th November 2026 (00:00 IST) to 20th November 2026 (23:59 IST) exclusively for already registered applicants of Advt No. 06/2026 (Items 93–96), Advt No. 07/2026 (Items 97–103), and Advt No. 08/2026 (Items 104–181). New applications are not accepted.',
     ageLimit: 'As per original Advt 06, 07 & 08 of 2026 rules',
     eligibility: 'Candidates who already submitted valid online forms under Advt 06/2026, 07/2026, or 08/2026.',
@@ -1460,7 +1798,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Verified direct official PDFs Edit_option_06OF2026_11112026.pdf, Edit_option_07OF2026_11112026.pdf, and Edit_option_08OF2026_11112026.pdf dated 11/11/2026 (HTTP 200).'
       ]
     },
-    isNew: true
+    isNew: false
   },
 
   // 🏛️ JKSSB HEALTH EDUCATOR RESULT & FINAL ANSWER KEY (Exam: 01.11.2026)
@@ -1477,7 +1815,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     recruitmentYear: '2026',
     department: 'J&K Services Selection Board (JKSSB)',
     postType: 'Result',
-    status: 'Result',
+    status: 'Closed',
     shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) has released the Final Answer Key and Result/Scorecard for the OMR-based Written Examination conducted on 01.11.2026 for Health Educator (Health & Medical Education Department) after disposal of representations.',
     ageLimit: 'Not Applicable (Result & Final Answer Key)',
     eligibility: 'Candidates who appeared in the JKSSB Health Educator OMR exam held on 01/11/2026.',
@@ -1505,7 +1843,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Verified official JKSSB PDFs Result_01112026.pdf and Final_Answer_Key_01112026.pdf (HTTP 200) on 14/11/2026.'
       ]
     },
-    isNew: true
+    isNew: false
   },
 
   // 🏛️ JKSSB SUPPLEMENTARY DV NOTICE (WILDLIFE GUARD / FPF GUARD / INSPECTOR) (Dated: 10.11.2026)
@@ -1523,7 +1861,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     recruitmentYear: '2026',
     department: 'J&K Services Selection Board (JKSSB)',
     postType: 'Job',
-    status: 'Informational',
+    status: 'Closed',
     shortInfo: 'JKSSB has granted a final supplementary Document Verification opportunity on 17th November 2026 (11:00 AM to 4:00 PM) for absentee shortlisted candidates of Wildlife Guard, Inspector, FPF Guard, Social Forestry Worker, and Field Assistant under Advt 03/2021 & 04/2022.',
     ageLimit: 'As per Advt 03/2021 & 04/2022',
     eligibility: 'Absentee candidates called for Supplementary DV under Forest, Ecology & Environment Dept notifications.',
@@ -1551,7 +1889,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Verified direct official PDF notice_10112026.pdf dated 10/11/2026 on jkssb.nic.in (HTTP 200).'
       ]
     },
-    isNew: true
+    isNew: false
   },
 
   // 🎓 CLUSTER UNIVERSITY SRINAGAR RESULT NOTIFICATION NO. 471 (UG 2ND SEM BATCH 2025) (Dated: 11.11.2026)
@@ -1610,7 +1948,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     recruitmentYear: '2026',
     department: 'Controller of Examinations, Cluster University Srinagar',
     postType: 'Admission',
-    status: 'Open',
+    status: 'Closed',
     shortInfo: 'Cluster University Srinagar has notified online examination form submission for backlog students of Integrated B.Ed.-M.Ed. 5th Semester. Batch 2020–2022 candidates can submit forms from 14th November to 16th November 2026 (Batch 2019 window concluded on 13th November 2026).',
     ageLimit: 'Not Applicable (Enrolled Students)',
     eligibility: 'Backlog students of Integrated B.Ed.-M.Ed. 5th Semester (Batch 2020–2022 active window; Batch 2019 concluded 13/11/2026).',
@@ -1637,7 +1975,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Verified circular CUS/Exam/26/1817-21 (41883576c4594b0e92bb28b6486c8728.pdf) dated 10/11/2026 on cusrinagar.edu.in (Batch 2019: 11–13/11; Batch 2020–2022: 14–16/11/2026).'
       ]
     },
-    isNew: true
+    isNew: false
   },
 
   // 🏛️ CLUSTER UNIVERSITY SRINAGAR BACKLOG EXAM FORMS INTEGRATED/HONORS/PROF NON-NEP (Dated: 09.11.2026)
@@ -1654,7 +1992,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     recruitmentYear: '2026',
     department: 'Controller of Examinations, Cluster University Srinagar',
     postType: 'Admission',
-    status: 'Open',
+    status: 'Closed',
     shortInfo: 'Cluster University Srinagar invites online examination forms from backlog students of Integrated, Honours, and Professional (Non-NEP) 1st, 3rd, 5th & 7th Semesters (Batch 2017–2022). Phase-I (IG 2017 / Hons 2018–19) runs 11–14 Nov 2026; Phase-II (IG 2018–22 / Hons 2020–22) runs 15–18 Nov 2026.',
     ageLimit: 'Not Applicable (Enrolled Backlog Students)',
     eligibility: 'Backlog students of Integrated/Honours/Professional Non-NEP 1st, 3rd, 5th and 7th Semesters (Batch 2017–2022).',
@@ -1681,7 +2019,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Verified circular CUS/Exam/26/1784-90 (97725711bb8148a7a40c28f85129c40d.pdf) dated 09/11/2026 on cusrinagar.edu.in.'
       ]
     },
-    isNew: true
+    isNew: false
   },
 
   // 📅 CLUSTER UNIVERSITY SRINAGAR B.TECH 8TH SEM DATE SHEET (Dated: 09.11.2026)
@@ -1831,7 +2169,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     recruitmentYear: '2026',
     department: 'Staff Selection Commission (SSC HQ)',
     postType: 'Job',
-    status: 'Informational',
+    status: 'Closed',
     shortInfo: 'Staff Selection Commission (SSC) has released the Identity Verification (IV) & Sliding Process schedule for candidates shortlisted in the First Round of Tentative Allocation (FRTA) of Combined Hindi Translators (CHT) Examination 2025. IV slips went live from 13th November 2026 (17:00 IST) on ssc.gov.in ahead of physical Regional Office IV on 18th November 2026.',
     ageLimit: 'As per CHT 2025 recruitment notice',
     eligibility: 'Candidates shortlisted in CHT 2025 First Round of Tentative Allocation (FRTA) declared on 05/11/2026.',
@@ -1861,7 +2199,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Verified direct official SSC notice PDF CHT%202025%20FRTA%20notice%2007112026.pdf (07/11/2026) and FRTA writeup writeup_05112026.pdf (05/11/2026) via ssc.gov.in (HTTP 200).'
       ]
     },
-    isNew: true
+    isNew: false
   },
 
   // 🇮🇳 SSC COAST GUARD CGEPT 01/2027 & 02/2027 CITY INTIMATION & ADMIT CARD (Dated: 06.11.2026)
@@ -1878,7 +2216,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     recruitmentYear: '2026',
     department: 'Staff Selection Commission (SSC) / Indian Coast Guard',
     postType: 'Job',
-    status: 'Informational',
+    status: 'Closed',
     shortInfo: 'Staff Selection Commission has issued the examination city intimation and admit card notice for Coast Guard Enrolled Personnel Test (CGEPT) Batches 01/2027 and 02/2027 scheduled on 17th & 18th November 2026. City slips are live and e-Admit Cards become downloadable 2–3 days before the exam via cgept.parikshasaarthi.in.',
     ageLimit: 'As per CGEPT 01/2027 & 02/2027 eligibility',
     eligibility: 'Registered candidates of Indian Coast Guard CGEPT 01/2027 & 02/2027 batches.',
@@ -1906,7 +2244,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Verified direct official SSC notice PDF Englishnotice_06112026.pdf dated 06/11/2026 (HTTP 200).'
       ]
     },
-    isNew: true
+    isNew: false
   },
 
   // 🏛️ UNIVERSITY OF KASHMIR CALLIGRAPHIST RECRUITMENT (ADVT NO. 18 OF 2026) - PORTAL TIMEOUT ON 14/11/2026
@@ -1996,7 +2334,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     session: '2026-27',
     department: 'Academic / Registration Section, Cluster University Srinagar',
     postType: 'Admission',
-    status: 'Open',
+    status: 'Closed',
     shortInfo: 'Cluster University Srinagar has issued Circular No. CUS/Adm-Reg/2026/6377-94 dated 11/11/2026 for online submission of registration forms by NEP UG 1st Semester Students (Batch 2026) across all Constituent and Affiliated Colleges EXCEPT Abdul Ahad Azad Memorial Degree College, Bemina, Srinagar. Deadline is 16th November 2026 via the registration portal.',
     ageLimit: 'As per University Admission Guidelines',
     eligibility: 'Newly admitted NEP-2020 UG 1st Semester students (Batch 2026) across Constituent & Affiliated Colleges of Cluster University Srinagar, EXCEPT Abdul Ahad Azad Memorial Degree College, Bemina, Srinagar.',
@@ -2026,7 +2364,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Updated exception clause: applies to all constituent and affiliated colleges except Abdul Ahad Azad Memorial Degree College, Bemina, Srinagar.'
       ]
     },
-    isNew: true
+    isNew: false
   },
 
   // 🚆 RAILWAY RECRUITMENT BOARDS (RRB) STATION MASTER RECRUITMENT 2026 (CEN 08/2026)
@@ -2475,7 +2813,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     stage: 'answer_key',
     department: 'Staff Selection Commission (SSC)',
     postType: 'Result',
-    status: 'Informational',
+    status: 'Closed',
     shortInfo: 'Staff Selection Commission (SSC) has uploaded the Final Answer Keys along with Question Papers and candidate marks for the Computer Based Examination of Constable (GD) in Central Armed Police Forces (CAPFs), SSF, and Rifleman (GD) in Assam Rifles Examination, 2026. Candidates can download their scorecards and final answer keys through ssc.gov.in from 03/11/2026 (17:00 IST) to 17/11/2026 (17:00 IST).',
     ageLimit: 'Not Applicable (Final Answer Key & Scorecard Download)',
     eligibility: 'All candidates who appeared in the Computer-Based Examination for Constable (GD) 2026.',
@@ -2514,7 +2852,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Verified direct official SSC PDF writeup_03112026.pdf on 14/11/2026: final keys & marks facility runs 03/11/2026 (17:00 IST) to 17/11/2026 (17:00 IST).'
       ]
     },
-    isNew: true
+    isNew: false
   },
 
   // 🎓 UNIVERSITY OF KASHMIR PRO WRITTEN EXAM ADMIT CARDS (Dated: 07.11.2026)
@@ -2532,7 +2870,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     stage: 'admit_card',
     department: 'University of Kashmir (Recruitment Section)',
     postType: 'Job',
-    status: 'Informational',
+    status: 'Closed',
     shortInfo: 'University of Kashmir has officially issued notice regarding the activation of the online download link for E-Admit Cards for the OMR-based written examination for the post of Public Relations Officer (PRO). Candidates who have submitted online applications can download their admit card using their Form Number and Date of Birth from the university website kashmiruniversity.net.',
     ageLimit: 'As per original advertisement criteria',
     eligibility: 'Applicants who successfully submitted application forms for Public Relations Officer (PRO) position at University of Kashmir.',
@@ -2650,7 +2988,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     stage: 'exam_form',
     department: 'Cluster University Srinagar (Controller of Examinations)',
     postType: 'Admission',
-    status: 'Informational',
+    status: 'Closed',
     editorialReviewRequired: true,
     editorialNotes: 'Live cusrinagar.edu.in examination archive check on 14/11/2026 found Result Notification No. 469 (B.Tech 2nd Sem) on 04/11/2026 and Date Sheet B.Tech 8th Sem Batch 2022 on 09/11/2026, with no 04/11/2026 B.Tech 8th Sem Exam Form notice.',
     shortInfo: 'Legacy record for Cluster University Srinagar B.Tech 8th Semester Examination Form. Official CUS live notification archives verified on 14/11/2026 do not confirm a 04/11/2026 exam form notice; please refer to the verified B.Tech 8th Semester Date Sheet (09/11/2026) and official student portal.',
@@ -2697,6 +3035,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   // 🎓 UNIVERSITY OF KASHMIR FYUGP ADMISSIONS CLOSURE NOTICE (Dated: 05.11.2026)
   {
     id: 'ku-admission-closure-fyugp-nep2020-pvt-colleges-2026',
+    status: 'Closed',
     title: 'University of Kashmir: Admission Closure Notice for FYUGP NEP-2020 at Private Affiliated Colleges',
     category: 'admissions',
     postDate: '05/11/2026',
@@ -2712,7 +3051,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: 'Not Applicable (Institutional Admission Closure Notice)',
       scSt: 'Not Applicable'
     },
-    isNew: true
+    isNew: false
   },
 
   // 🇮🇳 STAFF SELECTION COMMISSION (SSC) CGL TIER-1 TENTATIVE ANSWER KEY & OBJECTIONS (Dated: 04.11.2026 - CLOSED)
@@ -2774,7 +3113,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     lastDate: '15/11/2026',
     advertisementNo: 'Notification No. 10 of 2025 (Item No. 271) | Notice No. JKSSB-COE0EXAM(UT)/10/2026',
     postType: 'Job',
-    status: 'Informational',
+    status: 'Closed',
     shortInfo: 'Jammu and Kashmir Services Selection Board (JKSSB) has officially uploaded the E-Admit Cards on 11th November 2026 for the OMR-based written examination for the post of Accounts Assistant (Finance Department) under Notification No. 10 of 2025 (Item No. 271). The examination will be held on 15th November 2026 across designated centers.',
     ageLimit: 'Open Merit: 40 Years, Reserved Categories: 43 Years, PwD: 42 Years (as per advertisement)',
     eligibility: 'Graduation in Commerce or any discipline with minimum 50% marks from a recognized university, having applied under Item No. 271.',
@@ -2800,7 +3139,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Verified official PDF Admit_Card_Notice_15112026.pdf (HTTP 200) on jkssb.nic.in during 14/11/2026 audit.'
       ]
     },
-    isNew: true
+    isNew: false
   },
 
   // 🏥 UNIVERSITY OF KASHMIR BUMS PRACTICAL DATE SHEET (Dated: 04.11.2026)
@@ -2971,8 +3310,8 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       ]
     },
     stage: 'admission',
-    status: 'Open',
-    isNew: true
+    status: 'Closed',
+    isNew: false
   },
   // 📚 UNIVERSITY OF KASHMIR B.ED 3RD & 4TH SEM REVISED DATE SHEET
   {
@@ -3137,7 +3476,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     },
     isNew: false
   },
-  // 🏛️ CLUSTER UNIVERSITY SRINAGAR SENIOR FACULTY RECRUITMENT (28 OCTOBER 2026 - VERIFIED 14/11/2026)
+  // 🏛️ CLUSTER UNIVERSITY SRINAGAR SENIOR FACULTY RECRUITMENT (EXTENDED 20/11/2026 - VERIFIED 21/11/2026)
   {
     id: 'cus-faculty-recruitment-advt-07-2026',
     title: 'Cluster University Srinagar Faculty Recruitment 2026 (Advt No. 07-CUS of 2026) - 22 Associate Professor & Professor Posts',
@@ -3146,17 +3485,18 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     postType: 'Job',
     status: 'Open',
     postDate: '28/10/2026',
+    documentDate: '20/11/2026',
     startDate: '01/11/2026',
-    lastDate: '21/11/2026',
+    lastDate: '30/11/2026',
     closingTime: '23:55 IST',
-    feeDeadline: '21/11/2026 (23:55 IST); Hard Copy by 27/11/2026',
-    advertisementNo: 'Advt No. 07-CUS OF 2026 (No: CUS/Advt/2026/6085-96, Dated: 28.10.2026)',
+    feeDeadline: '30/11/2026 (Online); Hard Copy by 07/12/2026',
+    advertisementNo: 'Advt No. 07-CUS OF 2026 (No: CUS/Advt/2026/6085-96, Dated: 28.10.2026) | Extension No. CUS/Advt/2026/6559 (Dated: 20-11-2026)',
     recruitmentYear: '2026',
-    shortInfo: 'Cluster University Srinagar invites online applications from 01/11/2026 to 21/11/2026 (23:55 IST) for direct recruitment to 22 senior faculty positions (Associate Professors and Professors) across constituent colleges. Hard copies of submitted application forms must reach the University by 27/11/2026.',
+    shortInfo: 'Cluster University Srinagar extended the online application deadline for direct recruitment to 22 senior faculty positions (Associate Professors and Professors) under Advt No. 07-CUS of 2026 until 30/11/2026. Hard copies of submitted application forms may be submitted up to 07/12/2026; all other terms remain unchanged.',
     ageLimit: 'As per UGC Regulations and University Statutes',
     eligibility: 'Good academic record with a Ph.D. Degree in the concerned/allied/relevant disciplines and requisite teaching/research experience as per UGC Regulations 2018.',
     totalPosts: '22 Posts (Associate Professors & Professors)',
-    officialLink: 'https://www.cusrinagar.edu.in/FolderManager/Notification/c57984ba332c426cb8226e8af66bb39d.pdf',
+    officialLink: 'https://www.cusrinagar.edu.in/FolderManager/Notification/8d2a4c0d9ad04042b6cdf0a46964132b.pdf',
     officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/c57984ba332c426cb8226e8af66bb39d.pdf',
     officialApplicationUrl: 'https://cusrinagar.edu.in',
     fees: {
@@ -3164,21 +3504,26 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       scSt: '₹1,500/- (For Reserved Category Candidates)'
     },
     stage: 'recruitment',
+    updatedAt: '21/11/2026',
     verificationStatus: 'verified',
     verification: {
       status: 'verified',
       verificationStatus: 'verified',
-      verifiedAt: '14/11/2026',
-      lastVerified: '14/11/2026',
+      verifiedAt: '21/11/2026',
+      lastVerified: '21/11/2026',
       officialNotificationUrl: 'https://www.cusrinagar.edu.in/FolderManager/Notification/c57984ba332c426cb8226e8af66bb39d.pdf',
+      amendmentUrls: [
+        'https://www.cusrinagar.edu.in/FolderManager/Notification/8d2a4c0d9ad04042b6cdf0a46964132b.pdf'
+      ],
       officialApplicationUrl: 'https://cusrinagar.edu.in',
-      advertisementNo: 'Advt No. 07-CUS OF 2026 (CUS/Advt/2026/6085-96)',
+      advertisementNo: 'Advt No. 07-CUS OF 2026 (CUS/Advt/2026/6085-96) | Extension CUS/Advt/2026/6559',
       recruitmentYear: '2026',
       verifiedOpeningDate: '01/11/2026',
-      verifiedClosingDate: '21/11/2026',
+      verifiedClosingDate: '30/11/2026',
       closingTime: '23:55 IST',
       correctionHistory: [
-        'Verified directly from official PDF c57984ba332c426cb8226e8af66bb39d.pdf on 14/11/2026: fees corrected to ₹2,000 (General/UR) and ₹1,500 (Reserved), closing time 23:55 IST on 21/11/2026, hard copy due 27/11/2026.'
+        'Verified directly from official PDF c57984ba332c426cb8226e8af66bb39d.pdf on 14/11/2026: fees corrected to ₹2,000 (General/UR) and ₹1,500 (Reserved), closing time 23:55 IST on 21/11/2026, hard copy due 27/11/2026.',
+        'Verified Extension Notice No. CUS/Advt/2026/6559 (dated 20/11/2026, PDF 8d2a4c0d9ad04042b6cdf0a46964132b.pdf) on 21/11/2026: online application last date extended from 21/11/2026 to 30/11/2026; hard copy submission extended from 27/11/2026 to 07/12/2026.'
       ]
     },
     isNew: true
@@ -3186,6 +3531,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   // 🎓 KASHMIR UNIVERSITY JUNIOR ACCOUNTS ASSISTANT ANSWER KEY (28 OCTOBER 2026)
   {
     id: 'ku-junior-accounts-assistant-answer-key-2026',
+    status: 'Closed',
     title: 'University of Kashmir Written Test Provisional Answer Key & Objection Notice for Junior Accounts Assistant Posts',
     category: 'exam_forms',
     postDate: '28/10/2026',
@@ -3221,11 +3567,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Verified JAA Answer Key notice on kashmiruniversity.net notifications.'
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🎓 KASHMIR UNIVERSITY B.ED SELECTION LIST V (28 OCTOBER 2026)
   {
     id: 'ku-bed-selection-list-v-2026',
+    status: 'Closed',
     title: 'University of Kashmir 2-Year B.Ed (Session 2026) Selection Notification No. V for South Campus & Affiliated Colleges',
     category: 'admissions',
     postDate: '28/10/2026',
@@ -3261,11 +3608,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Verified B.Ed Selection List V published on kashmiruniversity.net admissions.'
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🏛️ JKSSB DRIVER RESULT & FINAL ANSWER KEY (29 OCTOBER 2026)
   {
     id: 'jkssb-driver-final-answer-key-result-2026',
+    status: 'Closed',
     title: 'JKSSB Written Examination Score Sheet & Final Answer Key Notice for Driver & Driver Grade-II Posts',
     category: 'jkssb',
     postDate: '29/10/2026',
@@ -3301,11 +3649,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Verified Driver & Driver-II final answer key and score sheet on jkssb.nic.in.'
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🏛️ JKSSB OFFICIAL PORTAL NOTICES (30 OCTOBER 2026)
   {
     id: 'jkssb-answer-key-theatre-tech-2026',
+    status: 'Closed',
     title: 'JKSSB Provisional Answer Key & Objection Notice for Junior Theatre Tech & Lab Technician OMR Exam',
     category: 'jkssb',
     postDate: '28/10/2026',
@@ -3339,11 +3688,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Provisional Answer Key and candidate objection window released on jkssb.nic.in.'
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🎓 KASHMIR UNIVERSITY EXAM FORMS / DATE SHEETS (29 OCTOBER 2026)
   {
     id: 'ku-bed-special-center-notice-2026',
+    status: 'Closed',
     title: 'University of Kashmir Examination Center Notice for B.Ed Special Education (CRC Bemina) 1st & 2nd Sem',
     category: 'exam_forms',
     postDate: '29/10/2026',
@@ -3377,7 +3727,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Verified Center Notice released on kashmiruniversity.net examination notifications.'
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🏛️ CLUSTER UNIVERSITY SRINAGAR (29 OCTOBER 2026)
   {
@@ -3421,6 +3771,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   // 🇮🇳 INDIAN ARMY RECRUITMENT (30 OCTOBER 2026)
   {
     id: 'army-tgc-145-course-2026',
+    status: 'Closed',
     title: 'Indian Army 145th Technical Graduate Course (TGC-145) Online Recruitment Notice 2026',
     category: 'army_jobs',
     postDate: '29/10/2026',
@@ -3454,11 +3805,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Verified closing on 30/10/2026 at 15:00 IST on joinindianarmy.nic.in officer recruitment portal.'
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🇮🇳 STAFF SELECTION COMMISSION (SSC)
   {
     id: 'ssc-je-paper-1-admit-card-2026',
+    status: 'Closed',
     title: 'SSC Junior Engineer Paper-I Admit Card 2026 Released',
     category: 'ssc_jobs',
     postDate: '30/10/2026',
@@ -3492,10 +3844,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Verified SSC Junior Engineer Paper-I Admit Card release on ssc.gov.in/login.'
       ]
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ku-bed-2year-distance-admissions-2026',
+    status: 'Closed',
     "title": "University of Kashmir 2-Year B.Ed. (Session 2026-28) Distance Mode Online Admission & Counselling Notice",
     "category": "admissions",
     "postDate": "27/10/2026",
@@ -3541,6 +3894,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   },
   {
     "id": "army-rvc-captain-entry-2026",
+    status: 'Closed',
     "title": "Indian Army Remount Veterinary Corps (RVC) Captain Entry Scheme 2026 (Short Service Commission)",
     "category": "army_jobs",
     "postDate": "26/10/2026",
@@ -3776,46 +4130,65 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   },
   {
     id: 'jkssb-advt-10-of-2026-je-mechanical-pwd',
-    title: 'JKSSB Advt 10 of 2026: Recruitment for 127 Junior Engineer (Mechanical) Posts in PW(R&B) Dept (Online Form Postponed)',
+    title: 'JKSSB Advt 10 of 2026: Recruitment for 127 Junior Engineer (Mechanical) Posts in PW(R&B) Dept (Fresh Dates 23 Nov–22 Dec)',
     category: 'jkssb',
     noticeType: 'recruitment',
     stage: 'recruitment',
     postDate: '21/10/2026',
-    documentDate: '15/11/2026',
-    startDate: 'Postponed (Fresh dates to be notified separately)',
-    lastDate: 'Postponed (Fresh dates to be notified separately)',
+    documentDate: '19/11/2026',
+    startDate: '23/11/2026',
+    lastDate: '22/12/2026',
+    closingTime: '23:59 IST',
+    feeDeadline: '22/12/2026 (23:59 IST)',
     postType: 'Job',
     status: 'Upcoming',
-    advertisementNo: 'Advertisement Notification No. 10 of 2026 (Dated: 21.10.2026) | Postponement Notice No. 15.11.2026',
-    shortInfo: 'JKSSB issued an official notice dated 15/11/2026 postponing the online application form window (earlier 16/11/2026 to 15/12/2026) for 127 Junior Engineer (Mechanical) posts in Public Works (R&B) Department under Advt No. 10 of 2026. Fresh dates for online registration will be notified separately on jkssb.nic.in.',
+    advertisementNo: 'Advertisement Notification No. 10 of 2026 (Dated: 21.10.2026) | Fresh Dates & Corrigendum No. JKSSB-PLAN/16/2022-03 (E-7047427) (Dated: 19.11.2026)',
+    shortInfo: 'JKSSB notified fresh online application and fee dates for 127 Junior Engineer (Mechanical) posts in PW(R&B) Department under Advt No. 10 of 2026: open from 23/11/2026 (12:00 AM) to 22/12/2026 (11:59 PM). A corrigendum dated 19/11/2026 also adds Degree/3-Year Diploma equivalence in Aeronautical, Automobile, or Production Engineering, and mandates Live Face Capture during online application.',
     ageLimit: 'Open Merit (OM): 40 Years (as on 01.01.2026) | SC / ST-1 / ST-2 / RBA / ALC-IB / EWS / OBC: 43 Years | PwBD: 42 Years | In-Service / Contractual: 40 Years',
-    eligibility: 'Three Years Diploma in Mechanical Engineering from a Government recognized Institute / Indian University, OR Degree in Mechanical Engineering / AMIE Section (A&B) in Mechanical Engineering. Candidate must be a Domicile of UT of J&K.',
+    eligibility: 'Three Years Diploma in Mechanical Engineering from a Government recognized Institute / Indian University, OR Degree in Mechanical Engineering / AMIE Section (A&B) in Mechanical Engineering. Candidate must be a Domicile of UT of J&K. Note: An Indian University Degree or a three-year Diploma from a Government recognized Institute in Aeronautical, Automobile or Production Engineering shall be considered equivalent to a Degree or Diploma in Mechanical Engineering, respectively.',
     totalPosts: '127 Posts (OM: 51 | SC: 11 | ST-1: 12 | ST-2: 13 | OBC: 10 | ALC/IB: 05 | RBA: 13 | EWS: 12)',
-    officialLink: 'https://jkssb.nic.in/Pdf/Notice_10OF2026_15112026.pdf',
+    officialLink: 'https://jkssb.nic.in/Pdf/Notice_10OF2026_19112026.pdf',
     officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Advt_notification_10OF2026_21102026.pdf',
     officialApplicationUrl: 'https://jkssb.nic.in',
     fees: {
       genObc: '₹600/- (For Open Merit, RBA, ALC/IB, OBC Categories)',
       scSt: '₹500/- (For SC, ST-1, ST-2, EWS & PwBD Categories)'
     },
+    howToApply: [
+      'Apply online at www.jkssb.nic.in from 23/11/2026 (12:00 AM) to 22/12/2026 (11:59 PM); online fee submission also closes on 22/12/2026 (11:59 PM).',
+      'Complete mandatory Live Face Capture directly via your device camera as specified in Annexure-"A" of Notice No. JKSSB-PLAN/16/2022-03 (E-7047427) dated 19/11/2026 (uploading saved photos or screenshots is not permitted).',
+      'Upload scanned signature (10–20 KB, 1.5 x 3.5 cm) and supporting Category/Qualification PDFs (maximum 200 KB each), then pay the fee via Net Banking, Debit Card, UPI, or Credit Card.',
+      'For technical/application assistance, contact JKSSB at ssbjk-grievance@jk.gov.in, Jammu 0191-2461335, Srinagar 0194-2435089, or NIC Helpline 9107706766.'
+    ],
+    documentsRequired: [
+      'Live Face Capture via device camera during form submission (Annexure-"A"; pre-saved photos/screenshots disallowed)',
+      'Scanned Signature (10–20 KB, 1.5 x 3.5 cm)',
+      'Category & Educational Qualification Certificates in PDF format (maximum 200 KB each)',
+      'J&K UT Domicile Certificate and Degree/3-Year Diploma in Mechanical, Aeronautical, Automobile, or Production Engineering'
+    ],
+    updatedAt: '21/11/2026',
     verificationStatus: 'verified',
     verification: {
       status: 'verified',
       verificationStatus: 'verified',
-      verifiedAt: '14/11/2026',
-      lastVerified: '16/11/2026',
+      verifiedAt: '21/11/2026',
+      lastVerified: '21/11/2026',
       officialNotificationUrl: 'https://jkssb.nic.in/Pdf/Advt_notification_10OF2026_21102026.pdf',
       amendmentUrls: [
-        'https://jkssb.nic.in/Pdf/Notice_10OF2026_15112026.pdf'
+        'https://jkssb.nic.in/Pdf/Notice_10OF2026_15112026.pdf',
+        'https://jkssb.nic.in/Pdf/Corrigendum_Advt_10OF2026_19112026.pdf',
+        'https://jkssb.nic.in/Pdf/Notice_10OF2026_19112026.pdf'
       ],
       officialApplicationUrl: 'https://jkssb.nic.in',
-      advertisementNo: 'Advt No. 10 of 2026',
+      advertisementNo: 'Advt No. 10 of 2026 | Corrigendum & Fresh Dates dated 19.11.2026',
       recruitmentYear: '2026',
-      verifiedOpeningDate: 'Postponed (Fresh dates to be notified separately)',
-      verifiedClosingDate: 'Postponed (Fresh dates to be notified separately)',
+      verifiedOpeningDate: '23/11/2026',
+      verifiedClosingDate: '22/12/2026',
+      closingTime: '23:59 IST',
       sourceHistory: [
         'Verified direct official PDF Advt_notification_10OF2026_21102026.pdf dated 21/10/2026 on 14/11/2026 (applications originally scheduled 16/11/2026 to 15/12/2026).',
-        'Verified official postponement notice Notice_10OF2026_15112026.pdf (dated 15/11/2026) on 16/11/2026: online submission of application forms postponed; fresh dates will be notified separately.'
+        'Verified official postponement notice Notice_10OF2026_15112026.pdf (dated 15/11/2026) on 16/11/2026.',
+        'Verified Corrigendum_Advt_10OF2026_19112026.pdf (3p, PWD Letter PWD-ADM/122/2021-05 (86549) dated 17.11.2026 & SRO 180 dated 26.05.1997) and Notice_10OF2026_19112026.pdf (5p, fresh dates 23/11/2026–22/12/2026 + Live Face Capture Annexure-A) on 21/11/2026.'
       ]
     },
     isNew: true
@@ -3842,6 +4215,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   },
   {
     id: 'ku-ddoe-distance-education-pg-admissions-2026',
+    status: 'Closed',
     title: 'University of Kashmir DDOE Distance Mode PG Admissions (MA, M.Com & M.Sc Mathematics) Notification 2026',
     category: 'admissions',
     postDate: '25/10/2026',
@@ -3982,6 +4356,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   // 🇮🇳 PREVIOUS NOTIFICATIONS (30 AUGUST 2026 - DISPATCH)
   {
     id: 'army-tes-55-course-july-2027',
+    status: 'Closed',
     title: 'Indian Army 10+2 Technical Entry Scheme (TES-55 Course Commencing July 2027)',
     category: 'army_jobs',
     postDate: '30/08/2026',
@@ -3997,10 +4372,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹0 (No Application Fee)',
       scSt: '₹0 (No Application Fee)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'rrb-ntpc-graduate-undergraduate-cen11-2026',
+    status: 'Closed',
     title: 'RRB Non-Technical Popular Categories (NTPC Graduate & Undergraduate) Recruitment 2026 (CEN 11/2026)',
     category: 'rrb_jobs',
     postDate: '30/08/2026',
@@ -4016,10 +4392,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹500 (₹400 refundable on appearing in 1st Stage CBT)',
       scSt: '₹250 (₹250 refundable on appearing in 1st Stage CBT)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ssc-mts-havaldar-recruitment-2026-fresh',
+    status: 'Closed',
     title: 'SSC Multi-Tasking (Non-Technical) Staff and Havaldar (CBIC & CBN) Examination 2026',
     category: 'ssc_jobs',
     postDate: '30/08/2026',
@@ -4035,10 +4412,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹100 (Online via BHIM UPI, Net Banking, Cards)',
       scSt: '₹0 (Exempted for SC/ST/PwBD/Ex-Servicemen/Women)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'cus-ug-phase2-spot-round-admissions-2026',
+    status: 'Closed',
     title: 'Phase-II Spot Round Admissions Notice for 4-Year UG Honours (FYUGP NEP-2020) Session 2026-27',
     category: 'cluster_univ',
     postDate: '30/08/2026',
@@ -4054,10 +4432,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹500 (Spot Registration & Counseling Fee)',
       scSt: '₹500 (Spot Registration & Counseling Fee)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'jkssb-dv-notice-advt06-2026-works-supervisor',
+    status: 'Closed',
     title: 'JKSSB Document Verification Notice for Draftsman (Civil) & Works Supervisor Posts under Advt 06/2026',
     category: 'jkssb',
     postDate: '30/08/2026',
@@ -4073,10 +4452,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹500 (Application & Processing Fee)',
       scSt: '₹400 (For SC/ST/EWS/PwD Candidates)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ku-date-sheet-bg-5th-6th-sem-backlog-2026',
+    status: 'Closed',
     title: 'Date Sheet for BG 5th & 6th Semester Backlog / Supplementary Examination (CBCS Session 2026)',
     category: 'exam_forms',
     postDate: '30/08/2026',
@@ -4092,10 +4472,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹750 (Exam Fee per semester backlog)',
       scSt: '₹750 (Exam Fee per semester backlog)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ku-admissions-ug-phase2-walkin-nep-2026',
+    status: 'Closed',
     title: 'Phase-II Walk-in & Merit-Based UG Admission Notice for Class 12th Pass-Outs (Session 2026-27)',
     category: 'admissions',
     postDate: '30/08/2026',
@@ -4111,11 +4492,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹500 (Online Application & Processing Fee)',
       scSt: '₹500 (Online Application & Processing Fee)'
     },
-    isNew: true
+    isNew: false
   },
   // 🇮🇳 PREVIOUS NOTIFICATIONS (22 AUGUST 2026 - DISPATCH)
   {
     id: 'army-ssc-tech-66-men-37-women-oct-2026',
+    status: 'Closed',
     title: 'Indian Army Short Service Commission (Tech) 66th Men & 37th Women Entry Scheme (Commencing Oct 2026)',
     category: 'army_jobs',
     postDate: '22/08/2026',
@@ -4131,10 +4513,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹0 (No Application Fee)',
       scSt: '₹0 (No Application Fee)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'rrb-staff-nurse-paramedical-cen10-2026',
+    status: 'Closed',
     title: 'RRB Paramedical Categories & Nursing Superintendent Recruitment 2026 (CEN 10/2026)',
     category: 'rrb_jobs',
     postDate: '22/08/2026',
@@ -4150,10 +4533,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹500 (₹400 refundable upon attending CBT)',
       scSt: '₹250 (₹250 refundable upon attending CBT)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ssc-stenographer-grade-c-d-exam-2026',
+    status: 'Closed',
     title: 'SSC Stenographer Grade ‘C’ and ‘D’ Examination 2026 (CBT & Skill Test)',
     category: 'ssc_jobs',
     postDate: '22/08/2026',
@@ -4169,10 +4553,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹100 (Online Payment via UPI/NetBanking)',
       scSt: '₹0 (Exempted for SC/ST/PwD/Women)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'cus-ug-honours-nep-sem2-exam-form-2026',
+    status: 'Closed',
     title: 'Online Examination Forms Notice for UG FYUGP (NEP-2020) 2nd Semester Batch 2025-26',
     category: 'cluster_univ',
     postDate: '22/08/2026',
@@ -4188,10 +4573,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹675 (Standard Form & Exam Fee)',
       scSt: '₹675 (Standard Form & Exam Fee)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ku-exam-form-bed-1st-2nd-sem-session-2026',
+    status: 'Closed',
     title: 'Online Examination Forms Notice for B.Ed 1st & 2nd Semester (Regular & Backlog Candidates, Session 2026)',
     category: 'exam_forms',
     postDate: '22/08/2026',
@@ -4207,10 +4593,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹1,050 (Exam Fee) + ₹250 (EMF / Services)',
       scSt: '₹1,050 (Exam Fee) + ₹250 (EMF / Services)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ku-admissions-postgraduate-diploma-cyber-security-2026',
+    status: 'Closed',
     title: 'Admission Notification for PG Diploma in Cyber Security, AI & Data Science (Session 2026-27)',
     category: 'admissions',
     postDate: '22/08/2026',
@@ -4226,11 +4613,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹750 (Entrance & Processing Fee)',
       scSt: '₹750 (Entrance & Processing Fee)'
     },
-    isNew: true
+    isNew: false
   },
   // 🇮🇳 PREVIOUS NOTIFICATIONS (19 AUGUST 2026 - DISPATCH)
   {
     id: 'army-tes-54-course-jan-2027',
+    status: 'Closed',
     title: 'Indian Army 10+2 Technical Entry Scheme (TES-54 Course - Commencing Jan 2027)',
     category: 'army_jobs',
     postDate: '19/08/2026',
@@ -4246,10 +4634,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹0 (No Application Fee)',
       scSt: '₹0 (No Application Fee)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'rrb-cma-metallurgical-cen09-2026',
+    status: 'Closed',
     title: 'RRB Chemical & Metallurgical Assistant (CMA) & Supervisor Recruitment 2026 (CEN 09/2026)',
     category: 'rrb_jobs',
     postDate: '19/08/2026',
@@ -4265,10 +4654,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹500 (₹400 refundable after appearing in CBT-1)',
       scSt: '₹250 (₹250 refundable after appearing in CBT-1)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ssc-junior-engineer-je-exam-2026',
+    status: 'Closed',
     title: 'SSC Junior Engineer (Civil, Mechanical & Electrical) Examination 2026 (JE Paper-I)',
     category: 'ssc_jobs',
     postDate: '19/08/2026',
@@ -4284,10 +4674,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹100 (Online Payment via UPI/NetBanking)',
       scSt: '₹0 (Exempted for SC/ST/PwD/Women candidates)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'cus-btech-engg-sem3-sem5-exam-2026',
+    status: 'Closed',
     title: 'Online Examination Forms Notice for B.Tech & Engineering 3rd & 5th Semester (Session 2026)',
     category: 'cluster_univ',
     postDate: '19/08/2026',
@@ -4303,10 +4694,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹550 per subject + ₹200 Exam Infra Fee',
       scSt: '₹550 per subject + ₹200 Exam Infra Fee'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ku-exam-form-llb-ballb-even-sem-2026',
+    status: 'Closed',
     title: 'Online Examination Forms Notice for LL.B 3-Year & BA-LL.B 5-Year 2nd, 4th & 6th Semesters (Session 2026)',
     category: 'exam_forms',
     postDate: '19/08/2026',
@@ -4322,10 +4714,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹1,650 per Semester (Online Payment)',
       scSt: '₹1,650 per Semester (Online Payment)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ku-admission-mttm-tourism-hospitality-2026',
+    status: 'Closed',
     title: 'Admission Notification for Master of Tourism & Travel Management (MTTM) & Hospitality Courses (Session 2026)',
     category: 'admissions',
     postDate: '19/08/2026',
@@ -4341,11 +4734,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹500 (Online Entrance & Application Fee)',
       scSt: '₹500 (Online Entrance & Application Fee)'
     },
-    isNew: true
+    isNew: false
   },
   // 🇮🇳 PREVIOUS NOTIFICATIONS (18 AUGUST 2026)
   {
     id: 'army-tgc-143-course-jul-2027',
+    status: 'Closed',
     title: 'Indian Army 143rd Technical Graduate Course (TGC-143 - Commencing Jul 2027)',
     category: 'army_jobs',
     postDate: '18/08/2026',
@@ -4361,10 +4755,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹0 (No Application Fee)',
       scSt: '₹0 (No Application Fee)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'rrb-ministerial-isolated-cen08-2026',
+    status: 'Closed',
     title: 'RRB Ministerial & Isolated Categories Recruitment 2026 (CEN 08/2026 - 1,280 Posts)',
     category: 'rrb_jobs',
     postDate: '18/08/2026',
@@ -4380,10 +4775,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹500 (₹400 refundable after appearing in CBT-1)',
       scSt: '₹250 (₹250 refundable after appearing in CBT-1)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ssc-junior-hindi-translator-jht-exam-2026',
+    status: 'Closed',
     title: 'SSC Combined Hindi Translators Examination (JHT, JT & SHT) 2026',
     category: 'ssc_jobs',
     postDate: '18/08/2026',
@@ -4399,10 +4795,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹100 (Online Payment via UPI/NetBanking)',
       scSt: '₹0 (Exempted for SC/ST/PwD/Women candidates)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'cus-integrated-pg-honors-sem2-sem4-exam-2026',
+    status: 'Closed',
     title: 'Online Examination Forms Notice for Integrated PG & Honors 2nd & 4th Semester (Session 2026)',
     category: 'cluster_univ',
     postDate: '18/08/2026',
@@ -4418,10 +4815,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹425 per subject + ₹200 University Exam Infra Fee',
       scSt: '₹425 per subject + ₹200 University Exam Infra Fee'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ku-exam-form-bed-1st-2nd-sem-distance-2026',
+    status: 'Closed',
     title: 'Online Examination Forms Notice for B.Ed 1st & 2nd Semester Regular & Distance Education (Batch 2025-26)',
     category: 'exam_forms',
     postDate: '18/08/2026',
@@ -4437,10 +4835,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹1,475 per Semester (Online Payment)',
       scSt: '₹1,475 per Semester (Online Payment)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ku-admission-foreign-language-diploma-2026',
+    status: 'Closed',
     title: 'Admission Notification for Diploma & Certificate Courses in Foreign Languages (Session 2026)',
     category: 'admissions',
     postDate: '18/08/2026',
@@ -4456,11 +4855,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹250 (Application Fee) + Course Fee upon selection',
       scSt: '₹250 (Application Fee) + Course Fee upon selection'
     },
-    isNew: true
+    isNew: false
   },
   // 🇮🇳 TODAY'S NEWLY EXTRACTED NOTIFICATIONS (18 AUGUST 2026)
   {
     id: 'army-ssc-tech-65-men-36-women-2026',
+    status: 'Closed',
     title: 'Indian Army SSC (Tech)-65 Men & SSCW (Tech)-36 Women Course (Apr 2027)',
     category: 'army_jobs',
     postDate: '18/08/2026',
@@ -4476,10 +4876,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹0 (No Application Fee)',
       scSt: '₹0 (No Application Fee)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'rrb-senior-section-engineer-cen07-2026',
+    status: 'Closed',
     title: 'RRB Senior Section Engineer (SSE) & Chief Depot Material Superintendent (CEN 07/2026)',
     category: 'rrb_jobs',
     postDate: '18/08/2026',
@@ -4495,10 +4896,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹500 (₹400 refundable after appearing in CBT-1)',
       scSt: '₹250 (₹250 refundable after appearing in CBT-1)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ssc-stenographer-grade-cd-exam-2026',
+    status: 'Closed',
     title: 'SSC Stenographer Grade "C" & "D" Examination 2026 (Official Notification)',
     category: 'ssc_jobs',
     postDate: '18/08/2026',
@@ -4514,10 +4916,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹100 (Online Payment via UPI/NetBanking)',
       scSt: '₹0 (Exempted for SC/ST/PwD/Women candidates)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'cus-ug-sem4-sem6-exam-form-2026',
+    status: 'Closed',
     title: 'Online Examination Form Notice for UG 4th & 6th Semester (NEP & Batch 2021-23)',
     category: 'cluster_univ',
     postDate: '18/08/2026',
@@ -4534,10 +4937,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: 'As per subject selection on student portal',
       scSt: 'As per subject selection on student portal'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ku-exam-form-ug-bg-2nd-sem-nep-2026',
+    status: 'Closed',
     title: 'Online Examination Forms Notice for UG (BG) 2nd Semester Regular & Fresh Private (NEP Batch 2025)',
     category: 'exam_forms',
     postDate: '18/08/2026',
@@ -4553,10 +4957,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: 'Standard UG NEP Examination Fee (Online Gateway)',
       scSt: 'Standard UG NEP Examination Fee (Online Gateway)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ku-admission-pg-counseling-list2-2026',
+    status: 'Closed',
     title: '2nd Counseling & Selection List for Admission to Post Graduate Programmes (Session 2026)',
     category: 'admissions',
     postDate: '18/08/2026',
@@ -4572,11 +4977,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: 'Admission Fee as per allotted Department/Course',
       scSt: 'Admission Fee as per allotted Department/Course'
     },
-    isNew: true
+    isNew: false
   },
   // 🇮🇳 PREVIOUS NOTIFICATIONS (17 AUGUST 2026)
   {
     id: 'army-tes-54-course-2026',
+    status: 'Closed',
     title: '10+2 Technical Entry Scheme (TES-54 Course - Jan 2027)',
     category: 'army_jobs',
     postDate: '17/08/2026',
@@ -4592,10 +4998,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹0 (No Application Fee)',
       scSt: '₹0 (No Application Fee)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'rrb-ministerial-isolated-2026',
+    status: 'Closed',
     title: 'RRB Ministerial & Isolated Categories Recruitment (CEN 06/2026)',
     category: 'rrb_jobs',
     postDate: '17/08/2026',
@@ -4611,10 +5018,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹500 (₹400 refundable after appearing in CBT)',
       scSt: '₹250 (₹250 refundable after appearing in CBT)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ssc-cpo-si-delhi-police-capf-2026',
+    status: 'Closed',
     title: 'SSC Sub-Inspector in Delhi Police & Central Armed Police Forces (CAPFs) Exam 2026',
     category: 'ssc_jobs',
     postDate: '17/08/2026',
@@ -4630,10 +5038,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹100 (Online via Net Banking/UPI/Debit Card)',
       scSt: '₹0 (Exempted for SC/ST/Ex-Servicemen/Women candidates)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'cus-ug-special-stray-round-2026',
+    status: 'Closed',
     title: 'Online Admission Notice for Special Stray Round for UG / Honours Programmes (Session 2026)',
     category: 'cluster_univ',
     postDate: '17/08/2026',
@@ -4649,10 +5058,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹300 (Counseling & Processing Fee)',
       scSt: '₹300 (Counseling & Processing Fee)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ku-exam-date-sheet-pg-3rd-sem-2026',
+    status: 'Closed',
     title: 'Date Sheet for MA / M.Sc / M.Com 3rd Semester Regular / Fresh Private Candidates (Session 2026)',
     category: 'exam_forms',
     postDate: '17/08/2026',
@@ -4668,10 +5078,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: 'Standard University PG Examination Fee',
       scSt: 'Standard University PG Examination Fee'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ku-admission-bed-cdoe-2026',
+    status: 'Closed',
     title: 'Admission Notification for 2-Year B.Ed Programme (Distance Mode) Session 2026-28',
     category: 'admissions',
     postDate: '17/08/2026',
@@ -4687,11 +5098,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹500 (Online Application & Processing Fee)',
       scSt: '₹500 (Online Application & Processing Fee)'
     },
-    isNew: true
+    isNew: false
   },
   // 🇮🇳 PREVIOUS NOTIFICATIONS (AUGUST 2026)
   {
     id: 'army-amc-ssc-course-2026',
+    status: 'Closed',
     title: 'Army Medical Corps (AMC) Non-Technical & SSC Officer Course 2026-27',
     category: 'army_jobs',
     postDate: '16/08/2026',
@@ -4707,10 +5119,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹0 (No Application Fee for Army Commission)',
       scSt: '₹0 (No Application Fee)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'rrb-paramedical-cen05-2026',
+    status: 'Closed',
     title: 'RRB Paramedical Categories (Staff Nurse, Lab Tech & Pharmacist) 2026',
     category: 'rrb_jobs',
     postDate: '16/08/2026',
@@ -4726,10 +5139,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹500 (₹400 refundable after appearing in CBT-1)',
       scSt: '₹250 (₹250 refundable after appearing in CBT-1)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ssc-jht-examination-2026',
+    status: 'Closed',
     title: 'SSC Junior Hindi Translator (JHT) & Senior Hindi Translator Exam 2026',
     category: 'ssc_jobs',
     postDate: '16/08/2026',
@@ -4745,10 +5159,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹100 (Online via Net Banking/UPI/Cards)',
       scSt: '₹0 (Exempted for SC/ST/PwD/Women candidates)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'cus-self-financed-admission-2026',
+    status: 'Closed',
     title: 'Online Admission Notice for UG / PG Self-Financed & Lateral Entry (Session 2026)',
     category: 'cluster_univ',
     postDate: '16/08/2026',
@@ -4780,10 +5195,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Formally concluded. Cluster University Srinagar officially notified the complete closure of Lateral Entry and PG admissions for Session 2026-27.'
       ]
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'jkssb-draft-merit-hme-2026',
+    status: 'Closed',
     title: 'JKSSB Document Verification & Draft Merit List for Health & Medical Education Dept',
     category: 'jkssb',
     postDate: '16/08/2026',
@@ -4799,10 +5215,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹0 (Document Verification Round)',
       scSt: '₹0 (Document Verification Round)'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ku-exam-form-bg-1st-2nd-sem-2026',
+    status: 'Closed',
     title: 'Submission of Online Examination Forms for BG 1st & 2nd Sem (Batch 2025-26 NEP-2020)',
     category: 'exam_forms',
     postDate: '16/08/2026',
@@ -4818,10 +5235,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: 'Standard University Exam Fee Schedule',
       scSt: 'Standard University Exam Fee Schedule'
     },
-    isNew: true
+    isNew: false
   },
   {
     id: 'ku-admission-cdoe-pg-diploma-2026',
+    status: 'Closed',
     title: 'Admission Notification No. 14 of 2026: PG Diploma & Certificate Programmes (CDOE)',
     category: 'admissions',
     postDate: '16/08/2026',
@@ -4837,12 +5255,13 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
       genObc: '₹400 (Online Application & Prospectus Fee)',
       scSt: '₹400 (Online Application & Prospectus Fee)'
     },
-    isNew: true
+    isNew: false
   },
 
   // 🇮🇳 JOIN INDIAN ARMY NOTIFICATIONS (https://www.joinindianarmy.nic.in/default.aspx)
   {
     id: 'army-ncc-125-2026',
+    status: 'Closed',
     title: 'NCC Special Entry Scheme 125th Course (April 2027)',
     category: 'army_jobs',
     postDate: '05/08/2026',
@@ -4855,7 +5274,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '70 Posts (Male & Female)',
     fees: { genObc: '₹0', scSt: '₹0' },
     officialLink: 'https://www.joinindianarmy.nic.in/officers-entry-apply-login.htm',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Officers Training Academy (OTA) Chennai',
@@ -4864,10 +5283,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         qualification: 'Graduate with 50% marks + NCC C-Cert',
         fee: 'Free (₹0)'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'army-jag-34-2026',
+    status: 'Closed',
     title: 'JAG Entry Scheme 34th Course (Law Graduates - April 2027)',
     category: 'army_jobs',
     postDate: '05/08/2026',
@@ -4880,7 +5301,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '10 Posts',
     fees: { genObc: '₹0', scSt: '₹0' },
     officialLink: 'https://www.joinindianarmy.nic.in/officers-entry-apply-login.htm',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Judge Advocate General (JAG) Branch',
@@ -4889,10 +5310,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         qualification: 'LLB Degree (55% marks) + Bar Council eligibility',
         fee: 'Free (₹0)'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'army-ta-officer-2026',
+    status: 'Closed',
     title: 'Territorial Army Non-Departmental Officer Entry 2026',
     category: 'army_jobs',
     postDate: '05/08/2026',
@@ -4905,7 +5328,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: 'Multiple Officer Vacancies',
     fees: { genObc: '₹0', scSt: '₹0' },
     officialLink: 'https://www.joinindianarmy.nic.in/default.aspx',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Territorial Army Units',
@@ -4918,6 +5341,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   },
   {
     id: 'army-ladakh-rally-2026',
+    status: 'Closed',
     title: 'Ladakh Scouts Regimental Centre Agniveer Recruitment Rally',
     category: 'army_jobs',
     postDate: '05/08/2026',
@@ -4930,7 +5354,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: 'Regimental HQ Quota',
     fees: { genObc: '₹0', scSt: '₹0' },
     officialLink: 'https://www.joinindianarmy.nic.in/BRAgniveerRallySchedule.htm',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Ladakh Scouts Regimental Centre',
@@ -4939,10 +5363,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         qualification: 'Class 10th / 12th Pass',
         fee: 'Free (₹0)'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'army-aoc-civilian-2026',
+    status: 'Closed',
     title: 'Army Ordnance Corps (AOC) Civilian Recruitment Alert 2026',
     category: 'army_jobs',
     postDate: '07/08/2026',
@@ -4955,7 +5381,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: 'Upcoming Vacancies',
     fees: { genObc: '₹0', scSt: '₹0' },
     officialLink: 'https://www.joinindianarmy.nic.in/default.aspx',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Army Ordnance Corps Units',
@@ -4969,6 +5395,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   // 🚆 RAILWAY RECRUITMENT BOARD (RRB) NOTIFICATIONS (https://www.rrbapply.gov.in/)
   {
     id: 'rrb-je-2026',
+    status: 'Closed',
     title: 'RRB Junior Engineer (JE), DMS & CMA Recruitment 2026 (CEN No. 04/2026)',
     category: 'rrb_jobs',
     postDate: '05/08/2026',
@@ -4981,7 +5408,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '4,098 Posts (Pan-India Railway Zones)',
     fees: { genObc: '₹500 (₹400 refunded after CBT-1)', scSt: '₹250 (Full ₹250 refunded after CBT-1)' },
     officialLink: 'https://www.rrbapply.gov.in/',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Indian Railways - Works, Track & Civil Infrastructure',
@@ -5015,6 +5442,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   },
   {
     id: 'rrb-section-controller-2026',
+    status: 'Closed',
     title: 'RRB Section Controller Recruitment 2026 (CEN No. 03/2026)',
     category: 'rrb_jobs',
     postDate: '15/07/2026',
@@ -5027,7 +5455,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '119 Posts',
     fees: { genObc: '₹500', scSt: '₹250' },
     officialLink: 'https://www.rrbapply.gov.in/#/auth/landing',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Operating & Traffic Control Division',
@@ -5036,10 +5464,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         qualification: 'Bachelor\'s Degree in any discipline',
         fee: '₹500 / ₹250'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'rrb-group-d-2026',
+    status: 'Closed',
     title: 'RRB Group D (Level-1) CBT Examination & City Intimation (CEN No. 09/2025)',
     category: 'rrb_jobs',
     postDate: '03/08/2026',
@@ -5052,7 +5482,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '22,195 Posts (Level-1 Posts)',
     fees: { genObc: '₹500', scSt: '₹250' },
     officialLink: 'https://www.rrbapply.gov.in/',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Track & Traffic Operating Units',
@@ -5065,6 +5495,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   },
   {
     id: 'rrb-technician-correction-2026',
+    status: 'Closed',
     title: 'RRB Technician (Grade 1 Signal & Grade 3) Application Correction Window (CEN No. 02/2026)',
     category: 'rrb_jobs',
     postDate: '01/08/2026',
@@ -5077,7 +5508,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '6,557 Posts',
     fees: { genObc: '₹100 (Correction Fee)', scSt: '₹100 (Correction Fee)' },
     officialLink: 'https://www.rrbapply.gov.in/#/auth/landing',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Signal, Telecom, Workshop & Loco Sheds',
@@ -5086,10 +5517,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         qualification: '10th+ITI / 10+2 PCM / Diploma / B.Sc / B.Tech',
         fee: '₹100 Modification'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'rrb-ntpc-paramedical-2026',
+    status: 'Closed',
     title: 'RRB NTPC & Paramedical Categories Recruitment Calendar 2026',
     category: 'rrb_jobs',
     postDate: '07/08/2026',
@@ -5119,7 +5552,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Verified Railway Recruitment Board annual exam schedule calendar.'
       ]
     },
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Traffic, Operating, Commercial & Railway Medical Division',
@@ -5133,6 +5566,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   // 🇮🇳 STAFF SELECTION COMMISSION (SSC) RECRUITMENT NOTIFICATIONS (https://ssc.gov.in/)
   {
     id: 'ssc-steno-2026',
+    status: 'Closed',
     title: 'SSC Stenographer Grade "C" & "D" Examination 2026 (1,207 Vacancies)',
     category: 'ssc_jobs',
     postDate: '06/08/2026',
@@ -5145,7 +5579,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '1,207 Posts (Tentative)',
     fees: { genObc: '₹100', scSt: '₹0 (Exempted for SC/ST/PwD/Women)' },
     officialLink: 'https://ssc.gov.in/',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Central Ministries & Armed Forces HQ (AFHQ)',
@@ -5165,6 +5599,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   },
   {
     id: 'ssc-cgl-2026-city-slip',
+    status: 'Closed',
     title: 'SSC CGL 2026 Tier-I Exam City Intimation Slip & Computer-Based Exam Schedule Notice',
     category: 'ssc_jobs',
     postDate: '05/08/2026',
@@ -5194,7 +5629,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Tier-I Computer Based Examination city intimation and schedule verified on ssc.gov.in/login.'
       ]
     },
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Govt Ministries & Departments (Group B & C Officers)',
@@ -5207,6 +5642,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   },
   {
     id: 'ssc-gd-constable-2026-notice',
+    status: 'Closed',
     title: 'SSC GD Constable in CAPFs, SSF & Rifleman (GD) in Assam Rifles 2026 Notification Notice',
     category: 'ssc_jobs',
     postDate: '07/08/2026',
@@ -5219,7 +5655,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '39,481 Expected Posts',
     fees: { genObc: '₹100', scSt: '₹0' },
     officialLink: 'https://ssc.gov.in/',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Central Armed Police Forces (CAPFs)',
@@ -5232,6 +5668,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   },
   {
     id: 'ssc-selection-post-phase14-2026',
+    status: 'Closed',
     title: 'SSC Selection Posts Phase-XIV 2026 Application Correction Window Notice',
     category: 'ssc_jobs',
     postDate: '06/08/2026',
@@ -5244,7 +5681,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '2,049 Posts across Regional Cadres',
     fees: { genObc: '₹100 (Correction Fee ₹200/₹500)', scSt: '₹0' },
     officialLink: 'https://ssc.gov.in/login',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Regional SSC Offices (NR, CR, WR, ER, SR, KKR, NWR, MPR, NER)',
@@ -5253,10 +5690,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         qualification: '10th / 12th / Degree relevant to post code',
         fee: '₹100'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'ssc-chsl-mains-2026-notice',
+    status: 'Closed',
     title: 'SSC CHSL (10+2) Tier-II (Mains) Examination Date Notice 2026',
     category: 'ssc_jobs',
     postDate: '05/08/2026',
@@ -5269,7 +5708,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '3,712 Posts',
     fees: { genObc: '₹0', scSt: '₹0' },
     officialLink: 'https://ssc.gov.in/',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Ministries & Departments of Govt of India',
@@ -5283,6 +5722,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   // 🏛️ NATIONAL TESTING AGENCY (NTA) ACTIVE ENTRANCE EXAM NOTIFICATIONS (https://www.nta.ac.in/)
   {
     id: 'nta-ugc-net-dec-2026',
+    status: 'Closed',
     title: 'NTA UGC NET December 2026 Session Public Notice & Online Registration Schedule',
     category: 'nta',
     postDate: '06/08/2026',
@@ -5296,7 +5736,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     feePerSubject: 'General / Unreserved: ₹1150 | General-EWS/OBC-NCL: ₹600 | SC/ST/PwD/Third Gender: ₹325',
     fees: { genObc: '₹1150 (Gen) / ₹600 (OBC/EWS)', scSt: '₹325' },
     officialLink: 'https://ugcnet.nta.ac.in/',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Humanities & Social Sciences',
@@ -5369,6 +5809,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   },
   {
     id: 'nta-neet-ug-2026-counselling',
+    status: 'Closed',
     title: 'NTA NEET UG 2026 Medical Counselling Data Verification Public Notice',
     category: 'nta',
     postDate: '06/08/2026',
@@ -5382,7 +5823,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     feePerSubject: 'Verification Free for NEET UG Qualified Candidates',
     fees: { genObc: 'Checked', scSt: 'Checked' },
     officialLink: 'https://neet.ntaonline.in/',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'MBBS & Dental Surgery (BDS)',
@@ -5398,10 +5839,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         qualification: 'NEET UG 2026 Qualified Scorecard',
         fee: 'Verified'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'nta-csir-ugc-net-dec-2026',
+    status: 'Closed',
     title: 'NTA Joint CSIR-UGC NET December 2026 Online Registration Public Notice',
     category: 'nta',
     postDate: '07/08/2026',
@@ -5415,7 +5858,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     feePerSubject: 'General: ₹1150 | OBC-NCL/EWS: ₹600 | SC/ST/Third Gender: ₹325 | PwD: Nil',
     fees: { genObc: '₹1150 (Gen) / ₹600 (OBC/EWS)', scSt: '₹325' },
     officialLink: 'https://csirnet.nta.ac.in/',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Chemical Sciences',
@@ -5590,6 +6033,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   },
   {
     id: 'jkssb-constable-si-2026',
+    status: 'Closed',
     title: 'JKSSB Home Dept Police Constable (Armed/IRP/SDRF/Executive) & Sub-Inspector Recruitment',
     category: 'jkssb',
     postDate: '19/01/2026',
@@ -5601,7 +6045,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '2,302 Posts',
     fees: { genObc: '₹500', scSt: '₹400' },
     officialLink: 'https://jkssb.nic.in/Advertisement.html',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'J&K Home Department (Executive Police)',
@@ -5621,10 +6065,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         posts: 487,
         qualification: 'Matriculation (10th Pass) from a recognized Board + PET/PST'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'jkssb-school-teacher-2026',
+    status: 'Closed',
     title: 'JKSSB Advt 07 of 2026: School Education Dept Teacher Recruitment Drive',
     category: 'jkssb',
     postDate: '15/07/2026',
@@ -5636,7 +6082,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '3,288 Posts',
     fees: { genObc: '₹500', scSt: '₹400' },
     officialLink: 'https://jkssb.nic.in/Advertisement.html',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'School Education Department',
@@ -5660,6 +6106,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   },
   {
     id: 'jkssb-advt-13-2025',
+    status: 'Closed',
     title: 'JKSSB Advt 13 of 2025: Poshan Supervisor, Stock Asst, Handicrafts Officer & Fisheries',
     category: 'jkssb',
     postDate: '27/01/2026',
@@ -5671,7 +6118,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '390 Posts',
     fees: { genObc: '₹500', scSt: '₹400' },
     officialLink: 'https://jkssb.nic.in/Advertisement.html',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Public Works (R&B) Department',
@@ -5709,10 +6156,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         posts: 95,
         qualification: '10+2 / Graduation from recognized Institute'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'jkssb-health-med-2026',
+    status: 'Closed',
     title: 'JKSSB Advt 01 of 2026: Health & Medical Education Staff Nurse, Pharmacist & Lab Tech',
     category: 'jkssb',
     postDate: '25/02/2026',
@@ -5724,7 +6173,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '239 Posts',
     fees: { genObc: '₹500', scSt: '₹400' },
     officialLink: 'https://jkssb.nic.in/Advertisement.html',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Health & Medical Education Dept',
@@ -5750,10 +6199,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         posts: 40,
         qualification: 'Graduate Degree + Diploma / Certificate in Medical Record Keeping'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'jkssb-patwari-2026',
+    status: 'Closed',
     title: 'JKSSB Revenue Dept Patwari Recruitment (Jammu & Kashmir Division)',
     category: 'jkssb',
     postDate: '15/03/2026',
@@ -5765,7 +6216,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '142 Posts',
     fees: { genObc: '₹500', scSt: '₹400' },
     officialLink: 'https://jkssb.nic.in/Advertisement.html',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Revenue Department (Jammu Division)',
@@ -5779,10 +6230,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         posts: 64,
         qualification: 'Graduate Degree + Computer Knowledge'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'jkssb-jr-assistant-2025',
+    status: 'Closed',
     title: 'JKSSB Advt 08 of 2025: Junior Assistant & Stenographer Various Depts',
     category: 'jkssb',
     postDate: '20/10/2025',
@@ -5820,10 +6273,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         posts: 40,
         qualification: 'Graduation + Typing & Shorthand Test'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'jkssb-wildlife-guard-2025',
+    status: 'Closed',
     title: 'JKSSB Forest & Environment Dept Wildlife Guard Recruitment',
     category: 'jkssb',
     postDate: '10/01/2026',
@@ -5849,11 +6304,13 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         posts: 54,
         qualification: '10th Pass (Matriculation) + 25 KM Physical Walk Test'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   // LATEST JOBS (Extracted from SarkariResult.com.cm Portal)
   {
     id: 'job-ssc-cgl-2026',
+    status: 'Closed',
     title: 'SSC Combined Graduate Level Examination 2024 (CGL 2024) - 17,727 Posts [Applications Closed]',
     category: 'ssc_jobs',
     postDate: '24/06/2024',
@@ -5890,10 +6347,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         'Audited and corrected historical 17,727 vacancies cycle to CGL 2024 (Notice F.No. HQ-PPI03/11/2024-PP_1); applications concluded 27/07/2024 at 23:00 IST.'
       ]
     },
-    isNew: false
+    isNew: false,
+    robotsNoindex: true
   },
   {
     id: 'job-rrb-ntpc-2026',
+    status: 'Closed',
     title: 'Railway RRB NTPC Graduate & Under Graduate Posts 2026',
     category: 'jobs',
     postDate: '31/07/2026',
@@ -5903,10 +6362,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     ageLimit: '18 - 33 Years (UG Posts) / 18 - 36 Years (Graduate Posts)',
     eligibility: 'Class 12th Intermediate for UG Level / Bachelor Degree for Graduate Level Posts.',
     fees: { genObc: '₹500 (₹400 Refundable)', scSt: '₹250 (Full Refundable)' },
-    isNew: true
+    isNew: false
   },
   {
     id: 'job-ssc-mts-2026',
+    status: 'Closed',
     title: 'SSC MTS & Havildar 9,583 Posts Registration 2026',
     category: 'jobs',
     postDate: '30/07/2026',
@@ -5916,10 +6376,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     ageLimit: '18 - 25 Years for MTS, 18 - 27 Years for Havildar',
     eligibility: 'Class 10th High School Pass from any recognized board in India.',
     fees: { genObc: '₹100', scSt: '₹0' },
-    isNew: true
+    isNew: false
   },
   {
     id: 'job-ibps-po-2026',
+    status: 'Closed',
     title: 'IBPS PO XVI Officer Scale-I Recruitment 2026 (3,955 Posts)',
     category: 'banking_jobs',
     postDate: '29/07/2026',
@@ -5929,10 +6390,11 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     ageLimit: '20 - 30 Years (As on 01/08/2026)',
     eligibility: 'Any Graduation Degree in any discipline from recognized University.',
     fees: { genObc: '₹850', scSt: '₹175' },
-    isNew: true
+    isNew: false
   },
   {
     id: 'job-navy-ssr-mr-2026',
+    status: 'Closed',
     title: 'Indian Navy Agniveer SSR & MR 02/2026 Online Form',
     category: 'jobs',
     postDate: '28/07/2026',
@@ -5942,10 +6404,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     ageLimit: 'Born between 01/11/2005 and 30/04/2009',
     eligibility: 'Class 12th Intermediate with Math & Physics for SSR / Class 10th Pass for MR.',
     fees: { genObc: '₹550', scSt: '₹550' },
-    isNew: true
+    isNew: false,
+    robotsNoindex: true
   },
   {
     id: 'job-up-police-si-2026',
+    status: 'Closed',
     title: 'UP Police Sub Inspector SI & Platoon Commander 2026',
     category: 'jobs',
     postDate: '26/07/2026',
@@ -5954,10 +6418,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     shortInfo: 'Uttar Pradesh Police Recruitment Board (UPPRPB) for 9,217 Sub Inspector Civilian Police and Fire Station Officer.',
     ageLimit: '21 - 28 Years',
     eligibility: 'Bachelor Degree in any stream for SI / B.Sc Degree for Fire Officer.',
-    fees: { genObc: '₹400', scSt: '₹400' }
+    fees: { genObc: '₹400', scSt: '₹400' },
+    robotsNoindex: true
   },
   {
     id: 'job-upsc-nda',
+    status: 'Closed',
     title: 'UPSC NDA / NA II Examination 2026 Notification',
     category: 'jobs',
     postDate: '10/07/2026',
@@ -5966,10 +6432,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     shortInfo: 'Union Public Service Commission (UPSC) recruitment for National Defence Academy & Naval Academy Examination II 2026.',
     ageLimit: 'Born between 02/01/2007 and 01/01/2010',
     eligibility: 'Class 12th Intermediate pass / appearing. For Navy & Air Force, Physics & Math mandatory.',
-    fees: { genObc: '₹100', scSt: '₹0' }
+    fees: { genObc: '₹100', scSt: '₹0' },
+    robotsNoindex: true
   },
   {
     id: 'job-agniveer-army',
+    status: 'Closed',
     title: 'Indian Army Agniveer Recruitment Rally Scheme 2026',
     category: 'jobs',
     postDate: '08/07/2026',
@@ -5978,7 +6446,8 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     shortInfo: 'Join Indian Army Agniveer General Duty (GD), Technical, Clerk, Store Keeper, and Tradesmen 8th / 10th Pass entry.',
     ageLimit: '17.5 - 21 Years',
     eligibility: 'Class 8th / 10th / 12th Pass as per designated post requirements.',
-    fees: { genObc: '₹250', scSt: '₹250' }
+    fees: { genObc: '₹250', scSt: '₹250' },
+    robotsNoindex: true
   },
 
   // ADMIT CARDS
@@ -6169,6 +6638,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   // ADMISSIONS - KASHMIR UNIVERSITY (kashmiruniversity.net/admission.aspx) & NATIONAL
   {
     id: 'ku-adm-pg-selection-1-2026',
+    status: 'Closed',
     title: 'Kashmir University PG Admissions 2026 1st Selection List & Counseling Notice (MA, M.Sc, M.Com, MCA)',
     category: 'admissions',
     postDate: '06/08/2026',
@@ -6180,7 +6650,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '2,850 Provisionally Selected Candidates',
     fees: { genObc: '₹750 Processing Fee', scSt: '₹750 Processing Fee' },
     officialLink: 'https://www.kashmiruniversity.net/admission.aspx',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'School of Applied Sciences & Technology',
@@ -6200,10 +6670,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         posts: 1150,
         qualification: 'Document verification & online fee payment deadline: Aug 18, 2026.'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'ku-adm-dde-pg-bed-2026',
+    status: 'Closed',
     title: 'Kashmir University DDE Distance Mode Admission Notification 2026 (MA, M.Com, B.Ed. & PG Diplomas)',
     category: 'admissions',
     postDate: '05/08/2026',
@@ -6215,7 +6687,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '4,500 Seats',
     fees: { genObc: '₹500 Application Fee', scSt: '₹500 Application Fee' },
     officialLink: 'https://www.kashmiruniversity.net/admission.aspx',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Directorate of Distance Education (DDE)',
@@ -6235,10 +6707,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         posts: 600,
         qualification: 'Graduation in any discipline from recognized university.'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'ku-adm-phd-research-2026',
+    status: 'Closed',
     title: 'Kashmir University Ph.D. Research Programme Entrance Exemption & Direct Admission Notice 2026',
     category: 'admissions',
     postDate: '07/08/2026',
@@ -6250,7 +6724,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '320 Research Seats',
     fees: { genObc: '₹500 Application Fee', scSt: '₹500 Application Fee' },
     officialLink: 'https://www.kashmiruniversity.net/admission.aspx',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Faculty of Science & Technology',
@@ -6274,6 +6748,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   },
   {
     id: 'ku-adm-ballb-2nd-selection-2026',
+    status: 'Closed',
     title: 'Kashmir University BA-LLB 5-Year Integrated Course 2nd Selection List & Allotment Counseling 2026',
     category: 'admissions',
     postDate: '06/08/2026',
@@ -6285,7 +6760,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '180 Law Candidates',
     fees: { genObc: '₹500 Processing Fee', scSt: '₹500 Processing Fee' },
     officialLink: 'https://www.kashmiruniversity.net/admission.aspx',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Department of Law (Main Campus Srinagar)',
@@ -6299,10 +6774,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         posts: 120,
         qualification: '10+2 with 45% marks. Verification at respective allotted college.'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'ku-adm-pg-diploma-2026',
+    status: 'Closed',
     title: 'Kashmir University 1-Year PG Diploma & Certificate Courses Online Admission Notification 2026',
     category: 'admissions',
     postDate: '05/08/2026',
@@ -6314,7 +6791,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '250 Seats',
     fees: { genObc: '₹500 Application Fee', scSt: '₹500 Application Fee' },
     officialLink: 'https://www.kashmiruniversity.net/admission.aspx',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Department of Law',
@@ -6340,16 +6817,19 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         posts: 100,
         qualification: '10+2 / Graduation from recognized board.'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'adm-du-ug',
+    status: 'Closed',
     title: 'Delhi University CSAS UG Admission Portal 2026',
     category: 'admissions',
     postDate: '25/07/2026',
     lastDate: '15/08/2026',
     shortInfo: 'Common Seat Allocation System (CSAS) registration for entry into DU undergraduate degree colleges based on CUET scores.',
-    isNew: true
+    isNew: false,
+    robotsNoindex: true
   },
   {
     id: 'adm-ignou-july',
@@ -6387,16 +6867,19 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   },
   {
     id: 'adm-up-deled',
+    status: 'Closed',
     title: 'UP D.El.Ed (BTC) Online Admission Registration 2026',
     category: 'admissions',
     postDate: '16/07/2026',
     lastDate: '20/08/2026',
-    shortInfo: 'Uttar Pradesh Diploma in Elementary Education 2-year teacher training course state merit list & choice filling.'
+    shortInfo: 'Uttar Pradesh Diploma in Elementary Education 2-year teacher training course state merit list & choice filling.',
+    robotsNoindex: true
   },
 
   // EXAM FORMS - KASHMIR UNIVERSITY (kashmiruniversity.net/Examination.aspx)
   {
     id: 'ku-ef-bg-4th-sem-2026',
+    status: 'Closed',
     title: 'Kashmir University UG BG 4th Semester (NEP 2020 Batch 2024 & CBCS Backlog) Online Exam Form 2026',
     category: 'exam_forms',
     postDate: '06/08/2026',
@@ -6409,7 +6892,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '42,000+ Enrolled Students',
     fees: { genObc: '₹250 per paper + ₹350 EMF', scSt: '₹250 per paper + ₹350 EMF' },
     officialLink: 'https://egov.kashmiruniversity.ac.in/',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'School of Arts, Languages & Social Sciences',
@@ -6432,10 +6915,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         qualification: '₹250 per course paper + ₹350 Semester EMF + ₹150 IT Portal Fee.',
         fee: '₹250 per paper'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'ku-ef-pg-sem1-3-2026',
+    status: 'Closed',
     title: 'Kashmir University PG (MA, M.Sc, M.Com, MCA) 1st & 3rd Semester Main & Satellite Campus Online Exam Form 2026',
     category: 'exam_forms',
     postDate: '05/08/2026',
@@ -6448,7 +6933,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '5,200 PG Candidates',
     fees: { genObc: '₹1,650 Complete Semester', scSt: '₹1,650 Complete Semester' },
     officialLink: 'https://www.kashmiruniversity.net/Examination.aspx',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'School of Applied Sciences & Technology',
@@ -6471,10 +6956,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         qualification: 'Full semester examination fee ₹1,650 including hall ticket and marks card generation.',
         fee: '₹1,650 / Semester'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'ku-ef-bed-sem1-2-2026',
+    status: 'Closed',
     title: 'Kashmir University B.Ed. (2-Year Program) 1st & 2nd Semester (Batch 2025) Online Exam Form 2026',
     category: 'exam_forms',
     postDate: '07/08/2026',
@@ -6487,7 +6974,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '3,800 B.Ed Candidates',
     fees: { genObc: '₹250 per paper + ₹900 EMF', scSt: '₹250 per paper + ₹900 EMF' },
     officialLink: 'https://egov.kashmiruniversity.ac.in/',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Department of Education (Main Campus & South Campus)',
@@ -6507,6 +6994,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   },
   {
     id: 'ku-ef-btech-even-sem-2026',
+    status: 'Closed',
     title: 'Kashmir University Professional B.Tech / B.E. 4th, 6th & 8th Semester Online Exam Form Notice 2026',
     category: 'exam_forms',
     postDate: '06/08/2026',
@@ -6519,7 +7007,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '2,100 B.Tech Engineers',
     fees: { genObc: '₹350 per paper + ₹450 Infra', scSt: '₹350 per paper + ₹450 Infra' },
     officialLink: 'https://www.kashmiruniversity.net/Examination.aspx',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Institute of Technology Zakura Campus',
@@ -6535,10 +7023,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         qualification: '₹350 per paper + ₹450 IT & Sessional Examination Fee.',
         fee: '₹350/paper'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'ku-ef-dde-distance-2026',
+    status: 'Closed',
     title: 'Kashmir University DDE Distance Education MA & B.Ed Term-End Online Exam Form Notice 2026',
     category: 'exam_forms',
     postDate: '05/08/2026',
@@ -6551,7 +7041,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '5,500 Distance Candidates',
     fees: { genObc: '₹300 per paper + ₹400 DDE Fee', scSt: '₹300 per paper + ₹400 DDE Fee' },
     officialLink: 'https://egov.kashmiruniversity.ac.in/',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Directorate of Distance Education (DDE)',
@@ -6567,12 +7057,14 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         qualification: '₹300 per theory paper + ₹400 DDE Examination Hall Fee.',
         fee: '₹300/paper'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
 
   // CLUSTER UNIVERSITY SRINAGAR (cusrinagar.edu.in)
   {
     id: 'cus-ug-3rd-5th-sem-exam-form-2026',
+    status: 'Closed',
     title: 'Cluster University Srinagar UG 3rd & 5th Semester NEP-2020 Online Examination Form Notice 2026',
     category: 'cluster_univ',
     postDate: '06/08/2026',
@@ -6586,7 +7078,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '18,500+ Enrolled Candidates',
     fees: { genObc: '₹250/paper + ₹300 EMF', scSt: '₹250/paper + ₹300 EMF' },
     officialLink: 'https://www.cusrinagar.edu.in/',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Sri Pratap (SP) College Srinagar',
@@ -6609,10 +7101,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         qualification: '₹250 per course paper + ₹250 lab exam charges + ₹300 Semester EMF.',
         fee: '₹250/paper + ₹250 lab'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'cus-pg-integrated-spot-round-2026',
+    status: 'Closed',
     title: 'Cluster University Srinagar PG & 5-Year Integrated 1st Semester Spot Round Counseling & Online Registration 2026',
     category: 'cluster_univ',
     postDate: '05/08/2026',
@@ -6626,7 +7120,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '650 Spot Round Vacant Seats',
     fees: { genObc: '₹500 Registration Fee', scSt: '₹500 Registration Fee' },
     officialLink: 'https://www.cusrinagar.edu.in/',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'School of Sciences (SP College Srinagar)',
@@ -6649,10 +7143,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         qualification: 'Bachelor Degree in relevant discipline with min 50% aggregate marks.',
         fee: '₹500 Spot Fee'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'cus-bed-med-exam-form-2026',
+    status: 'Closed',
     title: 'Cluster University Srinagar B.Ed & M.Ed 2-Year Program Examination Form & Online Fee Schedule 2026',
     category: 'cluster_univ',
     postDate: '07/08/2026',
@@ -6666,7 +7162,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '450 Candidates',
     fees: { genObc: '₹1,200 Semester Fee', scSt: '₹1,200 Semester Fee' },
     officialLink: 'https://www.cusrinagar.edu.in/',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Govt College of Education (IASE) M.A. Road Srinagar',
@@ -6686,6 +7182,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
   },
   {
     id: 'cus-ug-1st-sem-self-reg-2026',
+    status: 'Closed',
     title: 'Cluster University Srinagar UG 1st Semester (Batch 2026) Online Self-Registration & Document Verification Notice',
     category: 'cluster_univ',
     postDate: '06/08/2026',
@@ -6699,7 +7196,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: '7,200 Admitted Students',
     fees: { genObc: '₹350 Registration Fee', scSt: '₹350 Registration Fee' },
     officialLink: 'https://www.cusrinagar.edu.in/',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'All Constituent Colleges (AS College, SP College, GCW MA Road, AAAM Bemina)',
@@ -6708,10 +7205,12 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         qualification: '10+2 Marksheet, Provisional/Character Certificate, Category Certificate (if applicable).',
         fee: '₹350 One-time'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'cus-ug-reevaluation-form-2026',
+    status: 'Closed',
     title: 'Cluster University Srinagar Division of Examination - Online Re-evaluation Form for UG 2nd & 4th Semester Results',
     category: 'cluster_univ',
     postDate: '05/08/2026',
@@ -6725,7 +7224,7 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
     totalPosts: 'Open for all eligible students',
     fees: { genObc: '₹500 Per Paper', scSt: '₹500 Per Paper' },
     officialLink: 'https://www.cusrinagar.edu.in/',
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: 'Examination Wing Cluster University Srinagar',
@@ -6734,7 +7233,8 @@ const RAW_SARKARI_DATA: SarkariItem[] = [
         qualification: 'Roll Number & Exam Registration ID clearance required.',
         fee: '₹500 / Paper'
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: 'army-agniveer-rally-guide-2026',

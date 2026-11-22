@@ -69,7 +69,7 @@
   ],
   "contactRequests": [],
   "appointments": [],
-  "views": 560,
+  "views": 562,
   "lastIssuedTokenSeq": 9543,
   "customPosts": [
     {
@@ -307,69 +307,6 @@
         "recruitmentYear": "2026",
         "sourceHistory": [
           "Official CUS PDFs aad1fcb97a9247938e0a4d1ed0dd149d.pdf (475), d10c92d104694c188bebb4442f7f7217.pdf (476), and 5336f2b1f38746f3bbc9a62ec25be2fc.pdf (477), all dated 19/11/2026, verified on 19/11/2026."
-        ]
-      }
-    },
-    {
-      "id": "cus-ug-3rd-sem-cbcs-backlog-datesheet-2026",
-      "title": "CUS UG 3rd Sem (CBCS) Backlog Date Sheet 2026",
-      "category": "cluster_univ",
-      "org": "Cluster University of Srinagar",
-      "department": "Controller of Examinations, Cluster University Srinagar",
-      "postType": "Exam Form",
-      "noticeType": "date_sheet",
-      "stage": "exam_schedule",
-      "publicationStatus": "draft",
-      "isNew": true,
-      "postDate": "19/11/2026",
-      "documentDate": "19/11/2026",
-      "startDate": "26/11/2026",
-      "lastDate": "16/12/2026",
-      "examDate": "26/11/2026 to 16/12/2026 (11:00 AM)",
-      "advertisementNo": "No : CUS/Exam/DS/UG/3rd CBCS/26/1861-71",
-      "recruitmentYear": "2026",
-      "shortInfo": "Cluster University Srinagar issued the UG 3rd Semester (CBCS) Backlog Date Sheet (Batch 2017–2021); exams scheduled 26/11/2026 to 16/12/2026 at 11:00 AM.",
-      "ageLimit": "Not stated in the notice",
-      "eligibility": "Backlog candidates of UG 3rd Semester (CBCS), Batch 2017–2021 (Session-2026) across Arts/Social Science, Science, Commerce, and Home Science streams.",
-      "totalPosts": "Not stated in the notice",
-      "officialLink": "https://www.cusrinagar.edu.in/FolderManager/Notification/0f83fc0ffd3f46b3b42a39adad819bff.pdf",
-      "officialNotificationUrl": "https://www.cusrinagar.edu.in/FolderManager/Notification/0f83fc0ffd3f46b3b42a39adad819bff.pdf",
-      "officialApplicationUrl": "https://www.cusrinagar.edu.in",
-      "fees": {
-        "genObc": "Not stated in the notice",
-        "scSt": "Not stated in the notice"
-      },
-      "howToApply": [
-        "Check your paper dates in the official PDF (26/11, 01/12, 05/12, 09/12, 14/12, and 16/12/2026 at 11:00 AM).",
-        "Download your Admit Card via Student Login on www.cusrinagar.edu.in once the detailed Centre Notice is published separately."
-      ],
-      "documentsRequired": [
-        "Downloaded CUS Admit Card via Student Login (after detailed Centre Notice release)",
-        "Valid Identity Card on every examination day"
-      ],
-      "selectionProcess": [
-        "Written examinations at 11:00 AM on 26/11, 01/12, 05/12, 09/12, 14/12, and 16/12/2026. Mobile phones and electronic devices are banned in the examination centre."
-      ],
-      "faq": [
-        {
-          "question": "What are the examination dates for CUS UG 3rd Semester (CBCS) Backlog Batch 2017–2021?",
-          "answer": "Papers are scheduled on 26/11/2026, 01/12/2026, 05/12/2026, 09/12/2026, 14/12/2026, and 16/12/2026 at 11:00 AM."
-        }
-      ],
-      "verificationStatus": "verified",
-      "verification": {
-        "status": "verified",
-        "verificationStatus": "verified",
-        "verifiedAt": "19/11/2026",
-        "lastVerified": "19/11/2026",
-        "officialNotificationUrl": "https://www.cusrinagar.edu.in/FolderManager/Notification/0f83fc0ffd3f46b3b42a39adad819bff.pdf",
-        "officialApplicationUrl": "https://www.cusrinagar.edu.in",
-        "advertisementNo": "No : CUS/Exam/DS/UG/3rd CBCS/26/1861-71",
-        "recruitmentYear": "2026",
-        "verifiedOpeningDate": "26/11/2026",
-        "verifiedClosingDate": "16/12/2026",
-        "sourceHistory": [
-          "Official CUS PDF 0f83fc0ffd3f46b3b42a39adad819bff.pdf (dated 19/11/2026) verified on 19/11/2026."
         ]
       }
     },
