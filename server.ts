@@ -7438,17 +7438,22 @@ if (IS_PRODUCTION_RUNTIME) {
 
     try {
       let indexHtml: string | null = null;
+      let htmlSource: 'disk' | 'embedded' | 'root' | 'none' = 'none';
       if (HAS_DISK_BUILT_INDEX && fs.existsSync(DIST_INDEX_HTML)) {
         indexHtml = fs.readFileSync(DIST_INDEX_HTML, 'utf-8');
+        htmlSource = 'disk';
       } else if (EMBEDDED_DIST_INDEX_HTML) {
         indexHtml = EMBEDDED_DIST_INDEX_HTML;
+        htmlSource = 'embedded';
       } else if (fs.existsSync(ROOT_INDEX_HTML)) {
         indexHtml = fs.readFileSync(ROOT_INDEX_HTML, 'utf-8');
+        htmlSource = 'root';
       }
       if (indexHtml) {
         const { html: dynamicHtml, isNotFound } = renderDynamicMetaHtml(indexHtml, req);
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+        res.setHeader('X-CSC-Html-Source', htmlSource);
         if (isNotFound) {
           return res.status(404).send(dynamicHtml);
         }

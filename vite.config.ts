@@ -1,12 +1,70 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import {build as esbuild} from 'esbuild';
+import fs from 'fs';
 import path from 'path';
-import {defineConfig} from 'vite';
+import {defineConfig, type Plugin, type ResolvedConfig} from 'vite';
+
+function buildExpressServerPlugin(): Plugin {
+  let resolvedConfig: ResolvedConfig | null = null;
+  return {
+    name: 'csc-dost-build-express-server',
+    apply: 'build',
+    configResolved(config) {
+      resolvedConfig = config;
+    },
+    async closeBundle() {
+      const rootDir = resolvedConfig?.root || process.cwd();
+      const outDir = path.resolve(rootDir, resolvedConfig?.build.outDir || 'dist');
+      const distIndexPath = path.join(outDir, 'index.html');
+      const serverEntry = path.join(rootDir, 'server.ts');
+
+      if (!fs.existsSync(serverEntry)) {
+        return;
+      }
+      if (!fs.existsSync(distIndexPath)) {
+        throw new Error(`[build-express-server] Compiled index.html not found at ${distIndexPath}`);
+      }
+
+      const distIndexHtml = fs.readFileSync(distIndexPath, 'utf-8');
+      if (!distIndexHtml.includes('/assets/') || distIndexHtml.includes('/src/main.tsx')) {
+        throw new Error(`[build-express-server] ${distIndexPath} is not a compiled Vite production HTML file`);
+      }
+
+      const sharedOptions = {
+        entryPoints: [serverEntry],
+        bundle: true,
+        platform: 'node' as const,
+        packages: 'external' as const,
+        sourcemap: true,
+        define: {
+          __EMBEDDED_DIST_INDEX_HTML__: JSON.stringify(distIndexHtml),
+        },
+      };
+
+      const targets = Array.from(
+        new Set([
+          path.join(rootDir, 'server.js'),
+          path.join(outDir, 'server.js'),
+        ])
+      );
+
+      await Promise.all([
+        ...targets.map((outfile) => esbuild({...sharedOptions, format: 'esm', outfile})),
+        esbuild({...sharedOptions, format: 'cjs', outfile: path.join(outDir, 'server.cjs')}),
+      ]);
+
+      console.log(
+        `[build-express-server] Bundled Express entry files with embedded ${path.relative(rootDir, distIndexPath)}`
+      );
+    },
+  };
+}
 
 export default defineConfig(() => {
   return {
     base: '/',
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), buildExpressServerPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
