@@ -235,7 +235,7 @@ app.set('trust proxy', 1);
 const PORT = Number(process.env.PORT) || 3000;
 
 // Resolve application root reliably across Hostinger/LiteSpeed/Passenger, Vercel, and local dev
-function resolveRuntimeRoot(targetSubpath: string): string {
+function getCandidateRoots(): string[] {
   const candidates: string[] = [process.cwd()];
   try {
     if (typeof __dirname !== 'undefined' && __dirname) {
@@ -252,7 +252,11 @@ function resolveRuntimeRoot(targetSubpath: string): string {
   } catch {
     // ignore
   }
-  for (const dir of candidates) {
+  return Array.from(new Set(candidates));
+}
+
+function resolveRuntimeRoot(targetSubpath: string): string {
+  for (const dir of getCandidateRoots()) {
     if (fs.existsSync(path.join(dir, targetSubpath))) {
       return dir;
     }
@@ -260,12 +264,41 @@ function resolveRuntimeRoot(targetSubpath: string): string {
   return process.cwd();
 }
 
-const PUBLIC_ROOT = resolveRuntimeRoot(path.join('public', 'favicon.svg'));
-const PUBLIC_DIR = path.join(PUBLIC_ROOT, 'public');
-const DIST_ROOT = resolveRuntimeRoot(path.join('dist', 'index.html'));
-const DIST_DIR = path.join(DIST_ROOT, 'dist');
+function isBuiltViteIndexHtml(filePath: string): boolean {
+  try {
+    if (!fs.existsSync(filePath)) return false;
+    const html = fs.readFileSync(filePath, 'utf-8');
+    return html.includes('/assets/') && !html.includes('/src/main.tsx');
+  } catch {
+    return false;
+  }
+}
+
+function resolveBuiltDistDir(): string {
+  const candidates = getCandidateRoots();
+  // 1. Standard layout: <root>/dist/index.html
+  for (const dir of candidates) {
+    const distDir = path.join(dir, 'dist');
+    if (isBuiltViteIndexHtml(path.join(distDir, 'index.html'))) {
+      return distDir;
+    }
+  }
+  // 2. Flattened Hostinger layout: <builds/current/nodejs>/index.html next to server.js
+  for (const dir of candidates) {
+    if (isBuiltViteIndexHtml(path.join(dir, 'index.html'))) {
+      return dir;
+    }
+  }
+  return path.join(process.cwd(), 'dist');
+}
+
+const DIST_DIR = resolveBuiltDistDir();
 const DIST_ASSETS_DIR = path.join(DIST_DIR, 'assets');
 const DIST_INDEX_HTML = path.join(DIST_DIR, 'index.html');
+const PUBLIC_ROOT = resolveRuntimeRoot(path.join('public', 'favicon.svg'));
+const PUBLIC_DIR = fs.existsSync(path.join(PUBLIC_ROOT, 'public', 'favicon.svg'))
+  ? path.join(PUBLIC_ROOT, 'public')
+  : DIST_DIR;
 const ROOT_INDEX_HTML = path.join(resolveRuntimeRoot('index.html'), 'index.html');
 
 // Health check endpoints for deployment probes & container health checks

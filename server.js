@@ -738,7 +738,16 @@ function resolvePostOrg(item) {
     return "University of Kashmir";
   }
   if (item.category === "nta") return "NTA";
-  if (item.category === "banking_jobs") return "IBPS / Banking";
+  if (item.category === "banking_jobs") {
+    const bankText = `${item.title || ""} ${item.department || ""}`.toUpperCase();
+    if (bankText.includes("J&K BANK") || bankText.includes("JAMMU & KASHMIR BANK") || bankText.includes("JAMMU AND KASHMIR BANK")) {
+      return "J&K Bank";
+    }
+    if (bankText.includes("STATE BANK OF INDIA") || /\bSBI\b/.test(bankText)) return "SBI";
+    if (bankText.includes("RESERVE BANK OF INDIA") || /\bRBI\b/.test(bankText)) return "RBI";
+    if (/\bIBPS\b/.test(bankText)) return "IBPS";
+    return "IBPS / Banking";
+  }
   const t = item.title.toUpperCase();
   if (t.includes("JKSSB")) return "JKSSB";
   if (t.includes("IGNOU")) return "IGNOU";
@@ -892,9 +901,10 @@ function normalizeSarkariItem(raw, customNow) {
   const isSubmissionWindow = type === "application" || type === "admission" || type === "upcoming" || computed.stage === "correction";
   const cleanApplyStart = isSubmissionWindow ? formatCleanDateStr(raw.startDate) || void 0 : void 0;
   const cleanApplyEnd = isSubmissionWindow ? formatCleanDateStr(raw.lastDate) || void 0 : void 0;
-  const normalizedFee = type === "application" || type === "admission" || type === "upcoming" ? raw.fees ? {
-    genObc: raw.fees.genObc,
-    scSt: raw.fees.scSt,
+  const normalizedFee = type === "application" || type === "admission" || type === "upcoming" ? raw.fees || raw.feeCategories && raw.feeCategories.length > 0 ? {
+    genObc: raw.fees?.genObc,
+    scSt: raw.fees?.scSt,
+    categories: raw.feeCategories && raw.feeCategories.length > 0 ? raw.feeCategories : void 0,
     note: raw.paymentInstructions || raw.feePerSubject
   } : void 0 : void 0;
   const venueTime = KNOWN_VENUE_TIME[raw.id];
@@ -980,9 +990,347 @@ function parseSarkariDateSortValue(dateStr) {
   return y * 1e4 + mo * 100 + d;
 }
 var RAW_SARKARI_DATA = [
+  // 📰 DAILY OFFICIAL UPDATE VERIFIED 21/11/2026 IST (Approved & Published)
+  {
+    id: "jkssb-sub-inspector-home-admit-card-2026",
+    title: "JKSSB Sub Inspector (Home Dept) Admit Card 2026",
+    category: "jkssb",
+    org: "JKSSB",
+    department: "Home Department, Government of Jammu & Kashmir",
+    postType: "Admit Card",
+    noticeType: "admit_card",
+    stage: "admit_card",
+    status: "Open",
+    publicationStatus: "published",
+    isNew: true,
+    postDate: "20/11/2026",
+    documentDate: "20/11/2026",
+    startDate: "26/11/2026",
+    lastDate: "29/11/2026",
+    eventDate: "29/11/2026",
+    eventLabel: "OMR-Based Written Examination",
+    advertisementNo: "No. JKSSB-COE0EXAM (UT)/6/2026-03 (7990247) | Notification No. 02 of 2024 (Item No. 07)",
+    recruitmentYear: "2024",
+    shortInfo: "JKSSB scheduled the OMR-Based Written Examination for Sub Inspector (Home Department) under Notification No. 02 of 2024 (Item No. 07) on 29/11/2026; E-Admit Cards become available on www.jkssb.nic.in from 26/11/2026.",
+    ageLimit: "Not stated in the notice",
+    eligibility: "Candidates who applied for Sub-Inspector (Home Department) under JKSSB Notification No. 02 of 2024 (Item No. 07).",
+    totalPosts: "Not stated in the notice",
+    officialLink: "https://jkssb.nic.in/Pdf/AdmitCard_Notice_20112026.pdf",
+    officialNotificationUrl: "https://jkssb.nic.in/Pdf/AdmitCard_Notice_20112026.pdf",
+    officialApplicationUrl: "https://www.jkssb.nic.in",
+    fees: {
+      genObc: "Not stated in the notice",
+      scSt: "Not stated in the notice"
+    },
+    howToApply: [
+      "Visit www.jkssb.nic.in from 26/11/2026 onwards and open the E-Admit Card download link for Sub-Inspector (Home Dept.), Advt No. 02 of 2024 (Item No. 07).",
+      "Enter log-in credentials (Username and Password) and verify via the OTP received on your registered Email ID and Mobile Number.",
+      "Download and print the E-Admit Card. For download grievances, email ssbjk-grievance@jk.gov.in or visit the JKSSB office in person at least 2 days before 29/11/2026 with valid proof of online application and fee payment."
+    ],
+    documentsRequired: [
+      "Printed E-Admit Card (must be handed back to Invigilation staff duly signed by both the candidate and the concerned Invigilator after examination completion)",
+      "Valid Photo Identity Proof for Biometric/Facial Authentication at the examination centre (report at least 2 hours before scheduled exam time)",
+      "Valid proof of submitted online form and fee payment (required only if reporting an admit card download grievance)"
+    ],
+    selectionProcess: [
+      "OMR-Based Written Examination for Sub-Inspector (Home Department) on 29/11/2026.",
+      "Mandatory Biometric/Facial Authentication at the examination centre; candidates are advised to report at least two (02) hours before the scheduled exam time."
+    ],
+    faq: [
+      {
+        question: "When can candidates download the JKSSB Sub Inspector (Home Dept) Admit Card 2026?",
+        answer: "E-Admit Cards for Notification No. 02 of 2024 (Item No. 07) become available on www.jkssb.nic.in w.e.f. 26/11/2026 ahead of the OMR-Based Written Examination on 29/11/2026."
+      },
+      {
+        question: "What must candidates do with the Admit Card after completing the exam?",
+        answer: "Per page 2 of Notice No. JKSSB-COE0EXAM (UT)/6/2026-03 (7990247), candidates must submit their Admit Cards back to the Invigilation staff duly signed by both the candidate and the concerned Invigilator after the examination."
+      }
+    ],
+    updatedAt: "21/11/2026",
+    verificationStatus: "verified",
+    verification: {
+      status: "verified",
+      verificationStatus: "verified",
+      verifiedAt: "21/11/2026",
+      lastVerified: "21/11/2026",
+      officialNotificationUrl: "https://jkssb.nic.in/Pdf/AdmitCard_Notice_20112026.pdf",
+      officialApplicationUrl: "https://www.jkssb.nic.in",
+      advertisementNo: "No. JKSSB-COE0EXAM (UT)/6/2026-03 (7990247) | Advt 02/2024 Item 07",
+      recruitmentYear: "2024",
+      verifiedOpeningDate: "26/11/2026",
+      verifiedClosingDate: "29/11/2026",
+      sourceHistory: [
+        "Official JKSSB 2-page PDF AdmitCard_Notice_20112026.pdf (dated 20/11/2026) verified directly on 21/11/2026."
+      ]
+    }
+  },
+  {
+    id: "jkssb-advt-04-of-2026-fresh-application-dates",
+    title: "JKSSB Advt 04 of 2026 Fresh Online Form Dates",
+    category: "jkssb",
+    org: "JKSSB",
+    department: "Agriculture Production, Home, GAD, Higher Education, Industries & Commerce, ARI & Trainings, Law Justice & Parliamentary Affairs (J&K)",
+    postType: "Job",
+    noticeType: "recruitment",
+    stage: "recruitment",
+    status: "Upcoming",
+    publicationStatus: "published",
+    isNew: true,
+    postDate: "19/11/2026",
+    documentDate: "19/11/2026",
+    startDate: "16/12/2026",
+    lastDate: "14/01/2027",
+    closingTime: "23:59 IST",
+    feeDeadline: "14/01/2027 (23:59 IST)",
+    advertisementNo: "No. JKSSB-PLAN/17/2025-06 (E-7817791) | Advertisement Notification No. 04 of 2026 (Dated: 25.05.2026)",
+    recruitmentYear: "2026",
+    shortInfo: "JKSSB announced fresh online application and fee submission dates for Advertisement Notification No. 04 of 2026 (dated 25/05/2026): online forms open from 16/12/2026 (12:00 AM) to 14/01/2027 (11:59 PM).",
+    ageLimit: "Not stated in the notice",
+    eligibility: "Not stated in the notice (refer to original JKSSB Advertisement Notification No. 04 of 2026 dated 25/05/2026 for post-wise eligibility).",
+    totalPosts: "Not stated in the notice",
+    officialLink: "https://jkssb.nic.in/Pdf/Notice_04OF2026_19112026.pdf",
+    officialNotificationUrl: "https://jkssb.nic.in/Pdf/Notice_04OF2026_19112026.pdf",
+    officialApplicationUrl: "https://www.jkssb.nic.in",
+    fees: {
+      genObc: "Not stated in the notice",
+      scSt: "Not stated in the notice"
+    },
+    howToApply: [
+      "Visit the official JKSSB online application portal at www.jkssb.nic.in between 16/12/2026 (12:00 AM) and 14/01/2027 (11:59 PM).",
+      "Submit the online application form and pay the applicable fee online before 14/01/2027 (11:59 PM) per Notice No. JKSSB-PLAN/17/2025-06 (E-7817791)."
+    ],
+    documentsRequired: [
+      "Not stated in the notice (refer to original Advertisement Notification No. 04 of 2026 dated 25/05/2026)"
+    ],
+    selectionProcess: [
+      "Not stated in the notice (issued in continuation of Office Notice No. JKSSB-PLAN/6/2026-06 (E-7906336) dated 19/06/2026)."
+    ],
+    faq: [
+      {
+        question: "What are the fresh online application dates for JKSSB Advt No. 04 of 2026?",
+        answer: "Online application forms and online fee submission for JKSSB Advertisement Notification No. 04 of 2026 run from 16/12/2026 (12:00 AM) to 14/01/2027 (11:59 PM)."
+      }
+    ],
+    updatedAt: "21/11/2026",
+    verificationStatus: "verified",
+    verification: {
+      status: "verified",
+      verificationStatus: "verified",
+      verifiedAt: "21/11/2026",
+      lastVerified: "21/11/2026",
+      officialNotificationUrl: "https://jkssb.nic.in/Pdf/Notice_04OF2026_19112026.pdf",
+      officialApplicationUrl: "https://www.jkssb.nic.in",
+      advertisementNo: "No. JKSSB-PLAN/17/2025-06 (E-7817791) | Advt 04/2026",
+      recruitmentYear: "2026",
+      verifiedOpeningDate: "16/12/2026",
+      verifiedClosingDate: "14/01/2027",
+      closingTime: "23:59 IST",
+      sourceHistory: [
+        "Official JKSSB 2-page PDF Notice_04OF2026_19112026.pdf (dated 19/11/2026) verified directly on 21/11/2026."
+      ]
+    }
+  },
+  {
+    id: "ibps-crp-po-mt-xvi-main-exam-result-2026",
+    title: "IBPS CRP PO/MT-XVI Online Main Exam Result 2026",
+    category: "banking_jobs",
+    org: "IBPS",
+    department: "Institute of Banking Personnel Selection (Participating Banks)",
+    postType: "Result",
+    noticeType: "result",
+    stage: "result",
+    status: "Result",
+    publicationStatus: "published",
+    isNew: true,
+    postDate: "20/11/2026",
+    documentDate: "20/11/2026",
+    startDate: "20/11/2026",
+    lastDate: "27/11/2026",
+    advertisementNo: "CRP PO/MT-XVI",
+    recruitmentYear: "2026",
+    shortInfo: "IBPS activated the Result Status of the Online Main Examination for CRP PO/MT-XVI on 20/11/2026; candidates can log in with Registration/Roll No and Password/DOB until 27/11/2026.",
+    ageLimit: "Not stated in the notice",
+    eligibility: "Candidates who appeared in the Online Main Examination under IBPS Common Recruitment Process for Probationary Officers / Management Trainees (CRP PO/MT-XVI).",
+    totalPosts: "Not stated in the notice",
+    officialLink: "https://www.ibps.in/index.php/management-trainees-xvi/",
+    officialNotificationUrl: "https://www.ibps.in/index.php/management-trainees-xvi/",
+    officialApplicationUrl: "https://ibpsreg.ibps.in/crppoxvijun26/fresta_nov26/login.php?appid=faa539a0e8fbd226743a6f2df8768c59",
+    fees: {
+      genObc: "Not stated in the notice",
+      scSt: "Not stated in the notice"
+    },
+    howToApply: [
+      "Open the official IBPS CRP PO/MT-XVI Main Exam Result login portal at https://ibpsreg.ibps.in/crppoxvijun26/fresta_nov26/login.php?appid=faa539a0e8fbd226743a6f2df8768c59 (or navigate via www.ibps.in -> CRP PO/MTs-XVI).",
+      "Enter your Registration No / Roll No, Password / DOB (DD-MM-YY), and captcha code to check your Online Main Examination result status before 27/11/2026."
+    ],
+    documentsRequired: [
+      "IBPS Registration No or Roll No",
+      "Password or Date of Birth in DD-MM-YY format"
+    ],
+    selectionProcess: [
+      "Result Status of Online Main Examination commenced on 20/11/2026 and closes on 27/11/2026 (related notice: job-ibps-po-2026)."
+    ],
+    faq: [
+      {
+        question: "Until when is the IBPS CRP PO/MT-XVI Online Main Exam Result 2026 link active?",
+        answer: "According to the official IBPS result portal, result viewing commenced on 20/11/2026 and closes on 27/11/2026."
+      }
+    ],
+    updatedAt: "21/11/2026",
+    verificationStatus: "verified",
+    verification: {
+      status: "verified",
+      verificationStatus: "verified",
+      verifiedAt: "21/11/2026",
+      lastVerified: "21/11/2026",
+      officialNotificationUrl: "https://www.ibps.in/index.php/management-trainees-xvi/",
+      officialApplicationUrl: "https://ibpsreg.ibps.in/crppoxvijun26/fresta_nov26/login.php?appid=faa539a0e8fbd226743a6f2df8768c59",
+      advertisementNo: "CRP PO/MT-XVI",
+      recruitmentYear: "2026",
+      verifiedOpeningDate: "20/11/2026",
+      verifiedClosingDate: "27/11/2026",
+      sourceHistory: [
+        "Official IBPS CRP Updates page & live result login portal verified HTTP 200 on 21/11/2026. Related notice: job-ibps-po-2026."
+      ]
+    }
+  },
+  {
+    id: "cus-ug-5th-sem-cbcs-backlog-datesheet-2026",
+    title: "CUS UG 5th Sem (CBCS) Backlog Date Sheet 2026",
+    category: "cluster_univ",
+    org: "Cluster University of Srinagar",
+    department: "Controller of Examinations, Cluster University Srinagar",
+    postType: "Exam Form",
+    noticeType: "date_sheet",
+    stage: "date_sheet",
+    status: "Open",
+    publicationStatus: "published",
+    isNew: true,
+    postDate: "20/11/2026",
+    documentDate: "20/11/2026",
+    startDate: "28/11/2026",
+    lastDate: "17/12/2026",
+    eventDate: "28/11/2026 to 17/12/2026 (11:00 AM)",
+    eventLabel: "UG 5th Sem (CBCS) Backlog Examinations",
+    advertisementNo: "No : CUS/Exam/DS/UG/5th CBCS/26/1872-81",
+    recruitmentYear: "2026",
+    shortInfo: "Cluster University Srinagar released the Date Sheet for Backlog Candidates of UG 5th Semester (CBCS), Batch 2017\u20132021 (Session-2026); exams run from 28/11/2026 to 17/12/2026 at 11:00 AM.",
+    ageLimit: "Not stated in the notice",
+    eligibility: "Backlog candidates of UG 5th Semester (CBCS), Batch 2017\u20132021 (Session-2026) across Arts/Social Science, Science, Commerce, Home Science, and Generic Electives.",
+    totalPosts: "Not stated in the notice",
+    officialLink: "https://www.cusrinagar.edu.in/FolderManager/Notification/288069882b0c4d2c8156327ff4c3181f.pdf",
+    officialNotificationUrl: "https://www.cusrinagar.edu.in/FolderManager/Notification/288069882b0c4d2c8156327ff4c3181f.pdf",
+    officialApplicationUrl: "https://www.cusrinagar.edu.in",
+    fees: {
+      genObc: "Not stated in the notice",
+      scSt: "Not stated in the notice"
+    },
+    howToApply: [
+      "Download the official Date Sheet PDF from www.cusrinagar.edu.in and check your paper dates: 28/11/2026, 02/12/2026, 07/12/2026, 10/12/2026, 15/12/2026, and 17/12/2026 (Generic Electives) at 11:00 AM.",
+      "Download your Admit Card via Student Login on www.cusrinagar.edu.in once the separate Centre Notice is issued."
+    ],
+    documentsRequired: [
+      "Downloaded CUS Admit Card via Student Login (after separate Centre Notice is published on www.cusrinagar.edu.in)",
+      "Valid Identity Card on every examination day"
+    ],
+    selectionProcess: [
+      "Written examinations at 11:00 AM on 28/11/2026, 02/12/2026, 07/12/2026, 10/12/2026, 15/12/2026, and 17/12/2026 (Generic Electives)."
+    ],
+    faq: [
+      {
+        question: "When are the CUS UG 5th Semester (CBCS) Backlog exams scheduled?",
+        answer: "Examinations begin on 28/11/2026 and conclude with Generic Electives on 17/12/2026, with examination timing fixed at 11:00 AM."
+      }
+    ],
+    updatedAt: "21/11/2026",
+    verificationStatus: "verified",
+    verification: {
+      status: "verified",
+      verificationStatus: "verified",
+      verifiedAt: "21/11/2026",
+      lastVerified: "21/11/2026",
+      officialNotificationUrl: "https://www.cusrinagar.edu.in/FolderManager/Notification/288069882b0c4d2c8156327ff4c3181f.pdf",
+      officialApplicationUrl: "https://www.cusrinagar.edu.in",
+      advertisementNo: "No : CUS/Exam/DS/UG/5th CBCS/26/1872-81",
+      recruitmentYear: "2026",
+      verifiedOpeningDate: "28/11/2026",
+      verifiedClosingDate: "17/12/2026",
+      sourceHistory: [
+        "Official CUS 1-page PDF 288069882b0c4d2c8156327ff4c3181f.pdf (dated 20/11/2026) verified directly on 21/11/2026."
+      ]
+    }
+  },
+  {
+    id: "cus-ug-3rd-sem-cbcs-backlog-datesheet-2026",
+    title: "CUS UG 3rd Sem (CBCS) Backlog Date Sheet 2026",
+    category: "cluster_univ",
+    org: "Cluster University of Srinagar",
+    department: "Controller of Examinations, Cluster University Srinagar",
+    postType: "Exam Form",
+    noticeType: "date_sheet",
+    stage: "date_sheet",
+    status: "Open",
+    publicationStatus: "published",
+    isNew: true,
+    postDate: "19/11/2026",
+    documentDate: "19/11/2026",
+    startDate: "26/11/2026",
+    lastDate: "16/12/2026",
+    eventDate: "26/11/2026 to 16/12/2026 (11:00 AM)",
+    eventLabel: "UG 3rd Sem (CBCS) Backlog Examinations",
+    advertisementNo: "No : CUS/Exam/DS/UG/3rd CBCS/26/1861-71",
+    recruitmentYear: "2026",
+    shortInfo: "Cluster University Srinagar issued the revised Date Sheet for Backlog Candidates of UG 3rd Semester (CBCS), Batch 2017\u20132021 (Session-2026); exams run from 26/11/2026 to 16/12/2026 at 11:00 AM (History moved from 05/12 to 16/12/2026).",
+    ageLimit: "Not stated in the notice",
+    eligibility: "Backlog candidates of UG 3rd Semester (CBCS), Batch 2017\u20132021 (Session-2026) across Arts/Social Science, Science, Commerce, and Home Science streams.",
+    totalPosts: "Not stated in the notice",
+    officialLink: "https://www.cusrinagar.edu.in/FolderManager/Notification/fed67c211adf45ab9312915e7a41e83a.pdf",
+    officialNotificationUrl: "https://www.cusrinagar.edu.in/FolderManager/Notification/fed67c211adf45ab9312915e7a41e83a.pdf",
+    officialApplicationUrl: "https://www.cusrinagar.edu.in",
+    fees: {
+      genObc: "Not stated in the notice",
+      scSt: "Not stated in the notice"
+    },
+    howToApply: [
+      "Check your paper dates in the revised official PDF: 26/11/2026, 01/12/2026, 05/12/2026, 09/12/2026, 14/12/2026, and 16/12/2026 (History moved to 16/12/2026) at 11:00 AM.",
+      "Download your Admit Card via Student Login on www.cusrinagar.edu.in once the detailed Centre Notice is published separately."
+    ],
+    documentsRequired: [
+      "Downloaded CUS Admit Card via Student Login (after detailed Centre Notice release)",
+      "Valid Identity Card on every examination day"
+    ],
+    selectionProcess: [
+      "Written examinations at 11:00 AM on 26/11/2026, 01/12/2026, 05/12/2026, 09/12/2026, 14/12/2026, and 16/12/2026 (History: Modern India & Modern Kashmir shifted to 16/12/2026)."
+    ],
+    faq: [
+      {
+        question: "What are the examination dates for CUS UG 3rd Semester (CBCS) Backlog Batch 2017\u20132021?",
+        answer: "Papers are scheduled on 26/11/2026, 01/12/2026, 05/12/2026, 09/12/2026, 14/12/2026, and 16/12/2026 at 11:00 AM. In the revised PDF, History (Modern India & Modern Kashmir) moved from 05/12/2026 to 16/12/2026."
+      }
+    ],
+    updatedAt: "21/11/2026",
+    verificationStatus: "verified",
+    verification: {
+      status: "verified",
+      verificationStatus: "verified",
+      verifiedAt: "21/11/2026",
+      lastVerified: "21/11/2026",
+      officialNotificationUrl: "https://www.cusrinagar.edu.in/FolderManager/Notification/fed67c211adf45ab9312915e7a41e83a.pdf",
+      officialApplicationUrl: "https://www.cusrinagar.edu.in",
+      advertisementNo: "No : CUS/Exam/DS/UG/3rd CBCS/26/1861-71",
+      recruitmentYear: "2026",
+      verifiedOpeningDate: "26/11/2026",
+      verifiedClosingDate: "16/12/2026",
+      sourceHistory: [
+        "Official CUS PDF 0f83fc0ffd3f46b3b42a39adad819bff.pdf verified on 19/11/2026.",
+        "Updated to revised CUS PDF fed67c211adf45ab9312915e7a41e83a.pdf on 21/11/2026 (History moved from 05/12/2026 to 16/12/2026)."
+      ]
+    }
+  },
   // 📰 DAILY OFFICIAL UPDATE VERIFIED 16/11/2026 IST (Approved & Published)
   {
     id: "jkssb-accounts-assistant-finance-answer-key-2026",
+    status: "Closed",
     title: "JKSSB Accounts Assistant Answer Key Notice 2026",
     category: "jkssb",
     org: "JKSSB",
@@ -991,7 +1339,7 @@ var RAW_SARKARI_DATA = [
     noticeType: "answer_key",
     stage: "objection_window",
     publicationStatus: "published",
-    isNew: true,
+    isNew: false,
     postDate: "15/11/2026",
     documentDate: "15/11/2026",
     startDate: "16/11/2026",
@@ -1634,7 +1982,7 @@ var RAW_SARKARI_DATA = [
     lastDate: "19/11/2026",
     advertisementNo: "CPC / RC Srinagar Placement Announcement (Rescheduled from 12 Nov 2026)",
     session: "November 2026",
-    status: "Informational",
+    status: "Closed",
     shortInfo: "Campus Placement Cell, IGNOU in collaboration with Regional Centre Srinagar and Axis Bank Sales Academy has rescheduled its Face-to-Face Campus Placement Drive (originally 12 Nov 2026) to Thursday, 19 November 2026 from 10:00 AM onwards at Bibi Halima College of Nursing & Medical Technology, Rainawari, Srinagar for IGNOU students and alumni.",
     ageLimit: "As per Axis Bank Sales Academy recruitment norms",
     eligibility: "IGNOU enrolled students and alumni (Graduates / Postgraduates; freshers and experienced candidates eligible for Officer Sales OS1 across Srinagar, Budgam, Kupwara, Sopore, Kargil, Leh & Jammu).",
@@ -1658,7 +2006,7 @@ var RAW_SARKARI_DATA = [
         "Verified directly on ignou.ac.in/announcements/0?nav=1 on 14/11/2026 (Rescheduled date 19 Nov 2026, venue Bibi Halima College, Rainawari, Srinagar)."
       ]
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ignou-oams-assignment-submission-dec-2026-tee",
@@ -1677,7 +2025,7 @@ var RAW_SARKARI_DATA = [
     closingTime: "23:59 IST",
     advertisementNo: "F.No. IG/SED/2026/ (Dated 28 Oct 2026)",
     session: "December 2026 TEE",
-    status: "Open",
+    status: "Closed",
     shortInfo: "IGNOU Student Evaluation Division (SED) has launched the Online Assignment Management System (OAMS) on the IGNOU Samarth Portal for eligible ODL and Online programme learners appearing in December 2026 TEE. The last date for online assignment submission is 20th November 2026; learners who already submitted assignments at their Study Centre or Regional Centre do not need to re-upload.",
     eligibility: "Eligible learners enrolled in IGNOU Open and Distance Learning (ODL) and Online Programmes for December 2026 Term-End Examination.",
     totalPosts: "ODL & Online Assignments (OAMS)",
@@ -1704,7 +2052,7 @@ var RAW_SARKARI_DATA = [
         "Verified official circular OAMS-Notification.pdf (Document date 28/10/2026, portal upload 02/11/2026, last date 20/11/2026)."
       ]
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ignou-evidya-bharti-dec-2026-exam-form",
@@ -2067,7 +2415,7 @@ var RAW_SARKARI_DATA = [
     recruitmentYear: "2026",
     department: "J&K Services Selection Board (JKSSB)",
     postType: "Job",
-    status: "Informational",
+    status: "Closed",
     shortInfo: "Jammu and Kashmir Services Selection Board (JKSSB) has notified the Document Verification (DV) schedule for candidates shortlisted for the post of Junior Assistant (Advt No. 08 of 2025). Verification will be conducted from 18th November to 20th November 2026 at designated JKSSB centres with original certificates.",
     ageLimit: "As per Advt No. 08 of 2025 eligibility norms",
     eligibility: "Candidates shortlisted for Junior Assistant Document Verification under Advt No. 08 of 2025.",
@@ -2095,7 +2443,7 @@ var RAW_SARKARI_DATA = [
         "Verified direct official PDF DV_Notice_JrAssistant_12112026.pdf dated 12/11/2026 from jkssb.nic.in (HTTP 200)."
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🏛️ JKSSB STATISTICAL ASSISTANT FINAL & FOREMAN PROVISIONAL SELECTION LISTS (Dated: 12.11.2026)
   {
@@ -2111,7 +2459,7 @@ var RAW_SARKARI_DATA = [
     recruitmentYear: "2026",
     department: "J&K Services Selection Board (JKSSB)",
     postType: "Result",
-    status: "Result",
+    status: "Closed",
     shortInfo: "Jammu and Kashmir Services Selection Board (JKSSB) has published the Final Selection List for Statistical Assistant and Provisional Selection List for Foreman on 12th November 2026. Selected candidates can verify their merit rank and category allocation in the official selection list PDFs.",
     ageLimit: "As per respective recruitment advertisements",
     eligibility: "Candidates who appeared in JKSSB selection stages for Statistical Assistant and Foreman.",
@@ -2139,7 +2487,7 @@ var RAW_SARKARI_DATA = [
         "Verified direct official PDFs Final_Selection_List_Statistical_Asstt_12112026.pdf and Provisional_selection_List_Foreman_12112026.pdf (HTTP 200) on 14/11/2026."
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🏛️ JKSSB EDIT OPTION NOTICE FOR ADVT 06, 07 & 08 OF 2026 (Dated: 11.11.2026)
   {
@@ -2157,7 +2505,7 @@ var RAW_SARKARI_DATA = [
     recruitmentYear: "2026",
     department: "J&K Services Selection Board (JKSSB)",
     postType: "Job",
-    status: "Informational",
+    status: "Closed",
     shortInfo: "JKSSB has activated a 5-day online Edit Option window from 16th November 2026 (00:00 IST) to 20th November 2026 (23:59 IST) exclusively for already registered applicants of Advt No. 06/2026 (Items 93\u201396), Advt No. 07/2026 (Items 97\u2013103), and Advt No. 08/2026 (Items 104\u2013181). New applications are not accepted.",
     ageLimit: "As per original Advt 06, 07 & 08 of 2026 rules",
     eligibility: "Candidates who already submitted valid online forms under Advt 06/2026, 07/2026, or 08/2026.",
@@ -2190,7 +2538,7 @@ var RAW_SARKARI_DATA = [
         "Verified direct official PDFs Edit_option_06OF2026_11112026.pdf, Edit_option_07OF2026_11112026.pdf, and Edit_option_08OF2026_11112026.pdf dated 11/11/2026 (HTTP 200)."
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🏛️ JKSSB HEALTH EDUCATOR RESULT & FINAL ANSWER KEY (Exam: 01.11.2026)
   {
@@ -2206,7 +2554,7 @@ var RAW_SARKARI_DATA = [
     recruitmentYear: "2026",
     department: "J&K Services Selection Board (JKSSB)",
     postType: "Result",
-    status: "Result",
+    status: "Closed",
     shortInfo: "Jammu and Kashmir Services Selection Board (JKSSB) has released the Final Answer Key and Result/Scorecard for the OMR-based Written Examination conducted on 01.11.2026 for Health Educator (Health & Medical Education Department) after disposal of representations.",
     ageLimit: "Not Applicable (Result & Final Answer Key)",
     eligibility: "Candidates who appeared in the JKSSB Health Educator OMR exam held on 01/11/2026.",
@@ -2234,7 +2582,7 @@ var RAW_SARKARI_DATA = [
         "Verified official JKSSB PDFs Result_01112026.pdf and Final_Answer_Key_01112026.pdf (HTTP 200) on 14/11/2026."
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🏛️ JKSSB SUPPLEMENTARY DV NOTICE (WILDLIFE GUARD / FPF GUARD / INSPECTOR) (Dated: 10.11.2026)
   {
@@ -2251,7 +2599,7 @@ var RAW_SARKARI_DATA = [
     recruitmentYear: "2026",
     department: "J&K Services Selection Board (JKSSB)",
     postType: "Job",
-    status: "Informational",
+    status: "Closed",
     shortInfo: "JKSSB has granted a final supplementary Document Verification opportunity on 17th November 2026 (11:00 AM to 4:00 PM) for absentee shortlisted candidates of Wildlife Guard, Inspector, FPF Guard, Social Forestry Worker, and Field Assistant under Advt 03/2021 & 04/2022.",
     ageLimit: "As per Advt 03/2021 & 04/2022",
     eligibility: "Absentee candidates called for Supplementary DV under Forest, Ecology & Environment Dept notifications.",
@@ -2279,7 +2627,7 @@ var RAW_SARKARI_DATA = [
         "Verified direct official PDF notice_10112026.pdf dated 10/11/2026 on jkssb.nic.in (HTTP 200)."
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🎓 CLUSTER UNIVERSITY SRINAGAR RESULT NOTIFICATION NO. 471 (UG 2ND SEM BATCH 2025) (Dated: 11.11.2026)
   {
@@ -2336,7 +2684,7 @@ var RAW_SARKARI_DATA = [
     recruitmentYear: "2026",
     department: "Controller of Examinations, Cluster University Srinagar",
     postType: "Admission",
-    status: "Open",
+    status: "Closed",
     shortInfo: "Cluster University Srinagar has notified online examination form submission for backlog students of Integrated B.Ed.-M.Ed. 5th Semester. Batch 2020\u20132022 candidates can submit forms from 14th November to 16th November 2026 (Batch 2019 window concluded on 13th November 2026).",
     ageLimit: "Not Applicable (Enrolled Students)",
     eligibility: "Backlog students of Integrated B.Ed.-M.Ed. 5th Semester (Batch 2020\u20132022 active window; Batch 2019 concluded 13/11/2026).",
@@ -2363,7 +2711,7 @@ var RAW_SARKARI_DATA = [
         "Verified circular CUS/Exam/26/1817-21 (41883576c4594b0e92bb28b6486c8728.pdf) dated 10/11/2026 on cusrinagar.edu.in (Batch 2019: 11\u201313/11; Batch 2020\u20132022: 14\u201316/11/2026)."
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🏛️ CLUSTER UNIVERSITY SRINAGAR BACKLOG EXAM FORMS INTEGRATED/HONORS/PROF NON-NEP (Dated: 09.11.2026)
   {
@@ -2379,7 +2727,7 @@ var RAW_SARKARI_DATA = [
     recruitmentYear: "2026",
     department: "Controller of Examinations, Cluster University Srinagar",
     postType: "Admission",
-    status: "Open",
+    status: "Closed",
     shortInfo: "Cluster University Srinagar invites online examination forms from backlog students of Integrated, Honours, and Professional (Non-NEP) 1st, 3rd, 5th & 7th Semesters (Batch 2017\u20132022). Phase-I (IG 2017 / Hons 2018\u201319) runs 11\u201314 Nov 2026; Phase-II (IG 2018\u201322 / Hons 2020\u201322) runs 15\u201318 Nov 2026.",
     ageLimit: "Not Applicable (Enrolled Backlog Students)",
     eligibility: "Backlog students of Integrated/Honours/Professional Non-NEP 1st, 3rd, 5th and 7th Semesters (Batch 2017\u20132022).",
@@ -2406,7 +2754,7 @@ var RAW_SARKARI_DATA = [
         "Verified circular CUS/Exam/26/1784-90 (97725711bb8148a7a40c28f85129c40d.pdf) dated 09/11/2026 on cusrinagar.edu.in."
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 📅 CLUSTER UNIVERSITY SRINAGAR B.TECH 8TH SEM DATE SHEET (Dated: 09.11.2026)
   {
@@ -2552,7 +2900,7 @@ var RAW_SARKARI_DATA = [
     recruitmentYear: "2026",
     department: "Staff Selection Commission (SSC HQ)",
     postType: "Job",
-    status: "Informational",
+    status: "Closed",
     shortInfo: "Staff Selection Commission (SSC) has released the Identity Verification (IV) & Sliding Process schedule for candidates shortlisted in the First Round of Tentative Allocation (FRTA) of Combined Hindi Translators (CHT) Examination 2025. IV slips went live from 13th November 2026 (17:00 IST) on ssc.gov.in ahead of physical Regional Office IV on 18th November 2026.",
     ageLimit: "As per CHT 2025 recruitment notice",
     eligibility: "Candidates shortlisted in CHT 2025 First Round of Tentative Allocation (FRTA) declared on 05/11/2026.",
@@ -2582,7 +2930,7 @@ var RAW_SARKARI_DATA = [
         "Verified direct official SSC notice PDF CHT%202025%20FRTA%20notice%2007112026.pdf (07/11/2026) and FRTA writeup writeup_05112026.pdf (05/11/2026) via ssc.gov.in (HTTP 200)."
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🇮🇳 SSC COAST GUARD CGEPT 01/2027 & 02/2027 CITY INTIMATION & ADMIT CARD (Dated: 06.11.2026)
   {
@@ -2598,7 +2946,7 @@ var RAW_SARKARI_DATA = [
     recruitmentYear: "2026",
     department: "Staff Selection Commission (SSC) / Indian Coast Guard",
     postType: "Job",
-    status: "Informational",
+    status: "Closed",
     shortInfo: "Staff Selection Commission has issued the examination city intimation and admit card notice for Coast Guard Enrolled Personnel Test (CGEPT) Batches 01/2027 and 02/2027 scheduled on 17th & 18th November 2026. City slips are live and e-Admit Cards become downloadable 2\u20133 days before the exam via cgept.parikshasaarthi.in.",
     ageLimit: "As per CGEPT 01/2027 & 02/2027 eligibility",
     eligibility: "Registered candidates of Indian Coast Guard CGEPT 01/2027 & 02/2027 batches.",
@@ -2626,7 +2974,7 @@ var RAW_SARKARI_DATA = [
         "Verified direct official SSC notice PDF Englishnotice_06112026.pdf dated 06/11/2026 (HTTP 200)."
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🏛️ UNIVERSITY OF KASHMIR CALLIGRAPHIST RECRUITMENT (ADVT NO. 18 OF 2026) - PORTAL TIMEOUT ON 14/11/2026
   {
@@ -2714,7 +3062,7 @@ var RAW_SARKARI_DATA = [
     session: "2026-27",
     department: "Academic / Registration Section, Cluster University Srinagar",
     postType: "Admission",
-    status: "Open",
+    status: "Closed",
     shortInfo: "Cluster University Srinagar has issued Circular No. CUS/Adm-Reg/2026/6377-94 dated 11/11/2026 for online submission of registration forms by NEP UG 1st Semester Students (Batch 2026) across all Constituent and Affiliated Colleges EXCEPT Abdul Ahad Azad Memorial Degree College, Bemina, Srinagar. Deadline is 16th November 2026 via the registration portal.",
     ageLimit: "As per University Admission Guidelines",
     eligibility: "Newly admitted NEP-2020 UG 1st Semester students (Batch 2026) across Constituent & Affiliated Colleges of Cluster University Srinagar, EXCEPT Abdul Ahad Azad Memorial Degree College, Bemina, Srinagar.",
@@ -2744,7 +3092,7 @@ var RAW_SARKARI_DATA = [
         "Updated exception clause: applies to all constituent and affiliated colleges except Abdul Ahad Azad Memorial Degree College, Bemina, Srinagar."
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🚆 RAILWAY RECRUITMENT BOARDS (RRB) STATION MASTER RECRUITMENT 2026 (CEN 08/2026)
   {
@@ -3010,6 +3358,7 @@ var RAW_SARKARI_DATA = [
     recruitmentYear: "2026",
     noticeType: "recruitment",
     stage: "recruitment",
+    org: "J&K Bank",
     department: "Jammu & Kashmir Bank Ltd. (Corporate Headquarters, M.A. Road, Srinagar)",
     postType: "Job",
     status: "Open",
@@ -3022,9 +3371,14 @@ var RAW_SARKARI_DATA = [
     officialNotificationUrl: "/assets/aistudio/JK_BANK_b62482f5.pdf",
     officialApplicationUrl: "https://ibpsreg.ibps.in/jkbvpocto26/",
     fees: {
-      genObc: "\u20B9800/- (excluding GST) for General, EWS and other candidates",
-      scSt: "\u20B9600/- (excluding GST) for SC / ST / SEBC / PwBD / ESM candidates"
+      genObc: "\u20B9800 excluding GST",
+      scSt: "\u20B9600 excluding GST"
     },
+    feeCategories: [
+      { label: "SC/ST/SEBC/PwBD/ESM candidates", amount: "\u20B9600 excluding GST" },
+      { label: "All other candidates", amount: "\u20B9800 excluding GST" }
+    ],
+    whoShouldApplyLead: "Applicants must be domiciled in the Union Territory of Jammu and Kashmir and hold a degree in any discipline from a recognised university by 26 November 2026.",
     paymentInstructions: "Online payment through integrated payment gateway using Debit Cards (RuPay/Visa/MasterCard/Maestro), Credit Cards, Internet Banking, IMPS, Cash Cards / Mobile Wallets from 07/11/2026 to 26/11/2026.",
     departmentBreakdown: [
       {
@@ -3032,7 +3386,7 @@ var RAW_SARKARI_DATA = [
         postName: "Banking Associate (UT of J&K)",
         posts: 1033,
         qualification: "Graduation in any discipline from a recognized University/UGC as on 26-11-2026; Domicile of UT of J&K mandatory.",
-        fee: "\u20B9800 (General/EWS) / \u20B9600 (SC/ST/SEBC/PwBD/ESM) + GST"
+        fee: "SC/ST/SEBC/PwBD/ESM candidates: \u20B9600 excluding GST; All other candidates: \u20B9800 excluding GST"
       }
     ],
     selectionProcess: [
@@ -3054,6 +3408,13 @@ var RAW_SARKARI_DATA = [
       "Graduation Degree / Consolidated Marksheet (PDF format, up to 500KB).",
       "Valid Reserved Category Certificate (SC/ST/OBC/ALC-IB/RBA/EWS/PwBD/ESM) as per J&K Reservation Rules.",
       "J&K Bank Apprenticeship Completion Certificate (if claiming 1-year age relaxation and 2.5% additional marks)."
+    ],
+    howToApply: [
+      'Open Official Careers Portal: Visit the Jammu & Kashmir Bank website (jkb.bank.in) under the "Careers" tab or open the IBPS registration link for Banking Associates (Notification No. JKB/HR/Rectt/2026-493).',
+      'New Registration: Click "Click here for New Registration", enter basic details (Name, Contact Number, Email ID), and note the provisional Registration Number and Password generated by the system.',
+      "Upload Scanned Files & Live Photo: Upload your scanned passport photograph, live webcam/mobile photograph, signature (black ink, not in CAPITAL letters), left thumb impression, handwritten declaration in English, 10th DOB certificate, and Graduation marksheet/degree as specified in the notification PDF.",
+      'Preview & Final Submit: Verify all particulars, category, and zone preference using the Preview tab before clicking "Complete Registration", as no changes are permitted after final submission.',
+      "Pay Application Fee Online: Pay \u20B9600 excluding GST (SC/ST/SEBC/PwBD/ESM candidates) or \u20B9800 excluding GST (All other candidates) online via Debit Card, Credit Card, Internet Banking, IMPS, or Mobile Wallet between 07/11/2026 and 26/11/2026, then download the e-Receipt and submitted application form."
     ],
     verificationStatus: "verified",
     verification: {
@@ -3173,7 +3534,7 @@ var RAW_SARKARI_DATA = [
     stage: "answer_key",
     department: "Staff Selection Commission (SSC)",
     postType: "Result",
-    status: "Informational",
+    status: "Closed",
     shortInfo: "Staff Selection Commission (SSC) has uploaded the Final Answer Keys along with Question Papers and candidate marks for the Computer Based Examination of Constable (GD) in Central Armed Police Forces (CAPFs), SSF, and Rifleman (GD) in Assam Rifles Examination, 2026. Candidates can download their scorecards and final answer keys through ssc.gov.in from 03/11/2026 (17:00 IST) to 17/11/2026 (17:00 IST).",
     ageLimit: "Not Applicable (Final Answer Key & Scorecard Download)",
     eligibility: "All candidates who appeared in the Computer-Based Examination for Constable (GD) 2026.",
@@ -3212,7 +3573,7 @@ var RAW_SARKARI_DATA = [
         "Verified direct official SSC PDF writeup_03112026.pdf on 14/11/2026: final keys & marks facility runs 03/11/2026 (17:00 IST) to 17/11/2026 (17:00 IST)."
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🎓 UNIVERSITY OF KASHMIR PRO WRITTEN EXAM ADMIT CARDS (Dated: 07.11.2026)
   {
@@ -3229,7 +3590,7 @@ var RAW_SARKARI_DATA = [
     stage: "admit_card",
     department: "University of Kashmir (Recruitment Section)",
     postType: "Job",
-    status: "Informational",
+    status: "Closed",
     shortInfo: "University of Kashmir has officially issued notice regarding the activation of the online download link for E-Admit Cards for the OMR-based written examination for the post of Public Relations Officer (PRO). Candidates who have submitted online applications can download their admit card using their Form Number and Date of Birth from the university website kashmiruniversity.net.",
     ageLimit: "As per original advertisement criteria",
     eligibility: "Applicants who successfully submitted application forms for Public Relations Officer (PRO) position at University of Kashmir.",
@@ -3345,7 +3706,7 @@ var RAW_SARKARI_DATA = [
     stage: "exam_form",
     department: "Cluster University Srinagar (Controller of Examinations)",
     postType: "Admission",
-    status: "Informational",
+    status: "Closed",
     editorialReviewRequired: true,
     editorialNotes: "Live cusrinagar.edu.in examination archive check on 14/11/2026 found Result Notification No. 469 (B.Tech 2nd Sem) on 04/11/2026 and Date Sheet B.Tech 8th Sem Batch 2022 on 09/11/2026, with no 04/11/2026 B.Tech 8th Sem Exam Form notice.",
     shortInfo: "Legacy record for Cluster University Srinagar B.Tech 8th Semester Examination Form. Official CUS live notification archives verified on 14/11/2026 do not confirm a 04/11/2026 exam form notice; please refer to the verified B.Tech 8th Semester Date Sheet (09/11/2026) and official student portal.",
@@ -3391,6 +3752,7 @@ var RAW_SARKARI_DATA = [
   // 🎓 UNIVERSITY OF KASHMIR FYUGP ADMISSIONS CLOSURE NOTICE (Dated: 05.11.2026)
   {
     id: "ku-admission-closure-fyugp-nep2020-pvt-colleges-2026",
+    status: "Closed",
     title: "University of Kashmir: Admission Closure Notice for FYUGP NEP-2020 at Private Affiliated Colleges",
     category: "admissions",
     postDate: "05/11/2026",
@@ -3406,7 +3768,7 @@ var RAW_SARKARI_DATA = [
       genObc: "Not Applicable (Institutional Admission Closure Notice)",
       scSt: "Not Applicable"
     },
-    isNew: true
+    isNew: false
   },
   // 🇮🇳 STAFF SELECTION COMMISSION (SSC) CGL TIER-1 TENTATIVE ANSWER KEY & OBJECTIONS (Dated: 04.11.2026 - CLOSED)
   {
@@ -3466,7 +3828,7 @@ var RAW_SARKARI_DATA = [
     lastDate: "15/11/2026",
     advertisementNo: "Notification No. 10 of 2025 (Item No. 271) | Notice No. JKSSB-COE0EXAM(UT)/10/2026",
     postType: "Job",
-    status: "Informational",
+    status: "Closed",
     shortInfo: "Jammu and Kashmir Services Selection Board (JKSSB) has officially uploaded the E-Admit Cards on 11th November 2026 for the OMR-based written examination for the post of Accounts Assistant (Finance Department) under Notification No. 10 of 2025 (Item No. 271). The examination will be held on 15th November 2026 across designated centers.",
     ageLimit: "Open Merit: 40 Years, Reserved Categories: 43 Years, PwD: 42 Years (as per advertisement)",
     eligibility: "Graduation in Commerce or any discipline with minimum 50% marks from a recognized university, having applied under Item No. 271.",
@@ -3492,7 +3854,7 @@ var RAW_SARKARI_DATA = [
         "Verified official PDF Admit_Card_Notice_15112026.pdf (HTTP 200) on jkssb.nic.in during 14/11/2026 audit."
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🏥 UNIVERSITY OF KASHMIR BUMS PRACTICAL DATE SHEET (Dated: 04.11.2026)
   {
@@ -3660,8 +4022,8 @@ var RAW_SARKARI_DATA = [
       ]
     },
     stage: "admission",
-    status: "Open",
-    isNew: true
+    status: "Closed",
+    isNew: false
   },
   // 📚 UNIVERSITY OF KASHMIR B.ED 3RD & 4TH SEM REVISED DATE SHEET
   {
@@ -3826,7 +4188,7 @@ var RAW_SARKARI_DATA = [
     },
     isNew: false
   },
-  // 🏛️ CLUSTER UNIVERSITY SRINAGAR SENIOR FACULTY RECRUITMENT (28 OCTOBER 2026 - VERIFIED 14/11/2026)
+  // 🏛️ CLUSTER UNIVERSITY SRINAGAR SENIOR FACULTY RECRUITMENT (EXTENDED 20/11/2026 - VERIFIED 21/11/2026)
   {
     id: "cus-faculty-recruitment-advt-07-2026",
     title: "Cluster University Srinagar Faculty Recruitment 2026 (Advt No. 07-CUS of 2026) - 22 Associate Professor & Professor Posts",
@@ -3835,17 +4197,18 @@ var RAW_SARKARI_DATA = [
     postType: "Job",
     status: "Open",
     postDate: "28/10/2026",
+    documentDate: "20/11/2026",
     startDate: "01/11/2026",
-    lastDate: "21/11/2026",
+    lastDate: "30/11/2026",
     closingTime: "23:55 IST",
-    feeDeadline: "21/11/2026 (23:55 IST); Hard Copy by 27/11/2026",
-    advertisementNo: "Advt No. 07-CUS OF 2026 (No: CUS/Advt/2026/6085-96, Dated: 28.10.2026)",
+    feeDeadline: "30/11/2026 (Online); Hard Copy by 07/12/2026",
+    advertisementNo: "Advt No. 07-CUS OF 2026 (No: CUS/Advt/2026/6085-96, Dated: 28.10.2026) | Extension No. CUS/Advt/2026/6559 (Dated: 20-11-2026)",
     recruitmentYear: "2026",
-    shortInfo: "Cluster University Srinagar invites online applications from 01/11/2026 to 21/11/2026 (23:55 IST) for direct recruitment to 22 senior faculty positions (Associate Professors and Professors) across constituent colleges. Hard copies of submitted application forms must reach the University by 27/11/2026.",
+    shortInfo: "Cluster University Srinagar extended the online application deadline for direct recruitment to 22 senior faculty positions (Associate Professors and Professors) under Advt No. 07-CUS of 2026 until 30/11/2026. Hard copies of submitted application forms may be submitted up to 07/12/2026; all other terms remain unchanged.",
     ageLimit: "As per UGC Regulations and University Statutes",
     eligibility: "Good academic record with a Ph.D. Degree in the concerned/allied/relevant disciplines and requisite teaching/research experience as per UGC Regulations 2018.",
     totalPosts: "22 Posts (Associate Professors & Professors)",
-    officialLink: "https://www.cusrinagar.edu.in/FolderManager/Notification/c57984ba332c426cb8226e8af66bb39d.pdf",
+    officialLink: "https://www.cusrinagar.edu.in/FolderManager/Notification/8d2a4c0d9ad04042b6cdf0a46964132b.pdf",
     officialNotificationUrl: "https://www.cusrinagar.edu.in/FolderManager/Notification/c57984ba332c426cb8226e8af66bb39d.pdf",
     officialApplicationUrl: "https://cusrinagar.edu.in",
     fees: {
@@ -3853,21 +4216,26 @@ var RAW_SARKARI_DATA = [
       scSt: "\u20B91,500/- (For Reserved Category Candidates)"
     },
     stage: "recruitment",
+    updatedAt: "21/11/2026",
     verificationStatus: "verified",
     verification: {
       status: "verified",
       verificationStatus: "verified",
-      verifiedAt: "14/11/2026",
-      lastVerified: "14/11/2026",
+      verifiedAt: "21/11/2026",
+      lastVerified: "21/11/2026",
       officialNotificationUrl: "https://www.cusrinagar.edu.in/FolderManager/Notification/c57984ba332c426cb8226e8af66bb39d.pdf",
+      amendmentUrls: [
+        "https://www.cusrinagar.edu.in/FolderManager/Notification/8d2a4c0d9ad04042b6cdf0a46964132b.pdf"
+      ],
       officialApplicationUrl: "https://cusrinagar.edu.in",
-      advertisementNo: "Advt No. 07-CUS OF 2026 (CUS/Advt/2026/6085-96)",
+      advertisementNo: "Advt No. 07-CUS OF 2026 (CUS/Advt/2026/6085-96) | Extension CUS/Advt/2026/6559",
       recruitmentYear: "2026",
       verifiedOpeningDate: "01/11/2026",
-      verifiedClosingDate: "21/11/2026",
+      verifiedClosingDate: "30/11/2026",
       closingTime: "23:55 IST",
       correctionHistory: [
-        "Verified directly from official PDF c57984ba332c426cb8226e8af66bb39d.pdf on 14/11/2026: fees corrected to \u20B92,000 (General/UR) and \u20B91,500 (Reserved), closing time 23:55 IST on 21/11/2026, hard copy due 27/11/2026."
+        "Verified directly from official PDF c57984ba332c426cb8226e8af66bb39d.pdf on 14/11/2026: fees corrected to \u20B92,000 (General/UR) and \u20B91,500 (Reserved), closing time 23:55 IST on 21/11/2026, hard copy due 27/11/2026.",
+        "Verified Extension Notice No. CUS/Advt/2026/6559 (dated 20/11/2026, PDF 8d2a4c0d9ad04042b6cdf0a46964132b.pdf) on 21/11/2026: online application last date extended from 21/11/2026 to 30/11/2026; hard copy submission extended from 27/11/2026 to 07/12/2026."
       ]
     },
     isNew: true
@@ -3875,6 +4243,7 @@ var RAW_SARKARI_DATA = [
   // 🎓 KASHMIR UNIVERSITY JUNIOR ACCOUNTS ASSISTANT ANSWER KEY (28 OCTOBER 2026)
   {
     id: "ku-junior-accounts-assistant-answer-key-2026",
+    status: "Closed",
     title: "University of Kashmir Written Test Provisional Answer Key & Objection Notice for Junior Accounts Assistant Posts",
     category: "exam_forms",
     postDate: "28/10/2026",
@@ -3910,11 +4279,12 @@ var RAW_SARKARI_DATA = [
         "Verified JAA Answer Key notice on kashmiruniversity.net notifications."
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🎓 KASHMIR UNIVERSITY B.ED SELECTION LIST V (28 OCTOBER 2026)
   {
     id: "ku-bed-selection-list-v-2026",
+    status: "Closed",
     title: "University of Kashmir 2-Year B.Ed (Session 2026) Selection Notification No. V for South Campus & Affiliated Colleges",
     category: "admissions",
     postDate: "28/10/2026",
@@ -3950,11 +4320,12 @@ var RAW_SARKARI_DATA = [
         "Verified B.Ed Selection List V published on kashmiruniversity.net admissions."
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🏛️ JKSSB DRIVER RESULT & FINAL ANSWER KEY (29 OCTOBER 2026)
   {
     id: "jkssb-driver-final-answer-key-result-2026",
+    status: "Closed",
     title: "JKSSB Written Examination Score Sheet & Final Answer Key Notice for Driver & Driver Grade-II Posts",
     category: "jkssb",
     postDate: "29/10/2026",
@@ -3990,11 +4361,12 @@ var RAW_SARKARI_DATA = [
         "Verified Driver & Driver-II final answer key and score sheet on jkssb.nic.in."
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🏛️ JKSSB OFFICIAL PORTAL NOTICES (30 OCTOBER 2026)
   {
     id: "jkssb-answer-key-theatre-tech-2026",
+    status: "Closed",
     title: "JKSSB Provisional Answer Key & Objection Notice for Junior Theatre Tech & Lab Technician OMR Exam",
     category: "jkssb",
     postDate: "28/10/2026",
@@ -4028,11 +4400,12 @@ var RAW_SARKARI_DATA = [
         "Provisional Answer Key and candidate objection window released on jkssb.nic.in."
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🎓 KASHMIR UNIVERSITY EXAM FORMS / DATE SHEETS (29 OCTOBER 2026)
   {
     id: "ku-bed-special-center-notice-2026",
+    status: "Closed",
     title: "University of Kashmir Examination Center Notice for B.Ed Special Education (CRC Bemina) 1st & 2nd Sem",
     category: "exam_forms",
     postDate: "29/10/2026",
@@ -4066,7 +4439,7 @@ var RAW_SARKARI_DATA = [
         "Verified Center Notice released on kashmiruniversity.net examination notifications."
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🏛️ CLUSTER UNIVERSITY SRINAGAR (29 OCTOBER 2026)
   {
@@ -4110,6 +4483,7 @@ var RAW_SARKARI_DATA = [
   // 🇮🇳 INDIAN ARMY RECRUITMENT (30 OCTOBER 2026)
   {
     id: "army-tgc-145-course-2026",
+    status: "Closed",
     title: "Indian Army 145th Technical Graduate Course (TGC-145) Online Recruitment Notice 2026",
     category: "army_jobs",
     postDate: "29/10/2026",
@@ -4143,11 +4517,12 @@ var RAW_SARKARI_DATA = [
         "Verified closing on 30/10/2026 at 15:00 IST on joinindianarmy.nic.in officer recruitment portal."
       ]
     },
-    isNew: true
+    isNew: false
   },
   // 🇮🇳 STAFF SELECTION COMMISSION (SSC)
   {
     id: "ssc-je-paper-1-admit-card-2026",
+    status: "Closed",
     title: "SSC Junior Engineer Paper-I Admit Card 2026 Released",
     category: "ssc_jobs",
     postDate: "30/10/2026",
@@ -4181,10 +4556,11 @@ var RAW_SARKARI_DATA = [
         "Verified SSC Junior Engineer Paper-I Admit Card release on ssc.gov.in/login."
       ]
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ku-bed-2year-distance-admissions-2026",
+    status: "Closed",
     "title": "University of Kashmir 2-Year B.Ed. (Session 2026-28) Distance Mode Online Admission & Counselling Notice",
     "category": "admissions",
     "postDate": "27/10/2026",
@@ -4230,6 +4606,7 @@ var RAW_SARKARI_DATA = [
   },
   {
     "id": "army-rvc-captain-entry-2026",
+    status: "Closed",
     "title": "Indian Army Remount Veterinary Corps (RVC) Captain Entry Scheme 2026 (Short Service Commission)",
     "category": "army_jobs",
     "postDate": "26/10/2026",
@@ -4465,46 +4842,65 @@ var RAW_SARKARI_DATA = [
   },
   {
     id: "jkssb-advt-10-of-2026-je-mechanical-pwd",
-    title: "JKSSB Advt 10 of 2026: Recruitment for 127 Junior Engineer (Mechanical) Posts in PW(R&B) Dept (Online Form Postponed)",
+    title: "JKSSB Advt 10 of 2026: Recruitment for 127 Junior Engineer (Mechanical) Posts in PW(R&B) Dept (Fresh Dates 23 Nov\u201322 Dec)",
     category: "jkssb",
     noticeType: "recruitment",
     stage: "recruitment",
     postDate: "21/10/2026",
-    documentDate: "15/11/2026",
-    startDate: "Postponed (Fresh dates to be notified separately)",
-    lastDate: "Postponed (Fresh dates to be notified separately)",
+    documentDate: "19/11/2026",
+    startDate: "23/11/2026",
+    lastDate: "22/12/2026",
+    closingTime: "23:59 IST",
+    feeDeadline: "22/12/2026 (23:59 IST)",
     postType: "Job",
     status: "Upcoming",
-    advertisementNo: "Advertisement Notification No. 10 of 2026 (Dated: 21.10.2026) | Postponement Notice No. 15.11.2026",
-    shortInfo: "JKSSB issued an official notice dated 15/11/2026 postponing the online application form window (earlier 16/11/2026 to 15/12/2026) for 127 Junior Engineer (Mechanical) posts in Public Works (R&B) Department under Advt No. 10 of 2026. Fresh dates for online registration will be notified separately on jkssb.nic.in.",
+    advertisementNo: "Advertisement Notification No. 10 of 2026 (Dated: 21.10.2026) | Fresh Dates & Corrigendum No. JKSSB-PLAN/16/2022-03 (E-7047427) (Dated: 19.11.2026)",
+    shortInfo: "JKSSB notified fresh online application and fee dates for 127 Junior Engineer (Mechanical) posts in PW(R&B) Department under Advt No. 10 of 2026: open from 23/11/2026 (12:00 AM) to 22/12/2026 (11:59 PM). A corrigendum dated 19/11/2026 also adds Degree/3-Year Diploma equivalence in Aeronautical, Automobile, or Production Engineering, and mandates Live Face Capture during online application.",
     ageLimit: "Open Merit (OM): 40 Years (as on 01.01.2026) | SC / ST-1 / ST-2 / RBA / ALC-IB / EWS / OBC: 43 Years | PwBD: 42 Years | In-Service / Contractual: 40 Years",
-    eligibility: "Three Years Diploma in Mechanical Engineering from a Government recognized Institute / Indian University, OR Degree in Mechanical Engineering / AMIE Section (A&B) in Mechanical Engineering. Candidate must be a Domicile of UT of J&K.",
+    eligibility: "Three Years Diploma in Mechanical Engineering from a Government recognized Institute / Indian University, OR Degree in Mechanical Engineering / AMIE Section (A&B) in Mechanical Engineering. Candidate must be a Domicile of UT of J&K. Note: An Indian University Degree or a three-year Diploma from a Government recognized Institute in Aeronautical, Automobile or Production Engineering shall be considered equivalent to a Degree or Diploma in Mechanical Engineering, respectively.",
     totalPosts: "127 Posts (OM: 51 | SC: 11 | ST-1: 12 | ST-2: 13 | OBC: 10 | ALC/IB: 05 | RBA: 13 | EWS: 12)",
-    officialLink: "https://jkssb.nic.in/Pdf/Notice_10OF2026_15112026.pdf",
+    officialLink: "https://jkssb.nic.in/Pdf/Notice_10OF2026_19112026.pdf",
     officialNotificationUrl: "https://jkssb.nic.in/Pdf/Advt_notification_10OF2026_21102026.pdf",
     officialApplicationUrl: "https://jkssb.nic.in",
     fees: {
       genObc: "\u20B9600/- (For Open Merit, RBA, ALC/IB, OBC Categories)",
       scSt: "\u20B9500/- (For SC, ST-1, ST-2, EWS & PwBD Categories)"
     },
+    howToApply: [
+      "Apply online at www.jkssb.nic.in from 23/11/2026 (12:00 AM) to 22/12/2026 (11:59 PM); online fee submission also closes on 22/12/2026 (11:59 PM).",
+      'Complete mandatory Live Face Capture directly via your device camera as specified in Annexure-"A" of Notice No. JKSSB-PLAN/16/2022-03 (E-7047427) dated 19/11/2026 (uploading saved photos or screenshots is not permitted).',
+      "Upload scanned signature (10\u201320 KB, 1.5 x 3.5 cm) and supporting Category/Qualification PDFs (maximum 200 KB each), then pay the fee via Net Banking, Debit Card, UPI, or Credit Card.",
+      "For technical/application assistance, contact JKSSB at ssbjk-grievance@jk.gov.in, Jammu 0191-2461335, Srinagar 0194-2435089, or NIC Helpline 9107706766."
+    ],
+    documentsRequired: [
+      'Live Face Capture via device camera during form submission (Annexure-"A"; pre-saved photos/screenshots disallowed)',
+      "Scanned Signature (10\u201320 KB, 1.5 x 3.5 cm)",
+      "Category & Educational Qualification Certificates in PDF format (maximum 200 KB each)",
+      "J&K UT Domicile Certificate and Degree/3-Year Diploma in Mechanical, Aeronautical, Automobile, or Production Engineering"
+    ],
+    updatedAt: "21/11/2026",
     verificationStatus: "verified",
     verification: {
       status: "verified",
       verificationStatus: "verified",
-      verifiedAt: "14/11/2026",
-      lastVerified: "16/11/2026",
+      verifiedAt: "21/11/2026",
+      lastVerified: "21/11/2026",
       officialNotificationUrl: "https://jkssb.nic.in/Pdf/Advt_notification_10OF2026_21102026.pdf",
       amendmentUrls: [
-        "https://jkssb.nic.in/Pdf/Notice_10OF2026_15112026.pdf"
+        "https://jkssb.nic.in/Pdf/Notice_10OF2026_15112026.pdf",
+        "https://jkssb.nic.in/Pdf/Corrigendum_Advt_10OF2026_19112026.pdf",
+        "https://jkssb.nic.in/Pdf/Notice_10OF2026_19112026.pdf"
       ],
       officialApplicationUrl: "https://jkssb.nic.in",
-      advertisementNo: "Advt No. 10 of 2026",
+      advertisementNo: "Advt No. 10 of 2026 | Corrigendum & Fresh Dates dated 19.11.2026",
       recruitmentYear: "2026",
-      verifiedOpeningDate: "Postponed (Fresh dates to be notified separately)",
-      verifiedClosingDate: "Postponed (Fresh dates to be notified separately)",
+      verifiedOpeningDate: "23/11/2026",
+      verifiedClosingDate: "22/12/2026",
+      closingTime: "23:59 IST",
       sourceHistory: [
         "Verified direct official PDF Advt_notification_10OF2026_21102026.pdf dated 21/10/2026 on 14/11/2026 (applications originally scheduled 16/11/2026 to 15/12/2026).",
-        "Verified official postponement notice Notice_10OF2026_15112026.pdf (dated 15/11/2026) on 16/11/2026: online submission of application forms postponed; fresh dates will be notified separately."
+        "Verified official postponement notice Notice_10OF2026_15112026.pdf (dated 15/11/2026) on 16/11/2026.",
+        "Verified Corrigendum_Advt_10OF2026_19112026.pdf (3p, PWD Letter PWD-ADM/122/2021-05 (86549) dated 17.11.2026 & SRO 180 dated 26.05.1997) and Notice_10OF2026_19112026.pdf (5p, fresh dates 23/11/2026\u201322/12/2026 + Live Face Capture Annexure-A) on 21/11/2026."
       ]
     },
     isNew: true
@@ -4531,6 +4927,7 @@ var RAW_SARKARI_DATA = [
   },
   {
     id: "ku-ddoe-distance-education-pg-admissions-2026",
+    status: "Closed",
     title: "University of Kashmir DDOE Distance Mode PG Admissions (MA, M.Com & M.Sc Mathematics) Notification 2026",
     category: "admissions",
     postDate: "25/10/2026",
@@ -4671,6 +5068,7 @@ var RAW_SARKARI_DATA = [
   // 🇮🇳 PREVIOUS NOTIFICATIONS (30 AUGUST 2026 - DISPATCH)
   {
     id: "army-tes-55-course-july-2027",
+    status: "Closed",
     title: "Indian Army 10+2 Technical Entry Scheme (TES-55 Course Commencing July 2027)",
     category: "army_jobs",
     postDate: "30/08/2026",
@@ -4686,10 +5084,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B90 (No Application Fee)",
       scSt: "\u20B90 (No Application Fee)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "rrb-ntpc-graduate-undergraduate-cen11-2026",
+    status: "Closed",
     title: "RRB Non-Technical Popular Categories (NTPC Graduate & Undergraduate) Recruitment 2026 (CEN 11/2026)",
     category: "rrb_jobs",
     postDate: "30/08/2026",
@@ -4705,10 +5104,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9500 (\u20B9400 refundable on appearing in 1st Stage CBT)",
       scSt: "\u20B9250 (\u20B9250 refundable on appearing in 1st Stage CBT)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ssc-mts-havaldar-recruitment-2026-fresh",
+    status: "Closed",
     title: "SSC Multi-Tasking (Non-Technical) Staff and Havaldar (CBIC & CBN) Examination 2026",
     category: "ssc_jobs",
     postDate: "30/08/2026",
@@ -4724,10 +5124,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9100 (Online via BHIM UPI, Net Banking, Cards)",
       scSt: "\u20B90 (Exempted for SC/ST/PwBD/Ex-Servicemen/Women)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "cus-ug-phase2-spot-round-admissions-2026",
+    status: "Closed",
     title: "Phase-II Spot Round Admissions Notice for 4-Year UG Honours (FYUGP NEP-2020) Session 2026-27",
     category: "cluster_univ",
     postDate: "30/08/2026",
@@ -4743,10 +5144,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9500 (Spot Registration & Counseling Fee)",
       scSt: "\u20B9500 (Spot Registration & Counseling Fee)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "jkssb-dv-notice-advt06-2026-works-supervisor",
+    status: "Closed",
     title: "JKSSB Document Verification Notice for Draftsman (Civil) & Works Supervisor Posts under Advt 06/2026",
     category: "jkssb",
     postDate: "30/08/2026",
@@ -4762,10 +5164,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9500 (Application & Processing Fee)",
       scSt: "\u20B9400 (For SC/ST/EWS/PwD Candidates)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ku-date-sheet-bg-5th-6th-sem-backlog-2026",
+    status: "Closed",
     title: "Date Sheet for BG 5th & 6th Semester Backlog / Supplementary Examination (CBCS Session 2026)",
     category: "exam_forms",
     postDate: "30/08/2026",
@@ -4781,10 +5184,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9750 (Exam Fee per semester backlog)",
       scSt: "\u20B9750 (Exam Fee per semester backlog)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ku-admissions-ug-phase2-walkin-nep-2026",
+    status: "Closed",
     title: "Phase-II Walk-in & Merit-Based UG Admission Notice for Class 12th Pass-Outs (Session 2026-27)",
     category: "admissions",
     postDate: "30/08/2026",
@@ -4800,11 +5204,12 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9500 (Online Application & Processing Fee)",
       scSt: "\u20B9500 (Online Application & Processing Fee)"
     },
-    isNew: true
+    isNew: false
   },
   // 🇮🇳 PREVIOUS NOTIFICATIONS (22 AUGUST 2026 - DISPATCH)
   {
     id: "army-ssc-tech-66-men-37-women-oct-2026",
+    status: "Closed",
     title: "Indian Army Short Service Commission (Tech) 66th Men & 37th Women Entry Scheme (Commencing Oct 2026)",
     category: "army_jobs",
     postDate: "22/08/2026",
@@ -4820,10 +5225,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B90 (No Application Fee)",
       scSt: "\u20B90 (No Application Fee)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "rrb-staff-nurse-paramedical-cen10-2026",
+    status: "Closed",
     title: "RRB Paramedical Categories & Nursing Superintendent Recruitment 2026 (CEN 10/2026)",
     category: "rrb_jobs",
     postDate: "22/08/2026",
@@ -4839,10 +5245,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9500 (\u20B9400 refundable upon attending CBT)",
       scSt: "\u20B9250 (\u20B9250 refundable upon attending CBT)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ssc-stenographer-grade-c-d-exam-2026",
+    status: "Closed",
     title: "SSC Stenographer Grade \u2018C\u2019 and \u2018D\u2019 Examination 2026 (CBT & Skill Test)",
     category: "ssc_jobs",
     postDate: "22/08/2026",
@@ -4858,10 +5265,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9100 (Online Payment via UPI/NetBanking)",
       scSt: "\u20B90 (Exempted for SC/ST/PwD/Women)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "cus-ug-honours-nep-sem2-exam-form-2026",
+    status: "Closed",
     title: "Online Examination Forms Notice for UG FYUGP (NEP-2020) 2nd Semester Batch 2025-26",
     category: "cluster_univ",
     postDate: "22/08/2026",
@@ -4877,10 +5285,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9675 (Standard Form & Exam Fee)",
       scSt: "\u20B9675 (Standard Form & Exam Fee)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ku-exam-form-bed-1st-2nd-sem-session-2026",
+    status: "Closed",
     title: "Online Examination Forms Notice for B.Ed 1st & 2nd Semester (Regular & Backlog Candidates, Session 2026)",
     category: "exam_forms",
     postDate: "22/08/2026",
@@ -4896,10 +5305,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B91,050 (Exam Fee) + \u20B9250 (EMF / Services)",
       scSt: "\u20B91,050 (Exam Fee) + \u20B9250 (EMF / Services)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ku-admissions-postgraduate-diploma-cyber-security-2026",
+    status: "Closed",
     title: "Admission Notification for PG Diploma in Cyber Security, AI & Data Science (Session 2026-27)",
     category: "admissions",
     postDate: "22/08/2026",
@@ -4915,11 +5325,12 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9750 (Entrance & Processing Fee)",
       scSt: "\u20B9750 (Entrance & Processing Fee)"
     },
-    isNew: true
+    isNew: false
   },
   // 🇮🇳 PREVIOUS NOTIFICATIONS (19 AUGUST 2026 - DISPATCH)
   {
     id: "army-tes-54-course-jan-2027",
+    status: "Closed",
     title: "Indian Army 10+2 Technical Entry Scheme (TES-54 Course - Commencing Jan 2027)",
     category: "army_jobs",
     postDate: "19/08/2026",
@@ -4935,10 +5346,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B90 (No Application Fee)",
       scSt: "\u20B90 (No Application Fee)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "rrb-cma-metallurgical-cen09-2026",
+    status: "Closed",
     title: "RRB Chemical & Metallurgical Assistant (CMA) & Supervisor Recruitment 2026 (CEN 09/2026)",
     category: "rrb_jobs",
     postDate: "19/08/2026",
@@ -4954,10 +5366,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9500 (\u20B9400 refundable after appearing in CBT-1)",
       scSt: "\u20B9250 (\u20B9250 refundable after appearing in CBT-1)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ssc-junior-engineer-je-exam-2026",
+    status: "Closed",
     title: "SSC Junior Engineer (Civil, Mechanical & Electrical) Examination 2026 (JE Paper-I)",
     category: "ssc_jobs",
     postDate: "19/08/2026",
@@ -4973,10 +5386,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9100 (Online Payment via UPI/NetBanking)",
       scSt: "\u20B90 (Exempted for SC/ST/PwD/Women candidates)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "cus-btech-engg-sem3-sem5-exam-2026",
+    status: "Closed",
     title: "Online Examination Forms Notice for B.Tech & Engineering 3rd & 5th Semester (Session 2026)",
     category: "cluster_univ",
     postDate: "19/08/2026",
@@ -4992,10 +5406,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9550 per subject + \u20B9200 Exam Infra Fee",
       scSt: "\u20B9550 per subject + \u20B9200 Exam Infra Fee"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ku-exam-form-llb-ballb-even-sem-2026",
+    status: "Closed",
     title: "Online Examination Forms Notice for LL.B 3-Year & BA-LL.B 5-Year 2nd, 4th & 6th Semesters (Session 2026)",
     category: "exam_forms",
     postDate: "19/08/2026",
@@ -5011,10 +5426,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B91,650 per Semester (Online Payment)",
       scSt: "\u20B91,650 per Semester (Online Payment)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ku-admission-mttm-tourism-hospitality-2026",
+    status: "Closed",
     title: "Admission Notification for Master of Tourism & Travel Management (MTTM) & Hospitality Courses (Session 2026)",
     category: "admissions",
     postDate: "19/08/2026",
@@ -5030,11 +5446,12 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9500 (Online Entrance & Application Fee)",
       scSt: "\u20B9500 (Online Entrance & Application Fee)"
     },
-    isNew: true
+    isNew: false
   },
   // 🇮🇳 PREVIOUS NOTIFICATIONS (18 AUGUST 2026)
   {
     id: "army-tgc-143-course-jul-2027",
+    status: "Closed",
     title: "Indian Army 143rd Technical Graduate Course (TGC-143 - Commencing Jul 2027)",
     category: "army_jobs",
     postDate: "18/08/2026",
@@ -5050,10 +5467,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B90 (No Application Fee)",
       scSt: "\u20B90 (No Application Fee)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "rrb-ministerial-isolated-cen08-2026",
+    status: "Closed",
     title: "RRB Ministerial & Isolated Categories Recruitment 2026 (CEN 08/2026 - 1,280 Posts)",
     category: "rrb_jobs",
     postDate: "18/08/2026",
@@ -5069,10 +5487,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9500 (\u20B9400 refundable after appearing in CBT-1)",
       scSt: "\u20B9250 (\u20B9250 refundable after appearing in CBT-1)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ssc-junior-hindi-translator-jht-exam-2026",
+    status: "Closed",
     title: "SSC Combined Hindi Translators Examination (JHT, JT & SHT) 2026",
     category: "ssc_jobs",
     postDate: "18/08/2026",
@@ -5088,10 +5507,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9100 (Online Payment via UPI/NetBanking)",
       scSt: "\u20B90 (Exempted for SC/ST/PwD/Women candidates)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "cus-integrated-pg-honors-sem2-sem4-exam-2026",
+    status: "Closed",
     title: "Online Examination Forms Notice for Integrated PG & Honors 2nd & 4th Semester (Session 2026)",
     category: "cluster_univ",
     postDate: "18/08/2026",
@@ -5107,10 +5527,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9425 per subject + \u20B9200 University Exam Infra Fee",
       scSt: "\u20B9425 per subject + \u20B9200 University Exam Infra Fee"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ku-exam-form-bed-1st-2nd-sem-distance-2026",
+    status: "Closed",
     title: "Online Examination Forms Notice for B.Ed 1st & 2nd Semester Regular & Distance Education (Batch 2025-26)",
     category: "exam_forms",
     postDate: "18/08/2026",
@@ -5126,10 +5547,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B91,475 per Semester (Online Payment)",
       scSt: "\u20B91,475 per Semester (Online Payment)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ku-admission-foreign-language-diploma-2026",
+    status: "Closed",
     title: "Admission Notification for Diploma & Certificate Courses in Foreign Languages (Session 2026)",
     category: "admissions",
     postDate: "18/08/2026",
@@ -5145,11 +5567,12 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9250 (Application Fee) + Course Fee upon selection",
       scSt: "\u20B9250 (Application Fee) + Course Fee upon selection"
     },
-    isNew: true
+    isNew: false
   },
   // 🇮🇳 TODAY'S NEWLY EXTRACTED NOTIFICATIONS (18 AUGUST 2026)
   {
     id: "army-ssc-tech-65-men-36-women-2026",
+    status: "Closed",
     title: "Indian Army SSC (Tech)-65 Men & SSCW (Tech)-36 Women Course (Apr 2027)",
     category: "army_jobs",
     postDate: "18/08/2026",
@@ -5165,10 +5588,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B90 (No Application Fee)",
       scSt: "\u20B90 (No Application Fee)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "rrb-senior-section-engineer-cen07-2026",
+    status: "Closed",
     title: "RRB Senior Section Engineer (SSE) & Chief Depot Material Superintendent (CEN 07/2026)",
     category: "rrb_jobs",
     postDate: "18/08/2026",
@@ -5184,10 +5608,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9500 (\u20B9400 refundable after appearing in CBT-1)",
       scSt: "\u20B9250 (\u20B9250 refundable after appearing in CBT-1)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ssc-stenographer-grade-cd-exam-2026",
+    status: "Closed",
     title: 'SSC Stenographer Grade "C" & "D" Examination 2026 (Official Notification)',
     category: "ssc_jobs",
     postDate: "18/08/2026",
@@ -5203,10 +5628,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9100 (Online Payment via UPI/NetBanking)",
       scSt: "\u20B90 (Exempted for SC/ST/PwD/Women candidates)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "cus-ug-sem4-sem6-exam-form-2026",
+    status: "Closed",
     title: "Online Examination Form Notice for UG 4th & 6th Semester (NEP & Batch 2021-23)",
     category: "cluster_univ",
     postDate: "18/08/2026",
@@ -5223,10 +5649,11 @@ var RAW_SARKARI_DATA = [
       genObc: "As per subject selection on student portal",
       scSt: "As per subject selection on student portal"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ku-exam-form-ug-bg-2nd-sem-nep-2026",
+    status: "Closed",
     title: "Online Examination Forms Notice for UG (BG) 2nd Semester Regular & Fresh Private (NEP Batch 2025)",
     category: "exam_forms",
     postDate: "18/08/2026",
@@ -5242,10 +5669,11 @@ var RAW_SARKARI_DATA = [
       genObc: "Standard UG NEP Examination Fee (Online Gateway)",
       scSt: "Standard UG NEP Examination Fee (Online Gateway)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ku-admission-pg-counseling-list2-2026",
+    status: "Closed",
     title: "2nd Counseling & Selection List for Admission to Post Graduate Programmes (Session 2026)",
     category: "admissions",
     postDate: "18/08/2026",
@@ -5261,11 +5689,12 @@ var RAW_SARKARI_DATA = [
       genObc: "Admission Fee as per allotted Department/Course",
       scSt: "Admission Fee as per allotted Department/Course"
     },
-    isNew: true
+    isNew: false
   },
   // 🇮🇳 PREVIOUS NOTIFICATIONS (17 AUGUST 2026)
   {
     id: "army-tes-54-course-2026",
+    status: "Closed",
     title: "10+2 Technical Entry Scheme (TES-54 Course - Jan 2027)",
     category: "army_jobs",
     postDate: "17/08/2026",
@@ -5281,10 +5710,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B90 (No Application Fee)",
       scSt: "\u20B90 (No Application Fee)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "rrb-ministerial-isolated-2026",
+    status: "Closed",
     title: "RRB Ministerial & Isolated Categories Recruitment (CEN 06/2026)",
     category: "rrb_jobs",
     postDate: "17/08/2026",
@@ -5300,10 +5730,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9500 (\u20B9400 refundable after appearing in CBT)",
       scSt: "\u20B9250 (\u20B9250 refundable after appearing in CBT)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ssc-cpo-si-delhi-police-capf-2026",
+    status: "Closed",
     title: "SSC Sub-Inspector in Delhi Police & Central Armed Police Forces (CAPFs) Exam 2026",
     category: "ssc_jobs",
     postDate: "17/08/2026",
@@ -5319,10 +5750,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9100 (Online via Net Banking/UPI/Debit Card)",
       scSt: "\u20B90 (Exempted for SC/ST/Ex-Servicemen/Women candidates)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "cus-ug-special-stray-round-2026",
+    status: "Closed",
     title: "Online Admission Notice for Special Stray Round for UG / Honours Programmes (Session 2026)",
     category: "cluster_univ",
     postDate: "17/08/2026",
@@ -5338,10 +5770,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9300 (Counseling & Processing Fee)",
       scSt: "\u20B9300 (Counseling & Processing Fee)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ku-exam-date-sheet-pg-3rd-sem-2026",
+    status: "Closed",
     title: "Date Sheet for MA / M.Sc / M.Com 3rd Semester Regular / Fresh Private Candidates (Session 2026)",
     category: "exam_forms",
     postDate: "17/08/2026",
@@ -5357,10 +5790,11 @@ var RAW_SARKARI_DATA = [
       genObc: "Standard University PG Examination Fee",
       scSt: "Standard University PG Examination Fee"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ku-admission-bed-cdoe-2026",
+    status: "Closed",
     title: "Admission Notification for 2-Year B.Ed Programme (Distance Mode) Session 2026-28",
     category: "admissions",
     postDate: "17/08/2026",
@@ -5376,11 +5810,12 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9500 (Online Application & Processing Fee)",
       scSt: "\u20B9500 (Online Application & Processing Fee)"
     },
-    isNew: true
+    isNew: false
   },
   // 🇮🇳 PREVIOUS NOTIFICATIONS (AUGUST 2026)
   {
     id: "army-amc-ssc-course-2026",
+    status: "Closed",
     title: "Army Medical Corps (AMC) Non-Technical & SSC Officer Course 2026-27",
     category: "army_jobs",
     postDate: "16/08/2026",
@@ -5396,10 +5831,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B90 (No Application Fee for Army Commission)",
       scSt: "\u20B90 (No Application Fee)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "rrb-paramedical-cen05-2026",
+    status: "Closed",
     title: "RRB Paramedical Categories (Staff Nurse, Lab Tech & Pharmacist) 2026",
     category: "rrb_jobs",
     postDate: "16/08/2026",
@@ -5415,10 +5851,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9500 (\u20B9400 refundable after appearing in CBT-1)",
       scSt: "\u20B9250 (\u20B9250 refundable after appearing in CBT-1)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ssc-jht-examination-2026",
+    status: "Closed",
     title: "SSC Junior Hindi Translator (JHT) & Senior Hindi Translator Exam 2026",
     category: "ssc_jobs",
     postDate: "16/08/2026",
@@ -5434,10 +5871,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9100 (Online via Net Banking/UPI/Cards)",
       scSt: "\u20B90 (Exempted for SC/ST/PwD/Women candidates)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "cus-self-financed-admission-2026",
+    status: "Closed",
     title: "Online Admission Notice for UG / PG Self-Financed & Lateral Entry (Session 2026)",
     category: "cluster_univ",
     postDate: "16/08/2026",
@@ -5469,10 +5907,11 @@ var RAW_SARKARI_DATA = [
         "Formally concluded. Cluster University Srinagar officially notified the complete closure of Lateral Entry and PG admissions for Session 2026-27."
       ]
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "jkssb-draft-merit-hme-2026",
+    status: "Closed",
     title: "JKSSB Document Verification & Draft Merit List for Health & Medical Education Dept",
     category: "jkssb",
     postDate: "16/08/2026",
@@ -5488,10 +5927,11 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B90 (Document Verification Round)",
       scSt: "\u20B90 (Document Verification Round)"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ku-exam-form-bg-1st-2nd-sem-2026",
+    status: "Closed",
     title: "Submission of Online Examination Forms for BG 1st & 2nd Sem (Batch 2025-26 NEP-2020)",
     category: "exam_forms",
     postDate: "16/08/2026",
@@ -5507,10 +5947,11 @@ var RAW_SARKARI_DATA = [
       genObc: "Standard University Exam Fee Schedule",
       scSt: "Standard University Exam Fee Schedule"
     },
-    isNew: true
+    isNew: false
   },
   {
     id: "ku-admission-cdoe-pg-diploma-2026",
+    status: "Closed",
     title: "Admission Notification No. 14 of 2026: PG Diploma & Certificate Programmes (CDOE)",
     category: "admissions",
     postDate: "16/08/2026",
@@ -5526,11 +5967,12 @@ var RAW_SARKARI_DATA = [
       genObc: "\u20B9400 (Online Application & Prospectus Fee)",
       scSt: "\u20B9400 (Online Application & Prospectus Fee)"
     },
-    isNew: true
+    isNew: false
   },
   // 🇮🇳 JOIN INDIAN ARMY NOTIFICATIONS (https://www.joinindianarmy.nic.in/default.aspx)
   {
     id: "army-ncc-125-2026",
+    status: "Closed",
     title: "NCC Special Entry Scheme 125th Course (April 2027)",
     category: "army_jobs",
     postDate: "05/08/2026",
@@ -5543,7 +5985,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "70 Posts (Male & Female)",
     fees: { genObc: "\u20B90", scSt: "\u20B90" },
     officialLink: "https://www.joinindianarmy.nic.in/officers-entry-apply-login.htm",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Officers Training Academy (OTA) Chennai",
@@ -5552,10 +5994,12 @@ var RAW_SARKARI_DATA = [
         qualification: "Graduate with 50% marks + NCC C-Cert",
         fee: "Free (\u20B90)"
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "army-jag-34-2026",
+    status: "Closed",
     title: "JAG Entry Scheme 34th Course (Law Graduates - April 2027)",
     category: "army_jobs",
     postDate: "05/08/2026",
@@ -5568,7 +6012,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "10 Posts",
     fees: { genObc: "\u20B90", scSt: "\u20B90" },
     officialLink: "https://www.joinindianarmy.nic.in/officers-entry-apply-login.htm",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Judge Advocate General (JAG) Branch",
@@ -5577,10 +6021,12 @@ var RAW_SARKARI_DATA = [
         qualification: "LLB Degree (55% marks) + Bar Council eligibility",
         fee: "Free (\u20B90)"
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "army-ta-officer-2026",
+    status: "Closed",
     title: "Territorial Army Non-Departmental Officer Entry 2026",
     category: "army_jobs",
     postDate: "05/08/2026",
@@ -5593,7 +6039,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "Multiple Officer Vacancies",
     fees: { genObc: "\u20B90", scSt: "\u20B90" },
     officialLink: "https://www.joinindianarmy.nic.in/default.aspx",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Territorial Army Units",
@@ -5606,6 +6052,7 @@ var RAW_SARKARI_DATA = [
   },
   {
     id: "army-ladakh-rally-2026",
+    status: "Closed",
     title: "Ladakh Scouts Regimental Centre Agniveer Recruitment Rally",
     category: "army_jobs",
     postDate: "05/08/2026",
@@ -5618,7 +6065,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "Regimental HQ Quota",
     fees: { genObc: "\u20B90", scSt: "\u20B90" },
     officialLink: "https://www.joinindianarmy.nic.in/BRAgniveerRallySchedule.htm",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Ladakh Scouts Regimental Centre",
@@ -5627,10 +6074,12 @@ var RAW_SARKARI_DATA = [
         qualification: "Class 10th / 12th Pass",
         fee: "Free (\u20B90)"
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "army-aoc-civilian-2026",
+    status: "Closed",
     title: "Army Ordnance Corps (AOC) Civilian Recruitment Alert 2026",
     category: "army_jobs",
     postDate: "07/08/2026",
@@ -5643,7 +6092,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "Upcoming Vacancies",
     fees: { genObc: "\u20B90", scSt: "\u20B90" },
     officialLink: "https://www.joinindianarmy.nic.in/default.aspx",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Army Ordnance Corps Units",
@@ -5657,6 +6106,7 @@ var RAW_SARKARI_DATA = [
   // 🚆 RAILWAY RECRUITMENT BOARD (RRB) NOTIFICATIONS (https://www.rrbapply.gov.in/)
   {
     id: "rrb-je-2026",
+    status: "Closed",
     title: "RRB Junior Engineer (JE), DMS & CMA Recruitment 2026 (CEN No. 04/2026)",
     category: "rrb_jobs",
     postDate: "05/08/2026",
@@ -5669,7 +6119,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "4,098 Posts (Pan-India Railway Zones)",
     fees: { genObc: "\u20B9500 (\u20B9400 refunded after CBT-1)", scSt: "\u20B9250 (Full \u20B9250 refunded after CBT-1)" },
     officialLink: "https://www.rrbapply.gov.in/",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Indian Railways - Works, Track & Civil Infrastructure",
@@ -5703,6 +6153,7 @@ var RAW_SARKARI_DATA = [
   },
   {
     id: "rrb-section-controller-2026",
+    status: "Closed",
     title: "RRB Section Controller Recruitment 2026 (CEN No. 03/2026)",
     category: "rrb_jobs",
     postDate: "15/07/2026",
@@ -5715,7 +6166,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "119 Posts",
     fees: { genObc: "\u20B9500", scSt: "\u20B9250" },
     officialLink: "https://www.rrbapply.gov.in/#/auth/landing",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Operating & Traffic Control Division",
@@ -5724,10 +6175,12 @@ var RAW_SARKARI_DATA = [
         qualification: "Bachelor's Degree in any discipline",
         fee: "\u20B9500 / \u20B9250"
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "rrb-group-d-2026",
+    status: "Closed",
     title: "RRB Group D (Level-1) CBT Examination & City Intimation (CEN No. 09/2025)",
     category: "rrb_jobs",
     postDate: "03/08/2026",
@@ -5740,7 +6193,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "22,195 Posts (Level-1 Posts)",
     fees: { genObc: "\u20B9500", scSt: "\u20B9250" },
     officialLink: "https://www.rrbapply.gov.in/",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Track & Traffic Operating Units",
@@ -5753,6 +6206,7 @@ var RAW_SARKARI_DATA = [
   },
   {
     id: "rrb-technician-correction-2026",
+    status: "Closed",
     title: "RRB Technician (Grade 1 Signal & Grade 3) Application Correction Window (CEN No. 02/2026)",
     category: "rrb_jobs",
     postDate: "01/08/2026",
@@ -5765,7 +6219,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "6,557 Posts",
     fees: { genObc: "\u20B9100 (Correction Fee)", scSt: "\u20B9100 (Correction Fee)" },
     officialLink: "https://www.rrbapply.gov.in/#/auth/landing",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Signal, Telecom, Workshop & Loco Sheds",
@@ -5774,10 +6228,12 @@ var RAW_SARKARI_DATA = [
         qualification: "10th+ITI / 10+2 PCM / Diploma / B.Sc / B.Tech",
         fee: "\u20B9100 Modification"
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "rrb-ntpc-paramedical-2026",
+    status: "Closed",
     title: "RRB NTPC & Paramedical Categories Recruitment Calendar 2026",
     category: "rrb_jobs",
     postDate: "07/08/2026",
@@ -5807,7 +6263,7 @@ var RAW_SARKARI_DATA = [
         "Verified Railway Recruitment Board annual exam schedule calendar."
       ]
     },
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Traffic, Operating, Commercial & Railway Medical Division",
@@ -5821,6 +6277,7 @@ var RAW_SARKARI_DATA = [
   // 🇮🇳 STAFF SELECTION COMMISSION (SSC) RECRUITMENT NOTIFICATIONS (https://ssc.gov.in/)
   {
     id: "ssc-steno-2026",
+    status: "Closed",
     title: 'SSC Stenographer Grade "C" & "D" Examination 2026 (1,207 Vacancies)',
     category: "ssc_jobs",
     postDate: "06/08/2026",
@@ -5833,7 +6290,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "1,207 Posts (Tentative)",
     fees: { genObc: "\u20B9100", scSt: "\u20B90 (Exempted for SC/ST/PwD/Women)" },
     officialLink: "https://ssc.gov.in/",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Central Ministries & Armed Forces HQ (AFHQ)",
@@ -5853,6 +6310,7 @@ var RAW_SARKARI_DATA = [
   },
   {
     id: "ssc-cgl-2026-city-slip",
+    status: "Closed",
     title: "SSC CGL 2026 Tier-I Exam City Intimation Slip & Computer-Based Exam Schedule Notice",
     category: "ssc_jobs",
     postDate: "05/08/2026",
@@ -5882,7 +6340,7 @@ var RAW_SARKARI_DATA = [
         "Tier-I Computer Based Examination city intimation and schedule verified on ssc.gov.in/login."
       ]
     },
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Govt Ministries & Departments (Group B & C Officers)",
@@ -5895,6 +6353,7 @@ var RAW_SARKARI_DATA = [
   },
   {
     id: "ssc-gd-constable-2026-notice",
+    status: "Closed",
     title: "SSC GD Constable in CAPFs, SSF & Rifleman (GD) in Assam Rifles 2026 Notification Notice",
     category: "ssc_jobs",
     postDate: "07/08/2026",
@@ -5907,7 +6366,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "39,481 Expected Posts",
     fees: { genObc: "\u20B9100", scSt: "\u20B90" },
     officialLink: "https://ssc.gov.in/",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Central Armed Police Forces (CAPFs)",
@@ -5920,6 +6379,7 @@ var RAW_SARKARI_DATA = [
   },
   {
     id: "ssc-selection-post-phase14-2026",
+    status: "Closed",
     title: "SSC Selection Posts Phase-XIV 2026 Application Correction Window Notice",
     category: "ssc_jobs",
     postDate: "06/08/2026",
@@ -5932,7 +6392,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "2,049 Posts across Regional Cadres",
     fees: { genObc: "\u20B9100 (Correction Fee \u20B9200/\u20B9500)", scSt: "\u20B90" },
     officialLink: "https://ssc.gov.in/login",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Regional SSC Offices (NR, CR, WR, ER, SR, KKR, NWR, MPR, NER)",
@@ -5941,10 +6401,12 @@ var RAW_SARKARI_DATA = [
         qualification: "10th / 12th / Degree relevant to post code",
         fee: "\u20B9100"
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "ssc-chsl-mains-2026-notice",
+    status: "Closed",
     title: "SSC CHSL (10+2) Tier-II (Mains) Examination Date Notice 2026",
     category: "ssc_jobs",
     postDate: "05/08/2026",
@@ -5957,7 +6419,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "3,712 Posts",
     fees: { genObc: "\u20B90", scSt: "\u20B90" },
     officialLink: "https://ssc.gov.in/",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Ministries & Departments of Govt of India",
@@ -5971,6 +6433,7 @@ var RAW_SARKARI_DATA = [
   // 🏛️ NATIONAL TESTING AGENCY (NTA) ACTIVE ENTRANCE EXAM NOTIFICATIONS (https://www.nta.ac.in/)
   {
     id: "nta-ugc-net-dec-2026",
+    status: "Closed",
     title: "NTA UGC NET December 2026 Session Public Notice & Online Registration Schedule",
     category: "nta",
     postDate: "06/08/2026",
@@ -5984,7 +6447,7 @@ var RAW_SARKARI_DATA = [
     feePerSubject: "General / Unreserved: \u20B91150 | General-EWS/OBC-NCL: \u20B9600 | SC/ST/PwD/Third Gender: \u20B9325",
     fees: { genObc: "\u20B91150 (Gen) / \u20B9600 (OBC/EWS)", scSt: "\u20B9325" },
     officialLink: "https://ugcnet.nta.ac.in/",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Humanities & Social Sciences",
@@ -6057,6 +6520,7 @@ var RAW_SARKARI_DATA = [
   },
   {
     id: "nta-neet-ug-2026-counselling",
+    status: "Closed",
     title: "NTA NEET UG 2026 Medical Counselling Data Verification Public Notice",
     category: "nta",
     postDate: "06/08/2026",
@@ -6070,7 +6534,7 @@ var RAW_SARKARI_DATA = [
     feePerSubject: "Verification Free for NEET UG Qualified Candidates",
     fees: { genObc: "Checked", scSt: "Checked" },
     officialLink: "https://neet.ntaonline.in/",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "MBBS & Dental Surgery (BDS)",
@@ -6086,10 +6550,12 @@ var RAW_SARKARI_DATA = [
         qualification: "NEET UG 2026 Qualified Scorecard",
         fee: "Verified"
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "nta-csir-ugc-net-dec-2026",
+    status: "Closed",
     title: "NTA Joint CSIR-UGC NET December 2026 Online Registration Public Notice",
     category: "nta",
     postDate: "07/08/2026",
@@ -6103,7 +6569,7 @@ var RAW_SARKARI_DATA = [
     feePerSubject: "General: \u20B91150 | OBC-NCL/EWS: \u20B9600 | SC/ST/Third Gender: \u20B9325 | PwD: Nil",
     fees: { genObc: "\u20B91150 (Gen) / \u20B9600 (OBC/EWS)", scSt: "\u20B9325" },
     officialLink: "https://csirnet.nta.ac.in/",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Chemical Sciences",
@@ -6278,6 +6744,7 @@ var RAW_SARKARI_DATA = [
   },
   {
     id: "jkssb-constable-si-2026",
+    status: "Closed",
     title: "JKSSB Home Dept Police Constable (Armed/IRP/SDRF/Executive) & Sub-Inspector Recruitment",
     category: "jkssb",
     postDate: "19/01/2026",
@@ -6289,7 +6756,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "2,302 Posts",
     fees: { genObc: "\u20B9500", scSt: "\u20B9400" },
     officialLink: "https://jkssb.nic.in/Advertisement.html",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "J&K Home Department (Executive Police)",
@@ -6309,10 +6776,12 @@ var RAW_SARKARI_DATA = [
         posts: 487,
         qualification: "Matriculation (10th Pass) from a recognized Board + PET/PST"
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "jkssb-school-teacher-2026",
+    status: "Closed",
     title: "JKSSB Advt 07 of 2026: School Education Dept Teacher Recruitment Drive",
     category: "jkssb",
     postDate: "15/07/2026",
@@ -6324,7 +6793,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "3,288 Posts",
     fees: { genObc: "\u20B9500", scSt: "\u20B9400" },
     officialLink: "https://jkssb.nic.in/Advertisement.html",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "School Education Department",
@@ -6348,6 +6817,7 @@ var RAW_SARKARI_DATA = [
   },
   {
     id: "jkssb-advt-13-2025",
+    status: "Closed",
     title: "JKSSB Advt 13 of 2025: Poshan Supervisor, Stock Asst, Handicrafts Officer & Fisheries",
     category: "jkssb",
     postDate: "27/01/2026",
@@ -6359,7 +6829,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "390 Posts",
     fees: { genObc: "\u20B9500", scSt: "\u20B9400" },
     officialLink: "https://jkssb.nic.in/Advertisement.html",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Public Works (R&B) Department",
@@ -6397,10 +6867,12 @@ var RAW_SARKARI_DATA = [
         posts: 95,
         qualification: "10+2 / Graduation from recognized Institute"
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "jkssb-health-med-2026",
+    status: "Closed",
     title: "JKSSB Advt 01 of 2026: Health & Medical Education Staff Nurse, Pharmacist & Lab Tech",
     category: "jkssb",
     postDate: "25/02/2026",
@@ -6412,7 +6884,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "239 Posts",
     fees: { genObc: "\u20B9500", scSt: "\u20B9400" },
     officialLink: "https://jkssb.nic.in/Advertisement.html",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Health & Medical Education Dept",
@@ -6438,10 +6910,12 @@ var RAW_SARKARI_DATA = [
         posts: 40,
         qualification: "Graduate Degree + Diploma / Certificate in Medical Record Keeping"
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "jkssb-patwari-2026",
+    status: "Closed",
     title: "JKSSB Revenue Dept Patwari Recruitment (Jammu & Kashmir Division)",
     category: "jkssb",
     postDate: "15/03/2026",
@@ -6453,7 +6927,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "142 Posts",
     fees: { genObc: "\u20B9500", scSt: "\u20B9400" },
     officialLink: "https://jkssb.nic.in/Advertisement.html",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Revenue Department (Jammu Division)",
@@ -6467,10 +6941,12 @@ var RAW_SARKARI_DATA = [
         posts: 64,
         qualification: "Graduate Degree + Computer Knowledge"
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "jkssb-jr-assistant-2025",
+    status: "Closed",
     title: "JKSSB Advt 08 of 2025: Junior Assistant & Stenographer Various Depts",
     category: "jkssb",
     postDate: "20/10/2025",
@@ -6508,10 +6984,12 @@ var RAW_SARKARI_DATA = [
         posts: 40,
         qualification: "Graduation + Typing & Shorthand Test"
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "jkssb-wildlife-guard-2025",
+    status: "Closed",
     title: "JKSSB Forest & Environment Dept Wildlife Guard Recruitment",
     category: "jkssb",
     postDate: "10/01/2026",
@@ -6537,11 +7015,13 @@ var RAW_SARKARI_DATA = [
         posts: 54,
         qualification: "10th Pass (Matriculation) + 25 KM Physical Walk Test"
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   // LATEST JOBS (Extracted from SarkariResult.com.cm Portal)
   {
     id: "job-ssc-cgl-2026",
+    status: "Closed",
     title: "SSC Combined Graduate Level Examination 2024 (CGL 2024) - 17,727 Posts [Applications Closed]",
     category: "ssc_jobs",
     postDate: "24/06/2024",
@@ -6578,10 +7058,12 @@ var RAW_SARKARI_DATA = [
         "Audited and corrected historical 17,727 vacancies cycle to CGL 2024 (Notice F.No. HQ-PPI03/11/2024-PP_1); applications concluded 27/07/2024 at 23:00 IST."
       ]
     },
-    isNew: false
+    isNew: false,
+    robotsNoindex: true
   },
   {
     id: "job-rrb-ntpc-2026",
+    status: "Closed",
     title: "Railway RRB NTPC Graduate & Under Graduate Posts 2026",
     category: "jobs",
     postDate: "31/07/2026",
@@ -6591,10 +7073,11 @@ var RAW_SARKARI_DATA = [
     ageLimit: "18 - 33 Years (UG Posts) / 18 - 36 Years (Graduate Posts)",
     eligibility: "Class 12th Intermediate for UG Level / Bachelor Degree for Graduate Level Posts.",
     fees: { genObc: "\u20B9500 (\u20B9400 Refundable)", scSt: "\u20B9250 (Full Refundable)" },
-    isNew: true
+    isNew: false
   },
   {
     id: "job-ssc-mts-2026",
+    status: "Closed",
     title: "SSC MTS & Havildar 9,583 Posts Registration 2026",
     category: "jobs",
     postDate: "30/07/2026",
@@ -6604,10 +7087,11 @@ var RAW_SARKARI_DATA = [
     ageLimit: "18 - 25 Years for MTS, 18 - 27 Years for Havildar",
     eligibility: "Class 10th High School Pass from any recognized board in India.",
     fees: { genObc: "\u20B9100", scSt: "\u20B90" },
-    isNew: true
+    isNew: false
   },
   {
     id: "job-ibps-po-2026",
+    status: "Closed",
     title: "IBPS PO XVI Officer Scale-I Recruitment 2026 (3,955 Posts)",
     category: "banking_jobs",
     postDate: "29/07/2026",
@@ -6617,10 +7101,11 @@ var RAW_SARKARI_DATA = [
     ageLimit: "20 - 30 Years (As on 01/08/2026)",
     eligibility: "Any Graduation Degree in any discipline from recognized University.",
     fees: { genObc: "\u20B9850", scSt: "\u20B9175" },
-    isNew: true
+    isNew: false
   },
   {
     id: "job-navy-ssr-mr-2026",
+    status: "Closed",
     title: "Indian Navy Agniveer SSR & MR 02/2026 Online Form",
     category: "jobs",
     postDate: "28/07/2026",
@@ -6630,10 +7115,12 @@ var RAW_SARKARI_DATA = [
     ageLimit: "Born between 01/11/2005 and 30/04/2009",
     eligibility: "Class 12th Intermediate with Math & Physics for SSR / Class 10th Pass for MR.",
     fees: { genObc: "\u20B9550", scSt: "\u20B9550" },
-    isNew: true
+    isNew: false,
+    robotsNoindex: true
   },
   {
     id: "job-up-police-si-2026",
+    status: "Closed",
     title: "UP Police Sub Inspector SI & Platoon Commander 2026",
     category: "jobs",
     postDate: "26/07/2026",
@@ -6642,10 +7129,12 @@ var RAW_SARKARI_DATA = [
     shortInfo: "Uttar Pradesh Police Recruitment Board (UPPRPB) for 9,217 Sub Inspector Civilian Police and Fire Station Officer.",
     ageLimit: "21 - 28 Years",
     eligibility: "Bachelor Degree in any stream for SI / B.Sc Degree for Fire Officer.",
-    fees: { genObc: "\u20B9400", scSt: "\u20B9400" }
+    fees: { genObc: "\u20B9400", scSt: "\u20B9400" },
+    robotsNoindex: true
   },
   {
     id: "job-upsc-nda",
+    status: "Closed",
     title: "UPSC NDA / NA II Examination 2026 Notification",
     category: "jobs",
     postDate: "10/07/2026",
@@ -6654,10 +7143,12 @@ var RAW_SARKARI_DATA = [
     shortInfo: "Union Public Service Commission (UPSC) recruitment for National Defence Academy & Naval Academy Examination II 2026.",
     ageLimit: "Born between 02/01/2007 and 01/01/2010",
     eligibility: "Class 12th Intermediate pass / appearing. For Navy & Air Force, Physics & Math mandatory.",
-    fees: { genObc: "\u20B9100", scSt: "\u20B90" }
+    fees: { genObc: "\u20B9100", scSt: "\u20B90" },
+    robotsNoindex: true
   },
   {
     id: "job-agniveer-army",
+    status: "Closed",
     title: "Indian Army Agniveer Recruitment Rally Scheme 2026",
     category: "jobs",
     postDate: "08/07/2026",
@@ -6666,7 +7157,8 @@ var RAW_SARKARI_DATA = [
     shortInfo: "Join Indian Army Agniveer General Duty (GD), Technical, Clerk, Store Keeper, and Tradesmen 8th / 10th Pass entry.",
     ageLimit: "17.5 - 21 Years",
     eligibility: "Class 8th / 10th / 12th Pass as per designated post requirements.",
-    fees: { genObc: "\u20B9250", scSt: "\u20B9250" }
+    fees: { genObc: "\u20B9250", scSt: "\u20B9250" },
+    robotsNoindex: true
   },
   // ADMIT CARDS
   {
@@ -6852,6 +7344,7 @@ var RAW_SARKARI_DATA = [
   // ADMISSIONS - KASHMIR UNIVERSITY (kashmiruniversity.net/admission.aspx) & NATIONAL
   {
     id: "ku-adm-pg-selection-1-2026",
+    status: "Closed",
     title: "Kashmir University PG Admissions 2026 1st Selection List & Counseling Notice (MA, M.Sc, M.Com, MCA)",
     category: "admissions",
     postDate: "06/08/2026",
@@ -6863,7 +7356,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "2,850 Provisionally Selected Candidates",
     fees: { genObc: "\u20B9750 Processing Fee", scSt: "\u20B9750 Processing Fee" },
     officialLink: "https://www.kashmiruniversity.net/admission.aspx",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "School of Applied Sciences & Technology",
@@ -6883,10 +7376,12 @@ var RAW_SARKARI_DATA = [
         posts: 1150,
         qualification: "Document verification & online fee payment deadline: Aug 18, 2026."
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "ku-adm-dde-pg-bed-2026",
+    status: "Closed",
     title: "Kashmir University DDE Distance Mode Admission Notification 2026 (MA, M.Com, B.Ed. & PG Diplomas)",
     category: "admissions",
     postDate: "05/08/2026",
@@ -6898,7 +7393,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "4,500 Seats",
     fees: { genObc: "\u20B9500 Application Fee", scSt: "\u20B9500 Application Fee" },
     officialLink: "https://www.kashmiruniversity.net/admission.aspx",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Directorate of Distance Education (DDE)",
@@ -6918,10 +7413,12 @@ var RAW_SARKARI_DATA = [
         posts: 600,
         qualification: "Graduation in any discipline from recognized university."
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "ku-adm-phd-research-2026",
+    status: "Closed",
     title: "Kashmir University Ph.D. Research Programme Entrance Exemption & Direct Admission Notice 2026",
     category: "admissions",
     postDate: "07/08/2026",
@@ -6933,7 +7430,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "320 Research Seats",
     fees: { genObc: "\u20B9500 Application Fee", scSt: "\u20B9500 Application Fee" },
     officialLink: "https://www.kashmiruniversity.net/admission.aspx",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Faculty of Science & Technology",
@@ -6957,6 +7454,7 @@ var RAW_SARKARI_DATA = [
   },
   {
     id: "ku-adm-ballb-2nd-selection-2026",
+    status: "Closed",
     title: "Kashmir University BA-LLB 5-Year Integrated Course 2nd Selection List & Allotment Counseling 2026",
     category: "admissions",
     postDate: "06/08/2026",
@@ -6968,7 +7466,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "180 Law Candidates",
     fees: { genObc: "\u20B9500 Processing Fee", scSt: "\u20B9500 Processing Fee" },
     officialLink: "https://www.kashmiruniversity.net/admission.aspx",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Department of Law (Main Campus Srinagar)",
@@ -6982,10 +7480,12 @@ var RAW_SARKARI_DATA = [
         posts: 120,
         qualification: "10+2 with 45% marks. Verification at respective allotted college."
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "ku-adm-pg-diploma-2026",
+    status: "Closed",
     title: "Kashmir University 1-Year PG Diploma & Certificate Courses Online Admission Notification 2026",
     category: "admissions",
     postDate: "05/08/2026",
@@ -6997,7 +7497,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "250 Seats",
     fees: { genObc: "\u20B9500 Application Fee", scSt: "\u20B9500 Application Fee" },
     officialLink: "https://www.kashmiruniversity.net/admission.aspx",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Department of Law",
@@ -7023,16 +7523,19 @@ var RAW_SARKARI_DATA = [
         posts: 100,
         qualification: "10+2 / Graduation from recognized board."
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "adm-du-ug",
+    status: "Closed",
     title: "Delhi University CSAS UG Admission Portal 2026",
     category: "admissions",
     postDate: "25/07/2026",
     lastDate: "15/08/2026",
     shortInfo: "Common Seat Allocation System (CSAS) registration for entry into DU undergraduate degree colleges based on CUET scores.",
-    isNew: true
+    isNew: false,
+    robotsNoindex: true
   },
   {
     id: "adm-ignou-july",
@@ -7070,15 +7573,18 @@ var RAW_SARKARI_DATA = [
   },
   {
     id: "adm-up-deled",
+    status: "Closed",
     title: "UP D.El.Ed (BTC) Online Admission Registration 2026",
     category: "admissions",
     postDate: "16/07/2026",
     lastDate: "20/08/2026",
-    shortInfo: "Uttar Pradesh Diploma in Elementary Education 2-year teacher training course state merit list & choice filling."
+    shortInfo: "Uttar Pradesh Diploma in Elementary Education 2-year teacher training course state merit list & choice filling.",
+    robotsNoindex: true
   },
   // EXAM FORMS - KASHMIR UNIVERSITY (kashmiruniversity.net/Examination.aspx)
   {
     id: "ku-ef-bg-4th-sem-2026",
+    status: "Closed",
     title: "Kashmir University UG BG 4th Semester (NEP 2020 Batch 2024 & CBCS Backlog) Online Exam Form 2026",
     category: "exam_forms",
     postDate: "06/08/2026",
@@ -7091,7 +7597,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "42,000+ Enrolled Students",
     fees: { genObc: "\u20B9250 per paper + \u20B9350 EMF", scSt: "\u20B9250 per paper + \u20B9350 EMF" },
     officialLink: "https://egov.kashmiruniversity.ac.in/",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "School of Arts, Languages & Social Sciences",
@@ -7114,10 +7620,12 @@ var RAW_SARKARI_DATA = [
         qualification: "\u20B9250 per course paper + \u20B9350 Semester EMF + \u20B9150 IT Portal Fee.",
         fee: "\u20B9250 per paper"
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "ku-ef-pg-sem1-3-2026",
+    status: "Closed",
     title: "Kashmir University PG (MA, M.Sc, M.Com, MCA) 1st & 3rd Semester Main & Satellite Campus Online Exam Form 2026",
     category: "exam_forms",
     postDate: "05/08/2026",
@@ -7130,7 +7638,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "5,200 PG Candidates",
     fees: { genObc: "\u20B91,650 Complete Semester", scSt: "\u20B91,650 Complete Semester" },
     officialLink: "https://www.kashmiruniversity.net/Examination.aspx",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "School of Applied Sciences & Technology",
@@ -7153,10 +7661,12 @@ var RAW_SARKARI_DATA = [
         qualification: "Full semester examination fee \u20B91,650 including hall ticket and marks card generation.",
         fee: "\u20B91,650 / Semester"
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "ku-ef-bed-sem1-2-2026",
+    status: "Closed",
     title: "Kashmir University B.Ed. (2-Year Program) 1st & 2nd Semester (Batch 2025) Online Exam Form 2026",
     category: "exam_forms",
     postDate: "07/08/2026",
@@ -7169,7 +7679,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "3,800 B.Ed Candidates",
     fees: { genObc: "\u20B9250 per paper + \u20B9900 EMF", scSt: "\u20B9250 per paper + \u20B9900 EMF" },
     officialLink: "https://egov.kashmiruniversity.ac.in/",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Department of Education (Main Campus & South Campus)",
@@ -7189,6 +7699,7 @@ var RAW_SARKARI_DATA = [
   },
   {
     id: "ku-ef-btech-even-sem-2026",
+    status: "Closed",
     title: "Kashmir University Professional B.Tech / B.E. 4th, 6th & 8th Semester Online Exam Form Notice 2026",
     category: "exam_forms",
     postDate: "06/08/2026",
@@ -7201,7 +7712,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "2,100 B.Tech Engineers",
     fees: { genObc: "\u20B9350 per paper + \u20B9450 Infra", scSt: "\u20B9350 per paper + \u20B9450 Infra" },
     officialLink: "https://www.kashmiruniversity.net/Examination.aspx",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Institute of Technology Zakura Campus",
@@ -7217,10 +7728,12 @@ var RAW_SARKARI_DATA = [
         qualification: "\u20B9350 per paper + \u20B9450 IT & Sessional Examination Fee.",
         fee: "\u20B9350/paper"
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "ku-ef-dde-distance-2026",
+    status: "Closed",
     title: "Kashmir University DDE Distance Education MA & B.Ed Term-End Online Exam Form Notice 2026",
     category: "exam_forms",
     postDate: "05/08/2026",
@@ -7233,7 +7746,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "5,500 Distance Candidates",
     fees: { genObc: "\u20B9300 per paper + \u20B9400 DDE Fee", scSt: "\u20B9300 per paper + \u20B9400 DDE Fee" },
     officialLink: "https://egov.kashmiruniversity.ac.in/",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Directorate of Distance Education (DDE)",
@@ -7249,11 +7762,13 @@ var RAW_SARKARI_DATA = [
         qualification: "\u20B9300 per theory paper + \u20B9400 DDE Examination Hall Fee.",
         fee: "\u20B9300/paper"
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   // CLUSTER UNIVERSITY SRINAGAR (cusrinagar.edu.in)
   {
     id: "cus-ug-3rd-5th-sem-exam-form-2026",
+    status: "Closed",
     title: "Cluster University Srinagar UG 3rd & 5th Semester NEP-2020 Online Examination Form Notice 2026",
     category: "cluster_univ",
     postDate: "06/08/2026",
@@ -7267,7 +7782,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "18,500+ Enrolled Candidates",
     fees: { genObc: "\u20B9250/paper + \u20B9300 EMF", scSt: "\u20B9250/paper + \u20B9300 EMF" },
     officialLink: "https://www.cusrinagar.edu.in/",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Sri Pratap (SP) College Srinagar",
@@ -7290,10 +7805,12 @@ var RAW_SARKARI_DATA = [
         qualification: "\u20B9250 per course paper + \u20B9250 lab exam charges + \u20B9300 Semester EMF.",
         fee: "\u20B9250/paper + \u20B9250 lab"
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "cus-pg-integrated-spot-round-2026",
+    status: "Closed",
     title: "Cluster University Srinagar PG & 5-Year Integrated 1st Semester Spot Round Counseling & Online Registration 2026",
     category: "cluster_univ",
     postDate: "05/08/2026",
@@ -7307,7 +7824,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "650 Spot Round Vacant Seats",
     fees: { genObc: "\u20B9500 Registration Fee", scSt: "\u20B9500 Registration Fee" },
     officialLink: "https://www.cusrinagar.edu.in/",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "School of Sciences (SP College Srinagar)",
@@ -7330,10 +7847,12 @@ var RAW_SARKARI_DATA = [
         qualification: "Bachelor Degree in relevant discipline with min 50% aggregate marks.",
         fee: "\u20B9500 Spot Fee"
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "cus-bed-med-exam-form-2026",
+    status: "Closed",
     title: "Cluster University Srinagar B.Ed & M.Ed 2-Year Program Examination Form & Online Fee Schedule 2026",
     category: "cluster_univ",
     postDate: "07/08/2026",
@@ -7347,7 +7866,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "450 Candidates",
     fees: { genObc: "\u20B91,200 Semester Fee", scSt: "\u20B91,200 Semester Fee" },
     officialLink: "https://www.cusrinagar.edu.in/",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Govt College of Education (IASE) M.A. Road Srinagar",
@@ -7367,6 +7886,7 @@ var RAW_SARKARI_DATA = [
   },
   {
     id: "cus-ug-1st-sem-self-reg-2026",
+    status: "Closed",
     title: "Cluster University Srinagar UG 1st Semester (Batch 2026) Online Self-Registration & Document Verification Notice",
     category: "cluster_univ",
     postDate: "06/08/2026",
@@ -7380,7 +7900,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "7,200 Admitted Students",
     fees: { genObc: "\u20B9350 Registration Fee", scSt: "\u20B9350 Registration Fee" },
     officialLink: "https://www.cusrinagar.edu.in/",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "All Constituent Colleges (AS College, SP College, GCW MA Road, AAAM Bemina)",
@@ -7389,10 +7909,12 @@ var RAW_SARKARI_DATA = [
         qualification: "10+2 Marksheet, Provisional/Character Certificate, Category Certificate (if applicable).",
         fee: "\u20B9350 One-time"
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "cus-ug-reevaluation-form-2026",
+    status: "Closed",
     title: "Cluster University Srinagar Division of Examination - Online Re-evaluation Form for UG 2nd & 4th Semester Results",
     category: "cluster_univ",
     postDate: "05/08/2026",
@@ -7406,7 +7928,7 @@ var RAW_SARKARI_DATA = [
     totalPosts: "Open for all eligible students",
     fees: { genObc: "\u20B9500 Per Paper", scSt: "\u20B9500 Per Paper" },
     officialLink: "https://www.cusrinagar.edu.in/",
-    isNew: true,
+    isNew: false,
     departmentBreakdown: [
       {
         department: "Examination Wing Cluster University Srinagar",
@@ -7415,7 +7937,8 @@ var RAW_SARKARI_DATA = [
         qualification: "Roll Number & Exam Registration ID clearance required.",
         fee: "\u20B9500 / Paper"
       }
-    ]
+    ],
+    robotsNoindex: true
   },
   {
     id: "army-agniveer-rally-guide-2026",
@@ -7561,14 +8084,34 @@ function resolveApplicationModeLabel(item) {
   }
   return "Online";
 }
+function stripLeadingStepNumber(text) {
+  return String(text || "").replace(/^\s*(?:step\s*\d+\s*[:.)-]\s*|\d+\s*[.)]\s+)/i, "").trim();
+}
+function getCustomFeeCategories(item) {
+  const cats = item.feeCategories || item.fee?.categories;
+  if (!Array.isArray(cats) || cats.length === 0) return [];
+  return cats.filter(
+    (c) => Boolean(c && typeof c.label === "string" && c.label.trim() && typeof c.amount === "string" && c.amount.trim())
+  ).map((c) => ({ label: c.label.trim(), amount: c.amount.trim() }));
+}
 function isZeroOrExemptFee(item) {
+  const customCats = getCustomFeeCategories(item);
+  const positiveAmountRegex = /(?:₹|rs\.?)\s*[1-9]\d*/i;
+  const zeroRegex = /₹\s*0\b|rs\.?\s*0\b|\bnil\b|no\s*(application\s*)?fee|exempt|free\b/i;
+  if (customCats.length > 0) {
+    if (customCats.some((c) => positiveAmountRegex.test(c.amount))) return false;
+    return customCats.every((c) => zeroRegex.test(c.amount));
+  }
   const gen = String(item.fee?.genObc || item.fees?.genObc || "").trim();
   const sc = String(item.fee?.scSt || item.fees?.scSt || "").trim();
   if (!gen && !sc) return false;
-  const zeroRegex = /₹\s*0\b|rs\.?\s*0\b|\bnil\b|no\s*(application\s*)?fee|exempt|free\b/i;
+  if (positiveAmountRegex.test(gen) || positiveAmountRegex.test(sc)) {
+    return false;
+  }
   return Boolean(gen && zeroRegex.test(gen) && (!sc || zeroRegex.test(sc)));
 }
 function hasExplicitFee(item) {
+  if (getCustomFeeCategories(item).length > 0) return true;
   const gen = String(item.fee?.genObc || item.fees?.genObc || "").trim();
   const sc = String(item.fee?.scSt || item.fees?.scSt || "").trim();
   const genValid = hasRealDataValue(gen) && !isGenericNoticePlaceholder(gen);
@@ -7864,11 +8407,11 @@ function getProcessSectionConfig(item, type, statusInfo, portalUrl) {
       const explicitFee = hasExplicitFee(item);
       const zeroFee = isZeroOrExemptFee(item);
       if (Array.isArray(item.howToApply) && item.howToApply.length > 0) {
-        const cleanedSteps = item.howToApply.map((raw) => String(raw || "").trim()).filter(Boolean).map((raw, idx) => {
+        const cleanedSteps = item.howToApply.map((raw) => stripLeadingStepNumber(String(raw || "").trim())).filter(Boolean).map((raw, idx) => {
           const colonIdx = raw.indexOf(":");
           if (colonIdx > 3 && colonIdx < 48 && !/^https?:/i.test(raw.slice(0, colonIdx + 1))) {
             return {
-              title: raw.slice(0, colonIdx).trim(),
+              title: stripLeadingStepNumber(raw.slice(0, colonIdx).trim()),
               description: raw.slice(colonIdx + 1).trim()
             };
           }
@@ -7880,8 +8423,8 @@ function getProcessSectionConfig(item, type, statusInfo, portalUrl) {
         if (cleanedSteps.length > 0) {
           return {
             id: "how-to-apply",
-            title: `How to Apply (${modeLabel}) \u2014 ${item.title}`,
-            subtitle: mode === "offline" ? `Verified offline application instructions from the official ${orgName} notice.` : mode === "hybrid" ? `Verified online and offline submission steps from the official ${orgName} notice.` : `Verified application steps for ${orgName}.`,
+            title: `How to Apply (${modeLabel})`,
+            subtitle: mode === "offline" ? `Verified offline application instructions from the official ${orgName} notice.` : mode === "hybrid" ? `Verified online and offline submission steps from the official ${orgName} notice.` : `Verified online application steps from the official ${orgName} notice.`,
             steps: cleanedSteps
           };
         }
@@ -7909,7 +8452,7 @@ function getProcessSectionConfig(item, type, statusInfo, portalUrl) {
         });
         return {
           id: "how-to-apply",
-          title: `How to Apply (${modeLabel}) \u2014 ${item.title}`,
+          title: `How to Apply (${modeLabel})`,
           subtitle: `Offline application process as stated in the official ${orgName} notice.`,
           steps: offlineSteps
         };
@@ -7917,12 +8460,12 @@ function getProcessSectionConfig(item, type, statusInfo, portalUrl) {
       if (isEdu) {
         return {
           id: "submission-procedure",
-          title: `Submission Procedure \u2014 ${item.title}`,
+          title: "Submission Procedure",
           subtitle: `${modeLabel} submission guide for ${orgName}.`,
           steps: [
             {
               title: `Open ${orgName} Portal`,
-              description: `Visit ${portalUrl} and open "${item.title}".`
+              description: `Visit ${portalUrl} and open the relevant ${orgName} notice.`
             },
             {
               title: "Student Sign-In",
@@ -7942,12 +8485,12 @@ function getProcessSectionConfig(item, type, statusInfo, portalUrl) {
       const usesOtr = /\b(SSC|JKSSB|UPSC|RRB)\b/i.test(`${orgName} ${item.category || ""}`);
       return {
         id: "how-to-apply",
-        title: `How to Apply (${modeLabel}) \u2014 ${item.title}`,
+        title: `How to Apply (${modeLabel})`,
         subtitle: mode === "hybrid" ? `Online registration and physical/offline stage overview for ${orgName}.` : `Online application overview for ${orgName}.`,
         steps: [
           {
             title: `Open Official ${orgName} Portal`,
-            description: `Go to ${portalUrl} and read "${item.title}" carefully.`
+            description: `Go to ${portalUrl} and read the official ${orgName} notification carefully.`
           },
           {
             title: usesOtr ? "Candidate Registration / OTR" : "Candidate Registration",
@@ -7973,38 +8516,38 @@ function buildPostFaqs(item, type, orgName, portalUrl, statusInfo) {
   const explicitFee = hasExplicitFee(item);
   const zeroFee = isZeroOrExemptFee(item);
   faqs.push({
-    question: `Where is the official source for ${item.title}?`,
-    answer: `Official dates and rules for ${item.title} are published by ${orgName} at ${portalUrl}.`
+    question: `Where is the official source for this ${orgName} notice?`,
+    answer: `Official dates, eligibility criteria, and rules are published by ${orgName} at ${portalUrl}.`
   });
   if (mode !== "offline" && !isAssignmentNotice(item) && (type === "application" || type === "admission" || type === "upcoming") && explicitFee && !zeroFee) {
     faqs.push({
-      question: `What if ${orgName} fee payment shows pending for ${item.title}?`,
-      answer: `Wait 24\u201348 hours for bank reconciliation before retrying on ${portalUrl}.`
+      question: `What if ${orgName} fee payment shows pending after deduction?`,
+      answer: `Wait 24\u201348 hours for bank reconciliation and check your application status before retrying on ${portalUrl}.`
     });
   }
   if (isAssignmentNotice(item)) {
     faqs.push({
-      question: `Must offline Study Centre learners re-upload ${item.title}?`,
+      question: `Must offline Study Centre learners re-upload this assignment?`,
       answer: `No. Learners who already submitted offline at their ${orgName} centre need not re-upload.`
     });
   } else if (type === "dv") {
     faqs.push({
-      question: `Is a fresh form needed for ${item.title}?`,
-      answer: `No. Only candidates shortlisted by ${orgName} attend with original certificates.`
+      question: `Is a fresh application form needed for this ${orgName} DV notice?`,
+      answer: `No. Only candidates shortlisted by ${orgName} attend document verification with original certificates.`
     });
   } else if (type === "answer_key") {
     faqs.push({
-      question: `Who can access ${item.title}?`,
-      answer: statusInfo.computedStatus === "closing_soon" ? `Only candidates who appeared in this ${orgName} exam can check keys or object until ${statusInfo.dateValue}.` : `Candidates who appeared in this ${orgName} exam can verify their responses.`
+      question: `Who can access this ${orgName} answer key?`,
+      answer: statusInfo.computedStatus === "closing_soon" ? `Only candidates who appeared in this ${orgName} exam can check keys or raise objections until ${statusInfo.dateValue}.` : `Candidates who appeared in this ${orgName} exam can verify their responses.`
     });
   } else if (type === "result") {
     faqs.push({
-      question: `Does ${item.title} open new registration?`,
-      answer: `No. ${item.title} covers result/merit updates from ${orgName}. Follow next-stage DV or counselling instructions.`
+      question: `Does this ${orgName} result notice open new registration?`,
+      answer: `No. This notice covers result/merit updates from ${orgName}. Follow the next-stage DV or counselling instructions issued by the authority.`
     });
   } else if (type === "admit_card" || type === "exam") {
     faqs.push({
-      question: `Who can download or appear under ${item.title}?`,
+      question: `Who can download the hall ticket or appear under this ${orgName} notice?`,
       answer: `Registered candidates of this ${orgName} examination cycle (${statusInfo.dateValue}).`
     });
   }
@@ -13110,10 +13653,6 @@ function buildPostEnrichmentData(item, effectiveType, statusInfo, orgName, porta
   const appModeLabel = resolveApplicationModeLabel(item);
   const isEdu = item.section === "education" || item.category === "ignou" || item.category === "admissions" || item.category === "exam_forms" || item.category === "cluster_univ" || item.category === "nta";
   const quickSummary = [];
-  const leadText = (item.summary || item.shortInfo || "").trim();
-  if (leadText) {
-    quickSummary.push(leadText);
-  }
   quickSummary.push(
     `Issued by ${orgName}${hasRealDataValue(item.advertisementNo) && !isGenericNoticePlaceholder(item.advertisementNo) ? ` (${item.advertisementNo})` : ""}${postLong ? ` and published on ${postLong}` : ""}.`
   );
@@ -13130,9 +13669,9 @@ function buildPostEnrichmentData(item, effectiveType, statusInfo, orgName, porta
       `${hasVacancies ? `Reported count / scope: ${vacanciesStr}. ` : ""}Application mode: ${appModeLabel}. ${endLong ? statusInfo.isClosed ? `Submission deadline closed on ${endLong}.` : appMode === "offline" ? `Offline applications must reach the notified address on or before ${endLong}.` : `Application / form window ${startLong ? `from ${startLong} ` : ""}closes on ${endLong}.` : `Check ${sourceDomain} for exact schedule details.`}`
     );
     if (hasFee) {
-      quickSummary.push(
-        zeroFee ? "Application fee: Exempted / No fee required as stated in the official notice." : `Fee noted in notice: ${genFee || "As per notice"}${scFee && scFee !== genFee ? ` (Reserved/SC/ST: ${scFee})` : ""}.`
-      );
+      const customFeeCats = getCustomFeeCategories(item);
+      const feeSummaryLine = zeroFee ? "Application fee: Exempted / No fee required as stated in the official notice." : customFeeCats.length > 0 ? `Application fee: ${customFeeCats.map((c) => `${c.label} \u2014 ${c.amount}`).join("; ")}.` : scFee && scFee !== genFee ? /\bfor\b/i.test(scFee) ? `Fee noted in notice: ${genFee || "As per notice"}; ${scFee}.` : `Fee noted in notice: ${genFee || "As per notice"} (Reserved / SC / ST: ${scFee}).` : `Fee noted in notice: ${genFee || "As per notice"}.`;
+      quickSummary.push(feeSummaryLine);
     } else if (hasRealDataValue(item.paymentInstructions)) {
       quickSummary.push(String(item.paymentInstructions).trim());
     }
@@ -13140,39 +13679,44 @@ function buildPostEnrichmentData(item, effectiveType, statusInfo, orgName, porta
   const whoShouldApply = [];
   if (effectiveType === "result" || effectiveType === "admit_card" || effectiveType === "dv" || effectiveType === "exam" || effectiveType === "answer_key") {
     whoShouldApply.push(
-      `Candidates registered under ${orgName} for ${item.title} (${hasRealDataValue(item.learnerGroup) ? item.learnerGroup : qualStr}).`
+      `Candidates registered under this ${orgName} cycle (${hasRealDataValue(item.learnerGroup) ? item.learnerGroup : qualStr}).`
     );
     whoShouldApply.push(
-      effectiveType === "answer_key" ? `Appeared examinees reviewing ${orgName} responses${statusInfo.isClosingSoon && endLong ? ` before ${endLong}` : ""}.` : effectiveType === "dv" ? `Shortlisted applicants carrying originals required by ${orgName}.` : `Holders of valid ${orgName} roll/registration numbers for ${item.title}.`
+      effectiveType === "answer_key" ? `Appeared examinees reviewing ${orgName} responses${statusInfo.isClosingSoon && endLong ? ` before ${endLong}` : ""}.` : effectiveType === "dv" ? `Shortlisted applicants carrying original certificates required by ${orgName}.` : `Holders of valid ${orgName} roll or registration numbers covered under this notice.`
     );
     if (item.jkDomicile) {
-      whoShouldApply.push(`Eligible J&K domicile residents covered in ${item.title}.`);
+      whoShouldApply.push("Eligible Jammu & Kashmir domicile candidates covered under this notice.");
     }
   } else {
-    whoShouldApply.push(
-      `Applicants fulfilling ${qualStr} as notified by ${orgName} in ${item.title}.`
-    );
+    if (item.whoShouldApplyLead && item.whoShouldApplyLead.trim()) {
+      whoShouldApply.push(item.whoShouldApplyLead.trim());
+    } else {
+      const cleanQual = qualStr.replace(/\.+$/, "");
+      whoShouldApply.push(
+        `Applicants fulfilling ${cleanQual} as notified by ${orgName}.`
+      );
+    }
     if (hasRealDataValue(item.ageLimit) && !isGenericNoticePlaceholder(item.ageLimit)) {
       whoShouldApply.push(
-        `Candidates within ${orgName} age bounds (${item.ageLimit}) for ${item.title}.`
+        `Candidates within the prescribed age limit (${item.ageLimit}).`
       );
     }
     if (item.jkDomicile) {
-      whoShouldApply.push(`Holders of valid Jammu & Kashmir Domicile Certificates for ${item.title}.`);
+      whoShouldApply.push("Holders of a valid Jammu & Kashmir Domicile Certificate.");
     }
     whoShouldApply.push(
-      statusInfo.isClosed ? `Window closed (${endLong || statusInfo.dateValue}); kept for reference.` : appMode === "offline" ? `Candidates able to prepare self-attested testimonials and deliver the offline application on or before ${endLong || "the deadline"}.` : `Candidates with active contact details ready before ${endLong || "the deadline"} on ${sourceDomain}.`
+      statusInfo.isClosed ? `Window closed (${endLong || statusInfo.dateValue}); retained for reference.` : appMode === "offline" ? `Candidates able to prepare self-attested testimonials and deliver the offline application on or before ${endLong || "the deadline"}.` : `Candidates with active mobile/email credentials ready before ${endLong || "the deadline"} on ${sourceDomain}.`
     );
   }
   const whoShouldNotApply = [];
   if (statusInfo.isClosed || statusInfo.isCancelled) {
     whoShouldNotApply.push(
-      statusInfo.isCancelled ? `All applicants \u2014 ${orgName} cancelled ${item.title}.` : `New applicants \u2014 ${item.title} closed on ${endLong || statusInfo.dateValue}.`
+      statusInfo.isCancelled ? `All applicants \u2014 ${orgName} cancelled or withdrew this notice.` : `New applicants \u2014 the submission window closed on ${endLong || statusInfo.dateValue}.`
     );
   }
   if (effectiveType === "result" || effectiveType === "admit_card" || effectiveType === "dv" || effectiveType === "answer_key" || effectiveType === "exam") {
     whoShouldNotApply.push(
-      `Unregistered applicants \u2014 ${item.title} covers existing ${orgName} candidates only.`
+      `Unregistered applicants \u2014 this update applies to existing ${orgName} candidates only.`
     );
   } else {
     whoShouldNotApply.push(
@@ -13188,11 +13732,11 @@ function buildPostEnrichmentData(item, effectiveType, statusInfo, orgName, porta
     }
   }
   const commonMistakes = [
-    `Skipping the original ${item.title} notice on ${sourceDomain}.`
+    `Skipping the original ${orgName} notification PDF on ${sourceDomain} before acting.`
   ];
   if (appMode === "offline" && (effectiveType === "application" || effectiveType === "admission" || effectiveType === "upcoming")) {
     commonMistakes.push(
-      `Sending an incomplete or unsigned application form, or omitting self-attested copies of required enclosures.`
+      "Sending an incomplete or unsigned application form, or omitting self-attested copies of required enclosures."
     );
     if (item.envelopeSuperscription) {
       commonMistakes.push(
@@ -13204,14 +13748,14 @@ function buildPostEnrichmentData(item, effectiveType, statusInfo, orgName, porta
     );
   } else {
     commonMistakes.push(
-      effectiveType === "application" || effectiveType === "admission" || effectiveType === "upcoming" ? `Uploading unclear or non-compliant document files on ${sourceDomain} without checking the official notice specifications.` : `Mismatched roll number or DOB entry when checking ${item.title} on ${sourceDomain}.`
+      effectiveType === "application" || effectiveType === "admission" || effectiveType === "upcoming" ? `Uploading unclear or non-compliant document files on ${sourceDomain} without checking the official notice specifications.` : `Entering a mismatched roll number or date of birth when checking this ${orgName} update on ${sourceDomain}.`
     );
     commonMistakes.push(
       `Spelling or date-of-birth mismatches compared with Class 10th / academic records during ${orgName} verification.`
     );
     if (hasFee && !zeroFee) {
       commonMistakes.push(
-        `Double-paying ${item.title} fees before checking portal or bank reconciliation status.`
+        `Double-paying the ${orgName} application fee before checking portal or bank reconciliation status.`
       );
     } else {
       commonMistakes.push(
@@ -13221,13 +13765,13 @@ function buildPostEnrichmentData(item, effectiveType, statusInfo, orgName, porta
   }
   if (item.jkDomicile) {
     commonMistakes.push(
-      `Claiming J&K domicile or reserved categories without valid certificates dated within the official cutoff.`
+      "Claiming J&K domicile or reserved categories without valid certificates dated within the official cutoff."
     );
   }
   const whatToDoNext = [
-    `1. Confirm ${item.title} (${postLong}) directly on ${sourceDomain}.`,
-    statusInfo.isClosed ? `2. Follow post-closing ${orgName} updates (${endLong || "closed"}) on ${sourceDomain}.` : statusInfo.isUpcoming ? `2. Prepare certificates for ${item.title} ahead of ${startLong || "opening"}.` : effectiveType === "result" || effectiveType === "admit_card" || effectiveType === "answer_key" ? `2. Sign in on ${sourceDomain} with registration ID${endLong ? ` before ${endLong}` : ""} for ${item.title}.` : appMode === "offline" ? `2. Download the prescribed offline application format from ${sourceDomain}, attach required self-attested enclosures, and send to the notified ${orgName} address on or before ${endLong || "closing"}.` : `2. Submit ${item.title} on ${sourceDomain} before ${endLong || "closing"}${startLong ? ` (opened ${startLong})` : ""}.`,
-    appMode === "offline" ? `3. Keep a photocopy of your signed application form, enclosures, and postal/submission receipt for reference.` : `3. Save the official ${orgName} PDF or confirmation receipt for ${item.title}.`
+    `Confirm the official ${orgName} notice${postLong ? ` (published ${postLong})` : ""} directly on ${sourceDomain}.`,
+    statusInfo.isClosed ? `Follow post-closing ${orgName} updates (${endLong || "closed"}) on ${sourceDomain}.` : statusInfo.isUpcoming ? `Prepare required certificates and scanned files ahead of ${startLong || "opening"}.` : effectiveType === "result" || effectiveType === "admit_card" || effectiveType === "answer_key" ? `Sign in on ${sourceDomain} with your registration ID${endLong ? ` before ${endLong}` : ""} to check or download the official document.` : appMode === "offline" ? `Download the prescribed offline application format from ${sourceDomain}, attach required self-attested enclosures, and send to the notified ${orgName} address on or before ${endLong || "closing"}.` : `Complete and submit your application on ${sourceDomain} before ${endLong || "closing"}${startLong ? ` (window opened ${startLong})` : ""}.`,
+    appMode === "offline" ? "Keep a photocopy of your signed application form, enclosures, and postal/submission receipt for reference." : `Save the official ${orgName} PDF and final confirmation receipt for future reference.`
   ];
   return {
     quickSummary,
@@ -13311,16 +13855,16 @@ function renderPostSubstantiveHtml(item, allPosts = SARKARI_DATA) {
 
     <!-- Government Transparency Notice -->
     <aside style="background:#fffbeb; border-left:4px solid #f59e0b; padding:10px 14px; border-radius:0 8px 8px 0; margin-bottom:18px; font-size:13px; color:#92400e;">
-      <strong>Independent Summary (${safeOrg}):</strong> Verify "${safeTitle}" directly on <a href="${safeOfficialLink}" target="_blank" rel="noopener noreferrer" style="color:#92400e; font-weight:700;">${escapeHtml(enrichment.sourceDomain)}</a>.
+      <strong>Independent Summary (${safeOrg}):</strong> Verify official dates, fees, and eligibility directly on <a href="${safeOfficialLink}" target="_blank" rel="noopener noreferrer" style="color:#92400e; font-weight:700;">${escapeHtml(enrichment.sourceDomain)}</a>.
     </aside>
     ${isStale90 ? `
     <aside role="status" style="background:#fef2f2; border:1px solid #fecaca; border-left:4px solid #dc2626; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:14px; color:#7f1d1d;">
-      <strong>Closed (${escapeHtml(safeLastDate)}):</strong> "${safeTitle}" passed closing${daysClosed !== null && daysClosed > 0 ? ` ${daysClosed} days ago` : ""}; verify any new ${safeOrg} cycle on ${escapeHtml(enrichment.sourceDomain)}.
+      <strong>Closed (${escapeHtml(safeLastDate)}):</strong> This ${safeOrg} notice passed closing${daysClosed !== null && daysClosed > 0 ? ` ${daysClosed} days ago` : ""}; verify any new cycle on ${escapeHtml(enrichment.sourceDomain)}.
     </aside>
     ` : ""}
     ${!computed.canApplyOnline ? `
     <aside style="background:${computed.verificationStatus === "needs_verification" ? "#fffbeb" : computed.isCancelled ? "#fff1f2" : "#f8fafc"}; border:1px solid ${computed.verificationStatus === "needs_verification" ? "#fde68a" : computed.isCancelled ? "#fecdd3" : "#cbd5e1"}; border-left:4px solid ${computed.verificationStatus === "needs_verification" ? "#d97706" : computed.isCancelled ? "#e11d48" : "#475569"}; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:13px; color:#0f172a;">
-      <strong>${escapeHtml(computed.badgeLabel)} (${safeOrg}):</strong> ${computed.verificationStatus === "needs_verification" ? `Confirm "${safeTitle}" status directly on ${escapeHtml(enrichment.sourceDomain)}.` : computed.isCancelled ? `${safeOrg} cancelled or withdrew "${safeTitle}".` : computed.isClosed ? escapeHtml(computed.closingTimeNote || `"${safeTitle}" closed on ${safeLastDate}.`) : computed.isUpcoming ? `${safeOrg} scheduled opening for "${safeTitle}": ${safeStartDate}.` : `Check ${escapeHtml(enrichment.sourceDomain)} for "${safeTitle}" updates.`}
+      <strong>${escapeHtml(computed.badgeLabel)} (${safeOrg}):</strong> ${computed.verificationStatus === "needs_verification" ? `Confirm the current status of this notice directly on ${escapeHtml(enrichment.sourceDomain)}.` : computed.isCancelled ? `${safeOrg} cancelled or withdrew this notice.` : computed.isClosed ? escapeHtml(computed.closingTimeNote || `Application window closed on ${safeLastDate}.`) : computed.isUpcoming ? `${safeOrg} scheduled opening date: ${safeStartDate}.` : `Check ${escapeHtml(enrichment.sourceDomain)} for official ${safeOrg} updates.`}
     </aside>
     ` : ""}
 
@@ -13381,14 +13925,20 @@ function renderPostSubstantiveHtml(item, allPosts = SARKARI_DATA) {
           </ul>
         </div>
 
-        ${!nonAppTemplate && explicitFee ? `<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
+        ${!nonAppTemplate && explicitFee ? (() => {
+    const customFeeRows = getCustomFeeCategories(item);
+    const feeListItems = customFeeRows.length > 0 && !isZeroFee ? customFeeRows.map(
+      (row) => `<li><strong>${escapeHtml(row.label)}:</strong> ${escapeHtml(row.amount)}</li>`
+    ).join("\n            ") : `<li><strong>General / OBC / EWS:</strong> ${isZeroFee ? "\u20B90/- (Exempted)" : safeGenObc}</li>
+            ${safeScSt && safeScSt !== safeGenObc ? `<li><strong>SC / ST / PwD / Female:</strong> ${isZeroFee ? "\u20B90/- (Exempted)" : safeScSt}</li>` : isZeroFee ? `<li><strong>SC / ST / PwD / Female:</strong> \u20B90/- (Exempted)</li>` : ""}`;
+    return `<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
           <h3 style="font-size:15px; font-weight:700; color:#101A36; margin:0 0 10px 0;">Application Fee</h3>
           <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#334155; line-height:1.8;">
-            <li><strong>General / OBC / EWS:</strong> ${isZeroFee ? "\u20B90/- (Exempted)" : safeGenObc}</li>
-            <li><strong>SC / ST / PwD / Female:</strong> ${isZeroFee ? "\u20B90/- (Exempted)" : safeScSt}</li>
+            ${feeListItems}
             <li><strong>Payment Note:</strong> ${paymentInstructionText}</li>
           </ul>
-        </div>` : `<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
+        </div>`;
+  })() : `<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
           <h3 style="font-size:15px; font-weight:700; color:#101A36; margin:0 0 10px 0;">Official Notice &amp; Submission Details</h3>
           <ul style="list-style:none; padding:0; margin:0; font-size:14px; color:#334155; line-height:1.8;">
             <li><strong>Issuing Body:</strong> ${safeOrg}</li>
@@ -13481,7 +14031,7 @@ function renderPostSubstantiveHtml(item, allPosts = SARKARI_DATA) {
       <section style="margin-bottom:24px;">
         <h2 style="font-size:18px; font-weight:700; color:#101A36; margin:0 0 8px 0;">What to do next</h2>
         <ol style="padding-left:20px; font-size:14px; color:#334155; line-height:1.75; margin:0;">
-          ${enrichment.whatToDoNext.map((point) => `<li>${escapeHtml(point)}</li>`).join("")}
+          ${enrichment.whatToDoNext.map((point) => `<li>${escapeHtml(stripLeadingStepNumber(point))}</li>`).join("")}
         </ol>
       </section>
 
@@ -13523,7 +14073,7 @@ function renderPostSubstantiveHtml(item, allPosts = SARKARI_DATA) {
       <section style="background:#f1f5f9; border-radius:10px; padding:18px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
         <div>
           <div style="font-weight:700; font-size:15px; color:#101A36;">Official ${safeOrg} Source Links</div>
-          <div style="font-size:13px; color:#475569;">Confirm "${safeTitle}" on ${escapeHtml(enrichment.sourceDomain)}.</div>
+          <div style="font-size:13px; color:#475569;">Confirm official notice details directly on ${escapeHtml(enrichment.sourceDomain)}.</div>
         </div>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
           <a href="${safeOfficialLink}" target="_blank" rel="noopener noreferrer" style="display:inline-block; background:#1F9D6B; color:#ffffff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:8px; text-decoration:none;">
@@ -13910,10 +14460,10 @@ function renderLegalPageSubstantiveHtml(pageType) {
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">2. Information We Collect</h2>
           <ul style="padding-left:20px; margin:0 0 16px 0; line-height:1.8;">
-            <li><strong>Informational Visitors:</strong> We collect standard, anonymous server log files (IP addresses, browser type, referring pages, date/time stamps) strictly for aggregate security analytics and system health monitoring.</li>
-            <li><strong>Assisted Form Applicants:</strong> When you voluntarily submit an application assistance request, we collect only necessary personal data: Full Name, Father's Name, Date of Birth, Gender, Mobile Number, Email Address, and uploaded proof documents (e.g. Matriculation diploma, Domicile certificate, Photograph, Signature).</li>
+            <li><strong>Informational Visitors:</strong> Standard technical request logs (such as IP address, browser type, referring URL, and timestamps) may be recorded by our hosting and server infrastructure for security monitoring, abuse prevention, and operational troubleshooting.</li>
+            <li><strong>Assisted Form Applicants:</strong> When you voluntarily submit an application assistance request through our Apply Desk, we collect only the details needed for facilitation: Full Name, Father's Name, Date of Birth, Gender, Mobile Number, Email Address, selected service details, and uploaded proof documents (e.g., Matriculation certificate, Domicile certificate, Photograph, Signature). These submissions are transmitted to our backend and cloud storage (such as Supabase) so our VLE operator can process your request and issue a tracking token.</li>
             <li><strong>Web Push Subscribers:</strong> If you click &ldquo;Enable Notifications&rdquo; and grant browser notification permission, we store your browser push subscription endpoint URL, cryptographic encryption keys (<code>p256dh</code> and <code>auth</code>), browser user-agent, the page you subscribed from, and timestamps strictly to deliver requested recruitment, exam date-sheet, admission, and CSC welfare scheme alerts. No personal identity is linked to push subscriptions. You can <strong>unsubscribe at any time</strong> by clicking &ldquo;Unsubscribe&rdquo; in Notification Preferences or blocking Notifications in your browser site settings; unsubscribed or expired (HTTP 404/410) rows are permanently deleted from our database.</li>
-            <li><strong>Payment Information:</strong> Online fee transactions are processed directly by <strong>Razorpay (PCI-DSS Level 1 compliant gateway)</strong>. CSC DOST does <strong>not</strong> collect, store, or view your debit/credit card numbers, CVVs, net-banking passwords, or UPI PINs.</li>
+            <li><strong>Payment Information:</strong> When online payment is enabled for assisted services, transactions are processed through authorized third-party payment gateways configured on our platform (such as <strong>PayU</strong> or <strong>Razorpay</strong>). CSC DOST does <strong>not</strong> collect, store, or view your debit/credit card numbers, CVVs, net-banking passwords, or UPI PINs.</li>
           </ul>
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">3. Purpose and Legal Basis for Processing</h2>
@@ -13927,7 +14477,7 @@ function renderLegalPageSubstantiveHtml(pageType) {
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">4. Client-Side Document Tools Data Isolation</h2>
           <p>
-            Our browser-based document resizing, signature joining, and PDF generation tools operate <strong>entirely inside your local web browser</strong> via HTML5 Canvas and WebAssembly. Your photos, signatures, and certificates are never uploaded to our servers when utilizing these offline utilities.
+            Our browser-based photo resizing, signature cropping, image compression, and PDF utilities process your files <strong>locally inside your web browser</strong> using HTML5 Canvas and client-side JavaScript libraries (such as <code>pdf-lib</code> and <code>pdfjs-dist</code>). Files opened in these tools are not uploaded to CSC DOST servers. Note that our PDF Compressor and PDF to Image tools load the open-source <code>pdf.js</code> worker script from a third-party CDN (<code>cdnjs.cloudflare.com</code>) while keeping your document content inside your browser.
           </p>
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">5. Third-Party Advertising &amp; Google AdSense</h2>
@@ -13940,12 +14490,12 @@ function renderLegalPageSubstantiveHtml(pageType) {
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">6. Cookies and Browser Storage Controls</h2>
           <p>
-            CSC DOST uses minimal browser storage (<code>localStorage</code>) to remember your language preference, theme selection, and cookie banner acknowledgement (<code>csc_cookie_consent</code>). Third-party advertising partners such as Google AdSense may place or read cookies and web beacons to measure ad delivery and show relevant ads. You can manage personalized ad preferences via <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" style="color:#2563eb;">Google Ads Settings</a> or <a href="https://optout.networkadvertising.org" target="_blank" rel="noopener noreferrer" style="color:#2563eb;">Network Advertising Initiative Opt-Out Page</a>, or disable cookies at any time in your web browser settings.
+            CSC DOST uses minimal browser storage (<code>localStorage</code>) to remember your language preference, theme selection, and dismissal of our informational cookie notice (<code>csc_cookie_consent</code>). Third-party advertising partners such as Google AdSense may place or read cookies and web beacons to measure ad delivery and show relevant ads. You can manage personalized ad preferences via <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" style="color:#2563eb;">Google Ads Settings</a> or <a href="https://optout.networkadvertising.org" target="_blank" rel="noopener noreferrer" style="color:#2563eb;">Network Advertising Initiative Opt-Out Page</a>, or disable cookies at any time in your web browser settings.
           </p>
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">7. Data Retention and Erasure</h2>
           <p>
-            Application records and uploaded documents are retained securely for a period of up to 180 days after application processing to permit verification and candidate support, after which they are systematically purged from our encrypted storage. Citizens may request immediate deletion of their personal records by emailing <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a> with their tracking token.
+            Application records and uploaded proof documents submitted through the Apply Desk are stored in our application database and cloud storage (such as Supabase) for as long as needed to complete form facilitation, provide status tracking, resolve applicant queries, or meet statutory record-keeping requirements. Our system does not currently run an automated expiry purge; instead, records are reviewed and deleted manually by the VLE operator. Citizens may request deletion of their application record and uploaded files at any time by emailing <a href="mailto:urnxtfd@gmail.com" style="color:#2563eb; font-weight:600;">urnxtfd@gmail.com</a> with their tracking token and registered mobile number.
           </p>
 
           <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:24px 0 10px 0;">8. Grievance Redressal Officer</h2>
@@ -15939,6 +16489,10 @@ var POST_EXACT_SEO_MAP = {
   "ignou-piu-consultants-recruitment-2026": {
     title: "IGNOU PIU Consultants 2026 (Offline, 3 Posts) | CSC DOST",
     description: "IGNOU Public Information Unit offline recruitment for 3 contractual Consultants (last date 11/12/2026). Check postal address, checklist & official Job-AD.pdf."
+  },
+  "jk-bank-banking-associates-recruitment-2026": {
+    title: "J&K Bank Banking Associates 2026 (1,033 Posts) | CSC DOST",
+    description: "J&K Bank Banking Associates 2026 (JKB/HR/Rectt/2026-493) for 1,033 posts (J&K UT domiciles). Apply 07/11/2026\u201326/11/2026; fee \u20B9600/\u20B9800 excluding GST."
   }
 };
 function formatPostSeoTitle(item) {
@@ -20139,7 +20693,37 @@ function startNoticeMonitorScheduler() {
 
 // server.ts
 var app = express();
+app.set("trust proxy", 1);
 var PORT = Number(process.env.PORT) || 3e3;
+function resolveRuntimeRoot(targetSubpath) {
+  const candidates = [process.cwd()];
+  try {
+    if (typeof __dirname !== "undefined" && __dirname) {
+      candidates.push(__dirname, path4.resolve(__dirname, ".."));
+    }
+  } catch {
+  }
+  try {
+    if (process.argv[1]) {
+      const entryDir = path4.dirname(path4.resolve(process.argv[1]));
+      candidates.push(entryDir, path4.resolve(entryDir, ".."));
+    }
+  } catch {
+  }
+  for (const dir of candidates) {
+    if (fs4.existsSync(path4.join(dir, targetSubpath))) {
+      return dir;
+    }
+  }
+  return process.cwd();
+}
+var PUBLIC_ROOT = resolveRuntimeRoot(path4.join("public", "favicon.svg"));
+var PUBLIC_DIR = path4.join(PUBLIC_ROOT, "public");
+var DIST_ROOT = resolveRuntimeRoot(path4.join("dist", "index.html"));
+var DIST_DIR = path4.join(DIST_ROOT, "dist");
+var DIST_ASSETS_DIR = path4.join(DIST_DIR, "assets");
+var DIST_INDEX_HTML = path4.join(DIST_DIR, "index.html");
+var ROOT_INDEX_HTML = path4.join(resolveRuntimeRoot("index.html"), "index.html");
 app.get(["/api/health", "/health", "/_health"], (req, res) => {
   res.status(200).json({ status: "ok", time: (/* @__PURE__ */ new Date()).toISOString() });
 });
@@ -22912,7 +23496,7 @@ app.post("/api/whatsapp/broadcast", authenticateAdmin, async (req, res) => {
   return res.redirect(307, "/api/whatsapp/send");
 });
 app.get("/sw.js", (_req, res) => {
-  const swPath = path4.join(process.cwd(), "public", "sw.js");
+  const swPath = path4.join(PUBLIC_DIR, "sw.js");
   res.setHeader("Content-Type", "application/javascript; charset=utf-8");
   res.setHeader("Service-Worker-Allowed", "/");
   res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -25491,7 +26075,7 @@ app.get(["/api/og-image/:id.png", "/api/og-image/:id.webp", "/api/og-image/:id.s
       res.setHeader("Cache-Control", "public, max-age=3600");
       return res.status(200).send(fallbackBuffer);
     } catch {
-      const fallbackPath = path4.join(process.cwd(), "public", "og-banner.png");
+      const fallbackPath = path4.join(PUBLIC_DIR, "og-banner.png");
       res.setHeader("Content-Type", "image/png");
       res.setHeader("Cache-Control", "public, max-age=3600");
       return res.status(200).sendFile(fallbackPath);
@@ -25499,7 +26083,7 @@ app.get(["/api/og-image/:id.png", "/api/og-image/:id.webp", "/api/og-image/:id.s
   }
 });
 app.get(["/og-banner.png", "/og-image.png"], async (req, res) => {
-  const bannerPath = path4.join(process.cwd(), "public", "og-banner.png");
+  const bannerPath = path4.join(PUBLIC_DIR, "og-banner.png");
   if (fs4.existsSync(bannerPath)) {
     res.setHeader("Content-Type", "image/png");
     res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=604800");
@@ -25511,7 +26095,7 @@ app.get(["/og-banner.png", "/og-image.png"], async (req, res) => {
   return res.send(png);
 });
 app.get(["/og-banner.svg", "/og-image.svg"], (req, res) => {
-  const bannerPath = path4.join(process.cwd(), "public", "og-banner.svg");
+  const bannerPath = path4.join(PUBLIC_DIR, "og-banner.svg");
   if (fs4.existsSync(bannerPath)) {
     res.setHeader("Content-Type", "image/svg+xml");
     res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=604800");
@@ -26057,18 +26641,22 @@ app.get("/sitemap.xml", (req, res) => {
     return res.send(xml);
   } catch (err) {
     console.error("Error generating dynamic sitemap, serving static file:", err);
-    const sitemapPath = path4.join(process.cwd(), "public", "sitemap.xml");
+    const sitemapPath = path4.join(PUBLIC_DIR, "sitemap.xml");
     res.setHeader("Content-Type", "application/xml; charset=utf-8");
     res.sendFile(sitemapPath);
   }
 });
 app.get("/robots.txt", (req, res) => {
-  const robotsPath = path4.join(process.cwd(), "public", "robots.txt");
+  const robotsPath = path4.join(PUBLIC_DIR, "robots.txt");
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
   res.sendFile(robotsPath);
 });
+var IS_RUNNING_DEV_TS = Boolean(
+  process.argv[1] && /\.tsx?$/i.test(process.argv[1]) || process.env.npm_lifecycle_event === "dev"
+);
+var IS_PRODUCTION_RUNTIME = process.env.NODE_ENV === "production" || Boolean(process.env.VERCEL) || !IS_RUNNING_DEV_TS && fs4.existsSync(DIST_INDEX_HTML);
 app.use(
-  express.static(path4.join(process.cwd(), "public"), {
+  express.static(PUBLIC_DIR, {
     index: false,
     setHeaders: (res, filePath) => {
       const lower = filePath.toLowerCase();
@@ -26082,28 +26670,46 @@ app.use(
     }
   })
 );
-if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
-  const distPath = path4.join(process.cwd(), "dist");
-  const distAssetsPath = path4.join(distPath, "assets");
-  const indexHtmlPath = path4.join(distPath, "index.html");
-  const rootHtmlPath = path4.join(process.cwd(), "index.html");
-  if (fs4.existsSync(distAssetsPath)) {
+if (IS_PRODUCTION_RUNTIME) {
+  if (!fs4.existsSync(DIST_INDEX_HTML)) {
+    console.error(
+      `[CSC DOST] CRITICAL: Built frontend not found at ${DIST_INDEX_HTML}. Run "npm run build" before starting server.js so compiled CSS/JS bundles in dist/assets/ are present.`
+    );
+  }
+  if (fs4.existsSync(DIST_ASSETS_DIR)) {
     app.get("/assets/:file", (req, res, next) => {
       const fileName = path4.basename(String(req.params.file || ""));
-      if (!/\.(js|mjs|css|svg|json|map)$/i.test(fileName)) return next();
-      const absFile = path4.join(distAssetsPath, fileName);
-      if (!absFile.startsWith(distAssetsPath) || !fs4.existsSync(absFile)) return next();
+      if (!/\.(js|mjs|css|svg|json|map|woff2?|ttf|eot|png|jpe?g|webp|avif|gif)$/i.test(fileName)) return next();
+      const absFile = path4.join(DIST_ASSETS_DIR, fileName);
+      if (!absFile.startsWith(DIST_ASSETS_DIR) || !fs4.existsSync(absFile)) return next();
       const ext = path4.extname(fileName).toLowerCase();
-      const mime = ext === ".css" ? "text/css; charset=utf-8" : ext === ".svg" ? "image/svg+xml" : ext === ".json" || ext === ".map" ? "application/json; charset=utf-8" : "application/javascript; charset=utf-8";
-      res.setHeader("Content-Type", mime);
+      const mimeMap = {
+        ".css": "text/css; charset=utf-8",
+        ".js": "application/javascript; charset=utf-8",
+        ".mjs": "application/javascript; charset=utf-8",
+        ".svg": "image/svg+xml",
+        ".json": "application/json; charset=utf-8",
+        ".map": "application/json; charset=utf-8",
+        ".woff2": "font/woff2",
+        ".woff": "font/woff",
+        ".ttf": "font/ttf",
+        ".eot": "application/vnd.ms-fontobject",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".webp": "image/webp",
+        ".avif": "image/avif",
+        ".gif": "image/gif"
+      };
+      res.setHeader("Content-Type", mimeMap[ext] || "application/octet-stream");
       res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
       return res.send(fs4.readFileSync(absFile));
     });
-    app.use("/assets", express.static(distAssetsPath, { index: false, maxAge: "365d", immutable: true }));
+    app.use("/assets", express.static(DIST_ASSETS_DIR, { index: false, maxAge: "365d", immutable: true }));
   }
-  if (fs4.existsSync(distPath)) {
+  if (fs4.existsSync(DIST_DIR)) {
     app.use(
-      express.static(distPath, {
+      express.static(DIST_DIR, {
         index: false,
         setHeaders: (res, filePath) => {
           const lower = filePath.toLowerCase();
@@ -26116,12 +26722,15 @@ if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
       })
     );
   }
+  app.get(["/assets/*", "/src/*"], (_req, res) => {
+    res.status(404).type("text/plain; charset=utf-8").send("Asset not found");
+  });
   app.get("*", (req, res, next) => {
     if (req.path.startsWith("/api/")) {
       return next();
     }
     try {
-      const targetHtmlPath = fs4.existsSync(indexHtmlPath) ? indexHtmlPath : fs4.existsSync(rootHtmlPath) ? rootHtmlPath : null;
+      const targetHtmlPath = fs4.existsSync(DIST_INDEX_HTML) ? DIST_INDEX_HTML : fs4.existsSync(ROOT_INDEX_HTML) ? ROOT_INDEX_HTML : null;
       if (targetHtmlPath) {
         const indexHtml = fs4.readFileSync(targetHtmlPath, "utf-8");
         const { html: dynamicHtml, isNotFound } = renderDynamicMetaHtml(indexHtml, req);
@@ -26139,10 +26748,10 @@ if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
   });
 }
 async function startServer() {
-  if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+  if (!IS_PRODUCTION_RUNTIME) {
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: { middlewareMode: true, hmr: false },
       appType: "custom"
     });
     app.use(vite.middlewares);
@@ -26155,7 +26764,7 @@ async function startServer() {
       }
       const url = req.originalUrl || req.url;
       try {
-        const indexHtml = fs4.readFileSync(path4.join(process.cwd(), "index.html"), "utf-8");
+        const indexHtml = fs4.readFileSync(ROOT_INDEX_HTML, "utf-8");
         const transformedHtml = await vite.transformIndexHtml(url, indexHtml);
         const { html: finalHtml, isNotFound } = renderDynamicMetaHtml(transformedHtml, req);
         res.setHeader("Content-Type", "text/html; charset=utf-8");
@@ -26175,7 +26784,7 @@ async function startServer() {
   if (!process.env.VERCEL) {
     startNoticeMonitorScheduler();
     app.listen(PORT, "0.0.0.0", () => {
-      console.log(`\u{1F680} CSC DOST Server successfully started on http://0.0.0.0:${PORT}`);
+      console.log(`\u{1F680} CSC DOST Server successfully started on http://0.0.0.0:${PORT} (mode=${IS_PRODUCTION_RUNTIME ? "production" : "development"}, dist=${fs4.existsSync(DIST_INDEX_HTML) ? "ready" : "missing"})`);
     });
   }
 }
