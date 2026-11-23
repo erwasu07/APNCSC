@@ -234,23 +234,44 @@ const app = express();
 app.set('trust proxy', 1);
 const PORT = Number(process.env.PORT) || 3000;
 
+declare const __EMBEDDED_DIST_INDEX_HTML__: string | undefined;
+
+const EMBEDDED_DIST_INDEX_HTML =
+  typeof __EMBEDDED_DIST_INDEX_HTML__ === 'string' &&
+  __EMBEDDED_DIST_INDEX_HTML__.includes('/assets/') &&
+  !__EMBEDDED_DIST_INDEX_HTML__.includes('/src/main.tsx')
+    ? __EMBEDDED_DIST_INDEX_HTML__
+    : '';
+
 // Resolve application root reliably across Hostinger/LiteSpeed/Passenger, Vercel, and local dev
 function getCandidateRoots(): string[] {
-  const candidates: string[] = [process.cwd()];
+  const seeds: string[] = [process.cwd()];
+  if (process.env.DOCUMENT_ROOT) seeds.push(process.env.DOCUMENT_ROOT);
+  if (process.env.PUBLIC_HTML_DIR) seeds.push(process.env.PUBLIC_HTML_DIR);
   try {
     if (typeof __dirname !== 'undefined' && __dirname) {
-      candidates.push(__dirname, path.resolve(__dirname, '..'));
+      seeds.push(__dirname);
     }
   } catch {
     // ignore in strict ESM
   }
   try {
     if (process.argv[1]) {
-      const entryDir = path.dirname(path.resolve(process.argv[1]));
-      candidates.push(entryDir, path.resolve(entryDir, '..'));
+      seeds.push(path.dirname(path.resolve(process.argv[1])));
     }
   } catch {
     // ignore
+  }
+
+  const candidates: string[] = [];
+  for (const seed of seeds) {
+    let cur = path.resolve(seed);
+    for (let depth = 0; depth < 6; depth++) {
+      candidates.push(cur);
+      const parent = path.dirname(cur);
+      if (parent === cur) break;
+      cur = parent;
+    }
   }
   return Array.from(new Set(candidates));
 }
@@ -283,7 +304,14 @@ function resolveBuiltDistDir(): string {
       return distDir;
     }
   }
-  // 2. Flattened Hostinger layout: <builds/current/nodejs>/index.html next to server.js
+  // 2. Hostinger LiteSpeed layout: <domain>/public_html/index.html (sibling/ancestor of builds/current/nodejs)
+  for (const dir of candidates) {
+    const publicHtmlDir = path.join(dir, 'public_html');
+    if (isBuiltViteIndexHtml(path.join(publicHtmlDir, 'index.html'))) {
+      return publicHtmlDir;
+    }
+  }
+  // 3. Flattened layout: index.html next to server.js
   for (const dir of candidates) {
     if (isBuiltViteIndexHtml(path.join(dir, 'index.html'))) {
       return dir;
@@ -295,6 +323,7 @@ function resolveBuiltDistDir(): string {
 const DIST_DIR = resolveBuiltDistDir();
 const DIST_ASSETS_DIR = path.join(DIST_DIR, 'assets');
 const DIST_INDEX_HTML = path.join(DIST_DIR, 'index.html');
+const HAS_DISK_BUILT_INDEX = isBuiltViteIndexHtml(DIST_INDEX_HTML);
 const PUBLIC_ROOT = resolveRuntimeRoot(path.join('public', 'favicon.svg'));
 const PUBLIC_DIR = fs.existsSync(path.join(PUBLIC_ROOT, 'public', 'favicon.svg'))
   ? path.join(PUBLIC_ROOT, 'public')
@@ -4211,16 +4240,6 @@ app.get(['/api/notifications/center', '/notifications/center'], (_req: Request, 
   }
 });
 
-// Admin Authentication: Login
-app.post('/api/admin/login', (req, res) => {
-  const { username, password } = req.body;
-  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-    res.json({ success: true, token: ADMIN_TOKEN_SECRET, message: 'Administrator authenticated successfully.' });
-  } else {
-    res.status(401).json({ error: 'Invalid username or password. Please try again.' });
-  }
-});
-
 // Admin APIs: Secured by token validation
 
 // Get full dashboard data
@@ -7332,7 +7351,7 @@ const IS_RUNNING_DEV_TS = Boolean(
 const IS_PRODUCTION_RUNTIME =
   process.env.NODE_ENV === 'production' ||
   Boolean(process.env.VERCEL) ||
-  (!IS_RUNNING_DEV_TS && fs.existsSync(DIST_INDEX_HTML));
+  (!IS_RUNNING_DEV_TS && (HAS_DISK_BUILT_INDEX || Boolean(EMBEDDED_DIST_INDEX_HTML)));
 
 // Explicitly serve static public assets like favicons with sensible cache lifetimes (never auto-serve index.html for /)
 app.use(
@@ -7353,7 +7372,7 @@ app.use(
 
 // Production, Hostinger Node.js & Vercel SSR catch-all route (Registered immediately so both Node.js and Vercel Serverless execute it)
 if (IS_PRODUCTION_RUNTIME) {
-  if (!fs.existsSync(DIST_INDEX_HTML)) {
+  if (!HAS_DISK_BUILT_INDEX && !EMBEDDED_DIST_INDEX_HTML) {
     console.error(
       `[CSC DOST] CRITICAL: Built frontend not found at ${DIST_INDEX_HTML}. Run "npm run build" before starting server.js so compiled CSS/JS bundles in dist/assets/ are present.`
     );
@@ -7418,13 +7437,15 @@ if (IS_PRODUCTION_RUNTIME) {
     }
 
     try {
-      const targetHtmlPath = fs.existsSync(DIST_INDEX_HTML)
-        ? DIST_INDEX_HTML
-        : fs.existsSync(ROOT_INDEX_HTML)
-        ? ROOT_INDEX_HTML
-        : null;
-      if (targetHtmlPath) {
-        const indexHtml = fs.readFileSync(targetHtmlPath, 'utf-8');
+      let indexHtml: string | null = null;
+      if (HAS_DISK_BUILT_INDEX && fs.existsSync(DIST_INDEX_HTML)) {
+        indexHtml = fs.readFileSync(DIST_INDEX_HTML, 'utf-8');
+      } else if (EMBEDDED_DIST_INDEX_HTML) {
+        indexHtml = EMBEDDED_DIST_INDEX_HTML;
+      } else if (fs.existsSync(ROOT_INDEX_HTML)) {
+        indexHtml = fs.readFileSync(ROOT_INDEX_HTML, 'utf-8');
+      }
+      if (indexHtml) {
         const { html: dynamicHtml, isNotFound } = renderDynamicMetaHtml(indexHtml, req);
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
@@ -7483,7 +7504,8 @@ async function startServer() {
   if (!process.env.VERCEL) {
     startNoticeMonitorScheduler();
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 CSC DOST Server successfully started on http://0.0.0.0:${PORT} (mode=${IS_PRODUCTION_RUNTIME ? 'production' : 'development'}, dist=${fs.existsSync(DIST_INDEX_HTML) ? 'ready' : 'missing'})`);
+      const distStatus = HAS_DISK_BUILT_INDEX ? 'ready(disk)' : EMBEDDED_DIST_INDEX_HTML ? 'ready(embedded)' : 'missing';
+      console.log(`🚀 CSC DOST Server successfully started on http://0.0.0.0:${PORT} (mode=${IS_PRODUCTION_RUNTIME ? 'production' : 'development'}, dist=${distStatus})`);
     });
   }
 }

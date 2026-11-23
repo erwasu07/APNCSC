@@ -519,56 +519,43 @@ export default function AdminDashboard({ cafeName, onClose }: AdminDashboardProp
     const trimmedPass = password.trim();
 
     try {
-      if (trimmedUser === 'Mahi' && trimmedPass === 'Wasu@9687') {
-        setStaffDisplayName('Mahi');
-        setSafeSession('csc_staff_name', 'Mahi');
-        try {
-          const loginRes = await fetch('/api/admin/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: trimmedUser, password: trimmedPass })
-          });
-          const loginData = await loginRes.json();
-          if (loginData.token) {
-            setSafeSession('csc_admin_token', loginData.token);
-          }
-        } catch {}
-        try {
-          await signInAnonymously(auth);
-        } catch {}
-        setIsAuthenticated(true);
-        setSafeSession('csc_admin_authed', 'true');
-      } else if (trimmedUser.includes('@')) {
-        try {
-          const loginRes = await fetch('/api/admin/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: trimmedUser, password: trimmedPass })
-          });
-          const loginData = await loginRes.json();
-          if (loginData.token) {
-            setSafeSession('csc_admin_token', loginData.token);
-          }
-        } catch {}
+      // 1. Verify against Express /api/admin/login first (supports Hostinger ADMIN_USER/ADMIN_PASS env vars and operator credentials)
+      try {
+        const loginRes = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: trimmedUser, password: trimmedPass })
+        });
+        const loginData = await loginRes.json().catch(() => ({}));
+        if (loginRes.ok && loginData.success && loginData.token) {
+          const display = loginData.user?.displayName || trimmedUser || 'Mahi';
+          setSafeSession('csc_admin_token', loginData.token);
+          setStaffDisplayName(display);
+          setSafeSession('csc_staff_name', display);
+          try {
+            await signInAnonymously(auth);
+          } catch {}
+          setIsAuthenticated(true);
+          setSafeSession('csc_admin_authed', 'true');
+          return;
+        }
+      } catch {}
+
+      // 2. Fallback to Firebase email/password login for registered staff emails
+      if (trimmedUser.includes('@')) {
         await signInWithEmailAndPassword(auth, trimmedUser, trimmedPass);
         const namePart = trimmedUser.split('@')[0];
         setStaffDisplayName(namePart);
         setSafeSession('csc_staff_name', namePart);
         setIsAuthenticated(true);
         setSafeSession('csc_admin_authed', 'true');
-      } else {
-        setLoginError('Invalid Staff Credentials. Use "Mahi" / "Wasu@9687" or a registered staff email.');
+        return;
       }
+
+      setLoginError('Invalid Staff Credentials. Check your operator username/password or use a registered staff email.');
     } catch (err: any) {
       console.error('Staff authentication notice:', err);
-      if (trimmedUser === 'Mahi' && trimmedPass === 'Wasu@9687') {
-        setStaffDisplayName('Mahi');
-        setSafeSession('csc_staff_name', 'Mahi');
-        setIsAuthenticated(true);
-        setSafeSession('csc_admin_authed', 'true');
-      } else {
-        setLoginError(err.message || 'Staff authentication failed. Check credentials.');
-      }
+      setLoginError(err.message || 'Staff authentication failed. Check credentials.');
     } finally {
       setAuthLoading(false);
     }
