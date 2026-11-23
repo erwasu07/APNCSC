@@ -20695,7 +20695,7 @@ function startNoticeMonitorScheduler() {
 var app = express();
 app.set("trust proxy", 1);
 var PORT = Number(process.env.PORT) || 3e3;
-function resolveRuntimeRoot(targetSubpath) {
+function getCandidateRoots() {
   const candidates = [process.cwd()];
   try {
     if (typeof __dirname !== "undefined" && __dirname) {
@@ -20710,19 +20710,45 @@ function resolveRuntimeRoot(targetSubpath) {
     }
   } catch {
   }
-  for (const dir of candidates) {
+  return Array.from(new Set(candidates));
+}
+function resolveRuntimeRoot(targetSubpath) {
+  for (const dir of getCandidateRoots()) {
     if (fs4.existsSync(path4.join(dir, targetSubpath))) {
       return dir;
     }
   }
   return process.cwd();
 }
-var PUBLIC_ROOT = resolveRuntimeRoot(path4.join("public", "favicon.svg"));
-var PUBLIC_DIR = path4.join(PUBLIC_ROOT, "public");
-var DIST_ROOT = resolveRuntimeRoot(path4.join("dist", "index.html"));
-var DIST_DIR = path4.join(DIST_ROOT, "dist");
+function isBuiltViteIndexHtml(filePath) {
+  try {
+    if (!fs4.existsSync(filePath)) return false;
+    const html = fs4.readFileSync(filePath, "utf-8");
+    return html.includes("/assets/") && !html.includes("/src/main.tsx");
+  } catch {
+    return false;
+  }
+}
+function resolveBuiltDistDir() {
+  const candidates = getCandidateRoots();
+  for (const dir of candidates) {
+    const distDir = path4.join(dir, "dist");
+    if (isBuiltViteIndexHtml(path4.join(distDir, "index.html"))) {
+      return distDir;
+    }
+  }
+  for (const dir of candidates) {
+    if (isBuiltViteIndexHtml(path4.join(dir, "index.html"))) {
+      return dir;
+    }
+  }
+  return path4.join(process.cwd(), "dist");
+}
+var DIST_DIR = resolveBuiltDistDir();
 var DIST_ASSETS_DIR = path4.join(DIST_DIR, "assets");
 var DIST_INDEX_HTML = path4.join(DIST_DIR, "index.html");
+var PUBLIC_ROOT = resolveRuntimeRoot(path4.join("public", "favicon.svg"));
+var PUBLIC_DIR = fs4.existsSync(path4.join(PUBLIC_ROOT, "public", "favicon.svg")) ? path4.join(PUBLIC_ROOT, "public") : DIST_DIR;
 var ROOT_INDEX_HTML = path4.join(resolveRuntimeRoot("index.html"), "index.html");
 app.get(["/api/health", "/health", "/_health"], (req, res) => {
   res.status(200).json({ status: "ok", time: (/* @__PURE__ */ new Date()).toISOString() });
