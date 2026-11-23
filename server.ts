@@ -231,7 +231,42 @@ import {
 } from './src/server/noticeMonitor';
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = Number(process.env.PORT) || 3000;
+
+// Resolve application root reliably across Hostinger/LiteSpeed/Passenger, Vercel, and local dev
+function resolveRuntimeRoot(targetSubpath: string): string {
+  const candidates: string[] = [process.cwd()];
+  try {
+    if (typeof __dirname !== 'undefined' && __dirname) {
+      candidates.push(__dirname, path.resolve(__dirname, '..'));
+    }
+  } catch {
+    // ignore in strict ESM
+  }
+  try {
+    if (process.argv[1]) {
+      const entryDir = path.dirname(path.resolve(process.argv[1]));
+      candidates.push(entryDir, path.resolve(entryDir, '..'));
+    }
+  } catch {
+    // ignore
+  }
+  for (const dir of candidates) {
+    if (fs.existsSync(path.join(dir, targetSubpath))) {
+      return dir;
+    }
+  }
+  return process.cwd();
+}
+
+const PUBLIC_ROOT = resolveRuntimeRoot(path.join('public', 'favicon.svg'));
+const PUBLIC_DIR = path.join(PUBLIC_ROOT, 'public');
+const DIST_ROOT = resolveRuntimeRoot(path.join('dist', 'index.html'));
+const DIST_DIR = path.join(DIST_ROOT, 'dist');
+const DIST_ASSETS_DIR = path.join(DIST_DIR, 'assets');
+const DIST_INDEX_HTML = path.join(DIST_DIR, 'index.html');
+const ROOT_INDEX_HTML = path.join(resolveRuntimeRoot('index.html'), 'index.html');
 
 // Health check endpoints for deployment probes & container health checks
 app.get(['/api/health', '/health', '/_health'], (req: Request, res: Response) => {
@@ -3572,7 +3607,7 @@ app.post('/api/whatsapp/broadcast', authenticateAdmin, async (req: Request, res:
 // ============================================================
 
 app.get('/sw.js', (_req: Request, res: Response) => {
-  const swPath = path.join(process.cwd(), 'public', 'sw.js');
+  const swPath = path.join(PUBLIC_DIR, 'sw.js');
   res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
   res.setHeader('Service-Worker-Allowed', '/');
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -6601,7 +6636,7 @@ app.get(['/api/og-image/:id.png', '/api/og-image/:id.webp', '/api/og-image/:id.s
       res.setHeader('Cache-Control', 'public, max-age=3600');
       return res.status(200).send(fallbackBuffer);
     } catch {
-      const fallbackPath = path.join(process.cwd(), 'public', 'og-banner.png');
+      const fallbackPath = path.join(PUBLIC_DIR, 'og-banner.png');
       res.setHeader('Content-Type', 'image/png');
       res.setHeader('Cache-Control', 'public, max-age=3600');
       return res.status(200).sendFile(fallbackPath);
@@ -6611,7 +6646,7 @@ app.get(['/api/og-image/:id.png', '/api/og-image/:id.webp', '/api/og-image/:id.s
 
 // Explicitly serve static og banners with caching (Supports query versions like ?v=2026)
 app.get(['/og-banner.png', '/og-image.png'], async (req: Request, res: Response) => {
-  const bannerPath = path.join(process.cwd(), 'public', 'og-banner.png');
+  const bannerPath = path.join(PUBLIC_DIR, 'og-banner.png');
   if (fs.existsSync(bannerPath)) {
     res.setHeader('Content-Type', 'image/png');
     res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
@@ -6624,7 +6659,7 @@ app.get(['/og-banner.png', '/og-image.png'], async (req: Request, res: Response)
 });
 
 app.get(['/og-banner.svg', '/og-image.svg'], (req: Request, res: Response) => {
-  const bannerPath = path.join(process.cwd(), 'public', 'og-banner.svg');
+  const bannerPath = path.join(PUBLIC_DIR, 'og-banner.svg');
   if (fs.existsSync(bannerPath)) {
     res.setHeader('Content-Type', 'image/svg+xml');
     res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
@@ -7245,21 +7280,30 @@ app.get('/sitemap.xml', (req: Request, res: Response) => {
     return res.send(xml);
   } catch (err) {
     console.error('Error generating dynamic sitemap, serving static file:', err);
-    const sitemapPath = path.join(process.cwd(), 'public', 'sitemap.xml');
+    const sitemapPath = path.join(PUBLIC_DIR, 'sitemap.xml');
     res.setHeader('Content-Type', 'application/xml; charset=utf-8');
     res.sendFile(sitemapPath);
   }
 });
 
 app.get('/robots.txt', (req: Request, res: Response) => {
-  const robotsPath = path.join(process.cwd(), 'public', 'robots.txt');
+  const robotsPath = path.join(PUBLIC_DIR, 'robots.txt');
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.sendFile(robotsPath);
 });
 
+const IS_RUNNING_DEV_TS = Boolean(
+  (process.argv[1] && /\.tsx?$/i.test(process.argv[1])) ||
+    process.env.npm_lifecycle_event === 'dev'
+);
+const IS_PRODUCTION_RUNTIME =
+  process.env.NODE_ENV === 'production' ||
+  Boolean(process.env.VERCEL) ||
+  (!IS_RUNNING_DEV_TS && fs.existsSync(DIST_INDEX_HTML));
+
 // Explicitly serve static public assets like favicons with sensible cache lifetimes (never auto-serve index.html for /)
 app.use(
-  express.static(path.join(process.cwd(), 'public'), {
+  express.static(PUBLIC_DIR, {
     index: false,
     setHeaders: (res, filePath) => {
       const lower = filePath.toLowerCase();
@@ -7274,37 +7318,49 @@ app.use(
   })
 );
 
-// Production & Vercel SSR catch-all route (Registered immediately so Vercel Serverless Function executes it)
-if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
-  const distPath = path.join(process.cwd(), 'dist');
-  const distAssetsPath = path.join(distPath, 'assets');
-  const indexHtmlPath = path.join(distPath, 'index.html');
-  const rootHtmlPath = path.join(process.cwd(), 'index.html');
+// Production, Hostinger Node.js & Vercel SSR catch-all route (Registered immediately so both Node.js and Vercel Serverless execute it)
+if (IS_PRODUCTION_RUNTIME) {
+  if (!fs.existsSync(DIST_INDEX_HTML)) {
+    console.error(
+      `[CSC DOST] CRITICAL: Built frontend not found at ${DIST_INDEX_HTML}. Run "npm run build" before starting server.js so compiled CSS/JS bundles in dist/assets/ are present.`
+    );
+  }
 
-  if (fs.existsSync(distAssetsPath)) {
+  if (fs.existsSync(DIST_ASSETS_DIR)) {
     app.get('/assets/:file', (req: Request, res: Response, next: NextFunction) => {
       const fileName = path.basename(String(req.params.file || ''));
-      if (!/\.(js|mjs|css|svg|json|map)$/i.test(fileName)) return next();
-      const absFile = path.join(distAssetsPath, fileName);
-      if (!absFile.startsWith(distAssetsPath) || !fs.existsSync(absFile)) return next();
+      if (!/\.(js|mjs|css|svg|json|map|woff2?|ttf|eot|png|jpe?g|webp|avif|gif)$/i.test(fileName)) return next();
+      const absFile = path.join(DIST_ASSETS_DIR, fileName);
+      if (!absFile.startsWith(DIST_ASSETS_DIR) || !fs.existsSync(absFile)) return next();
       const ext = path.extname(fileName).toLowerCase();
-      const mime =
-        ext === '.css'
-          ? 'text/css; charset=utf-8'
-          : ext === '.svg'
-          ? 'image/svg+xml'
-          : ext === '.json' || ext === '.map'
-          ? 'application/json; charset=utf-8'
-          : 'application/javascript; charset=utf-8';
-      res.setHeader('Content-Type', mime);
+      const mimeMap: Record<string, string> = {
+        '.css': 'text/css; charset=utf-8',
+        '.js': 'application/javascript; charset=utf-8',
+        '.mjs': 'application/javascript; charset=utf-8',
+        '.svg': 'image/svg+xml',
+        '.json': 'application/json; charset=utf-8',
+        '.map': 'application/json; charset=utf-8',
+        '.woff2': 'font/woff2',
+        '.woff': 'font/woff',
+        '.ttf': 'font/ttf',
+        '.eot': 'application/vnd.ms-fontobject',
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.webp': 'image/webp',
+        '.avif': 'image/avif',
+        '.gif': 'image/gif',
+      };
+      res.setHeader('Content-Type', mimeMap[ext] || 'application/octet-stream');
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
       return res.send(fs.readFileSync(absFile));
     });
-    app.use('/assets', express.static(distAssetsPath, { index: false, maxAge: '365d', immutable: true }));
+    app.use('/assets', express.static(DIST_ASSETS_DIR, { index: false, maxAge: '365d', immutable: true }));
   }
-  if (fs.existsSync(distPath)) {
+
+  if (fs.existsSync(DIST_DIR)) {
     app.use(
-      express.static(distPath, {
+      express.static(DIST_DIR, {
         index: false,
         setHeaders: (res, filePath) => {
           const lower = filePath.toLowerCase();
@@ -7318,13 +7374,22 @@ if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
     );
   }
 
+  // Never serve HTML for missing hashed bundle assets or dev source paths in production
+  app.get(['/assets/*', '/src/*'], (_req: Request, res: Response) => {
+    res.status(404).type('text/plain; charset=utf-8').send('Asset not found');
+  });
+
   app.get('*', (req: Request, res: Response, next: NextFunction) => {
     if (req.path.startsWith('/api/')) {
       return next();
     }
 
     try {
-      const targetHtmlPath = fs.existsSync(indexHtmlPath) ? indexHtmlPath : (fs.existsSync(rootHtmlPath) ? rootHtmlPath : null);
+      const targetHtmlPath = fs.existsSync(DIST_INDEX_HTML)
+        ? DIST_INDEX_HTML
+        : fs.existsSync(ROOT_INDEX_HTML)
+        ? ROOT_INDEX_HTML
+        : null;
       if (targetHtmlPath) {
         const indexHtml = fs.readFileSync(targetHtmlPath, 'utf-8');
         const { html: dynamicHtml, isNotFound } = renderDynamicMetaHtml(indexHtml, req);
@@ -7344,7 +7409,7 @@ if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
 
 // Setup Vite Dev Server / Local Development HTTP Listener
 async function startServer() {
-  if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  if (!IS_PRODUCTION_RUNTIME) {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -7364,7 +7429,7 @@ async function startServer() {
 
       const url = req.originalUrl || req.url;
       try {
-        const indexHtml = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf-8');
+        const indexHtml = fs.readFileSync(ROOT_INDEX_HTML, 'utf-8');
         const transformedHtml = await vite.transformIndexHtml(url, indexHtml);
         const { html: finalHtml, isNotFound } = renderDynamicMetaHtml(transformedHtml, req);
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -7385,7 +7450,7 @@ async function startServer() {
   if (!process.env.VERCEL) {
     startNoticeMonitorScheduler();
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 CSC DOST Server successfully started on http://0.0.0.0:${PORT}`);
+      console.log(`🚀 CSC DOST Server successfully started on http://0.0.0.0:${PORT} (mode=${IS_PRODUCTION_RUNTIME ? 'production' : 'development'}, dist=${fs.existsSync(DIST_INDEX_HTML) ? 'ready' : 'missing'})`);
     });
   }
 }

@@ -6,12 +6,17 @@ import { ThemeProvider } from './context/ThemeContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
 
+const shouldLoadVercelAnalytics =
+  typeof window !== 'undefined' &&
+  (window.location.hostname.endsWith('.vercel.app') ||
+    import.meta.env.VITE_ENABLE_VERCEL_ANALYTICS === 'true');
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
       <ThemeProvider>
         <App />
-        <Analytics />
+        {shouldLoadVercelAnalytics ? <Analytics /> : null}
       </ThemeProvider>
     </ErrorBoundary>
   </StrictMode>,
